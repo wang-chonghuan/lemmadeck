@@ -1,0 +1,129 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST');
+const affected = path.join(work, 'fig-24-AFFECTED-label1-FIRST');
+assert.equal(process.cwd(), R);
+const hash = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const write = (file, value) => {
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return binding(file);
+};
+const previousReadyPath = path.join(work, 'render-ready.record');
+assert.equal(binding(previousReadyPath).sha256, '6184137a88412a38b9fee81794ffbd8cb03ce929666952c564c70ffc63fa1358');
+const previous = read(previousReadyPath);
+const passing = previous.figures.filter((figure) => ['fig-22', 'fig-23'].includes(figure.id));
+for (const figure of passing) {
+  for (const key of ['spec', 'svg', 'render', 'nativePng', 'width640Preview']) {
+    assert.equal(binding(figure[key].path).sha256, figure[key].sha256);
+  }
+  assert.equal(read(figure.render.path).status, 'pass');
+}
+const passingReady = write(path.join(work, 'render-ready-fig22-23.record'), {
+  status: 'HASH_BOUND_EXISTING_RENDER_PASS_NOT_FIGURE_APPROVAL',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  root: R,
+  figures: passing,
+  previousFIRSTRenderReady: binding(previousReadyPath),
+  originalInventory: previous.originalInventory,
+  originalInventoryReady: previous.originalInventoryReady,
+  originalDraftReady: previous.immutableDraftReady,
+  textReady: previous.textReady,
+  countsThisCheckpoint: {
+    validations: 0,
+    renders: 0,
+    screenshots: 0,
+    imageViews: 0,
+    figureApprovals: 0,
+    cost: 'unknown',
+  },
+  proceduralHold: previous.proceduralHold,
+  meaning: 'Only byte bindings and existing render status were read. Fig22/23 were not revalidated, rerendered, recaptured, reviewed, or promoted. Independent figure review remains separate.',
+});
+
+const failed = previous.figures.find((figure) => figure.id === 'fig-24');
+assert.equal(binding(failed.spec.path).sha256, failed.spec.sha256);
+const before = read(failed.spec.path);
+const failedRender = read(failed.render.path);
+assert.equal(failedRender.status, 'fail');
+assert.deepEqual(failedRender.collisions, [
+  { id: 'fig24-x-unit-label-label', text: '1', position: 'S', score: 10000 },
+]);
+for (const key of ['svg', 'render', 'nativePng', 'width640Preview']) {
+  assert.equal(binding(failed[key].path).sha256, failed[key].sha256);
+}
+const after = structuredClone(before);
+const label = after.objects.find((object) => object.id === 'fig24-x-unit-label');
+assert.deepEqual(label.at, [1, 0]);
+assert.deepEqual(label.labelPlacement, { position: 'S', gap: 16 });
+const originalPlacement = structuredClone(label.labelPlacement);
+label.labelPlacement.offset = [-8, 0];
+const restored = structuredClone(after);
+restored.objects.find((object) => object.id === label.id).labelPlacement = originalPlacement;
+assert.deepEqual(restored, before, 'Only this label placement may change.');
+
+fs.mkdirSync(affected);
+const spec = write(path.join(affected, 'fig-24.spec.json'), after);
+const change = write(path.join(affected, 'change.record'), {
+  status: 'AFFECTED_RENDER_LABEL_REPAIR_PREPARED_NOT_APPROVED',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  id: 'fig-24',
+  originalSpec: failed.spec,
+  originalFIRSTDraftSpec: failed.originalFIRSTDraftSpec,
+  originalAssertionRepair: failed.assertionRepair,
+  originalFailedSVG: failed.svg,
+  originalFailedRender: failed.render,
+  originalFailedNativePng: failed.nativePng,
+  originalFailedWidth640Preview: failed.width640Preview,
+  spec,
+  changedPath: 'objects[id=fig24-x-unit-label].labelPlacement.offset',
+  before: before.objects.find((object) => object.id === label.id),
+  after: label,
+  explanation: 'Keep source x-unit anchor [1,0], S-side, gap16, font20 and all mathematics unchanged. Offset the glyph 8 output pixels left to clear the reported stroke collision.',
+  mathematicalSourceCoordinatesChanged: false,
+  assertionsChanged: false,
+  canvasChanged: false,
+  displayChanged: false,
+  otherObjectsChanged: false,
+  sourceInventoryChanged: false,
+  authoritativeTextChanged: false,
+  originalGeneratedOutputsEdited: false,
+  priorFigureRepairsNotReset: {
+    fig22AssertionRepairs: 1,
+    fig23AssertionRepairs: 1,
+    fig24AssertionRepairs: 1,
+    fig24RenderLabelRepairPrepared: 1,
+    cumulativeRepairsPreparedAcrossThisBatch: 4,
+    fig24CumulativeRepairsPrepared: 2,
+  },
+  authorization: 'Direct user authorized one affected repair for this FIRST render label failure. It does not erase the prior assertion repair or reset failures/budgets.',
+  next: 'Validate this affected spec once, render once, rasterize only its new SVG once. If still fail, retain HOLD and stop.',
+  proceduralHold: previous.proceduralHold,
+});
+const ready = write(path.join(affected, 'prepared.record'), {
+  status: 'AFFECTED_LABEL1_PREPARED_NOT_FIGURE_APPROVAL',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  id: 'fig-24',
+  spec,
+  change,
+  existingFig22Fig23RenderReady: passingReady,
+  previousFIRSTRenderReady: binding(previousReadyPath),
+  validationCallsAtPreparation: 0,
+  renderCallsAtPreparation: 0,
+  cost: 'unknown',
+});
+console.log(JSON.stringify({ passingReady, affectedReady: ready, spec, change }, null, 2));

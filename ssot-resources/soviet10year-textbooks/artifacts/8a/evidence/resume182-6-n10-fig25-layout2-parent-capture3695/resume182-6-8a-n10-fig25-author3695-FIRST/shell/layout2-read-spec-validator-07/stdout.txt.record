@@ -1,0 +1,919 @@
+19-)
+20-CENTRAL_SYMMETRY = re.compile(
+21-    r"中心对称|对称中心|central symmetry|centrally symmetric|half-turn|"
+22-    r"180(?:°| degrees?)",
+23-    re.IGNORECASE,
+24-)
+25-GEOMETRY_TYPES = {
+26:    "point", "segment", "line", "arrow", "circle", "polygon", "arc",
+27-    "grid", "axis", "measure", "svgPath",
+28-}
+29-SUPPORTED_TYPES = GEOMETRY_TYPES | {"text", "image"}
+30-COLOR_ROLES = {"ink", "muted", "accent", "accentSoft", "grid", "paper"}
+31-
+32-
+33-def load(path: Path) -> dict:
+--
+79-    fields = {
+80-        "distance": ("a", "b"),
+81-        "equalDistance": ("a", "b", "c", "d"),
+82-        "collinear": ("a", "b", "c"),
+83-        "parallel": ("a", "b", "c", "d"),
+84-        "perpendicular": ("a", "b", "c", "d"),
+85-        "pointOnLine": ("point", "a", "b"),
+86:        "pointOnCircle": ("point", "center"),
+87:        "connects": ("from", "to"),
+88-        "displacement": ("from", "to"),
+89-    }.get(kind, ())
+90-    values = [assertion.get(field) for field in fields]
+91-    if kind == "centralSymmetry":
+92-        values.append(assertion.get("center"))
+93-        for pair in assertion.get("pairs", []):
+94-            if isinstance(pair, dict):
+--
+142-    return a[0] * b[1] - a[1] * b[0]
+143-
+144-
+145-def dot(a: tuple[float, float], b: tuple[float, float]) -> float:
+146-    return a[0] * b[0] + a[1] * b[1]
+147-
+148-
+149:def point_to_segment_distance(
+150-    point: tuple[float, float],
+151-    start: tuple[float, float],
+152-    end: tuple[float, float],
+153-) -> float:
+154:    segment = vector(start, end)
+155:    length_squared = dot(segment, segment)
+156-    if length_squared == 0:
+157-        return distance(point, start)
+158-    offset = vector(start, point)
+159:    position = max(0.0, min(1.0, dot(offset, segment) / length_squared))
+160-    projection = (
+161:        start[0] + segment[0] * position,
+162:        start[1] + segment[1] * position,
+163-    )
+164-    return distance(point, projection)
+165-
+166-
+167-def point_in_polygon(
+168-    point: tuple[float, float],
+169-    polygon: list[tuple[float, float]],
+--
+199-        item.get("id"): item
+200-        for item in objects
+201-        if isinstance(item, dict)
+202-        and item.get("type") == "polygon"
+203-        and isinstance(item.get("id"), str)
+204-        and item["id"].endswith("-set")
+205-    }
+206:    connects = [
+207-        item
+208-        for item in assertions
+209:        if isinstance(item, dict) and item.get("type") == "connects"
+210-    ]
+211:    if len(set_polygons) < 2 or not connects:
+212-        return []
+213-
+214-    objects_by_id = {
+215-        item.get("id"): item
+216-        for item in objects
+217-        if isinstance(item, dict) and isinstance(item.get("id"), str)
+218-    }
+--
+234-                    item["id"],
+235-                )
+236-            ),
+237-            None,
+238-        )
+239-        for item in objects
+240-        if isinstance(item, dict)
+241:        and item.get("visible") is not False
+242-        and isinstance(item.get("id"), str)
+243-        and (
+244-            item.get("type") == "point"
+245-            or (
+246-                item.get("type") == "text"
+247-                and item["id"].endswith("-label")
+248-            )
+--
+336-                    f"container {container.get('id')!r}",
+337-                    errors,
+338-                )
+339-                if resolved is not None:
+340-                    polygon.append(resolved)
+341-            if len(polygon) >= 3 and point_in_polygon(position, polygon):
+342-                clearances.append(min(
+343:                    point_to_segment_distance(position, start, end)
+344-                    for start, end in zip(polygon, polygon[1:] + polygon[:1])
+345-                ))
+346-
+347-        if clearances and max(clearances) < required_clearance:
+348-            errors.append(
+349-                f"set member {member_id!r} has {max(clearances):.3g} units "
+350-                f"of boundary clearance; requires {required_clearance:.3g}"
+--
+357-    spec: dict,
+358-    objects: list[dict],
+359-    points: dict[str, tuple[float, float]],
+360-    assertions: list[dict],
+361-    current: bool,
+362-) -> list[str]:
+363-    errors = []
+364:    inventory = spec.get("source", {}).get("inventory")
+365-    by_id = {item.get("id"): item for item in objects if isinstance(item, dict)}
+366-    assertions_by_id = {
+367-        item.get("id"): item
+368-        for item in assertions
+369-        if isinstance(item, dict) and isinstance(item.get("id"), str)
+370-    }
+371:    if inventory is not None:
+372:        if not isinstance(inventory, list) or not inventory:
+373:            errors.append("source.inventory must be a nonempty array")
+374-        else:
+375:            inventory_ids = []
+376:            for index, group in enumerate(inventory):
+377:                label = f"source.inventory[{index}]"
+378-                if not isinstance(group, dict) or not group.get("description"):
+379-                    errors.append(f"{label} needs a source-based description")
+380-                    continue
+381-                if current:
+382:                    inventory_id = group.get("id")
+383:                    if not isinstance(inventory_id, str) or not inventory_id:
+384-                        errors.append(f"{label}.id must be nonempty")
+385-                    else:
+386:                        inventory_ids.append(inventory_id)
+387-                required_objects = group.get("objects")
+388-                required_assertions = group.get("assertions", [])
+389-                if not isinstance(required_objects, list):
+390-                    errors.append(f"{label}.objects must be an array")
+391-                    required_objects = []
+392-                if current and not isinstance(required_assertions, list):
+393-                    errors.append(f"{label}.assertions must be an array")
+--
+401-                    errors.append(
+402-                        f"{label} must map at least one object or assertion"
+403-                    )
+404-                if not current and not required_objects:
+405-                    errors.append(f"{label}.objects must be nonempty")
+406-                for object_id in required_objects:
+407-                    obj = by_id.get(object_id) if isinstance(object_id, str) else None
+408:                    if obj is None or obj.get("visible") is False:
+409:                        errors.append(f"{label}: missing visible object {object_id!r}")
+410-                for assertion_id in required_assertions:
+411-                    if assertion_id not in assertions_by_id:
+412-                        errors.append(
+413-                            f"{label}: missing assertion {assertion_id!r}"
+414-                        )
+415-                mapped_assertions = [
+416-                    assertions_by_id[assertion_id]
+--
+423-                    if object_id in by_id
+424-                ]
+425-                requirements = group.get("requires", [])
+426-                if (
+427-                    not isinstance(requirements, list)
+428-                    or any(
+429-                        requirement not in {
+430:                            "gridDimensions", "pointRelationships"
+431-                        }
+432-                        for requirement in requirements
+433-                    )
+434-                    or len(requirements) != len(set(requirements))
+435-                ):
+436-                    errors.append(
+437-                        f"{label}.requires must contain unique supported requirements"
+--
+458-                                "gridDimensions assertion; objectCount is insufficient"
+459-                            )
+460-                mapped_points = [
+461-                    item["id"]
+462-                    for item in mapped_objects
+463-                    if item.get("type") == "point"
+464-                ]
+465:                if "pointRelationships" in requirements:
+466-                    if len(mapped_points) < 2:
+467-                        errors.append(
+468:                            f"{label}: pointRelationships requirement needs "
+469-                            "at least two mapped points"
+470-                        )
+471-                    else:
+472-                        mapped_point_ids = set(mapped_points)
+473-                        relationship_coverages = []
+474-                        for item in mapped_assertions:
+475-                            references = assertion_point_ids(
+--
+480-                                and references <= mapped_point_ids
+481-                            ):
+482-                                relationship_coverages.append(references)
+483-                        if not relationship_coverages:
+484-                            errors.append(
+485-                                f"{label}: multiple source points require a "
+486-                                "mapped relationship assertion wholly within "
+487:                                "the inventory group; objectCount or unrelated "
+488-                                "relationships are insufficient"
+489-                            )
+490-                        else:
+491-                            covered_points = set().union(
+492-                                *relationship_coverages
+493-                            )
+494-                            missing_points = sorted(
+495-                                mapped_point_ids - covered_points
+496-                            )
+497-                            if missing_points:
+498-                                errors.append(
+499:                                    f"{label}: pointRelationships missing "
+500-                                    "mapped relation coverage for "
+501-                                    + ", ".join(repr(item) for item in missing_points)
+502-                                )
+503:            if current and len(inventory_ids) != len(set(inventory_ids)):
+504:                errors.append("source.inventory ids must be unique")
+505-
+506-    box = spec.get("canvas", {}).get("boundingBox")
+507-    if not isinstance(box, list) or len(box) != 4 or not all(map(finite_number, box)):
+508-        return errors
+509-    xmin, ymax, xmax, ymin = box
+510-    for obj in objects:
+511:        if not isinstance(obj, dict) or obj.get("visible") is False:
+512-            continue
+513-        kind = obj.get("type")
+514-        # Infinite lines and viewport grids are intentionally bounded by the viewport.
+515-        if kind in {"line", "svgPath", "image"}:
+516-            continue
+517-        coordinates = []
+518-        if kind == "grid":
+--
+522-                    [bounds[0], bounds[1]],
+523-                    [bounds[2], bounds[3]],
+524-                ]
+525-            else:
+526-                continue
+527-        elif kind in {"point", "text"}:
+528-            coordinates = [obj.get("at")]
+529:        elif kind in {"segment", "arrow", "measure", "axis"}:
+530-            coordinates = [obj.get("from"), obj.get("to")]
+531-        elif kind == "polygon":
+532-            coordinates = obj.get("points", [])
+533-        elif kind == "circle" and finite_number(obj.get("radius")):
+534-            center = obj.get("center")
+535-            center = points.get(center) if isinstance(center, str) else center
+536-            if center is not None and len(center) == 2:
+--
+676-                ):
+677-                    errors.append(
+678-                        f"{label}: displacement ({actual_dx:.8g}, "
+679-                        f"{actual_dy:.8g}) != ({expected_dx!r}, "
+680-                        f"{expected_dy!r})"
+681-                    )
+682-            continue
+683:        if kind == "pointOnCircle":
+684-            point = resolve_point(item.get("point"), points, f"{label}.point", errors)
+685-            center = resolve_point(item.get("center"), points, f"{label}.center", errors)
+686-            radius = item.get("radius")
+687-            if not finite_number(radius) or radius <= 0:
+688-                errors.append(f"{label}.radius must be positive")
+689-            elif point is not None and center is not None:
+690-                if abs(distance(point, center) - radius) > tolerance:
+--
+752-            if point is not None and len(polygon) >= 3:
+753-                if not point_in_polygon(point, polygon):
+754-                    errors.append(
+755-                        f"{label}: point {item.get('point')!r} is outside "
+756-                        f"{container_id!r}"
+757-                    )
+758-                elif margin and min(
+759:                    point_to_segment_distance(point, start, end)
+760-                    for start, end in zip(polygon, polygon[1:] + polygon[:1])
+761-                ) < margin:
+762-                    errors.append(
+763-                        f"{label}: point {item.get('point')!r} is inside "
+764-                        f"{container_id!r} but violates margin {margin}"
+765-                    )
+766-            continue
+767:        if kind == "connects":
+768-            arrow_id = item.get("arrow")
+769-            arrow = objects_by_id.get(arrow_id)
+770:            if not isinstance(arrow, dict) or arrow.get("type") not in {"arrow", "segment"}:
+771:                errors.append(f"{label}.arrow must reference an arrow or segment")
+772-                continue
+773-            actual_from = resolve_point(
+774-                arrow.get("from"), points, f"{label}.arrow.from", errors
+775-            )
+776-            actual_to = resolve_point(
+777-                arrow.get("to"), points, f"{label}.arrow.to", errors
+778-            )
+--
+911-    elif any(
+912-        not isinstance(item, dict)
+913-        or not isinstance(item.get("text"), str)
+914-        or not item["text"].strip()
+915-        for item in authoritative
+916-    ):
+917-        errors.append("every authoritativeText item needs nonempty text")
+918:    if current and not source.get("inventory"):
+919:        errors.append("current FigureSpec requires source.inventory")
+920-
+921-    canvas = spec.get("canvas")
+922-    if not isinstance(canvas, dict):
+923-        errors.append("canvas must be an object")
+924-        canvas = {}
+925-    for key in ("width", "height"):
+926-        value = canvas.get(key)
+--
+1063-        if not isinstance(item, dict):
+1064-            errors.append(f"{label} must be an object")
+1065-            continue
+1066-        kind = item.get("type")
+1067-        if kind not in SUPPORTED_TYPES:
+1068-            errors.append(f"{label}: unsupported type {kind!r}")
+1069-            continue
+1070:        placements = [(label, item.get("labelPlacement"))]
+1071-        if kind == "axis":
+1072-            placements.extend(
+1073:                (f"{label}.ticks[{tick_index}]", tick.get("labelPlacement"))
+1074-                for tick_index, tick in enumerate(item.get("ticks", []))
+1075-                if isinstance(tick, dict)
+1076-            )
+1077-        for owner, placement in placements:
+1078-            if placement is None:
+1079-                continue
+1080-            if not isinstance(placement, dict):
+1081:                errors.append(f"{owner}.labelPlacement must be an object")
+1082-                continue
+1083-            position = placement.get("position")
+1084-            if position is not None and position not in {
+1085-                "CENTER", "NE", "NW", "SE", "SW", "E", "W", "N", "S"
+1086-            }:
+1087:                errors.append(f"{owner}.labelPlacement.position is unsupported: {position!r}")
+1088-        if current:
+1089-            for field in ("stroke", "fill", "labelColor"):
+1090-                role = item.get(field)
+1091-                if role is not None and role not in COLOR_ROLES:
+1092-                    errors.append(
+1093-                        f"{label}.{field} must use a semantic color role"
+1094-                    )
+1095-        for field in ("label", "text"):
+1096-            text = item.get(field)
+1097-            if isinstance(text, str) and text:
+1098-                labels.append((label, text))
+1099-        if kind == "point" and not coordinate(item.get("at")):
+1100-            errors.append(f"{label}.at must be [x, y]")
+1101:        elif kind in {"segment", "line", "arrow", "axis", "measure"}:
+1102-            resolve_point(item.get("from"), points, f"{label}.from", errors)
+1103-            resolve_point(item.get("to"), points, f"{label}.to", errors)
+1104-        elif kind == "circle":
+1105-            resolve_point(item.get("center"), points, f"{label}.center", errors)
+1106-            if not finite_number(item.get("radius")) or item["radius"] <= 0:
+1107-                errors.append(f"{label}.radius must be positive")
+1108-        elif kind == "polygon":
+--
+1164-                            f"{label}.rotation.center must be [x, y]"
+1165-                        )
+1166-        elif kind == "svgPath":
+1167-            if not isinstance(item.get("d"), str) or not item["d"].strip():
+1168-                errors.append(f"{label}.d must be nonempty")
+1169-    for label, text in labels:
+1170-        if NON_ENGLISH.search(text):
+1171:            errors.append(f"{label}: visible text must be English: {text!r}")
+1172-
+1173-    if mode == "generated" and objects:
+1174-        errors.append("generated mode must not contain deterministic objects")
+1175-    if mode == "hybrid" and image_count == 0:
+1176-        errors.append("hybrid mode requires an image object")
+1177-    if mode == "hybrid":
+1178-        first_geometry = next(
+
+SPEC
+{
+  "schema": "ld-s10y-image/figure-spec@2",
+  "id": "fig-25",
+  "mode": "deterministic",
+  "description": "Four separate ruled coordinate frames for exercise 136. Preserve the source hatching, solid boundaries, given scale labels, bounded rectangle above the x axis, right semicircular region, and concentric annulus. Do not print an answer or additional coordinate/radius annotations.",
+  "source": {
+    "image": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-25.png",
+      "sha256": "c6982988a8fa79b1d62fec64a7027bf125c8535cd6ee0daa6cc86ad074b62e33"
+    },
+    "authoritativeText": [
+      {
+        "lesson": "alg8-c2-s2-n10",
+        "exercise": "136",
+        "text": "136. 图25中画细线条表示的都是由不等式组给出的点的集合，写出这些不等式组。"
+      }
+    ],
+    "inventory": [
+      {
+        "id": "fig-25-a",
+        "description": "upper left: source label а); 18 columns, 9 rows, unit grid phase through O; Only the lower-right side of O is hatched. The displayed hatching occupies ten columns to the right and four rows below the axes, reaching the right and bottom frame edges. All defining boundaries are solid. Original axis/tick labels are retained. No source point dots are present. Modern English label a) and regularized placement are additions, not source labels.",
+        "objects": [
+          "fig-25-a-grid",
+          "fig-25-a-frame",
+          "fig-25-a-hatch-region",
+          "fig-25-a-hatch-region-001",
+          "fig-25-a-hatch-region-002",
+          "fig-25-a-hatch-region-003",
+          "fig-25-a-hatch-region-004",
+          "fig-25-a-hatch-region-005",
+          "fig-25-a-hatch-region-006",
+          "fig-25-a-hatch-region-007",
+          "fig-25-a-hatch-region-008",
+          "fig-25-a-hatch-region-009",
+          "fig-25-a-hatch-region-010",
+          "fig-25-a-hatch-region-011",
+          "fig-25-a-hatch-region-012",
+          "fig-25-a-hatch-region-013",
+          "fig-25-a-hatch-region-014",
+          "fig-25-a-hatch-region-015",
+          "fig-25-a-hatch-region-016",
+          "fig-25-a-hatch-region-017",
+          "fig-25-a-hatch-region-018",
+          "fig-25-a-hatch-region-019",
+          "fig-25-a-hatch-region-020",
+          "fig-25-a-hatch-region-021",
+          "fig-25-a-hatch-region-022",
+          "fig-25-a-hatch-region-023",
+          "fig-25-a-hatch-region-024",
+          "fig-25-a-hatch-region-025",
+          "fig-25-a-hatch-region-026",
+          "fig-25-a-hatch-region-027",
+          "fig-25-a-hatch-region-028",
+          "fig-25-a-x-axis",
+          "fig-25-a-y-axis",
+          "fig-25-a-subfigure-label",
+          "fig-25-a-origin-label",
+          "fig-25-a-x-label",
+          "fig-25-a-y-label",
+          "fig-25-a-x-unit-label",
+          "fig-25-a-y-unit-label"
+        ],
+        "assertions": [
+          "fig-25-a-grid-dimensions",
+          "fig-25-a-origin-phase-horizontal",
+          "fig-25-a-origin-phase-vertical",
+          "fig-25-a-hatch-0-endpoints",
+          "fig-25-a-hatch-0-direction",
+          "fig-25-a-hatch-0-start-clipping",
+          "fig-25-a-hatch-0-end-clipping",
+          "fig-25-a-hatch-1-endpoints",
+          "fig-25-a-hatch-1-direction",
+          "fig-25-a-hatch-1-start-clipping",
+          "fig-25-a-hatch-1-end-clipping",
+          "fig-25-a-hatch-2-endpoints",
+          "fig-25-a-hatch-2-direction",
+          "fig-25-a-hatch-2-start-clipping",
+          "fig-25-a-hatch-2-end-clipping",
+          "fig-25-a-hatch-3-endpoints",
+          "fig-25-a-hatch-3-direction",
+          "fig-25-a-hatch-3-start-clipping",
+          "fig-25-a-hatch-3-end-clipping",
+          "fig-25-a-hatch-4-endpoints",
+          "fig-25-a-hatch-4-direction",
+          "fig-25-a-hatch-4-start-clipping",
+          "fig-25-a-hatch-4-end-clipping",
+          "fig-25-a-hatch-5-endpoints",
+          "fig-25-a-hatch-5-direction",
+          "fig-25-a-hatch-5-start-clipping",
+          "fig-25-a-hatch-5-end-clipping",
+          "fig-25-a-hatch-6-endpoints",
+          "fig-25-a-hatch-6-direction",
+          "fig-25-a-hatch-6-start-clipping",
+          "fig-25-a-hatch-6-end-clipping",
+          "fig-25-a-hatch-7-endpoints",
+          "fig-25-a-hatch-7-direction",
+          "fig-25-a-hatch-7-start-clipping",
+          "fig-25-a-hatch-7-end-clipping",
+          "fig-25-a-hatch-8-endpoints",
+          "fig-25-a-hatch-8-direction",
+          "fig-25-a-hatch-8-start-clipping",
+          "fig-25-a-hatch-8-end-clipping",
+          "fig-25-a-hatch-9-endpoints",
+          "fig-25-a-hatch-9-direction",
+          "fig-25-a-hatch-9-start-clipping",
+          "fig-25-a-hatch-9-end-clipping",
+          "fig-25-a-hatch-10-endpoints",
+          "fig-25-a-hatch-10-direction",
+          "fig-25-a-hatch-10-start-clipping",
+          "fig-25-a-hatch-10-end-clipping",
+          "fig-25-a-hatch-11-endpoints",
+          "fig-25-a-hatch-11-direction",
+          "fig-25-a-hatch-11-start-clipping",
+          "fig-25-a-hatch-11-end-clipping",
+          "fig-25-a-hatch-12-endpoints",
+          "fig-25-a-hatch-12-direction",
+          "fig-25-a-hatch-12-start-clipping",
+          "fig-25-a-hatch-12-end-clipping",
+          "fig-25-a-hatch-13-endpoints",
+          "fig-25-a-hatch-13-direction",
+          "fig-25-a-hatch-13-start-clipping",
+          "fig-25-a-hatch-13-end-clipping",
+          "fig-25-a-hatch-14-endpoints",
+          "fig-25-a-hatch-14-direction",
+          "fig-25-a-hatch-14-start-clipping",
+          "fig-25-a-hatch-14-end-clipping",
+          "fig-25-a-hatch-15-endpoints",
+          "fig-25-a-hatch-15-direction",
+          "fig-25-a-hatch-15-start-clipping",
+          "fig-25-a-hatch-15-end-clipping",
+          "fig-25-a-hatch-16-endpoints",
+          "fig-25-a-hatch-16-direction",
+          "fig-25-a-hatch-16-start-clipping",
+          "fig-25-a-hatch-16-end-clipping",
+          "fig-25-a-hatch-17-endpoints",
+          "fig-25-a-hatch-17-direction",
+          "fig-25-a-hatch-17-start-clipping",
+          "fig-25-a-hatch-17-end-clipping",
+          "fig-25-a-hatch-18-endpoints",
+          "fig-25-a-hatch-18-direction",
+          "fig-25-a-hatch-18-start-clipping",
+          "fig-25-a-hatch-18-end-clipping",
+          "fig-25-a-hatch-19-endpoints",
+          "fig-25-a-hatch-19-direction",
+          "fig-25-a-hatch-19-start-clipping",
+          "fig-25-a-hatch-19-end-clipping",
+          "fig-25-a-hatch-20-endpoints",
+          "fig-25-a-hatch-20-direction",
+          "fig-25-a-hatch-20-start-clipping",
+          "fig-25-a-hatch-21-endpoints",
+          "fig-25-a-hatch-21-direction",
+          "fig-25-a-hatch-21-end-clipping",
+          "fig-25-a-hatch-22-endpoints",
+          "fig-25-a-hatch-22-direction",
+          "fig-25-a-hatch-22-start-clipping",
+          "fig-25-a-hatch-23-endpoints",
+          "fig-25-a-hatch-23-direction",
+          "fig-25-a-hatch-23-end-clipping",
+          "fig-25-a-hatch-24-endpoints",
+          "fig-25-a-hatch-24-direction",
+          "fig-25-a-hatch-24-start-clipping",
+          "fig-25-a-hatch-25-endpoints",
+          "fig-25-a-hatch-25-direction",
+          "fig-25-a-hatch-25-end-clipping",
+          "fig-25-a-hatch-26-endpoints",
+          "fig-25-a-hatch-26-direction",
+          "fig-25-a-hatch-26-start-clipping",
+          "fig-25-a-hatch-27-endpoints",
+          "fig-25-a-hatch-27-direction",
+          "fig-25-a-hatch-27-end-clipping",
+          "fig-25-a-hatch-28-endpoints",
+          "fig-25-a-hatch-28-direction",
+          "fig-25-a-hatch-28-start-clipping",
+          "fig-25-a-hatch-28-end-clipping",
+          "fig-25-a-axis-frame",
+          "fig-25-a-x-axis-endpoints",
+          "fig-25-a-y-axis-endpoints",
+          "fig-25-a-origin-on-x-axis",
+          "fig-25-a-origin-on-y-axis",
+          "fig-25-a-x-unit-label-source-coordinate",
+          "fig-25-a-y-unit-label-source-coordinate"
+        ],
+        "requires": [
+          "gridDimensions"
+        ]
+      },
+      {
+        "id": "fig-25-b",
+        "description": "upper right: source label б); 18 columns, 9 rows, unit grid phase through O; A bounded rectangle two grid columns wide and three grid rows high, wholly to the right of the y axis and above the x axis. Its bottom is one unit above O. Hatching does not extend to either coordinate axis or to the frame. All defining boundaries are solid. Original axis/tick labels are retained. No source point dots are present. Modern English label b) and regularized placement are additions, not source labels.",
+        "objects": [
+
+CAPTURE AND HOLD
+{
+  "schema": "resume182-6/author-svg-rasterization@1",
+  "status": "CAPTURE_COMPLETE_NOT_VISUAL_APPROVAL",
+  "role": "AUTHOR_NOT_REVIEWER",
+  "book": "8a",
+  "lesson": "alg8-c2-s2-n10",
+  "edition": "modern-us-neutral",
+  "figure": "fig-25",
+  "sourceSvg": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/render-FIRST/fig-25.svg",
+    "sha256": "c250a438ccae4e1aec77a2f44cdfebd09a4516bbceb2f802238a1566cb6bd1be"
+  },
+  "spec": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/draft-FIRST/fig-25.spec.json",
+    "sha256": "ec93308fdd5c0f348a7be40adc34b08c670a3cf0a5a51ea93075d4b1ba15d6ee"
+  },
+  "render": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/render-FIRST/fig-25.render.json",
+    "sha256": "e5793120e996c62c64e5d69a5111c624a874aaed2514a1f9cc0c6d4b0be68aa4"
+  },
+  "captureScript": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/capture-first.mjs",
+    "sha256": "26ba0340986bfd0f8eaf2fd0e9a010547955f37da5ba97d7fe558c320f08aed4"
+  },
+  "runtime": {
+    "package": "/Users/yong/work/lemmadeck-ws/lemmadeck/app/node_modules/@playwright/test/index.js",
+    "version": "1.61.1",
+    "executablePath": "/Users/yong/Library/Caches/ms-playwright/chromium-1228/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
+    "node": "v24.16.0"
+  },
+  "deviceScaleFactor": 1,
+  "networkPolicy": "abort every routed request",
+  "browserLaunches": 1,
+  "contexts": 1,
+  "pages": 1,
+  "contentLoads": 2,
+  "screenshotCalls": 2,
+  "abortedRequests": 0,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "candidateRasterViews": 0,
+  "sourceRasterReads": 0,
+  "rasterResizes": 0,
+  "rasterCrops": 0,
+  "captures": [
+    {
+      "name": "native",
+      "png": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/raster-FIRST/fig-25.native.png",
+        "sha256": "6fed9aade56c285ed41a9ac58e241b80025bdc7398adec2b61d0d83294ae03df",
+        "width": 1320,
+        "height": 1080
+      },
+      "cssSize": {
+        "width": 1320,
+        "height": 1080
+      },
+      "viewport": {
+        "width": 1320,
+        "height": 1080
+      },
+      "rasterization": "Original generated SVG loaded directly at this CSS width with DPR1; no existing PNG resize or crop.",
+      "minMeasuredTextPx": 36,
+      "observation": {
+        "svgWidth": 1320,
+        "svgHeight": 1080,
+        "devicePixelRatio": 1,
+        "labels": [
+          {
+            "id": "fig-25-a-subfigure-label-label",
+            "text": "a)",
+            "x": 61.9921875,
+            "y": 336.328125,
+            "width": 32.015625,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-a-origin-label-label",
+            "text": "O",
+            "x": 255.9921875,
+            "y": 216.328125,
+            "width": 28.015625,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-a-x-label-label",
+            "text": "x",
+            "x": 620,
+            "y": 186.328125,
+            "width": 18,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-a-y-label-label",
+            "text": "y",
+            "x": 291,
+            "y": 7.328125,
+            "width": 18,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-a-x-unit-label-label",
+            "text": "1",
+            "x": 319.984375,
+            "y": 216.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-a-y-unit-label-label",
+            "text": "1",
+            "x": 259.984375,
+            "y": 156.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-subfigure-label-label",
+            "text": "b)",
+            "x": 721.9921875,
+            "y": 336.328125,
+            "width": 32.015625,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-origin-label-label",
+            "text": "O",
+            "x": 915.9921875,
+            "y": 276.328125,
+            "width": 28.015625,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-x-label-label",
+            "text": "x",
+            "x": 1280,
+            "y": 246.328125,
+            "width": 18,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-y-label-label",
+            "text": "y",
+            "x": 951,
+            "y": 7.328125,
+            "width": 18,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-x-unit-label-label",
+            "text": "1",
+            "x": 979.984375,
+            "y": 276.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-x-three-label-label",
+            "text": "3",
+            "x": 1039.984375,
+            "y": 276.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-x-five-label-label",
+            "text": "5",
+            "x": 1099.984375,
+            "y": 276.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-y-unit-label-label",
+            "text": "1",
+            "x": 919.984375,
+            "y": 216.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-b-y-four-label-label",
+            "text": "4",
+            "x": 919.984375,
+            "y": 126.328125,
+            "width": 20.03125,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-v-subfigure-label-label",
+            "text": "c)",
+            "x": 63,
+            "y": 876.328125,
+            "width": 30,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-v-origin-label-label",
+            "text": "O",
+            "x": 255.9921875,
+            "y": 666.328125,
+            "width": 28.015625,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-v-x-label-label",
+            "text": "x",
+            "x": 620,
+            "y": 636.328125,
+            "width": 18,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+            "id": "fig-25-v-y-label-label",
+            "text": "y",
+            "x": 291,
+            "y": 367.328125,
+            "width": 18,
+            "height": 41,
+            "finalFontPx": 36
+          },
+          {
+{
+  "schema": "independent-figure-visual-hold@1",
+  "status": "HOLD",
+  "book": "8a",
+  "lesson": "alg8-c2-s2-n10",
+  "edition": "modern-us-neutral",
+  "figure": "fig-25",
+  "reviewerRole": "FIRST_INDEPENDENT_REVIEWER_NOT_AUTHOR",
+  "finding": {
+    "severity": "instructional-content",
+    "title": "Given axis values are printed one full grid cell away from their corresponding circle intersections.",
+    "observedAtViewCall": 2,
+    "objects": [
+      {
+        "id": "fig-25-v-x-four-label",
+        "panel": "c)",
+        "visibleText": "4",
+        "specAnchor": [14, 14],
+        "labelPlacementOffsetPx": [30, 30],
+        "circleCenterUser": [10, 14],
+        "circleRightIntersectionUser": [14, 14],
+        "nativeCircleRightIntersectionPx": [420, 660],
+        "nativeTextCenterPx": [450, 686.828125],
+        "actualDisplayedGridAbscissa": 5,
+        "givenAbscissa": 4
+      },
+      {
+        "id": "fig-25-g-x-four-label",
+        "panel": "d)",
+        "visibleText": "4",
+        "specAnchor": [36, 14],
+        "labelPlacementOffsetPx": [-30, 30],
+        "circleCenterUser": [32, 14],
+        "circleRightIntersectionUser": [36, 14],
+        "nativeCircleRightIntersectionPx": [1080, 660],
+        "nativeTextCenterPx": [1050, 686.828125],
+        "actualDisplayedGridAbscissa": 3,
+        "givenAbscissa": 4
+      },
+      {
+        "id": "fig-25-g-x-six-label",
+        "panel": "d)",
+        "visibleText": "6",
+        "specAnchor": [38, 14],
+        "labelPlacementOffsetPx": [30, 30],
+        "circleCenterUser": [32, 14],
+        "circleRightIntersectionUser": [38, 14],
+        "nativeCircleRightIntersectionPx": [1140, 660],
+        "nativeTextCenterPx": [1170, 686.828125],
+        "actualDisplayedGridAbscissa": 7,
+        "givenAbscissa": 6
+      }
+    ],
+    "sourceComparison": "Independent source inventory established the lower-left circle's right intersection four cells from O and the annulus intersections four and six cells from O. These given numerals identify those intersections. The current native preview prints the values below adjacent integer grid lines with no tick or leader tying them back to the circle intersection.",
+    "whyBlocked": "Exercise 136 requires reading the regions from the figure. Hidden correct spec anchors and passing displacement assertions do not correct visible numbers centered under different grid lines. The annulus panel also explicitly marks one unit per cell, so its visible 4 at three cells and 6 at seven cells contradict that readable scale.",
+    "affectedSurface": "Current generated SVG and both hash-bound raster captures use these label offsets. The 640px image was not visually opened after the defect was found.",
+    "repairRequirement": "The author must align the given numeric labels with the actual circle-axis intersections, or use unambiguous ticks or leaders without adding answer-bearing annotations. This reviewer made no author changes and did not request or perform a repair."
+  },
+  "otherObservedFacts": {
+    "grids": ["a: 18 by 9", "b: 18 by 9", "c: 18 by 15", "d: 18 by 15"],
+    "phase": "Source and spec agree: origins eight cells from the left; five, seven, eight and eight rows from the top.",
+    "regions": "Native preview preserves lower-right hatching, two-by-three-cell rectangle, right half-circle and annulus.",
+    "boundaries": "Axes, rectangle and circle geometries are present, solid and within their respective frames.",
+    "labels": "Only Latin subpart labels, x, y, O and given numbers are visible. No inequality answer, Cyrillic cultural residue or decorative source markings are present.",
+    "rasterState": "Native PNG is nonblank on white paper with visible geometry and labels; not black or broken.",
+    "existing640TextMeasurementPx": 17.454166666666666,
+    "existing640MeasurementNotVisualApproval": true
+  },
+  "views": [
+    {
+      "ordinal": 1,
+      "tool": "functions.view_image",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-25.png",
+      "sha256": "c6982988a8fa79b1d62fec64a7027bf125c8535cd6ee0daa6cc86ad074b62e33",
+      "dimensions": [1759, 1208],
+      "result": "viewed once"
+    },
+    {
+      "ordinal": 2,
+      "tool": "functions.view_image",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/raster-FIRST/fig-25.native.png",
+      "sha256": "6fed9aade56c285ed41a9ac58e241b80025bdc7398adec2b61d0d83294ae03df",
+      "dimensions": [1320, 1080],
+      "result": "viewed once; content defect found"
+    }
+  ],
+  "thirdPlannedView": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/raster-FIRST/fig-25.width640.png",
+    "sha256": "d9ba34e1929b7942d21ead54a8b8922965889bf2bd4d18c999067aa1d1e2208a",
+    "dimensions": [640, 524],
+    "executed": false,
+    "reason": "Stopped additional image loading at the first content defect, as directly instructed."
+  },
+  "actualViewCalls": 2,
+  "reopens": 0,
+  "crops": 0,
+  "zooms": 0,
+  "rerenders": 0,
+  "officialReviewProduced": false,
+  "officialReviewReason": "No defect-free visual result; the authorized --status pass command was not run."
+}

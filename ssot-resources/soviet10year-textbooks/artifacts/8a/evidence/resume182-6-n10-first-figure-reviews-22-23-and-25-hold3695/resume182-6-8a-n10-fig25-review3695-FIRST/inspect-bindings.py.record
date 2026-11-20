@@ -1,0 +1,112 @@
+"""Read existing evidence and SVG XML without rendering, validating or loading images."""
+
+import hashlib
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+ROOT = R / ".tmp/resume182-6-8a-n10-fig25-review3695-FIRST"
+AUTHOR = R / ".tmp/resume182-6-8a-n10-fig25-author3695-FIRST"
+assert Path.cwd() == R
+
+
+def load(path):
+    return json.loads(Path(path).read_text())
+
+
+def bound(record):
+    path = Path(record["path"])
+    if not path.is_absolute():
+        path = R / path
+    assert path.is_relative_to(R), path
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert digest == record["sha256"], path
+    return {"path": str(path), "sha256": digest}
+
+
+ready = load(AUTHOR / "render-ready.record")
+bindings = {
+    key: bound(ready[key])
+    for key in (
+        "sourceImage", "spec", "svg", "render",
+        "nativePng", "width640Preview", "capture",
+        "captureScript", "independentSourceInventory",
+    )
+}
+spec = load(bindings["spec"]["path"])
+render = load(bindings["render"]["path"])
+capture = load(bindings["capture"]["path"])
+for key in ("spec", "render", "captureScript"):
+    assert bound(capture[key]) == bindings[key]
+assert bound(capture["sourceSvg"]) == bindings["svg"]
+assert bound(spec["source"]["image"]) == bindings["sourceImage"]
+assert bound(render["spec"]) == bindings["spec"]
+assert bound(render["output"]["svg"]) == bindings["svg"]
+assert render["status"] == "pass"
+
+svg = ET.parse(bindings["svg"]["path"]).getroot()
+texts = [n for n in svg.iter() if n.tag.split("}")[-1] == "text"]
+assert len(texts) == 28
+objects = {o["id"]: o for o in spec["objects"]}
+label_findings = []
+expected = {
+    "fig-25-v-x-four-label": {"pixelX": 420, "coordinate": 4},
+    "fig-25-g-x-four-label": {"pixelX": 1080, "coordinate": 4},
+    "fig-25-g-x-six-label": {"pixelX": 1140, "coordinate": 6},
+}
+for object_id, target in expected.items():
+    label_id = object_id + "-label"
+    node = next(n for n in texts if n.get("data-label-id") == label_id)
+    observations = []
+    for item in capture["captures"]:
+        label = next(
+            v for v in item["observation"]["labels"] if v["id"] == label_id
+        )
+        expected_x = target["pixelX"] * item["cssSize"]["width"] / 1320
+        observations.append({
+            "capture": item["name"],
+            "measuredTextCenterX": label["x"] + label["width"] / 2,
+            "correspondingCircleAxisIntersectionX": expected_x,
+            "finalFontPx": label["finalFontPx"],
+        })
+    label_findings.append({
+        "object": objects[object_id],
+        "svgAttributes": dict(node.attrib),
+        "svgText": "".join(node.itertext()),
+        "givenCoordinate": target["coordinate"],
+        "observations": observations,
+    })
+
+for item, key in zip(capture["captures"], ("nativePng", "width640Preview")):
+    assert bound(item["png"]) == bindings[key]
+    header = Path(bindings[key]["path"]).read_bytes()[:24]
+    assert header[:8] == bytes.fromhex("89504e470d0a1a0a")
+    width, height = int.from_bytes(header[16:20], "big"), int.from_bytes(header[20:24], "big")
+    assert (width, height) == (item["png"]["width"], item["png"]["height"])
+    assert len(item["observation"]["labels"]) == 28
+    assert min(v["finalFontPx"] for v in item["observation"]["labels"]) >= 16
+
+inventory = load(bindings["independentSourceInventory"]["path"])
+result = {
+    "schema": "independent-existing-evidence-inspection@1",
+    "bindings": bindings,
+    "captureBindingClosed": True,
+    "existingRenderStatus": render["status"],
+    "existingDisplayChecks": render["displayChecks"],
+    "svgTextCount": len(texts),
+    "svgTextValues": ["".join(n.itertext()) for n in texts],
+    "labelFindings": label_findings,
+    "authorSourceSubfigures": inventory["subfigures"],
+    "authorModernAdditions": inventory["modern_additions_separate_from_source"],
+    "imageLoadsByThisScript": 0,
+    "rendererInvocations": 0,
+    "validateSpecInvocations": 0,
+    "officialReviewInvocations": 0,
+    "note": "PNG bytes were hashed and headers read only; no pixels decoded or viewed. Existing capture measurements do not approve an unviewed preview.",
+}
+output = ROOT / "existing-evidence-inspection.json"
+with output.open("x") as stream:
+    json.dump(result, stream, indent=2)
+    stream.write("\n")
+print(json.dumps(result, indent=2))

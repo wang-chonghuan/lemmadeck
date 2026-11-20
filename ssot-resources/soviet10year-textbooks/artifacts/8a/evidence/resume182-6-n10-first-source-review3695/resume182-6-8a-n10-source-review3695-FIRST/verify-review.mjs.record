@@ -1,0 +1,133 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const reviewRoot = path.join(root, '.tmp/resume182-6-8a-n10-source-review3695-FIRST');
+assert.equal(process.cwd(), root);
+const readyPath = path.join(reviewRoot, 'ready.record');
+const readyBytes = fs.readFileSync(readyPath);
+const review = JSON.parse(readyBytes.toString('utf8'));
+const sha256 = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+assert.equal(review.status, 'HOLD');
+assert.equal(review.finish, 'review');
+assert.equal(review.image_usage.actual_view_image_calls, 4);
+assert.equal(review.image_usage.reopens, 0);
+assert.equal(review.image_usage.crops, 0);
+assert.deepEqual(review.pages.map((page) => page.page), [60, 61, 62, 63]);
+
+const currentInputs = review.input_hashes.files.map((input) => {
+  const absolute = path.join(root, input.path);
+  const bytes = fs.readFileSync(absolute);
+  const current = sha256(bytes);
+  assert.equal(current, input.sha256, `Changed input: ${input.path}`);
+  return { path: absolute, bytes: bytes.length, sha256: current };
+});
+
+const pageDocs = new Map();
+const expectedCounts = [25, 18, 25, 14];
+for (const [index, pageReview] of review.pages.entries()) {
+  const number = String(pageReview.page).padStart(4, '0');
+  const directory = path.join(review.scope.actual_draft_root, '8a/pages', number);
+  const document = JSON.parse(fs.readFileSync(path.join(directory, 'page.json'), 'utf8'));
+  const markdown = fs.readFileSync(path.join(directory, 'page.md'), 'utf8');
+  const audit = JSON.parse(fs.readFileSync(path.join(directory, 'audit.json'), 'utf8'));
+  const frontmatter = markdown.split(/^---\s*$/m);
+  assert.ok(frontmatter.length >= 3);
+  assert.deepEqual(JSON.parse(frontmatter[1]), document.meta);
+  const image = fs.readFileSync(path.join(review.scope.source_root, '8a/pages', number, 'page.png'));
+  assert.equal(sha256(image), document.meta.render.sha256);
+  assert.equal(audit.lines_printed, expectedCounts[index]);
+  assert.equal(audit.lines_md, expectedCounts[index]);
+  assert.deepEqual(audit.errors, []);
+  assert.equal(pageReview.printed_lines.inventory.length, document.blocks.length);
+  assert.equal(
+    pageReview.printed_lines.inventory.reduce((sum, block) => sum + block.rows, 0),
+    expectedCounts[index],
+  );
+  for (const [blockIndex, block] of pageReview.printed_lines.inventory.entries()) {
+    assert.equal(block.ref, `p${number}#${blockIndex + 1}`);
+  }
+  pageDocs.set(pageReview.page, document);
+}
+
+function referencedText(ref) {
+  const match = /^p(\d{4})#(\d+)$/.exec(ref);
+  assert.ok(match, `Invalid reference: ${ref}`);
+  const block = pageDocs.get(Number(match[1]))?.blocks[Number(match[2]) - 1];
+  assert.ok(block, `Missing block: ${ref}`);
+  return block.lines.join('\n');
+}
+
+for (const page of review.pages) {
+  for (const checked of page.mathematics.checked_originals) {
+    assert.ok(referencedText(checked.ref).includes(checked.original), `Original not bound: ${checked.ref}`);
+  }
+}
+const labelIssue = review.issues.find((issue) => issue.id === 'p0062-ex134-third-label');
+assert.ok(referencedText(labelIssue.block).includes(labelIssue.original));
+assert.equal(
+  referencedText(labelIssue.block).split(labelIssue.original).length - 1,
+  1,
+  'Label-only erratum must bind a unique occurrence',
+);
+assert.equal(labelIssue.proposed_bound_erratum.original, labelIssue.original);
+assert.equal(
+  labelIssue.proposed_bound_erratum.corrected.slice(2),
+  labelIssue.proposed_bound_erratum.original.slice(2),
+  'The proposal must change only the label',
+);
+assert.equal(labelIssue.proposal_applied, false);
+const ownershipIssue = review.issues.find((issue) => issue.id === 'p0063-ex137-ownership-note');
+assert.equal(pageDocs.get(63).meta.notes[3], ownershipIssue.original);
+assert.equal(pageDocs.get(63).blocks[2].kind, 'exhead');
+assert.equal(pageDocs.get(63).blocks[3].label, '137');
+assert.equal(pageDocs.get(63).blocks[4].kind, 'h2');
+assert.equal(pageDocs.get(63).blocks[0].owner_exercise, '136');
+assert.equal(pageDocs.get(63).blocks[6].open, true);
+
+const executionReceipts = [
+  ...review.execution_evidence.successful_read_receipts,
+  ...review.execution_evidence.failures.map((failure) => failure.receipt),
+].map((relative) => {
+  const absolute = path.join(reviewRoot, relative);
+  const bytes = fs.readFileSync(absolute);
+  const receipt = JSON.parse(bytes.toString('utf8'));
+  assert.equal(receipt.cwd, root);
+  const failure = review.execution_evidence.failures.find((item) => item.receipt === relative);
+  assert.equal(receipt.returncode, failure ? failure.returncode : 0);
+  return { path: absolute, sha256: sha256(bytes), returncode: receipt.returncode };
+});
+const deviationReceiptPath = path.join(review.execution_evidence.receipt_root_deviation.directory, 'receipt.record');
+const deviationReceiptBytes = fs.readFileSync(deviationReceiptPath);
+assert.equal(JSON.parse(deviationReceiptBytes.toString('utf8')).returncode, 0);
+const contractPath = path.join(root, review.input_hashes.additional_read_contract_hash.path);
+
+console.log(JSON.stringify({
+  schema: 'resume182-6/read-only-review-record-verification@1',
+  verification_status: 'PASS',
+  review_status_unchanged: review.status,
+  verified_at: new Date().toISOString(),
+  ready: { path: readyPath, sha256: sha256(readyBytes), bytes: readyBytes.length },
+  primary_and_guidance_input_hashes: currentInputs,
+  additional_read_contract: { path: contractPath, sha256: sha256(fs.readFileSync(contractPath)) },
+  verifier: { path: import.meta.filename, sha256: sha256(fs.readFileSync(import.meta.filename)) },
+  verified_receipts: executionReceipts,
+  deviation_receipt: { path: deviationReceiptPath, sha256: sha256(deviationReceiptBytes) },
+  checks: [
+    'JSON parse and exact current input hash binding',
+    'page.md JSON frontmatter equals current page.json metadata',
+    'native PNG hash equals current render metadata',
+    'stored audits read, not recomputed or finalized',
+    'manual visual row inventory sums and block indices',
+    'reviewed original strings bound to exact source blocks',
+    'third-label proposal unique and label-only',
+    '137 precedes h2; fig25 owner136; 138 remains open',
+    'actual failed receipts remain present with returncode 1',
+  ],
+  new_image_calls: 0,
+  source_writes: 0,
+  official_finalize_calls: 0,
+  cost: 'unknown',
+}, null, 2));

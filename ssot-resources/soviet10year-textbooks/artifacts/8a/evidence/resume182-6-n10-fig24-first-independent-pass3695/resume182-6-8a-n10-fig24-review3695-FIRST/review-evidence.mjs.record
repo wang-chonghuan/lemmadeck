@@ -1,0 +1,179 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const root = path.join(R, '.tmp/resume182-6-8a-n10-fig24-review3695-FIRST');
+const authorRoot = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/fig-24-AFFECTED-label1-FIRST');
+const contextRoot = path.join(R, '.tmp/resume182-6-8a-n10-figure-context3695-FIRST');
+assert.equal(process.cwd(), R);
+
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const write = (file, value) => {
+  assert.equal(path.dirname(file), root);
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return binding(file);
+};
+const check = (record) => {
+  assert.equal(binding(record.path).sha256, record.sha256);
+  return binding(record.path);
+};
+
+const authorReady = binding(path.join(authorRoot, 'render-ready.record'));
+assert.equal(authorReady.sha256, '5cce7a33be5f62f3ec196c7ea65a1440937a66c8ab814e2bafd9619a7bc6e93e');
+const author = read(authorReady.path);
+const figure = author.figures[0];
+assert.equal(figure.id, 'fig-24');
+const artifacts = Object.fromEntries(['sourceImage', 'spec', 'svg', 'render', 'nativePng', 'width640Preview'].map((key) => [key, check(figure[key])]));
+assert.equal(artifacts.nativePng.path, artifacts.width640Preview.path);
+const textPass = binding(path.join(R, '.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record'));
+assert.equal(textPass.sha256, '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7');
+const context = binding(path.join(contextRoot, 'fig-24.context.json'));
+const lessonRoot = path.join(contextRoot, 'artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10');
+const textHashes = {
+  'lesson.json': 'd13354560d681bb189cd3ed1310e1abebdde6bf5b517bf0cf981405090a8d676',
+  'exercises.json': '54e9be6f97a199515ca25e0b1c33ea4235558c660e184cad45bab8da4a8f4ef2',
+  'figures.json': 'a355a02d9450426f4097999d02db4de8140d8b3a1e29d310f8ebba16eab8274f'
+};
+const modernTexts = Object.entries(textHashes).map(([name, expected]) => {
+  const item = binding(path.join(lessonRoot, name));
+  assert.equal(item.sha256, expected);
+  return item;
+});
+const sourceObservation = binding(path.join(root, 'source-observation.json'));
+const currentObservation = binding(path.join(root, 'current-observation.json'));
+const observed = read(currentObservation.path);
+assert.equal(observed.visualStatus, 'PASS');
+assert.equal(observed.imageUsage.totalViews, 2);
+const captureRoot = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/shell/resume182-6-fig24-label1-raster-ready-AFFECTED3695-24');
+const captureCall = Object.fromEntries(['start.record', 'stdout.txt', 'stderr.txt', 'receipt.record'].map((name) => [name, binding(path.join(captureRoot, name))]));
+const captureReceipt = read(captureCall['receipt.record'].path);
+assert.equal(captureReceipt.returncode, 0);
+assert.equal(captureReceipt.signal, null);
+assert.equal(captureReceipt.error, null);
+assert.equal(fs.readFileSync(captureCall['stderr.txt'].path, 'utf8'), '');
+const capture = {
+  record: check(author.raster),
+  script: binding(path.join(authorRoot, 'capture-and-record.mjs')),
+  call: captureCall,
+  closure: observed.captureClosure
+};
+const contracts = [
+  '.agents/skills/ld-s10y-image/SKILL.md',
+  '.agents/skills/ld-s10y-image/references/figure-spec.md',
+  '.agents/skills/ld-s10y-image/references/quality-gate.md',
+  '.claude/skills/ld-s10y-lesson/references/production-resume.md',
+  '.agents/skills/ld-s10y-image/scripts/record_review.py',
+  '.agents/skills/ld-s10y-image/scripts/validate_spec.py',
+  '.agents/skills/ld-s10y-image/assets/figure-spec.schema.json'
+].map((file) => binding(path.join(R, file)));
+
+if (process.argv[2] === 'prepare') {
+  const snapshot = write(path.join(root, 'review-bindings.record'), {
+    status: 'VISUAL_PASS_AWAITING_OFFICIAL_RECORD',
+    book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+    authorReady, textPass, context, modernTexts, artifacts,
+    sourceObservation, currentObservation, capture, contracts,
+    imageUsage: observed.imageUsage,
+    inheritedProceduralHold: author.proceduralHold,
+    crossWorkerTotalFailures: 'unknown',
+    crossWorkerTotalCounts: 'unknown',
+    cost: 'unknown'
+  });
+  const notes = [
+    'Independent FIRST visual review by a non-author, only fig-24.',
+    `Source first observed once: ${artifacts.sourceImage.path} SHA256 ${artifacts.sourceImage.sha256}.`,
+    'Modern example: y >= 2x - 3, y <= 2x + 2; a closed strip including both solid boundaries.',
+    `Current context: ${context.path} SHA256 ${context.sha256}.`,
+    ...modernTexts.map((item) => `Current modern text: ${item.path} SHA256 ${item.sha256}.`),
+    `Inherited TEXT_PASS: ${textPass.path} SHA256 ${textPass.sha256}; not re-reviewed.`,
+    `Observation1, recorded before author inventory: ${sourceObservation.path} SHA256 ${sourceObservation.sha256}.`,
+    'Independent source grid: 12 columns x 18 rows, integer phase, bounds[-5,11,7,-7], origin offsets[5,7,11,7]; source axes, two unit labels, two slope2 solid parallels, half-cell lower x-intercept and strip hatching preserved.',
+    'Inventory and mapped gridDimensions/displacement/equalDistance/parallel/connects/pointOnLine/inside assertions cover these requirements. Closed-boundary assertions retain, not move, geometry.',
+    `Observation2, current PNG opened once at native640x960 and actual width640: ${artifacts.nativePng.path} SHA256 ${artifacts.nativePng.sha256}.`,
+    `Detailed current observation: ${currentObservation.path} SHA256 ${currentObservation.sha256}.`,
+    'Labels, signs, units, grid phase/equal spacing, region and included boundaries agree with source and modern example. The x-unit1 glyph offset[-8,0] preserves its anchor[1,0] and remains unambiguous. Clean complete raster; no clipping, broken content, answer or cultural leakage. Actual640 seven labels20px >=16.',
+    'Modern regularizations: clean equal square cells, light semantic grid/faint fill, horizontal equation labels, legible axis arrowheads and origin0. No new mathematical data.',
+    `Capture: ${capture.record.path} SHA256 ${capture.record.sha256}; capture script SHA256 ${capture.script.sha256}; success/closure receipt ${captureCall['receipt.record'].path} SHA256 ${captureCall['receipt.record'].sha256}.`,
+    'Closure inferred from awaited page/context/browser closes before output and successful existing receipt; no new capture or browser query.',
+    `Binding snapshot: ${snapshot.path} SHA256 ${snapshot.sha256}.`,
+    'Exactly2views = source1 + current1; 0reopens,0crops,0resizes,0rerenders,0old-failed-PNGviews,0fig22/23checks. No explicit validate or render replay; only required record_review internal validation.',
+    'Visual PASS is only this current fig24 review. Prior failures and unresolved procedural HOLD remain; no promotion, DB/Plane/git/worktree/merge/deploy or other-chat contact. Cross-worker total failures/counts/cost unknown.'
+  ].join(' ');
+  const notesPath = path.join(root, 'review-notes.txt');
+  fs.writeFileSync(notesPath, `${notes}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({snapshot, notes: binding(notesPath)}, null, 2));
+} else if (process.argv[2] === 'finalize') {
+  const snapshot = read(path.join(root, 'review-bindings.record'));
+  for (const item of [snapshot.authorReady, snapshot.textPass, snapshot.context, ...snapshot.modernTexts, ...Object.values(snapshot.artifacts), snapshot.sourceObservation, snapshot.currentObservation, snapshot.capture.record, snapshot.capture.script, ...Object.values(snapshot.capture.call), ...snapshot.contracts]) check(item);
+  const review = binding(path.join(root, 'fig-24.review.json'));
+  const official = read(review.path);
+  assert.equal(official.status, 'pass');
+  assert.equal(official.figure, 'fig-24');
+  assert.equal(official.source.sha256, artifacts.sourceImage.sha256);
+  assert.equal(official.spec.sha256, artifacts.spec.sha256);
+  assert.equal(official.render.sha256, artifacts.render.sha256);
+  assert.equal(official.outputs.svg.sha256, artifacts.svg.sha256);
+  const callRoot = path.join(root, '14-official-review');
+  const officialCall = Object.fromEntries(['start.record', 'stdout.txt', 'stderr.txt', 'receipt.record'].map((name) => [name, binding(path.join(callRoot, name))]));
+  assert.equal(read(officialCall['receipt.record'].path).returncode, 0);
+  const ready = write(path.join(root, 'ready.record'), {
+    status: 'PASS',
+    scope: 'Current fig24 first independent visual review only; not a publication or release approval.',
+    book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+    repo: R, writeRoot: root, reviewerIsAuthor: false,
+    figures: [{
+      id: 'fig-24', status: 'PASS',
+      source: artifacts.sourceImage,
+      spec: artifacts.spec, svg: artifacts.svg, render: artifacts.render,
+      nativePng: artifacts.nativePng,
+      width640Preview: artifacts.width640Preview,
+      nativeAndWidth640SameFile: true,
+      officialReview: review,
+      actual640: figure.actual640,
+      capture,
+      observations: [sourceObservation, currentObservation]
+    }],
+    authorReady, inheritedTextPass: { ...textPass, reReviewed: false },
+    context, modernTexts,
+    bindingSnapshot: binding(path.join(root, 'review-bindings.record')),
+    reviewNotes: binding(path.join(root, 'review-notes.txt')),
+    officialCall,
+    imageUsage: observed.imageUsage,
+    localCounts: {
+      sourceViews: 1, currentViews: 1, totalViews: 2,
+      reopens: 0, crops: 0, resizes: 0, rerenders: 0,
+      explicitValidationCalls: 0, officialRecordReviewCalls: 1,
+      necessaryRecordReviewInternalValidations: 1,
+      localTechnicalFailedCommands: 1, localContentFailures: 0,
+      fig22Fig23Checks: 0, sourceMathStageReplays: 0,
+      promotions: 0, paidCalls: 0
+    },
+    localTechnicalFailure: read(sourceObservation.path).technicalFailure,
+    inheritedFailureEvidence: {
+      provenance: 'References and reported counts inherited from the hash-bound current author ready. No historical failed PNG was opened; no historical content was re-reviewed.',
+      preservedFIRSTFailure: author.preservedFIRSTFailure,
+      reportedAuthorCumulativeCountsNotReset: author.cumulativeCountsNotReset
+    },
+    inheritedProceduralHold: { ...author.proceduralHold, releasedByThisReview: false },
+    crossWorkerTotalFailures: 'unknown',
+    crossWorkerTotalCounts: 'unknown',
+    cost: 'unknown',
+    preservation: {
+      sourceAndCurrentBindingsStillMatch: true,
+      previousFailuresReclassifiedAsPass: false,
+      deletedOrRewrittenExistingArtifacts: false,
+      oldFailedPNGOpened: false,
+      otherChatsContacted: false,
+      dbPlaneGitWorktreeMergeDeployOperations: 0
+    }
+  });
+  console.log(JSON.stringify({ready}, null, 2));
+} else {
+  throw new Error('Expected prepare or finalize');
+}

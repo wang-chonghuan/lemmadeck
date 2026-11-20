@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const input = '.tmp/resume182-6-8a-n8-answer-stage3695.mjs';
+const output = '.tmp/resume182-6-8a-n10-answer-stage3695.mjs';
+const own = '.tmp/resume182-6-8a-n10-answer-code3695-FIRST';
+assert.ok(!fs.existsSync(own) && !fs.existsSync(output));
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const bytes = fs.readFileSync(input);
+const text = bytes.toString('utf8')
+  .replaceAll('alg8-c2-s1-n8', 'alg8-c2-s2-n10')
+  .replaceAll('n8', 'n10');
+fs.mkdirSync(own);
+fs.writeFileSync(output, text, { flag: 'wx' });
+const command = [process.execPath, '--check', output];
+const result = spawnSync(command[0], command.slice(1), {
+  cwd: repo, encoding: 'utf8',
+});
+for (const stream of ['stdout', 'stderr']) fs.writeFileSync(
+  `${own}/${stream}.txt`, result[stream] ?? '', { flag: 'wx' });
+fs.writeFileSync(`${own}/syntax.record`, `${JSON.stringify({
+  command, cwd: repo, returncode: result.status,
+  signal: result.signal, error: result.error?.message ?? null,
+}, null, 2)}\n`, { flag: 'wx' });
+assert.equal(result.status, 0, result.stderr);
+assert.equal(sha(fs.readFileSync(input)), sha(bytes));
+const file = `${own}/ready.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'ANSWER_BINDING_CODE_PREPARED_NOT_EXECUTED',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+  input: { path: input, sha256: sha(bytes) },
+  output: { path: output, sha256: sha(fs.readFileSync(output)) },
+  changes: ['Lesson and scratch identity only'],
+  syntaxCalls: 1, answerReads: 0, authorOrReviewRuns: 0,
+  runtimeExecutions: 0, imageViews: 0, DBWrites: 0,
+  unknownHistoricalBytesRecovered: false, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)) }));

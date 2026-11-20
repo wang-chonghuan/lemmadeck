@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ld-s10y-image/figure-spec@2",
+  "title": "Soviet 10 Years modern-edition FigureSpec",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "mode",
+    "description",
+    "source",
+    "canvas",
+    "display",
+    "objects",
+    "assertions"
+  ],
+  "properties": {
+    "schema": {
+      "const": "ld-s10y-image/figure-spec@2"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^(fig|tbl)-[A-Za-z0-9-]+$"
+    },
+    "mode": {
+      "enum": ["deterministic", "hybrid", "generated"]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authoritativeText", "inventory"],
+      "oneOf": [
+        {"required": ["image"], "not": {"required": ["authoredBasis"]}},
+        {"required": ["authoredBasis"], "not": {"required": ["image"]}}
+      ],
+      "properties": {
+        "authoredBasis": {
+          "type": "string",
+          "minLength": 1,
+          "description": "New deterministic choice diagram derived from written mathematics, including deliberate alternatives; not a recovered original."
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "sha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "inventory": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "description", "objects", "assertions"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "description": {"type": "string", "minLength": 1},
+              "objects": {
+                "type": "array",
+                "items": {"type": "string", "minLength": 1}
+              },
+              "assertions": {
+                "type": "array",
+                "items": {"type": "string", "minLength": 1}
+              },
+              "requires": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "enum": ["gridDimensions", "pointRelationships"]
+                }
+              }
+            }
+          }
+        },
+        "authoritativeText": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["text"],
+            "properties": {
+              "lesson": {"type": "string"},
+              "exercise": {"type": "string"},
+              "text": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "boundingBox"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 320, "maximum": 4096},
+        "height": {"type": "integer", "minimum": 320, "maximum": 4096},
+        "boundingBox": {
+          "type": "array",
+          "prefixItems": [
+            {"type": "number"},
+            {"type": "number"},
+            {"type": "number"},
+            {"type": "number"}
+          ],
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "background": {
+          "enum": ["paper", "transparent"],
+          "default": "paper"
+        },
+        "keepAspectRatio": {"type": "boolean", "default": true}
+      }
+    },
+    "display": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout", "minTextPx", "widths"],
+      "properties": {
+        "layout": {"enum": ["inline", "scroll"]},
+        "purpose": {"enum": ["instructional", "decorative"]},
+        "maxWidthPx": {
+          "type": "integer",
+          "minimum": 128,
+          "maximum": 960
+        },
+        "minTextPx": {"type": "number", "minimum": 16},
+        "widths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "integer", "minimum": 128, "maximum": 1600}
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "purpose": {"const": "decorative"}
+            },
+            "required": ["purpose"]
+          },
+          "then": {
+            "required": ["maxWidthPx"],
+            "properties": {
+              "layout": {"const": "inline"},
+              "maxWidthPx": {"maximum": 240}
+            }
+          }
+        }
+      ]
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "role"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "metadata": {"type": "string"},
+          "role": {"const": "artwork"}
+        }
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "type": {
+            "enum": [
+              "point",
+              "segment",
+              "line",
+              "arrow",
+              "circle",
+              "polygon",
+              "arc",
+              "grid",
+              "axis",
+              "measure",
+              "text",
+              "image",
+              "svgPath"
+            ]
+          }
+        }
+      }
+    },
+    "assertions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "type": {
+            "enum": [
+              "distance",

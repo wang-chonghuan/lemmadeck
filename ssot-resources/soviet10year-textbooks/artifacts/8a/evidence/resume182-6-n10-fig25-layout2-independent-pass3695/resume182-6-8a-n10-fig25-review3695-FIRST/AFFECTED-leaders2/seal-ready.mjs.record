@@ -1,0 +1,306 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const firstRoot = `${R}/.tmp/resume182-6-8a-n10-fig25-review3695-FIRST`;
+const root = `${firstRoot}/AFFECTED-leaders2`;
+const authorRoot = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/AFFECTED-numeric-labels1/technical-layout2`;
+assert.equal(process.cwd(), R);
+const load = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
+const bind = (p) => {
+  const full = path.isAbsolute(p) ? p : path.join(R, p);
+  assert.ok(full.startsWith(`${R}/`));
+  return {
+    path: full,
+    sha256: crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex'),
+  };
+};
+const current = (record) => {
+  const actual = bind(record.path);
+  assert.equal(actual.sha256, record.sha256, record.path);
+  return actual;
+};
+
+const authorReady = bind(`${authorRoot}/render-ready.record`);
+assert.equal(authorReady.sha256, 'e568114ed1bfdda3a603e0093ccbb14ed9780ca86190d6115b060ea8e2f8ab8b');
+const author = load(authorReady.path);
+const inspection = load(`${root}/binding-delta-inspection.json`);
+const observations = load(`${root}/visual-observations.json`);
+const firstReady = current(inspection.firstReady);
+const first = load(firstReady.path);
+const firstHold = current(inspection.firstHold);
+const priorPreparationGate = current(inspection.priorPreparationGate);
+assert.equal(first.status, 'HOLD');
+assert.equal(first.actualViewCalls.length, 2);
+assert.equal(first.width640Preview.visuallyViewed, false);
+assert.equal(observations.status, 'PASS');
+assert.equal(observations.actualViewsThisContinuation.length, 2);
+assert.equal(observations.counts.cumulativeActualViews, 4);
+
+const inputs = {};
+for (const key of ['spec', 'svg', 'render', 'nativePng', 'width640Preview', 'capture', 'captureScript', 'sourceImage']) {
+  inputs[key] = current(author[key]);
+  assert.deepEqual(inputs[key], inspection.bindings[key]);
+}
+const review = load(`${root}/fig-25.review.json`);
+assert.equal(review.schema, 'ld-s10y-image/review@1');
+assert.equal(review.figure, 'fig-25');
+assert.equal(review.status, 'pass');
+assert.deepEqual(current(review.spec), inputs.spec);
+assert.deepEqual(current(review.render), inputs.render);
+assert.deepEqual(current(review.outputs.svg), inputs.svg);
+assert.deepEqual(current(review.source), inputs.sourceImage);
+const officialReview = bind(`${root}/fig-25.review.json`);
+const capture = load(inputs.capture.path);
+assert.equal(capture.captures[1].minMeasuredTextPx, 17.454166666666666);
+const acceptedTextReady = current(first.acceptedTextReady);
+assert.equal(acceptedTextReady.sha256, '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7');
+
+const receipts = [];
+for (const name of [
+  '01-bindings', '02-delta-and-capture', '03-capture-read-recovery',
+  '04-binding-delta-inspection', '05-official-record-review',
+]) {
+  const receipt = bind(`${root}/${name}/receipt.record`);
+  const record = load(receipt.path);
+  assert.equal(record.cwd, R);
+  assert.equal(record.returncode, name === '02-delta-and-capture' ? 1 : 0);
+  receipts.push({ ...receipt, returncode: record.returncode });
+}
+assert.equal(load(receipts.at(-1).path).returncode, 0);
+const currentFailure = receipts.find((receipt) => receipt.returncode === 1);
+const cumulativeViews = [
+  ...first.actualViewCalls.map((view) => ({ ...view, stage: 'FIRST', cumulativeOrdinal: view.ordinal })),
+  ...observations.actualViewsThisContinuation.map((view) => ({ ...view, stage: 'AFFECTED-leaders2' })),
+];
+assert.equal(cumulativeViews.length, 4);
+
+const payload = {
+  schema: 'resume182-6/affected-leaders-independent-review-ready@1',
+  status: 'PASS',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  figure: 'fig-25',
+  role: 'SAME_FIRST_INDEPENDENT_REVIEWER_NOT_AUTHOR',
+  scope: 'AFFECTED-leaders2: three numeric-label leaders only, with exact unchanged-content inheritance.',
+  createdAt: new Date().toISOString(),
+  cwd: R,
+  authorizedWriteRoot: root,
+  authorReady,
+  spec: inputs.spec,
+  svg: inputs.svg,
+  render: inputs.render,
+  nativePng: { ...inputs.nativePng, width: 1320, height: 1080, actuallyViewedOnce: true },
+  width640Preview: { ...inputs.width640Preview, width: 640, height: 524, actuallyViewedOnce: true },
+  source: inputs.sourceImage,
+  sourceImage: inputs.sourceImage,
+  capture: inputs.capture,
+  captureScript: inputs.captureScript,
+  officialReview,
+  officialReviewReceipt: receipts.at(-1),
+  visualObservations: bind(`${root}/visual-observations.json`),
+  exactBindingDeltaInspection: bind(`${root}/binding-delta-inspection.json`),
+  inspectionScript: bind(`${root}/inspect-current.py`),
+  sealScript: bind(`${root}/seal-ready.mjs`),
+  immutableFirst: {
+    ready: firstReady,
+    hold: firstHold,
+    independentSourceObservations: current(first.independentSourceObservations),
+    originalExistingEvidenceInspection: current(first.existingEvidenceInspection),
+    originalStatus: 'HOLD',
+    actualImageViews: 2,
+    original640ActuallyViewed: false,
+    officialReviewProducedInFirst: false,
+    priorPreparationGate,
+    priorPreparationGateRemains: 'WAITING_FOR_NEW_BINDINGS',
+    noFirstFilesOverwritten: true,
+    noHistoryRewritten: true,
+    priorScopeSupersededByLatestDirectHumanAuthorization: 'Retain FIRST readable offsets and add three short segment leaders, connects assertions and explicit modern-addition inventory; do not force the obsolete zero-offset-only gate.',
+  },
+  inheritance: {
+    acceptedTextReady,
+    acceptedModernContext: current(first.currentModernContext),
+    currentModernFiles: first.currentModernFiles.map(current),
+    sourceGridPhaseRegionsBoundariesConfirmedInFirst: true,
+    originalObjectsUnchanged: inspection.oldObjectsLabelsAssertionsAndSourceUnchanged,
+    originalLabelsAndPositionsUnchanged: true,
+    originalAssertionsUnchanged: true,
+    originalSourceInventoryUnchanged: true,
+    sourceMathTextPassReruns: 0,
+    sourcePagesOrOldPngsReopened: 0,
+    sourceFactsReReviewed: false,
+    meaning: 'Reuse only the unchanged confirmed FIRST facts. FIRST overall HOLD remains historical; this current candidate resolves its specific label-association defect.',
+  },
+  delta: inspection.delta,
+  captureBindingClosed: inspection.captureBindingClosed,
+  affectedVisualResult: {
+    associations: observations.associations,
+    nativeAnd640ActuallyViewed: true,
+    givenLabelsAssociatedWithTrueIntersections: ['c) 4', 'd) inner 4', 'd) outer 6'],
+    associationAmbiguous: false,
+    glyphLeaderCollision: false,
+    clipping: false,
+    minimumNativeTextPx: 36,
+    minimumActual640TextPx: 17.454166666666666,
+    minimumActual640TextAtLeast16: true,
+    minimumActual640LeaderGlyphGapPx: 3.584365858855108,
+    newCircles: 0,
+    newPointDots: 0,
+    newGivenValues: 0,
+    newAnswerAnnotations: 0,
+    newCulturalResidue: false,
+    rendererPassNotSubstitutedForVisualApproval: true,
+  },
+  actualViewsThisContinuation: observations.actualViewsThisContinuation,
+  actualViewCalls: cumulativeViews,
+  counts: {
+    actualImageViewsThisContinuation: 2,
+    cumulativeActualImageViews: 4,
+    originalSourceViews: 1,
+    originalNativeViews: 1,
+    original640Views: 0,
+    newNativeViews: 1,
+    new640Views: 1,
+    reopens: 0,
+    crops: 0,
+    zooms: 0,
+    rerenders: 0,
+    explicitValidateSpecCalls: 0,
+    rendererCalls: 0,
+    officialRecordReviewCalls: 1,
+    officialRecordReviewInternalValidationCalls: 1,
+    sourcePassReruns: 0,
+    mathPassReruns: 0,
+    textPassReruns: 0,
+    otherFigurePassReruns: 0,
+    inheritedReviewerToolExecutionFailures: 1,
+    newReviewerToolExecutionFailures: 1,
+    cumulativeReviewerToolExecutionFailures: 2,
+    preservedFirstContentHoldFindings: 1,
+    newAffectedContentHoldFindings: 0,
+    originalAffectedLabelObjects: 3,
+    addedLeaderObjects: 3,
+    addedConnectsAssertions: 3,
+    addedModernInventoryGroups: 1,
+    authorEditsByReviewer: 0,
+    inheritedFirstShellCalls: 13,
+    priorPreparationShellCalls: 1,
+    currentShellCallsIncludingSeal: 6,
+    cumulativeShellCallsIssued: 20,
+    currentReceiptCallsCompletedBeforeSeal: 5,
+    currentReceiptCallsSucceededBeforeSeal: 4,
+    currentSealingCall: 1,
+    currentPythonCommands: 2,
+    reviewerImageGenerationCalls: 0,
+    reviewerPaidApiCallsInitiated: 0,
+    runtimeInstallsOrCopies: 0,
+    newReviewerBrowserLaunches: 0,
+    inheritedTruncatedTextOutputs: 1,
+    newTruncatedTextOutputs: 1,
+    cumulativeTruncatedTextOutputs: 2,
+  },
+  preservedReviewerFailures: [
+    ...first.failures,
+    {
+      kind: 'tool-execution',
+      receipt: currentFailure,
+      stdout: bind(`${root}/02-delta-and-capture/stdout.txt`),
+      stderr: bind(`${root}/02-delta-and-capture/stderr.txt`),
+      returncode: 1,
+      error: "TypeError: Cannot read properties of undefined (reading 'labels')",
+      diagnosis: 'Capture reader assumed the FIRST observation.labels structure; this candidate uses labelLeaderMeasurements.',
+      recoveryReceipt: receipts.find((item) => item.path.includes('/03-capture-read-recovery/')),
+      recoveryDoesNotResetUsageOrApproveContent: true,
+      validSpecDeltaAndRenderOutputRetained: true,
+      affectedByRecoveryImageViews: 0,
+      validationOrRenderingRerunByRecovery: false,
+    },
+  ],
+  authorProductionHistoryPreserved: {
+    fromAuthorReady: authorReady,
+    cumulativeCounters: inspection.authorCountersPreserved,
+    historicalFailures: inspection.authorHistoricalFailuresPreserved,
+    candidateHistory: inspection.authorCandidateHistoryPreserved,
+    authorKnownToolExecutionFailures: inspection.authorCountersPreserved.knownToolExecutionFailures,
+    previousCosts: author.previousCosts,
+    historicalFailuresAreNotReviewerFailures: true,
+    noReexecutionOfFailedOrSuccessfulAuthorStages: true,
+  },
+  truncatedTextEvidence: {
+    original: first.evidenceDisplayLimit,
+    current: {
+      stdout: bind(`${root}/03-capture-read-recovery/stdout.txt`),
+      receipt: receipts.find((item) => item.path.includes('/03-capture-read-recovery/')),
+      fullStdoutRetained: true,
+      followup: 'Compact typed inspection of existing evidence, without images or producer reruns.',
+    },
+  },
+  receipts,
+  sealingInvocation: {
+    start: bind(`${root}/06-seal/start.record`),
+    receiptPath: `${root}/06-seal/receipt.record`,
+    wrapperWritesReceiptAfterThisProcessExits: true,
+  },
+  unknowns: [
+    ...first.unknowns,
+    'FIRST old640 remains unviewed; only the distinct current width640 PNG has now been visually reviewed.',
+    'Author generation/capture costs and reviewer model/tool billing remain unknown.',
+    'No database, publication, promotion, deployment or other-figure acceptance result is claimed by this affected review.',
+  ],
+  unknownInterpretation: 'Preserve historical unknowns with their FIRST time scope; the new current640 was actually viewed and passed independently, without changing old640 history.',
+  cost: {
+    status: 'unknown',
+    inheritedFirstCost: first.cost,
+    authorCurrentCost: author.cost,
+    authorPreviousCosts: author.previousCosts,
+    reviewerModelAndToolBilling: 'unknown',
+    reviewerPaidApiCallsInitiated: 0,
+    reviewerImageGenerationCalls: 0,
+    noUsageOrFailuresReset: true,
+  },
+  boundaries: {
+    sourcePagesReviewed: false,
+    sourceOrOldPngsReopened: false,
+    old640Viewed: false,
+    oldPassReReviewed: false,
+    answerReadOrDerived: false,
+    authorArtifactsModified: false,
+    firstFilesOverwritten: false,
+    validatorOrRendererExplicitlyRun: false,
+    officialReviewRunOnce: true,
+    databaseOrPlaneAccess: false,
+    publicationOrPromotion: false,
+    gitCommitMergeDeploy: false,
+    otherPassReruns: false,
+    chatsOrWorktreesManaged: false,
+    writesOutsideNewReviewSubdirectory: false,
+    imagePayloadReturnedToParent: false,
+  },
+};
+
+const output = `${root}/ready.record`;
+fs.writeFileSync(output, `${JSON.stringify(payload, null, 2)}\n`, { flag: 'wx' });
+const saved = load(output);
+assert.equal(saved.status, 'PASS');
+assert.equal(saved.actualViewCalls.length, 4);
+assert.equal(saved.actualViewsThisContinuation.length, 2);
+assert.equal(saved.immutableFirst.originalStatus, 'HOLD');
+assert.equal(saved.immutableFirst.original640ActuallyViewed, false);
+assert.equal(saved.counts.cumulativeReviewerToolExecutionFailures, 2);
+console.log(JSON.stringify({
+  status: saved.status,
+  ready: bind(output),
+  officialReview,
+  observations: saved.visualObservations,
+  firstReadyUnchanged: firstReady,
+  newViews: 2,
+  cumulativeViews: 4,
+  reopens: 0,
+  original640Viewed: false,
+  cumulativeReviewerToolFailures: 2,
+  officialReviewCalls: 1,
+  cost: 'unknown',
+}, null, 2));

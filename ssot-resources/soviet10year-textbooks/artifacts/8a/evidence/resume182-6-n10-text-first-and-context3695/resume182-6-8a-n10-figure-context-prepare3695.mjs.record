@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [authorPath, authorHash] = process.argv.slice(2);
+assert.ok(authorPath?.startsWith('.tmp/resume182-6-8a-n10-text-author3695-FIRST/'));
+assert.match(authorHash, /^[a-f0-9]{64}$/);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const authorBytes = fs.readFileSync(authorPath);
+assert.equal(sha(authorBytes), authorHash);
+const author = JSON.parse(authorBytes);
+const own = '.tmp/resume182-6-8a-n10-figure-context3695-FIRST';
+const stageRoot = `${own}/artifacts/8a`;
+const raw = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c2-s2-n10';
+const lessonRoot = `${stageRoot}/editions/modern-us-neutral/lessons/${id}`;
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(lessonRoot, { recursive: true });
+const entries = [];
+for (const name of ['lesson', 'exercises', 'figures']) {
+  const input = `.tmp/resume182-6-8a-n10-text-author3695-FIRST/adapt/8a/modern-us-neutral/lessons/${id}/${name}.template.json`;
+  const bytes = fs.readFileSync(input);
+  const binding = author.templates.find(item => path.resolve(repo, item.path) === path.resolve(repo, input));
+  assert.ok(binding, input);
+  assert.equal(sha(bytes), binding.sha256);
+  const doc = JSON.parse(bytes);
+  assert.equal(doc.edition, 'modern-us-neutral');
+  if (name === 'lesson') assert.equal(doc.id, id);
+  else assert.equal(doc.lesson, id);
+  const output = `${lessonRoot}/${name}.json`;
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  entries.push({ input, output, sha256: sha(bytes), bytes: bytes.length });
+}
+fs.symlinkSync(path.resolve(repo, raw, 'figures'), `${stageRoot}/figures`, 'dir');
+fs.writeFileSync(`${own}/inputs.record`, `${JSON.stringify({
+  schema: 'stemrobin-182/n10-modern-figure-context-prepared@1',
+  created: new Date().toISOString(), status: 'CURRENT_AUTHOR_CONTEXT_NOT_TEXT_APPROVAL',
+  book: '8a', lesson: id, edition: 'modern-us-neutral', entries,
+  author: { path: authorPath, sha256: authorHash },
+  root: `${own}/artifacts`,
+  originalSourceImages: { path: `${raw}/figures`, referenceOnly: true, copiedBytes: 0 },
+  figureIDs: ['fig-22', 'fig-23', 'fig-24', 'fig-25'],
+  originalSourceEdits: 0, imagesLoaded: 0, rendererCalls: 0, browserCalls: 0,
+  sourceMathOrImagePASSReruns: 0, DBWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'CURRENT_AUTHOR_CONTEXT_NOT_TEXT_APPROVAL',
+  root: `${own}/artifacts`, copiedCurrentTemplateFiles: 3, originalImageCopies: 0 }));

@@ -1,0 +1,311 @@
+    )
+    rule_labels, _ = ndimage.label(horizontal)
+    rules = []
+    reach = int(1.5 * glyph_h)
+    for bounds in ndimage.find_objects(rule_labels):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            rows.stop - rows.start <= 0.25 * glyph_h
+            and band[max(0, rows.start - reach):rows.start, columns].any()
+            and band[rows.stop:min(len(band), rows.stop + reach), columns].any()
+        ):
+            rules.append((rows.start, rows.stop, columns.start, columns.stop))
+    outer_rules = {
+        max(
+            (other for other in rules
+             if other[2] - 0.2 * glyph_h <= left
+             and right <= other[3] + 0.2 * glyph_h),
+            key=lambda other: other[3] - other[2],
+        )
+        for _, _, left, right in rules
+    }
+    fractions = []
+    for top, bottom, _, _ in sorted(outer_rules):
+        centre = a + (top + bottom) / 2
+        if not fractions or centre - fractions[-1] > 1.5 * glyph_h:
+            fractions.append(centre)
+    if not fractions:
+        return None
+    centres = sorted(fractions + [
+        (top + bottom) / 2 for top, bottom in strong_rows
+        if all(abs((top + bottom) / 2 - centre) > 1.5 * glyph_h
+               for centre in fractions)
+    ])
+    distinct = []
+    for centre in centres:
+        if not distinct or centre - distinct[-1] > 1.5 * glyph_h:
+            distinct.append(centre)
+    return len(distinct) if len(distinct) >= 2 else None
+
+
+def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+    """Count printed rows after masking model-identified figures."""
+    # Work on a counting-only copy; extraction pixels are never changed.
+    ink = ink.copy()
+    edge = max(1, int(ink.shape[1] * 0.01))
+    ink[:, :edge] = False
+    ink[:, -edge:] = False
+    raw = _row_fragments(ink, content_w)
+    if not raw:
+        return []
+    line_h = int(np.median([b - a + 1 for a, b in raw]))
+    components, _ = ndimage.label(ink)
+    bounds_list = ndimage.find_objects(components)
+    sizes = np.bincount(components.ravel())
+    compact = sorted(
+        (rows.stop - rows.start, int(sizes[component_id]))
+        for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None
+        for rows, columns in [bounds]
+        if 0.2 * (rows.stop - rows.start)
+        <= columns.stop - columns.start <= 2 * (rows.stop - rows.start)
+    )
+    if compact:
+        # Many tiny specks can outvote printed glyphs, but not their ink area.
+        cumulative = np.cumsum([area for _, area in compact])
+        supported_h = compact[int(np.searchsorted(cumulative, 0.75 * cumulative[-1]))][0]
+        line_h = max(line_h, supported_h)
+    glyph_heights = [
+        rows.stop - rows.start
+        for bounds in bounds_list if bounds is not None
+        for rows, columns in [bounds]
+        if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
+        and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+    ]
+    glyph_h = (
+        float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
+    )
+    glyph_boxes = [
+        bounds for bounds in bounds_list if bounds is not None
+        for rows, columns in [bounds]
+        if rows.stop - rows.start >= 0.6 * glyph_h
+        and columns.stop - columns.start >= 0.2 * glyph_h
+    ]
+    short_rows = [
+        (a, b) for a, b in _merge_close(raw, 0.4 * glyph_h)
+        if 0.3 * glyph_h <= b - a + 1 < 0.65 * glyph_h
+        and (supported_columns := np.flatnonzero(
+            ink[a:b + 1].sum(axis=0) >= MIN_BAND_HEIGHT
+        )).size
+        and 0.5 * glyph_h <= np.ptp(supported_columns) + 1 <= 2 * glyph_h
+    ]
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        sparse_shallow_rule = (
+            0.3 * glyph_h <= height <= 0.4 * glyph_h
+            and width >= 3 * glyph_h
+            and sizes[component_id] < 0.2 * width * height
+        )
+        isolated_fragment = height < 0.3 * glyph_h or (
+            height < 0.65 * glyph_h and width >= 0.5 * glyph_h
+            and sizes[component_id] >= 0.35 * width * height
+        ) or sparse_shallow_rule
+        thin_rule = height <= 0.2 * glyph_h and width >= 0.7 * glyph_h
+        if isolated_fragment and not (
+            height < 0.65 * glyph_h
+            and any(a <= rows.start and rows.stop - 1 <= b for a, b in short_rows)
+        ) and not any(
+            (
+                abs((rows.start + rows.stop) - (other_rows.start + other_rows.stop))
+                <= 1.5 * glyph_h
+                or (thin_rule or height >= 0.3 * glyph_h)
+                and max(rows.start - other_rows.stop, other_rows.start - rows.stop)
+                <= (1.0 if thin_rule else 0.5) * glyph_h
+            )
+            and max(columns.start - other_columns.stop,
+                    other_columns.start - columns.stop) <= 1.5 * glyph_h
+            for other_rows, other_columns in glyph_boxes
+        ):
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
+    raw = _row_fragments(ink, content_w)
+    supporting_rows = {
+        (a, b) for a, b in raw
+        if any(
+            a <= rows.start and rows.stop - 1 <= b
+            and rows.stop - rows.start >= 0.2 * glyph_h
+            and columns.stop - columns.start >= 0.1 * glyph_h
+            and not (
+                rows.stop - rows.start > 1.8 * line_h
+                and columns.stop - columns.start < 0.5 * line_h
+                and columns.stop - columns.start < 0.2 * (rows.stop - rows.start)
+            )
+            for bounds in bounds_list if bounds is not None
+            for rows, columns in [bounds]
+        )
+    }
+    # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
+    # Remove them only when they occupy an otherwise isolated projection row.
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        area = np.count_nonzero(components[bounds] == component_id)
+        if (
+            0.35 * glyph_h <= height <= 0.65 * glyph_h
+            and width >= 1.5 * glyph_h
+            and area >= 0.35 * width * height
+            and any(
+                a - 0.15 * glyph_h <= rows.start
+                and rows.stop - 1 <= b + 0.15 * glyph_h
+                and b - a + 1 <= 0.65 * glyph_h
+                and np.count_nonzero(ink[a:b + 1]) <= area * 1.1
+                for a, b in raw
+            )
+        ):
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        margin_outline = (
+            rows.start < 0.1 * ink.shape[0]
+            and height > 1.2 * glyph_h and width > 2 * glyph_h
+            and sizes[component_id] < 0.2 * width * height
+            and not any(
+                other_id != component_id
+                and sizes[other_id] >= 0.15 * glyph_h ** 2
+                and 0.6 * glyph_h <= other_rows.stop - other_rows.start <= 1.3 * glyph_h
+                and 0.2 * glyph_h <= other_columns.stop - other_columns.start <= 1.3 * glyph_h
+                and max(rows.start - other_rows.stop, other_rows.start - rows.stop) <= 1.5 * glyph_h
+                for other_id, other_bounds in enumerate(bounds_list, 1)
+                if other_bounds is not None
+                for other_rows, other_columns in [other_bounds]
+            )
+        )
+        if margin_outline or (
+            height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height
+        ):
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
+    raw = _row_fragments(ink, content_w)
+    # Check residual streaks after removing the larger scan outlines.
+    for a, b in raw:
+        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        fraction_support = (
+            xs.size
+            and b - a + 1 <= 0.25 * glyph_h
+            and xs[-1] - xs[0] + 1 >= 2 * glyph_h
+            and any(
+                rows.stop <= a and a - rows.stop <= 1.5 * glyph_h
+                and xs[0] <= (columns.start + columns.stop) / 2 <= xs[-1]
+                for rows, columns in glyph_boxes
+            )
+            and any(
+                rows.start > b and rows.start - b <= 1.5 * glyph_h
+                and xs[0] <= (columns.start + columns.stop) / 2 <= xs[-1]
+                for rows, columns in glyph_boxes
+            )
+        )
+        if (
+            b - a + 1 < 0.2 * glyph_h
+            and xs.size and xs[-1] - xs[0] + 1 > 2 * glyph_h
+            and not fraction_support
+            and not any(
+                (c, d) != (a, b)
+                and (c, d) in supporting_rows
+                and max(c - b, a - d) <= 1.5 * glyph_h
+                for c, d in raw
+            )
+        ):
+            ink[a:b + 1] = False
+    raw = _row_fragments(ink, content_w)
+    if not raw:
+        return []
+    line_h = max(glyph_h, int(np.median([b - a + 1 for a, b in raw])))
+    # Fraction-heavy pages inflate row heights without enlarging printed digits.
+    number_glyph_h = min(line_h, glyph_h)
+    # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if (
+            0.6 * number_glyph_h <= height <= 1.3 * number_glyph_h
+            and 0.3 * number_glyph_h <= width <= number_glyph_h
+            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * number_glyph_h ** 2
+            and not any(a <= rows.start and rows.stop - 1 <= b for a, b in raw)
+        ):
+            raw.append((rows.start, rows.stop - 1))
+    raw.sort()
+    stacked_centres = []
+    stacked_rules = []
+    spans = _merge_close(raw, 0)
+    for first, second, rule, result in zip(spans, spans[1:], spans[2:], spans[3:]):
+        glyph_rows = (first, second, result)
+        heights = [b - a + 1 for a, b in glyph_rows]
+        widths = [
+            np.flatnonzero(ink[a:b + 1].any(axis=0))
+            for a, b in glyph_rows
+        ]
+        widths = [xs[-1] - xs[0] + 1 for xs in widths]
+        rule_x = np.flatnonzero(ink[rule[0]:rule[1] + 1].any(axis=0))
+        pitches = (second[0] - first[0], result[0] - second[0])
+        if (
+            all(0.6 * glyph_h <= height <= 1.5 * glyph_h for height in heights)
+            and min(widths) >= 2 * glyph_h
+            and min(widths) >= 0.65 * max(widths)
+            and rule[1] - rule[0] + 1 <= 0.25 * glyph_h
+            and rule_x.size and rule_x[-1] - rule_x[0] + 1 >= min(widths)
+            and min(pitches) > 0
+            and max(pitches) <= 1.35 * min(pitches)
+        ):
+            # A rule below two aligned operand rows is not a fraction bar.
+            stacked_centres.extend((a + b) / 2 for a, b in glyph_rows)
+            stacked_rules.append(rule)
+    if stacked_centres:
+        for a, b in stacked_rules:
+            ink[a:b + 1] = False
+        raw = [(a, b) for a, b in raw if ink[a:b + 1].any()]
+
+    def different_stacked_rows(first, second):
+        return (
+            any(first[0] <= centre <= first[1] for centre in stacked_centres)
+            and any(second[0] <= centre <= second[1] for centre in stacked_centres)
+        )
+
+    merged = []
+    merge_gap = max(2.0, GLYPH_GAP_FACTOR * min(line_h, glyph_h))
+    for a, b in _merge_close(raw, 0):
+        if merged:
+            prev_a, prev_b = merged[-1]
+            separate_tall_rows = (
+                min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
+                and not _single_fraction_row(ink, prev_a, b, glyph_h)
+            )
+            row_widths = [
+                np.flatnonzero(ink[top:bottom + 1].any(axis=0))
+                for top, bottom in ((prev_a, prev_b), (a, b))
+            ]
+            row_widths = [xs[-1] - xs[0] + 1 for xs in row_widths]
+            # Complete smaller or short wrapped rows can have a tight gap.
+            separate_full_text = (
+                min(prev_b - prev_a + 1, b - a + 1) >= 0.6 * glyph_h
+                and min(row_widths) >= 2 * glyph_h
+                and not any(
+                    prev_a <= c <= d <= b
+                    and d - c + 1 <= 0.25 * glyph_h
+                    and np.ptp(np.flatnonzero(ink[c:d + 1].any(axis=0))) >= 0.7 * glyph_h
+                    for c, d in raw
+                )
+                and not _fraction_across_split(ink, prev_a, a, b, glyph_h)
+            )
+            if (
+                a - prev_b <= merge_gap
+                and not separate_tall_rows
+                and not separate_full_text
+                and not different_stacked_rows((prev_a, prev_b), (a, b))
+            ):
+                merged[-1] = (prev_a, b)
+                continue
+        merged.append((a, b))
+    joined = []
+    fraction_starts = set()

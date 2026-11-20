@@ -1,0 +1,64 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+page = REPO / ".tmp/resume182-6-8a-n10-source3695-FIRST/8a/pages/0062/page.png"
+digest = hashlib.sha256(page.read_bytes()).hexdigest()
+assert digest == "6d597c70694800f924d752bc1e8236a7fb802f3b934cd2282900ae9aa0f151db"
+with Image.open(page) as image:
+    ink = layout.ink_mask(image)
+columns = np.flatnonzero(ink.any(axis=0))
+width = int(columns[-1] - columns[0] + 1)
+states = []
+events = []
+positions = {424: "before-isolated-filter", 487: "after-component-filter",
+             537: "after-projection", 609: "after-close-merge",
+             672: "after-fraction-join", 727: "after-expansion", 773: "final"}
+
+
+def plain(value):
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, (tuple, list, set)):
+        return [plain(item) for item in value]
+    return value
+
+
+def trace(frame, event, arg):
+    if frame.f_code.co_name != "line_bands" or event != "line":
+        return trace
+    local = frame.f_locals
+    position = frame.f_lineno
+    if position in positions:
+        states.append({"stage": positions[position],
+                       **{name: plain(local[name]) for name in
+                          ("raw", "merged", "joined", "expanded", "out",
+                           "glyph_h", "line_h", "typical_gap", "fraction_starts")
+                          if name in local}})
+    if position in (606, 667, 716, 735):
+        events.append({"line": position, **{name: plain(local[name]) for name in
+                       ("a", "b", "prev_a", "prev_b", "count", "strong_rows",
+                        "system_rows", "supported_fraction", "fraction_spill",
+                        "radical_overbar_spill", "widths", "heights")
+                       if name in local}})
+    return trace
+
+
+sys.settrace(trace)
+bands = layout.line_bands(ink, width)
+sys.settrace(None)
+print(json.dumps({"page": str(page), "sha256": digest,
+                  "toolSha256": hashlib.sha256(Path(layout.__file__).read_bytes()).hexdigest(),
+                  "count": len(bands), "bands": plain(bands),
+                  "states": states, "events": events,
+                  "imageViews": 0, "renderCalls": 0,
+                  "sourceContentEdits": 0}, indent=2))

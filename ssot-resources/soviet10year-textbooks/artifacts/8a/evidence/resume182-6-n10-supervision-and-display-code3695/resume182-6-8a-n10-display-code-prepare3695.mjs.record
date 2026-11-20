@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const source = '.tmp/resume182-6-8a-n8-display3695-FIRST';
+const target = '.tmp/resume182-6-8a-n10-display3695-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+const entries = [];
+for (const file of ['prepare.mjs', 'run.mjs', 'display-helper.mjs']) {
+  const input = path.join(source, file);
+  const original = fs.readFileSync(input);
+  let text = original.toString('utf8')
+    .replaceAll('alg8-c2-s1-n8', 'alg8-c2-s2-n10')
+    .replaceAll('n8', 'n10');
+  if (file === 'prepare.mjs') {
+    const anchor = "export const requiredFigures = ['fig-16'];";
+    assert.equal(text.split(anchor).length - 1, 1);
+    text = text.replace(anchor,
+      "export const requiredFigures = ['fig-22', 'fig-23', 'fig-24', 'fig-25'];");
+  }
+  const output = path.join(target, file);
+  fs.writeFileSync(output, text, { flag: 'wx' });
+  entries.push({ input, inputSha256: sha(original), output,
+    sha256: sha(fs.readFileSync(output)), contentOrThresholdEdits: 0 });
+  const command = [process.execPath, '--check', output];
+  const checked = spawnSync(command[0], command.slice(1), { cwd: repo, encoding: 'utf8' });
+  for (const stream of ['stdout', 'stderr']) {
+    fs.writeFileSync(`${target}/${file}.syntax-${stream}.txt`, checked[stream] ?? '', { flag: 'wx' });
+  }
+  fs.writeFileSync(`${target}/${file}.syntax.record`, `${JSON.stringify({
+    command, cwd: repo, returncode: checked.status, signal: checked.signal,
+    error: checked.error?.message ?? null,
+  }, null, 2)}\n`, { flag: 'wx' });
+  assert.equal(checked.status, 0);
+  assert.equal(sha(fs.readFileSync(input)), sha(original));
+}
+fs.writeFileSync(`${target}/code-prepared.record`, `${JSON.stringify({
+  schema: 'stemrobin-182/n10-display-code-prepared@1',
+  created: new Date().toISOString(), status: 'CODE_PREPARED_NOT_CONTENT_READY',
+  book: '8a', lesson: 'alg8-c2-s2-n10', entries,
+  changes: ['Lesson/scratch/protocol identity only', 'Actual four source figure IDs'],
+  syntaxCalls: 3, contentReadinessChecks: 0, rendererCalls: 0, browserCalls: 0,
+  imageViews: 0, semanticReviewReruns: 0, unknownHistoricalBytesRecovered: false,
+  oldFailuresAndUsagePreserved: true, DBWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'CODE_PREPARED_NOT_CONTENT_READY', target,
+  syntaxCalls: 3, rendererCalls: 0, browserCalls: 0, images: 0 }));

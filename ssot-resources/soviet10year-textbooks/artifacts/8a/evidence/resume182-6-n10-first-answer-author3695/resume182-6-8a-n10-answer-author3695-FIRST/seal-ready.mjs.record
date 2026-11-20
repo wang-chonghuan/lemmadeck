@@ -1,0 +1,184 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const W = `${R}/.tmp/resume182-6-8a-n10-answer-author3695-FIRST`;
+assert.equal(process.cwd(), R);
+const read = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
+const bind = (p) => ({
+  path: p,
+  sha256: crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex'),
+});
+const lessonRoot = `${R}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10`;
+const figureRoot = `${R}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures`;
+const previewRoot = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/AFFECTED-numeric-labels1/technical-layout2`;
+const expectedBindings = [
+  [`${W}/prepare/8a/modern-us-neutral/lessons/alg8-c2-s2-n10/answer-keys.template.json`, '988c3392530bc1a7ecc2a0a7f42daf27e258c96cf1802d182efe3ed925c9ffca'],
+  [`${lessonRoot}/exercises.json`, 'e51724b6600d83f44d6b34a80619e8c1e8889d4cddaaf8a110b3f4cf3350a222'],
+  [`${lessonRoot}/lesson.json`, '55ae2422e5aa1e4402912b5798b8184d6e81ae317d2cb1b045cee119ddfed1a2'],
+  [`${lessonRoot}/figures.json`, '574ce249c2a56e7ba594e6fa451d757c78957d57f9a61a38bce82d7fe19c58f7'],
+  [`${figureRoot}/fig-25.spec.json`, 'a633fef1255fee2c211c98e3b43140a41a339be0d9e468130614b5f2163cf264'],
+  [`${figureRoot}/fig-25.svg`, 'd2799da5e0cfaf8c90f27636ce8b0fa94038512b0aa2b8a085e3576f419cfcad'],
+  [`${previewRoot}/render/fig-25.svg`, 'd2799da5e0cfaf8c90f27636ce8b0fa94038512b0aa2b8a085e3576f419cfcad'],
+  [`${previewRoot}/raster/fig-25.native.png`, '55e8015e5ce5c72c7ac07105c197deac3bb7518f50b457eb30ab2cfef78fb286'],
+  [`${R}/ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-25.png`, 'c6982988a8fa79b1d62fec64a7027bf125c8535cd6ee0daa6cc86ad074b62e33'],
+];
+for (const [p, sha256] of expectedBindings) assert.equal(bind(p).sha256, sha256, p);
+
+const previewCapturePath = `${previewRoot}/raster/capture.record`;
+const capture = read(previewCapturePath);
+assert.equal(capture.sourceSvg.sha256, bind(`${figureRoot}/fig-25.svg`).sha256);
+assert.equal(capture.spec.sha256, bind(`${figureRoot}/fig-25.spec.json`).sha256);
+assert.equal(capture.captures.find((c) => c.name === 'native').png.sha256,
+  bind(`${previewRoot}/raster/fig-25.native.png`).sha256);
+const exactPath = `${W}/exact-check.record`;
+const exact = read(exactPath);
+assert.equal(exact.status, 'AUTHOR_CHECK_COMPLETE_NOT_APPROVAL');
+assert.deepEqual(exact.answersDraft, bind(`${W}/answers.draft.json`));
+const draft = read(`${W}/answers.draft.json`);
+const derivations = read(`${W}/derivations.record`);
+assert.deepEqual(derivations.exercises.map((e) => e.exercise), draft.answers.map((a) => a.exercise));
+
+const ownStartedExecutions = fs.readdirSync(W, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory() && /^\d{3}-/.test(entry.name))
+  .map((entry) => {
+    const directory = `${W}/${entry.name}`;
+    const start = read(`${directory}/start.record`);
+    const receiptPath = `${directory}/receipt.record`;
+    return {
+      name: entry.name,
+      start: bind(`${directory}/start.record`),
+      command: start.command,
+      receipt: fs.existsSync(receiptPath) ? bind(receiptPath) : null,
+      result: fs.existsSync(receiptPath) ? read(receiptPath) : null,
+    };
+  })
+  .sort((a, b) => a.name.localeCompare(b.name));
+const completed = ownStartedExecutions.filter((e) => e.result);
+const failures = completed.filter((e) => e.result.returncode !== 0 || e.result.error);
+const sealing = ownStartedExecutions.filter((e) => !e.result);
+assert.equal(sealing.length, 1);
+assert.equal(sealing[0].name, '017-seal-author-ready');
+assert.equal(failures.length, 0);
+assert.equal(ownStartedExecutions.length, 17);
+
+const ready = {
+  schema: 'resume182-6/lesson-answer-author-ready@1',
+  status: 'AUTHOR_READY_NOT_APPROVAL',
+  role: 'FRESH_BOUNDED_ANSWER_AUTHOR_NOT_REVIEWER',
+  authorization: 'Direct human authorization in chat182-6; only8a/alg8-c2-s2-n10/modern-us-neutral; parent alone may independently review and promote.',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  productionRoot: R,
+  writeRoot: W,
+  candidateNumber: 1,
+  answerCount: draft.answers.length,
+  exerciseNumbers: draft.answers.map((a) => a.exercise),
+  autoExercises: 1,
+  ungradedExercises: 6,
+  numericParts: 4,
+  template: bind(expectedBindings[0][0]),
+  finalModernInputs: {
+    exercises: bind(`${lessonRoot}/exercises.json`),
+    lesson: bind(`${lessonRoot}/lesson.json`),
+    figures: bind(`${lessonRoot}/figures.json`),
+    figure25Spec: bind(`${figureRoot}/fig-25.spec.json`),
+    figure25Svg: bind(`${figureRoot}/fig-25.svg`),
+    figure25Render: bind(`${figureRoot}/fig-25.render.json`),
+  },
+  inputStability: 'All initial template, modern lesson/exercises/figures and observed figure25 hashes remain identical at sealing.',
+  answersDraft: bind(`${W}/answers.draft.json`),
+  derivationEvidence: bind(`${W}/derivations.record`),
+  perExerciseDerivations: derivations.exercises,
+  exactArithmeticAuthorCheck: bind(exactPath),
+  actualViews: bind(`${W}/views.record`),
+  svgPreviewBinding: {
+    capture: bind(previewCapturePath),
+    captureScript: bind(`${previewRoot}/capture-leaders.mjs`),
+    capturedSourceSvg: bind(`${previewRoot}/render/fig-25.svg`),
+    nativePreview: bind(`${previewRoot}/raster/fig-25.native.png`),
+    originalPng: bind(expectedBindings[8][0]),
+    conclusion: 'Current durable SVG bytes match the capture-bound SVG, and the observed complete native PNG matches that capture record.',
+  },
+  provenance: {
+    bookRawSupplied: 0,
+    derivedAnswers: 7,
+    consultedOtherAnswerKeys: false,
+    consultedChoices: false,
+    parentApprovalsUsedAsSpecificAnswerObservation: false,
+    modernLabel134Third: 'c; existing lesson erratum p0062-ex134-label-3, equations unchanged',
+    figure136: 'four panels in one exercise',
+    review137: 'group g1 retained',
+    excluded138: true,
+  },
+  counters: {
+    authorCandidates: 1,
+    authorContentRevisions: 0,
+    officialPrepareExecutions: 1,
+    exactArithmeticCheckExecutions: 1,
+    viewBatches: 1,
+    imagesActuallyViewed: 2,
+    sourceViews: 1,
+    modernViews: 1,
+    imageReopens: 0,
+    renders: 0,
+    crops: 0,
+    resizes: 0,
+    browserLaunches: 0,
+    paidModelOrImageCalls: 0,
+    pythonExecutions: 2,
+    receiptWrappedCommandStartsIncludingSealing: ownStartedExecutions.length,
+    completedCommandReceiptsBeforeSealingReturn: completed.length,
+    completedExecutionFailures: failures.length,
+    sourceApprovalRuns: 0,
+    textApprovalRuns: 0,
+    figureApprovalRuns: 0,
+    answerApprovalRuns: 0,
+    officialFinalizeRuns: 0,
+    sharedRegressionRuns: 0,
+    dbOperations: 0,
+    planeOperations: 0,
+    commitPushMergeDeployOperations: 0,
+    otherChatMessages: 0,
+    manualApplyPatchCalls: 1,
+  },
+  executionFailures: failures,
+  executionReceipts: ownStartedExecutions,
+  sealingExecutionReceipt: {
+    path: `${W}/017-seal-author-ready/receipt.record`,
+    note: 'The supplied immutable wrapper writes this receipt after the sealing script exits; it is authoritative for this last execution.',
+  },
+  technicalObservations: [
+    '011 long tool display was truncated; saved stdout remains intact. 015 structured text projection recovered visible spec semantics. This was not a failed command or content review.',
+    '004 discovery returned other filenames only; no other answer/choice/history file contents were opened or used.',
+  ],
+  runtime: {
+    python: '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+    pythonFlags: ['-B'],
+    executedPythonCode: [
+      `${R}/.claude/skills/ld-s10y-answer/tools/lesson_answers.py`,
+      `${W}/exact-check.py`,
+    ],
+    installs: 0,
+    copiedRuntimeBytes: 0,
+  },
+  preservation: 'No durable or parent file was edited. Original trees, existing locks, FAIL receipts, PASS records and cumulative usage remain untouched. No old PASS was rewritten.',
+  inheritedCountersAndCosts: 'Not reset, altered or synthesized; retained in their original parent evidence paths. No claim of a cumulative total from this fresh bounded author.',
+  cost: 'unknown',
+  review: 'NOT_RUN; author readiness only, no PASS review, no approval and no durable promotion.',
+};
+const target = path.join(W, 'ready.record');
+assert.equal(fs.existsSync(target), false);
+fs.writeFileSync(target, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  status: ready.status,
+  book: ready.book,
+  lesson: ready.lesson,
+  edition: ready.edition,
+  answerCount: ready.answerCount,
+  answersDraft: ready.answersDraft,
+  readyRecord: bind(target),
+}, null, 2));

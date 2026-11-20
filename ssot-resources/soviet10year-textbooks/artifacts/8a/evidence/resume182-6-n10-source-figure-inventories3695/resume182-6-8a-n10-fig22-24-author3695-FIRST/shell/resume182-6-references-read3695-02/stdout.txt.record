@@ -1,0 +1,757 @@
+# Rendering mode routing
+
+Choose the least generative mode that can express the figure.
+
+| Mode | Use when | Final construction |
+|---|---|---|
+| `deterministic` | Geometry, sets, number lines, coordinates, tables, charts, transformations, measured diagrams | JSXGraph-generated SVG; optional PNG snapshot |
+| `hybrid` | Natural objects must sit at mathematically exact positions | GPT Image artwork below a JSXGraph overlay |
+| `generated` | Object identity, count, or scene matters, but exact coordinates do not | GPT Image 2 PNG |
+
+## Hard routing rules
+
+- Rendering mode and display purpose are independent decisions. A generated
+  portrait can be decorative; a generated classification scene is
+  instructional. Record the choice in `display.purpose`.
+- Any exact point, tick, number, distance, angle, grid intersection, alignment,
+  parallelism, perpendicularity, symmetry, or transformation makes the
+  mathematical layer deterministic.
+- A decorative illustration does not justify making the mathematical layer
+  generative.
+- Do not ask GPT Image to draw readable scales, coordinate axes, tables, or
+  multi-label geometry.
+- Do not use a generated PNG as the sole output when the exercise depends on
+  measuring or counting equal intervals.
+
+## Examples
+
+- Animal/plant classification collection: `generated`.
+- Squirrels at measured heights on a tree: `hybrid`; tree and squirrels are
+  artwork, height guides and labels are deterministic.
+- Birds on a rope at signed offsets: `hybrid`; birds and rope may be artwork,
+  knot, grid, scale, and placements are deterministic.
+- Half-turn around point O: `deterministic`; optional child artwork may be
+  transformed as a paired image asset, but the transform is computed.
+- Venn diagrams, polygons, angle diagrams, number lines: `deterministic`.
+# FigureSpec contract
+
+The canonical schema is
+`assets/figure-spec.schema.json`; the semantic validator is
+`scripts/validate_spec.py`.
+
+## Required top-level fields
+
+- `schema`: `ld-s10y-image/figure-spec@2`
+- `id`: original figure id
+- `mode`: `deterministic`, `hybrid`, or `generated`
+- `description`: instructional purpose, not merely appearance
+- `source.image`: original PNG path and SHA-256
+- `source.authoritativeText`: complete relevant edition text
+- `source.inventory`: source-based groups with `description`, `objects`, and
+  `assertions`. Use `requires: ["gridDimensions"]` for source grid counts and
+  `requires: ["pointRelationships"]` for source-bound relations among multiple
+  points. Record source requirements first, give them stable IDs, then map
+  them to the object and assertion IDs that realize each requirement.
+  Missing, invisible, or unresolved IDs fail validation. Reused specs are not
+  evidence: rebuild or recheck this inventory against the original PNG, not
+  the prior SVG or object list. State modern regularization or additions as
+  additions rather than source-image facts.
+- For a **new deterministic choice diagram**, use `source.authoredBasis`
+  instead of `source.image`. State the independently derived geometry and any
+  deliberate false alternatives. `authoritativeText` still holds the written
+  task; `inventory` maps these authored requirements to objects and assertions,
+  not invented source pixels. This path cannot recover or replace a missing
+  original, requires a new `fig-choice-` identifier, and cannot use
+  hybrid/generated mode. Reference-only images do not
+  become `source.image`. All geometry, label and independent-review checks remain.
+- `canvas`: pixel size and mathematical bounding box
+- `display`: product `layout`, semantic `purpose`, minimum final text size,
+  every width that must be checked, and an optional validated product maximum
+  width
+- `objects`: ordered render objects
+- `assertions`: ID-addressable machine-checkable mathematical facts
+
+Coordinates use JSXGraph user space. `canvas.boundingBox` is
+`[xMin, yMax, xMax, yMin]`.
+
+Review is not embedded in the spec. Record it separately as
+`ld-s10y-image/review@1` after rendering or generation so any spec or output
+change invalidates the review evidence.
+
+## Supported objects
+
+- `point`: `at`, optional `label`, `visible`, style
+- `segment`, `line`, `arrow`: `from`, `to`
+- `circle`: `center`, `radius`
+- `polygon`: `points`
+- `arc`: `center`, `start`, `end`. Coordinate literals create hidden construction
+  points; only explicitly declared point objects may display endpoint markers.
+- `grid`: `xStep`, `yStep`; optional finite
+  `[xMin, yMax, xMax, yMin]` `bounds`; optional absolute coordinate phases
+  `xOffset` and `yOffset`. Grid lines occur at `offset + n * step`, so a
+  cropped or locally positioned source grid does not have to align with the
+  canvas origin.
+- `axis`: `from`, `to`, optional ticks
+- `measure`: `from`, `to`, `label`
+- `text`: `at`, `text`
+- `image`: `asset`, `at`, `size`; hybrid artwork only. `size` is a fit box:
+  the renderer always preserves the source artwork's intrinsic aspect ratio
+  with centered `contain` behavior and must never stretch it to fill the box.
+  Put image objects before geometry objects so the exact overlay is always on
+  top. Set `avoidLabels: true` only when its tight image rectangle must exclude
+  labels; otherwise use `layout.avoidRegions` for occupied artwork areas.
+  Optional `rotation` contains `angleDegrees` and `center`; the renderer
+  applies an exact JSXGraph rotation around that user-coordinate center.
+- `svgPath`: deterministic fallback for a curve or filled region JSXGraph
+  cannot express directly. It uses source-screen path coordinates and must not
+  contain labels, ticks, points, or measurements. Like other objects,
+  `strokeWidth` is in output pixels, independent of unequal axis scales.
+
+Point references may be object ids. Coordinate literals are `[x, y]`.
+
+## Labels
+
+Labels are an overlay owned by the renderer, not freehand SVG text. Default
+placement tests eight candidates around the anchor and scores collisions
+against earlier labels, visible points, declared image regions, and
+`layout.avoidRegions`.
+
+Use `labelPlacement` only when the semantic layout requires a fixed side:
+
+```json
+{
+  "position": "NE",
+  "offset": [8, -8]
+}
+```
+
+Never compensate for a wrong coordinate by moving a label.
+Supported positions are `CENTER`, `NE`, `NW`, `SE`, `SW`, `E`, `W`, `N`, and `S`.
+`C` is not an alias. Unknown positions must fail validation rather than silently
+falling back to a different side. Axis tick labels follow the same contract.
+
+## Display and color
+
+Classify the figure by what the learner must do with it, independently of its
+rendering mode:
+
+- `display.purpose: "instructional"` is the default for diagrams, apparatus,
+  tables, graphs, measured figures, and any image whose details the learner
+  must inspect. It keeps the product's normal figure sizing unless the
+  composition has a smaller natural display size. In that case use inline
+  layout and set `display.maxWidthPx` from 240 through 960; include every
+  resulting desktop and mobile width in `display.widths`, with no width above
+  the maximum. Measure the media width in each headed product surface rather
+  than assuming it from the viewport or the prose column.
+- `display.purpose: "decorative"` is for portraits, avatars, and similar
+  identification or atmosphere images that carry no measured, relational, or
+  answer-bearing detail. Decorative figures must use `layout: "inline"`, set
+  `display.maxWidthPx` from 128 through 240, and declare only
+  `display.widths` at or below that maximum. Use 160 px for an ordinary
+  textbook portrait.
+
+Every newly authored or repaired FigureSpec must state `display.purpose`.
+Specs that predate this field are treated as instructional for compatibility.
+Never classify an image as decorative merely because it was generated or
+contains natural objects.
+
+`display.widths` contains the actual CSS widths at which the product may show
+the figure. The renderer measures labels at each width and rejects any text
+smaller than `display.minTextPx`, which must be at least 16. Use
+`display.layout: "scroll"` when keeping labels readable requires a figure
+wider than its viewport. Scroll media currently renders at 640 px regardless
+of a wider source canvas, so include that actual width rather than only the
+canvas width. Any figure with `display.maxWidthPx` must use inline layout and
+include its actual mobile media width. A prose-column measurement does not
+cover a narrower exercise container.
+
+Use semantic color roles rather than literal product-theme colors:
+
+- `ink`
+- `muted`
+- `accent`
+- `accentSoft`
+- `grid`
+- `paper`
+
+The renderer converts these roles to `--ld-figure-*` CSS variables. This keeps
+the same SVG usable in neutral, accent, and print themes.
+
+## Assertions
+
+Use assertions for every relationship required by the exercise:
+
+- `distance`
+- `equalDistance`
+- `collinear`
+- `parallel`
+- `perpendicular`
+- `pointOnLine`
+- `pointOnCircle`: `point`, `center`, `radius`, optional tolerance
+- `centralSymmetry`: `center` plus every defining opposite point pair in
+  `pairs`; each pair's midpoint must equal the declared center
+- `inside`: `point` plus the containing polygon `container`; use for points,
+  labels, or other anchored items that must remain inside a set, panel, or
+  frame. In a set-relation figure, every visible member point and every
+  `*-label` requires its own `inside` assertion. The anchor and the rendered
+  footprint must both have clear boundary space. Name a set polygon
+  `<group>-set`, its points `<group>-<index>`, and labels
+  `<group>-<index>-label`; the validator derives mandatory coverage from those
+  ids instead of trusting a hand-written assertion list.
+- `connects`: `arrow`, `from`, and `to`; use for arrows or edges whose
+  endpoints are part of the source meaning
+- `gridDimensions`: `grid`, `columns`, and `rows`; the finite grid bounds must
+  align with its offsets and steps, and the asserted cell count must match
+- `displacement`: `from`, `to`, `dx`, and `dy`; use for source-bound horizontal
+  and vertical point relationships on a grid
+- `objectCount`
+
+Assertions validate source-space mathematics before rendering. The render
+report separately validates label overlap and clipping. When a source-inventory
+group declares `gridDimensions`, every mapped grid must have that assertion;
+when it declares `pointRelationships`, every mapped point must appear in at
+least one mapped multi-point assertion whose point references are wholly
+inside that inventory group. A relationship among other points or to an
+unmapped point does not cover the missing source point. `objectCount` is never
+a substitute for either check.
+
+When the description or authoritative text says a figure is centrally
+symmetric or invariant under a half-turn, `centralSymmetry` is mandatory.
+Do not use an opaque `svgPath` for the claimed symmetric object: construct its
+defining vertices deterministically and include all opposite pairs.
+# Figure quality gate
+
+Start with purpose: can a student use this figure with the edition question and
+still be misled about the mathematical relationship?
+
+## Deterministic checks
+
+- source PNG hash is current
+- For deterministic `source.authoredBasis` diagrams, compare the actual image
+  with the written task and declared derived geometry instead of a source PNG.
+  The spec hash binds this provenance; intentional alternative geometry is not
+  a claim of original-source fidelity. All other applicable checks still run.
+- all object ids and references resolve
+- the independent source inventory resolves to visible objects; for new and
+  reused figures alike, compare its completeness against the original source
+  pixels, never against the already-generated object list or SVG
+- every source inventory assertion ID resolves
+- every finite source grid has a `gridDimensions` assertion, and every
+  source-bound point relation has an executable relationship assertion such as
+  `displacement`; every mapped point is covered by a mapped relation wholly
+  inside its source-inventory group, so another point's or an outside point's
+  relation cannot substitute; `objectCount` cannot satisfy either requirement
+- every required mathematical relationship has an assertion
+- every centrally symmetric object has complete opposite-point pairs whose
+  midpoint is the declared center
+- every set-relation member point and member label has an `inside` assertion;
+  omission is a validation failure, and the rendered footprint has clear
+  space from the set boundary
+- every semantic arrow or edge has a `connects` assertion
+- preserve shared frames: source elements that use one axis, grid, number line,
+  or coordinate system remain in one deterministic frame even when they are
+  labelled as separate subparts
+- preserve every instructional grid row, column, offset, and road/cell gap;
+  a blank frame is not a valid substitute for a source lattice
+- assertions pass within declared tolerance
+- visible labels use English
+- output hash matches render metadata
+- byte-identical regeneration is determinism evidence only, never source-fidelity evidence
+- render metadata names only the durable final output, never a preview or ticket-temp path
+- every hybrid image reports centered contain fitting with preserved aspect ratio
+- no label collision, clipping, missing point, or missing object
+- text is at least 16 px at every declared product width and on the final
+  offline/product surface after applying the SVG screen transform
+- every scroll-layout figure can reach its horizontal scroll end
+- SVG colors are semantic CSS variables and remain legible in neutral, accent,
+  and print themes
+- finite geometry fits the canvas, including empty table cells and border lines;
+  a label-only pass is insufficient
+
+## Visual checks
+
+- compare the full edition text, original PNG, and rendered output together
+- verify counts, signs, units, relative positions, equal intervals, and labels
+- verify half-unit scales, every subfigure, every chord endpoint, every table
+  column and every directed self-loop. When repairing given data, also repair
+  dependent answer keys through `ld-s10y-answer`.
+- verify no answer is revealed
+- verify no cultural text or symbols leaked from the source
+- inspect at full resolution and at normal app width
+- reject black or visually broken raster rendering
+- for hybrid output, inspect the artwork and SVG overlay as separate layers as
+  well as together; reject alignment that only works in a flattened preview
+
+## Review evidence
+
+The review lives in a separate `ld-s10y-image/review@1` file. It must record
+`status: pass` and hashes for the source image, current FigureSpec, render or
+generation evidence, and every durable output. A spec, render, generation, or
+output change invalidates the review.
+
+## Repair loop
+
+Allow one targeted repair:
+
+- wrong mathematics: repair FigureSpec coordinates or assertions
+- overlap: repair label constraints or canvas composition
+- wrong artwork: regenerate only the artwork
+
+If the second result still defeats the instructional purpose, mark
+the review evidence as `fail` and stop. Never hand-edit renderer output.
+---
+name: intentfold
+description: Load for ticket-based product development with the .intentfold harness, from initialization and filing through development, handoff and closure; also for multi-ticket delivery planning with cap5 or supervising one or more workers with cap6. Triggers include "intentfold", "cap1/cap2/cap3/cap3setup/cap3handoff/cap4/cap5/cap6", "开发这个工单", "准备开放开发", "开发完成，做 handoff", "建个工单", "拆单安排并行", "监督工人直到完成", and charter-directed deployment of merged code.
+---
+
+# intentfold
+
+One ticket at a time **per developer session**; a supervisor can coordinate several. `.intentfold/`
+holds what persists, the ticket backend — **plane or linear**,
+whichever `project.json` names — holds the tickets. The ticket's acceptance criteria define acceptance;
+the project's required mechanical checks still apply.
+
+The release version lives in `intentfold.json` (`version`). Usage declarations continue to record
+the exact Git commit SHA, not this release number.
+
+**IntentFold** is the harness brand for three independent controls a project may name in
+`charter/engineering.md`'s `## Tools`: an IntentFold process declaration, an overlap check before rebasing,
+and an optional cap4 takeover gate before merging. The declaration records the ticket, repository,
+and IntentFold version. The verifier checks the committed `handoff.md` directly from the PR head. It
+is process evidence, not employee identity or proof that a binary ran.
+The overlap check detects when upstream and ticket changes touch the same code region. The ticket
+developer resolves these overlaps and Git conflicts, verifies the result, and continues without an
+additional team-leader approval. A cap4 takeover gate remains pending during
+normal PR and review events, then releases the current head only after cap4 has armed auto-merge and
+explicitly dispatched the trusted verifier.
+
+## Specification first
+
+During planning and implementation, **do not use existing unit tests, for example unit tests
+under `tests/`, as a reference for designing or changing code**. Do not infer requirements
+from their assertions or preserve an obsolete implementation just to satisfy them. Design
+from the approved ticket, Charter and valid external contracts; refactoring and optimization
+remain available within that scope.
+
+Run the project's required unit tests **after implementation is ready for verification**.
+When one fails, judge both the test and the code against those same specifications:
+correct an outdated test or an assertion tied only to replaced implementation details;
+correct the code when it violates a valid requirement. Do not weaken valid assertions,
+delete tests merely to get green, or infer expected values from the new code's output.
+
+Examples:
+
+- **Correct the test:** an approved refactor replaces per-item lookups with one batch
+  lookup while preserving required results and error behavior. An old unit test in
+  `tests/` asserts one private-helper call per item. Replace that obsolete assertion
+  with the required behavior; do not restore the old call pattern.
+- **Correct the code:** the contract forbids reading another user's private record.
+  After a refactor, a unit test catches such a read succeeding. Fix the authorization
+  regression; do not change the test to expect success.
+
+This does not prohibit reading production code, running the app, lint/type checks, or
+consulting authoritative acceptance and API-contract specifications. Classify by purpose,
+not directory name: `tests/` may also contain those specifications. Required checks still
+must pass; this rule changes what drives implementation, not the acceptance standard.
+
+## Proposed solutions
+
+A developable ticket's `## Proposed solution` is advisory, not another requirement.
+Read it before choosing the implementation route and prefer its applicable parts rather
+than starting over. Check its assumptions against the actual system; adapt or replace it
+when incomplete, outdated, infeasible, or unnecessarily complex.
+
+Scope, explicit constraints, acceptance criteria and the Charter remain binding. Do not
+silently demote an explicit user requirement into a suggestion. Explain material departures
+briefly in the existing plan, draft or handoff; no separate report or extra approval round
+is needed merely to change a proposal. A proposal neither replaces an agreed approach nor
+skips the normal alignment step, and matching it is not an acceptance criterion.
+
+## Capability freshness gate
+
+Before executing **any** IntentFold capability — cap1, cap2, cap3, cap3setup, cap3handoff, cap4, cap5, or cap6 —
+run this once for the current capability invocation:
+
+```bash
+skillhost update narrative-skills --agent <current-agent>
+```
+
+Use the current runtime's SkillHost agent name (`codex`, `claude`, `opencode`, `copilot`,
+`openclaw`, or `hermes`). If SkillHost is unavailable or the update fails, stop and report the
+failure; do not continue the capability with a stale skill. After a successful update, re-read the
+active SkillHost-linked `intentfold/SKILL.md` and the selected capability reference before
+continuing. That re-read does not trigger a second update in the same invocation.
+Recurring cap6 inspections and resumes of that inspection loop are the same invocation,
+not reasons to update the skill at each inspection. A newly invoked child capability keeps its own gate.
+
+## Start here — what is being asked?
+
+**Read this table before anything else and go where it points.** Not every request that mentions this
+skill is one of its capabilities, and forcing one onto the nearest capability is the most common
+way this skill gets misused.
+
+| The human wants… | Go to |
+|---|---|
+| a `.intentfold/` harness in this repo | **cap1** — `references/capability-1-init/init.md` |
+| a ticket filed | **cap2** — `references/capability-2-ticket/create-ticket.md` |
+| IntentFold to develop a ticket autonomously, end to end — including a generic "开发这个工单" | **cap3** — `references/capability-3-develop/dev.md` |
+| the required IntentFold setup before vibe coding or another development skill | **cap3setup** — `references/capability-3-setup/setup.md` |
+| completed open-development work verified and handed off | **cap3handoff** — `references/capability-3-handoff/handoff.md` |
+| a verified ticket merged, landed, closed | **cap4** — `references/capability-4-close/close.md` |
+| a goal organized into the necessary tickets, parallel groups and dependencies | **cap5** — `references/capability-5-orchestrate/orchestrate.md` |
+| one existing ticket/worker, or an epic's workers, supervised through completion | **cap6** — `references/capability-6-supervise/supervise.md`; no mandatory cap5 or epic |
+| **to deploy** — "重新部署", "发布一下", "deploy this" | **Not a capability. Do not file a ticket.** See *Deploying on its own* below |
+| the app run, a page looked at, a log read | **Nothing here.** Follow `charter/operations.md` and do it |
+| a question answered about this project | **Nothing here.** Read `charter/`, answer, stop |
+| a code change, with no ticket for it | **cap2 first**, then cap3 or cap3setup. This is the case the no-ticket rule is for |
+
+When the request fits none of these, say so and ask — **do not map it onto the closest capability.**
+
+## Supervised delivery
+
+For cap5/cap6 and their explicitly supervised children, read
+`references/common/supervision.md`. It is the scoped override for finish, Grill, recoverable
+stops, the delivery decision and next-ticket selection below. Defaults are **no recurring
+monitoring, delegated ordinary decisions, and `finish: review`**: develop and verify, then
+keep the preview ports running for human review. Requested monitoring runs every **10 minutes**;
+automatic merge/closure or deployment requires its own explicit authorization.
+Unsupervised cap1-cap4 behavior is unchanged.
+
+cap5's arrangement must pass `references/gate-5-orchestrate/gate.md` inline before filing
+or dispatch. cap6 reuses the existing handoff decision, not a new review pipeline.
+Session names, model resolution, bootstrap and opt-in recurring continuation live only in
+`references/common/supervision-sessions.md`.
+
+## Deploying on its own
+
+Deploying already-merged code is **not a product change and needs no ticket**. `charter/operations.md`
+says it in its own words: a ticket ends at merge, and deploying is a separate, deliberate act. Three
+steps, and this skill contributes nothing else:
+
+1. Read `charter/operations.md`, including its `## Redlines`. A first-time or destructive deploy needs the
+   human; a routine redeploy of an already-deployed service does not.
+2. Do exactly what `operations.md` says. No assumed platform, no invented command. If it does not say how,
+   that is a stop.
+3. **Confirm it actually took** by its post-deploy check — hit the URL, look at the response. *"The
+   deploy command exited 0"* is not confirmation.
+
+The same three steps run inside cap4 for an `auto-deploy` ticket. Standalone, they are the whole job.
+
+## Why this skill is shaped the way it is
+
+The point of this skill is **speed with a trace**, not assurance. Autonomous cap3 has exactly one
+thinking step (a grill, before the code); cap3setup instead establishes the required boundary and
+leaves the development method open. Both routes have one IntentFold proof step in cap3handoff: run
+the product, check the AC, and look at the result once through the human's request. Everything
+else is just a record so a human can see later what happened. **No repeated review passes, no
+regression suite added by the workflow, no timeline, no ADR log.** Multi-ticket coordination belongs to cap5/cap6, not a developer's ticket. If you find
+yourself about to verify something a second time, stop — that is the thing this skill exists to not
+do.
+
+What this skill refuses is checking that is **frequent, repeated, and scattered everywhere** — the
+same question asked at five points because nobody could say which point was the real one. It does not
+refuse checking. **At a major joint, check.** The joints are few and named: before development starts
+(cap3's grill and route lookup, or cap3setup's boundary briefing), at the cap3handoff proof step, and
+before an irreversible act in cap4. A check at a joint costs seconds and catches what cannot be
+undone afterwards; the same check sprinkled through every step is the bureaucracy this skill exists
+to avoid. Judge a proposed check by **where** it sits, not by whether it is a check.
+
+## Persistent layer
+
+```text
+.intentfold/
+  readme.md            # session entry: what to read, in what order
+  project.json         # project/main/deploy/tickets + each service's main port and ticket prefix
+  charter/             # human-owned intent — read it; write it only when the human asks
+    product.md         #   product purpose, users, value, non-goals
+    engineering.md     #   architecture, development rules, checks, and landing
+    ui.md              #   design system and interface constraints
+    operations.md      #   local runtime, acceptance evidence, deploy, and operations
+  tickets/<ticket-id>/ # ticket.json (mode/stage/finish/branch/base/ports)  draft.md  plan.md  ac.md
+                       # grill.md  handoff.md  intentfold-usage.json  rework.md  tmp/
+  tmp/                 # project scratch
+```
+
+`tmp/` directories and env files are git-ignored; everything else is committed.
+
+In commands, `<intentfold-skill>` means the loaded skill directory containing this `SKILL.md`.
+
+The four-file Charter contract is exact. A project that still has `charter/readme.md`, `dev.md`,
+`arch.md`, `runbook.md`, `qa.md`, or `devops.md` has not migrated; cap3 and cap3setup stop rather
+than interpreting both layouts or combining human-owned files automatically.
+
+## The charter's shape — four sections, and how each is used
+
+Every charter file is made of these four, always in this order and always all four. They are not
+strength levels — they are four different things to state, and **each is consumed at a different
+moment, in a different way**. `.intentfold/readme.md` carries the full rules and the tests for
+deciding where a line goes; this is what the flow needs to know:
+
+| Section | States | The flow's use of it |
+|---|---|---|
+| **Contract** | what the artifact is | **referenced while authoring** — built from, never audited against at the end |
+| **Tools** | commands, paths, ports, URLs, viewports | **looked up at the moment of acting**, run as written; never recalled from earlier in the run, never restated into a plan or a ticket |
+| **Guidance** | how to do the work | **followed while writing**, judged by the author. **Nothing in this skill reviews a diff against Guidance** — that is deliberate, and adding such a review is the bureaucracy this skill refuses |
+| **Redlines** | the boundary | **looked up before the action**, table-style, never judged |
+
+**All four headings appear in every charter file**, in this order; a section with nothing to say
+keeps its heading and stays empty. An empty section states that the dimension has nothing of that
+kind — a missing heading would instead read as "somebody forgot", and it would break the addressing
+the capabilities rely on. Redlines live in the file whose dimension they belong to; there is **never
+a separate redline file**.
+
+**A rule is worth more mechanised than emphasised.** Where a Contract fact or a Redline can be
+checked by a command, the charter names that command in `Tools` and the build fails — that beats the
+same rule written more forcefully, and it is why the flow needs no review pass.
+
+**Where the flow touches each section**, once each, and nowhere else:
+
+- **cap3 step 1 or cap3setup step 1** reads `Contract` + `Guidance` as the constraints the ticket is
+  built under.
+- **cap3 step 4** looks the planned route up against `Redlines` — before any code exists, because an
+  approval collected afterwards is not an approval.
+- **cap3setup step 5** briefs the relevant `Redlines` before its open development phase, since
+  IntentFold does not own a route to look up.
+- **cap3handoff** reads `Tools` at the moment of acting (start the product, run the checks) and runs
+  the project's mechanical defence once before the handoff.
+- **cap4** runs the mechanical defence once on the final branch only when rework or synchronization
+  requires it, as its close reference specifies. It reads `engineering.md`'s PR commands at the
+  moment it uses them, and a deploying ticket reads `operations.md`'s `Tools` and `Redlines` at the
+  moment of deploying.
+
+Nothing reads the charter to audit finished work. That is the duplication this arrangement removes.
+
+**Requirements stay authoritative in the ticket backend** — read the ticket live each time through
+**n-plane** or **n-linear** as `project.json` `tickets.system` says. There is no `req.md`. `ac.md` is
+only the executable check plan and must match the live acceptance criteria. The routing, delegation
+rule and per-backend content language are in `references/common/ticket-backend.md`; read it before the
+first ticket read or write of a run.
+
+## Ticket types
+
+Set by the human when the ticket is filed — or, for a ticket the human wrote by hand in the backend's
+UI, inferred once from its prose when cap3 or cap3setup structures it
+(`references/capability-2-ticket/create-ticket.md`, "A ticket someone wrote by hand"). **The agent
+never changes a type** — in particular never promotes an `express` ticket into the full flow because
+the work turned out bigger. If a type looks wrong, say so and stop; the human re-decides.
+Cap5 may select the parent/child types under its explicit orchestration delegation, as cap2 describes.
+
+| Type | What it is | Worktree | Autonomous `plan.md` / `ac.md` | Autonomous grill | Proof | `handoff.md` |
+|---|---|---|---|---|---|---|
+| **story / enabler / fix** | shipped-code work | yes | yes | yes | playwright AC check | yes |
+| **chore** | **changes no code** — generating data, changing a configuration, a runtime or dashboard operation | yes | no | no | whatever settles its criterion — usually a command, the running product when only it can show it | yes |
+| **express** | the human wants to change something **directly on main**, interactively; unavailable when the project requires PRs or IntentFold | **no** | no | no | playwright AC check | yes |
+| **seed** | an idea or note, never developed | no | no | no | none | no |
+| **epic** | a multi-ticket delivery outcome and coordination, not code | no | no | no | overall outcome using child evidence | no; backend closing record |
+
+cap3setup writes `ac.md` but no IntentFold `plan.md` or grill; the open development middle chooses
+its own planning and interaction method.
+An epic stays in the backend: cap5 arranges it, cap6 supervises it, cap4 closes its overall
+outcome without Git artifacts. It is not a developed type and never enters cap3's worktree flow.
+
+**Autonomous cap3 has one alignment with the human before any code, in one of two orders.** When the human opens the run
+with *"discuss the approach first"*, cap3 talks it through and records the agreed approach in
+`draft.md`, then plans from it — and does not grill. Otherwise it drafts `plan.md` / `ac.md` first and
+grills them. Exactly one of the two runs; a draft is what the human reaches for when the ticket is
+unclear, is wrong, or when they already know how they want it built.
+
+Every developed type ends in a `handoff.md` — that is what makes the work readable later, and it is
+the one artifact none of them skip. A **seed** gets no `tickets/<id>/` directory at all and lives only
+in the ticket backend.
+
+`chore` gets a worktree like any other work even though it writes no code: its output still gets
+committed, and an isolated checkout is what keeps a half-done configuration change out of main.
+
+## The capabilities
+
+Paths are in the routing table above; this is what each one is for.
+
+1. **cap1 Initialize** — "初始化 intentfold". Lands `.intentfold/` in this repo and pushes it.
+2. **cap2 File a ticket** — "建个工单". The only birth channel for a product change.
+3. **cap3 Autonomous development** — the complete built-in path: the same required opening boundary
+   as cap3setup, IntentFold's own plan / grill / implementation, then the cap3handoff proof boundary.
+3setup. **cap3setup Open development setup** — creates the worktree, `ticket.json`, `ac.md`, and
+   boundary briefing, then stops. The middle may be ordinary vibe coding with the current agent or
+   any other development skill. IntentFold does not own that middle.
+3handoff. **cap3handoff Verify and hand off** — accepts the committed result of autonomous or open
+   development, runs the AC and mechanical defence, writes `handoff.md` and the usage declaration,
+   then finishes per the effective `finish` recorded in `ticket.json`. It does not merge or close the
+   ticket; that remains cap4.
+4. **cap4 Close a ticket** — "合了这个工单", "关掉这个工单". Rework record → rebase → merge → stop the
+   service → sync `.env` → deploy if requested → close → clean up → update the main checkout. **Every irreversible action lives
+   here.** cap3 calls it directly in an auto mode; in the default 验证模式 the human's approval usually
+   arrives in a later session, and this is what that session runs.
+5. **cap5 Orchestrate delivery** — understand/reuse, minimal decomposition, epic and child tickets,
+   parallel groups and actual dependency conditions. Planning alone does not start workers.
+6. **cap6 Supervise execution** — bind current work; default to development and a running preview
+   for human review, without recurring monitoring. When requested, inspect every 10 minutes,
+   correct drift and advance only to the authorized finish, including closure/deployment if approved.
+
+## Finish mode — declared on the ticket when it is filed
+
+Carried as the ticket's `Finish` row. **Default is 验证模式, including cap6** — a ticket that says
+nothing waits for the human after verification. Monitoring alone does not change its finish;
+supervised delegation uses `references/common/supervision.md`.
+
+- **`review` — 验证模式 (default)** — develop, check the AC, then **leave the service running** and
+  send cap3handoff's review message: the URL, what to check and where, and what was decided for
+  the human. Do not merge, do not close. Wait.
+- **`auto-merge` — 自动合并** — the human said so when filing. Develop, check the AC, merge, sync
+  `.env` back, clean up, close, pick the next ticket and keep going without asking.
+- **`auto-deploy` — 自动部署** — auto-merge, **then deploy** per `charter/operations.md` and confirm the
+  deploy actually took, then close and continue.
+
+A human instruction when cap3 or cap3setup starts overrides the row for that development run. Resolve
+the effective value once, record it as `ticket.json` `finish`, and leave a ticket comment when it
+differs from the row. The description itself is never amended.
+Supervised next-ticket selection is limited to assigned, dependency-ready work.
+
+## Hard rules
+
+- **No change to the product without a ticket.** File one first (cap2) if the user asks for a code
+  change and there is none. **Scope: the repo's shipped content.** Operating what is already landed is
+  not a product change and needs no ticket — deploying merged code, running the app, reading a log,
+  answering a question about the project, looking something up in the charter. When in doubt: does it
+  add a commit to the product? Then it needs a ticket.
+- **One backend, and it decides the language.** `project.json` `tickets.system` picks plane or linear,
+  and every ticket read and write goes through that skill — never a hand-written API call. All ticket
+  text, comments included: **linear → English, required; plane → Chinese by default**, English only
+  when the human explicitly asks. See `references/common/ticket-backend.md`.
+- **Autonomous cap3 grills once, before the code, on story / enabler / fix only** —
+  `references/common/grill.md`. Persist the complete question batch, recommendations and reasons
+  in the ticket's `grill.md` before asking or self-adjudicating; record answers in that same file.
+  cap3setup has no IntentFold grill because its development middle is
+  open. `chore` and `express` have no grill. The grill's coverage is the same in every mode;
+  default autonomous cap3 asks the human only the questions that pass the grill's bar, one line
+  each, and continues without stopping when none do;
+  the agent self-adjudicates **only** when the ticket's `Grill: self` row says the human authorized
+  it, and stops when it hits a question only a human can answer. The explicit supervised delegation in
+  `references/common/supervision.md` also grants self-adjudication within its scope.
+- **Irreversible or externally-consequential actions need the human.** Creating or deleting cloud
+  resources, publishing publicly, sending mail or messages to real recipients, deleting or polluting
+  production data, spending money. Route around it, or stop and hand it over — never approximate and
+  never decide on the human's behalf. This holds on every project; it is not something a charter
+  grants away.
+- **Redlines are lookup, and they live in the charter file they belong to** — as that file's closing
+  `## Redlines` section, which **every charter file carries, empty when there is nothing to forbid**
+  (the shape is `.intentfold/readme.md`'s; it is stated there and nowhere else). `charter/ui.md` owns
+  the token-registry one, `charter/operations.md` the deploy ones, and so on. **There is never a separate
+  `redline.md`**: a cross-cutting file is organised by severity while the rest are
+  organised by subject, so it attracts every important rule and fills with copies of them. The
+  prohibitions that hold on every project — destructive external writes, irreversible production data,
+  spend — are hard rules here instead. Check them before acting; do not ask "is this a big deal?", check
+  whether the action is listed. Each entry says whether it is forbidden outright or needs the human's
+  approval.
+- **The charter is binding, not advisory.** `charter/product.md`, `charter/engineering.md`,
+  `charter/ui.md`, and `charter/operations.md` are **obeyed**. They are not style suggestions,
+  defaults to weigh against convenience, or something a deadline overrides. When the ticket cannot
+  be done without breaking one of them, that is a **stop**: say which rule, say why the ticket needs
+  it broken, and hand it to the human. Deciding it yourself is never available, and "the charter
+  didn't literally cover this case" is not permission — ask.
+- **The charter binds the agent, not the human.** It exists to stop the agent changing things on
+  its own, not to stop the human changing them. When the human explicitly asks for something the
+  charter rules out, that request is the authorization to change the charter: amend the rule in
+  the same ticket so it matches what was asked, and say in the ticket which rule changed and why.
+  Do not stop to ask for the charter change a second time, and do not file it as "confirm before
+  changing the charter". The stop above is for conflicts the agent's own route or inference
+  creates, never for what the human asked for. The every-project hard rules (destructive external
+  writes, irreversible production data, spend) still need their own explicit approval.
+- **Charter is human-owned; report drift, do not quietly fix it.** The agent may edit `charter/` when
+  the human asks for that edit, and only for what they asked. A human request that only works if a
+  charter rule changes is such an ask, for that rule. What stays forbidden is editing it on
+  the agent's own initiative — deciding mid-ticket that a rule is inconvenient and rewriting it, or
+  "correcting" the charter to match code the agent just wrote. Prove the drift, say what is stale,
+  and let the human decide what the charter should say. The document that constrains every ticket
+  must not be the document every ticket rewrites to suit itself. The human's preferences are read
+  from earlier tickets' grill answers and rework asks (`references/common/grill.md`) and are not
+  written into the charter or any other file.
+- **IntentFold usage and overlap resolution stay separate.** Usage records the ticket identity,
+  repository, and IntentFold version once after handoff. It does not identify the PR author, duplicate
+  Git's content hashing, bind a Git tree, or include an overlap report. The overlap check compares
+  upstream and ticket code regions; the ticket developer owns resolution and verification, regardless
+  of PR author. IntentFold does not require an additional team-leader approval for this work.
+- **Cap4 takeover is not a signature and does not duplicate usage evidence.** When a project
+  configures it, normal PR and review events leave the required integrity status pending. Cap4 reads
+  the current head, arms auto-merge first, then dispatches the trusted verifier for that exact head.
+  A new head invalidates the authorization. The takeover proves only that cap4 controls the merge;
+  its resumable post-merge steps still establish backend closure and cleanup.
+- **Legacy IntentFold machinery is a stop.** If `charter/engineering.md` still names a comment-based approval
+  override, CI private-key signing, a CI-signed full-tree manifest, or a close-marker PR, report the
+  exact stale entries and wait for a human-authored charter migration. An overlap detector, cap4
+  takeover dispatch, and combined `intentfold / integrity` check are current controls, not legacy ones.
+  If an existing project still enforces team-leader overlap approval, report that policy mismatch for
+  an explicitly authorised migration; do not bypass its required check or fabricate an approval.
+- **Acceptance follows the AC**, checked against the running product, alongside the project's
+  existing required checks. Do not add unrelated regression or coverage work. Apply
+  **Specification first** above when unit tests fail. "The code implements it" is never evidence.
+- **Cap4 closure conditions are a closed set.** AC must pass, and only the existing explicit
+  conditions in `references/capability-4-close/close.md` apply. Never add a closure condition,
+  promote an optional check into a requirement, or infer a gate from a tool's default behavior.
+  Cap4's reference owns the waiting and commit rules; it is not a new verification round.
+- **No fake progress.** No TEMP markers, no degradation branches, no mock standing in for a failed
+  external dependency. A dead credential or unreachable service is a stop, not a workaround.
+- **Ticket-owned `.env` key changes sync back to the main checkout on every merge**, with the old file
+  backed up first. Preserve unrelated main-checkout values. Never commit env files. See
+  `references/common/worktree-env-port.md`.
+- **A dev server never outlives the run that started it.** Stopped at close, and stopped when a run
+  stops for any other reason. The only exception is 验证模式, where it is deliberately left running
+  for the human, or the short supervised delivery checkpoint described in the shared contract;
+  then cap4 kills it. Kill by the port `handoff.md` records as actually used,
+  not the computed one, and confirm the port is free.
+- **cap4 first checks whether the PR is already merged, then rebases the ticket branch onto freshly
+  fetched `origin/<main>` and lands it through the project's pull-request workflow.** Push the
+  rebased ticket branch explicitly to its remote branch with `--force-with-lease`. When the project
+  configures cap4 takeover, arm auto-merge for the exact current head before dispatching
+  authorization for that head; otherwise use the project's named required-check and merge commands.
+  Never move local `main` as part of another ticket.
+  The only exception is an express ticket in a project whose charter explicitly has no PR or
+  IntentFold requirement; cap4 handles that local-main route separately.
+- **The ticket developer owns overlap and conflict resolution.** When configured, cap4 runs the
+  overlap detector before rebasing onto current remote main. Overlap is an inspection signal, not an
+  approval gate. Resolve using both branches' intent, preserve unrelated upstream changes, verify
+  affected criteria, and continue cap4 without an additional team-leader approval. See cap4 step 3.
+- **Unresolvable intent is a stop, not every Git conflict.** Do not blindly select ours or theirs.
+  If the intended combined behaviour cannot be established, abort the rebase, retain the branch and
+  worktree, and ask the human with the conflict evidence.
+- **IntentFold usage is recorded once after the handoff is complete.** The repository verifier checks
+  the ticket, repository, IntentFold version, and committed `handoff.md`. It does not require
+  employee registration, an SSH key, or equality between the declaration creator and the PR author.
+- **Never `rm -rf`.** Worktree deletion is `git worktree remove`'s job; generated artifacts worth
+  keeping are **moved** out, not removed. Recursive deletes are unnecessary here and are commonly
+  blocked by local safety policy anyway.
+- **`handoff.md` freezes at the first-delivery commit.** Commit each human- or authorized
+  supervisor-requested rework round once, using that ask as the commit message. Do not combine
+  separate requested rounds into one commit. Cap4's own incidental changes and required records
+  are different: avoid new commits where possible, otherwise batch them into one final commit,
+  not one per workflow step. Reconstruct `rework.md` **once** at close from the diff since first
+  delivery. No per-round bookkeeping artifact. Never edit a frozen handoff to keep it current.
+
+## Stop conditions
+
+For supervised work, first apply `references/common/supervision.md`: a repo-correctable
+failure or ordinary design question stays within the delegation. A coordination checkpoint
+goes to the next inspection only when monitoring is active; otherwise report unresolved
+blockers in the worker's session, not to an absent supervisor. Only the affected step waits;
+other authorized work continues. Necessary checks still must pass. The preservation rules
+below also apply to such checkpoints.
+
+**When to stop:** an external premise failed; a redline blocks the only route; self-adjudication hit a
+question only a human can rule; the AC still fails after three attempts; an unresolved conflict; a
+required-check failure.
+
+**What stopping looks like — the same every time**, so a later session finds a known state:
+
+- Leave a ticket comment with the cause and the evidence.
+- **Ticket stays In Progress.** It is not done and it is not abandoned.
+- **Worktree and branch stay.** They are what a resumed run picks up; deleting them is what makes the
+  work unrecoverable.
+- **Dev server stops**, port confirmed free.
+- Say plainly in the worker session what is left where; an active cap6 monitor reads that
+  checkpoint. Without monitoring, report directly to the human.
+
+## Partner skills
+
+**n-plane** *or* **n-linear** — whichever backend `project.json` names, for every ticket read and write —
+and **n-grill** (the grill's coverage) are used by the flow itself. Deployment has no assumed
+tooling — follow whatever `charter/operations.md` says; **n-easyapp** is used only when that file
+or the human names it.

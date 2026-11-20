@@ -1,0 +1,181 @@
+"""Inspect existing hash bindings, exact affected delta and SVG XML; never render."""
+
+import hashlib
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+ROOT = R / ".tmp/resume182-6-8a-n10-fig25-review3695-FIRST"
+WORK = ROOT / "AFFECTED-leaders2"
+AUTHOR = R / ".tmp/resume182-6-8a-n10-fig25-author3695-FIRST"
+NEW = AUTHOR / "AFFECTED-numeric-labels1/technical-layout2"
+assert Path.cwd() == R
+
+
+def load(p):
+    return json.loads(Path(p).read_text())
+
+
+def bind(p):
+    p = Path(p)
+    if not p.is_absolute():
+        p = R / p
+    assert p.is_relative_to(R)
+    return {"path": str(p), "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+
+
+def current(record):
+    actual = bind(record["path"])
+    assert actual["sha256"] == record["sha256"], record["path"]
+    return actual
+
+
+author_binding = bind(NEW / "render-ready.record")
+assert author_binding["sha256"] == "e568114ed1bfdda3a603e0093ccbb14ed9780ca86190d6115b060ea8e2f8ab8b"
+author = load(author_binding["path"])
+first_binding = bind(ROOT / "ready.record")
+assert first_binding["sha256"] == "ad3caeadc5d09028be323f1b7d1d6c7dda22c0deaf58e2b1a0e6f5ed7b2bf6bb"
+first = load(first_binding["path"])
+assert first["status"] == "HOLD" and len(first["actualViewCalls"]) == 2
+assert first["width640Preview"]["visuallyViewed"] is False
+hold_binding = bind(ROOT / "fig-25.hold.json")
+assert hold_binding["sha256"] == "c4902641d6c084635797d7bf4ca62624d055d1cc3b73dcdbc9c447aeaa4c6d0c"
+gate_binding = bind(ROOT / "AFFECTED-numeric-labels1/review-gate.record")
+assert gate_binding["sha256"] == "c51ffae3af0d3f1adf2ca4607b67271e1e2467b31e7423ac45599b88fffd2b8a"
+
+bindings = {
+    key: current(author[key])
+    for key in (
+        "spec", "svg", "render", "nativePng",
+        "width640Preview", "capture", "captureScript", "sourceImage",
+    )
+}
+old = load(current(first["spec"])["path"])
+new = load(bindings["spec"]["path"])
+targets = (
+    ("fig-25-v-x-four-label", [14, 14]),
+    ("fig-25-g-x-four-label", [36, 14]),
+    ("fig-25-g-x-six-label", [38, 14]),
+)
+leaders = [label + "-modern-leader" for label, _ in targets]
+
+
+def added_only(before, after, expected):
+    old_ids = {item["id"] for item in before}
+    after_ids = {item["id"] for item in after}
+    assert after_ids - old_ids == set(expected)
+    assert old_ids <= after_ids
+    assert [item for item in after if item["id"] in old_ids] == before
+    return [item for item in after if item["id"] not in old_ids]
+
+
+added_objects = added_only(old["objects"], new["objects"], leaders)
+added_assertions = added_only(
+    old["assertions"], new["assertions"], [p + "-connects" for p in leaders]
+)
+added_inventory = added_only(
+    old["source"]["inventory"], new["source"]["inventory"],
+    ["fig-25-modern-numeric-leaders"],
+)
+assert {k: v for k, v in old.items() if k not in ("objects", "assertions", "source")} == {
+    k: v for k, v in new.items() if k not in ("objects", "assertions", "source")
+}
+assert {k: v for k, v in old["source"].items() if k != "inventory"} == {
+    k: v for k, v in new["source"].items() if k != "inventory"
+}
+objects = {v["id"]: v for v in new["objects"]}
+assertions = {v["id"]: v for v in new["assertions"]}
+for label, intersection in targets:
+    leader = objects[label + "-modern-leader"]
+    relation = assertions[leader["id"] + "-connects"]
+    assert leader["type"] == "segment" and leader["from"] == intersection
+    assert relation["type"] == "connects" and relation["arrow"] == leader["id"]
+    assert relation["from"] == leader["from"] and relation["to"] == leader["to"]
+assert "Modern addition, NOT source-image fact" in added_inventory[0]["description"]
+assert added_inventory[0]["objects"] == leaders
+
+render = load(bindings["render"]["path"])
+capture = load(bindings["capture"]["path"])
+assert current(render["spec"]) == bindings["spec"]
+assert current(render["output"]["svg"]) == bindings["svg"]
+assert render["status"] == "pass" and render["collisions"] == []
+for key in ("spec", "render", "captureScript"):
+    assert current(capture[key]) == bindings[key]
+assert current(capture["sourceSvg"]) == bindings["svg"]
+assert current(new["source"]["image"]) == bindings["sourceImage"]
+assert capture["status"] == "CAPTURE_COMPLETE_NOT_VISUAL_APPROVAL"
+assert capture["screenshotCalls"] == 2
+assert all(capture["closures"].values()) and capture["closureErrors"] == []
+for item, key, dimensions in zip(
+    capture["captures"], ("nativePng", "width640Preview"), ((1320, 1080), (640, 524))
+):
+    assert current(item["png"]) == bindings[key]
+    header = Path(bindings[key]["path"]).read_bytes()[:24]
+    assert header[:8] == bytes.fromhex("89504e470d0a1a0a")
+    assert (int.from_bytes(header[16:20], "big"), int.from_bytes(header[20:24], "big")) == dimensions
+    assert item["minMeasuredTextPx"] >= 16
+    for measurement in item["labelLeaderMeasurements"]:
+        assert measurement["givenAbscissa"] == round(measurement["associatedIntersectionAbscissa"])
+        assert measurement["glyphSideGapPx"] > measurement["leaderStrokePx"] / 2
+
+svg = ET.parse(bindings["svg"]["path"]).getroot()
+svg_labels = [
+    {"attributes": dict(node.attrib), "text": "".join(node.itertext())}
+    for node in svg.iter()
+    if node.tag.split("}")[-1] == "text"
+    and node.get("data-label-id") in [label + "-label" for label, _ in targets]
+]
+svg_leaders = [
+    {"tag": node.tag.split("}")[-1], "attributes": dict(node.attrib)}
+    for node in svg.iter()
+    if any(node.get("id", "").endswith("_ld-" + leader) for leader in leaders)
+]
+assert len(svg_labels) == len(svg_leaders) == 3
+result = {
+    "schema": "resume182-6/affected-leaders-existing-binding-delta-inspection@1",
+    "authorReady": author_binding,
+    "firstReady": first_binding,
+    "firstHold": hold_binding,
+    "priorPreparationGate": gate_binding,
+    "bindings": bindings,
+    "allFirstBytesCheckedUnchanged": True,
+    "oldObjectsLabelsAssertionsAndSourceUnchanged": True,
+    "delta": {
+        "addedObjects": added_objects,
+        "addedAssertions": added_assertions,
+        "addedModernInventory": added_inventory,
+        "otherChanges": [],
+    },
+    "captureBindingClosed": True,
+    "svgLabels": svg_labels,
+    "svgLeaders": svg_leaders,
+    "existingRenderStatus": render["status"],
+    "existingDisplayChecks": render["displayChecks"],
+    "existingCaptureMeasurements": capture["captures"],
+    "newImagesViewedByThisScript": 0,
+    "validatorCalls": 0,
+    "rendererCalls": 0,
+    "sourceMathTextPassReruns": 0,
+    "authorCountersPreserved": author["cumulativeAuthorCounters"],
+    "authorHistoricalFailuresPreserved": author["historicalFailures"],
+    "authorCandidateHistoryPreserved": author["candidateHistory"],
+    "cost": "unknown",
+}
+output = WORK / "binding-delta-inspection.json"
+with output.open("x") as stream:
+    json.dump(result, stream, indent=2)
+    stream.write("\n")
+print(json.dumps({
+    "inspection": bind(output),
+    "addedObjects": len(added_objects),
+    "addedAssertions": len(added_assertions),
+    "addedModernInventory": len(added_inventory),
+    "allOldContentUnchanged": True,
+    "captureBindingClosed": True,
+    "svgLeaderAttributes": svg_leaders,
+    "authorCounters": result["authorCountersPreserved"],
+    "authorHistoricalFailureKeys": list(author["historicalFailures"]),
+    "minimum640TextPx": capture["captures"][1]["minMeasuredTextPx"],
+    "imageViewsByScript": 0,
+}, indent=2))

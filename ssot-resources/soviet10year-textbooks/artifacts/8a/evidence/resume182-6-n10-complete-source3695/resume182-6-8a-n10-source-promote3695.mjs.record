@@ -1,0 +1,67 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const stage = '.tmp/resume182-6-8a-n10-assembly3695-FIRST';
+const from = `${stage}/artifacts/8a`;
+const to = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c2-s2-n10';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const sourceReady = JSON.parse(fs.readFileSync(`${stage}/metadata-sync.record`));
+assert.equal(sourceReady.status, 'CURRENT_SOURCE_READY');
+const index = JSON.parse(fs.readFileSync(`${from}/book.json`));
+assert.deepEqual(index.audit.errors, []);
+const lesson = JSON.parse(fs.readFileSync(`${from}/lessons/${id}/lesson.json`));
+const exercises = JSON.parse(fs.readFileSync(`${from}/lessons/${id}/exercises.json`));
+assert.equal(lesson.id, id);
+assert.equal(lesson.exercise_count, 7);
+assert.deepEqual(exercises.exercises.map(item => item.number),
+  ['131', '132', '133', '134', '135', '136', '137']);
+assert.equal(exercises.exercises.at(-1).group, '复习题');
+assert.deepEqual(lesson.figures.map(item => item.id).sort(),
+  ['fig-22', 'fig-23', 'fig-24', 'fig-25']);
+assert.ok(!fs.existsSync(`${stage}/source-promoted.record`));
+const paths = [];
+for (const page of ['0060', '0061', '0062', '0063']) {
+  for (const file of ['page.md', 'page.json', 'audit.json']) {
+    paths.push(`pages/${page}/${file}`);
+  }
+}
+for (const figure of ['fig-22', 'fig-23', 'fig-24', 'fig-25']) {
+  for (const suffix of ['png', 'svg']) paths.push(`figures/${figure}.${suffix}`);
+}
+for (const file of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  paths.push(`lessons/${id}/${file}`);
+}
+for (const item of paths) {
+  assert.ok(fs.existsSync(`${from}/${item}`), item);
+  assert.ok(!fs.existsSync(`${to}/${item}`), `Existing source must not be overwritten: ${item}`);
+}
+const oldIndex = fs.readFileSync(`${to}/book.json`);
+fs.writeFileSync(`${stage}/source-book-before.record`, oldIndex, { flag: 'wx' });
+const entries = [];
+for (const item of paths) {
+  const input = `${from}/${item}`;
+  const output = `${to}/${item}`;
+  const bytes = fs.readFileSync(input);
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  entries.push({ input, output, bytes: bytes.length, sha256: sha(bytes) });
+}
+fs.writeFileSync(`${stage}/source-promoted.record`, `${JSON.stringify({
+  schema: 'stemrobin-182/n10-source-promotion@1',
+  created: new Date().toISOString(), book: '8a', lesson: id, entries,
+  oldIndex: { path: `${stage}/source-book-before.record`, sha256: sha(oldIndex) },
+  sourceStatus: 'CURRENT_SOURCE_READY', inheritedOfficialPageAudits: true,
+  metadataValidation: '.tmp/resume182-6-n10-errata-contract3695-AFFECTED1/receipt.record',
+  inheritedAuditErrataCount: 'p62 audit reflects its last line-count run before label-erratum registration; no fabricated finalize rerun.',
+  completeSourceLessonOnly: true, incompleteSupplementaryLessonPromoted: false,
+  ancestorProjectionsPromoted: false, sourceImageViews: 0,
+  sourceOrMathReviewReruns: 0, unknownHistoricalBytesRecovered: false,
+  DBWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'N10_COMPLETE_SOURCE_PROMOTED', files: entries.length,
+  exerciseCount: 7, incompleteLessonsPromoted: 0, indexNotYetRebuilt: true }));

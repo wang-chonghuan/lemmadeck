@@ -1,0 +1,936 @@
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-232-        }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-233-        return pointValue(value)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-234-      }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-235-      const color = (value, fallback) => palette[value] || fallback
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-236-      const lineStyle = (object, fallback = palette.ink) => ({
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-237-        fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-238-        highlight: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:239:        strokeColor: color(object.stroke, fallback),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-240-        strokeWidth: object.strokeWidth ?? 3,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-241-        dash: object.dash || 0,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-242-        opacity: object.opacity ?? 1,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-243-      })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-244-      const addLabel = (object, at, text = object.label) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-245-        if (!text) return
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-246-        labels.push({
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-247-          id: `${object.id}-label`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-248-          at: pointValue(at),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-249-          text,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:250:          placement: object.labelPlacement || {},
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:251:          fontSize: object.fontSize || 28,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-252-          fontWeight: object.fontWeight || 600,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-253-          fill: color(object.labelColor, palette.ink),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-254-          textAnchor: object.textAnchor,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-255-          dominantBaseline: object.dominantBaseline || 'middle',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-256-        })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-257-      }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-258-      const createSegment = (id, from, to, style) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-259-        const segment = board.create('segment', [jsxPoint(from), jsxPoint(to)], {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-260-          id: `ld-${id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-261-          ...style,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-262-        })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-263-        elements.set(id, segment)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-264-        return segment
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-265-      }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-266-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-267-      for (const object of figureSpec.objects) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-268-        if (object.type === 'point') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-269-          const point = board.create('point', object.at, {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-270-            id: `ld-${object.id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-271-            name: '',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-272-            withLabel: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-273-            fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-274-            highlight: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-275-            visible: object.visible !== false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-276-            face: object.face || 'o',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-277-            size: object.size || 4,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-278-            strokeWidth: object.strokeWidth || 2,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:279:            strokeColor: color(object.stroke, palette.accent),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:280:            fillColor: color(object.fill, palette.accent),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-281-          })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-282-          elements.set(object.id, point)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-283-          if (object.visible !== false) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-284-            visiblePoints.push({ at: object.at, radius: (object.size || 4) + 5 })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-285-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-286-          addLabel(object, object.at)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-287-        } else if (object.type === 'segment') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-288-          createSegment(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-289-            object.id,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-290-            object.from,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-291-            object.to,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-292-            lineStyle(object),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-293-          )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-294-          addLabel(object, [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-295-            (pointValue(object.from)[0] + pointValue(object.to)[0]) / 2,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-296-            (pointValue(object.from)[1] + pointValue(object.to)[1]) / 2,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-297-          ])
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-298-        } else if (object.type === 'line') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-299-          const line = board.create('line', [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-300-            jsxPoint(object.from),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-301-            jsxPoint(object.to),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-302-          ], {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-303-            id: `ld-${object.id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-304-            straightFirst: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-305-            straightLast: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-306-            ...lineStyle(object),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-307-          })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-308-          elements.set(object.id, line)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-309-        } else if (object.type === 'arrow') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-310-          const arrow = board.create('arrow', [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-311-            jsxPoint(object.from),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-312-            jsxPoint(object.to),
+--
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-319-          const circle = board.create('circle', [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-320-            jsxPoint(object.center),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-321-            object.radius,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-322-          ], {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-323-            id: `ld-${object.id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-324-            fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-325-            highlight: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:326:            strokeColor: color(object.stroke, palette.accent),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-327-            strokeWidth: object.strokeWidth || 3,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:328:            fillColor: color(object.fill, 'none'),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-329-            fillOpacity: object.fillOpacity ?? 0,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-330-          })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-331-          elements.set(object.id, circle)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-332-        } else if (object.type === 'polygon') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-333-          const polygon = board.create(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-334-            'polygon',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-335-            object.points.map(jsxPoint),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-336-            {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-337-              id: `ld-${object.id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-338-              fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-339-              highlight: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:340:            fillColor: color(object.fill, palette.accentSoft),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-341-              fillOpacity: object.fillOpacity ?? 0.15,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-342-              vertices: { visible: false },
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-343-              borders: lineStyle(object),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-344-            },
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-345-          )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-346-          elements.set(object.id, polygon)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-347-        } else if (object.type === 'arc') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-348-          const arcPoint = (value, role) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-349-            if (typeof value === 'string') return jsxPoint(value)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-350-            return board.create('point', pointValue(value), {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-351-              id: `ld-${object.id}-${role}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-352-              name: '',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-353-              withLabel: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-354-              visible: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-355-              fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-356-              highlight: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-357-            })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-358-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-359-          const arc = board.create('arc', [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-360-            arcPoint(object.center, 'center'),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-361-            arcPoint(object.start, 'start'),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-362-            arcPoint(object.end, 'end'),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-363-          ], {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-364-            id: `ld-${object.id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-365-            ...lineStyle(object, palette.accent),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-366-          })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-367-          elements.set(object.id, arc)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-368-        } else if (object.type === 'grid') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-369-          const [xMin, yMax, xMax, yMin] = object.bounds || box
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-370-          const xOffset = object.xOffset ?? 0
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-371-          const yOffset = object.yOffset ?? 0
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-372-          let index = 0
+--
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-425-              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-426-              lineStyle(object, palette.ink),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-427-            )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-428-            if (tick.label !== undefined) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-429-              addLabel(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-430-                {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-431-                  id: `${object.id}-tick-${index}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:432:                  labelPlacement: tick.labelPlacement || {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-433-                    position: Math.abs(dx) >= Math.abs(dy) ? 'S' : 'E',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-434-                  },
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:435:                  fontSize: tick.fontSize || object.fontSize || 26,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-436-                  fontWeight: 600,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-437-                  labelColor: object.labelColor,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-438-                },
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-439-                at,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-440-                String(tick.label),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-441-              )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-442-            }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-443-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-444-        } else if (object.type === 'measure') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-445-          const start = pointValue(object.from)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-446-          const end = pointValue(object.to)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-447-          createSegment(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-448-            object.id,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-449-            start,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-450-            end,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-451-            lineStyle(object, palette.accent),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-452-          )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-453-          const dx = end[0] - start[0]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-454-          const dy = end[1] - start[1]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-455-          const length = Math.hypot(dx, dy) || 1
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-456-          const normal = [-dy / length, dx / length]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-457-          const size = object.capSize || 0.15
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-458-          for (const [index, at] of [start, end].entries()) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-459-            createSegment(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-460-              `${object.id}-cap-${index}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-461-              [at[0] - normal[0] * size, at[1] - normal[1] * size],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-462-              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-463-              lineStyle(object, palette.accent),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-464-            )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-465-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-466-          addLabel(object, [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-467-            (start[0] + end[0]) / 2,
+--
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-477-            object.size,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-478-          ], {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-479-            id: `ld-${object.id}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-480-            fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-481-            highlight: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-482-            opacity: object.opacity ?? 1,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-483-          })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:484:          if (object.rotation) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:485:            const center = board.create('point', object.rotation.center, {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-486-              name: '',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-487-              visible: false,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-488-              fixed: true,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-489-            })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-490-            const transform = board.create('transform', [
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:491:              object.rotation.angleDegrees * Math.PI / 180,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-492-              center,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-493-            ], {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:494:              type: 'rotate',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-495-            })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-496-            transform.bindTo(image)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-497-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-498-          elements.set(object.id, image)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-499-          if (object.avoidLabels === true) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-500-            imageRegions.push([
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-501-              object.at[0],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-502-              object.at[1] + object.size[1],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-503-              object.at[0] + object.size[0],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-504-              object.at[1],
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-505-            ])
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-506-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:507:        } else if (object.type === 'svgPath') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-508-          rawPaths.push(object)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-509-        }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-510-      }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-511-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-512-      board.unsuspendUpdate()
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-513-      board.fullUpdate()
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-514-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-515-      const svg = document.getElementById(boardId)?.querySelector('svg')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-516-      if (!svg) throw new Error('JSXGraph did not create an SVG renderer')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-517-      svg.setAttribute('xmlns', SVG_NS)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-518-      svg.setAttribute('width', String(figureSpec.canvas.width))
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-519-      svg.setAttribute('height', String(figureSpec.canvas.height))
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-520-      svg.setAttribute(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-521-        'viewBox',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-522-        `0 0 ${figureSpec.canvas.width} ${figureSpec.canvas.height}`,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-523-      )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-524-      svg.style.background = figureSpec.canvas.background === 'transparent'
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-525-        ? 'transparent'
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-526-        : palette.paper
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-527-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-528-      const imageFits = figureSpec.objects
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-529-        .filter((object) => object.type === 'image')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-530-        .map((object) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-531-          const node = document.getElementById(`${boardId}_ld-${object.id}`)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-532-          if (!node) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-533-            return {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-534-              id: object.id,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-535-              status: 'fail',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-536-              reason: 'missing rendered image node',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-537-            }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-538-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-539-          // JSXGraph defaults SVG images to preserveAspectRatio="none".
+--
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-704-      }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-705-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-706-      for (const label of labels) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-707-        const node = document.createElementNS(SVG_NS, 'text')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-708-        node.textContent = label.text
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-709-        node.setAttribute('fill', label.fill)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-710-        node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:711:        node.setAttribute('font-size', String(label.fontSize))
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-712-        node.setAttribute('font-weight', String(label.fontWeight))
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-713-        node.setAttribute('dominant-baseline', label.dominantBaseline)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-714-        node.setAttribute('data-label-id', label.id)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-715-        labelLayer.appendChild(node)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-716-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-717-        const [anchorX, anchorY] = toScreen(label.at)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:718:        const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-719-        const offset = label.placement.offset || [0, 0]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-720-        const requested = label.placement.position
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-721-        const automatic = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-722-        const candidates = requested
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-723-          ? (
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-724-              label.placement.fallback
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-725-                ? [requested, ...automatic.filter((item) => item !== requested)]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-726-                : [requested]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-727-            )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-728-          : automatic
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-729-        let best = null
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-730-
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-731-        for (const position of candidates) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-732-          if (!placements[position]) {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-733-            throw new Error(`Unsupported label placement: ${position}`)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-734-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-735-          const [xDirection, yDirection, anchor] = placements[position]
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-736-          node.setAttribute(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-737-            'x',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-738-            String(anchorX + xDirection * gap + offset[0]),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-739-          )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-740-          node.setAttribute(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-741-            'y',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-742-            String(anchorY + yDirection * gap + offset[1]),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-743-          )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-744-          node.setAttribute('text-anchor', label.textAnchor || anchor)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-745-          const rect = node.getBBox()
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-746-          const padded = inflate(rect, minGap)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-747-          const overlap = [...avoid, ...occupied].reduce(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-748-            (sum, other) => sum + overlapArea(padded, other),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-749-            0,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-750-          )
+--
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-796-        candidate.setAttribute('width', String(width))
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-797-        candidate.removeAttribute('height')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-798-        candidate.style.width = `${width}px`
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-799-        candidate.style.height = 'auto'
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-800-        host.appendChild(candidate)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-801-        document.body.appendChild(host)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-802-        const textSizes = [...candidate.querySelectorAll('text')].map((node) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:803:          const fontSize = Number.parseFloat(node.getAttribute('font-size') || '0')
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-804-          const matrix = node.getScreenCTM()
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-805-          const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-806-          return {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-807-            id: node.getAttribute('data-label-id'),
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-808-            text: node.textContent,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs:809:            px: fontSize * scale,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-810-          }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-811-        })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-812-        const failures = textSizes.filter(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-813-          (item) => item.px + 0.01 < figureSpec.display.minTextPx,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-814-        )
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-815-        host.remove()
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-816-        return {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-817-          width,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-818-          minTextPx: figureSpec.display.minTextPx,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-819-          measuredMinPx: textSizes.length
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-820-            ? Math.min(...textSizes.map((item) => item.px))
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-821-            : null,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-822-          failures,
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-823-          status: failures.length ? 'fail' : 'pass',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-824-        }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-825-      })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-826-      const cloneFor = (layer) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-827-        const clone = svg.cloneNode(true)
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-828-        clone.style.background = layer === 'composite'
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-829-          ? svg.style.background
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-830-          : 'transparent'
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-831-        if (layer === 'overlay') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-832-          clone.querySelectorAll('image').forEach((node) => node.remove())
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-833-        } else if (layer === 'artwork') {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-834-          clone.querySelectorAll(
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-835-            'line, path, polygon, polyline, circle, ellipse, rect, text',
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-836-          ).forEach((node) => {
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-837-            if (!node.closest('defs')) node.remove()
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-838-          })
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-839-        }
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-840-        clone.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+.agents/skills/ld-s10y-image/scripts/render_spec.mjs-841-        return clone.outerHTML
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-20-CENTRAL_SYMMETRY = re.compile(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-21-    r"中心对称|对称中心|central symmetry|centrally symmetric|half-turn|"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-22-    r"180(?:°| degrees?)",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-23-    re.IGNORECASE,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-24-)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-25-GEOMETRY_TYPES = {
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-26-    "point", "segment", "line", "arrow", "circle", "polygon", "arc",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:27:    "grid", "axis", "measure", "svgPath",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-28-}
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-29-SUPPORTED_TYPES = GEOMETRY_TYPES | {"text", "image"}
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-30-COLOR_ROLES = {"ink", "muted", "accent", "accentSoft", "grid", "paper"}
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-31-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-32-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-33-def load(path: Path) -> dict:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-34-    try:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-35-        return json.loads(path.read_text(encoding="utf-8"))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-36-    except FileNotFoundError:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-37-        raise SystemExit(f"ERROR: missing spec: {path}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-38-    except json.JSONDecodeError as error:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-39-        raise SystemExit(f"ERROR: invalid JSON {path}: {error}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-40-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-41-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-42-def sha256(path: Path) -> str:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-43-    digest = hashlib.sha256()
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-44-    with path.open("rb") as handle:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-45-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-46-            digest.update(chunk)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-47-    return digest.hexdigest()
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-48-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-49-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-50-def finite_number(value: Any) -> bool:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-51-    return (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-52-        isinstance(value, (int, float))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-53-        and not isinstance(value, bool)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-54-        and math.isfinite(value)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-55-    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-56-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-57-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-58-def coordinate(value: Any) -> bool:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-59-    return (
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-84-        "perpendicular": ("a", "b", "c", "d"),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-85-        "pointOnLine": ("point", "a", "b"),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-86-        "pointOnCircle": ("point", "center"),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-87-        "connects": ("from", "to"),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-88-        "displacement": ("from", "to"),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-89-    }.get(kind, ())
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-90-    values = [assertion.get(field) for field in fields]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:91:    if kind == "centralSymmetry":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-92-        values.append(assertion.get("center"))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-93-        for pair in assertion.get("pairs", []):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-94-            if isinstance(pair, dict):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-95-                values.extend((pair.get("a"), pair.get("b")))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-96-    return {
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-97-        value
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-98-        for value in values
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-99-        if isinstance(value, str) and value in point_ids
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-100-    }
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-101-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-102-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-103-def resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-104-    value: Any,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-105-    points: dict[str, tuple[float, float]],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-106-    label: str,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-107-    errors: list[str],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-108-) -> tuple[float, float] | None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-109-    if coordinate(value):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-110-        return float(value[0]), float(value[1])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-111-    if isinstance(value, str) and value in points:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-112-        return points[value]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-113-    errors.append(f"{label}: expected coordinate or point id")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-114-    return None
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-115-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-116-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-117-def resolve_position(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-118-    value: Any,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-119-    objects_by_id: dict[str, dict],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-120-    points: dict[str, tuple[float, float]],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-121-    label: str,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-122-    errors: list[str],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-123-) -> tuple[float, float] | None:
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-301-            f"set member {member_id!r}",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-302-            errors,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-303-        )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-304-        if position is None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-305-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-306-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-307-        if member.get("type") == "text":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:308:            font_size = member.get("fontSize", 16)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-309-            text = member.get("text", "")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-310-            half_height = font_size * 0.5 if finite_number(font_size) else 8
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-311-            half_width = (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-312-                font_size * 0.3 * max(len(text), 1)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-313-                if finite_number(font_size)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-314-                else 8
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-315-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-316-            required_clearance = (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-317-                max(half_height, half_width) * user_units_per_canvas_px
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-318-                + 4 * user_units_per_product_px
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-319-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-320-        else:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-321-            size = member.get("size", 3)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-322-            required_clearance = (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-323-                size if finite_number(size) and size >= 0 else 3
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-324-            ) * user_units_per_canvas_px + 4 * user_units_per_product_px
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-325-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-326-        clearances = []
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-327-        for assertion in member_assertions:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-328-            container = set_polygons.get(assertion.get("container"))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-329-            if container is None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-330-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-331-            polygon = []
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-332-            for value in container.get("points", []):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-333-                resolved = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-334-                    value,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-335-                    points,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-336-                    f"container {container.get('id')!r}",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-337-                    errors,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-338-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-339-                if resolved is not None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-340-                    polygon.append(resolved)
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-508-        return errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-509-    xmin, ymax, xmax, ymin = box
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-510-    for obj in objects:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-511-        if not isinstance(obj, dict) or obj.get("visible") is False:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-512-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-513-        kind = obj.get("type")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-514-        # Infinite lines and viewport grids are intentionally bounded by the viewport.
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:515:        if kind in {"line", "svgPath", "image"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-516-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-517-        coordinates = []
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:518:        if kind == "grid":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-519-            bounds = obj.get("bounds")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-520-            if isinstance(bounds, list) and len(bounds) == 4:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-521-                coordinates = [
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-522-                    [bounds[0], bounds[1]],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-523-                    [bounds[2], bounds[3]],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-524-                ]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-525-            else:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-526-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-527-        elif kind in {"point", "text"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-528-            coordinates = [obj.get("at")]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-529-        elif kind in {"segment", "arrow", "measure", "axis"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-530-            coordinates = [obj.get("from"), obj.get("to")]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:531:        elif kind == "polygon":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-532-            coordinates = obj.get("points", [])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:533:        elif kind == "circle" and finite_number(obj.get("radius")):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-534-            center = obj.get("center")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-535-            center = points.get(center) if isinstance(center, str) else center
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-536-            if center is not None and len(center) == 2:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-537-                radius = obj["radius"]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-538-                coordinates = [
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-539-                    [center[0] - radius, center[1] - radius],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-540-                    [center[0] + radius, center[1] + radius],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-541-                ]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:542:        elif kind == "arc":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-543-            coordinates = [obj.get("start"), obj.get("end")]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-544-        for value in coordinates:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-545-            value = points.get(value) if isinstance(value, str) else value
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-546-            if not isinstance(value, (list, tuple)) or len(value) != 2:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-547-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-548-            if not all(map(finite_number, value)):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-549-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-550-            if not (xmin <= value[0] <= xmax and ymin <= value[1] <= ymax):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-551-                errors.append(f"{obj.get('id')}: geometry outside canvas at {value}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-552-                break
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-553-    return errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-554-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-555-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-556-def assertion_errors(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-557-    assertions: list[dict],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-558-    objects: list[dict],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-559-    points: dict[str, tuple[float, float]],
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-560-) -> list[str]:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-561-    errors = []
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-562-    objects_by_id = {
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-563-        item.get("id"): item
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-564-        for item in objects
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-565-        if isinstance(item, dict) and isinstance(item.get("id"), str)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-566-    }
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-567-    for index, item in enumerate(assertions):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-568-        label = f"assertions[{index}]"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-569-        kind = item.get("type")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-570-        tolerance = item.get("tolerance", 1e-6)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-571-        if not finite_number(tolerance) or tolerance < 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-572-            errors.append(f"{label}.tolerance must be a nonnegative number")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-573-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:574:        if kind == "objectCount":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-575-            object_type = item.get("objectType")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-576-            expected = item.get("count")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-577-            actual = sum(obj.get("type") == object_type for obj in objects)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-578-            if not isinstance(expected, int) or actual != expected:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-579-                errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-580-                    f"{label}: expected {expected} {object_type}, found {actual}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-581-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-582-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:583:        if kind == "gridDimensions":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-584-            grid_id = item.get("grid")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-585-            grid = objects_by_id.get(grid_id)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-586-            if not isinstance(grid, dict) or grid.get("type") != "grid":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-587-                errors.append(f"{label}.grid must reference a grid")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-588-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-589-            columns = item.get("columns")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-590-            rows = item.get("rows")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-591-            if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-592-                not isinstance(columns, int)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-593-                or isinstance(columns, bool)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-594-                or columns <= 0
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-595-            ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-596-                errors.append(f"{label}.columns must be a positive integer")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-597-            if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-598-                not isinstance(rows, int)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-599-                or isinstance(rows, bool)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-600-                or rows <= 0
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-601-            ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-602-                errors.append(f"{label}.rows must be a positive integer")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-603-            bounds = grid.get("bounds")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-604-            x_step = grid.get("xStep")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-605-            y_step = grid.get("yStep")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-606-            if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-607-                not isinstance(bounds, list)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-608-                or len(bounds) != 4
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-609-                or not all(finite_number(value) for value in bounds)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-610-            ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-611-                errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-612-                    f"{label}: gridDimensions requires finite grid bounds"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-613-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-614-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-615-            if (
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-645-                    f"{label}: grid has {actual_columns} columns, expected {columns}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-646-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-647-            if isinstance(rows, int) and actual_rows != rows:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-648-                errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-649-                    f"{label}: grid has {actual_rows} rows, expected {rows}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-650-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-651-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:652:        if kind == "displacement":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-653-            start = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-654-                item.get("from"), points, f"{label}.from", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-655-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-656-            end = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-657-                item.get("to"), points, f"{label}.to", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-658-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-659-            expected_dx = item.get("dx")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-660-            expected_dy = item.get("dy")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-661-            if not finite_number(expected_dx):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-662-                errors.append(f"{label}.dx must be finite")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-663-            if not finite_number(expected_dy):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-664-                errors.append(f"{label}.dy must be finite")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-665-            if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-666-                start is not None
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-667-                and end is not None
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-668-                and finite_number(expected_dx)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-669-                and finite_number(expected_dy)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-670-            ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-671-                actual_dx = end[0] - start[0]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-672-                actual_dy = end[1] - start[1]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-673-                if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-674-                    abs(actual_dx - expected_dx) > tolerance
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-675-                    or abs(actual_dy - expected_dy) > tolerance
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-676-                ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-677-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-678-                        f"{label}: displacement ({actual_dx:.8g}, "
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-679-                        f"{actual_dy:.8g}) != ({expected_dx!r}, "
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-680-                        f"{expected_dy!r})"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-681-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-682-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:683:        if kind == "pointOnCircle":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-684-            point = resolve_point(item.get("point"), points, f"{label}.point", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-685-            center = resolve_point(item.get("center"), points, f"{label}.center", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-686-            radius = item.get("radius")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-687-            if not finite_number(radius) or radius <= 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-688-                errors.append(f"{label}.radius must be positive")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-689-            elif point is not None and center is not None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-690-                if abs(distance(point, center) - radius) > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-691-                    errors.append(f"{label}: point is not on circle")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-692-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:693:        if kind == "centralSymmetry":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-694-            center = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-695-                item.get("center"), points, f"{label}.center", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-696-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-697-            pairs = item.get("pairs")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-698-            if not isinstance(pairs, list) or not pairs:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-699-                errors.append(f"{label}.pairs must be a nonempty array")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-700-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-701-            if center is None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-702-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-703-            for pair_index, pair in enumerate(pairs):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-704-                pair_label = f"{label}.pairs[{pair_index}]"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-705-                if not isinstance(pair, dict):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-706-                    errors.append(f"{pair_label} must be an object")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-707-                    continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-708-                first = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-709-                    pair.get("a"), points, f"{pair_label}.a", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-710-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-711-                second = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-712-                    pair.get("b"), points, f"{pair_label}.b", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-713-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-714-                if first is None or second is None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-715-                    continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-716-                midpoint = (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-717-                    (first[0] + second[0]) / 2,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-718-                    (first[1] + second[1]) / 2,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-719-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-720-                if distance(midpoint, center) > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-721-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-722-                        f"{pair_label}: midpoint {midpoint} != center {center}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-723-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-724-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:725:        if kind == "inside":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-726-            point = resolve_position(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-727-                item.get("point"),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-728-                objects_by_id,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-729-                points,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-730-                f"{label}.point",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-731-                errors,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-732-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-733-            container_id = item.get("container")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-734-            container = objects_by_id.get(container_id)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-735-            if not isinstance(container, dict) or container.get("type") != "polygon":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-736-                errors.append(f"{label}.container must reference a polygon")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-737-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-738-            polygon = []
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-739-            for point_index, value in enumerate(container.get("points", [])):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-740-                resolved = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-741-                    value,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-742-                    points,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-743-                    f"{label}.container.points[{point_index}]",
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-744-                    errors,
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-745-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-746-                if resolved is not None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-747-                    polygon.append(resolved)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-748-            margin = item.get("margin", 0)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-749-            if not finite_number(margin) or margin < 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-750-                errors.append(f"{label}.margin must be a nonnegative number")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-751-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-752-            if point is not None and len(polygon) >= 3:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-753-                if not point_in_polygon(point, polygon):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-754-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-755-                        f"{label}: point {item.get('point')!r} is outside "
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-756-                        f"{container_id!r}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-757-                    )
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-760-                    for start, end in zip(polygon, polygon[1:] + polygon[:1])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-761-                ) < margin:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-762-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-763-                        f"{label}: point {item.get('point')!r} is inside "
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-764-                        f"{container_id!r} but violates margin {margin}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-765-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-766-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:767:        if kind == "connects":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-768-            arrow_id = item.get("arrow")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-769-            arrow = objects_by_id.get(arrow_id)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-770-            if not isinstance(arrow, dict) or arrow.get("type") not in {"arrow", "segment"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-771-                errors.append(f"{label}.arrow must reference an arrow or segment")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-772-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-773-            actual_from = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-774-                arrow.get("from"), points, f"{label}.arrow.from", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-775-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-776-            actual_to = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-777-                arrow.get("to"), points, f"{label}.arrow.to", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-778-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-779-            expected_from = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-780-                item.get("from"), points, f"{label}.from", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-781-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-782-            expected_to = resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-783-                item.get("to"), points, f"{label}.to", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-784-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-785-            if all(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-786-                value is not None
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-787-                for value in (actual_from, actual_to, expected_from, expected_to)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-788-            ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-789-                if distance(actual_from, expected_from) > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-790-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-791-                        f"{label}: arrow {arrow_id!r} starts at the wrong member"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-792-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-793-                if distance(actual_to, expected_to) > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-794-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-795-                        f"{label}: arrow {arrow_id!r} ends at the wrong member"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-796-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-797-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-798-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-799-        names = {
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-810-        resolved = {
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-811-            name: resolve_point(item.get(name), points, f"{label}.{name}", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-812-            for name in names
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-813-        }
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-814-        if any(value is None for value in resolved.values()):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-815-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-816-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:817:        if kind == "distance":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-818-            actual = distance(resolved["a"], resolved["b"])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-819-            expected = item.get("value")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-820-            if not finite_number(expected) or abs(actual - expected) > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-821-                errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-822-                    f"{label}: distance {actual:.8g} != {expected!r}"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-823-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:824:        elif kind == "equalDistance":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-825-            first = distance(resolved["a"], resolved["b"])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-826-            second = distance(resolved["c"], resolved["d"])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-827-            if abs(first - second) > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-828-                errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-829-                    f"{label}: distances {first:.8g} and {second:.8g} differ"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-830-                )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:831:        elif kind == "collinear":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-832-            value = abs(cross(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-833-                vector(resolved["a"], resolved["b"]),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-834-                vector(resolved["a"], resolved["c"]),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-835-            ))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-836-            if value > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-837-                errors.append(f"{label}: points are not collinear")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-838-        elif kind in {"parallel", "perpendicular"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-839-            first = vector(resolved["a"], resolved["b"])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-840-            second = vector(resolved["c"], resolved["d"])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-841-            scale = max(math.hypot(*first) * math.hypot(*second), 1.0)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-842-            value = (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-843-                abs(cross(first, second))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:844:                if kind == "parallel"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-845-                else abs(dot(first, second))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-846-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-847-            if value > tolerance * scale:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-848-                errors.append(f"{label}: lines are not {kind}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:849:        elif kind == "pointOnLine":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-850-            value = abs(cross(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-851-                vector(resolved["a"], resolved["b"]),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-852-                vector(resolved["a"], resolved["point"]),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-853-            ))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-854-            if value > tolerance:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-855-                errors.append(f"{label}: point is not on line")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-856-    return errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-857-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-858-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-859-def validate(spec_path: Path, stage: str) -> list[str]:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-860-    spec = load(spec_path)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-861-    errors: list[str] = []
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-862-    schema = spec.get("schema")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-863-    if schema not in {SCHEMA, LEGACY_SCHEMA}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-864-        errors.append(f"schema must be {SCHEMA}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-865-    current = schema == SCHEMA
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-866-    if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-867-        not isinstance(spec.get("id"), str)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-868-        or not re.fullmatch(r"(fig|tbl)-[A-Za-z0-9-]+", spec["id"])
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-869-    ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-870-        errors.append("id must start with fig- or tbl-")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-871-    mode = spec.get("mode")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-872-    if mode not in {"deterministic", "hybrid", "generated"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-873-        errors.append("mode must be deterministic, hybrid, or generated")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-874-    if not isinstance(spec.get("description"), str) or not spec["description"].strip():
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-875-        errors.append("description must be nonempty")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-876-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-877-    source = spec.get("source")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-878-    if not isinstance(source, dict):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-879-        errors.append("source must be an object")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-880-        source = {}
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-881-    if "authoredBasis" in source:
+--
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1063-        if not isinstance(item, dict):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1064-            errors.append(f"{label} must be an object")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1065-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1066-        kind = item.get("type")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1067-        if kind not in SUPPORTED_TYPES:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1068-            errors.append(f"{label}: unsupported type {kind!r}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1069-            continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1070:        placements = [(label, item.get("labelPlacement"))]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1071:        if kind == "axis":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1072-            placements.extend(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1073:                (f"{label}.ticks[{tick_index}]", tick.get("labelPlacement"))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1074-                for tick_index, tick in enumerate(item.get("ticks", []))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1075-                if isinstance(tick, dict)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1076-            )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1077-        for owner, placement in placements:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1078-            if placement is None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1079-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1080-            if not isinstance(placement, dict):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1081:                errors.append(f"{owner}.labelPlacement must be an object")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1082-                continue
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1083-            position = placement.get("position")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1084-            if position is not None and position not in {
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1085-                "CENTER", "NE", "NW", "SE", "SW", "E", "W", "N", "S"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1086-            }:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1087:                errors.append(f"{owner}.labelPlacement.position is unsupported: {position!r}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1088-        if current:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1089-            for field in ("stroke", "fill", "labelColor"):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1090-                role = item.get(field)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1091-                if role is not None and role not in COLOR_ROLES:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1092-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1093-                        f"{label}.{field} must use a semantic color role"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1094-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1095-        for field in ("label", "text"):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1096-            text = item.get(field)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1097-            if isinstance(text, str) and text:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1098-                labels.append((label, text))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1099:        if kind == "point" and not coordinate(item.get("at")):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1100-            errors.append(f"{label}.at must be [x, y]")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1101-        elif kind in {"segment", "line", "arrow", "axis", "measure"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1102-            resolve_point(item.get("from"), points, f"{label}.from", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1103-            resolve_point(item.get("to"), points, f"{label}.to", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1104:        elif kind == "circle":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1105-            resolve_point(item.get("center"), points, f"{label}.center", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1106-            if not finite_number(item.get("radius")) or item["radius"] <= 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1107-                errors.append(f"{label}.radius must be positive")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1108:        elif kind == "polygon":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1109-            values = item.get("points")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1110-            if not isinstance(values, list) or len(values) < 3:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1111-                errors.append(f"{label}.points needs at least three points")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1112-            else:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1113-                for point_index, value in enumerate(values):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1114-                    resolve_point(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1115-                        value, points, f"{label}.points[{point_index}]", errors
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1116-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1117:        elif kind == "arc":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1118-            for field in ("center", "start", "end"):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1119-                resolve_point(item.get(field), points, f"{label}.{field}", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1120:        elif kind == "grid":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1121-            for field in ("xStep", "yStep"):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1122-                if not finite_number(item.get(field)) or item[field] <= 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1123-                    errors.append(f"{label}.{field} must be positive")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1124-            for field in ("xOffset", "yOffset"):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1125-                if field in item and not finite_number(item.get(field)):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1126-                    errors.append(f"{label}.{field} must be finite")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1127-            bounds = item.get("bounds")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1128-            if bounds is not None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1129-                if (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1130-                    not isinstance(bounds, list)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1131-                    or len(bounds) != 4
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1132-                    or not all(map(finite_number, bounds))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1133-                ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1134-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1135-                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1136-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1137-                elif not (bounds[0] < bounds[2] and bounds[3] < bounds[1]):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1138-                    errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1139-                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1140-                    )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1141:        elif kind == "text":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1142-            resolve_point(item.get("at"), points, f"{label}.at", errors)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1143-            if not isinstance(item.get("text"), str) or not item["text"].strip():
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1144-                errors.append(f"{label}.text must be nonempty")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1145:        elif kind == "image":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1146-            image_count += 1
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1147-            if item.get("asset") not in asset_ids:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1148-                errors.append(f"{label}.asset does not resolve")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1149-            if not coordinate(item.get("at")) or not coordinate(item.get("size")):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1150-                errors.append(f"{label}.at and size must be [x, y]")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1151-            elif item["size"][0] <= 0 or item["size"][1] <= 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1152-                errors.append(f"{label}.size values must be positive")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1153:            rotation = item.get("rotation")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1154:            if rotation is not None:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1155:                if not isinstance(rotation, dict):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1156:                    errors.append(f"{label}.rotation must be an object")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1157-                else:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1158:                    if not finite_number(rotation.get("angleDegrees")):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1159-                        errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1160:                            f"{label}.rotation.angleDegrees must be finite"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1161-                        )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1162:                    if not coordinate(rotation.get("center")):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1163-                        errors.append(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1164:                            f"{label}.rotation.center must be [x, y]"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1165-                        )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py:1166:        elif kind == "svgPath":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1167-            if not isinstance(item.get("d"), str) or not item["d"].strip():
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1168-                errors.append(f"{label}.d must be nonempty")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1169-    for label, text in labels:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1170-        if NON_ENGLISH.search(text):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1171-            errors.append(f"{label}: visible text must be English: {text!r}")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1172-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1173-    if mode == "generated" and objects:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1174-        errors.append("generated mode must not contain deterministic objects")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1175-    if mode == "hybrid" and image_count == 0:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1176-        errors.append("hybrid mode requires an image object")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1177-    if mode == "hybrid":
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1178-        first_geometry = next(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1179-            (
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1180-                index
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1181-                for index, item in enumerate(objects)
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1182-                if isinstance(item, dict) and item.get("type") != "image"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1183-            ),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1184-            len(objects),
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1185-        )
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1186-        if any(
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1187-            isinstance(item, dict) and item.get("type") == "image"
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1188-            for item in objects[first_geometry:]
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1189-        ):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1190-            errors.append("hybrid image objects must precede overlay objects")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1191-    if mode == "deterministic" and image_count:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1192-        errors.append("deterministic mode cannot contain image objects")
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1193-
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1194-    if stage in {"rendered", "approved"}:
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1195-        for index, asset in enumerate(assets):
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1196-            path = Path(asset.get("path", ""))
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1197-            if not path.is_file():
+.agents/skills/ld-s10y-image/scripts/validate_spec.py-1198-                errors.append(f"assets[{index}]: missing file {path}")

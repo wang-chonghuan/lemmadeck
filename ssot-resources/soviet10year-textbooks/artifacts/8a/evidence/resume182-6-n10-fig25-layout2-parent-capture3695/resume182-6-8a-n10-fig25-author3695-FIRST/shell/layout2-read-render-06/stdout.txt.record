@@ -1,0 +1,158 @@
+242-        opacity: object.opacity ?? 1,
+243-      })
+244-      const addLabel = (object, at, text = object.label) => {
+245-        if (!text) return
+246-        labels.push({
+247-          id: `${object.id}-label`,
+248-          at: pointValue(at),
+249-          text,
+250:          placement: object.labelPlacement || {},
+251-          fontSize: object.fontSize || 28,
+252-          fontWeight: object.fontWeight || 600,
+253-          fill: color(object.labelColor, palette.ink),
+254-          textAnchor: object.textAnchor,
+255-          dominantBaseline: object.dominantBaseline || 'middle',
+256-        })
+257-      }
+258-      const createSegment = (id, from, to, style) => {
+259:        const segment = board.create('segment', [jsxPoint(from), jsxPoint(to)], {
+260-          id: `ld-${id}`,
+261-          ...style,
+262-        })
+263:        elements.set(id, segment)
+264:        return segment
+265-      }
+266-
+267-      for (const object of figureSpec.objects) {
+268-        if (object.type === 'point') {
+269-          const point = board.create('point', object.at, {
+270-            id: `ld-${object.id}`,
+271-            name: '',
+272-            withLabel: false,
+--
+279-            strokeColor: color(object.stroke, palette.accent),
+280-            fillColor: color(object.fill, palette.accent),
+281-          })
+282-          elements.set(object.id, point)
+283-          if (object.visible !== false) {
+284-            visiblePoints.push({ at: object.at, radius: (object.size || 4) + 5 })
+285-          }
+286-          addLabel(object, object.at)
+287:        } else if (object.type === 'segment') {
+288-          createSegment(
+289-            object.id,
+290-            object.from,
+291-            object.to,
+292-            lineStyle(object),
+293-          )
+294-          addLabel(object, [
+295-            (pointValue(object.from)[0] + pointValue(object.to)[0]) / 2,
+--
+424-              [at[0] - normal[0] * size, at[1] - normal[1] * size],
+425-              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+426-              lineStyle(object, palette.ink),
+427-            )
+428-            if (tick.label !== undefined) {
+429-              addLabel(
+430-                {
+431-                  id: `${object.id}-tick-${index}`,
+432:                  labelPlacement: tick.labelPlacement || {
+433-                    position: Math.abs(dx) >= Math.abs(dy) ? 'S' : 'E',
+434-                  },
+435-                  fontSize: tick.fontSize || object.fontSize || 26,
+436-                  fontWeight: 600,
+437-                  labelColor: object.labelColor,
+438-                },
+439-                at,
+440-                String(tick.label),
+--
+624-          return {
+625-            x: x - point.radius,
+626-            y: y - point.radius,
+627-            width: point.radius * 2,
+628-            height: point.radius * 2,
+629-          }
+630-        }),
+631-        ...imageRegions.map(rectFromRegion),
+632:        ...(figureSpec.layout?.avoidRegions || []).map(rectFromRegion),
+633-      ]
+634-      const occupied = []
+635-      const collisions = []
+636-
+637-      const overlapArea = (a, b) => {
+638-        const width = Math.max(
+639-          0,
+640-          Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
+--
+687-            transformed.y <= rect.y + rect.height
+688-          ) {
+689-            return true
+690-          }
+691-        }
+692-        return false
+693-      }
+694-      const placements = {
+695:        CENTER: [0, 0, 'middle'],
+696-        NE: [1, -1, 'start'],
+697-        NW: [-1, -1, 'end'],
+698-        SE: [1, 1, 'start'],
+699-        SW: [-1, 1, 'end'],
+700-        E: [1, 0, 'start'],
+701-        W: [-1, 0, 'end'],
+702-        N: [0, -1, 'middle'],
+703-        S: [0, 1, 'middle'],
+--
+711-        node.setAttribute('font-size', String(label.fontSize))
+712-        node.setAttribute('font-weight', String(label.fontWeight))
+713-        node.setAttribute('dominant-baseline', label.dominantBaseline)
+714-        node.setAttribute('data-label-id', label.id)
+715-        labelLayer.appendChild(node)
+716-
+717-        const [anchorX, anchorY] = toScreen(label.at)
+718-        const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
+719:        const offset = label.placement.offset || [0, 0]
+720-        const requested = label.placement.position
+721-        const automatic = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
+722-        const candidates = requested
+723-          ? (
+724-              label.placement.fallback
+725-                ? [requested, ...automatic.filter((item) => item !== requested)]
+726-                : [requested]
+727-            )
+--
+730-
+731-        for (const position of candidates) {
+732-          if (!placements[position]) {
+733-            throw new Error(`Unsupported label placement: ${position}`)
+734-          }
+735-          const [xDirection, yDirection, anchor] = placements[position]
+736-          node.setAttribute(
+737-            'x',
+738:            String(anchorX + xDirection * gap + offset[0]),
+739-          )
+740-          node.setAttribute(
+741-            'y',
+742:            String(anchorY + yDirection * gap + offset[1]),
+743-          )
+744-          node.setAttribute('text-anchor', label.textAnchor || anchor)
+745-          const rect = node.getBBox()
+746-          const padded = inflate(rect, minGap)
+747-          const overlap = [...avoid, ...occupied].reduce(
+748-            (sum, other) => sum + overlapArea(padded, other),
+749-            0,
+750-          )
+751:          const strokeCollision = geometryNodes.some(
+752-            (geometry) => strokeHitsRect(geometry, padded),
+753-          )
+754-          const score =
+755-            overlap +
+756-            outsideArea(padded) * 100 +
+757:            (strokeCollision ? 10000 : 0)
+758-          if (!best || score < best.score) {
+759-            best = {
+760-              position,
+761-              x: node.getAttribute('x'),
+762-              y: node.getAttribute('y'),
+763-              anchor: label.textAnchor || anchor,
+764-              rect: {
+765-                x: rect.x,

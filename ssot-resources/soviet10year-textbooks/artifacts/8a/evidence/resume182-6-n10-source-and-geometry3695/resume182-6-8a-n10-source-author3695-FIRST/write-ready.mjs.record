@@ -1,0 +1,208 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const work = path.join(R, '.tmp/resume182-6-8a-n10-source3695-FIRST');
+const author = path.join(R, '.tmp/resume182-6-8a-n10-source-author3695-FIRST');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const identity = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const json = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const observations = json(path.join(author, 'observations.record'));
+const preflight = fs.readFileSync(path.join(author, '006-preflight-inputs-FIRST/stdout.txt'), 'utf8');
+const baseline = JSON.parse(preflight.split('INPUT_HASHES\n')[1].split('\nN8 RECEIPT DIRS\n')[0]);
+const prepared = baseline.map(previous => {
+  const current = identity(previous.path);
+  assert.equal(current.sha256, previous.sha256, `Prepared input changed: ${previous.path}`);
+  return { ...current, unchangedFromPreflight: true };
+});
+const profile = identity(path.join(R, '.claude/skills/ld-s10y-lesson/profiles/soviet-cn.json'));
+const sourceManifest = path.join(R, 'ssot-resources/soviet10year-textbooks/sources/manifest.json');
+const manifest = json(sourceManifest);
+const catalog = manifest.catalogs.find(item => item.book === '8a');
+assert.ok(catalog);
+const pdfRecord = manifest.pdfs.find(item => item.book === catalog.sourcePdf);
+assert.ok(pdfRecord);
+const roots = path.isAbsolute(manifest.pdfRoot) ? [manifest.pdfRoot] : [
+  path.join(R, manifest.pdfRoot), path.join(path.dirname(sourceManifest), manifest.pdfRoot),
+];
+const pdfPath = roots.map(root => path.join(root, pdfRecord.file)).find(file => fs.existsSync(file));
+assert.ok(pdfPath);
+const pdf = identity(pdfPath);
+const pages = observations.nativeImages.map(native => {
+  const number = String(native.physical).padStart(4, '0');
+  const pdir = path.join(work, 'draft-root/8a/pages', number);
+  const wdir = path.join(work, '8a/pages', number);
+  const page = json(path.join(pdir, 'page.json'));
+  const audit = json(path.join(pdir, 'audit.json'));
+  const template = JSON.parse(fs.readFileSync(path.join(wdir, 'page.template.md'), 'utf8').split('---')[1]);
+  assert.deepEqual(page.meta.source, template.source);
+  assert.deepEqual(page.meta.render, template.render);
+  assert.deepEqual(page.meta.profile, template.profile);
+  assert.equal(page.meta.source.pdf_sha256, pdf.sha256);
+  assert.equal(page.meta.profile.sha256, profile.sha256);
+  assert.equal(page.meta.source.pdf_page, native.physical);
+  assert.equal(page.meta.printed_page, native.printed);
+  assert.equal(native.physical - native.printed, 7);
+  assert.equal(page.blocks.at(-1).kind, 'foot');
+  assert.equal(page.blocks.at(-1).lines.join(''), String(native.printed));
+  const commandIndex = { '0060': '013', '0061': '015', '0062': '017', '0063': '020' }[number];
+  const receiptPath = path.join(author, `${commandIndex}-p${number}-finalize-FIRST/receipt.record`);
+  const receipt = json(receiptPath);
+  assert.equal(receipt.cwd, R);
+  assert.equal(receipt.returncode, audit.errors.length ? 1 : 0);
+  return {
+    ...native,
+    offset: 7,
+    files: ['page.md', 'page.json', 'audit.json'].map(file => identity(path.join(pdir, file))),
+    inputs: prepared.filter(file => file.path.startsWith(wdir + '/')),
+    authorSnapshot: identity(path.join(author, `${number}-author-FIRST-snapshot/manifest.record`)),
+    failureSnapshot: audit.errors.length
+      ? identity(path.join(author, `${number}-failure-FIRST-snapshot/manifest.record`)) : null,
+    finalize: {
+      stage: 'FIRST', attempts: 1, retries: 0, receipt: identity(receiptPath),
+      returncode: receipt.returncode,
+      status: audit.errors.length ? 'FAIL' : 'PASS',
+      linesPrintedMachine: audit.lines_printed,
+      linesTranscribed: audit.lines_md,
+      errors: audit.errors,
+      unknownChars: audit.unknown_chars,
+      normalizations: audit.normalizations,
+      katexWarnings: audit.katex_warnings,
+    },
+    blockInventory: page.blocks.map((block, index) => ({
+      ref: `p${number}#${index + 1}`, kind: block.kind, label: block.label,
+      cont: block.cont, open: block.open, samerow: block.samerow,
+      ownerEx: block.owner_exercise,
+    })),
+    figures: audit.figures.map(figure => ({
+      ref: `p${number}#${page.blocks.findIndex(block => block.kind === 'fig' && block.id === figure.id) + 1}`,
+      id: figure.id, printedLabel: figure.label,
+      coarseBox: figure.from, snappedBox: figure.box,
+      components: figure.components,
+      output: identity(path.join(wdir, 'figures', `${figure.id}.png`)),
+      visuallyOpened: false,
+      physicalMeasurementInferred: false,
+    })),
+  };
+});
+const failures = pages.filter(page => page.finalize.returncode !== 0);
+assert.deepEqual(failures.map(page => page.physical), [62]);
+const proof = ['commit', 'push', 'remote-confirm'].map(stage => {
+  const dir = path.join(R, `.tmp/resume182-6-8a-n8-${stage}3695-FIRST`);
+  const receipt = json(path.join(dir, 'receipt.record'));
+  assert.equal(receipt.returncode, 0);
+  return {
+    stage, returncode: receipt.returncode,
+    files: ['receipt.record', 'stdout.txt', 'stderr.txt'].map(file => identity(path.join(dir, file))),
+  };
+});
+const remote = fs.readFileSync(path.join(R, '.tmp/resume182-6-8a-n8-remote-confirm3695-FIRST/stdout.txt'), 'utf8').trim().split(/\s+/);
+assert.equal(remote[0], '127efaf507aabd664f73c4516fe9154b03c9fa56');
+const records = [];
+function inventory(dir) {
+  for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+    const file = path.join(dir, item.name);
+    if (item.isDirectory()) inventory(file);
+    else if (item.isFile() && item.name !== 'ready.record') records.push(identity(file));
+  }
+}
+inventory(author);
+const result = {
+  schema: 'resume182-6/n10-source-ready@1',
+  created: new Date().toISOString(),
+  repo: R,
+  work,
+  draftRoot: path.join(work, 'draft-root'),
+  authorRoot: author,
+  lesson: 'alg8-c2-s2-n10',
+  status: 'HOLD',
+  preparation: 'Four native pages transcribed and FIRST-finalized. Not independently approved source, mathematics, or figures.',
+  predecessor: { remoteCommit: remote[0], remoteRef: remote[1], proof },
+  bindings: {
+    sourcePdf: pdf,
+    sourceManifest: identity(sourceManifest),
+    exerciseNumbering: catalog.exerciseNumbering,
+    profile,
+    p2c: identity(path.join(R, '.claude/skills/ld-s10y-lesson/tools/p2c.py')),
+    blocks: identity(path.join(R, '.claude/skills/ld-s10y-lesson/tools/blocks.py')),
+    layout: identity(path.join(R, '.claude/skills/ld-s10y-lesson/tools/layout.py')),
+    interpreter: '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+    interpreterFlag: '-B',
+    runner: identity(path.join(R, '.tmp/resume182-6-run3695.mjs')),
+    toc: identity(path.join(R, 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json')),
+    p0054MetadataEvidence: identity(path.join(author, '006-preflight-inputs-FIRST/stdout.txt')),
+    p0054Physical: 54,
+    p0054Printed: 47,
+    p0054Scope: 'Metadata only; no old lesson body or old native image opened.',
+  },
+  pages,
+  boundaries: {
+    start: { ref: 'p0060#1', physical: 60, printed: 53, kind: 'h3', title: '10. 二元不等式组' },
+    lastCoreObject: { ref: 'p0063#2', kind: 'cap', label: '图 25', exercise: '136' },
+    boundaryReviewTail: { ref: 'p0063#3', kind: 'exhead', title: '复习题', exerciseRef: 'p0063#4', exercise: '137', includedInN10Core: false, ownerReview: 'HOLD' },
+    tocRightBoundary: { ref: 'p0063#5', physical: 63, printed: 56, kind: 'h2', title: '第二章补充习题', owner: 'alg8-c2-ex' },
+    nextHeading: { ref: 'p0063#6', kind: 'h3', title: '第7小节', includedInN10: false },
+    nextExercise: { ref: 'p0063#7', number: '138', open: true, includedInN10: false },
+    priorN9: { read: false, extended: false, tailObservedOnPage60: false },
+  },
+  inventory: {
+    coreExerciseNumbers: ['131', '132', '133', '134', '135', '136'],
+    boundaryReviewNumbers: ['137'],
+    nextSupplementNumbers: ['138'],
+    allPrintedExerciseNumbersInThesePages: ['131', '132', '133', '134', '135', '136', '137', '138'],
+    figureNumbers: ['22', '23', '24', '25'],
+    figure25Subfigures: ['а)', 'б)', 'в)', 'г)'],
+    original134SubpartLabelsPreserved: ['а)', 'б)', 'б)', 'г)'],
+    sourceNumberingCorrectionPerformed: false,
+  },
+  sourceCompleteness: {
+    allVisiblePageTextTranscribed: 'Author observation only; machine completeness remains HOLD for p0062.',
+    boundaryTextRetained: true,
+    preparedFilesUnchanged: prepared.length,
+    skippedVisibleEquations: 0,
+    unknownGlyphs: observations.unknownGlyphs,
+    continuations: observations.continuations,
+    approvals: observations.approvals,
+  },
+  audit: {
+    status: 'HOLD', finalizeFirstCalls: 4, passPages: 3, failPages: 1,
+    retries: 0, firstFailurePreserved: true,
+    linesTranscribed: pages.reduce((n, page) => n + page.finalize.linesTranscribed, 0),
+    linesMachine: pages.reduce((n, page) => n + page.finalize.linesPrintedMachine, 0),
+    failure: observations.lineAuditHold,
+    earlyPreflight: observations.earlyPreflight,
+    dependentStagesStopped: ['assemble', 'source approval', 'math approval', 'modern authoring', 'figure approval', 'publish', 'Git delivery'],
+    detectorChanged: false, thresholdsChanged: false, failureCountReset: false,
+  },
+  usage: {
+    nativeImageLoads: 4,
+    gridImageLoads: 4,
+    plainImageLoads: 0,
+    perPageImageLoads: [1, 1, 1, 1],
+    imageLoadFailures: 0,
+    reopens: 0, cropsViewed: 0, resizedImages: 0,
+    browserCalls: 0, rendererCalls: 0, generatedImages: 0,
+    machineFigureCropsWrittenByFinalize: 4,
+    mathProblemsSolved: 0, answerFilesRead: 0, oldChoicesRead: 0, oldSolvesRead: 0,
+    paidExternalGenerationCalls: 0,
+    unknownGlyphCount: 0,
+    monetaryCost: null,
+    monetaryCostStatus: 'Unknown; runtime billing not exposed. No fabricated zero-dollar claim.',
+  },
+  observations: identity(path.join(author, 'observations.record')),
+  authorEvidenceFiles: records,
+};
+const destination = path.join(author, 'ready.record');
+fs.writeFileSync(destination, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({
+  ...identity(destination), status: result.status,
+  finalizePass: 3, finalizeFailure: 1, nativeImages: 4,
+  preflightFailure: observations.earlyPreflight.failures.length,
+  preparedFilesUnchanged: prepared.length,
+}, null, 2));

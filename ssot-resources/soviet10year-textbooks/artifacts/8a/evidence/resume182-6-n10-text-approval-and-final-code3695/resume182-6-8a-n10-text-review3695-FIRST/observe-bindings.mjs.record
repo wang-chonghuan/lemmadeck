@@ -1,0 +1,149 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { isDeepStrictEqual as same } from 'node:util';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const review = `${R}/.tmp/resume182-6-8a-n10-text-review3695-FIRST`;
+const author = `${R}/.tmp/resume182-6-8a-n10-text-author3695-FIRST`;
+const rawRoot = `${R}/ssot-resources/soviet10year-textbooks/artifacts/8a`;
+const templateRoot = `${author}/adapt/8a/modern-us-neutral/lessons/alg8-c2-s2-n10`;
+assert.equal(process.cwd(), R);
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const readyPath = `${author}/ready.record`;
+const ready = read(readyPath);
+const lesson = read(`${templateRoot}/lesson.template.json`);
+const exercises = read(`${templateRoot}/exercises.template.json`);
+const figures = read(`${templateRoot}/figures.template.json`);
+const rawLesson = read(`${rawRoot}/lessons/alg8-c2-s2-n10/lesson.json`);
+const rawExercises = read(`${rawRoot}/lessons/alg8-c2-s2-n10/exercises.json`);
+const authorFlow = read(`${author}/shell-13-prose-flow-ready/stdout.txt`);
+const currentFlow = read(`${review}/calls/current-prose-flow/stdout.txt`);
+const pageMap = new Map([60, 61, 62, 63].map((n) => [
+  n, read(`${rawRoot}/pages/${String(n).padStart(4, '0')}/page.json`),
+]));
+const math = (text) => Array.from(text.matchAll(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs), (m) => m[0]);
+const numbers = (text) => text.match(/[0-9]+(?:\.[0-9]+)*/g) ?? [];
+const count = (text, fragment) => text.split(fragment).length - 1;
+const observations = [];
+function observe(name, result, detail = null) {
+  observations.push({ name, result, ...(detail === null ? {} : { detail }) });
+}
+function metadataMatches(source, modern, omitted) {
+  return Object.entries(source).every(([key, value]) => omitted.includes(key) || same(value, modern[key]));
+}
+const refsExist = (refs) => refs.every((ref) => {
+  const match = /^p(\d{4})#(\d+)$/.exec(ref);
+  return match && pageMap.get(Number(match[1]))?.blocks[Number(match[2]) - 1] !== undefined;
+});
+const hashes = [
+  { path: readyPath, sha256: '712d3be9ccb88f726812e38e66fec00afbcfbc9b672665604c1c156d1325846c' },
+  ...ready.sources,
+  ...ready.templates,
+].map((item) => {
+  const actual = sha256(item.path);
+  return { path: item.path, sha256: actual, bytes: fs.statSync(item.path).size, expected_sha256: item.sha256, matches_expected: actual === item.sha256 };
+});
+observe('all_current_source_and_template_hashes_match_pinned_inputs', hashes.every((item) => item.matches_expected));
+observe('author_ready_identity', ready.repo === R && ready.book === '8a' && ready.lesson === 'alg8-c2-s2-n10' && ready.edition === 'modern-us-neutral');
+observe('three_template_identity_and_draft', lesson.id === 'alg8-c2-s2-n10' && exercises.lesson === lesson.id && figures.lesson === lesson.id && [lesson, exercises, figures].every((d) => d.edition === 'modern-us-neutral' && d.status === 'draft'));
+observe('lesson_source_data_unchanged', same(lesson.source.data, rawLesson));
+observe('exercises_source_data_unchanged', same(exercises.source.data, rawExercises));
+observe('lesson_source_hash_binding', lesson.source.sha256 === sha256(`${rawRoot}/${lesson.source.path}`));
+observe('exercise_source_hash_binding', exercises.source.sha256 === sha256(`${rawRoot}/${exercises.source.path}`));
+observe('lesson_metadata_unchanged', metadataMatches(rawLesson, lesson, ['prose']));
+observe('exercise_document_metadata_unchanged', metadataMatches(rawExercises, exercises, ['exercises']));
+observe('source_page_identities', [...pageMap].every(([n, d]) => d.meta.book === '8a' && d.meta.page === n && d.meta.printed_page === n - 7 && d.meta.source.pdf_page === n && d.meta.source.pdf_sha256 === ready.erratum.source.pdf_sha256));
+observe('prose_object_count', lesson.prose.length === 13 && lesson.prose.length === rawLesson.prose.length);
+observe('exercise_count_and_order', exercises.exercises.length === 7 && same(exercises.exercises.map((e) => e.number), ['131', '132', '133', '134', '135', '136', '137']));
+
+for (const [index, modern] of lesson.prose.entries()) {
+  const source = rawLesson.prose[index];
+  observe(`lesson.prose[${index}].source_text`, modern.source_text === source.text);
+  observe(`lesson.prose[${index}].metadata`, metadataMatches(source, modern, ['text']) && refsExist(modern.source_refs));
+  observe(`lesson.prose[${index}].literal_math_sequence`, same(math(source.text), math(modern.text)));
+  observe(`lesson.prose[${index}].literal_numeric_sequence`, same(numbers(source.text), numbers(modern.text)));
+  if (source.kind !== 'p') observe(`lesson.prose[${index}].nonprose_text_unchanged`, source.text === modern.text);
+}
+for (const [index, modern] of exercises.exercises.entries()) {
+  const source = rawExercises.exercises[index];
+  observe(`exercises[${index}].source_text`, modern.source_text === source.text);
+  observe(`exercises[${index}].metadata`, metadataMatches(source, modern, ['text', 'lines']) && refsExist(modern.pages));
+  observe(`exercises[${index}].literal_math_sequence`, same(math(source.text), math(modern.text)));
+  observe(`exercises[${index}].literal_numeric_sequence`, same(numbers(source.text), numbers(modern.text)));
+  observe(`exercises[${index}].lines_equal_text`, modern.text === modern.lines.join('\n'));
+  const labels = modern.lines.slice(1).map((line) => /^([a-d])\) /.exec(line)?.[1]).filter(Boolean);
+  observe(`exercises[${index}].ordered_layout_subparts`, same(labels, index < 5 ? ['a', 'b', 'c', 'd'] : index === 6 ? ['a', 'b'] : []));
+}
+
+const modernTexts = [...lesson.prose, ...exercises.exercises].map((item) => item.text);
+observe('no_chinese_punctuation_in_math', modernTexts.every((text) => math(text).every((formula) => !/[、，；。？！：]/u.test(formula))));
+observe('no_cyrillic_or_print_alignment_in_modern_text', modernTexts.every((text) => !/[\u0400-\u04ff\u3000]/u.test(text)));
+const profile = read(`${R}/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json`);
+observe('no_forbidden_culture_or_fictional_names', modernTexts.every((text) => [...profile.forbidden_terms, ...profile.forbidden_person_names].every((term) => !text.includes(term))));
+observe('no_numeric_or_historical_overrides', [...lesson.prose, ...exercises.exercises].every((item) => item.numeric_changes.length === 0 && item.historical_entities.length === 0));
+observe('actual_author_flow_matches_current_flow', same(authorFlow, currentFlow));
+observe('section_breaks_exact_actual_author_anchors', same(lesson.section_breaks, authorFlow.boundaries.map(({ before, after }) => ({ before, after }))));
+observe('eight_paragraphs_three_resolved_breaks', currentFlow.paragraphs.length === 8 && same(currentFlow.resolvedBreaks, [2, 5, 7]));
+const authorFlowReceipt = read(`${author}/shell-13-prose-flow-ready/receipt.record`);
+observe('author_flow_execution_receipt', authorFlowReceipt.returncode === 0 && authorFlowReceipt.cwd === R && authorFlowReceipt.command.at(-1) === `${templateRoot}/lesson.template.json`);
+const reviewExercise = exercises.exercises[6];
+observe('137_review_group_and_page', reviewExercise.group === '复习题' && reviewExercise.group_id === 'g1' && same(reviewExercise.pages, ['p0063#4']));
+const compact = (text) => text.replace(/\s+/g, '').replace(/[аa]\)/g, 'a)').replace(/[бb]\)/g, 'b)').replace(/(?<!\d)\.(?!\d)|(?<=\D)\.(?=\D|$)/g, '。');
+observe('137_only_culture_and_layout_replacement', compact(rawExercises.exercises[6].text.replace('两个少先队中队', '两支徒步队')) === compact(reviewExercise.text));
+
+const erratum = lesson.errata[0];
+const page62 = pageMap.get(62);
+const raw134 = rawExercises.exercises[3];
+const modern134 = exercises.exercises[3];
+observe('exactly_one_registered_erratum', lesson.errata.length === 1 && page62.meta.errata.length === 1);
+observe('erratum_full_source_record_binding', erratum.id === page62.meta.errata[0].id && erratum.original === page62.meta.errata[0].original && erratum.reason === page62.meta.errata[0].reason && erratum.target === 'exercises[3]' && erratum.source.page === 62 && erratum.source.printed_page === 55 && erratum.source.block === 'p0062#2' && erratum.source.sha256 === sha256(`${rawRoot}/pages/0062/page.json`) && erratum.source.pdf_sha256 === page62.meta.source.pdf_sha256);
+observe('erratum_original_unique_in_source_block_and_target', count(page62.blocks[1].lines.join('').replaceAll('↵', ''), erratum.original) === 1 && count(raw134.text, erratum.original) === 1 && rawExercises.exercises.filter((item) => item.text.includes(erratum.original)).length === 1);
+observe('134_third_label_only_correction', erratum.corrected === erratum.original.replace(/^б\)/u, 'c)') && modern134.lines[3] === erratum.corrected && count(modern134.text, erratum.corrected) === 1 && modern134.changes.includes('math-correction'));
+observe('134_binding_and_original_snapshot_unchanged', same(modern134.pages, ['p0062#2']) && modern134.source_text === raw134.text && exercises.source.data.exercises[3].text === raw134.text && raw134.text.includes(erratum.original));
+observe('figure_id_bindings_only_not_figure_approval', same(figures.figures.map((item) => item.id), ['fig-22', 'fig-23', 'fig-24', 'fig-25']) && same(lesson.figures, rawLesson.figures) && same(exercises.exercises[5].figure_refs, ['fig-25']) && pageMap.get(63).blocks[0].owner_exercise === '136');
+
+const evidenceFiles = [
+  `${R}/.claude/skills/ld-s10y-lesson/SKILL.md`,
+  `${R}/.claude/skills/ld-s10y-lesson/references/production-resume.md`,
+  `${R}/.claude/skills/ld-s10y-lesson/references/edition-text-contract.md`,
+  `${R}/.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs`,
+  `${R}/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js`,
+  `${R}/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json`,
+  `${author}/shell-12-prose-flow-final-author/stdout.txt`,
+  `${author}/shell-12-prose-flow-final-author/receipt.record`,
+  `${author}/shell-13-prose-flow-ready/stdout.txt`,
+  `${author}/shell-13-prose-flow-ready/receipt.record`,
+  `${review}/calls/current-prose-flow/stdout.txt`,
+  `${review}/observe-bindings.mjs`,
+].map((file) => ({ path: file, sha256: sha256(file), bytes: fs.statSync(file).size }));
+console.log(JSON.stringify({
+  schema: 'resume182-6/first-text-binding-observations@1',
+  role: 'Read-only byte, metadata, layout and source-binding observations; not a semantic approval, source PASS, math PASS or figure review.',
+  repo: R, book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+  sources: hashes.slice(1, 1 + ready.sources.length),
+  templates: hashes.slice(1 + ready.sources.length),
+  author_ready: hashes[0],
+  evidence_files: evidenceFiles,
+  observations,
+  false_observations: observations.filter((item) => !item.result),
+  counts: {
+    observations: observations.length,
+    source_prose_objects: lesson.prose.length,
+    textual_prose_objects: lesson.prose.filter((item) => item.kind === 'p').length,
+    unchanged_figure_caption_objects: lesson.prose.filter((item) => item.kind !== 'p').length,
+    final_prose_paragraphs: currentFlow.paragraphs.length,
+    section_breaks: lesson.section_breaks.length,
+    exercises: exercises.exercises.length,
+    modern_subparts: exercises.exercises.reduce((n, item) => n + item.lines.filter((line) => /^[a-d]\) /.test(line)).length, 0),
+    literal_math_segments: modernTexts.reduce((n, text) => n + math(text).length, 0),
+    figures_draft: figures.figures.length,
+    new_source_PASS_reruns: 0,
+    new_math_PASS_reruns: 0,
+    images_viewed: 0,
+    new_images: 0,
+  },
+}, null, 2));
+process.exitCode = observations.some((item) => !item.result) ? 2 : 0;

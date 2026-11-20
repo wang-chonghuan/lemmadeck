@@ -1,0 +1,16 @@
+43-        doc = json.loads(pj.read_text(encoding="utf-8"))
+44-        page = doc["meta"]["page"]
+45-        numbering_errata = B.exercise_numbering_errata(doc["meta"], doc["blocks"], page)
+46:        for i, b in enumerate(doc["blocks"]):
+47:            ref = f"p{page:04d}#{i+1}"
+48-            item = {**b, "page": page,
+49-                           "printed_page": doc["meta"].get("printed_page"),
+50-                           "ref": ref}
+--
+803-             "prose": [{"kind": b["kind"], "text": B.text_of(b),
+804-                        "id": b.get("id"), "label": b.get("label"),
+805-                        "printed_page": b.get("printed_page"),
+806:                        "source_refs": b.get("spans") or [b["ref"]]}
+807-                       for b in l["prose"]]},
+808-            ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+809-        index.append({"id": lid, "card_id": l.get("card_id"),

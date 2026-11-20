@@ -688,7 +688,18 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         band_h = b - a + 1
         count = 1
-        if a not in fraction_starts and band_h > 2.2 * typical_h and pitch > 0:
+        spanning_brace = any(
+            min(rows.stop, b + 1) - max(rows.start, a) >= 0.9 * band_h
+            and rows.stop - rows.start <= band_h + 0.5 * glyph_h
+            and columns.stop - columns.start < 0.8 * glyph_h
+            for bounds in bounds_list if bounds is not None
+            for rows, columns in [bounds]
+        )
+        # Staggered text inflates typical_h; a local brace retains glyph-sized rows.
+        if a not in fraction_starts and pitch > 0 and (
+            band_h > 2.2 * typical_h
+            or spanning_brace and band_h > 2.2 * glyph_h
+        ):
             # Brace-connected rows are often shorter than an integral pitch
             # multiple. Count the nearest number of row centres, not a floor.
             count = max(2, int(round((band_h + typical_gap) / pitch)))

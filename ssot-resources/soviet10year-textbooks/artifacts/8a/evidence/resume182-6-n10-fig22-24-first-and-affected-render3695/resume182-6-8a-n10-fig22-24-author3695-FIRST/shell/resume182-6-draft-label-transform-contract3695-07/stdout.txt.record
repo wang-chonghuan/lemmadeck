@@ -1,0 +1,123 @@
+      const imageFits = figureSpec.objects
+        .filter((object) => object.type === 'image')
+        .map((object) => {
+          const node = document.getElementById(`${boardId}_ld-${object.id}`)
+          if (!node) {
+            return {
+              id: object.id,
+              status: 'fail',
+              reason: 'missing rendered image node',
+            }
+          }
+          // JSXGraph defaults SVG images to preserveAspectRatio="none".
+          // Treat FigureSpec size as a fit box and never distort artwork.
+          node.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+          node.setAttribute('data-ld-layer', 'artwork')
+          return {
+            id: object.id,
+            status: node.getAttribute('preserveAspectRatio') === 'xMidYMid meet'
+              ? 'pass'
+              : 'fail',
+            preserveAspectRatio: node.getAttribute('preserveAspectRatio'),
+          }
+        })
+
+      if (rawPaths.length) {
+        const rawLayer = document.createElementNS(SVG_NS, 'g')
+        rawLayer.setAttribute('id', `${boardId}-raw-path-layer`)
+        const scaleX = figureSpec.canvas.width / (
+          figureSpec.canvas.boundingBox[2] - figureSpec.canvas.boundingBox[0]
+        )
+        const scaleY = figureSpec.canvas.height / (
+          figureSpec.canvas.boundingBox[1] - figureSpec.canvas.boundingBox[3]
+        )
+        rawLayer.setAttribute('transform', `scale(${scaleX} ${scaleY})`)
+        for (const object of rawPaths) {
+          const node = document.createElementNS(SVG_NS, 'path')
+          node.setAttribute('d', object.d)
+          node.setAttribute('fill', color(object.fill, 'none'))
+          node.setAttribute('stroke', color(object.stroke, 'none'))
+          node.setAttribute(
+            'stroke-width',
+            String(object.strokeWidth || 1),
+          )
+          node.setAttribute('vector-effect', 'non-scaling-stroke')
+          const dashPatterns = [
+            [2, 2], [5, 5], [10, 10], [20, 20],
+            [20, 10, 10, 10], [20, 5, 10, 5], [0, 5],
+          ]
+          const dashPattern = dashPatterns[(object.dash || 0) - 1]
+          if (dashPattern) {
+            node.setAttribute(
+              'stroke-dasharray',
+              dashPattern.map(value => value * (object.strokeWidth || 1)).join(','),
+            )
+          }
+          if (object.fillOpacity !== undefined) {
+            node.setAttribute('fill-opacity', String(object.fillOpacity))
+          }
+          if (object.strokeOpacity !== undefined) {
+            node.setAttribute('stroke-opacity', String(object.strokeOpacity))
+          }
+          rawLayer.appendChild(node)
+        }
+        svg.appendChild(rawLayer)
+      }
+
+      const toScreen = (at) => {
+        const coords = new JXG.Coords(JXG.COORDS_BY_USER, at, board)
+        return [coords.scrCoords[1], coords.scrCoords[2]]
+      }
+      const rectFromRegion = (region) => {
+        const topLeft = toScreen([region[0], region[1]])
+        const bottomRight = toScreen([region[2], region[3]])
+        return {
+          x: Math.min(topLeft[0], bottomRight[0]),
+          y: Math.min(topLeft[1], bottomRight[1]),
+          width: Math.abs(bottomRight[0] - topLeft[0]),
+          height: Math.abs(bottomRight[1] - topLeft[1]),
+        }
+      }
+      const labelLayer = document.createElementNS(SVG_NS, 'g')
+      labelLayer.setAttribute('id', `${boardId}-label-layer`)
+      svg.appendChild(labelLayer)
+      const geometryNodes = [...svg.querySelectorAll(
+        'line, path, polygon, polyline, circle, ellipse, rect',
+      )].filter((node) => (
+        !node.closest('defs') &&
+        node.getAttribute('display') !== 'none' &&
+        node.getAttribute('stroke') !== 'none' &&
+        Number.parseFloat(node.getAttribute('stroke-width') || '0') > 2.5
+      ))
+
+      const minGap = figureSpec.layout?.minLabelGap ?? 4
+      const avoid = [
+        ...visiblePoints.map((point) => {
+          const [x, y] = toScreen(point.at)
+          return {
+            x: x - point.radius,
+            y: y - point.radius,
+            width: point.radius * 2,
+            height: point.radius * 2,
+          }
+        }),
+        ...imageRegions.map(rectFromRegion),
+        ...(figureSpec.layout?.avoidRegions || []).map(rectFromRegion),
+      ]
+      const occupied = []
+      const collisions = []
+
+      const overlapArea = (a, b) => {
+        const width = Math.max(
+          0,
+          Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
+        )
+        const height = Math.max(
+          0,
+          Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y),
+        )
+        return width * height
+      }
+      const inflate = (rect, amount) => ({
+        x: rect.x - amount,
+        y: rect.y - amount,

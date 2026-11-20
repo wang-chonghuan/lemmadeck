@@ -1,0 +1,334 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import {
+  normalizeMathAnswer,
+  exactMathAnswersMatch,
+} from '../../../app/src/lib/answer-normalize.ts';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const FIRST = `${R}/.tmp/resume182-6-8a-n10-answer-review3695-FIRST`;
+const W = `${FIRST}/AFFECTED-grading1`;
+const CURRENT = `${R}/.tmp/resume182-6-8a-n10-answer-grading-recovery3695-FIRST`;
+assert.equal(process.cwd(), R);
+const hash = path => crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex');
+const read = path => JSON.parse(fs.readFileSync(path, 'utf8'));
+const bind = path => ({ path, sha256: hash(path) });
+const candidatePath = `${CURRENT}/answers.draft.json`;
+const deltaPath = `${CURRENT}/grading-delta.record`;
+assert.equal(hash(candidatePath), '856f61c3f0af0656353dbbd1adf07f39848d439497683cd2483b336de4ae729d');
+assert.equal(hash(deltaPath), '4a7832ad10f8a9d98fc067c9716fbd41a90bb813e2e105899b20542521066258');
+assert.equal(hash(`${FIRST}/ready.record`), '707bf253eb84cf236fc226d29354120820b281877ea6e50eaceac74ab4403908');
+const first = read(`${FIRST}/ready.record`);
+const delta = read(deltaPath);
+const candidate = read(candidatePath);
+const oldPath = delta.originalCandidate.path;
+assert.equal(hash(oldPath), delta.originalCandidate.sha256);
+assert.equal(delta.originalCandidate.sha256, 'b1ee4c245193b5d0ceb24e93f761da1415dad0b21b804a60af08cb661f0b018d');
+assert.equal(delta.originalReviewHold.path, `${FIRST}/ready.record`);
+assert.equal(delta.originalReviewHold.sha256, hash(`${FIRST}/ready.record`));
+assert.equal(delta.candidate.path, candidatePath);
+assert.equal(delta.candidate.sha256, hash(candidatePath));
+const old = read(oldPath);
+for (const field of ['schema', 'book', 'lesson', 'edition', 'status']) {
+  assert.equal(candidate[field], old[field], field);
+}
+assert.equal(candidate.book, '8a');
+assert.equal(candidate.lesson, 'alg8-c2-s2-n10');
+assert.equal(candidate.edition, 'modern-us-neutral');
+assert.deepEqual(candidate.answers.map(a => a.exercise), ['131', '132', '133', '134', '135', '136', '137']);
+assert.equal(candidate.answers.length, old.answers.length);
+assert.deepEqual(delta.affectedExercises, ['131', '132']);
+assert.deepEqual(delta.changedFields, ['grading', 'parts', 'notes']);
+assert.equal(delta.candidateNumber, 2);
+
+const normPath = `${R}/app/src/lib/answer-normalize.ts`;
+const exactGatePath = `${R}/.claude/skills/ld-s10y-answer/tools/check_mathlive_exact.mjs`;
+for (const input of delta.runtimeContract) assert.equal(hash(input.path), input.sha256, input.path);
+assert.equal(hash(normPath), '5c11b4304874b65ec5d99f92413b524cfc4f6683a60268a0ba04143534c7448c');
+for (const evidence of [first.independentDerivation, first.independentFreeze, first.perExerciseVerification]) {
+  assert.equal(hash(evidence.path), evidence.sha256, evidence.path);
+}
+const frozen = read(first.independentDerivation.path);
+const firstReport = read(first.perExerciseVerification.path);
+assert.equal(firstReport.mathematicalResult, 'ALL_7_EXERCISES_AND_26_LABELED_SUBQUESTIONS_MATCH_INDEPENDENT_SOLUTION');
+assert.equal(first.result.mathematicalDefects, 0);
+assert.equal(first.result.unitDefects, 0);
+assert.equal(first.result.displayDefects, 0);
+assert.equal(first.images.views, 2);
+assert.equal(first.authorIsReviewer, false);
+
+const permitted = new Set(['grading', 'parts', 'notes']);
+const withoutPermitted = answer => Object.fromEntries(
+  Object.entries(answer).filter(([field]) => !permitted.has(field)),
+);
+const words = {
+  yes: '\u662f',
+  no: '\u5426',
+  'in F': '\u5c5e\u4e8e',
+  'not in F': '\u4e0d\u5c5e\u4e8e',
+};
+const opposite = {
+  yes: 'no', no: 'yes',
+  'in F': 'not in F', 'not in F': 'in F',
+};
+const mapping = [];
+let positiveChecks = 0;
+let negativeChecks = 0;
+for (const [index, answer] of candidate.answers.entries()) {
+  const original = old.answers[index];
+  assert.equal(answer.displayAnswer, original.displayAnswer, `${answer.exercise} display`);
+  if (index >= 2) {
+    assert.deepEqual(answer, original, `${answer.exercise} unchanged object`);
+    continue;
+  }
+  assert.deepEqual(withoutPermitted(answer), withoutPermitted(original));
+  assert.equal(original.grading, 'ungraded');
+  assert.equal(answer.grading, 'auto');
+  assert.equal(answer.source, original.source);
+  assert.equal(answer.parts.length, 4);
+  assert.ok(answer.notes.startsWith(original.notes));
+  const frozenAnswer = frozen.exercises.find(e => e.exercise === answer.exercise);
+  assert.equal(frozenAnswer.parts.length, 4);
+  for (const [partIndex, part] of answer.parts.entries()) {
+    const frozenPart = frozenAnswer.parts[partIndex];
+    assert.ok(['yes', 'no'].includes(frozenPart.expected));
+    const meaning = answer.exercise === '132'
+      ? (frozenPart.expected === 'yes' ? 'in F' : 'not in F')
+      : frozenPart.expected;
+    const word = words[meaning];
+    const negativeWord = words[opposite[meaning]];
+    assert.ok(word && negativeWord);
+    assert.equal(part.label, `${frozenPart.label})`);
+    assert.equal(part.judge, 'exact');
+    assert.deepEqual(part.expected, [`\\text{${word}}`]);
+    assert.deepEqual(Object.keys(part).sort(), ['expected', 'judge', 'label']);
+    assert.equal(normalizeMathAnswer(part.expected[0]), word);
+    for (const wrapper of ['text', 'textrm', 'mathrm', 'operatorname']) {
+      assert.equal(exactMathAnswersMatch(part.expected, `\\${wrapper}{${word}}`), true);
+      positiveChecks++;
+      assert.equal(exactMathAnswersMatch(part.expected, `\\${wrapper}{${negativeWord}}`), false);
+      negativeChecks++;
+    }
+    mapping.push({
+      exercise: answer.exercise,
+      label: part.label,
+      ...(frozenPart.point ? { point: frozenPart.point } : {}),
+      frozenExpectedMeaning: frozenPart.expected,
+      answerMeaning: meaning,
+      expected: part.expected,
+      normalizedExpected: word,
+      oppositeRejected: negativeWord,
+      grading: 'auto',
+      judge: 'exact',
+      status: 'PASS_AFFECTED_MAPPING_AND_CLASSIFICATION',
+    });
+  }
+}
+assert.equal(mapping.length, 8);
+assert.equal(positiveChecks, 32);
+assert.equal(negativeChecks, 32);
+assert.equal(candidate.answers.filter(a => a.grading === 'auto').length, 3);
+assert.equal(candidate.answers.flatMap(a => a.parts).filter(p => p.judge === 'exact').length, 8);
+assert.equal(candidate.answers.flatMap(a => a.parts).filter(p => p.judge === 'numeric').length, 4);
+const preservedFailures = first.executionFailures.map(failure => {
+  assert.equal(hash(failure.receipt.path), failure.receipt.sha256);
+  return {
+    name: failure.name,
+    receipt: failure.receipt,
+    classification: failure.classification,
+    preservedUnchanged: true,
+  };
+});
+assert.equal(preservedFailures.length, 2);
+const firstSealReceipt = bind(`${FIRST}/seal-review27/receipt.record`);
+assert.equal(read(firstSealReceipt.path).returncode, 0);
+
+const report = {
+  schema: 'resume182-6/affected-answer-grading-review@1',
+  status: 'PASS',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+  authorIsReviewer: false,
+  reviewerIdentity: 'SAME_FIRST_INDEPENDENT_REVIEWER',
+  candidate: bind(candidatePath),
+  affectedExercises: ['131', '132'],
+  permittedChangedFields: ['grading', 'parts', 'notes'],
+  allDisplayAnswersUnchanged: true,
+  otherFiveAnswerObjectsUnchanged: true,
+  mathematicalExpectedSource: first.independentDerivation,
+  independentMathematicalDerivationReruns: 0,
+  newImageViews: 0,
+  mapping,
+  normalizerCheck: {
+    executionCount: 1,
+    actualSharedFunctions: ['normalizeMathAnswer', 'exactMathAnswersMatch'],
+    code: bind(normPath),
+    positiveChecks,
+    negativeChecks,
+    wrappers: ['text', 'textrm', 'mathrm', 'operatorname'],
+    scope: 'Lexical polarity and existing representation contract only; not a MathLive editor test or official finalize.',
+  },
+  resolvedFirstDefects: [
+    { id: 'GRADING-131', status: 'RESOLVED', reason: 'Four labeled exact text keys encode the previously frozen yes/yes/no/yes results using the existing judge.' },
+    { id: 'GRADING-132', status: 'RESOLVED', reason: 'Four labeled exact text keys encode the previously frozen not-in/in/not-in/in results in A/B/C/D order using the existing judge.' },
+  ],
+  gradingSuitable: true,
+  newJudgeOrNumericEncoding: false,
+  defects: [],
+  officialFinalize: {
+    status: 'REQUIRED_NOT_RUN',
+    reviewerExecutions: 0,
+    parentOnly: true,
+    requiredNextGate: 'Parent runs official finalize once for all current keys, including the real MathLive editing contract for the eight exact parts. This review is not editor-chain approval.',
+    onFailure: 'Preserve failure evidence and keep the production gate closed; do not publish or report finalize PASS.',
+  },
+  cost: 'unknown',
+};
+fs.writeFileSync(`${W}/review.report.json`, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
+const executions = fs.readdirSync(W, { withFileTypes: true })
+  .filter(entry => entry.isDirectory() && fs.existsSync(`${W}/${entry.name}/start.record`))
+  .map(entry => {
+    const path = `${W}/${entry.name}/receipt.record`;
+    return {
+      name: entry.name,
+      start: bind(`${W}/${entry.name}/start.record`),
+      receipt: fs.existsSync(path) ? bind(path) : null,
+      result: fs.existsSync(path) ? read(path) : null,
+    };
+  });
+assert.equal(executions.length, 3);
+const newFailures = executions.filter(e => e.result && e.result.returncode !== 0);
+assert.equal(newFailures.length, 0);
+const preservedFirst = {
+  candidate: bind(oldPath),
+  reviewHold: bind(`${FIRST}/ready.record`),
+  reviewReport: first.perExerciseVerification,
+  independentDerivation: first.independentDerivation,
+  independentFreeze: first.independentFreeze,
+  completedSealingReceipt: firstSealReceipt,
+  executionFailures: preservedFailures,
+  counters: first.counters,
+  cost: first.cost,
+  preservation: 'Original candidate, FIRST HOLD, FAIL receipts, report and frozen solutions remain byte-identical; no overwrite or reset.',
+};
+const inputs = [
+  bind(candidatePath),
+  bind(deltaPath),
+  bind(normPath),
+  first.independentDerivation,
+  first.independentFreeze,
+  first.perExerciseVerification,
+  bind(exactGatePath),
+  bind(`${R}/.claude/skills/ld-s10y-answer/references/gate-2-lesson-answers/gate.md`),
+  bind(`${R}/.claude/skills/ld-s10y-lesson/references/production-resume.md`),
+];
+assert.deepEqual(inputs.filter(i => i.path.endsWith('/answers.draft.json')).map(i => i.path), [candidatePath]);
+const ready = {
+  schema: 'resume182-6/affected-answer-review-ready@1',
+  status: 'PASS',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  authorIsReviewer: false,
+  role: 'SAME_FIRST_INDEPENDENT_ANSWER_REVIEWER_AFFECTED_GRADING_ONLY',
+  productionRoot: R,
+  writeRoot: W,
+  sealedAt: new Date().toISOString(),
+  approvalScope: 'Current hash-bound answer candidate: affected 131/132 classification passes; prior unchanged mathematics/figures/units and five answers are reused. Not whole-lesson, editor-chain, publish or finalize approval.',
+  inputs,
+  candidate: bind(candidatePath),
+  candidateNumber: 2,
+  delta: bind(deltaPath),
+  affectedReview: bind(`${W}/review.report.json`),
+  preservedFirst,
+  result: {
+    affectedExerciseCount: 2,
+    exactPartsReviewed: 8,
+    labeledExpectedMappings: 8,
+    resolvedFirstHolds: ['GRADING-131', 'GRADING-132'],
+    allDisplayAnswersUnchanged: true,
+    otherFiveAnswerObjectsUnchanged: true,
+    inheritedAllSevenMathematicalResults: 'PASS_REUSED_ZERO_RERUNS',
+    inheritedFigureObservationsAndUnits: 'PASS_REUSED_ZERO_RERUNS',
+    gradingSuitable: true,
+    defects: [],
+  },
+  inheritedEvidence: {
+    math: first.independentDerivation,
+    freeze: first.independentFreeze,
+    perExerciseVerification: first.perExerciseVerification,
+    priorCorrectnessAndDisplayResults: first.perExerciseResults.map(e => ({
+      exercise: e.exercise,
+      mathematicalCorrectness: e.mathematicalCorrectness,
+      displaySufficiency: e.displaySufficiency,
+    })),
+    figureObservationEvidence: {
+      report: first.perExerciseVerification,
+      images: first.images,
+      reusedWithoutNewViews: true,
+    },
+  },
+  formalFinalizeGate: report.officialFinalize,
+  counters: {
+    scope: 'Affected grading only; previous cumulative counters retained separately, never reset.',
+    candidateCountCumulative: 2,
+    candidateReviewCountCumulative: 2,
+    affectedReviewExecutions: 1,
+    normalizerPolarityCheckExecutions: 1,
+    positiveNormalizerChecks: positiveChecks,
+    negativeNormalizerChecks: negativeChecks,
+    mathematicalDerivationReruns: 0,
+    mathematicalValidationReruns: 0,
+    numericContractReruns: 0,
+    sourceApprovalReruns: 0,
+    textApprovalReruns: 0,
+    figureApprovalReruns: 0,
+    newImageViews: 0,
+    inheritedImageViews: 2,
+    reviewerImageViewsCumulative: 2,
+    renders: 0, crops: 0, resizes: 0,
+    browserLaunches: 0,
+    MathLiveEditingChecks: 0,
+    officialFinalizeExecutions: 0,
+    candidateWrites: 0,
+    affectedReceiptWrappedStartsIncludingSealing: executions.length,
+    completedAffectedReceiptsBeforeSealingReturn: executions.filter(e => e.receipt).length,
+    reviewerReceiptWrappedStartsCumulative: first.counters.receiptWrappedCommandStartsIncludingSealing + executions.length,
+    inheritedExecutionFailures: 2,
+    newExecutionFailures: 0,
+    reviewerExecutionFailuresCumulative: 2,
+    affectedManualApplyPatchCalls: 2,
+    pythonExecutions: 0,
+    networkOperations: 0,
+    dependencyInstalls: 0,
+    paidModelOrImageCallsViaTools: 0,
+    dbOperations: 0, planeOperations: 0,
+    commitPushMergeDeployOperations: 0,
+    newChats: 0,
+  },
+  executionFailures: { inherited: preservedFailures, current: newFailures },
+  executionReceipts: executions,
+  sealingExecutionReceipt: {
+    path: `${W}/review-and-seal3/receipt.record`,
+    note: 'Immutable wrapper records final producer completion after this file is written.',
+  },
+  preservation: 'Only AFFECTED-grading1 is written; original FIRST review, frozen math, FAIL, candidate, durable files, figures, locks and all other work remain untouched.',
+  cost: 'unknown',
+  inheritedCost: 'unknown',
+  unknownParentTotals: 'unknown; retained without reconstruction or reset',
+};
+fs.writeFileSync(`${W}/ready.record`, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+for (const input of inputs) assert.equal(hash(input.path), input.sha256);
+assert.equal(hash(preservedFirst.reviewHold.path), preservedFirst.reviewHold.sha256);
+assert.equal(hash(preservedFirst.candidate.path), preservedFirst.candidate.sha256);
+assert.equal(read(`${W}/ready.record`).status, 'PASS');
+console.log(JSON.stringify({
+  ready: bind(`${W}/ready.record`),
+  status: 'PASS',
+  defects: [],
+  affectedExactParts: 8,
+  mathReruns: 0,
+  newImageViews: 0,
+  officialFinalize: 'REQUIRED_NOT_RUN',
+  cost: 'unknown',
+}, null, 2));

@@ -1,0 +1,356 @@
+.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/fig-24-AFFECTED-label1-FIRST/capture-and-record.mjs
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST');
+const affected = path.join(work, 'fig-24-AFFECTED-label1-FIRST');
+assert.equal(process.cwd(), R);
+const require = createRequire(path.join(R, 'app/package.json'));
+const { chromium } = require('playwright');
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const json = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const write = (file, value) => {
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return binding(file);
+};
+const previousPath = path.join(work, 'render-ready.record');
+assert.equal(binding(previousPath).sha256, '6184137a88412a38b9fee81794ffbd8cb03ce929666952c564c70ffc63fa1358');
+const previous = json(previousPath);
+const previousFigure = previous.figures.find((figure) => figure.id === 'fig-24');
+const preserved = [
+  ...previous.figures.flatMap((figure) => ['spec', 'svg', 'render', 'nativePng'].map((key) => figure[key])),
+  previous.originalInventory,
+  previous.originalInventoryReady,
+  previous.immutableDraftReady,
+  previous.assertionRepairReady,
+];
+const checkPreserved = () => {
+  for (const item of preserved) assert.equal(binding(item.path).sha256, item.sha256);
+};
+checkPreserved();
+const specPath = path.join(affected, 'fig-24.spec.json');
+const spec = json(specPath);
+const renderPath = path.join(affected, 'fig-24.AFFECTED-label1.render.json');
+const render = json(renderPath);
+const svgPath = path.join(affected, 'fig-24.AFFECTED-label1.svg');
+const svg = fs.readFileSync(svgPath, 'utf8');
+assert.equal(render.spec.sha256, binding(specPath).sha256);
+assert.equal(render.output.svg.sha256, binding(svgPath).sha256);
+assert.equal(spec.canvas.width, 640);
+const pngPath = path.join(affected, 'fig-24.native-and-640-AFFECTED-label1.png');
+assert.equal(fs.existsSync(pngPath), false);
+const executablePath = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  process.env.CHROME_PATH,
+  chromium.executablePath(),
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].filter(Boolean).find((file) => fs.existsSync(file));
+assert.ok(executablePath, 'Use an existing browser only.');
+
+let browser;
+let context;
+let page;
+let screenshotCalls = 0;
+let observed;
+let captureFailure;
+let blockedRequests = 0;
+try {
+  browser = await chromium.launch({ executablePath, headless: true });
+  context = await browser.newContext({
+    viewport: { width: 640, height: spec.canvas.height },
+    deviceScaleFactor: 1,
+    serviceWorkers: 'block',
+  });
+  await context.route('**/*', async (route) => {
+    blockedRequests += 1;
+    await route.abort();
+  });
+  page = await context.newPage();
+  await page.setContent(
+    `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff}body>svg{display:block;width:640px;height:${spec.canvas.height}px}</style></head><body>${svg}</body></html>`,
+    { waitUntil: 'load' },
+  );
+  await page.evaluate(() => document.fonts.ready);
+  observed = await page.evaluate(() => {
+    const svg = document.querySelector('body > svg');
+    const rect = svg.getBoundingClientRect();
+    const labels = [...svg.querySelectorAll('text')].map((node) => {
+      const matrix = node.getScreenCTM();
+      return {
+        id: node.getAttribute('data-label-id'),
+        text: node.textContent,
+        actualCssTextPx: Number.parseFloat(getComputedStyle(node).fontSize) * Math.hypot(matrix.a, matrix.b),
+      };
+    });
+    return {
+      actualCssWidth: rect.width,
+      actualCssHeight: rect.height,
+      DPR: window.devicePixelRatio,
+      labels,
+      minimumActualCssTextPx: Math.min(...labels.map((item) => item.actualCssTextPx)),
+    };
+  });
+  assert.equal(observed.actualCssWidth, 640);
+  assert.equal(observed.DPR, 1);
+  assert.ok(observed.minimumActualCssTextPx >= 16);
+  screenshotCalls += 1;
+  await page.locator('body > svg').screenshot({ path: pngPath, animations: 'disabled' });
+} catch (error) {
+  captureFailure = String(error.stack || error);
+} finally {
+  try {
+    if (page) await page.close();
+  } finally {
+    try {
+      if (context) await context.close();
+    } finally {
+      if (browser) await browser.close();
+    }
+  }
+}
+checkPreserved();
+const pngBinding = fs.existsSync(pngPath) ? binding(pngPath) : null;
+const pngBytes = pngBinding ? fs.readFileSync(pngPath) : null;
+const capture = write(path.join(affected, 'raster.record'), {
+  status: captureFailure ? 'AFFECTED_SVG_RASTER_HOLD' : 'AFFECTED_SVG_RASTER_CAPTURED_NOT_FIGURE_APPROVAL',
+  id: 'fig-24',
+  svg: binding(svgPath),
+  nativePng: pngBinding,
+  width640Preview: pngBinding,
+  nativeAnd640SamePNG: true,
+  reason: 'Native canvas width640 at DPR1; one SVG screenshot is reused as actual640 preview, with no copy or second capture.',
+  observed,
+  PNGDimensions: pngBytes ? { width: pngBytes.readUInt32BE(16), height: pngBytes.readUInt32BE(20) } : null,
+  captureFailure,
+  screenshotCalls,
+  blockedRequests,
+  networkPolicy: 'Abort all requests; block service workers.',
+  PNGViewedByAuthor: false,
+  otherPNGRecaptures: 0,
+  originalFailedPNGUnchanged: previousFigure.nativePng,
+  cost: 'unknown',
+});
+const validationRoot = path.join(work, 'shell/resume182-6-fig24-label1-validate-AFFECTED3695-22');
+const renderRoot = path.join(work, 'shell/resume182-6-fig24-label1-render-AFFECTED3695-23');
+const call = (directory) => ({
+  start: binding(path.join(directory, 'start.record')),
+  stdout: binding(path.join(directory, 'stdout.txt')),
+  stderr: binding(path.join(directory, 'stderr.txt')),
+  receipt: binding(path.join(directory, 'receipt.record')),
+  returncode: json(path.join(directory, 'receipt.record')).returncode,
+});
+const validation = json(path.join(validationRoot, 'stdout.txt'));
+const passingReadyPath = path.join(work, 'render-ready-fig22-23.record');
+const ready = write(path.join(affected, 'render-ready.record'), {
+  status: render.status === 'pass' && !captureFailure ? 'AFFECTED_LABEL1_RENDER_PASS_NOT_FIGURE_APPROVAL' : 'AFFECTED_LABEL1_HOLD_NOT_FIGURE_APPROVAL',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  root: R,
+  figures: [{
+    id: 'fig-24',
+    validationStatus: validation.status,
+    renderStatus: render.status,
+    spec: binding(specPath),
+    svg: binding(svgPath),
+    render: binding(renderPath),
+    nativePng: pngBinding,
+    width640Preview: pngBinding,
+    nativeAnd640SamePNG: true,
+    collisions: render.collisions,
+    displayChecks: render.displayChecks,
+    actual640: observed,
+    sourceImage: previousFigure.sourceImage,
+  }],
+  existingFig22Fig23RenderReady: binding(passingReadyPath),
+  previousFIRSTRenderReady: binding(previousPath),
+  preservedFIRSTFailure: {
+    status: 'fail',
+    originalDraftSpec: previousFigure.originalFIRSTDraftSpec,
+    originalAssertionRepair: previousFigure.assertionRepair,
+    failedSpec: previousFigure.spec,
+    failedSVG: previousFigure.svg,
+    failedRender: previousFigure.render,
+    failedNativePng: previousFigure.nativePng,
+    failedWidth640Preview: previousFigure.width640Preview,
+    collisions: previousFigure.firstRender.collisions,
+  },
+  change: binding(path.join(affected, 'change.record')),
+  preparation: binding(path.join(affected, 'prepared.record')),
+  raster: capture,
+  validation: { status: validation.status, errors: validation.errors, call: call(validationRoot) },
+  renderCall: call(renderRoot),
+  currentCounts: {
+    affectedLabelLayoutRepairs: 1,
+    explicitDraftValidations: 1,
+    rendererInternalDraftValidations: 1,
+    renderAttempts: 1,
+    screenshotCalls,
+    PNGFilesCreated: pngBinding ? 1 : 0,
+    fig22Fig23ValidationRenderCaptureCalls: 0,
+    originalSourceImageViews: 0,
+    PNGImageViewsByAuthor: 0,
+    record_review: 0,
+    figureApprovals: 0,
+    promotions: 0,
+    cost: 'unknown',
+  },
+  cumulativeCountsNotReset: {
+    initialDraftSpecCandidates: 3,
+    assertionRepairSpecCandidates: 3,
+    labelRepairSpecCandidates: 1,
+    totalFigureSpecCandidates: 7,
+    assertionRepairOperations: 3,
+    renderLabelRepairOperations: 1,
+    totalActualRepairOperations: 4,
+    fig24CumulativeRepairOperations: 2,
+    explicitDraftValidations: 7,
+    rendererInternalDraftValidations: 4,
+    totalActualValidatorInvocations: 11,
+    FIRSTValidationFailuresStillRetained: 3,
+    renderAttempts: 4,
+    FIRSTRenderFailuresStillRetained: 1,
+    historicalFIRSTRenderPasses: 2,
+    affectedRenderPasses: render.status === 'pass' ? 1 : 0,
+    currentPassingFiguresInThisAuthorBatch: render.status === 'pass' ? 3 : 2,
+    sourceImageViewsCumulative: 3,
+    sourceImageReopensCumulative: 0,
+    PNGFilesCreated: 3 + (pngBinding ? 1 : 0),
+    screenshotCalls: 3 + screenshotCalls,
+    newFailedCommandsThisStage: (validation.status === 'pass' ? 0 : 1) + (render.status === 'pass' ? 0 : 1) + (captureFailure ? 1 : 0),
+    previousRetainedFailedCommandReceipts: 5,
+    previousLostProbeFailureWithoutOriginalReceipt: 1,
+    figureReviewRecords: 0,
+    figureApprovals: 0,
+    promotions: 0,
+    cost: 'unknown',
+  },
+  proceduralHold: previous.proceduralHold,
+  preservation: {
+    previousFIRSTReadyChanged: false,
+    priorInventoryDraftRepairReadyChanged: false,
+    sourceCoordinatesAssertionsAndCanvasChanged: false,
+    originalFailureOutputsChanged: false,
+    fig22Fig23ArtifactsChanged: false,
+    generatedSVGEditedByHand: false,
+    thresholdsOrCountersAlteredToPass: false,
+  },
+  meaning: 'Only fig24 x-unit glyph placement changed, offset[-8,0], while its source anchor[1,0], S-side and gap16 remain. Existing fig22/23 passes were reused without executing their producer/checker. Successful affected render is not independent figure approval; all earlier failures and the procedural HOLD remain.',
+});
+console.log(JSON.stringify({
+  passingFig22Fig23Ready: binding(passingReadyPath),
+  affectedFig24Ready: ready,
+  validationStatus: validation.status,
+  renderStatus: render.status,
+  collisions: render.collisions,
+  nativePng: pngBinding,
+  actual640: observed,
+  captureFailure,
+}, null, 2));
+if (captureFailure || render.status !== 'pass') process.exitCode = 2;
+
+.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/shell/resume182-6-fig24-label1-raster-ready-AFFECTED3695-24/receipt.record
+{
+  "command": [
+    "/usr/bin/env",
+    "TMPDIR=/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/shell/resume182-6-fig24-label1-raster-ready-AFFECTED3695-24",
+    "node",
+    ".tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/fig-24-AFFECTED-label1-FIRST/capture-and-record.mjs"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T12:24:09.983Z",
+  "finished": "2026-11-20T12:24:11.111Z",
+  "returncode": 0,
+  "signal": null,
+  "error": null
+}
+
+.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/shell/resume182-6-fig24-label1-raster-ready-AFFECTED3695-24/stdout.txt
+{
+  "passingFig22Fig23Ready": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/render-ready-fig22-23.record",
+    "sha256": "1b877ea717ab57a27677dd7e43289bcd927a28501ff56b676f0a58550a06cf3d",
+    "bytes": 29397
+  },
+  "affectedFig24Ready": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/fig-24-AFFECTED-label1-FIRST/render-ready.record",
+    "sha256": "5cce7a33be5f62f3ec196c7ea65a1440937a66c8ab814e2bafd9619a7bc6e93e",
+    "bytes": 13098
+  },
+  "validationStatus": "pass",
+  "renderStatus": "pass",
+  "collisions": [],
+  "nativePng": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/fig-24-AFFECTED-label1-FIRST/fig-24.native-and-640-AFFECTED-label1.png",
+    "sha256": "4c41e410a7c4b4a77c281996de30d0b31542dfbd5c90ce97527c70061026cf34",
+    "bytes": 65956
+  },
+  "actual640": {
+    "actualCssWidth": 640,
+    "actualCssHeight": 960,
+    "DPR": 1,
+    "labels": [
+      {
+        "id": "fig24-upper-line-label-label",
+        "text": "y = 2x + 2",
+        "actualCssTextPx": 20
+      },
+      {
+        "id": "fig24-lower-line-label-label",
+        "text": "y = 2x - 3",
+        "actualCssTextPx": 20
+      },
+      {
+        "id": "fig24-origin-label-label",
+        "text": "0",
+        "actualCssTextPx": 20
+      },
+      {
+        "id": "fig24-x-label-label",
+        "text": "x",
+        "actualCssTextPx": 20
+      },
+      {
+        "id": "fig24-y-label-label",
+        "text": "y",
+        "actualCssTextPx": 20
+      },
+      {
+        "id": "fig24-x-unit-label-label",
+        "text": "1",
+        "actualCssTextPx": 20
+      },
+      {
+        "id": "fig24-y-unit-label-label",
+        "text": "1",
+        "actualCssTextPx": 20
+      }
+    ],
+    "minimumActualCssTextPx": 20
+  }
+}
+
+.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/shell/resume182-6-fig24-label1-raster-ready-AFFECTED3695-24/stderr.txt
+
+{
+  "svgRootKeys": [
+    "@width",
+    "@height",
+    "@style",
+    "@xmlns",
+    "@viewBox",
+    "defs",
+    "g"
+  ],
+  "width": "640",
+  "height": "960",
+  "viewBox": "0 0 640 960"
+}

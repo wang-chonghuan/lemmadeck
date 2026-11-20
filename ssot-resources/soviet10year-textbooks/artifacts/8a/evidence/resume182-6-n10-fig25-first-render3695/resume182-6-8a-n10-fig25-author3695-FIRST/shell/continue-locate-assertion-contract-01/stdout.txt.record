@@ -1,0 +1,90 @@
+27:    "grid", "axis", "measure", "svgPath",
+69:        if item.get("type") == "point" and coordinate(item.get("at")):
+74:def assertion_point_ids(
+78:    kind = assertion.get("type")
+91:    if kind == "centralSymmetry":
+126:        if isinstance(obj, dict) and obj.get("type") in {"point", "text"}:
+202:        and item.get("type") == "polygon"
+209:        if isinstance(item, dict) and item.get("type") == "connects"
+221:        if not isinstance(assertion, dict) or assertion.get("type") != "inside":
+241:        and item.get("visible") is not False
+244:            item.get("type") == "point"
+246:                item.get("type") == "text"
+291:                "set-relation figure requires an inside assertion for "
+307:        if member.get("type") == "text":
+350:                f"of boundary clearance; requires {required_clearance:.3g}"
+373:            errors.append("source.inventory must be a nonempty array")
+377:                label = f"source.inventory[{index}]"
+408:                    if obj is None or obj.get("visible") is False:
+425:                requirements = group.get("requires", [])
+437:                        f"{label}.requires must contain unique supported requirements"
+443:                    if item.get("type") == "grid"
+452:                            item.get("type") == "gridDimensions"
+457:                                f"{label}: grid {grid_id!r} requires a mapped "
+463:                    if item.get("type") == "point"
+504:                errors.append("source.inventory ids must be unique")
+511:        if not isinstance(obj, dict) or obj.get("visible") is False:
+513:        kind = obj.get("type")
+515:        if kind in {"line", "svgPath", "image"}:
+518:        if kind == "grid":
+519:            bounds = obj.get("bounds")
+520:            if isinstance(bounds, list) and len(bounds) == 4:
+522:                    [bounds[0], bounds[1]],
+523:                    [bounds[2], bounds[3]],
+531:        elif kind == "polygon":
+533:        elif kind == "circle" and finite_number(obj.get("radius")):
+542:        elif kind == "arc":
+556:def assertion_errors(
+569:        kind = item.get("type")
+574:        if kind == "objectCount":
+577:            actual = sum(obj.get("type") == object_type for obj in objects)
+583:        if kind == "gridDimensions":
+586:            if not isinstance(grid, dict) or grid.get("type") != "grid":
+603:            bounds = grid.get("bounds")
+607:                not isinstance(bounds, list)
+608:                or len(bounds) != 4
+609:                or not all(finite_number(value) for value in bounds)
+612:                    f"{label}: gridDimensions requires finite grid bounds"
+626:            x_min, y_max, x_max, y_min = bounds
+638:                    f"{label}: grid bounds must align with its offsets and steps"
+652:        if kind == "displacement":
+683:        if kind == "pointOnCircle":
+693:        if kind == "centralSymmetry":
+725:        if kind == "inside":
+735:            if not isinstance(container, dict) or container.get("type") != "polygon":
+767:        if kind == "connects":
+770:            if not isinstance(arrow, dict) or arrow.get("type") not in {"arrow", "segment"}:
+817:        if kind == "distance":
+824:        elif kind == "equalDistance":
+831:        elif kind == "collinear":
+844:                if kind == "parallel"
+849:        elif kind == "pointOnLine":
+883:            errors.append("source.authoredBasis requires current deterministic FigureSpec")
+885:            errors.append("source.authoredBasis requires a new fig-choice- identifier")
+919:        errors.append("current FigureSpec requires source.inventory")
+949:            errors.append("current FigureSpec requires display")
+1066:        kind = item.get("type")
+1071:        if kind == "axis":
+1099:        if kind == "point" and not coordinate(item.get("at")):
+1104:        elif kind == "circle":
+1108:        elif kind == "polygon":
+1117:        elif kind == "arc":
+1120:        elif kind == "grid":
+1127:            bounds = item.get("bounds")
+1128:            if bounds is not None:
+1130:                    not isinstance(bounds, list)
+1131:                    or len(bounds) != 4
+1132:                    or not all(map(finite_number, bounds))
+1135:                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+1137:                elif not (bounds[0] < bounds[2] and bounds[3] < bounds[1]):
+1139:                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+1141:        elif kind == "text":
+1145:        elif kind == "image":
+1166:        elif kind == "svgPath":
+1176:        errors.append("hybrid mode requires an image object")
+1182:                if isinstance(item, dict) and item.get("type") != "image"
+1187:            isinstance(item, dict) and item.get("type") == "image"
+1221:        item.get("type") in GEOMETRY_TYPES
+1243:            isinstance(item, dict) and item.get("type") == "centralSymmetry"
+1248:            "central-symmetry content requires a centralSymmetry assertion"
+1258:            errors.append("approved stage requires review.status pass")

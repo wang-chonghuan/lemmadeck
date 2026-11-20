@@ -1,0 +1,14 @@
+{
+  "command": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json; from pathlib import Path; sys.path.insert(0,\".claude/skills/ld-s10y-lesson/tools\"); import layout; import numpy as np; from PIL import Image; ink=layout.ink_mask(Image.open(\".tmp/resume182-6-8a-n10-source3695-FIRST/8a/pages/0062/page.png\")); a,b,g=2435,2601,59; labels,_=layout.ndimage.label(ink); boxes=layout.ndimage.find_objects(labels); braces=[[[r.start,r.stop],[c.start,c.stop]] for bounds in boxes if bounds is not None for r,c in [bounds] if r.start<=a and b<r.stop and c.stop-c.start<.8*g]; core=ink[a:b+1].sum(axis=1); strong=layout._merge_close([(a+x,a+y) for x,y in layout._runs(core>.4*core.max())],max(2,.25*g)); strong=[(x,y) for x,y in strong if y-x+1>=.3*g]; print(json.dumps({\"region\":[a,b],\"glyph_h\":g,\"nominal_h\":76,\"braces\":braces,\"strong_rows\":strong,\"fraction_system_count\":layout._fraction_system_row_count(ink,a,b,g,strong),\"single_fraction\":layout._single_fraction_row(ink,a,b,g)},indent=2))"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T11:26:47.738Z",
+  "finished": "2026-11-20T11:26:48.128Z",
+  "returncode": 0,
+  "signal": null,
+  "error": null
+}

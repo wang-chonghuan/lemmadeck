@@ -1,0 +1,128 @@
+import hashlib
+import json
+import math
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+OWN = R / ".tmp/resume182-6-8a-n10-fig25-author3695-FIRST"
+FAILED = OWN / "AFFECTED-numeric-labels1"
+WORK = FAILED / "technical-layout2"
+assert Path.cwd() == R
+
+
+def binding(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def number(value):
+    return float(value.removesuffix("px"))
+
+
+first_diagnosis = json.loads((WORK / "layout-diagnostic.record").read_text())
+spec = json.loads((FAILED / "fig-25.spec.json").read_text())
+svg = ET.parse(FAILED / "render/fig-25.svg").getroot()
+assert svg.attrib["viewBox"] == "0 0 1320 1080"
+nodes = {node.attrib.get("id"): node for node in svg.iter()}
+native_metrics = json.loads((OWN / "raster-FIRST/capture.record").read_text())["captures"][0]["observation"]["labels"]
+targets = {item["id"] for item in first_diagnosis["diagnosis"]["targets"]}
+gap = spec["layout"]["minLabelGap"]
+assert gap == 4
+assert not spec["layout"].get("avoidRegions")
+circles = []
+for obj in spec["objects"]:
+    if obj["type"] != "circle":
+        continue
+    node = nodes[f"ld-fig-25_ld-{obj['id']}"]
+    assert node.attrib.get("display") == "inline"
+    assert not node.attrib.get("transform")
+    circles.append({
+        "id": obj["id"],
+        "cx": number(node.attrib["cx"]), "cy": number(node.attrib["cy"]),
+        "rx": number(node.attrib["rx"]), "ry": number(node.attrib["ry"]),
+        "strokeWidth": number(node.attrib["stroke-width"]),
+    })
+
+
+def screen(point):
+    return point[0] * 30, (36 - point[1]) * 30
+
+
+def lower_segment_extent(obj, left, right):
+    a, b = screen(obj["from"]), screen(obj["to"])
+    half = obj["strokeWidth"] / 2
+    if a[0] == b[0]:
+        return max(a[1], b[1]) + half if left - half <= a[0] <= right + half else None
+    parameters = sorted(((left - half - a[0]) / (b[0] - a[0]), (right + half - a[0]) / (b[0] - a[0])))
+    start, end = max(0, parameters[0]), min(1, parameters[1])
+    if start > end:
+        return None
+    return max(a[1] + (b[1] - a[1]) * start, a[1] + (b[1] - a[1]) * end) + half
+
+
+results = []
+for measured in first_diagnosis["diagnosis"]["targets"]:
+    rect = measured["actualCurrentGlyphBox"]
+    padded = measured["actualCurrentPaddedBox"]
+    left, right = padded["x"], padded["x"] + padded["width"]
+    obstructions = []
+    for circle in circles:
+        rx, ry = circle["rx"] + circle["strokeWidth"] / 2, circle["ry"] + circle["strokeWidth"] / 2
+        dx = max(left, min(right, circle["cx"])) - circle["cx"]
+        if abs(dx) > rx:
+            continue
+        lower = circle["cy"] + ry * math.sqrt(1 - dx * dx / (rx * rx))
+        if lower >= padded["y"]:
+            obstructions.append({"id": circle["id"], "lowerStrokeExtentPx": lower, "method": "analytic ellipse with original stroke footprint"})
+    for obj in spec["objects"]:
+        if obj["type"] not in {"segment", "arrow"} or obj.get("strokeWidth", 3) <= 2.5:
+            continue
+        lower = lower_segment_extent(obj, left, right)
+        if lower is not None and lower >= padded["y"]:
+            obstructions.append({"id": obj["id"], "lowerStrokeExtentPx": lower, "method": "finite segment extent with original half-stroke"})
+    lowest = max(item["lowerStrokeExtentPx"] for item in obstructions)
+    extra = math.ceil(lowest + 1 - padded["y"])
+    proposed = {**padded, "y": padded["y"] + extra}
+    overlaps = []
+    for other in native_metrics:
+        if other["id"] in {f"{item}-label" for item in targets}:
+            continue
+        overlap_x = min(proposed["x"] + proposed["width"], other["x"] + other["width"] + gap) > max(proposed["x"], other["x"] - gap)
+        overlap_y = min(proposed["y"] + proposed["height"], other["y"] + other["height"] + gap) > max(proposed["y"], other["y"] - gap)
+        if overlap_x and overlap_y:
+            overlaps.append(other["id"])
+    assert not overlaps
+    assert proposed["y"] + proposed["height"] <= 1080
+    assert proposed["y"] > lowest + 1
+    assert proposed["y"] - 1 <= lowest + 1
+    results.append({
+        "id": measured["id"], "anchorUnchanged": measured["anchorUnchanged"],
+        "currentGlyphBox": rect, "currentPaddedBox": padded,
+        "currentStrokeHits": measured["currentStrokeHits"],
+        "columnObstructions": obstructions, "lowerStrokeExtentPx": lowest,
+        "minimumIntegerExtraDownwardPx": extra, "originalVerticalOffset": 30,
+        "proposedVerticalOffset": 30 + extra, "horizontalOffsetUnchanged": 0,
+        "proposedPaddedBox": proposed, "clearanceBeyondStrokePx": proposed["y"] - lowest,
+        "minimalIntegerProof": "Subtracting one pixel violates the fixed 1px safety clearance.",
+        "otherLabelOverlaps": overlaps, "proposedBoxFitsCanvas": True,
+    })
+
+record = {
+    "schema": "resume182-6/layout-text-diagnosis-recovery@1",
+    "status": "TEXT_DIAGNOSIS_RECOVERED_NOT_FIGURE_APPROVAL",
+    "baselineSpec": binding(FAILED / "fig-25.spec.json"),
+    "baselineSvg": binding(FAILED / "render/fig-25.svg"),
+    "failedDiagnosticPreserved": binding(WORK / "layout-diagnostic.record"),
+    "failedDiagnosticScriptPreserved": binding(WORK / "diagnose.mjs"),
+    "recoveryScript": binding(Path(__file__)),
+    "metricsSource": "Reuse actual current native SVG glyph boxes from the failed diagnostic, not PNG pixels.",
+    "strokeParsingCorrection": "3.2px is parsed as the native CSS width 3.2 rather than NaN.",
+    "avoidRegions": [], "minLabelGapUnchanged": 4, "safetyClearancePx": 1,
+    "results": results, "newBrowserLaunches": 0, "screenshotCalls": 0,
+    "sourceViews": 0, "pngReads": 0, "imageViews": 0, "cost": "unknown",
+}
+output = WORK / "layout-diagnostic-recovered.record"
+with output.open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps({"diagnostic": binding(output), "results": results}, indent=2))

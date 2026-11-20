@@ -1,0 +1,276 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+const frozen = `${R}/.tmp/resume182-6-8a-n10-figure-context3695-FIRST`;
+const templates = `${frozen}/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10`;
+const hash = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = (file, expected) => {
+  const bytes = fs.readFileSync(file);
+  if (expected) assert.equal(hash(bytes), expected, file);
+  return { path: file, sha256: hash(bytes), value: JSON.parse(bytes) };
+};
+assert.equal(process.cwd(), R);
+const inventory = read(`${work}/ready.record`, '12dc00282ea205a5031beb8a47ee5a69c8c7e52574a674d24a1480fe87d150fa');
+const context = read(`${frozen}/fig-25.context.json`, '643596eef9c9f5f5fd794476456ac6ab2c72c3934c7e3e4b054808818693c21d');
+const lesson = read(`${templates}/lesson.json`, 'd13354560d681bb189cd3ed1310e1abebdde6bf5b517bf0cf981405090a8d676');
+const exercises = read(`${templates}/exercises.json`, '54e9be6f97a199515ca25e0b1c33ea4235558c660e184cad45bab8da4a8f4ef2');
+const figures = read(`${templates}/figures.json`, 'a355a02d9450426f4097999d02db4de8140d8b3a1e29d310f8ebba16eab8274f');
+const textReview = read(`${R}/.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record`, '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7');
+assert.equal(textReview.value.status, 'TEXT_PASS');
+const exerciseList = Array.isArray(exercises.value) ? exercises.value : exercises.value.exercises;
+const exercise = exerciseList.find((item) => item.number === '136');
+assert.equal(exercise.text, context.value.lessons[0].exercises[0].text);
+assert.deepEqual(exercise.figure_refs, ['fig-25']);
+const sourceImage = `${R}/ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-25.png`;
+assert.equal(hash(fs.readFileSync(sourceImage)), inventory.value.source.image.sha256);
+
+const output = `${work}/draft-FIRST`;
+assert.equal(fs.existsSync(output), false, 'Preserve any existing candidate.');
+const objects = [];
+const assertions = [];
+const sourceInventory = [];
+const frames = [];
+const add = (object) => (objects.push(object), object);
+const equation = (id, type, fields) => (assertions.push({ id, type, ...fields }), id);
+const fontSize = 36;
+const strokeWidth = 3.2;
+const canvas = { width: 1320, height: 1080, boundingBox: [0, 36, 44, 0], background: 'paper', keepAspectRatio: true };
+const definitions = [
+  { key: 'a', modern: 'a)', origin: [10, 29] },
+  { key: 'b', modern: 'b)', origin: [32, 27] },
+  { key: 'v', modern: 'c)', origin: [10, 14] },
+  { key: 'g', modern: 'd)', origin: [32, 14] },
+];
+
+for (const definition of definitions) {
+  const original = inventory.value.subfigures.find((item) => item.id === `fig-25-${definition.key}`);
+  const id = original.id;
+  const groupObjects = [];
+  const groupAssertions = [];
+  const point = ([x, y]) => [x + definition.origin[0], y + definition.origin[1]];
+  const put = (object) => (groupObjects.push(object.id), add(object));
+  const claim = (suffix, type, fields) => {
+    const assertionId = equation(`${id}-${suffix}`, type, fields);
+    groupAssertions.push(assertionId);
+    return assertionId;
+  };
+  const g = original.grid;
+  const extent = g.source_coordinate_extents;
+  const topLeft = point([extent.left, extent.top]);
+  const bottomRight = point([extent.right, extent.bottom]);
+  const bounds = [topLeft[0], topLeft[1], bottomRight[0], bottomRight[1]];
+  put({
+    id: `${id}-grid`, type: 'grid', bounds, xStep: 1, yStep: 1,
+    xOffset: definition.origin[0], yOffset: definition.origin[1],
+    stroke: 'grid', strokeWidth: 1.3, dash: 0,
+  });
+  put({
+    id: `${id}-frame`, type: 'polygon',
+    points: [topLeft, [bottomRight[0], topLeft[1]], bottomRight, [topLeft[0], bottomRight[1]]],
+    fill: 'paper', fillOpacity: 0, stroke: 'muted', strokeWidth: 1.8, dash: 0,
+  });
+  claim('grid-dimensions', 'gridDimensions', { grid: `${id}-grid`, columns: g.columns, rows: g.rows });
+  claim('origin-phase-horizontal', 'displacement', { from: [topLeft[0], definition.origin[1]], to: definition.origin, dx: g.origin_offsets_cells.left, dy: 0 });
+  claim('origin-phase-vertical', 'displacement', { from: definition.origin, to: [definition.origin[0], topLeft[1]], dx: 0, dy: g.origin_offsets_cells.above });
+
+  const hatchSegments = [];
+  const hatch = (from, to, boundaryFrom, boundaryTo) => {
+    if (Math.hypot(to[0] - from[0], to[1] - from[1]) < 0.03) return;
+    hatchSegments.push({ from: point(from), to: point(to), boundaryFrom, boundaryTo });
+  };
+  const rectangleHatches = (rectangle) => {
+    const [xMin, yMax, xMax, yMin] = rectangle;
+    const boundary = (p) => {
+      if (Math.abs(p[0] - xMin) < 1e-7) return { kind: 'line', a: point([xMin, yMin]), b: point([xMin, yMax]) };
+      if (Math.abs(p[0] - xMax) < 1e-7) return { kind: 'line', a: point([xMax, yMin]), b: point([xMax, yMax]) };
+      if (Math.abs(p[1] - yMin) < 1e-7) return { kind: 'line', a: point([xMin, yMin]), b: point([xMax, yMin]) };
+      return { kind: 'line', a: point([xMin, yMax]), b: point([xMax, yMax]) };
+    };
+    for (let c = Math.ceil((yMin - xMax) / 0.55) * 0.55; c < yMax - xMin; c += 0.55) {
+      const low = Math.max(xMin, yMin - c);
+      const high = Math.min(xMax, yMax - c);
+      if (high <= low) continue;
+      const start = [low, low + c];
+      const end = [high, high + c];
+      // A small label-clearance gap is presentation, not a new region boundary.
+      if (definition.key === 'a') {
+        const gapStart = Math.max(low, 0.5, -1.65 - c);
+        const gapEnd = Math.min(high, 1.5, -0.35 - c);
+        if (gapEnd > gapStart) {
+          hatch(start, [gapStart, gapStart + c], boundary(start), null);
+          hatch([gapEnd, gapEnd + c], end, null, boundary(end));
+          continue;
+        }
+      }
+      hatch(start, end, boundary(start), boundary(end));
+    }
+  };
+  const intersections = (radius, c) => {
+    const discriminant = 2 * radius * radius - c * c;
+    if (discriminant <= 0) return null;
+    const root = Math.sqrt(discriminant);
+    return [(-c - root) / 2, (-c + root) / 2];
+  };
+  const circleBoundary = (radius) => ({ kind: 'circle', center: definition.origin, radius });
+  if (definition.key === 'a') rectangleHatches([0, 0, 10, -4]);
+  if (definition.key === 'b') rectangleHatches([3, 4, 5, 1]);
+  if (definition.key === 'v') {
+    for (let c = -5.5; c < 5.5; c += 0.55) {
+      const span = intersections(4, c);
+      if (!span || span[1] <= 0) continue;
+      const low = Math.max(0, span[0]);
+      const fromBoundary = low === 0
+        ? { kind: 'line', a: point([0, -4]), b: point([0, 4]) }
+        : circleBoundary(4);
+      hatch([low, low + c], [span[1], span[1] + c], fromBoundary, circleBoundary(4));
+    }
+  }
+  if (definition.key === 'g') {
+    for (let c = -8.25; c < 8.5; c += 0.55) {
+      const outer = intersections(6, c);
+      if (!outer) continue;
+      const inner = intersections(4, c);
+      if (inner) {
+        hatch([outer[0], outer[0] + c], [inner[0], inner[0] + c], circleBoundary(6), circleBoundary(4));
+        hatch([inner[1], inner[1] + c], [outer[1], outer[1] + c], circleBoundary(4), circleBoundary(6));
+      } else {
+        hatch([outer[0], outer[0] + c], [outer[1], outer[1] + c], circleBoundary(6), circleBoundary(6));
+      }
+    }
+  }
+  for (const [index, line] of hatchSegments.entries()) {
+    const hatchId = `${id}-hatch-region${index ? `-${String(index).padStart(3, '0')}` : ''}`;
+    put({ id: hatchId, type: 'segment', from: line.from, to: line.to, stroke: 'muted', strokeWidth: 1.3, dash: 0 });
+    claim(`hatch-${index}-endpoints`, 'connects', { arrow: hatchId, from: line.from, to: line.to });
+    claim(`hatch-${index}-direction`, 'parallel', { a: line.from, b: line.to, c: definition.origin, d: point([1, 1]) });
+    for (const [role, at, boundary] of [['start', line.from, line.boundaryFrom], ['end', line.to, line.boundaryTo]]) {
+      if (!boundary) continue;
+      const { kind, ...fields } = boundary;
+      claim(`hatch-${index}-${role}-clipping`, kind === 'circle' ? 'pointOnCircle' : 'pointOnLine', { point: at, ...fields });
+    }
+  }
+
+  if (definition.key === 'b') {
+    const edges = [
+      ['left', [3, 1], [3, 4]], ['right', [5, 1], [5, 4]],
+      ['top', [3, 4], [5, 4]], ['bottom', [3, 1], [5, 1]],
+    ];
+    for (const [name, from, to] of edges) {
+      const object = put({ id: `${id}-rectangle-${name}`, type: 'segment', from: point(from), to: point(to), stroke: 'ink', strokeWidth, dash: 0 });
+      claim(`rectangle-${name}-endpoints`, 'connects', { arrow: object.id, from: object.from, to: object.to });
+    }
+    claim('rectangle-extents', 'displacement', { from: point([3, 1]), to: point([5, 4]), dx: 2, dy: 3 });
+    claim('rectangle-bottom-to-axis-gap', 'displacement', { from: point([3, 0]), to: point([3, 1]), dx: 0, dy: 1 });
+    claim('rectangle-lower-corner-from-origin', 'displacement', { from: definition.origin, to: point([3, 1]), dx: 3, dy: 1 });
+    claim('rectangle-upper-corner-from-origin', 'displacement', { from: definition.origin, to: point([5, 4]), dx: 5, dy: 4 });
+  }
+  if (definition.key === 'v' || definition.key === 'g') {
+    const radii = definition.key === 'v' ? [['circle', 4]] : [['inner-circle', 4], ['outer-circle', 6]];
+    for (const [suffix, radius] of radii) {
+      const circle = put({ id: `${id}-${suffix}`, type: 'circle', center: definition.origin, radius, stroke: 'ink', strokeWidth, fillOpacity: 0 });
+      for (const [name, local] of [['right', [radius, 0]], ['top', [0, radius]], ['left', [-radius, 0]], ['bottom', [0, -radius]]]) {
+        claim(`${suffix}-${name}-intersection`, 'pointOnCircle', { point: point(local), center: circle.center, radius: circle.radius });
+      }
+      claim(`${suffix}-radius`, 'distance', { a: circle.center, b: point([radius, 0]), value: radius });
+    }
+    if (definition.key === 'v') {
+      claim('center-radius', 'distance', { a: definition.origin, b: point([4, 0]), value: 4 });
+      claim('diameter-through-origin', 'collinear', { a: point([0, -4]), b: definition.origin, c: point([0, 4]) });
+      claim('right-half-horizontal-extent', 'displacement', { from: definition.origin, to: point([4, 0]), dx: 4, dy: 0 });
+    } else {
+      claim('concentric-radii', 'distance', { a: definition.origin, b: definition.origin, value: 0 });
+      claim('annular-radial-gap', 'displacement', { from: point([4, 0]), to: point([6, 0]), dx: 2, dy: 0 });
+    }
+  }
+
+  const xAxis = put({ id: `${id}-x-axis`, type: 'arrow', from: point([extent.left, 0]), to: point([extent.right - 0.2, 0]), stroke: 'ink', strokeWidth, dash: 0 });
+  const yAxis = put({ id: `${id}-y-axis`, type: 'arrow', from: point([0, extent.bottom]), to: point([0, extent.top - 0.2]), stroke: 'ink', strokeWidth, dash: 0 });
+  claim('axis-frame', 'perpendicular', { a: xAxis.from, b: xAxis.to, c: yAxis.from, d: yAxis.to });
+  claim('x-axis-endpoints', 'connects', { arrow: xAxis.id, from: xAxis.from, to: xAxis.to });
+  claim('y-axis-endpoints', 'connects', { arrow: yAxis.id, from: yAxis.from, to: yAxis.to });
+  claim('origin-on-x-axis', 'pointOnLine', { point: definition.origin, a: xAxis.from, b: xAxis.to });
+  claim('origin-on-y-axis', 'pointOnLine', { point: definition.origin, a: yAxis.from, b: yAxis.to });
+  const text = (suffix, content, at, offset) => put({
+    id: `${id}-${suffix}`, type: 'text', at, text: content,
+    fontSize, fontWeight: 500, labelColor: 'ink',
+    labelPlacement: { position: 'CENTER', offset },
+  });
+  text('subfigure-label', definition.modern, [bounds[0], bounds[3]], [18, 30]);
+  text('origin-label', 'O', definition.origin, [-30, 30]);
+  text('x-label', 'x', xAxis.to, [35, 0]);
+  text('y-label', 'y', yAxis.to, [0, -35]);
+  for (const label of original.source_labels_and_ticks.filter((item) => item.tick_coordinate)) {
+    const local = label.tick_coordinate;
+    const offset = local[0] === 0 ? [-30, 0] : [0, 30];
+    if (definition.key === 'v' && local[0] === 4) offset[0] = 30;
+    if (definition.key === 'g' && local[0] === 4) offset[0] = -30;
+    if (definition.key === 'g' && local[0] === 6) offset[0] = 30;
+    const object = text(label.object_id.slice(id.length + 1), label.text, point(local), offset);
+    claim(`${object.id.slice(id.length + 1)}-source-coordinate`, 'displacement', { from: definition.origin, to: object.at, dx: local[0], dy: local[1] });
+  }
+  frames.push({
+    id, sourceLabel: original.source_label, modernLabel: definition.modern,
+    origin: definition.origin, sourceOriginOffsets: g.origin_offsets_cells,
+    translatedBounds: bounds, columns: g.columns, rows: g.rows,
+    hatchSegments: hatchSegments.length, visiblePointObjects: 0,
+  });
+  sourceInventory.push({
+    id,
+    description: `${original.position}: source label ${original.source_label}; ${g.columns} columns, ${g.rows} rows, unit grid phase through O; ${original.shaded_region.description} All defining boundaries are solid. Original axis/tick labels are retained. No source point dots are present. Modern English label ${definition.modern} and regularized placement are additions, not source labels.`,
+    objects: groupObjects,
+    assertions: groupAssertions,
+    requires: ['gridDimensions'],
+  });
+}
+equation('fig-25-no-point-objects', 'objectCount', { objectType: 'point', count: 0 });
+equation('fig-25-three-circle-objects', 'objectCount', { objectType: 'circle', count: 3 });
+equation('fig-25-all-given-labels', 'objectCount', { objectType: 'text', count: 28 });
+const spec = {
+  schema: 'ld-s10y-image/figure-spec@2', id: 'fig-25', mode: 'deterministic',
+  description: 'Four separate ruled coordinate frames for exercise 136. Preserve the source hatching, solid boundaries, given scale labels, bounded rectangle above the x axis, right semicircular region, and concentric annulus. Do not print an answer or additional coordinate/radius annotations.',
+  source: {
+    image: { path: sourceImage, sha256: inventory.value.source.image.sha256 },
+    authoritativeText: [{ lesson: 'alg8-c2-s2-n10', exercise: '136', text: exercise.text }],
+    inventory: sourceInventory,
+  },
+  canvas, display: { purpose: 'instructional', layout: 'scroll', minTextPx: 16, widths: [640] },
+  objects, assertions, layout: { minLabelGap: 4 },
+};
+fs.mkdirSync(output, { recursive: false });
+const write = (name, value) => {
+  const bytes = `${JSON.stringify(value, null, 2)}\n`;
+  const file = path.join(output, name);
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+  return { path: file, sha256: hash(bytes) };
+};
+const draft = write('fig-25.spec.json', spec);
+const notes = write('authoring-notes.record', {
+  status: 'DRAFT_ONLY_NOT_FIGURE_APPROVAL', book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+  figure: 'fig-25', spec: draft,
+  inputs: [inventory, context, lesson, exercises, figures, textReview].map(({ path, sha256 }) => ({ path, sha256 })),
+  sourceImage: spec.source.image,
+  copiedContextImageUsedAsSource: false, additionalSourceViews: 0, cumulativeSourceViews: 1, reopens: 0, crops: 0,
+  authoritativeTextScope: 'The frozen figure context has no relevant prose and only exercise 136; full lesson template read for context, not for generating answer annotations.',
+  frames,
+  pointRelationshipsRequirement: 'No source point dots exist. Relationships use coordinate literals, gridDimensions, displacement, connects, perpendicular, collinear and pointOnCircle assertions. No visible points were invented to satisfy pointRelationships.',
+  modernAdditions: [
+    'Source а), б), в), г) map to visible English a), b), c), d), preserving stable source IDs a/b/v/g.',
+    'Deskewed square unit grids and exact circles replace raster tilt and irregular ink; all row/column counts and origin phases are preserved.',
+    'Uniform 0.55-unit hatch intercept pitch, lighter semantic grid strokes and 36-px native labels are presentation regularization.',
+    'Subfigure labels sit below the frames, and axis names sit beyond their arrowheads. Numeric labels remain anchored to their source tick coordinates with explicit pixel offsets.',
+    'Small hatch gaps clear a source-provided unit label in panel a; these gaps are not additional region boundaries.',
+  ],
+  sourcePolicyRequirementsNotClaimedAsStandaloneExecutableAssertions: [
+    'fig-25-v-no-invented-unit-label: enforced by selecting only source tick labels; no extra 1 in c).',
+    'fig-25-g-artifact-exclusion: no scan-stain object is created; omission is not a scientific approval.',
+  ],
+  unknowns: ['Original subpixel geometry and exact hatch/ink metrics', 'Cost', 'Independent visual/cultural review outcome'],
+  fontPlan: { nativePx: fontSize, canvasWidth: canvas.width, actualScrollWidth: 640, projectedPx: fontSize * 640 / canvas.width, minimumPx: 16, measured: false },
+  cost: 'unknown', paidGenerationCalls: 0,
+  notExecuted: ['validate_spec', 'render_spec', 'preview', 'record_review', 'promote', 'publish', 'DB'],
+});
+console.log(JSON.stringify({ draft, notes, objects: objects.length, assertions: assertions.length, frames }, null, 2));

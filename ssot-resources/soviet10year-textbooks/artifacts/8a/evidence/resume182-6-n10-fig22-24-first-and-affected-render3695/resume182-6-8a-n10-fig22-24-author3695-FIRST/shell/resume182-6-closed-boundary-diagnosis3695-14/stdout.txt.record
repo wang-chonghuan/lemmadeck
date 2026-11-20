@@ -1,0 +1,44 @@
+    if length_squared == 0:
+        return distance(point, start)
+    offset = vector(start, point)
+    position = max(0.0, min(1.0, dot(offset, segment) / length_squared))
+    projection = (
+        start[0] + segment[0] * position,
+        start[1] + segment[1] * position,
+    )
+    return distance(point, projection)
+
+
+def point_in_polygon(
+    point: tuple[float, float],
+    polygon: list[tuple[float, float]],
+) -> bool:
+    inside = False
+    previous = polygon[-1]
+    for current in polygon:
+        crosses = (current[1] > point[1]) != (previous[1] > point[1])
+        if crosses:
+            edge_x = (
+                (previous[0] - current[0])
+                * (point[1] - current[1])
+                / (previous[1] - current[1])
+                + current[0]
+            )
+            if point[0] < edge_x:
+                inside = not inside
+        previous = current
+    return inside
+
+
+def relation_membership_errors(
+    spec: dict,
+    objects: list[dict],
+    points: dict[str, tuple[float, float]],
+    assertions: list[dict],
+    current: bool,
+) -> list[str]:
+    if not current:
+        return []
+
+    set_polygons = {
+        item.get("id"): item

@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewPath] = process.argv.slice(2);
+assert.ok(reviewPath?.startsWith('.tmp/resume182-6-8a-n10-source-metadata-review3695-AFFECTED1/'));
+const reviewBytes = fs.readFileSync(reviewPath);
+const review = JSON.parse(reviewBytes);
+assert.equal(review.status, 'PASS');
+const firstPath = '.tmp/resume182-6-8a-n10-source-review3695-FIRST/ready.record';
+const firstBytes = fs.readFileSync(firstPath);
+const first = JSON.parse(firstBytes);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+assert.equal(sha(reviewBytes), '78248c2ac5f7d2f5f639aa3b8ee54fe67857553324e473fa28ab7a6f7409c21d');
+assert.equal(sha(firstBytes), '769e5e28e088114bd83bdf4256a3d072906e07a1312e97e7ea1ca667610a98a1');
+for (const key of ['faithful_printed_text_status', 'printed_line_inventory_status',
+  'example_mathematical_consistency_status', 'source_page_figure_relationships_status']) {
+  assert.equal(first.decision[key], 'PASS');
+}
+const stage = '.tmp/resume182-6-8a-n10-assembly3695-FIRST';
+const draft = '.tmp/resume182-6-8a-n10-source3695-FIRST/draft-root/8a';
+const entries = [];
+assert.ok(!fs.existsSync(`${stage}/metadata-sync.record`));
+for (const page of ['0062', '0063']) {
+  for (const file of ['page.md', 'page.json']) {
+    const input = `${draft}/pages/${page}/${file}`;
+    const output = `${stage}/artifacts/8a/pages/${page}/${file}`;
+    const old = fs.readFileSync(output);
+    const bytes = fs.readFileSync(input);
+    const binding = review.input_hashes.files.find(item => item.path === input);
+    assert.ok(binding, input);
+    assert.equal(sha(bytes), binding.sha256);
+    entries.push({ input, output, beforeSha256: sha(old), afterSha256: sha(bytes),
+      bytes: bytes.length, originalSnapshotRetained: true, metadataOnly: true });
+    fs.writeFileSync(output, bytes);
+  }
+}
+fs.writeFileSync(`${stage}/metadata-sync.record`, `${JSON.stringify({
+  schema: 'stemrobin-182/n10-source-metadata-sync@1',
+  created: new Date().toISOString(), status: 'CURRENT_SOURCE_READY',
+  first: { path: firstPath, sha256: sha(firstBytes), originalStatus: first.status },
+  affected: { path: reviewPath, sha256: sha(reviewBytes) },
+  entries, originalSourceBodyEdits: 0, imagesLoaded: 0, finalizedPagesRerun: 0,
+  inheritedNativeReviews: 4, newMetadataReviews: 2,
+  note: 'FIRST HOLD is retained. Its source/math/line conclusions are inherited; only the two diagnosed metadata issues are resolved.',
+  unfinishedLessonPromotions: 0, unknownHistoricalBytesRecovered: false,
+  DBWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'CURRENT_SOURCE_READY', updatedMetadataFiles: 4,
+  record: `${stage}/metadata-sync.record` }));

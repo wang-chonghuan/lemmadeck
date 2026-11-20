@@ -1,0 +1,176 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [inputFile, inputSHA] = process.argv.slice(2);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const modern = `${root}/editions/modern-us-neutral`;
+const lesson = 'alg8-c2-s2-n10';
+const own = '.tmp/resume182-6-8a-n10-approved-binding3695-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const checked = ref => {
+  assert.ok(path.resolve(ref.path).startsWith(`${repo}/`));
+  assert.match(ref.sha256, /^[a-f0-9]{64}$/);
+  const bytes = read(ref.path);
+  assert.equal(sha(bytes), ref.sha256, ref.path);
+  return bytes;
+};
+const json = ref => JSON.parse(checked(ref));
+const write = (file, bytes) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+};
+const save = (file, value) => write(file, `${JSON.stringify(value, null, 2)}\n`);
+const bind = file => ({ path: file, sha256: sha(read(file)) });
+const input = json({ path: inputFile, sha256: inputSHA });
+assert.equal(input.status, 'APPROVED_N10_PROMOTION_INPUT');
+const text = json(input.textReview);
+assert.equal(text.status, 'TEXT_PASS');
+assert.equal(text.book, '8a');
+assert.equal(text.lesson, lesson);
+assert.equal(text.edition, 'modern-us-neutral');
+const author = json(input.textAuthor);
+assert.equal(author.book, '8a');
+assert.equal(author.lesson, lesson);
+assert.equal(author.edition, 'modern-us-neutral');
+const templates = author.templates.filter(item =>
+  ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+    .includes(path.basename(item.path)));
+assert.equal(templates.length, 3);
+for (const ref of templates) {
+  checked(ref);
+  if (path.basename(ref.path) !== 'figures.template.json') {
+    assert.equal(text.templates.find(item => item.path === ref.path)?.sha256,
+      ref.sha256, `TEXT approval must bind the exact template: ${ref.path}`);
+  }
+}
+assert.deepEqual(input.figures.map(item => item.id).sort(),
+  ['fig-22', 'fig-23', 'fig-24', 'fig-25']);
+const retained = new Map();
+for (const directory of fs.readdirSync(`${root}/evidence`).sort()) {
+  const file = `${root}/evidence/${directory}/retention.record`;
+  if (!fs.existsSync(file)) continue;
+  for (const ref of JSON.parse(read(file)).entries ?? []) {
+    if (typeof ref.path === 'string' && fs.existsSync(ref.path)
+      && sha(read(ref.path)) === ref.sha256) retained.set(ref.sha256, ref.path);
+  }
+}
+const durable = ref => {
+  checked(ref);
+  const file = retained.get(ref.sha256);
+  assert.ok(file, `Approved bytes not retained: ${ref.path}`);
+  return { path: file, sha256: ref.sha256 };
+};
+const approvals = [];
+for (const item of input.figures) {
+  const spec = json(item.spec), render = json(item.render);
+  const review = json(item.review);
+  checked(item.svg);
+  checked(item.nativePng);
+  checked(item.authorReady);
+  assert.equal(spec.id, item.id);
+  assert.equal(spec.mode, 'deterministic');
+  assert.equal(render.figure, item.id);
+  assert.equal(render.status, 'pass');
+  assert.equal(render.spec.sha256, item.spec.sha256);
+  assert.equal(render.output.svg.sha256, item.svg.sha256);
+  assert.equal(review.schema, 'ld-s10y-image/review@1');
+  assert.equal(review.figure, item.id);
+  assert.equal(review.status, 'pass');
+  assert.equal(review.spec.sha256, item.spec.sha256);
+  assert.equal(review.render.sha256, item.render.sha256);
+  assert.equal(review.outputs.svg.sha256, item.svg.sha256);
+  checked(spec.source.image);
+  assert.equal(review.source.sha256, spec.source.image.sha256);
+  assert.ok(path.resolve(spec.source.image.path).startsWith(`${repo}/${root}/figures/`));
+  const prefix = `${modern}/figures/${item.id}`;
+  for (const ext of ['spec.json', 'svg', 'render.json', 'review.json']) {
+    assert.ok(!fs.existsSync(`${prefix}.${ext}`), `Refuse existing output: ${prefix}.${ext}`);
+  }
+  approvals.push({
+    id: item.id, officialReview: durable(item.review),
+    authorReady: durable(item.authorReady), originalRender: durable(item.render),
+    approvedPreview: durable(item.nativePng),
+  });
+}
+assert.ok(!fs.existsSync(own));
+write(`${own}/edition-book-before.record`, read(`${modern}/book.json`));
+save(`${own}/start.record`, {
+  started: new Date().toISOString(), input: bind(inputFile),
+  textReview: durable(input.textReview), textAuthor: durable(input.textAuthor),
+  figures: approvals, imageViews: 0, rendererCalls: 0, DBWrites: 0,
+});
+for (const item of input.figures) {
+  const prefix = `${modern}/figures/${item.id}`;
+  write(`${prefix}.spec.json`, checked(item.spec));
+  write(`${prefix}.svg`, checked(item.svg));
+  const render = json(item.render);
+  render.spec.path = `${prefix}.spec.json`;
+  render.output.svg.path = `${prefix}.svg`;
+  save(`${prefix}.render.json`, render);
+  const evidence = approvals.find(ref => ref.id === item.id);
+  const command = [
+    '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+    '-B', '.agents/skills/ld-s10y-image/scripts/record_review.py',
+    '--spec', `${prefix}.spec.json`, '--render', `${prefix}.render.json`,
+    '--output', `${prefix}.review.json`, '--status', 'pass', '--notes',
+    `Path binding only; inherited independent visual PASS ${evidence.officialReview.path} ` +
+    `SHA=${evidence.officialReview.sha256}. Source/spec/SVG bytes unchanged; ` +
+    'only render spec.path/output.svg.path changed. No new renderer or image observation. ' +
+    'Failures, counters and unknown costs remain preserved.',
+  ];
+  const receipt = `${own}/${item.id}-path-binding`;
+  save(`${receipt}/start.record`, { command, cwd: repo, pathBindingOnly: true });
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd: repo, encoding: 'utf8',
+  });
+  for (const stream of ['stdout', 'stderr']) write(`${receipt}/${stream}.txt`,
+    result[stream] ?? '');
+  save(`${receipt}/receipt.record`, {
+    command, cwd: repo, returncode: result.status, signal: result.signal,
+    error: result.error?.message ?? null,
+  });
+  assert.equal(result.status, 0, result.stderr);
+}
+const work = `${own}/adapt/8a/modern-us-neutral/lessons/${lesson}`;
+for (const ref of templates) {
+  const name = path.basename(ref.path), bytes = checked(ref);
+  if (name !== 'figures.template.json') write(`${work}/${name}`, bytes);
+  else {
+    const value = JSON.parse(bytes);
+    assert.deepEqual(value.figures.map(item => item.id).sort(),
+      input.figures.map(item => item.id).sort());
+    for (const item of value.figures) {
+      Object.assign(item, {
+        spec: `figures/${item.id}.spec.json`, svg: `figures/${item.id}.svg`,
+        render: `figures/${item.id}.render.json`, review: `figures/${item.id}.review.json`,
+      });
+      for (const key of ['png', 'artwork', 'generation']) delete item[key];
+    }
+    save(`${work}/${name}`, value);
+  }
+}
+save(`${own}/binding.record`, {
+  status: 'APPROVED_BYTES_BOUND_PENDING_MODERN_FINALIZATION',
+  ticket: 'STEMROBIN-182', root: repo, book: '8a', lesson,
+  edition: 'modern-us-neutral', textReview: durable(input.textReview),
+  figures: approvals.map(item => ({
+    ...item, files: ['spec.json', 'svg', 'render.json', 'review.json']
+      .map(ext => bind(`${modern}/figures/${item.id}.${ext}`)),
+  })),
+  templates: ['lesson', 'exercises', 'figures']
+    .map(name => bind(`${work}/${name}.template.json`)),
+  sourceSpecAndSVGBytesUnchanged: true,
+  changedRenderFields: ['spec.path', 'output.svg.path'],
+  pathBindingRecorderCalls: 4, imageViews: 0, rendererCalls: 0,
+  newSourceMathOrSemanticReviews: 0, oldFailuresAndUsagePreserved: true,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown',
+  totalCost: 'unknown', DBWrites: 0, wholeLessonApproval: false, finish: 'review',
+});
+console.log(JSON.stringify({ ...bind(`${own}/binding.record`),
+  work: `${own}/adapt`, figures: 4, rendererCalls: 0, imageViews: 0 }));

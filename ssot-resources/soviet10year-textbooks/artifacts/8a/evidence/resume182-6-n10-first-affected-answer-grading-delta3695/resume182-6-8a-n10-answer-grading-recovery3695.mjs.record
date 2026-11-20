@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: file, sha256: sha(fs.readFileSync(file)) });
+const source = `${R}/.tmp/resume182-6-8a-n10-answer-author3695-FIRST/answers.draft.json`;
+const hold = `${R}/.tmp/resume182-6-8a-n10-answer-review3695-FIRST/ready.record`;
+assert.equal(bind(source).sha256, 'b1ee4c245193b5d0ceb24e93f761da1415dad0b21b804a60af08cb661f0b018d');
+assert.equal(bind(hold).sha256, '707bf253eb84cf236fc226d29354120820b281877ea6e50eaceac74ab4403908');
+const before = JSON.parse(fs.readFileSync(source, 'utf8'));
+const after = structuredClone(before);
+const words = {
+  '131': ['是', '是', '否', '是'],
+  '132': ['不属于', '属于', '不属于', '属于'],
+};
+for (const answer of after.answers) {
+  if (!Object.hasOwn(words, answer.exercise)) continue;
+  assert.equal(answer.grading, 'ungraded');
+  assert.deepEqual(answer.parts, []);
+  answer.grading = 'auto';
+  answer.parts = words[answer.exercise].map((word, index) => ({
+    label: `${'abcd'[index]})`,
+    judge: 'exact',
+    expected: [`\\text{${word}}`],
+  }));
+  answer.notes += ' 保留题面中的文字答词，使用现有exact判题；不新增判断器或数值编码。';
+}
+assert.deepEqual(after.answers.map(item => item.displayAnswer), before.answers.map(item => item.displayAnswer));
+assert.deepEqual(after.answers.filter(item => !Object.hasOwn(words, item.exercise)),
+  before.answers.filter(item => !Object.hasOwn(words, item.exercise)));
+const restored = structuredClone(after);
+for (const answer of restored.answers) {
+  if (!Object.hasOwn(words, answer.exercise)) continue;
+  const original = before.answers.find(item => item.exercise === answer.exercise);
+  for (const field of ['grading', 'parts', 'notes']) answer[field] = original[field];
+}
+assert.deepEqual(restored, before, 'Only classification, corresponding exact parts and notes may change.');
+const own = `${R}/.tmp/resume182-6-8a-n10-answer-grading-recovery3695-FIRST`;
+assert.equal(fs.existsSync(own), false);
+fs.mkdirSync(own);
+fs.writeFileSync(`${own}/answers.draft.json`, `${JSON.stringify(after, null, 2)}\n`, { flag: 'wx' });
+const record = {
+  status: 'AFFECTED_GRADING_CANDIDATE_READY_NOT_APPROVAL',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral', root: R,
+  candidateNumber: 2, originalCandidate: bind(source), originalReviewHold: bind(hold),
+  candidate: bind(`${own}/answers.draft.json`), affectedExercises: ['131', '132'],
+  changedFields: ['grading', 'parts', 'notes'], newExactParts: 8, existingNumericParts: 4,
+  allDisplayAnswersUnchanged: true, otherFiveAnswerObjectsUnchanged: true,
+  oldMathematicalAndFigureObservationsNotRerun: true,
+  runtimeContract: [
+    bind(`${R}/app/src/lib/answer-normalize.ts`),
+    bind(`${R}/.claude/skills/ld-s10y-answer/tools/check_mathlive_exact.mjs`),
+  ],
+  decision: 'Existing exact normalization unwraps text/textrm/mathrm/operatorname. Natural Chinese yes/no and membership words are represented in supported LaTeX text, not invented numeric encodings. New parts still require the one official finalize/editor transaction gate.',
+  officialFinalizations: 0, independentAffectedReview: 'PENDING',
+  firstHoldAndFailureBytesPreserved: true, imageViews: 0, figureRenders: 0,
+  oldFailuresAndUnknownTotalsNotReset: true, cost: 'unknown', hostTokens: 'unknown',
+  unknownHistoricalBytesRecovered: false, DBWrites: 0, finish: 'review',
+};
+fs.writeFileSync(`${own}/grading-delta.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ candidate: record.candidate, delta: bind(`${own}/grading-delta.record`),
+  changedExercises: record.affectedExercises, approval: false }));

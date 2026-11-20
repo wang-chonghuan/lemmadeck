@@ -1,0 +1,49 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const [readyPath, readySHA, reviewPath, reviewSHA] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const checked = (file, digest) => {
+  assert.ok(path.resolve(file).startsWith(`${R}/`));
+  const bytes = fs.readFileSync(file);
+  assert.equal(sha(bytes), digest, file);
+  return bytes;
+};
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const ready = JSON.parse(checked(readyPath, readySHA));
+for (const [key, value] of Object.entries({
+  status: 'PASS', book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+})) assert.equal(ready[key], value);
+const bytes = checked(reviewPath, reviewSHA), review = JSON.parse(bytes);
+assert.equal(review.schema, 's10y-choice-review-v1');
+assert.equal(review.outcome, 'pass');
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.equal(review.seed_sha256, '808ce85014cce411eff26adc5c6e408192f08eccba35cf9fba59412534f86193');
+assert.equal(review.draft_sha256, 'd63dd26828812f10bb38d960af87d121842a3549ca57814492b6391d1d1736e0');
+const author = `${R}/.tmp/resume182-6-8a-n10-choice-author3695-FIRST`;
+checked(`${author}/seed.json`, 'ae7a03e2076d76c8f7ab96656bd9cde4e2ded412411d50194d7a1a0efd9715a9');
+checked(`${author}/draft.json`, '70e051456b52b554586eba003a401a67c237a064325ecc9a08dedabbfb35271f');
+const draft = JSON.parse(fs.readFileSync(`${author}/draft.json`, 'utf8'));
+assert.equal(draft.questions.length, 8);
+assert.deepEqual(draft.new_figures, []);
+const own = `${R}/.tmp/resume182-6-8a-n10-choice-stage3695-FIRST`;
+assert.equal(fs.existsSync(own), false);
+assert.equal(fs.existsSync(`${author}/review.json`), false);
+fs.mkdirSync(own);
+fs.writeFileSync(`${author}/review.json`, bytes, { flag: 'wx' });
+const output = `${own}/binding.record`;
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'APPROVED_CHOICE_REVIEW_BOUND_PENDING_OFFICIAL_RETENTION',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral', root: R,
+  independentReady: bind(readyPath), independentReview: bind(reviewPath),
+  source: author, files: ['seed.json', 'draft.json', 'review.json'].map(name => bind(`${author}/${name}`)),
+  reviewBytesUnchanged: true, questions: 8, seedCount: 7,
+  newSemanticReviews: 0, newImageViews: 0, newFigureRenders: 0,
+  oldFailuresAndUnknownCountsPreserved: true, unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', cost: 'unknown', DBWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...bind(output), source: author }));

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"fs\"),c=require(\"crypto\"),assert=require(\"assert/strict\"),p=require(\"path\");const base=p.resolve(\".tmp/resume182-6-8a-n10-source-author3695-FIRST\"),file=p.join(base,\"ready.record\"),r=JSON.parse(fs.readFileSync(file,\"utf8\")),seen=new Set;function walk(x){if(!x||typeof x!==\"object\")return;if(typeof x.path===\"string\"&&typeof x.sha256===\"string\"){const key=x.path+\"|\"+x.sha256;if(!seen.has(key)){assert.equal(c.createHash(\"sha256\").update(fs.readFileSync(x.path)).digest(\"hex\"),x.sha256,x.path);seen.add(key);}}for(const v of Object.values(x))if(v&&typeof v===\"object\")Array.isArray(v)?v.forEach(walk):walk(v);}walk(r);const snapshot=JSON.parse(fs.readFileSync(p.join(base,\"0062-failure-FIRST-snapshot/manifest.record\"),\"utf8\"));walk(snapshot);for(const name of [\"page.md\",\"page.json\",\"audit.json\"]){assert.equal(Buffer.compare(fs.readFileSync(p.join(base,\"0062-failure-FIRST-snapshot\",name)),fs.readFileSync(p.resolve(\".tmp/resume182-6-8a-n10-source3695-FIRST/draft-root/8a/pages/0062\",name))),0);}assert.equal(r.status,\"HOLD\");assert.deepEqual(r.pages.map(x=>[x.physical,x.printed,x.gridOpens,x.plainOpens,x.finalize.returncode]),[[60,53,1,0,0],[61,54,1,0,0],[62,55,1,0,1],[63,56,1,0,0]]);console.log(JSON.stringify({path:file,sha256:c.createHash(\"sha256\").update(fs.readFileSync(file)).digest(\"hex\"),status:r.status,hashBindingsVerified:seen.size,failedSnapshotStillExact:true,finalizeFirstCalls:4,pass:3,fail:1,retries:0,nativeImages:4,unknownGlyphs:0,preflightFailures:1},null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T11:22:32.301Z",
+  "finished": "2026-11-20T11:22:32.371Z",
+  "returncode": 0,
+  "signal": null,
+  "error": null
+}

@@ -1,0 +1,204 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck'
+const work = path.join(repo, '.tmp/resume182-6-8a-n10-text-author3695-FIRST')
+const book = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a')
+const target = path.join(work, 'adapt/8a/modern-us-neutral/lessons/alg8-c2-s2-n10')
+assert.equal(process.cwd(), repo)
+const read = (filename) => JSON.parse(fs.readFileSync(filename, 'utf8'))
+const hash = (filename) => {
+  const bytes = fs.readFileSync(filename)
+  return {
+    path: filename,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length,
+  }
+}
+const sourceBaseline = {
+  'lessons/alg8-c2-s2-n10/lesson.json': '8be6afcb95fbdbc9df16eb2113ea4ff8e6aac55228fdb2a45ef3e816c7190770',
+  'lessons/alg8-c2-s2-n10/exercises.json': '293abac76d7c8578707b4dc539fd04f315a14fbd7b0fa4f9feea1e12b18319a9',
+  'lessons/alg8-c2-s2-n10/lesson.md': '9902c6f2ddd60b8be32942bc07238e610ba276c4569131aea42d374f418daba3',
+  'pages/0060/page.json': 'fddfeaf0ebe27c05749fbea5a86fcd185e2a4d7ac18787f0bf4864fd2547d070',
+  'pages/0060/page.md': '2fae501775ef0983f27078892ad74a5e401f3c87454262fd98a247ed22d89ab2',
+  'pages/0061/page.json': '259878aa41e6847a9a33cdd2f29a26344148ab2ddf90f80f05cc8cdcacdb15cc',
+  'pages/0061/page.md': 'e3be8420ea2d878ae81f1894c57f67b80a0ead6b0f2afac3e84ea88628b79e78',
+  'pages/0062/page.json': '2f649252e5773a82668d7b5a0c1e1235cb8f4dc7a5626f866d4bf02eea58ece2',
+  'pages/0062/page.md': '6b3b6f65ad42189d3650f0f40b58ebbd7c42746730e648f46f8173c14c562ade',
+  'pages/0063/page.json': '51990246f666373aa61da20360a5c8ca66e6df409e7d3c0bd43205228055e542',
+  'pages/0063/page.md': 'fba821ed45153a8b01e21168841350047823aa88d9d8badd4ce15ecb69521039',
+  'figures/fig-22.png': '45fe3024c4f17df6c2bced17e809e116dc74c0dc6ca569f8d181362538a753af',
+  'figures/fig-22.svg': 'a7101a4e839b6decd2ef40f3b9575dd4c4cf9c6109870b83137c460d47145f09',
+  'figures/fig-23.png': 'ee6c3df6bd43b48df8fa006dbd23478e47ba66fe2dd2d248da7c4699d371ad31',
+  'figures/fig-23.svg': 'a951a97fd4def7b94a41e4067557a8a3fc5c040cd1b215acd261cc018e4a0499',
+  'figures/fig-24.png': 'bc88e91a7d714f7cb7b821aebb23daf9de6772ffe5786ca6368649c14c006fa2',
+  'figures/fig-24.svg': '3d99aeefa5fd5071661b5ad645bf267797707f1388a7b41b7e6348d73a568a8d',
+  'figures/fig-25.png': 'c6982988a8fa79b1d62fec64a7027bf125c8535cd6ee0daa6cc86ad074b62e33',
+  'figures/fig-25.svg': 'e9ca4bf69a986c79d0aa4b8464d30af1422be2f5f4692a2684dc0bca69335ac0',
+}
+const sources = Object.entries(sourceBaseline).map(([relative, expected]) => {
+  const current = hash(path.join(book, relative))
+  assert.equal(current.sha256, expected, `source drift: ${relative}`)
+  return current
+})
+const pdf = path.join(repo, 'ssot-resources/soviet10year-textbooks/sources/soviet10years/8a 苏联十年制学校数学教材 代数 八年级.pdf')
+const pdfHash = hash(pdf)
+assert.equal(pdfHash.sha256, '5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071')
+sources.push(pdfHash)
+const lesson = read(path.join(target, 'lesson.template.json'))
+const exercises = read(path.join(target, 'exercises.template.json'))
+const figures = read(path.join(target, 'figures.template.json'))
+const indexPath = path.join(work, 'adapt/8a/modern-us-neutral/book.template.json')
+const index = read(indexPath)
+const rawLesson = read(path.join(book, lesson.source.path))
+const rawExercises = read(path.join(book, exercises.source.path))
+assert.deepEqual(lesson.source.data, rawLesson)
+assert.deepEqual(exercises.source.data, rawExercises)
+assert.equal(lesson.source.sha256, hash(path.join(book, lesson.source.path)).sha256)
+assert.equal(exercises.source.sha256, hash(path.join(book, exercises.source.path)).sha256)
+assert.equal(lesson.prose.length, 13)
+assert.equal(lesson.exercise_count, 7)
+assert.equal(exercises.count, 7)
+assert.equal(figures.figures.length, 4)
+assert.deepEqual(exercises.exercises.map((item) => item.number), ['131', '132', '133', '134', '135', '136', '137'])
+for (const document of [lesson, exercises, figures, index]) {
+  assert.equal(document.status, 'draft')
+  assert.equal(document.edition, 'modern-us-neutral')
+}
+
+const formulas = (text) => [...text.matchAll(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs)].map((match) => match[0])
+const numbers = (text) => [...text.replace(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs, '').matchAll(/(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?(?![A-Za-z0-9_\u0400-\u04ff.])/g)].map((match) => match[0])
+const unchangedMetadata = (item, omitted) => Object.fromEntries(Object.entries(item).filter(([key]) => !omitted.includes(key)))
+const textChecks = (source, modern) => {
+  assert.equal(modern.source_text, source.text)
+  assert.deepEqual(formulas(modern.text), formulas(source.text), 'literal formula drift')
+  assert.deepEqual(numbers(modern.text), numbers(source.text), 'literal numeric drift')
+  assert.deepEqual(modern.numeric_changes, [])
+  assert.deepEqual(modern.historical_entities, [])
+  assert.ok(!/[\u0400-\u04ff\u3000]/u.test(modern.text))
+  for (const expression of formulas(modern.text)) assert.ok(!/[、，；。？！：]/u.test(expression))
+  assert.equal(modern.text === source.text, modern.changes.length === 0)
+}
+lesson.prose.forEach((modern, i) => {
+  const source = rawLesson.prose[i]
+  textChecks(source, modern)
+  assert.deepEqual(
+    unchangedMetadata(modern, ['text', 'source_text', 'changes', 'numeric_changes', 'historical_entities']),
+    unchangedMetadata(source, ['text']),
+  )
+})
+exercises.exercises.forEach((modern, i) => {
+  const source = rawExercises.exercises[i]
+  textChecks(source, modern)
+  assert.deepEqual(modern.lines, modern.text.split('\n'))
+  assert.deepEqual(
+    unchangedMetadata(modern, ['text', 'lines', 'source_text', 'changes', 'numeric_changes', 'historical_entities']),
+    unchangedMetadata(source, ['text', 'lines']),
+  )
+  const labels = [...modern.text.matchAll(/^([a-z])\) /gm)].map((match) => match[1])
+  const expected = modern.number === '136' ? [] : modern.number === '137' ? ['a', 'b'] : ['a', 'b', 'c', 'd']
+  assert.deepEqual(labels, expected)
+  if (labels.length) {
+    assert.ok(!/[a-z]\) /.test(modern.lines[0]))
+    assert.equal(modern.lines.length, labels.length + 1)
+  }
+})
+const review = exercises.exercises.at(-1)
+assert.equal(review.group, '复习题')
+assert.equal(review.group_id, 'g1')
+assert.deepEqual(review.pages, ['p0063#4'])
+const expectedReview = rawExercises.exercises.at(-1).text
+  .replace('137. а)', '137.\na)')
+  .replace('两个少先队中队', '两支徒步队')
+  .replace('б)', '\nb)')
+  .replaceAll('. ', '。')
+assert.equal(review.text, expectedReview)
+assert.deepEqual(review.changes, ['layout', 'culture'])
+
+// Parse only the three template documents retained in the preparation read.
+const preparedText = fs.readFileSync(path.join(work, 'shell-07-current-templates/stdout.txt'), 'utf8')
+const prepared = []
+let position = 0
+while (prepared.length < 3) {
+  while (/\s/.test(preparedText[position])) position++
+  const start = position
+  let depth = 0
+  let quoted = false
+  let escaped = false
+  for (; position < preparedText.length; position++) {
+    const char = preparedText[position]
+    if (quoted) {
+      if (escaped) escaped = false
+      else if (char === '\\') escaped = true
+      else if (char === '"') quoted = false
+    } else if (char === '"') quoted = true
+    else if (char === '{' || char === '[') depth++
+    else if (char === '}' || char === ']') depth--
+    if (depth === 0 && !quoted) {
+      prepared.push(JSON.parse(preparedText.slice(start, ++position)))
+      break
+    }
+  }
+}
+assert.deepEqual(figures, prepared[2])
+assert.equal(lesson.errata.length, 1)
+const erratum = lesson.errata[0]
+assert.deepEqual(unchangedMetadata(erratum, ['corrected']), unchangedMetadata(prepared[0].errata[0], ['corrected']))
+assert.equal(erratum.id, 'p0062-ex134-label-3')
+assert.equal(erratum.target, 'exercises[3]')
+assert.equal(erratum.source.block, 'p0062#2')
+assert.equal(erratum.source.sha256, sourceBaseline['pages/0062/page.json'])
+assert.equal(erratum.corrected, exercises.exercises[3].lines[3])
+assert.equal(rawExercises.exercises[3].text.split(erratum.original).length - 1, 1)
+assert.ok(exercises.exercises[3].text.includes(erratum.corrected))
+assert.ok(!exercises.exercises[3].text.includes(erratum.original))
+assert.deepEqual(formulas(erratum.corrected), formulas(erratum.original))
+assert.deepEqual(exercises.exercises[3].changes, ['layout', 'math-correction'])
+const flowPath = path.join(work, 'shell-13-prose-flow-ready/stdout.txt')
+const flow = read(flowPath)
+assert.deepEqual(flow.boundaries.map(({ before, after }) => ({ before, after })), lesson.section_breaks)
+assert.equal(flow.paragraphs.length, 8)
+
+const templates = ['lesson', 'exercises', 'figures'].map((name) => hash(path.join(target, `${name}.template.json`)))
+templates.push(hash(indexPath))
+const toolPaths = [
+  '.claude/skills/ld-s10y-lesson/SKILL.md',
+  '.claude/skills/ld-s10y-lesson/references/production-resume.md',
+  '.claude/skills/ld-s10y-lesson/references/edition-text-contract.md',
+  '.claude/skills/ld-s10y-lesson/tools/p2c.py',
+  '.claude/skills/ld-s10y-lesson/tools/edition.py',
+  '.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs',
+  '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js',
+]
+const contracts = toolPaths.map((relative) => hash(path.join(repo, relative)))
+const profilePath = path.resolve(repo, index.profile.path)
+assert.equal(hash(profilePath).sha256, index.profile.sha256)
+contracts.push(hash(profilePath))
+console.log(JSON.stringify({
+  scope: 'author-only draft integrity; no semantic math review or TEXT approval',
+  sources,
+  templates,
+  contracts,
+  prose_flow: hash(flowPath),
+  checker: hash(path.join(work, 'check-author.mjs')),
+  counts: {
+    source_prose_objects: 13,
+    textual_prose_objects: 7,
+    unchanged_figure_caption_objects: 6,
+    final_prose_paragraphs: 8,
+    section_breaks: lesson.section_breaks.length,
+    exercises: 7,
+    subparts: 22,
+    figures_draft: 4,
+    source_original_bytes_edited: 0,
+    literal_formula_changes: 0,
+    literal_numeric_changes: 0,
+    figure_template_author_edits: 0,
+    semantic_math_review_reruns: 0,
+  },
+  prose_changes: lesson.prose.map((item, i) => ({ target: `lesson.prose[${i}]`, changes: item.changes })),
+  exercise_changes: exercises.exercises.map((item) => ({ number: item.number, changes: item.changes })),
+  erratum,
+}, null, 2))

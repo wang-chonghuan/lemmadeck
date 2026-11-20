@@ -1,0 +1,134 @@
+"""One bounded exact-arithmetic author check; no approval or durable writes."""
+
+import hashlib
+import json
+from fractions import Fraction as F
+from pathlib import Path
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+W = R / ".tmp/resume182-6-8a-n10-answer-author3695-FIRST"
+assert Path.cwd() == R
+
+
+def read(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def bind(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+checks = []
+
+
+def check(name, condition, evidence):
+    assert condition, name
+    checks.append({"name": name, "evidence": evidence})
+
+
+points131 = [(F(0), F(0)), (F(-1), F(1, 2)), (F(1), F(-1)), (F(1, 3), F(1))]
+values131 = [(2*x + 3*y, x*x + y*y) for x, y in points131]
+membership131 = [linear > -1 and squared <= 2 for linear, squared in values131]
+check("131 exact substitutions", membership131 == [True, True, False, True],
+      [{"linear": str(a), "squared": str(b), "member": c}
+       for (a, b), c in zip(values131, membership131)])
+
+points132 = [(0, 5), (-1, 3), (-20, 20), (100, 102)]
+differences132 = [y-x for x, y in points132]
+check("132 strip membership", [-4 <= d <= 4 for d in differences132] == [False, True, False, True],
+      {"yMinusX": differences132})
+
+check("133 interval extents", F("4.5") - 2 == F(5, 2) and 5 - 1 == 4
+      and 2 - (-1) == 3 and -1 - (-4) == 3,
+      "c rectangle width5/2,height4; d open rectangle width3,height3; inclusion follows the modern inequality symbols.")
+check("134a intersection", 2*0 + 6 == -2*0 + 6 == 6,
+      "4x<=0, vertex(0,6), left-opening region.")
+check("134b vertices", all(y >= x+2 and y >= -x+2 and y <= 5
+      for x, y in [(0, 2), (-3, 5), (3, 5)]),
+      "Boundary intersections: (0,2),(-3,5),(3,5).")
+check("134c transformed constants", -F(3, 2)*2 + 3 == 0,
+      "2y-6x+3>=0 gives y>=3x-3/2.")
+check("134d vertices", all(x+y <= 2 and y-x <= 2 and y >= 0
+      for x, y in [(-2, 0), (2, 0), (0, 2)]),
+      "Boundary intersections: (-2,0),(2,0),(0,2).")
+
+check("135 radii", F("0.8")**2 == F("0.64") and 2**2 == 4 and 4**2 == 16,
+      "Closed upper half-disk radius4/5; annulus radii2,4.")
+check("135c chord endpoints", all(x*x + (4-x)**2 == 16 for x in [0, 4])
+      and 2**2 + 3**2 < 16 and 2+3 > 4 and not 0+0 >= 4,
+      "2x(x-4)=0; endpoints(0,4),(4,0), interior witness(2,3), origin excluded.")
+check("135d endpoints", (-2)**2 == 2**2 == 4,
+      "Parabola/line intersections(-2,4),(2,4).")
+check("136 circle squared radii", 4**2 == 16 and 6**2 == 36,
+      "Observed/spec-backed radii4,6; squares16,36. This arithmetic is not a visual approval.")
+
+u, v = F("4.8"), F("3.6")
+check("137a exact equations", u-v == F("4.8")/4 and u*u+v*v == (F(24)/4)**2,
+      {"u": str(u), "v": str(v), "speedDifference": str(u-v), "squaredSpeedSum": str(u*u+v*v)})
+check("137a physical root and distances", v*v + F("1.2")*v - F("17.28") == 0
+      and u > 0 and v > 0 and 4*u-4*v == F("4.8")
+      and (4*u)**2 + (4*v)**2 == 24**2,
+      {"firstPathKm": str(4*u), "secondPathKm": str(4*v), "discardedSecondSpeed": "-24/5"})
+u2, v2 = F(4, 25), F(3, 25)
+check("137b exact equations", 6*u2 == 8*v2 and u2*u2+v2*v2 == F(1, 25)
+      and (15*u2)**2 + (15*v2)**2 == 9,
+      {"u": str(u2), "v": str(v2), "equalComparisonDistanceM": str(6*u2),
+       "firstPathM": str(15*u2), "secondPathM": str(15*v2)})
+
+draft = read(W / "answers.draft.json")
+template = read(W / "prepare/8a/modern-us-neutral/lessons/alg8-c2-s2-n10/answer-keys.template.json")
+modern = read(R / "ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10/exercises.json")
+numbers = [str(item["number"]) for item in modern["exercises"]]
+check("bounded schema and exact coverage",
+      draft["schema"] == template["schema"] == "ld-s10y-answer/lesson-answers@1"
+      and (draft["book"], draft["lesson"], draft["edition"], draft["status"])
+      == ("8a", "alg8-c2-s2-n10", "modern-us-neutral", "draft")
+      and numbers == [str(n) for n in range(131, 138)]
+      and [a["exercise"] for a in draft["answers"]] == numbers
+      and [a["exercise"] for a in template["answers"]] == numbers,
+      {"exerciseNumbers": numbers, "count": len(numbers)})
+check("current prompt binding", all(t["prompt"] == e["text"]
+      for t, e in zip(template["answers"], modern["exercises"])),
+      "Prepared prompts equal each current durable modern exercise text.")
+check("bookRaw provenance and removed preparation fields",
+      all(a["source"] == t["source"] == "derived" and "bookRaw" not in a and "bookRaw" not in t
+          and not ({"prompt", "figureEvidence"} & a.keys())
+          for a, t in zip(draft["answers"], template["answers"])),
+      "All seven are derived; no prompt/figureEvidence or invented bookRaw remains.")
+check("grading scope",
+      all(a["grading"] == "ungraded" and a["parts"] == [] for a in draft["answers"][:-1])
+      and draft["answers"][-1]["grading"] == "auto"
+      and [p["judge"] for p in draft["answers"][-1]["parts"]] == ["numeric"]*4
+      and [F(p["expected"][0]) for p in draft["answers"][-1]["parts"]] == [u, v, u2, v2],
+      "One auto exercise with four numeric speeds; six ungraded exercises with concrete display answers.")
+check("review exercise identity and figure cardinality",
+      modern["exercises"][-1]["group_id"] == "g1"
+      and modern["exercises"][-1]["group"] == "复习题"
+      and modern["exercises"][5]["figure_refs"] == ["fig-25"],
+      "137 remains g1; four figure25 panels remain one exercise136.")
+check("display presence and text safety",
+      all(isinstance(a["displayAnswer"], str) and a["displayAnswer"].strip()
+          and "\x0c" not in a["displayAnswer"] and "\x08" not in a["displayAnswer"]
+          and "题面未附图" not in a["displayAnswer"] for a in draft["answers"]),
+      "Every exercise has nonempty Chinese display text and intact JSON LaTeX escapes.")
+
+record = {
+    "schema": "resume182-6/lesson-answer-author-exact-check@1",
+    "status": "AUTHOR_CHECK_COMPLETE_NOT_APPROVAL",
+    "book": "8a",
+    "lesson": "alg8-c2-s2-n10",
+    "edition": "modern-us-neutral",
+    "method": "One execution using Python stdlib fractions.Fraction for exact arithmetic; bounded draft shape assertions.",
+    "script": bind(Path(__file__)),
+    "answersDraft": bind(W / "answers.draft.json"),
+    "checkCount": len(checks),
+    "checks": checks,
+    "officialFinalizeRuns": 0,
+    "sharedRegressionRuns": 0,
+    "cost": "unknown",
+}
+target = W / "exact-check.record"
+with target.open("x", encoding="utf-8") as stream:
+    json.dump(record, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+print(json.dumps({"status": record["status"], "checkCount": len(checks), "record": bind(target)}, ensure_ascii=False))

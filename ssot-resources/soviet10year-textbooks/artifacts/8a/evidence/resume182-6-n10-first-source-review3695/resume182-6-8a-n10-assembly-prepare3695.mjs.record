@@ -1,0 +1,68 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const work = '.tmp/resume182-6-8a-n10-source3695-FIRST';
+const draft = `${work}/draft-root/8a`;
+const stage = '.tmp/resume182-6-8a-n10-assembly3695-FIRST';
+const root = `${stage}/artifacts/8a`;
+const source = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const entries = [];
+assert.ok(!fs.existsSync(root));
+function copy(input, output) {
+  const bytes = fs.readFileSync(input);
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  entries.push({ input, output, sha256: sha(bytes), bytes: bytes.length });
+}
+for (let page = 60; page <= 63; page++) {
+  const id = String(page).padStart(4, '0');
+  const audit = JSON.parse(fs.readFileSync(`${draft}/pages/${id}/audit.json`));
+  assert.deepEqual(audit.errors, []);
+  assert.equal(audit.lines_printed, audit.lines_md);
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    copy(`${draft}/pages/${id}/${name}`, `${root}/pages/${id}/${name}`);
+  }
+  const doc = JSON.parse(fs.readFileSync(`${draft}/pages/${id}/page.json`));
+  for (const figure of doc.meta.figures) {
+    copy(`${work}/8a/pages/${id}/figures/${figure.id}.png`,
+      `${root}/figures/${figure.id}.png`);
+  }
+}
+for (const [page, index, kind] of [['0042', 0, 'h1'], ['0054', 4, 'h2']]) {
+  const input = `${source}/pages/${page}/page.json`;
+  const bytes = fs.readFileSync(input);
+  const doc = JSON.parse(bytes);
+  assert.equal(doc.blocks[index].kind, kind);
+  const projection = {
+    meta: { ...doc.meta, figures: [], notes: [
+      'Ancestor heading projection only; not a new faithful page or source approval.',
+    ] },
+    blocks: [doc.blocks[index]],
+  };
+  const output = `${root}/pages/${page}/page.json`;
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, `${JSON.stringify(projection, null, 2)}\n`, { flag: 'wx' });
+  entries.push({ input, inputSha256: sha(bytes), output, kind: 'ancestor-heading-projection',
+    originalBlockIndexes: [index], originalBlockRef: `p${page}#${index + 1}`,
+    sourcePageEdits: 0, notSourcePage: true });
+}
+const doc63 = JSON.parse(fs.readFileSync(`${root}/pages/0063/page.json`));
+const ex137 = doc63.blocks.findIndex(block => block.kind === 'ex' && block.label === '137');
+const boundary = doc63.blocks.findIndex(block => block.kind === 'h2');
+assert.ok(ex137 >= 0 && ex137 < boundary);
+assert.ok(doc63.blocks.some(block => block.kind === 'ex' && block.label === '138' && block.open));
+fs.writeFileSync(`${stage}/inputs.record`, `${JSON.stringify({
+  schema: 'stemrobin-182/n10-isolated-source-inputs@1',
+  ticket: 'STEMROBIN-182', book: '8a', lesson: 'alg8-c2-s2-n10',
+  root, entries, preparedOnly: true, independentlyApproved: false,
+  boundary: 'n10 includes complete 131–137; c2-ex/138 remains unfinished context only.',
+  originalSourceWrites: 0, sourceImageViews: 0, sourceReviewReruns: 0,
+  unknownHistoricalBytesRecovered: false, DBWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'N10_ASSEMBLY_INPUT_PREPARED', root,
+  faithfulPageCopies: 12, figureCopies: 4, ancestorHeadingProjections: 2 }));

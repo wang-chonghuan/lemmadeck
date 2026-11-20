@@ -1,0 +1,111 @@
+462-              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+463-              lineStyle(object, palette.accent),
+464-            )
+465-          }
+466-          addLabel(object, [
+467-            (start[0] + end[0]) / 2,
+468-            (start[1] + end[1]) / 2,
+469-          ])
+470:        } else if (object.type === 'text') {
+471-          addLabel(object, object.at, object.text)
+472-        } else if (object.type === 'image') {
+473-          if (!object.dataUri) throw new Error(`missing asset: ${object.asset}`)
+474-          const image = board.create('image', [
+475-            object.dataUri,
+476-            object.at,
+477-            object.size,
+478-          ], {
+479-            id: `ld-${object.id}`,
+480-            fixed: true,
+481-            highlight: false,
+482-            opacity: object.opacity ?? 1,
+483-          })
+484-          if (object.rotation) {
+485-            const center = board.create('point', object.rotation.center, {
+486-              name: '',
+487-              visible: false,
+488-              fixed: true,
+489-            })
+490-            const transform = board.create('transform', [
+491-              object.rotation.angleDegrees * Math.PI / 180,
+492-              center,
+493-            ], {
+494-              type: 'rotate',
+--
+700-        E: [1, 0, 'start'],
+701-        W: [-1, 0, 'end'],
+702-        N: [0, -1, 'middle'],
+703-        S: [0, 1, 'middle'],
+704-      }
+705-
+706-      for (const label of labels) {
+707-        const node = document.createElementNS(SVG_NS, 'text')
+708:        node.textContent = label.text
+709-        node.setAttribute('fill', label.fill)
+710-        node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
+711:        node.setAttribute('font-size', String(label.fontSize))
+712-        node.setAttribute('font-weight', String(label.fontWeight))
+713-        node.setAttribute('dominant-baseline', label.dominantBaseline)
+714-        node.setAttribute('data-label-id', label.id)
+715-        labelLayer.appendChild(node)
+716-
+717-        const [anchorX, anchorY] = toScreen(label.at)
+718:        const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
+719-        const offset = label.placement.offset || [0, 0]
+720-        const requested = label.placement.position
+721-        const automatic = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
+722-        const candidates = requested
+723-          ? (
+724-              label.placement.fallback
+725-                ? [requested, ...automatic.filter((item) => item !== requested)]
+726-                : [requested]
+727-            )
+728-          : automatic
+729-        let best = null
+730-
+731-        for (const position of candidates) {
+732-          if (!placements[position]) {
+733-            throw new Error(`Unsupported label placement: ${position}`)
+734-          }
+735-          const [xDirection, yDirection, anchor] = placements[position]
+736-          node.setAttribute(
+737-            'x',
+738-            String(anchorX + xDirection * gap + offset[0]),
+739-          )
+740-          node.setAttribute(
+741-            'y',
+742-            String(anchorY + yDirection * gap + offset[1]),
+--
+800-        host.appendChild(candidate)
+801-        document.body.appendChild(host)
+802-        const textSizes = [...candidate.querySelectorAll('text')].map((node) => {
+803-          const fontSize = Number.parseFloat(node.getAttribute('font-size') || '0')
+804-          const matrix = node.getScreenCTM()
+805-          const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0
+806-          return {
+807-            id: node.getAttribute('data-label-id'),
+808:            text: node.textContent,
+809-            px: fontSize * scale,
+810-          }
+811-        })
+812-        const failures = textSizes.filter(
+813-          (item) => item.px + 0.01 < figureSpec.display.minTextPx,
+814-        )
+815-        host.remove()
+816-        return {
+817-          width,
+818-          minTextPx: figureSpec.display.minTextPx,
+819-          measuredMinPx: textSizes.length
+820-            ? Math.min(...textSizes.map((item) => item.px))
+821-            : null,
+822-          failures,
+823-          status: failures.length ? 'fail' : 'pass',
+824-        }
+825-      })
+826-      const cloneFor = (layer) => {
+827-        const clone = svg.cloneNode(true)
+828-        clone.style.background = layer === 'composite'
+829-          ? svg.style.background
+830-          : 'transparent'
+831-        if (layer === 'overlay') {
+832-          clone.querySelectorAll('image').forEach((node) => node.remove())

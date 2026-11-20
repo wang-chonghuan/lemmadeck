@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const due = '2026-11-20T13:09:50Z';
+const actual = new Date();
+assert.ok(actual.getTime() >= Date.parse(due), 'Keep the existing supervision anchor.');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: file, sha256: sha(fs.readFileSync(file)) });
+function pulse(directory) {
+  const receipts = [], unsettledStartedReceipts = [];
+  function visit(file) {
+    if (!fs.existsSync(file)) return;
+    const stat = fs.lstatSync(file);
+    if (stat.isDirectory()) {
+      for (const name of fs.readdirSync(file).sort()) visit(path.join(file, name));
+    } else if (stat.isFile() && path.basename(file) === 'receipt.record') {
+      const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+      receipts.push({ ...bind(file), started: value.started ?? null,
+        finished: value.finished ?? null, returncode: value.returncode,
+        error: value.error ?? null });
+    } else if (stat.isFile() && path.basename(file) === 'start.record'
+      && !fs.existsSync(path.join(path.dirname(file), 'receipt.record'))) {
+      unsettledStartedReceipts.push(bind(file));
+    }
+  }
+  visit(directory);
+  return {
+    root: directory, receiptCount: receipts.length,
+    knownNonzeroOrErrorReceipts: receipts.filter(item => item.returncode !== 0 || item.error),
+    latestFinished: receipts.filter(item => item.finished)
+      .sort((a, b) => a.finished.localeCompare(b.finished)).at(-1) ?? null,
+    unsettledStartedReceipts,
+    unsetStartIsNotClaimedAsLiveProcess: true,
+  };
+}
+const git = spawnSync('git', ['rev-parse', 'HEAD', 'origin/codex/STEMROBIN-182-textbooks'],
+  { cwd: R, encoding: 'utf8' });
+assert.equal(git.status, 0, git.stderr);
+const [head, remote] = git.stdout.trim().split('\n');
+const value = {
+  schema: 'resume182-6/supervision-checkpoint@1',
+  scope: { root: R, books: ['6a', '7a', '8a'], ticket: 'STEMROBIN-182', chat: '182-6' },
+  anchoredDue: due, actual: actual.toISOString(), nextAnchoredDue: '2026-11-20T13:49:50Z',
+  head, remote, originalDeliveryBranch: 'codex/STEMROBIN-182-textbooks',
+  parentInFlightExecSessions: 0,
+  workerPulses: [
+    ['01a1f90d-02c7-7141-a002-7fa88ca9b92c', 'answer-review'],
+    ['01a1f910-4539-7ef3-9e10-da30ebc3a7f8', 'choice-review'],
+  ].map(([agent, role]) => ({
+    agent, role,
+    ...pulse(`${R}/.tmp/resume182-6-8a-n10-${role}3695-FIRST`),
+    approvalNotInferredFromToolPulse: true,
+  })),
+  oldChatsAndMenciusRussellNotResumed: true,
+  createWorktreeCallsThisContinuation: 0, attachCallsThisContinuation: 0,
+  replacementChatsCreated: 0, otherChatsMessaged: 0,
+  newSourceMathFigureOrOldScreenshotPassReruns: 0,
+  imageViewsThisSupervision: 0, DBWrites: 0, merges: 0, deployments: 0,
+  formalHandoffRuns: 0, finish: 'review',
+  removedProbeReceiptFilesStillUnrecovered: 8,
+  previousFailuresLocksBackupsAndPendingMessagesPreserved: true,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+};
+const output = `${R}/.tmp/resume182-6-8a-n10-supervision1309-3695-FIRST.record`;
+fs.writeFileSync(output, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...bind(output), ...value }));

@@ -1,0 +1,201 @@
+242-  });
+243-  console.log(JSON.stringify({ spec: specBinding, context: contextBinding, fullDiff: diffBinding, assertions: 23, hiddenAnchors: 7, sourceViews: 1, newContentRepairs: 1 }));
+244-}
+245-
+246:async function capture() {
+247-  const render = read(path.join(OWN, 'render', 'figure.render.json'));
+248-  assert.equal(render.status, 'pass', 'native capture depends on successful official render');
+249-  assert.equal(render.spec.sha256, bind(path.join(OWN, 'candidate.spec.json')).sha256);
+250-  const svgPath = path.join(OWN, 'render', 'figure.svg');
+251-  const svgBinding = bind(svgPath);
+252-  assert.equal(render.output.svg.sha256, svgBinding.sha256);
+253-  const req = createRequire(path.join(R, 'app', 'package.json'));
+254-  const { chromium } = req('@playwright/test');
+255-  const executablePath = chromium.executablePath();
+256-  assert.ok(fs.existsSync(executablePath));
+257-  const outputPath = path.join(OWN, 'native640.png');
+258-  assert.ok(!fs.existsSync(outputPath), 'only one native raster is authorized');
+259-  const record = {
+260-    schema: 'bounded-author-native-capture@1', role: 'AUTHOR_NOT_REVIEWER',
+261-    sourceSvg: svgBinding, captureScript: bind(fileURLToPath(import.meta.url)),
+262-    runtime: { package: req.resolve('@playwright/test'), version: req('@playwright/test/package.json').version, executablePath, node: process.version },
+263-    isolatedHeadless: true, browserLaunches: 0, contexts: 0, pages: 0,
+264-    screenshotCalls: 0, contentLoads: 0, deviceScaleFactor: 1,
+265-    viewport: { width: 640, height: 480 },
+266-    rasterization: 'Original generated SVG rendered directly at CSS640x480 with DPR1; no existing raster resize/crop.',
+267-    candidateRasterViews: 0, visualReview: 'NOT_RUN',
+268-    closures: { page: false, context: false, browser: false },
+269-    startedAt: new Date().toISOString(),
+270-  };
+271-  let browser;
+272-  let context;
+273-  let page;
+274-  try {
+275-    record.browserLaunches++;
+276-    browser = await chromium.launch({ headless: true, executablePath });
+277-    record.contexts++;
+278-    context = await browser.newContext({ viewport: record.viewport, deviceScaleFactor: 1 });
+279-    await context.route('**/*', route => route.abort());
+280-    record.pages++;
+281-    page = await context.newPage();
+282-    record.browserVersion = browser.version();
+283-    record.contentLoads++;
+284-    await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+285-      :root { --ld-figure-ink:#15201f; --ld-figure-muted:#4c5a58; --ld-figure-accent:#15201f; --ld-figure-accent-soft:#8a9795; --ld-figure-grid:#e3eae9; --ld-figure-paper:#ffffff; }
+286-      html,body { margin:0; width:640px; height:480px; overflow:hidden; background:#ffffff; }
+287-      svg { display:block; width:640px; height:480px; }
+288-      </style></head><body>${fs.readFileSync(svgPath, 'utf8')}</body></html>`, { waitUntil: 'load' });
+289-    await page.evaluate(() => document.fonts.ready);
+290-    record.domTechnicalObservation = await page.evaluate(ids => {
+291-      const svg = document.querySelector('svg');
+292-      const anchors = ids.map(id => {
+293-        const node = document.getElementById(`ld-fig-16_ld-${id}`);
+294-        const style = node && getComputedStyle(node);
+295-        return { id, found: Boolean(node), display: style?.display, visibility: style?.visibility, visible: Boolean(node) && style.display !== 'none' && style.visibility !== 'hidden' };
+296-      });
+297-      const labels = [...svg.querySelectorAll('text')].map(node => {
+298-        const box = node.getBoundingClientRect();
+299-        const matrix = node.getScreenCTM();
+300-        return {
+301-          id: node.getAttribute('data-label-id'), text: node.textContent,
+302-          x: box.x, y: box.y, width: box.width, height: box.height,
+303-          finalFontPx: Number.parseFloat(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+304-        };
+305-      });
+306-      const svgBox = svg.getBoundingClientRect();
+307-      return {
+308-        svgWidth: svgBox.width, svgHeight: svgBox.height,
+309-        devicePixelRatio: devicePixelRatio, anchors, labels,
+310-        yLabelRightEdgeClearanceFromAxisPx: 320 - (labels.find(label => label.text === 'y').x + labels.find(label => label.text === 'y').width),
+311-        yUnitRightEdgeClearanceFromAxisPx: 320 - (labels.find(label => label.id === 'fig-16-y-unit-label-label').x + labels.find(label => label.id === 'fig-16-y-unit-label-label').width),
+312-      };
+313-    }, hiddenIds);
+314-    assert.equal(record.domTechnicalObservation.svgWidth, 640);
+315-    assert.equal(record.domTechnicalObservation.svgHeight, 480);
+316-    assert.equal(record.domTechnicalObservation.devicePixelRatio, 1);
+317-    assert.equal(record.domTechnicalObservation.labels.length, 9);
+318-    assert.ok(record.domTechnicalObservation.anchors.every(anchor => anchor.found && !anchor.visible));
+319-    assert.ok(record.domTechnicalObservation.labels.every(label => label.finalFontPx >= 16));
+320-    assert.ok(record.domTechnicalObservation.yLabelRightEdgeClearanceFromAxisPx >= 16);
+321-    assert.ok(record.domTechnicalObservation.yUnitRightEdgeClearanceFromAxisPx >= 16);
+322-    record.screenshotCalls++;
+323-    await page.screenshot({ path: outputPath, type: 'png', fullPage: false, animations: 'disabled' });
+324-    const bytes = fs.readFileSync(outputPath);
+325-    assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+326-    assert.equal(bytes.subarray(12, 16).toString('ascii'), 'IHDR');
+327-    record.png = { ...bind(outputPath), width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+328-    assert.equal(record.png.width, 640);
+329-    assert.equal(record.png.height, 480);
+330-    record.technicalCaptureStatus = 'complete';
+331-  } catch (error) {
+332-    record.technicalCaptureStatus = 'failed';
+333-    record.error = error.message;
+334-    throw error;
+335-  } finally {
+336-    if (page) { await page.close(); record.closures.page = true; }
+337-    if (context) { await context.close(); record.closures.context = true; }
+338-    if (browser) { await browser.close(); record.closures.browser = true; }
+339-    record.finishedAt = new Date().toISOString();
+340-    const binding = write('capture.record', record);
+341-    console.log(JSON.stringify({ capture: binding, png: record.png, screenshotCalls: record.screenshotCalls, closures: record.closures, candidateViews: 0 }));
+--
+343-}
+344-
+345-function ready() {
+346-  const author = read(path.join(OWN, 'author.record'));
+347:  const captureRecord = read(path.join(OWN, 'capture.record'));
+348-  const renderPath = path.join(OWN, 'render', 'figure.render.json');
+349-  const render = read(renderPath);
+350-  const rendererReceiptPath = path.join(OWN, '16-official-render', 'receipt.record');
+351:  const captureReceiptPath = path.join(OWN, '17-native640-capture', 'receipt.record');
+352-  assert.equal(read(rendererReceiptPath).returncode, 0);
+353-  assert.equal(read(captureReceiptPath).returncode, 0);
+354-  assert.equal(render.status, 'pass');
+355-  assert.equal(captureRecord.technicalCaptureStatus, 'complete');
+356-  assert.equal(captureRecord.screenshotCalls, 1);
+357-  assert.deepEqual(captureRecord.closures, { page: true, context: true, browser: true });
+358-  assert.equal(bind(TEMPLATE).sha256, author.currentTemplate.sha256);
+359-  assert.equal(bind(path.join(OWN, 'candidate.spec.json')).sha256, author.spec.sha256);
+360-  assert.equal(bind(captureRecord.png.path).sha256, captureRecord.png.sha256);
+361-  const logs = fs.readdirSync(OWN, { withFileTypes: true })
+362-    .filter(entry => entry.isDirectory() && fs.existsSync(path.join(OWN, entry.name, 'receipt.record')))
+363-    .map(entry => ({
+364-      directory: path.join(OWN, entry.name),
+365-      start: bind(path.join(OWN, entry.name, 'start.record')),
+366-      receipt: bind(path.join(OWN, entry.name, 'receipt.record')),
+367-      stdout: bind(path.join(OWN, entry.name, 'stdout.txt')),
+368-      stderr: bind(path.join(OWN, entry.name, 'stderr.txt')),
+369-    }));
+370-  const record = {
+371-    schema: 'bounded-author-ready@1', role: 'AUTHOR_NOT_REVIEWER',
+372-    status: 'READY_FOR_SEPARATE_REVIEWER_AUTHOR_CANDIDATE_ONLY',
+373-    ticket: author.ticket, book: '8a', lesson: author.lesson, figure: 'fig-16',
+374-    cwd: R, ownedWriteRoot: OWN, createdAt: new Date().toISOString(),
+375-    source: author.source, currentTemplate: bind(TEMPLATE),
+376-    context: bind(path.join(OWN, 'context.json')),
+377-    independentInventory: bind(path.join(OWN, 'independent.inventory.sealed.json')),
+378-    independentInventorySeal: bind(path.join(OWN, 'independent.inventory.seal.record')),
+379-    sourceViewEvidence: { tool: 'functions.view_image', path: SOURCE, count: 1, beforeInventorySeal: true, beforeOldSpecRead: true, oldPngViews: 0, reopens: 0, crops: 0 },
+380-    oldFirstVisualFail: oldBindings(),
+381-    spec: bind(path.join(OWN, 'candidate.spec.json')),
+382-    fullDiff: bind(path.join(OWN, 'full.diff.record')),
+383-    author: bind(path.join(OWN, 'author.record')),
+384-    authorHelper: bind(fileURLToPath(import.meta.url)),
+385-    render: bind(renderPath), svg: bind(path.join(OWN, 'render', 'figure.svg')),
+386-    nativePng: captureRecord.png, capture: bind(path.join(OWN, 'capture.record')),
+387-    actualRenderer: {
+388-      script: bind(path.join(R, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs')),
+389-      validator: bind(path.join(R, '.agents/skills/ld-s10y-image/scripts/validate_spec.py')),
+390-      receipt: bind(rendererReceiptPath),
+391-      name: render.renderer.name, version: render.renderer.version,
+392-      attempts: 1, successfulRuns: 1, technicalFailures: 0,
+393-      builtInDraftValidationRuns: 1, separatelyRerunValidation: 0,
+394-      browserLaunches: 1, screenshotCalls: 0,
+395-      reportStatus: render.status, reportDoesNotCertifyVisualFidelity: true,
+396-    },
+397-    actualBrowserCapture: {
+398-      receipt: bind(captureReceiptPath), runtime: captureRecord.runtime,
+399-      browserVersion: captureRecord.browserVersion,
+400-      browserLaunches: captureRecord.browserLaunches,
+401-      contexts: captureRecord.contexts, pages: captureRecord.pages,
+402-      contentLoads: captureRecord.contentLoads,
+403-      screenshotCalls: captureRecord.screenshotCalls,
+404-      deviceScaleFactor: 1, viewport: captureRecord.viewport,
+405-      pngIHDR: { width: captureRecord.png.width, height: captureRecord.png.height },
+406-      closures: captureRecord.closures,
+407-      sourceRasterLoadedByCapture: false, candidateRasterViews: 0,
+408-    },
+409-    totalsThisAuthor: {
+410-      sourceViews: 1, allImagesOpenedIntoAuthorContext: 1,
+411-      candidateViews: 0, oldPngViews: 0,
+412-      contentRepairs: 1, technicalRepairs: 0, rendererAttempts: 1,
+413-      rendererSuccesses: 1, browserLaunches: 2, nativeRasterCaptures: 1,
+414-      paidCalls: 0, dependencyInstalls: 0, reviewerCalls: 0,
+415-    },
+416-    repairAccounting: author.repairAccounting,
+417-    preserved: author.unchangedGeometry,
+418-    inventoryVisibility: {
+419-      hiddenConstructionAnchors: hiddenIds, visibleTextLabels: 9,
+420-      visiblePointObjects: ['fig-16-A', 'fig-16-B'],
+421-      originMappedAs: 'fig-16-origin-text',
+422-      sourceABRelationship: 'fig-16-A-to-B',
+423-      independentSourceSeparatePointGlyphs: 0,
+424-      existingABPointEmphasisClassifiedAsModernAddition: true,
+425-    },
+426-    review: { visual: 'NOT_RUN', mathFullTask: 'NOT_RUN', sourceApproval: 'NOT_CLAIMED', promotion: 'NOT_AUTHORIZED' },
+427-    oldRemainingOrdinaryRepairBudget: 0, oldRepairBudgetReset: false,
+428-    ordinaryRepairDirectlyHumanAuthorized: true,
+429-    logs,
+430-    readyCreationLogDirectory: path.join(OWN, '18-ready-seal'),
+431-    prohibitedStagesRun: [],
+432-  };
+433-  const binding = write('ready.record', record);
+434-  const seal = write('ready.sha256.record', { ready: binding, counts: record.totalsThisAuthor, authorOnly: true });
+435-  console.log(JSON.stringify({ ready: binding, seal, spec: record.spec, png: record.nativePng, counts: record.totalsThisAuthor }));
+436-}
+437-
+438-const phase = process.argv[2];
+439-if (phase === 'prepare') prepare();
+440-else if (phase === 'capture') await capture();
+441-else if (phase === 'ready') ready();
+442-else throw new Error('Expected prepare, capture or ready phase');

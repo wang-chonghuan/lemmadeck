@@ -1,0 +1,138 @@
+        objects = []
+    ids = [item.get("id") for item in objects if isinstance(item, dict)]
+    if any(not isinstance(value, str) or not value for value in ids):
+        errors.append("every object needs a nonempty id")
+    if len(ids) != len(set(ids)):
+        errors.append("object ids must be unique")
+    assets = spec.get("assets", [])
+    if not isinstance(assets, list):
+        errors.append("assets must be an array")
+        assets = []
+    asset_ids = {
+        item.get("id")
+        for item in assets
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if len(asset_ids) != len(assets):
+        errors.append("asset ids must be present and unique")
+
+    points = point_map(objects)
+    labels = []
+    image_count = 0
+    for index, item in enumerate(objects):
+        label = f"objects[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        kind = item.get("type")
+        if kind not in SUPPORTED_TYPES:
+            errors.append(f"{label}: unsupported type {kind!r}")
+            continue
+        placements = [(label, item.get("labelPlacement"))]
+        if kind == "axis":
+            placements.extend(
+                (f"{label}.ticks[{tick_index}]", tick.get("labelPlacement"))
+                for tick_index, tick in enumerate(item.get("ticks", []))
+                if isinstance(tick, dict)
+            )
+        for owner, placement in placements:
+            if placement is None:
+                continue
+            if not isinstance(placement, dict):
+                errors.append(f"{owner}.labelPlacement must be an object")
+                continue
+            position = placement.get("position")
+            if position is not None and position not in {
+                "CENTER", "NE", "NW", "SE", "SW", "E", "W", "N", "S"
+            }:
+                errors.append(f"{owner}.labelPlacement.position is unsupported: {position!r}")
+        if current:
+            for field in ("stroke", "fill", "labelColor"):
+                role = item.get(field)
+                if role is not None and role not in COLOR_ROLES:
+                    errors.append(
+                        f"{label}.{field} must use a semantic color role"
+                    )
+        for field in ("label", "text"):
+            text = item.get(field)
+            if isinstance(text, str) and text:
+                labels.append((label, text))
+        if kind == "point" and not coordinate(item.get("at")):
+            errors.append(f"{label}.at must be [x, y]")
+        elif kind in {"segment", "line", "arrow", "axis", "measure"}:
+            resolve_point(item.get("from"), points, f"{label}.from", errors)
+            resolve_point(item.get("to"), points, f"{label}.to", errors)
+        elif kind == "circle":
+            resolve_point(item.get("center"), points, f"{label}.center", errors)
+            if not finite_number(item.get("radius")) or item["radius"] <= 0:
+                errors.append(f"{label}.radius must be positive")
+        elif kind == "polygon":
+            values = item.get("points")
+            if not isinstance(values, list) or len(values) < 3:
+                errors.append(f"{label}.points needs at least three points")
+            else:
+                for point_index, value in enumerate(values):
+                    resolve_point(
+                        value, points, f"{label}.points[{point_index}]", errors
+                    )
+        elif kind == "arc":
+            for field in ("center", "start", "end"):
+                resolve_point(item.get(field), points, f"{label}.{field}", errors)
+        elif kind == "grid":
+            for field in ("xStep", "yStep"):
+                if not finite_number(item.get(field)) or item[field] <= 0:
+                    errors.append(f"{label}.{field} must be positive")
+            for field in ("xOffset", "yOffset"):
+                if field in item and not finite_number(item.get(field)):
+                    errors.append(f"{label}.{field} must be finite")
+            bounds = item.get("bounds")
+            if bounds is not None:
+                if (
+                    not isinstance(bounds, list)
+                    or len(bounds) != 4
+                    or not all(map(finite_number, bounds))
+                ):
+                    errors.append(
+                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+                    )
+                elif not (bounds[0] < bounds[2] and bounds[3] < bounds[1]):
+                    errors.append(
+                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+                    )
+        elif kind == "text":
+            resolve_point(item.get("at"), points, f"{label}.at", errors)
+            if not isinstance(item.get("text"), str) or not item["text"].strip():
+                errors.append(f"{label}.text must be nonempty")
+        elif kind == "image":
+            image_count += 1
+            if item.get("asset") not in asset_ids:
+                errors.append(f"{label}.asset does not resolve")
+            if not coordinate(item.get("at")) or not coordinate(item.get("size")):
+                errors.append(f"{label}.at and size must be [x, y]")
+            elif item["size"][0] <= 0 or item["size"][1] <= 0:
+                errors.append(f"{label}.size values must be positive")
+            rotation = item.get("rotation")
+            if rotation is not None:
+                if not isinstance(rotation, dict):
+                    errors.append(f"{label}.rotation must be an object")
+                else:
+                    if not finite_number(rotation.get("angleDegrees")):
+                        errors.append(
+                            f"{label}.rotation.angleDegrees must be finite"
+                        )
+                    if not coordinate(rotation.get("center")):
+                        errors.append(
+                            f"{label}.rotation.center must be [x, y]"
+                        )
+        elif kind == "svgPath":
+            if not isinstance(item.get("d"), str) or not item["d"].strip():
+                errors.append(f"{label}.d must be nonempty")
+    for label, text in labels:
+        if NON_ENGLISH.search(text):
+            errors.append(f"{label}: visible text must be English: {text!r}")
+
+    if mode == "generated" and objects:
+        errors.append("generated mode must not contain deterministic objects")
+    if mode == "hybrid" and image_count == 0:
+        errors.append("hybrid mode requires an image object")
+    if mode == "hybrid":

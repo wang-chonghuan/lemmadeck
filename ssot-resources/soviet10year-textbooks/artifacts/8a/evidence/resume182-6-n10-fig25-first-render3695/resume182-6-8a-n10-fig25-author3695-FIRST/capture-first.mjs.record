@@ -1,0 +1,160 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+assert.equal(process.cwd(), R);
+const bind = (path) => ({
+  path, sha256: crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex'),
+});
+const specPath = `${work}/draft-FIRST/fig-25.spec.json`;
+const svgPath = `${work}/render-FIRST/fig-25.svg`;
+const renderPath = `${work}/render-FIRST/fig-25.render.json`;
+const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
+const render = JSON.parse(fs.readFileSync(renderPath, 'utf8'));
+assert.equal(render.status, 'pass');
+assert.equal(render.spec.sha256, bind(specPath).sha256);
+assert.equal(render.output.svg.sha256, bind(svgPath).sha256);
+const output = `${work}/raster-FIRST`;
+assert.equal(fs.existsSync(output), false, 'Preserve every existing raster candidate.');
+fs.mkdirSync(output);
+const req = createRequire(`${R}/app/package.json`);
+const { chromium } = req('@playwright/test');
+const executablePath = chromium.executablePath();
+assert.ok(fs.existsSync(executablePath));
+const svgText = fs.readFileSync(svgPath, 'utf8');
+const record = {
+  schema: 'resume182-6/author-svg-rasterization@1',
+  status: 'STARTED', role: 'AUTHOR_NOT_REVIEWER',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral', figure: 'fig-25',
+  sourceSvg: bind(svgPath), spec: bind(specPath), render: bind(renderPath),
+  captureScript: bind(fileURLToPath(import.meta.url)),
+  runtime: { package: req.resolve('@playwright/test'), version: req('@playwright/test/package.json').version, executablePath, node: process.version },
+  deviceScaleFactor: 1, networkPolicy: 'abort every routed request',
+  browserLaunches: 0, contexts: 0, pages: 0, contentLoads: 0, screenshotCalls: 0,
+  abortedRequests: 0, consoleErrors: [], pageErrors: [],
+  candidateRasterViews: 0, sourceRasterReads: 0, rasterResizes: 0, rasterCrops: 0,
+  captures: [], closures: { page: false, context: false, browser: false },
+  closureErrors: [], independentVisualReview: 'NOT_RUN',
+  startedAt: new Date().toISOString(), cost: 'unknown',
+};
+let browser;
+let context;
+let page;
+let failure;
+try {
+  record.browserLaunches++;
+  browser = await chromium.launch({ headless: true, executablePath });
+  record.browserVersion = browser.version();
+  record.contexts++;
+  context = await browser.newContext({
+    viewport: { width: spec.canvas.width, height: spec.canvas.height },
+    deviceScaleFactor: 1,
+    serviceWorkers: 'block',
+  });
+  await context.route('**/*', (route) => {
+    record.abortedRequests++;
+    return route.abort();
+  });
+  record.pages++;
+  page = await context.newPage();
+  page.on('console', (message) => {
+    if (message.type() === 'error') record.consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => record.pageErrors.push(error.message));
+  for (const [name, width] of [['native', spec.canvas.width], ['width640', 640]]) {
+    const cssHeight = width * spec.canvas.height / spec.canvas.width;
+    const height = Math.ceil(cssHeight);
+    const pngPath = `${output}/fig-25.${name}.png`;
+    assert.equal(fs.existsSync(pngPath), false);
+    await page.setViewportSize({ width, height });
+    record.contentLoads++;
+    await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+      :root { --ld-figure-ink:#15201f; --ld-figure-muted:#4c5a58; --ld-figure-accent:#15201f; --ld-figure-accent-soft:#8a9795; --ld-figure-grid:#e3eae9; --ld-figure-paper:#ffffff; }
+      html,body { margin:0; width:${width}px; height:${height}px; overflow:hidden; background:#ffffff; }
+      svg { display:block; width:${width}px; height:${cssHeight}px; }
+      </style></head><body>${svgText}</body></html>`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    const observation = await page.evaluate(() => {
+      const svg = document.querySelector('svg');
+      const svgBox = svg.getBoundingClientRect();
+      const visible = (node) => {
+        const style = getComputedStyle(node);
+        return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0;
+      };
+      const labels = [...svg.querySelectorAll('text')].map((node) => {
+        const box = node.getBoundingClientRect();
+        const matrix = node.getScreenCTM();
+        return {
+          id: node.getAttribute('data-label-id'), text: node.textContent,
+          x: box.x, y: box.y, width: box.width, height: box.height,
+          finalFontPx: Number.parseFloat(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        };
+      });
+      const visibleRoundElements = [...svg.querySelectorAll('ellipse,circle')]
+        .filter(visible)
+        .map((node) => {
+          const box = node.getBoundingClientRect();
+          return { id: node.id, width: box.width, height: box.height };
+        });
+      return {
+        svgWidth: svgBox.width, svgHeight: svgBox.height, devicePixelRatio,
+        labels, visibleRoundElements,
+        visibleGeometryElements: [...svg.querySelectorAll('path,line,polygon,polyline,ellipse,circle')].filter(visible).length,
+      };
+    });
+    assert.equal(observation.svgWidth, width);
+    assert.ok(Math.abs(observation.svgHeight - cssHeight) < 0.03);
+    assert.equal(observation.devicePixelRatio, 1);
+    assert.equal(observation.labels.length, 28);
+    assert.ok(observation.labels.every((label) => label.finalFontPx >= 16));
+    assert.ok(observation.labels.every((label) =>
+      label.x >= 0 && label.y >= 0 && label.x + label.width <= width &&
+      label.y + label.height <= height));
+    assert.ok(observation.visibleGeometryElements > 100);
+    assert.ok(observation.visibleRoundElements.every((item) => item.width > 20 && item.height > 20), 'No visible point-size dots.');
+    record.screenshotCalls++;
+    await page.screenshot({ path: pngPath, type: 'png', fullPage: false, animations: 'disabled' });
+    const pngBytes = fs.readFileSync(pngPath);
+    assert.equal(pngBytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.equal(pngBytes.readUInt32BE(16), width);
+    assert.equal(pngBytes.readUInt32BE(20), height);
+    record.captures.push({
+      name, png: { ...bind(pngPath), width, height },
+      cssSize: { width, height: cssHeight }, viewport: { width, height },
+      rasterization: 'Original generated SVG loaded directly at this CSS width with DPR1; no existing PNG resize or crop.',
+      minMeasuredTextPx: Math.min(...observation.labels.map((label) => label.finalFontPx)),
+      observation,
+    });
+  }
+  assert.equal(record.consoleErrors.length, 0);
+  assert.equal(record.pageErrors.length, 0);
+  record.status = 'CAPTURE_COMPLETE_NOT_VISUAL_APPROVAL';
+} catch (error) {
+  failure = error;
+  record.status = 'CAPTURE_FAILED';
+  record.error = error.message;
+} finally {
+  for (const [name, resource] of [['page', page], ['context', context], ['browser', browser]]) {
+    if (!resource) continue;
+    try {
+      await resource.close();
+      record.closures[name] = true;
+    } catch (error) {
+      record.closureErrors.push({ resource: name, error: error.message });
+      failure ??= error;
+    }
+  }
+  record.finishedAt = new Date().toISOString();
+  const recordPath = `${output}/capture.record`;
+  fs.writeFileSync(recordPath, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({
+    capture: bind(recordPath), status: record.status,
+    captures: record.captures.map(({ name, png, minMeasuredTextPx }) => ({ name, png, minMeasuredTextPx })),
+    screenshotCalls: record.screenshotCalls, closures: record.closures,
+  }, null, 2));
+}
+if (failure) throw failure;

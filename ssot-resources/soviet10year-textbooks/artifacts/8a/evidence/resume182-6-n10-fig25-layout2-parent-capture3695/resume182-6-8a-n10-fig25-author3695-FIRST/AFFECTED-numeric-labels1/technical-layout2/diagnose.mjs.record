@@ -1,0 +1,155 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+const failed = `${own}/AFFECTED-numeric-labels1`;
+const work = `${failed}/technical-layout2`;
+assert.equal(process.cwd(), R);
+const bind = (path) => ({ path, sha256: crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex') });
+const spec = JSON.parse(fs.readFileSync(`${failed}/fig-25.spec.json`, 'utf8'));
+const ids = ['fig-25-v-x-four-label', 'fig-25-g-x-four-label', 'fig-25-g-x-six-label'];
+const req = createRequire(`${R}/app/package.json`);
+const { chromium } = req('@playwright/test');
+const record = {
+  schema: 'resume182-6/affected-layout-text-diagnosis@1',
+  role: 'AUTHOR_TECHNICAL_DIAGNOSIS_NOT_VISUAL_REVIEW',
+  baselineSpec: bind(`${failed}/fig-25.spec.json`),
+  baselineSvg: bind(`${failed}/render/fig-25.svg`),
+  baselineRender: bind(`${failed}/render/fig-25.render.json`),
+  diagnosisScript: bind(fileURLToPath(import.meta.url)),
+  layout: spec.layout, explicitAvoidRegions: spec.layout.avoidRegions ?? [],
+  minLabelGapUnchanged: spec.layout.minLabelGap,
+  browserLaunches: 0, contexts: 0, pages: 0, screenshotCalls: 0,
+  sourceViews: 0, pngReads: 0, imageViews: 0, abortedRequests: 0,
+  closures: { page: false, context: false, browser: false }, closureErrors: [],
+  cost: 'unknown',
+};
+let browser;
+let context;
+let page;
+let failure;
+try {
+  record.browserLaunches++;
+  browser = await chromium.launch({ headless: true, executablePath: chromium.executablePath() });
+  record.contexts++;
+  context = await browser.newContext({ viewport: { width: spec.canvas.width, height: spec.canvas.height }, deviceScaleFactor: 1, serviceWorkers: 'block' });
+  await context.route('**/*', (route) => { record.abortedRequests++; return route.abort(); });
+  record.pages++;
+  page = await context.newPage();
+  await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+    :root { --ld-figure-ink:#15201f; --ld-figure-muted:#4c5a58; --ld-figure-accent:#15201f; --ld-figure-accent-soft:#8a9795; --ld-figure-grid:#e3eae9; --ld-figure-paper:#ffffff; }
+    html,body { margin:0; width:1320px; height:1080px; overflow:hidden; }
+    svg { display:block; width:1320px; height:1080px; }
+    </style></head><body>${fs.readFileSync(record.baselineSvg.path, 'utf8')}</body></html>`, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  record.diagnosis = await page.evaluate(({ ids, spec }) => {
+    const svg = document.querySelector('svg');
+    const geometry = [...svg.querySelectorAll('line,path,polygon,polyline,circle,ellipse,rect')]
+      .filter((node) => !node.closest('defs') && node.getAttribute('display') !== 'none' &&
+        node.getAttribute('stroke') !== 'none' && Number.parseFloat(node.getAttribute('stroke-width') || '0') > 2.5)
+      .map((node) => {
+        const ctm = node.getCTM();
+        const points = [];
+        let length = 0;
+        try { length = node.getTotalLength(); } catch {}
+        if (Number.isFinite(length) && length > 0) {
+          const samples = Math.min(500, Math.max(2, Math.ceil(length / 4)));
+          for (let i = 0; i <= samples; i++) {
+            const p = node.getPointAtLength(length * i / samples);
+            const at = ctm ? new DOMPoint(p.x, p.y).matrixTransform(ctm) : p;
+            points.push({ x: at.x, y: at.y });
+          }
+        }
+        let ellipse;
+        if (node.tagName === 'ellipse' || node.tagName === 'circle') {
+          const cx = Number(node.getAttribute('cx'));
+          const cy = Number(node.getAttribute('cy'));
+          const rx = Number(node.getAttribute(node.tagName === 'circle' ? 'r' : 'rx'));
+          const ry = Number(node.getAttribute(node.tagName === 'circle' ? 'r' : 'ry'));
+          const center = new DOMPoint(cx, cy).matrixTransform(ctm);
+          ellipse = { cx: center.x, cy: center.y, rx: rx * Math.hypot(ctm.a, ctm.b), ry: ry * Math.hypot(ctm.c, ctm.d), axisAligned: Math.abs(ctm.b) < 1e-8 && Math.abs(ctm.c) < 1e-8 };
+        }
+        return { id: node.id, tag: node.tagName, strokeWidth: Number(node.getAttribute('stroke-width')), points, ellipse };
+      });
+    const boxes = [...svg.querySelectorAll('text')].map((node) => {
+      const b = node.getBBox();
+      return { id: node.getAttribute('data-label-id'), x: b.x, y: b.y, width: b.width, height: b.height };
+    });
+    const inRect = (p, rect) => p.x >= rect.x && p.x <= rect.x + rect.width && p.y >= rect.y && p.y <= rect.y + rect.height;
+    const gap = spec.layout.minLabelGap;
+    const targets = ids.map((id) => {
+      const object = spec.objects.find((item) => item.id === id);
+      const box = boxes.find((item) => item.id === `${id}-label`);
+      const padded = { x: box.x - gap, y: box.y - gap, width: box.width + 2 * gap, height: box.height + 2 * gap };
+      const currentHits = geometry.filter((item) => item.points.some((p) => inRect(p, padded)));
+      const column = { left: padded.x, right: padded.x + padded.width };
+      const columnObstructions = geometry.flatMap((item) => {
+        let maxY = -Infinity;
+        let method = 'existing-renderer path samples with half-stroke padding';
+        if (item.ellipse?.axisAligned) {
+          const e = item.ellipse;
+          const rx = e.rx + item.strokeWidth / 2;
+          const ry = e.ry + item.strokeWidth / 2;
+          const nearestX = Math.max(column.left, Math.min(column.right, e.cx));
+          const dx = nearestX - e.cx;
+          if (Math.abs(dx) <= rx) maxY = e.cy + ry * Math.sqrt(1 - dx * dx / (rx * rx));
+          method = 'analytic lower ellipse/stroke extent within the actual padded text x interval';
+        } else {
+          const halfStroke = item.strokeWidth / 2;
+          const points = item.points.filter((p) => p.x >= column.left - halfStroke && p.x <= column.right + halfStroke);
+          if (points.length) maxY = Math.max(...points.map((p) => p.y)) + halfStroke;
+        }
+        return Number.isFinite(maxY) && maxY >= padded.y ? [{ id: item.id, maxY, method }] : [];
+      });
+      const lowestObstruction = Math.max(...columnObstructions.map((item) => item.maxY));
+      const delta = Math.max(0, Math.ceil(lowestObstruction + 1 - padded.y));
+      const proposedBox = { ...box, y: box.y + delta };
+      const proposedPaddedBox = { ...padded, y: padded.y + delta };
+      const futureHits = geometry.filter((item) => item.points.some((p) => inRect(p, proposedPaddedBox)));
+      const otherBoxOverlap = boxes.filter((other) => !ids.some((item) => `${item}-label` === other.id))
+        .filter((other) => Math.min(proposedPaddedBox.x + proposedPaddedBox.width, other.x + other.width + gap) > Math.max(proposedPaddedBox.x, other.x - gap) &&
+          Math.min(proposedPaddedBox.y + proposedPaddedBox.height, other.y + other.height + gap) > Math.max(proposedPaddedBox.y, other.y - gap));
+      return {
+        id, anchorUnchanged: object.at, horizontalOffsetUnchanged: object.labelPlacement.offset[0],
+        originalVerticalOffset: object.labelPlacement.offset[1],
+        actualCurrentGlyphBox: box, actualCurrentPaddedBox: padded,
+        currentStrokeHits: currentHits.map(({ id, tag, strokeWidth }) => ({ id, tag, strokeWidth })),
+        scoreCause: 'strokeCollision contributes 10000; there are no layout.avoidRegions, point dots or image avoidance rectangles',
+        downstreamColumnObstructions: columnObstructions,
+        lowerStrokeExtentInTextColumn: lowestObstruction,
+        minimumIntegerExtraDownwardPx: delta, safetyClearancePx: 1,
+        derivation: 'ceil(lowerStrokeExtent + 1 - currentPaddedBoxTop); the original 4px minLabelGap and measured font box stay unchanged',
+        proposedVerticalOffset: object.labelPlacement.offset[1] + delta,
+        proposedGlyphBox: proposedBox, proposedPaddedBox,
+        proposedStrokeHits: futureHits.map((item) => item.id),
+        proposedOtherLabelOverlaps: otherBoxOverlap.map((item) => item.id),
+        proposedBoxFitsCanvas: proposedPaddedBox.y + proposedPaddedBox.height <= spec.canvas.height,
+      };
+    });
+    return { nativeSize: { width: svg.getBoundingClientRect().width, height: svg.getBoundingClientRect().height }, targets, explicitAvoidRegions: spec.layout.avoidRegions ?? [], glyphMetricsMethod: 'SVG getBBox after document.fonts.ready, no screenshot or PNG input' };
+  }, { ids, spec });
+  for (const target of record.diagnosis.targets) {
+    assert.equal(target.horizontalOffsetUnchanged, 0);
+    assert.ok(target.currentStrokeHits.length > 0);
+    assert.equal(target.proposedStrokeHits.length, 0);
+    assert.equal(target.proposedOtherLabelOverlaps.length, 0);
+    assert.ok(target.proposedBoxFitsCanvas);
+  }
+  record.status = 'TEXT_DIAGNOSIS_COMPLETE_NOT_RENDER_OR_REVIEW';
+} catch (error) {
+  failure = error; record.status = 'TEXT_DIAGNOSIS_FAILED'; record.error = error.message;
+} finally {
+  for (const [name, resource] of [['page', page], ['context', context], ['browser', browser]]) {
+    if (!resource) continue;
+    try { await resource.close(); record.closures[name] = true; }
+    catch (error) { record.closureErrors.push({ resource: name, error: error.message }); failure ??= error; }
+  }
+  const file = `${work}/layout-diagnostic.record`;
+  fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({ diagnostic: bind(file), status: record.status, targets: record.diagnosis?.targets, closures: record.closures }, null, 2));
+}
+if (failure) throw failure;

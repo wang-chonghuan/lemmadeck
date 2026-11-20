@@ -1,0 +1,114 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [name, ...sources] = process.argv.slice(2);
+assert.match(name, /^n10-[a-z0-9-]+$/);
+assert.ok(sources.length);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const lesson = 'alg8-c2-s2-n10';
+const target = `${root}/evidence/resume182-6-${name}`;
+assert.ok(!fs.existsSync(target));
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const existing = new Map();
+const retained = new Map();
+const entries = [];
+const changedHistoricalReferences = [];
+let reused = 0;
+function register(file) {
+  if (!fs.existsSync(file)) return;
+  const stat = fs.lstatSync(file);
+  if (stat.isDirectory()) {
+    for (const item of fs.readdirSync(file).sort()) register(path.join(file, item));
+  } else if (stat.isFile()) existing.set(sha(fs.readFileSync(file)), file);
+}
+for (const edition of ['', '/editions/modern-us-neutral']) {
+  register(`${root}${edition}/lessons/${lesson}`);
+  for (const id of ['fig-22', 'fig-23', 'fig-24', 'fig-25']) {
+    for (const suffix of ['png', 'svg', 'spec.json', 'render.json', 'review.json']) {
+      register(`${root}${edition}/figures/${id}.${suffix}`);
+    }
+  }
+}
+for (const page of ['0060', '0061', '0062', '0063']) {
+  for (const file of ['page.md', 'page.json', 'audit.json']) {
+    register(`${root}/pages/${page}/${file}`);
+  }
+}
+for (const book of ['6a', '7a', '8a']) {
+  const evidence = `ssot-resources/soviet10year-textbooks/artifacts/${book}/evidence`;
+  if (!fs.existsSync(evidence)) continue;
+  for (const directory of fs.readdirSync(evidence).sort()) {
+    const record = `${evidence}/${directory}/retention.record`;
+    if (!fs.existsSync(record)) continue;
+    for (const item of JSON.parse(fs.readFileSync(record)).entries ?? []) {
+      if (typeof item.path !== 'string' || typeof item.sha256 !== 'string') {
+        changedHistoricalReferences.push({ record, path: item.path ?? null,
+          expected: item.sha256 ?? null, actual: null, originalRecordUnchanged: true,
+          reason: 'Historical entry lacks an explicit path/hash binding; bytes are not guessed.' });
+        continue;
+      }
+      const actual = fs.existsSync(item.path) ? sha(fs.readFileSync(item.path)) : null;
+      if (actual !== item.sha256) {
+        changedHistoricalReferences.push({ record, path: item.path,
+          expected: item.sha256, actual, originalRecordUnchanged: true });
+        continue;
+      }
+      if (!existing.has(item.sha256)) existing.set(item.sha256, item.path);
+    }
+  }
+}
+function retain(file, destination) {
+  const stat = fs.lstatSync(file);
+  if (stat.isDirectory()) {
+    for (const item of fs.readdirSync(file).sort()) retain(path.join(file, item), path.join(destination, item));
+    return;
+  }
+  assert.ok(stat.isFile(), file);
+  const bytes = fs.readFileSync(file);
+  const digest = sha(bytes);
+  let output = retained.get(digest) ?? existing.get(digest);
+  if (output) {
+    assert.equal(sha(fs.readFileSync(output)), digest);
+    if (existing.get(digest) === output) reused++;
+  } else {
+    output = destination.endsWith('.record') ? destination : `${destination}.record`;
+    fs.mkdirSync(path.dirname(output), { recursive: true });
+    fs.writeFileSync(output, bytes, { flag: 'wx' });
+    retained.set(digest, output);
+  }
+  entries.push({ historical_path: file, path: output, sha256: digest, bytes: bytes.length });
+}
+for (const file of sources) {
+  assert.ok(file.startsWith('.tmp/resume182-6-'), file);
+  retain(file, `${target}/${path.basename(file)}`);
+}
+const value = {
+  schema: 'stemrobin-182/production-evidence-retention@1',
+  ticket: 'STEMROBIN-182', book: '8a', lesson,
+  date: '2026-11-20', evidence_package: name, entries,
+  unique_files: retained.size, reused_existing_references: reused,
+  status: 'retained-existing-bytes-only',
+  ...(changedHistoricalReferences.length ? { changedHistoricalReferences } : {}),
+  paths: 'historical_path is provenance only; path binds durable bytes.',
+  availableSubmittedFIRSTAndUsageBytesPreserved: true,
+  unavailableReceiptsDisclosure: {
+    path: '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/ready.record',
+    sha256: '1f044caa3bb4ee515692c7583f8f2ef4dc133472260445b2fb5e1ad70ebab5ca',
+    removedProbeReceiptFilesReported: 8,
+    status: 'Previously reported procedural HOLD remains unresolved. Removed bytes are not asserted to be present or recovered.',
+    previousRetentionRecordsUnchanged: true,
+  },
+  unknownHistoricalBytesRecovered: false,
+  retentionMathSourceImageOrValidatorRuns: 0,
+  hostTokens: 'unknown', totalCost: 'unknown', DBWrites: 0,
+  wholeLessonApproval: false, finish: 'review',
+};
+const bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+fs.mkdirSync(target, { recursive: true });
+fs.writeFileSync(`${target}/retention.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${target}/retention.record`, sha256: sha(bytes),
+  unique: retained.size, references: entries.length, reused }));

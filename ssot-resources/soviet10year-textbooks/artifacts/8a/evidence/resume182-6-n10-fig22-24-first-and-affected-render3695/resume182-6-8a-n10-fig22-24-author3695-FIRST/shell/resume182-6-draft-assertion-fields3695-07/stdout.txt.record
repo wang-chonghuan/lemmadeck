@@ -1,0 +1,156 @@
+        if kind == "connects":
+            arrow_id = item.get("arrow")
+            arrow = objects_by_id.get(arrow_id)
+            if not isinstance(arrow, dict) or arrow.get("type") not in {"arrow", "segment"}:
+                errors.append(f"{label}.arrow must reference an arrow or segment")
+                continue
+            actual_from = resolve_point(
+                arrow.get("from"), points, f"{label}.arrow.from", errors
+            )
+            actual_to = resolve_point(
+                arrow.get("to"), points, f"{label}.arrow.to", errors
+            )
+            expected_from = resolve_point(
+                item.get("from"), points, f"{label}.from", errors
+            )
+            expected_to = resolve_point(
+                item.get("to"), points, f"{label}.to", errors
+            )
+            if all(
+                value is not None
+                for value in (actual_from, actual_to, expected_from, expected_to)
+            ):
+                if distance(actual_from, expected_from) > tolerance:
+                    errors.append(
+                        f"{label}: arrow {arrow_id!r} starts at the wrong member"
+                    )
+                if distance(actual_to, expected_to) > tolerance:
+                    errors.append(
+                        f"{label}: arrow {arrow_id!r} ends at the wrong member"
+                    )
+            continue
+
+        names = {
+            "distance": ("a", "b"),
+            "equalDistance": ("a", "b", "c", "d"),
+            "collinear": ("a", "b", "c"),
+            "parallel": ("a", "b", "c", "d"),
+            "perpendicular": ("a", "b", "c", "d"),
+            "pointOnLine": ("point", "a", "b"),
+        }.get(kind)
+        if not names:
+            errors.append(f"{label}: unsupported assertion type {kind!r}")
+            continue
+        resolved = {
+            name: resolve_point(item.get(name), points, f"{label}.{name}", errors)
+            for name in names
+        }
+        if any(value is None for value in resolved.values()):
+            continue
+
+        if kind == "distance":
+            actual = distance(resolved["a"], resolved["b"])
+            expected = item.get("value")
+            if not finite_number(expected) or abs(actual - expected) > tolerance:
+                errors.append(
+                    f"{label}: distance {actual:.8g} != {expected!r}"
+                )
+        elif kind == "equalDistance":
+            first = distance(resolved["a"], resolved["b"])
+            second = distance(resolved["c"], resolved["d"])
+            if abs(first - second) > tolerance:
+                errors.append(
+                    f"{label}: distances {first:.8g} and {second:.8g} differ"
+                )
+        elif kind == "collinear":
+            value = abs(cross(
+                vector(resolved["a"], resolved["b"]),
+                vector(resolved["a"], resolved["c"]),
+            ))
+            if value > tolerance:
+                errors.append(f"{label}: points are not collinear")
+        elif kind in {"parallel", "perpendicular"}:
+            first = vector(resolved["a"], resolved["b"])
+            second = vector(resolved["c"], resolved["d"])
+            scale = max(math.hypot(*first) * math.hypot(*second), 1.0)
+            value = (
+                abs(cross(first, second))
+                if kind == "parallel"
+                else abs(dot(first, second))
+            )
+            if value > tolerance * scale:
+                errors.append(f"{label}: lines are not {kind}")
+        elif kind == "pointOnLine":
+            value = abs(cross(
+                vector(resolved["a"], resolved["b"]),
+                vector(resolved["a"], resolved["point"]),
+            ))
+            if value > tolerance:
+                errors.append(f"{label}: point is not on line")
+    return errors
+
+
+def validate(spec_path: Path, stage: str) -> list[str]:
+    spec = load(spec_path)
+    errors: list[str] = []
+    schema = spec.get("schema")
+    if schema not in {SCHEMA, LEGACY_SCHEMA}:
+        errors.append(f"schema must be {SCHEMA}")
+    current = schema == SCHEMA
+    if (
+        not isinstance(spec.get("id"), str)
+        or not re.fullmatch(r"(fig|tbl)-[A-Za-z0-9-]+", spec["id"])
+    ):
+        errors.append("id must start with fig- or tbl-")
+    mode = spec.get("mode")
+    if mode not in {"deterministic", "hybrid", "generated"}:
+        errors.append("mode must be deterministic, hybrid, or generated")
+    if not isinstance(spec.get("description"), str) or not spec["description"].strip():
+        errors.append("description must be nonempty")
+
+    source = spec.get("source")
+    if not isinstance(source, dict):
+        errors.append("source must be an object")
+        source = {}
+    if "authoredBasis" in source:
+        if not current or mode != "deterministic":
+            errors.append("source.authoredBasis requires current deterministic FigureSpec")
+        if not str(spec.get("id", "")).startswith("fig-choice-"):
+            errors.append("source.authoredBasis requires a new fig-choice- identifier")
+        if not isinstance(source["authoredBasis"], str) or not source["authoredBasis"].strip():
+            errors.append("source.authoredBasis must be nonempty")
+        if "image" in source:
+            errors.append("authored diagrams cannot claim source.image")
+    else:
+        source_image = source.get("image")
+        if not isinstance(source_image, dict):
+            errors.append("source.image must be an object")
+            source_image = {}
+        image_path = source_image.get("path")
+        image_sha = source_image.get("sha256")
+        if not isinstance(image_path, str) or not image_path:
+            errors.append("source.image.path must be nonempty")
+        elif stage in {"rendered", "approved"}:
+            path = Path(image_path)
+            if not path.is_file():
+                errors.append(f"missing source image: {path}")
+            elif image_sha != sha256(path):
+                errors.append("source.image.sha256 is stale")
+        if not isinstance(image_sha, str) or not re.fullmatch(r"[a-f0-9]{64}", image_sha):
+            errors.append("source.image.sha256 must be lowercase SHA-256")
+    authoritative = source.get("authoritativeText")
+    if not isinstance(authoritative, list) or not authoritative:
+        errors.append("source.authoritativeText must be nonempty")
+        authoritative = []
+    elif any(
+        not isinstance(item, dict)
+        or not isinstance(item.get("text"), str)
+        or not item["text"].strip()
+        for item in authoritative
+    ):
+        errors.append("every authoritativeText item needs nonempty text")
+    if current and not source.get("inventory"):
+        errors.append("current FigureSpec requires source.inventory")
+
+    canvas = spec.get("canvas")
+    if not isinstance(canvas, dict):

@@ -1,0 +1,143 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST');
+assert.equal(process.cwd(), R);
+const require = createRequire(path.join(R, 'app/package.json'));
+const { chromium } = require('playwright');
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const repairReady = JSON.parse(fs.readFileSync(path.join(work, 'repair-ready.record')));
+const executablePath = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  process.env.CHROME_PATH,
+  chromium.executablePath(),
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].filter(Boolean).find((file) => fs.existsSync(file));
+assert.ok(executablePath, 'Existing browser executable required; no installation allowed.');
+const captures = [];
+const failures = [];
+let browser;
+try {
+  browser = await chromium.launch({ executablePath, headless: true });
+  for (const figure of repairReady.figures) {
+    const directory = path.dirname(figure.spec.path);
+    const svgPath = path.join(directory, `${figure.id}.FIRST.svg`);
+    const svgBytes = fs.readFileSync(svgPath);
+    const spec = JSON.parse(fs.readFileSync(figure.spec.path));
+    const pngPath = path.join(directory, `${figure.id}.native-and-640-FIRST.png`);
+    assert.equal(spec.canvas.width, 640);
+    assert.equal(fs.existsSync(pngPath), false, 'Never overwrite a raster or failed candidate.');
+    let context;
+    let page;
+    let attemptedScreenshot = false;
+    try {
+      context = await browser.newContext({
+        viewport: { width: spec.canvas.width, height: spec.canvas.height },
+        deviceScaleFactor: 1,
+        serviceWorkers: 'block',
+      });
+      let blockedRequests = 0;
+      await context.route('**/*', async (route) => {
+        blockedRequests += 1;
+        await route.abort();
+      });
+      page = await context.newPage();
+      await page.setContent(
+        `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;padding:0;background:#fff}body>svg{display:block;width:640px;height:${spec.canvas.height}px}</style></head><body>${svgBytes.toString('utf8')}</body></html>`,
+        { waitUntil: 'load' },
+      );
+      await page.evaluate(() => document.fonts.ready);
+      const observed = await page.evaluate(() => {
+        const svg = document.querySelector('body > svg');
+        const rect = svg.getBoundingClientRect();
+        const text = [...svg.querySelectorAll('text')].map((node) => {
+          const matrix = node.getScreenCTM();
+          const font = Number.parseFloat(getComputedStyle(node).fontSize);
+          return {
+            id: node.getAttribute('data-label-id'),
+            text: node.textContent,
+            actualCssTextPx: font * Math.hypot(matrix.a, matrix.b),
+          };
+        });
+        return {
+          actualCssWidth: rect.width,
+          actualCssHeight: rect.height,
+          devicePixelRatio: window.devicePixelRatio,
+          labels: text,
+          minimumActualCssTextPx: Math.min(...text.map((item) => item.actualCssTextPx)),
+        };
+      });
+      assert.equal(observed.actualCssWidth, 640);
+      assert.equal(observed.actualCssHeight, spec.canvas.height);
+      assert.equal(observed.devicePixelRatio, 1);
+      assert.ok(observed.minimumActualCssTextPx >= 16);
+      attemptedScreenshot = true;
+      await page.locator('body > svg').screenshot({ path: pngPath, animations: 'disabled' });
+      const png = fs.readFileSync(pngPath);
+      const observedPixels = { width: png.readUInt32BE(16), height: png.readUInt32BE(20) };
+      assert.equal(observedPixels.width, 640);
+      assert.equal(observedPixels.height, spec.canvas.height);
+      const pngBinding = binding(pngPath);
+      captures.push({
+        id: figure.id,
+        status: 'SVG_RASTER_CAPTURED_NOT_FIGURE_APPROVAL',
+        svg: binding(svgPath),
+        spec: figure.spec,
+        nativePng: pngBinding,
+        width640Preview: pngBinding,
+        nativeAnd640Reuse: true,
+        reuseReason: 'The authored native canvas is 640 CSS px wide. At DPR1 the single native SVG screenshot is also the actual640 preview; no second raster or copy was made.',
+        screenshotCalls: 1,
+        blockedRequests,
+        networkPolicy: 'Abort every routed request; block service workers.',
+        observed,
+        observedPixels,
+        PNGOpenedByAuthor: false,
+        sourcePNGReopened: false,
+      });
+    } catch (error) {
+      failures.push({
+        id: figure.id,
+        message: String(error.stack || error),
+        attemptedScreenshot,
+        svg: binding(svgPath),
+        pngIfPresent: fs.existsSync(pngPath) ? binding(pngPath) : null,
+      });
+    } finally {
+      if (page) await page.close();
+      if (context) await context.close();
+    }
+  }
+} finally {
+  if (browser) await browser.close();
+}
+const recordPath = path.join(work, 'raster-FIRST.record');
+fs.writeFileSync(recordPath, `${JSON.stringify({
+  status: failures.length ? 'SVG_RASTER_CAPTURE_FAILURE_NOT_APPROVAL' : 'SVG_RASTERS_CAPTURED_NOT_FIGURE_APPROVAL',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+  captures,
+  failures,
+  browserExecutable: executablePath,
+  dependencyRequestedFrom: path.join(R, 'app/package.json'),
+  counts: {
+    screenshotCalls: captures.reduce((total, item) => total + item.screenshotCalls, 0) + failures.filter((item) => item.attemptedScreenshot).length,
+    PNGFilesCreated: captures.length + failures.filter((item) => item.pngIfPresent).length,
+    additional640Rasters: 0,
+    PNGImageViewsByAuthor: 0,
+    sourcePNGReopens: 0,
+    installsOrRuntimeCopies: 0,
+    cost: 'unknown',
+  },
+  proceduralHold: 'HOLD_UNRESOLVED',
+  meaning: 'Rasterization preserves the FIRST SVG exactly, including any reported render failure. It is evidence generation, not a figure review or repair.',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ record: binding(recordPath), captures, failures }, null, 2));
+if (failures.length) process.exitCode = 2;

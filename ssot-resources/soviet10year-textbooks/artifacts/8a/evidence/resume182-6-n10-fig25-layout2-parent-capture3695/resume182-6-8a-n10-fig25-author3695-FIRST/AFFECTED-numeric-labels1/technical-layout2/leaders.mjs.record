@@ -1,0 +1,266 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+const affected = `${own}/AFFECTED-numeric-labels1`;
+const work = `${affected}/technical-layout2`;
+const reviewer = `${R}/.tmp/resume182-6-8a-n10-fig25-review3695-FIRST`;
+assert.equal(process.cwd(), R);
+const hash = (value) => crypto.createHash('sha256').update(value).digest('hex');
+const bind = (path) => ({ path, sha256: hash(fs.readFileSync(path)) });
+const read = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
+const write = (name, value) => {
+  const path = `${work}/${name}`;
+  fs.writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return bind(path);
+};
+const changes = [
+  { id: 'fig-25-v-x-four-label', panel: 'v', anchor: [14, 14], origin: [10, 14], value: 4, offset: [30, 30], circle: 'fig-25-v-circle', circleAssertion: 'fig-25-v-circle-right-intersection' },
+  { id: 'fig-25-g-x-four-label', panel: 'g', anchor: [36, 14], origin: [32, 14], value: 4, offset: [-30, 30], circle: 'fig-25-g-inner-circle', circleAssertion: 'fig-25-g-inner-circle-right-intersection' },
+  { id: 'fig-25-g-x-six-label', panel: 'g', anchor: [38, 14], origin: [32, 14], value: 6, offset: [30, 30], circle: 'fig-25-g-outer-circle', circleAssertion: 'fig-25-g-outer-circle-right-intersection' },
+];
+const screen = ([x, y]) => [x * 30, (36 - y) * 30];
+const user = ([x, y]) => [x / 30, 36 - y / 30];
+const inflate = (b, gap) => ({ x: b.x - gap, y: b.y - gap, width: b.width + gap * 2, height: b.height + gap * 2 });
+const overlap = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+function segmentHitsBox(a, b, box) {
+  let lower = 0;
+  let upper = 1;
+  for (let axis = 0; axis < 2; axis++) {
+    const start = axis ? box.y : box.x;
+    const end = start + (axis ? box.height : box.width);
+    const delta = b[axis] - a[axis];
+    if (Math.abs(delta) < 1e-12) {
+      if (a[axis] < start || a[axis] > end) return false;
+    } else {
+      const bounds = [(start - a[axis]) / delta, (end - a[axis]) / delta].sort((x, y) => x - y);
+      lower = Math.max(lower, bounds[0]);
+      upper = Math.min(upper, bounds[1]);
+      if (lower > upper) return false;
+    }
+  }
+  return true;
+}
+function circleHitsBox(object, box) {
+  const [cx, cy] = screen(object.center);
+  const radius = object.radius * 30;
+  const dx = Math.max(box.x - cx, 0, cx - box.x - box.width);
+  const dy = Math.max(box.y - cy, 0, cy - box.y - box.height);
+  const nearest = Math.hypot(dx, dy);
+  const farthest = Math.max(...[box.x, box.x + box.width].flatMap((x) =>
+    [box.y, box.y + box.height].map((y) => Math.hypot(x - cx, y - cy))));
+  return nearest <= radius + object.strokeWidth / 2 && farthest >= radius - object.strokeWidth / 2;
+}
+
+if (process.argv[2] === 'prepare') {
+  const first = read(`${own}/render-ready.record`);
+  const original = read(first.spec.path);
+  const baseline = read(`${affected}/fig-25.spec.json`);
+  assert.equal(bind(`${affected}/fig-25.spec.json`).sha256, '368dd5dc012841160cfc9786c0c366ff6eabdb8a5fb642d258c1a458b275446d');
+  const failed = read(`${affected}/render/fig-25.render.json`);
+  assert.equal(failed.status, 'fail');
+  assert.equal(failed.collisions.length, 3);
+  assert.ok(failed.collisions.every((item) => item.score === 10000));
+  const diagnostic = read(`${work}/layout-diagnostic.record`);
+  assert.equal(diagnostic.status, 'TEXT_DIAGNOSIS_FAILED');
+  assert.deepEqual(diagnostic.explicitAvoidRegions, []);
+  assert.equal(baseline.layout.minLabelGap, 4);
+  const spec = structuredClone(baseline);
+  const originalLabels = read(first.capture.path).captures[0].observation.labels;
+  const boxes = originalLabels.map((box) => ({ ...box }));
+  const additions = [];
+  const derivations = [];
+  const leaderWidth = 2.8;
+  const safety = 2;
+  const glyphGap = spec.layout.minLabelGap + leaderWidth / 2 + safety;
+  for (const item of changes) {
+    const target = spec.objects.find((object) => object.id === item.id);
+    const old = baseline.objects.find((object) => object.id === item.id);
+    const firstTarget = original.objects.find((object) => object.id === item.id);
+    assert.deepEqual(old.at, item.anchor);
+    assert.equal(old.text, String(item.value));
+    assert.deepEqual(old.labelPlacement.offset, [0, 30]);
+    assert.deepEqual(firstTarget.labelPlacement.offset, item.offset);
+    target.labelPlacement.offset = [...item.offset];
+    assert.deepEqual(target, firstTarget);
+    const glyph = boxes.find((box) => box.id === `${item.id}-label`);
+    const measured = diagnostic.diagnosis.targets.find((target) => target.id === item.id).actualCurrentGlyphBox;
+    assert.ok(Math.abs(glyph.x - measured.x - item.offset[0]) < 1e-9);
+    assert.equal(glyph.y, measured.y);
+    assert.equal(glyph.width, measured.width);
+    assert.equal(glyph.height, measured.height);
+    const start = screen(item.anchor);
+    const end = [
+      item.offset[0] > 0 ? glyph.x - glyphGap : glyph.x + glyph.width + glyphGap,
+      glyph.y + glyph.height / 2,
+    ];
+    const leader = {
+      id: `${item.id}-modern-leader`, type: 'segment',
+      from: [...item.anchor], to: user(end),
+      stroke: 'muted', strokeWidth: leaderWidth, dash: 0,
+    };
+    assert.equal(item.anchor[0] - item.origin[0], item.value);
+    assert.equal(item.anchor[1], item.origin[1]);
+    const circle = spec.objects.find((object) => object.id === item.circle);
+    assert.equal(Math.hypot(item.anchor[0] - circle.center[0], item.anchor[1] - circle.center[1]), circle.radius);
+    const labelHits = boxes.filter((box) => segmentHitsBox(start, end, inflate(box, spec.layout.minLabelGap + leaderWidth / 2))).map((box) => box.id);
+    assert.deepEqual(labelHits, []);
+    const padded = inflate(glyph, spec.layout.minLabelGap);
+    const geometryHits = spec.objects.filter((object) => {
+      if (object.type === 'circle') return circleHitsBox(object, padded);
+      if (['segment', 'arrow', 'axis'].includes(object.type) && Array.isArray(object.from) && Array.isArray(object.to)) {
+        return segmentHitsBox(screen(object.from), screen(object.to), inflate(padded, (object.strokeWidth ?? 0) / 2));
+      }
+      return false;
+    }).map((object) => object.id);
+    assert.deepEqual(geometryHits, [], 'Given label must also avoid thin hatch segments, not just render-gated thick strokes.');
+    assert.deepEqual(boxes.filter((box) => box.id !== glyph.id && overlap(padded, inflate(box, spec.layout.minLabelGap))).map((box) => box.id), []);
+    // These short leaders leave the boundary immediately into an unhatched side.
+    const radialDirection = (start[0] - screen(circle.center)[0]) * (end[0] - start[0]);
+    assert.ok(item.offset[0] > 0 ? radialDirection > 0 : radialDirection < 0);
+    const assertion = { id: `${leader.id}-connects`, type: 'connects', arrow: leader.id, from: [...leader.from], to: [...leader.to] };
+    additions.push({ label: item.id, sourcePanel: item.panel, givenText: String(item.value), givenAbscissa: item.value, exactCircleAxisIntersection: item.anchor, origin: item.origin, circle: item.circle, existingPointOnCircleAssertion: item.circleAssertion, existingDisplacementAssertion: `${item.id}-source-coordinate`, leader, assertion, modernAdditionNotSourceFact: true });
+    derivations.push({
+      labelId: item.id, failedOffset: old.labelPlacement.offset, nextOffset: target.labelPlacement.offset,
+      measuredFailedGlyphBox: measured, reusedFirstGlyphBox: glyph, paddedGlyphBox: padded,
+      sourceIntersectionScreen: start, leaderEndScreen: end, leaderEndUser: leader.to,
+      gapDerivation: 'Unchanged minLabelGap + half new leader stroke + 2px safety = glyph-side endpoint clearance.',
+      minLabelGap: spec.layout.minLabelGap, leaderStrokePx: leaderWidth, safetyPx: safety,
+      glyphSideClearancePx: glyphGap, glyphSideClearanceCss640Px: glyphGap * 640 / spec.canvas.width,
+      leaderVsAllLabelFootprintsHits: labelHits, labelVsCirclesAxesAndHatchHits: geometryHits,
+      labelVsOtherLabelHits: [], method: 'Analytic text/segment/circle calculation from existing measured boxes; no browser, screenshots or image reads.',
+    });
+  }
+  spec.objects.push(...additions.map((item) => item.leader));
+  spec.assertions.push(...additions.map((item) => item.assertion));
+  spec.source.inventory.push({
+    id: 'fig-25-modern-numeric-leaders',
+    description: 'Modern addition, NOT source-image fact: three short leaders identify the already given 4, 4, and 6 labels with their exact original circle-axis intersections. Their offset text boxes are not neighboring grid coordinates. Source v and g correspond to modern c) and d). No dots, ticks, new given values or answer annotations are added.',
+    objects: additions.map((item) => item.leader.id),
+    assertions: additions.flatMap((item) => [item.assertion.id, item.existingPointOnCircleAssertion, item.existingDisplacementAssertion]),
+  });
+  const restored = structuredClone(spec);
+  restored.objects.splice(-3);
+  restored.assertions.splice(-3);
+  restored.source.inventory.pop();
+  assert.deepEqual(restored, original, 'Candidate equals FIRST except three modern leaders/assertions and their addition mapping.');
+  for (const item of changes) restored.objects.find((object) => object.id === item.id).labelPlacement.offset = [0, 30];
+  assert.deepEqual(restored, baseline, 'Only allowed deltas relative to failed AFFECTED1.');
+  const excluded = new Set(changes.map((item) => item.id));
+  const unchangedBefore = baseline.objects.filter((object) => !excluded.has(object.id));
+  const unchangedAfter = spec.objects.slice(0, baseline.objects.length).filter((object) => !excluded.has(object.id));
+  assert.deepEqual(unchangedBefore, unchangedAfter);
+  const preservation = [
+    ...[first.spec, first.svg, first.render, first.nativePng, first.width640Preview, first.independentSourceInventory, first.capture, first.authoringNotes],
+    ...['render-ready.record', 'ready.record'].map((name) => bind(`${own}/${name}`)),
+    ...['fig-25.spec.json', 'render/fig-25.svg', 'render/fig-25.render.json', 'render-ready.record', 'label-repair.diff.record', 'affected.mjs', 'capture.mjs'].map((name) => bind(`${affected}/${name}`)),
+    ...['layout-diagnostic.record', 'diagnose.mjs', 'diagnose-width-recovery.py'].map((name) => bind(`${work}/${name}`)),
+    ...['ready.record', 'fig-25.hold.json'].map((name) => bind(`${reviewer}/${name}`)),
+  ];
+  for (const item of preservation) assert.equal(bind(item.path).sha256, item.sha256);
+  const geometry = write('leader-layout-derivation.record', {
+    schema: 'resume182-6/affected-leader-text-geometry@1', status: 'TEXT_GEOMETRY_DERIVED_NOT_VISUAL_APPROVAL',
+    role: 'AUTHOR_NOT_REVIEWER', affectedCandidateNumber: 2,
+    baselineSpec: bind(`${affected}/fig-25.spec.json`), failedDiagnosis: bind(`${work}/layout-diagnostic.record`),
+    supervisorDecision: 'Latest human supervision permits unambiguous leaders instead of vertical-only placement. Restore the three readable FIRST offsets and connect only the exact existing circle-axis intersections.',
+    diagnosisCorrection: 'lowerStrokeExtent=null was a failed ellipse-width parse, not a zero-clearance result. That diagnostic failure is retained; no vertical-only candidate was rendered.',
+    originalAvoidRegions: [], fontSizeUnchanged: 36, derivations, newBrowserLaunches: 0, newViews: 0, cost: 'unknown',
+  });
+  const candidate = write('fig-25.spec.json', spec);
+  const additionRecord = write('modern-additions.record', { schema: 'resume182-6/modern-leader-additions@1', spec: candidate, additions, sourceFactsUnchanged: true, newVisiblePoints: 0, newGivenValues: 0 });
+  const diff = write('label-leader-delta.record', {
+    schema: 'resume182-6/affected-candidate-delta@1', affectedCandidateNumber: 2,
+    firstAdjustmentStatus: 'RENDER_FAIL', firstSpec: first.spec, failedAffectedSpec: bind(`${affected}/fig-25.spec.json`), spec: candidate,
+    changedLabels: derivations.map(({ labelId, failedOffset, nextOffset }) => ({ labelId, before: failedOffset, after: nextOffset, anchorUnchanged: true, verticalOffsetUnchanged: true, fontUnchanged: true, textUnchanged: true })),
+    newObjects: additions.map((item) => item.leader), newAssertions: additions.map((item) => item.assertion),
+    newInventoryGroup: spec.source.inventory.at(-1), modernAdditions: additionRecord, textGeometry: geometry,
+    restoredEqualsFailedCandidate: true, subtractAdditionsEqualsFirstSpec: true,
+    sourceGeometryObjectsBeforeHash: hash(JSON.stringify(unchangedBefore)), sourceGeometryObjectsAfterHash: hash(JSON.stringify(unchangedAfter)),
+    originalAssertionsHash: hash(JSON.stringify(baseline.assertions)), inheritedAssertionsHash: hash(JSON.stringify(spec.assertions.slice(0, baseline.assertions.length))),
+    originalSourceInventoryHash: hash(JSON.stringify(baseline.source.inventory)), inheritedSourceInventoryHash: hash(JSON.stringify(spec.source.inventory.slice(0, baseline.source.inventory.length))),
+    unchangedCanvasDisplayLayoutHash: hash(JSON.stringify({ canvas: spec.canvas, display: spec.display, layout: spec.layout })),
+    preservedFiles: preservation, authorViewsThisCandidate: 0, cost: 'unknown',
+  });
+  console.log(JSON.stringify({ spec: candidate, diff, textGeometry: geometry, additions: additionRecord, candidateNumber: 2, priorRender: 'FAIL' }, null, 2));
+} else if (process.argv[2] === 'seal') {
+  const first = read(`${own}/render-ready.record`);
+  const previous = read(`${affected}/render-ready.record`);
+  const diff = read(`${work}/label-leader-delta.record`);
+  for (const item of diff.preservedFiles) assert.equal(bind(item.path).sha256, item.sha256);
+  const maybeBind = (path) => fs.existsSync(path) ? bind(path) : null;
+  const maybeRead = (path) => fs.existsSync(path) ? read(path) : null;
+  const spec = bind(`${work}/fig-25.spec.json`);
+  assert.equal(spec.sha256, diff.spec.sha256);
+  const svg = maybeBind(`${work}/render/fig-25.svg`);
+  const render = maybeBind(`${work}/render/fig-25.render.json`);
+  const report = render && read(render.path);
+  const capture = maybeBind(`${work}/raster/capture.record`);
+  const captured = capture && read(capture.path);
+  const validation = maybeRead(`${own}/shell/layout2-leader-validate-13/stdout.txt`);
+  const receipts = fs.readdirSync(`${own}/shell`).filter((name) => fs.existsSync(`${own}/shell/${name}/receipt.record`)).map((name) => {
+    const path = `${own}/shell/${name}`;
+    return { name, receipt: bind(`${path}/receipt.record`), stdout: bind(`${path}/stdout.txt`), stderr: bind(`${path}/stderr.txt`), result: read(`${path}/receipt.record`) };
+  });
+  const rendererReceipt = receipts.find((item) => item.name === 'layout2-leader-render-14');
+  const captureReceipt = receipts.find((item) => item.name === 'layout2-leader-capture-15');
+  const nativePng = captured?.captures.find((item) => item.name === 'native')?.png ?? null;
+  const width640Preview = captured?.captures.find((item) => item.name === 'width640')?.png ?? null;
+  const complete = validation?.status === 'pass' && rendererReceipt?.result.returncode === 0 && report?.status === 'pass' &&
+    captured?.status === 'CAPTURE_COMPLETE_NOT_VISUAL_APPROVAL' && captured?.closureErrors.length === 0 &&
+    Object.values(captured.closures).every(Boolean) && nativePng && width640Preview;
+  if (report) {
+    assert.equal(report.spec.sha256, spec.sha256);
+    assert.equal(report.output.svg.sha256, svg.sha256);
+  }
+  for (const item of [nativePng, width640Preview].filter(Boolean)) assert.equal(bind(item.path).sha256, item.sha256);
+  const failures = receipts.filter((item) => item.result.returncode !== 0 || item.result.error);
+  const ready = write('render-ready.record', {
+    schema: 'resume182-6/affected-leader-render-ready@1',
+    status: complete ? 'AFFECTED_RENDER_READY_FOR_INDEPENDENT_REVIEW_NOT_FIGURE_APPROVAL' : 'HOLD_AFTER_SECOND_AFFECTED_CANDIDATE_STOP_NO_LOOP',
+    role: 'AUTHOR_NOT_REVIEWER', createdAt: new Date().toISOString(),
+    book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral', figure: 'fig-25',
+    authorizedWriteRoot: own, affectedDirectory: work, spec, svg, render, nativePng, width640Preview, capture,
+    delta: bind(`${work}/label-leader-delta.record`), textGeometry: bind(`${work}/leader-layout-derivation.record`),
+    modernAdditions: bind(`${work}/modern-additions.record`), labelAndLeaderAssociations: read(`${work}/modern-additions.record`).additions,
+    unchangedEvidence: diff, sourceImage: first.sourceImage, independentSourceInventory: first.independentSourceInventory,
+    firstReady: bind(`${own}/render-ready.record`), failedAffected1Ready: bind(`${affected}/render-ready.record`),
+    independentOriginalHold: bind(`${reviewer}/fig-25.hold.json`), independentFirstReview: bind(`${reviewer}/ready.record`),
+    inheritedReviewerConclusions: { sourceViews: 1, firstNativeViews: 1, first640Views: 0, authorReReview: false, note: 'Inherited grid, phase, boundaries and regions conclusions only. This candidate label/leader visual result still awaits independent review of the two new PNGs.' },
+    candidateHistory: [
+      { candidate: 'FIRST', renderer: 'pass', independentVisual: 'HOLD', reason: 'Three offset numeric labels lacked a visible association to their actual circle-axis intersections.' },
+      { affectedCandidate: 1, renderer: 'fail', renderExit: 2, specValidation: 'pass', reason: 'Three zero-horizontal-offset labels hit circle strokes, score10000 each; failed bytes preserved, no PNG generated.' },
+      { affectedCandidate: 2, mechanism: 'Restore three readable offsets plus explicit modern leaders', specValidation: validation?.status ?? 'NOT_RUN', renderer: report?.status ?? 'NOT_RUN', renderExit: rendererReceipt?.result.returncode ?? null, screenshotStatus: captured?.status ?? 'NOT_RUN' },
+    ],
+    producerEvidence: { validation, rendererReceipt: rendererReceipt?.receipt ?? null, renderStatus: report?.status ?? 'NOT_RUN', collisions: report?.collisions ?? null, displayChecks: report?.displayChecks ?? null, captureReceipt: captureReceipt?.receipt ?? null, closures: captured?.closures ?? null, width640MinTextPx: captured?.captures.find((item) => item.name === 'width640')?.minMeasuredTextPx ?? null },
+    cumulativeAuthorCounters: {
+      ...previous.cumulativeAuthorCounters,
+      contentRepairs: 2, affectedContentCandidates: 2, technicalCandidateRepairs: 1,
+      explicitDraftValidationInvocations: previous.cumulativeAuthorCounters.explicitDraftValidationInvocations + (validation ? 1 : 0),
+      embeddedRendererDraftValidations: previous.cumulativeAuthorCounters.embeddedRendererDraftValidations + (rendererReceipt ? 1 : 0),
+      rendererInvocations: previous.cumulativeAuthorCounters.rendererInvocations + (rendererReceipt ? 1 : 0),
+      successfulRendererInvocations: previous.cumulativeAuthorCounters.successfulRendererInvocations + (report?.status === 'pass' ? 1 : 0),
+      nativeRasterizations: previous.cumulativeAuthorCounters.nativeRasterizations + (nativePng ? 1 : 0),
+      width640Rasterizations: previous.cumulativeAuthorCounters.width640Rasterizations + (width640Preview ? 1 : 0),
+      screenshotCalls: previous.cumulativeAuthorCounters.screenshotCalls + (captured?.screenshotCalls ?? 0),
+      browserLaunches: previous.cumulativeAuthorCounters.browserLaunches + 1 + (rendererReceipt ? 1 : 0) + (captured?.browserLaunches ?? 0),
+      sourcePngViewsCumulative: 1, sourcePngViewsThisContinuation: 0, authorCandidateViews: 0,
+      imagesLoadedIntoAuthorContext: 1, sourceReopens: 0, sourceCrops: 0,
+      knownToolExecutionFailures: 1 + failures.length, paidGenerationCalls: 0,
+    },
+    historicalFailures: { initialBootstrap: first.preservedFailures.originalInventoryPhase, allNonzeroAuthorReceipts: failures, ellipseDiagnosisFailureRetained: bind(`${work}/layout-diagnostic.record`), previousPreservedFailures: first.preservedFailures },
+    cost: 'unknown', previousCosts: [first.cost, previous.cost],
+    repairTransactionCandidatesUsed: 2, furtherCandidateAuthorized: false,
+    noClaimOfFirstTimeRepairPass: true, noFailedCandidatePng: true,
+    originalInventoryUnchanged: true, firstAndAffected1BytesUnchanged: true,
+    newSourceViews: 0, newPngViews: 0, newAnswerAnnotations: 0, newVisibleDots: 0,
+    independentFigureApproval: false, recordReviewRun: false, promoteRun: false,
+    stopReason: complete ? null : 'Second affected candidate production did not complete; retain HOLD and stop without another spec/render attempt.',
+    receipts, authorScript: bind(fileURLToPath(import.meta.url)), captureScript: bind(`${work}/capture-leaders.mjs`),
+  });
+  console.log(JSON.stringify({ ready, complete: Boolean(complete), spec, svg, render, nativePng, width640Preview, independentFigureApproval: false, affectedCandidateNumber: 2, cost: 'unknown' }, null, 2));
+} else {
+  throw new Error('Expected prepare or seal.');
+}

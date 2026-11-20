@@ -1,0 +1,185 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const root = path.join(R, '.tmp/resume182-6-8a-n10-fig22-23-review3695-FIRST');
+assert.equal(process.cwd(), R);
+const sha256 = data => crypto.createHash('sha256').update(data).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const binding = (file, expected) => {
+  const absolute = path.resolve(R, file);
+  const bytes = fs.readFileSync(absolute);
+  const hash = sha256(bytes);
+  if (expected) assert.equal(hash, expected, `Changed input: ${absolute}`);
+  return { path: absolute, sha256: hash, bytes: bytes.length };
+};
+
+// Use the review's selected manifest snapshot, not a later author summary.
+const selected = read(path.join(root, 'receipt-02-selected-manifest/stdout.txt'));
+assert.equal(selected.sha256, '6184137a88412a38b9fee81794ffbd8cb03ce929666952c564c70ffc63fa1358');
+assert.deepEqual(selected.figures.map(f => f.id), ['fig-22', 'fig-23']);
+const visualPath = path.join(root, 'visual-observations.json');
+const visual = read(visualPath);
+assert.equal(visual.status, 'PASS');
+assert.equal(visual.imageViews.length, 4);
+assert.equal(new Set(visual.imageViews.map(v => v.sha256)).size, 4);
+assert.equal(visual.usage.totalViews, 4);
+for (const count of ['reopens', 'crops', 'resizes', 'rerenders']) {
+  assert.equal(visual.usage[count], 0);
+}
+
+const figures = selected.figures.map(f => {
+  assert.equal(f.FIRSTRenderStatus, 'pass');
+  const artifacts = Object.fromEntries(
+    ['sourceImage', 'spec', 'svg', 'render', 'nativePng', 'width640Preview']
+      .map(kind => [kind, binding(f[kind].path, f[kind].sha256)]),
+  );
+  assert.equal(artifacts.nativePng.path, artifacts.width640Preview.path);
+  const png = fs.readFileSync(artifacts.nativePng.path);
+  assert.equal(png.readUInt32BE(16), 640);
+  assert.equal(png.readUInt32BE(20), 640);
+  const render = read(artifacts.render.path);
+  const spec = read(artifacts.spec.path);
+  const reviewPath = path.join(root, `${f.id}.review.json`);
+  const review = read(reviewPath);
+  assert.equal(review.schema, 'ld-s10y-image/review@1');
+  assert.equal(review.status, 'pass');
+  assert.equal(review.figure, f.id);
+  assert.equal(review.source.sha256, artifacts.sourceImage.sha256);
+  assert.equal(review.spec.sha256, artifacts.spec.sha256);
+  assert.equal(review.render.sha256, artifacts.render.sha256);
+  assert.equal(review.outputs.svg.sha256, artifacts.svg.sha256);
+  assert.equal(render.status, 'pass');
+  assert.equal(render.spec.sha256, artifacts.spec.sha256);
+  assert.equal(render.output.svg.sha256, artifacts.svg.sha256);
+  assert.equal(spec.canvas.width, 640);
+  assert.equal(spec.canvas.height, 640);
+  assert.deepEqual(spec.display.widths, [640]);
+  assert.equal(spec.display.purpose, 'instructional');
+  const check = render.displayChecks.find(c => c.width === 640);
+  assert.equal(check.status, 'pass');
+  assert.ok(check.measuredMinPx >= 16);
+  const grid = spec.objects.find(o => o.type === 'grid');
+  const dimensions = spec.assertions.find(a => a.type === 'gridDimensions' && a.grid === grid.id);
+  assert.equal(dimensions.columns, 12);
+  assert.equal(dimensions.rows, 12);
+  assert.equal(grid.xOffset, 0);
+  assert.equal(grid.yOffset, 0);
+  const objectIds = new Set(spec.objects.map(o => o.id));
+  const assertionIds = new Set(spec.assertions.map(a => a.id));
+  for (const group of spec.source.inventory) {
+    assert.ok(group.objects.every(id => objectIds.has(id)));
+    assert.ok(group.assertions.every(id => assertionIds.has(id)));
+  }
+  return {
+    id: f.id,
+    status: 'PASS',
+    source: artifacts.sourceImage,
+    spec: artifacts.spec,
+    svg: artifacts.svg,
+    render: artifacts.render,
+    nativePng: { ...artifacts.nativePng, width: 640, height: 640 },
+    width640Preview: { ...artifacts.width640Preview, sameActualFileAsNativePng: true },
+    officialReview: binding(reviewPath),
+    grid: {
+      columns: 12,
+      rows: 12,
+      bounds: grid.bounds,
+      steps: [grid.xStep, grid.yStep],
+      phase: [grid.xOffset, grid.yOffset],
+      gridDimensionsAssertion: dimensions.id,
+      inventoryReferencesResolved: true,
+      sourceRelationshipsReviewed: true,
+      objectCountUsedAsSubstitute: false,
+    },
+    actualDisplay: { width: 640, measuredMinTextPx: check.measuredMinPx, requiredMinTextPx: 16 },
+    views: { source: 1, nativeEquals640: 1, total: 2, reopens: 0 },
+    findings: [],
+  };
+});
+
+const contextRoot = path.join(R, '.tmp/resume182-6-8a-n10-figure-context3695-FIRST');
+const lessonRoot = path.join(contextRoot, 'artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10');
+const contexts = [
+  binding(path.join(contextRoot, 'fig-22.context.json'), 'eacd768b85cc310636f7c25f2b60da3d7b7fb12b22fce6ee7f5a4ad458dc7880'),
+  binding(path.join(contextRoot, 'fig-23.context.json'), '51482893213e8104d7b505999f2cc8d2ad50cf6021b4d4d3683cc42d866bb3c2'),
+];
+const modernFiles = [
+  binding(path.join(lessonRoot, 'lesson.json'), 'd13354560d681bb189cd3ed1310e1abebdde6bf5b517bf0cf981405090a8d676'),
+  binding(path.join(lessonRoot, 'exercises.json'), '54e9be6f97a199515ca25e0b1c33ea4235558c660e184cad45bab8da4a8f4ef2'),
+  binding(path.join(lessonRoot, 'figures.json'), 'a355a02d9450426f4097999d02db4de8140d8b3a1e29d310f8ebba16eab8274f'),
+];
+const record = {
+  schema: 'resume182-6/independent-figure-review-ready@1',
+  status: 'PASS',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  reviewRole: 'first independent non-author reviewer',
+  root,
+  recordedAt: new Date().toISOString(),
+  scope: ['fig-22', 'fig-23'],
+  excludedFigureAssetsReadOrViewed: 0,
+  inheritedTextPass: {
+    ...binding(path.join(R, '.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record'), '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7'),
+    status: 'TEXT_PASS',
+    rerun: false,
+  },
+  authorRenderReadySnapshot: {
+    path: path.resolve(R, selected.path),
+    sha256: selected.sha256,
+    selectedExtraction: binding(path.join(root, 'receipt-02-selected-manifest/stdout.txt')),
+    selectedFigureStatuses: ['pass', 'pass'],
+    packageStatusUsedAsFigureVerdict: false,
+  },
+  contexts,
+  modernFiles,
+  figures,
+  observations: {
+    source: binding(path.join(root, 'source-observations.json')),
+    visual: binding(visualPath),
+  },
+  usage: {
+    ...visual.usage,
+    officialRecordReviewCalls: 2,
+    officialRecordReviewInternalRenderedChecks: 2,
+    rendererCalls: 0,
+    generatedImages: 0,
+    sourcePageViews: 0,
+    answersOrChoicesRead: 0,
+    oldPassFilesRead: 0,
+    authorSummaryOrSourceGridRead: 0,
+    inheritedAuthorCostsAndCounts: 'unknown',
+    totalMonetaryCost: 'unknown',
+    countsResetOnRecovery: false,
+  },
+  failures: {
+    content: 0,
+    officialReview: 0,
+    technicalExecution: 1,
+    technicalFault: binding(path.join(root, 'execution-fault.json')),
+    historicalAuthorAssertionRepairCountedAsNewFailure: false,
+    findings: [],
+  },
+  boundaries: {
+    writesOnlyUnderReviewRoot: true,
+    authorFilesModified: false,
+    explicitValidateSpecRerun: false,
+    captureOpened: false,
+    sourceMathTextOldPassReruns: 0,
+    databasePlaneGitMergeDeployOrChatWorktreeManagement: false,
+    authorization: 'Offline figure review only; not promotion or deployment.',
+  },
+};
+const output = path.join(root, 'ready.record');
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  status: record.status,
+  ready: binding(output),
+  reviews: figures.map(f => ({ id: f.id, ...f.officialReview })),
+  images: record.usage.totalViews,
+  contentFailures: record.failures.content,
+  technicalExecutionFailures: record.failures.technicalExecution,
+}, null, 2));

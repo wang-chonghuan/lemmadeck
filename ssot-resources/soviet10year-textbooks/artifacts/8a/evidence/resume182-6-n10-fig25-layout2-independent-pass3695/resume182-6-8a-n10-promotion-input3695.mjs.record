@@ -1,0 +1,78 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const checked = ref => {
+  assert.ok(path.resolve(ref.path).startsWith(`${R}/`));
+  assert.equal(bind(ref.path).sha256, ref.sha256, ref.path);
+  return JSON.parse(fs.readFileSync(ref.path, 'utf8'));
+};
+const ready22 = {
+  path: `${R}/.tmp/resume182-6-8a-n10-fig22-23-review3695-FIRST/ready.record`,
+  sha256: '617ad32a07243553e65b7a0abf5edcf6dbb9a917c18188d14b8fd078e8b42bd1',
+};
+const ready24 = {
+  path: `${R}/.tmp/resume182-6-8a-n10-fig24-review3695-FIRST/ready.record`,
+  sha256: '5df79dd5b166d7c8ddf218c7356a3ffda048ec7fc530642f6dcf220de8a10e41',
+};
+const ready25 = { path: reviewPath, sha256: reviewHash };
+const reviews = [ready22, ready24, ready25].map(checked);
+for (const review of reviews) {
+  assert.equal(review.status, 'PASS');
+  assert.equal(review.book, '8a');
+  assert.equal(review.lesson, 'alg8-c2-s2-n10');
+  assert.equal(review.edition, 'modern-us-neutral');
+}
+const authorReady = {
+  'fig-22': bind(`${R}/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/render-ready-fig22-23.record`),
+  'fig-23': bind(`${R}/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/render-ready-fig22-23.record`),
+  'fig-24': bind(`${R}/.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST/fig-24-AFFECTED-label1-FIRST/render-ready.record`),
+  'fig-25': {
+    path: `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST/AFFECTED-numeric-labels1/technical-layout2/render-ready.record`,
+    sha256: 'e568114ed1bfdda3a603e0093ccbb14ed9780ca86190d6115b060ea8e2f8ab8b',
+  },
+};
+assert.equal(authorReady['fig-22'].sha256,
+  '1b877ea717ab57a27677dd7e43289bcd927a28501ff56b676f0a58550a06cf3d');
+assert.equal(authorReady['fig-24'].sha256,
+  '5cce7a33be5f62f3ec196c7ea65a1440937a66c8ab814e2bafd9619a7bc6e93e');
+const figures = reviews.flatMap(review => review.figures).map(item => {
+  assert.equal(item.status, 'PASS');
+  const figure = {
+    id: item.id, spec: item.spec, svg: item.svg, render: item.render,
+    nativePng: item.nativePng, review: item.officialReview,
+    authorReady: authorReady[item.id],
+  };
+  for (const field of ['spec', 'render', 'review', 'authorReady']) checked(figure[field]);
+  for (const field of ['svg', 'nativePng']) {
+    assert.equal(bind(figure[field].path).sha256, figure[field].sha256);
+  }
+  return figure;
+});
+assert.deepEqual(figures.map(item => item.id).sort(), ['fig-22', 'fig-23', 'fig-24', 'fig-25']);
+const value = {
+  status: 'APPROVED_N10_PROMOTION_INPUT', book: '8a', lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral', root: R,
+  textAuthor: {
+    path: `${R}/.tmp/resume182-6-8a-n10-text-author3695-FIRST/ready.record`,
+    sha256: '712d3be9ccb88f726812e38e66fec00afbcfbc9b672665604c1c156d1325846c',
+  },
+  textReview: {
+    path: `${R}/.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record`,
+    sha256: '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7',
+  },
+  independentFigureReviews: [ready22, ready24, ready25], figures,
+  noNewImageOrRendererCalls: true, unknownHistoricalBytesRecovered: false,
+  cost: 'unknown', finish: 'review', DBWrites: 0,
+};
+checked(value.textAuthor);
+checked(value.textReview);
+const output = `${R}/.tmp/resume182-6-8a-n10-promotion-input3695-FIRST.record`;
+fs.writeFileSync(output, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(output)));

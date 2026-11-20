@@ -1,0 +1,300 @@
+#!/usr/bin/env python3
+"""Validate an ld-s10y-image FigureSpec and its mathematical assertions."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import re
+from pathlib import Path
+from typing import Any
+
+
+SCHEMA = "ld-s10y-image/figure-spec@2"
+LEGACY_SCHEMA = "ld-s10y-image/figure-spec@1"
+NON_ENGLISH = re.compile(
+    r"[\u0400-\u04ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]"
+)
+CENTRAL_SYMMETRY = re.compile(
+    r"中心对称|对称中心|central symmetry|centrally symmetric|half-turn|"
+    r"180(?:°| degrees?)",
+    re.IGNORECASE,
+)
+GEOMETRY_TYPES = {
+    "point", "segment", "line", "arrow", "circle", "polygon", "arc",
+    "grid", "axis", "measure", "svgPath",
+}
+SUPPORTED_TYPES = GEOMETRY_TYPES | {"text", "image"}
+COLOR_ROLES = {"ink", "muted", "accent", "accentSoft", "grid", "paper"}
+
+
+def load(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise SystemExit(f"ERROR: missing spec: {path}")
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: invalid JSON {path}: {error}")
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def finite_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(value)
+    )
+
+
+def coordinate(value: Any) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) == 2
+        and all(finite_number(item) for item in value)
+    )
+
+
+def point_map(objects: list[dict]) -> dict[str, tuple[float, float]]:
+    points = {}
+    for item in objects:
+        if item.get("type") == "point" and coordinate(item.get("at")):
+            points[item["id"]] = tuple(item["at"])
+    return points
+
+
+def assertion_point_ids(
+    assertion: dict,
+    point_ids: set[str],
+) -> set[str]:
+    kind = assertion.get("type")
+    fields = {
+        "distance": ("a", "b"),
+        "equalDistance": ("a", "b", "c", "d"),
+        "collinear": ("a", "b", "c"),
+        "parallel": ("a", "b", "c", "d"),
+        "perpendicular": ("a", "b", "c", "d"),
+        "pointOnLine": ("point", "a", "b"),
+        "pointOnCircle": ("point", "center"),
+        "connects": ("from", "to"),
+        "displacement": ("from", "to"),
+    }.get(kind, ())
+    values = [assertion.get(field) for field in fields]
+    if kind == "centralSymmetry":
+        values.append(assertion.get("center"))
+        for pair in assertion.get("pairs", []):
+            if isinstance(pair, dict):
+                values.extend((pair.get("a"), pair.get("b")))
+    return {
+        value
+        for value in values
+        if isinstance(value, str) and value in point_ids
+    }
+
+
+def resolve_point(
+    value: Any,
+    points: dict[str, tuple[float, float]],
+    label: str,
+    errors: list[str],
+) -> tuple[float, float] | None:
+    if coordinate(value):
+        return float(value[0]), float(value[1])
+    if isinstance(value, str) and value in points:
+        return points[value]
+    errors.append(f"{label}: expected coordinate or point id")
+    return None
+
+
+def resolve_position(
+    value: Any,
+    objects_by_id: dict[str, dict],
+    points: dict[str, tuple[float, float]],
+    label: str,
+    errors: list[str],
+) -> tuple[float, float] | None:
+    if isinstance(value, str):
+        obj = objects_by_id.get(value)
+        if isinstance(obj, dict) and obj.get("type") in {"point", "text"}:
+            at = obj.get("at")
+            if coordinate(at):
+                return float(at[0]), float(at[1])
+    return resolve_point(value, points, label, errors)
+
+
+def distance(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+def vector(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
+    return b[0] - a[0], b[1] - a[1]
+
+
+def cross(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return a[0] * b[1] - a[1] * b[0]
+
+
+def dot(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return a[0] * b[0] + a[1] * b[1]
+
+
+def point_to_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    segment = vector(start, end)
+    length_squared = dot(segment, segment)
+    if length_squared == 0:
+        return distance(point, start)
+    offset = vector(start, point)
+    position = max(0.0, min(1.0, dot(offset, segment) / length_squared))
+    projection = (
+        start[0] + segment[0] * position,
+        start[1] + segment[1] * position,
+    )
+    return distance(point, projection)
+
+
+def point_in_polygon(
+    point: tuple[float, float],
+    polygon: list[tuple[float, float]],
+) -> bool:
+    inside = False
+    previous = polygon[-1]
+    for current in polygon:
+        crosses = (current[1] > point[1]) != (previous[1] > point[1])
+        if crosses:
+            edge_x = (
+                (previous[0] - current[0])
+                * (point[1] - current[1])
+                / (previous[1] - current[1])
+                + current[0]
+            )
+            if point[0] < edge_x:
+                inside = not inside
+        previous = current
+    return inside
+
+
+def relation_membership_errors(
+    spec: dict,
+    objects: list[dict],
+    points: dict[str, tuple[float, float]],
+    assertions: list[dict],
+    current: bool,
+) -> list[str]:
+    if not current:
+        return []
+
+    set_polygons = {
+        item.get("id"): item
+        for item in objects
+        if isinstance(item, dict)
+        and item.get("type") == "polygon"
+        and isinstance(item.get("id"), str)
+        and item["id"].endswith("-set")
+    }
+    connects = [
+        item
+        for item in assertions
+        if isinstance(item, dict) and item.get("type") == "connects"
+    ]
+    if len(set_polygons) < 2 or not connects:
+        return []
+
+    objects_by_id = {
+        item.get("id"): item
+        for item in objects
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    memberships: dict[str, list[dict]] = {}
+    for assertion in assertions:
+        if not isinstance(assertion, dict) or assertion.get("type") != "inside":
+            continue
+        member_id = assertion.get("point")
+        if isinstance(member_id, str):
+            memberships.setdefault(member_id, []).append(assertion)
+
+    members = {
+        item["id"]: next(
+            (
+                container_id
+                for container_id in set_polygons
+                if re.fullmatch(
+                    rf"{re.escape(container_id[:-4])}-\d+(?:-label)?",
+                    item["id"],
+                )
+            ),
+            None,
+        )
+        for item in objects
+        if isinstance(item, dict)
+        and item.get("visible") is not False
+        and isinstance(item.get("id"), str)
+        and (
+            item.get("type") == "point"
+            or (
+                item.get("type") == "text"
+                and item["id"].endswith("-label")
+            )
+        )
+    }
+    members = {
+        member_id: container_id
+        for member_id, container_id in members.items()
+        if container_id is not None
+    }
+    errors = []
+    canvas_width = spec.get("canvas", {}).get("width")
+    bounding_box = spec.get("canvas", {}).get("boundingBox")
+    widths = spec.get("display", {}).get("widths")
+    user_width = (
+        bounding_box[2] - bounding_box[0]
+        if isinstance(bounding_box, list)
+        and len(bounding_box) == 4
+        and all(finite_number(value) for value in bounding_box)
+        else None
+    )
+    user_units_per_canvas_px = (
+        user_width / canvas_width
+        if finite_number(user_width)
+        and finite_number(canvas_width)
+        and canvas_width > 0
+        else 1.0
+    )
+    user_units_per_product_px = (
+        user_width / min(widths)
+        if finite_number(user_width)
+        and isinstance(widths, list)
+        and widths
+        and all(finite_number(width) and width > 0 for width in widths)
+        else user_units_per_canvas_px
+    )
+
+    for member_id, expected_container in sorted(members.items()):
+        member_assertions = [
+            assertion
+            for assertion in memberships.get(member_id, [])
+            if assertion.get("container") == expected_container
+        ]
+        if not member_assertions:
+            errors.append(
+                "set-relation figure requires an inside assertion for "
+                f"member {member_id!r} in {expected_container!r}"
+            )
+            continue
+
+        member = objects_by_id[member_id]
+        position = resolve_position(
+            member_id,
+            objects_by_id,
+            points,

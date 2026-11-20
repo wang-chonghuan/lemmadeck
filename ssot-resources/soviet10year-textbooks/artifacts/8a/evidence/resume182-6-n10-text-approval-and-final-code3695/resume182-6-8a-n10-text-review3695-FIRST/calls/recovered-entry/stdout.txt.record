@@ -1,0 +1,1484 @@
+.tmp/resume182-6-run3695.mjs:1:import fs from 'node:fs';
+.tmp/resume182-6-run3695.mjs:2:import assert from 'node:assert/strict';
+.tmp/resume182-6-run3695.mjs:3:import { spawnSync } from 'node:child_process';
+.tmp/resume182-6-run3695.mjs:4:
+.tmp/resume182-6-run3695.mjs:5:const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+.tmp/resume182-6-run3695.mjs:6:assert.equal(process.cwd(), repo);
+.tmp/resume182-6-run3695.mjs:7:const [directory, ...command] = process.argv.slice(2);
+.tmp/resume182-6-run3695.mjs:8:assert.ok(directory.startsWith('.tmp/resume182-6-'));
+.tmp/resume182-6-run3695.mjs:9:assert.ok(command.length);
+.tmp/resume182-6-run3695.mjs:10:fs.mkdirSync(directory, { recursive: true });
+.tmp/resume182-6-run3695.mjs:11:const started = new Date().toISOString();
+.tmp/resume182-6-run3695.mjs:12:fs.writeFileSync(`${directory}/start.record`,
+.tmp/resume182-6-run3695.mjs:13:  `${JSON.stringify({ command, cwd: repo, started }, null, 2)}\n`, { flag: 'wx' });
+.tmp/resume182-6-run3695.mjs:14:const result = spawnSync(command[0], command.slice(1), {
+.tmp/resume182-6-run3695.mjs:15:  cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+.tmp/resume182-6-run3695.mjs:16:});
+.tmp/resume182-6-run3695.mjs:17:for (const stream of ['stdout', 'stderr']) {
+.tmp/resume182-6-run3695.mjs:18:  fs.writeFileSync(`${directory}/${stream}.txt`, result[stream] ?? '', { flag: 'wx' });
+.tmp/resume182-6-run3695.mjs:19:}
+.tmp/resume182-6-run3695.mjs:20:fs.writeFileSync(`${directory}/receipt.record`, `${JSON.stringify({
+.tmp/resume182-6-run3695.mjs:21:  command, cwd: repo, started, finished: new Date().toISOString(),
+.tmp/resume182-6-run3695.mjs:22:  returncode: result.status, signal: result.signal, error: result.error?.message ?? null,
+.tmp/resume182-6-run3695.mjs:23:}, null, 2)}\n`, { flag: 'wx' });
+.tmp/resume182-6-run3695.mjs:24:process.stdout.write(result.stdout ?? '');
+.tmp/resume182-6-run3695.mjs:25:process.stderr.write(result.stderr ?? '');
+.tmp/resume182-6-run3695.mjs:26:process.exit(result.status ?? 1);
+.claude/skills/ld-s10y-lesson/references/production-resume.md:1:# Small-batch production and recovery
+.claude/skills/ld-s10y-lesson/references/production-resume.md:2:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:3:Use the active ticket's authorization, not the skill's usual publish default.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:4:An offline repair or a paused production assignment does not authorize DB writes,
+.claude/skills/ld-s10y-lesson/references/production-resume.md:5:deployment or starting other workers.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:6:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:7:## Continue from facts
+.claude/skills/ld-s10y-lesson/references/production-resume.md:8:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:9:- Before continuing, read the latest direct human instruction and the existing
+.claude/skills/ld-s10y-lesson/references/production-resume.md:10:  checkpoint. A direct pause stays effective until a later direct human resume
+.claude/skills/ld-s10y-lesson/references/production-resume.md:11:  for that scope; old resume messages, heartbeats and completion of a repair do
+.claude/skills/ld-s10y-lesson/references/production-resume.md:12:  not lift it.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:13:- Collect already completed child results before dispatching replacements.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:14:  Bind the returned paths to the actual files and reuse passed stages. A
+.claude/skills/ld-s10y-lesson/references/production-resume.md:15:  checkpoint, batch report or context compression is not a completion condition.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:16:  When batch delivery and further production are authorized, commit/push the
+.claude/skills/ld-s10y-lesson/references/production-resume.md:17:  completed small batch (normally about four lessons), then continue within that
+.claude/skills/ld-s10y-lesson/references/production-resume.md:18:  scope. An offline four-lesson experiment does not authorize a fifth lesson.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:19:- Distinguish tool execution failure, content review failure, missing/ambiguous
+.claude/skills/ld-s10y-lesson/references/production-resume.md:20:  source, and human approval. A bad cwd, missing output directory, read-only
+.claude/skills/ld-s10y-lesson/references/production-resume.md:21:  working file or output-parser error is not a scientific verdict or a permanent
+.claude/skills/ld-s10y-lesson/references/production-resume.md:22:  prohibition on that content.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:23:- Preserve the failed call and any valid output. Correct the identified technical
+.claude/skills/ld-s10y-lesson/references/production-resume.md:24:  cause and continue only the failed stage; do not redo passed authors/reviews or
+.claude/skills/ld-s10y-lesson/references/production-resume.md:25:  count recovery as approval. Content changes still need affected-only review.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:26:  Real content-revision, image and paid-call usage is never reset.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:27:- Read a checkpoint's HOLD reason to identify the held phase. A technical repair
+.claude/skills/ld-s10y-lesson/references/production-resume.md:28:  corrects its execution diagnosis, not a separate content or approval HOLD.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:29:- Stop dependent stages at their first failure. Independent completed work remains
+.claude/skills/ld-s10y-lesson/references/production-resume.md:30:  usable; a local gap does not block unrelated authorized lessons.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:31:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:32:## Existing tool contracts
+.claude/skills/ld-s10y-lesson/references/production-resume.md:33:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:34:Commands run from the exact active checkout root. Book identity is explicit;
+.claude/skills/ld-s10y-lesson/references/production-resume.md:35:neither the environment nor another book supplies a default.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:36:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:37:```bash
+.claude/skills/ld-s10y-lesson/references/production-resume.md:38:P=.claude/skills/ld-s10y-lesson/.venv/bin/python
+.claude/skills/ld-s10y-lesson/references/production-resume.md:39:$P .claude/skills/ld-s10y-lesson/tools/production.py prepare-range \
+.claude/skills/ld-s10y-lesson/references/production-resume.md:40:  --repo . --book <book> --first <physical-page> --last <physical-page> \
+.claude/skills/ld-s10y-lesson/references/production-resume.md:41:  --work .tmp/ld-s10y-lesson
+.claude/skills/ld-s10y-lesson/references/production-resume.md:42:$P .claude/skills/ld-s10y-lesson/tools/production.py read-json \
+.claude/skills/ld-s10y-lesson/references/production-resume.md:43:  --input <saved-stdout>
+.claude/skills/ld-s10y-lesson/references/production-resume.md:44:$P .claude/skills/ld-s10y-lesson/tools/retain_choices.py \
+.claude/skills/ld-s10y-lesson/references/production-resume.md:45:  --repo . --book <book> --lesson <card-id> --source <approved-choice-directory>
+.claude/skills/ld-s10y-lesson/references/production-resume.md:46:```
+.claude/skills/ld-s10y-lesson/references/production-resume.md:47:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:48:Range preparation reuses complete prepared pages and stops before the next page
+.claude/skills/ld-s10y-lesson/references/production-resume.md:49:when a command fails. It is preparation only, never source/content approval.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:50:Use the returned machine result for control; human logs are not one JSON document.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:51:For historical mixed stdout, read all complete top-level documents without
+.claude/skills/ld-s10y-lesson/references/production-resume.md:52:rerunning the successful producer. Do not turn candidate presence into approval.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:53:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:54:Choice retention verifies the existing choice checker against the current lesson,
+.claude/skills/ld-s10y-lesson/references/production-resume.md:55:its projection and assets. It refuses a wrong owner or a different existing
+.claude/skills/ld-s10y-lesson/references/production-resume.md:56:target; exact outputs can be reused. The seed's original index trace stays
+.claude/skills/ld-s10y-lesson/references/production-resume.md:57:historical: adding unrelated lessons to the book index does not invalidate
+.claude/skills/ld-s10y-lesson/references/production-resume.md:58:unchanged reviewed question content. Changed lesson files or assets still fail.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:59:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:60:Immutable evidence and editable outputs are different files. Keep the original
+.claude/skills/ld-s10y-lesson/references/production-resume.md:61:approved snapshots read-only; make a writable working copy. Modern finalization
+.claude/skills/ld-s10y-lesson/references/production-resume.md:62:replaces its output files, not the evidence snapshot or its permissions.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:63:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:64:When importing already approved raw lessons into a repair checkout, `p2c.py
+.claude/skills/ld-s10y-lesson/references/production-resume.md:65:reindex --book <book> --toc <toc.json>` derives the index from retained lesson
+.claude/skills/ld-s10y-lesson/references/production-resume.md:66:files without rewriting them. It is not a substitute for assembling or reviewing
+.claude/skills/ld-s10y-lesson/references/production-resume.md:67:new/incomplete source.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:68:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:69:## Evidence without duplicate packages
+.claude/skills/ld-s10y-lesson/references/production-resume.md:70:
+.claude/skills/ld-s10y-lesson/references/production-resume.md:71:Reference the existing source/PDF/runtime path, Git revision and file hash.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:72:Keep the first failure receipt and changed candidate snapshot once. Do not copy
+.claude/skills/ld-s10y-lesson/references/production-resume.md:73:Node, Python, whole PDFs or a whole earlier evidence package into each new batch.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:74:Only a genuinely required changed input or output needs new bytes.
+.claude/skills/ld-s10y-lesson/references/production-resume.md:75:Follow the image skill's bounded contexts; return text and evidence paths/hashes,
+.claude/skills/ld-s10y-lesson/references/production-resume.md:76:not image-bearing history. Verify a completed batch once, then only affected
+.claude/skills/ld-s10y-lesson/references/production-resume.md:77:changes after a real defect.
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:1:# Edition Text Contract
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:2:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:3:## Section Boundaries
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:4:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:5:`section_breaks` is authored as adjacent final-paragraph anchors:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:6:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:7:```json
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:8:{
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:9:  "section_breaks": [
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:10:    {
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:11:      "before": "同组例式的最后一个实际段落",
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:12:      "after": "下一个概念的第一个实际段落"
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:13:    }
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:14:  ]
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:15:}
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:16:```
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:17:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:18:Run `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.json>` and copy the
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:19:reported boundary object. The command, validator, offline renderer, and publisher all use
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:20:`htmlfrag.js` `proseParagraphs`/`proseFlow`. Do not count prose blocks or blank lines independently.
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:21:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:22:## Source-Bound Errata
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:23:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:24:A confirmed mathematical printing error remains unchanged in the faithful page block and is recorded
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:25:in that page's frontmatter:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:26:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:27:```json
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:28:{
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:29:  "errata": [
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:30:    {
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:31:      "id": "p0013-math-1",
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:32:      "block": "p0013#7",
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:33:      "original": "$a+b+c$",
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:34:      "reason": "The printed relation fails the stated substitution check."
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:35:    }
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:36:  ]
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:37:}
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:38:```
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:39:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:40:`finalize` verifies that the block exists and contains `original`. `assemble` preserves the source
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:41:block reference. `adapt-prepare` then creates the lesson-level record with the physical/printed page,
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:42:page JSON SHA-256, PDF SHA-256, target, original expression, and an empty `corrected` field.
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:43:`adapt-prepare`, `adapt-finalize`, and publication revalidation reconstruct the authoritative target
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:44:bindings from the page stream using the lesson identity and assembly rules. Missing legacy
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:45:`source_refs`/`pages` are recovered from that result; populated references must match it exactly or
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:46:validation fails and instructs the author to rerun `assemble`. Only an erratum absent from the
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:47:authoritative lesson binding is unrelated. Ambiguous reconstruction, incorrect populated references,
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:48:or an `original` that no longer appears exactly once in its authoritative raw lesson/exercise target
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:49:fails rather than silently dropping the registered erratum.
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:50:
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:51:The edition author fills only `corrected`, updates the target text, and adds `math-correction` to that
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:52:target's `changes`. `adapt-finalize` rejects a missing record, wrong page or block, stale page hash,
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:53:original mismatch, unchanged propagation, or any formula change not reproduced by the registered
+.claude/skills/ld-s10y-lesson/references/edition-text-contract.md:54:replacement.
+.intentfold/readme.md:1:# .intentfold
+.intentfold/readme.md:2:
+.intentfold/readme.md:3:Read this first in every session. It is the single entry to project intent and ticket workflow.
+.intentfold/readme.md:4:
+.intentfold/readme.md:5:*Machine-owned: IntentFold cap1 refreshes this file. The four files in `charter/` are human-owned;
+.intentfold/readme.md:6:do not edit them unless the human explicitly asks for a Charter change.*
+.intentfold/readme.md:7:
+.intentfold/readme.md:8:## Start here
+.intentfold/readme.md:9:
+.intentfold/readme.md:10:1. Read `.intentfold/project.json` for the project, main branch, ticket backend, deploy target, and
+.intentfold/readme.md:11:   service ports.
+.intentfold/readme.md:12:2. Read `charter/product.md` to understand what the product is, who it serves, and what it must not
+.intentfold/readme.md:13:   become.
+.intentfold/readme.md:14:3. Read `charter/engineering.md` before changing code or structure.
+.intentfold/readme.md:15:4. Read `charter/ui.md` when the work touches a user interface.
+.intentfold/readme.md:16:5. Read `charter/operations.md` when running, testing, querying, migrating, deploying, or operating
+.intentfold/readme.md:17:   the product.
+.intentfold/readme.md:18:6. Read the live ticket from the backend named by `project.json`, then its local artifacts under
+.intentfold/readme.md:19:   `tickets/<ticket-id>/`.
+.intentfold/readme.md:20:
+.intentfold/readme.md:21:The Charter has exactly four files:
+.intentfold/readme.md:22:
+.intentfold/readme.md:23:| File | Owns |
+.intentfold/readme.md:24:|---|---|
+.intentfold/readme.md:25:| `product.md` | product purpose, users, value, and non-goals |
+.intentfold/readme.md:26:| `engineering.md` | architecture, development rules, checks, dependencies, and landing |
+.intentfold/readme.md:27:| `ui.md` | design system and interface constraints |
+.intentfold/readme.md:28:| `operations.md` | local runtime, acceptance evidence, deployment, and operations |
+.intentfold/readme.md:29:
+.intentfold/readme.md:30:Requirements live in the ticket backend, not in a local `req.md`. Use the **n-plane** or
+.intentfold/readme.md:31:**n-linear** skill selected by `project.json`. Linear ticket text is English; Plane ticket text is
+.intentfold/readme.md:32:Chinese unless the human asks otherwise.
+.intentfold/readme.md:33:
+.intentfold/readme.md:34:## Charter format
+.intentfold/readme.md:35:
+.intentfold/readme.md:36:Every Charter file has these four headings, in this order, even when a section is empty:
+.intentfold/readme.md:37:
+.intentfold/readme.md:38:```markdown
+.intentfold/readme.md:39:## Contract
+.intentfold/readme.md:40:## Tools
+.intentfold/readme.md:41:## Guidance
+.intentfold/readme.md:42:## Redlines
+.intentfold/readme.md:43:```
+.intentfold/readme.md:44:
+.intentfold/readme.md:45:They are different kinds of information:
+.intentfold/readme.md:46:
+.intentfold/readme.md:47:| Section | States | How it is used |
+.intentfold/readme.md:48:|---|---|---|
+.intentfold/readme.md:49:| `Contract` | what the artifact is | referenced while authoring |
+.intentfold/readme.md:50:| `Tools` | commands, paths, ports, URLs, viewports | looked up at the moment of acting and run as written |
+.intentfold/readme.md:51:| `Guidance` | how to approach the work | followed while writing |
+.intentfold/readme.md:52:| `Redlines` | forbidden or approval-required actions | looked up before acting; never judged away |
+.intentfold/readme.md:53:
+.intentfold/readme.md:54:Use these tests when writing:
+.intentfold/readme.md:55:
+.intentfold/readme.md:56:1. **Contract or Guidance:** does the line describe the artifact, or the act of changing it?
+.intentfold/readme.md:57:2. **Guidance or Redline:** can compliance be decided from a path, token, command, or structural
+.intentfold/readme.md:58:   fact without reading and interpreting the implementation? If not, it is Guidance.
+.intentfold/readme.md:59:3. **Tools:** could the concrete value go stale? Commands, paths, ports, URLs, and viewports belong
+.intentfold/readme.md:60:   here once; other files point here rather than copy them.
+.intentfold/readme.md:61:4. **Derive, do not enumerate:** a check derives targets from the product, manifest, sitemap, schema,
+.intentfold/readme.md:62:   or registry and fails when derivation returns nothing. It does not preserve a second hand-written
+.intentfold/readme.md:63:   list of routes, fields, or fixtures.
+.intentfold/readme.md:64:
+.intentfold/readme.md:65:Redlines live in the file whose subject they govern. There is no separate redline file. Each entry
+.intentfold/readme.md:66:says either **forbidden outright** or **not without the human's explicit approval**.
+.intentfold/readme.md:67:
+.intentfold/readme.md:68:Write only what the code, configuration, schema, design system, or a command cannot answer more
+.intentfold/readme.md:69:reliably. Prefer making a rule mechanical in `Tools` over emphasizing it in prose.
+.intentfold/readme.md:70:
+.intentfold/readme.md:71:## Ticket artifacts
+.intentfold/readme.md:72:
+.intentfold/readme.md:73:`tickets/<ticket-id>/` may contain:
+.intentfold/readme.md:74:
+.intentfold/readme.md:75:- `ticket.json` — mode, stage, finish, checkout, branch, base, and ports;
+.intentfold/readme.md:76:- optional `draft.md`, `plan.md`, `ac.md`, and `grill.md`;
+.intentfold/readme.md:77:- `handoff.md`, plus `intentfold-usage.json` when configured;
+.intentfold/readme.md:78:- `rework.md` when the delivered branch changed after the first handoff;
+.intentfold/readme.md:79:- `tmp/` for uncommitted evidence.
+.intentfold/readme.md:80:
+.intentfold/readme.md:81:The ticket backend decides whether work is live or Done. `handoff.md` freezes at first delivery;
+.intentfold/readme.md:82:read it together with `rework.md`.
+.intentfold/readme.md:83:
+.intentfold/readme.md:84:Project scratch lives in `.intentfold/tmp/`. Scratch and environment files are not committed.
+.intentfold/readme.md:85:
+.intentfold/readme.md:86:## Workflow
+.intentfold/readme.md:87:
+.intentfold/readme.md:88:Use the **intentfold** skill:
+.intentfold/readme.md:89:
+.intentfold/readme.md:90:- cap1 initializes this harness;
+.intentfold/readme.md:91:- cap2 files one ticket;
+.intentfold/readme.md:92:- cap3 develops one ticket autonomously;
+.intentfold/readme.md:93:- cap3setup prepares an open development phase;
+.intentfold/readme.md:94:- cap3handoff verifies and records completed development;
+.intentfold/readme.md:95:- cap4 merges and closes a verified ticket.
+.intentfold/readme.md:96:
+.intentfold/readme.md:97:No product change without a ticket.
+.claude/skills/ld-s10y-lesson/SKILL.md:1:---
+.claude/skills/ld-s10y-lesson/SKILL.md:2:name: ld-s10y-lesson
+.claude/skills/ld-s10y-lesson/SKILL.md:3:description: 按书名、章、节、连续编号单元、无编号补充习题或页码，把纯扫描的教材 PDF 抽成课程卡片——每张卡片一份完整课文 + 一组独立编号的题；原始图忠实抽取，现代 edition 图委托项目技能 ld-s10y-image 生成。正文图留正文，共享练习图只展示一次。用于无文字层的老教材数字化。
+.claude/skills/ld-s10y-lesson/SKILL.md:4:---
+.claude/skills/ld-s10y-lesson/SKILL.md:5:
+.claude/skills/ld-s10y-lesson/SKILL.md:6:# ld-s10y-lesson
+.claude/skills/ld-s10y-lesson/SKILL.md:7:
+.claude/skills/ld-s10y-lesson/SKILL.md:8:**扫描教材 PDF → 按单元成课、按题成件。**
+.claude/skills/ld-s10y-lesson/SKILL.md:9:
+.claude/skills/ld-s10y-lesson/SKILL.md:10:适用判据：`pdffonts book.pdf` 无嵌入字体、`pdftotext` 提取 0 字符 → 该书没有文字层，
+.claude/skills/ld-s10y-lesson/SKILL.md:11:所有"抽取文字层"的工具都会输出空白，必须走视觉转写。
+.claude/skills/ld-s10y-lesson/SKILL.md:12:
+.claude/skills/ld-s10y-lesson/SKILL.md:13:开始读源页、图稿或验收截图前，遵守
+.claude/skills/ld-s10y-lesson/SKILL.md:14:[图片批次规则](../../../.agents/skills/ld-s10y-image/SKILL.md#image-batches)；
+.claude/skills/ld-s10y-lesson/SKILL.md:15:本流程及其子代理共用该规则，完成一批并返回文字结果后再处理新批次。
+.claude/skills/ld-s10y-lesson/SKILL.md:16:
+.claude/skills/ld-s10y-lesson/SKILL.md:17:批量生产、接续检查点或处理执行故障时，先读
+.claude/skills/ld-s10y-lesson/SKILL.md:18:[小批次与技术恢复](references/production-resume.md)。
+.claude/skills/ld-s10y-lesson/SKILL.md:19:调用方的暂停及离线授权优先于下文的默认发布流程。
+.claude/skills/ld-s10y-lesson/SKILL.md:20:
+.claude/skills/ld-s10y-lesson/SKILL.md:21:## 用户入口与术语
+.claude/skills/ld-s10y-lesson/SKILL.md:22:
+.claude/skills/ld-s10y-lesson/SKILL.md:23:- **卡片**是最小可发布内容项：有编号 `topics[]` 时父节只作结构；`topics[]` 全部无编号时，
+.claude/skills/ld-s10y-lesson/SKILL.md:24:  父节本身是主课卡，子项是随后排列的补充阅读卡。`kind: "exercises"` 的无编号补充习题或
+.claude/skills/ld-s10y-lesson/SKILL.md:25:  难题也是卡片。编号单元的 `printedNumber` 在全书连续；无编号卡片的 `number` 合法地为
+.claude/skills/ld-s10y-lesson/SKILL.md:26:  `null`，由 TOC 的 `id`、名称和起始页认领
+.claude/skills/ld-s10y-lesson/SKILL.md:27:- **章**对应 `contents[]`，**节**对应 `lessons[]`；它们用于辅助定位单元
+.claude/skills/ld-s10y-lesson/SKILL.md:28:- 书可用 book id 或书名；先在 `ssot-resources/soviet10year-textbooks/toc/` 找到唯一 TOC
+.claude/skills/ld-s10y-lesson/SKILL.md:29:- 支持「5m 第 8 单元」「5m 第 5–7 单元」「5m 第一章第一节第 5 单元」
+.claude/skills/ld-s10y-lesson/SKILL.md:30:  「5m 第一章『正数和负数』§1『集合的运算』第 5 单元『分类』」和直接给 PDF 页码
+.claude/skills/ld-s10y-lesson/SKILL.md:31:- 编号、层级和标题同时出现时要互相校验；能唯一定位就直接执行，只有冲突或不唯一时才问
+.claude/skills/ld-s10y-lesson/SKILL.md:32:- 从目标单元的 `page` 和下一单元的 `page` 推导印刷页范围，再按本书 PDF 偏移换成物理页；
+.claude/skills/ld-s10y-lesson/SKILL.md:33:  为闭合跨页正文或习题，可以向前后多取边界页，但只发布已完整的目标单元
+.claude/skills/ld-s10y-lesson/SKILL.md:34:- 整章生成时先从 TOC 展开该章的全部可发布卡片，**包括章末 `kind: "exercises"`**；
+.claude/skills/ld-s10y-lesson/SKILL.md:35:  章节右边界是下一章或下一同级条目的起始印刷页。为闭合对象临时多取的边界页，如果只含
+.claude/skills/ld-s10y-lesson/SKILL.md:36:  下一章内容，不进入本章提交、索引或发布集合
+.claude/skills/ld-s10y-lesson/SKILL.md:37:
+.claude/skills/ld-s10y-lesson/SKILL.md:38:## 抽一批页的标准流程
+.claude/skills/ld-s10y-lesson/SKILL.md:39:
+.claude/skills/ld-s10y-lesson/SKILL.md:40:用户通常只会给一句话：**「抽 5m 第 21–31 页」**或**「抽完 5、6、7 单元」**。
+.claude/skills/ld-s10y-lesson/SKILL.md:41:这句话同时授权把指定且已完整的单元 upsert 到生产内容库。默认按下面整套走到底，
+.claude/skills/ld-s10y-lesson/SKILL.md:42:直到产品中实际可见，不要停在中间：
+.claude/skills/ld-s10y-lesson/SKILL.md:43:
+.claude/skills/ld-s10y-lesson/SKILL.md:44:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:45:set -e
+.claude/skills/ld-s10y-lesson/SKILL.md:46:P=.claude/skills/ld-s10y-lesson/.venv/bin/python
+.claude/skills/ld-s10y-lesson/SKILL.md:47:S=.claude/skills/ld-s10y-lesson/tools/p2c.py
+.claude/skills/ld-s10y-lesson/SKILL.md:48:
+.claude/skills/ld-s10y-lesson/SKILL.md:49:for n in $(seq 21 31); do $P $S prepare --book 5m --page $n; done   # ① 在 .tmp 备料
+.claude/skills/ld-s10y-lesson/SKILL.md:50:#   ② 逐页读 .tmp 中的 page.grid.png/template，把 page.md 写入持久 pages/<page>/
+.claude/skills/ld-s10y-lesson/SKILL.md:51:for n in $(seq 21 31); do $P $S finalize --book 5m --page $n; done  # ③ 收口，必须全绿
+.claude/skills/ld-s10y-lesson/SKILL.md:52:
+.claude/skills/ld-s10y-lesson/SKILL.md:53:$P $S assemble  --book 5m --toc ssot-resources/soviet10year-textbooks/toc/5m/zh.json
+.claude/skills/ld-s10y-lesson/SKILL.md:54:$P $S vectorize --book 5m
+.claude/skills/ld-s10y-lesson/SKILL.md:55:$P $S assemble  --book 5m --toc ssot-resources/soviet10year-textbooks/toc/5m/zh.json
+.claude/skills/ld-s10y-lesson/SKILL.md:56:$P $S adapt-prepare --book 5m --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:57:  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+.claude/skills/ld-s10y-lesson/SKILL.md:58:# ④ 只编辑 editions/modern-us-neutral 下的模板，改写主题；
+.claude/skills/ld-s10y-lesson/SKILL.md:59:#    所有现代图委托 ld-s10y-image，按 deterministic / hybrid / generated 路由
+.claude/skills/ld-s10y-lesson/SKILL.md:60:$P $S adapt-finalize --book 5m --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:61:  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+.claude/skills/ld-s10y-lesson/SKILL.md:62:$P $S render --book 5m --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:63:  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+.claude/skills/ld-s10y-lesson/SKILL.md:64:node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+.claude/skills/ld-s10y-lesson/SKILL.md:65:  ssot-resources/soviet10year-textbooks/artifacts/5m \
+.claude/skills/ld-s10y-lesson/SKILL.md:66:  --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:67:  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+.claude/skills/ld-s10y-lesson/SKILL.md:68:# ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一批 lesson 依次发布答案键和交互规格
+.claude/skills/ld-s10y-lesson/SKILL.md:69:cd app && npm run dev
+.claude/skills/ld-s10y-lesson/SKILL.md:70:```
+.claude/skills/ld-s10y-lesson/SKILL.md:71:
+.claude/skills/ld-s10y-lesson/SKILL.md:72:- `assemble` 的 `--toc` **不能省**：课的 id 是从教材目录认领的，没有它产品里就没有地址
+.claude/skills/ld-s10y-lesson/SKILL.md:73:- ③ 和 `assemble` 的对账**不通过就是没做完**，回到 ② 修，不允许放行
+.claude/skills/ld-s10y-lesson/SKILL.md:74:- `finalize` 必须可重复执行：同一 `page.png` 和同一已收口图框要复用上次审计中的精确
+.claude/skills/ld-s10y-lesson/SKILL.md:75:  几何信息，禁止再次把精确框当粗框吸附，造成裁图像素和下游 FigureSpec 哈希漂移
+.claude/skills/ld-s10y-lesson/SKILL.md:76:- `vectorize` 后必须再跑一次 `assemble`，把页目录中新生成的 SVG 同步到全书图库
+.claude/skills/ld-s10y-lesson/SKILL.md:77:- 原始 `pages/`、`figures/`、`lessons/` 和 `book.json` 是忠实抽取层，生成现代版时不得修改
+.claude/skills/ld-s10y-lesson/SKILL.md:78:- `adapt-prepare` 后只编辑 `editions/<edition>/`；改写后的 JSON 和新图必须通过
+.claude/skills/ld-s10y-lesson/SKILL.md:79:  `adapt-finalize`，生产发布器不接受原始抽取层
+.claude/skills/ld-s10y-lesson/SKILL.md:80:- 现代 edition 的正文由工具按完整语句和单独引出的公式确定性分行，再把连续 2–3 个语句
+.claude/skills/ld-s10y-lesson/SKILL.md:81:  组成可独立显示的短段落；完整的数字、拉丁字母或西里尔字母分题序列必须统一成自然顺序，
+.claude/skills/ld-s10y-lesson/SKILL.md:82:  且题干前缀和每个分题各自独占一行。`adapt-finalize` 会重写已有 edition，不允许连续
+.claude/skills/ld-s10y-lesson/SKILL.md:83:  大段正文、错序或横向分题通过
+.claude/skills/ld-s10y-lesson/SKILL.md:84:- 现代 edition 中的中文顿号、逗号、分号、句号、问号、叹号和冒号必须放在 `$...$`
+.claude/skills/ld-s10y-lesson/SKILL.md:85:  数学区外；拆开相邻公式只属于 `layout` 变更。数学内容默认保持原式；只有忠实页已登记、
+.claude/skills/ld-s10y-lesson/SKILL.md:86:  且页哈希、块引用和原式全部匹配的 `errata` 才能在现代层改为修正式。工具必须始终从
+.claude/skills/ld-s10y-lesson/SKILL.md:87:  权威页流和装订身份核验来源绑定：旧 lesson 缺 `source_refs` 时重建，非空引用与权威绑定
+.claude/skills/ld-s10y-lesson/SKILL.md:88:  不一致时明确失败；无法唯一确认、绑定错误或原式漂移都不得把本课已登记勘误静默丢弃
+.claude/skills/ld-s10y-lesson/SKILL.md:89:- edition lesson 用 `section_breaks` 的 `{before, after}` 相邻段落文本标记真正的概念切换。
+.claude/skills/ld-s10y-lesson/SKILL.md:90:  先运行 `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.json>` 查看
+.claude/skills/ld-s10y-lesson/SKILL.md:91:  `proseFlow` 的最终段落，再复制工具输出的 boundary 对象；禁止按 prose 块或换行手算整数。
+.claude/skills/ld-s10y-lesson/SKILL.md:92:  `adapt-finalize`、离线渲染和发布均调用同一 `htmlfrag.js` 解析
+.claude/skills/ld-s10y-lesson/SKILL.md:93:- 现代正文中的公式外 ASCII 数字和拉丁字母由发布器、离线渲染器自动标记；作者只写正文和
+.claude/skills/ld-s10y-lesson/SKILL.md:94:  `$...$` 公式，禁止手工包 `<span>`。产品与离线 HTML 都必须让这些字符和行内 KaTeX 使用
+.claude/skills/ld-s10y-lesson/SKILL.md:95:  KaTeX Main，并以中文正文的 `1.10em` 显示，避免同一句中的数学字符换字体或显得偏小
+.claude/skills/ld-s10y-lesson/SKILL.md:96:- `render` 不是发布门禁，但必须用于离线视觉检查；它读取指定 edition，不得回退原书
+.claude/skills/ld-s10y-lesson/SKILL.md:97:- 边界页常会带出下一节开头；它必须完整转写以通过页级对账，但**不得发布未完成的下一节**。
+.claude/skills/ld-s10y-lesson/SKILL.md:98:  用可重复的 `--lesson <cardId>` 只发布本次已完成的单元
+.claude/skills/ld-s10y-lesson/SKILL.md:99:- **不允许以 `--dry` 作为交付终点**。dry-run 只能用于发布前检查，之后必须真实写库
+.claude/skills/ld-s10y-lesson/SKILL.md:100:- 写库后查询 `sr_lessons` 核对目标 id 的正文块数和题数，再启动 app，用浏览器逐节确认
+.claude/skills/ld-s10y-lesson/SKILL.md:101:  目录可点、正文准确（原书无正文时允许为空）、插图清晰、习题数量正确、控制台无错误
+.claude/skills/ld-s10y-lesson/SKILL.md:102:
+.claude/skills/ld-s10y-lesson/SKILL.md:103:## 交付的是对象，不是页
+.claude/skills/ld-s10y-lesson/SKILL.md:104:
+.claude/skills/ld-s10y-lesson/SKILL.md:105:页是扫描的产物，不是内容的单位。要交付的两个对象——**单元**和**题**——都不认页
+.claude/skills/ld-s10y-lesson/SKILL.md:106:边界：一道题会跨页，一段课文会被插图从中间截断，一张图的引用可能在邻页。
+.claude/skills/ld-s10y-lesson/SKILL.md:107:
+.claude/skills/ld-s10y-lesson/SKILL.md:108:所以整条管线围绕对象组织：cap1 认出对象并标好"是否续到下页"，cap2 按标记拼接。
+.claude/skills/ld-s10y-lesson/SKILL.md:109:**页级的东西只剩两样**：像素（裁图要它）和一条行数对账（页级唯一的完整性硬证据）。
+.claude/skills/ld-s10y-lesson/SKILL.md:110:
+.claude/skills/ld-s10y-lesson/SKILL.md:111:## 分工：模型认对象，机器管像素
+.claude/skills/ld-s10y-lesson/SKILL.md:112:
+.claude/skills/ld-s10y-lesson/SKILL.md:113:这是本技能最重要的一条，不要退回去。
+.claude/skills/ld-s10y-lesson/SKILL.md:114:
+.claude/skills/ld-s10y-lesson/SKILL.md:115:纯机械的图/文判据（长横线、连通域高度、尺寸下限）试过并放弃了：每换一种版面就得
+.claude/skills/ld-s10y-lesson/SKILL.md:116:加一条规则，补了五轮仍在漏——图题被裁进插图、坐标轴被行带拦腰切断、页码被切成
+.claude/skills/ld-s10y-lesson/SKILL.md:117:三截、文字环绕的插图把整段题面烙进图里。
+.claude/skills/ld-s10y-lesson/SKILL.md:118:
+.claude/skills/ld-s10y-lesson/SKILL.md:119:模型一眼就能看出哪块是插图、哪块是半张被撕掉的表、哪一段是第几题，**但给不出准确
+.claude/skills/ld-s10y-lesson/SKILL.md:120:像素坐标**。机器恰好相反。于是：
+.claude/skills/ld-s10y-lesson/SKILL.md:121:
+.claude/skills/ld-s10y-lesson/SKILL.md:122:| 谁 | 干什么 |
+.claude/skills/ld-s10y-lesson/SKILL.md:123:|---|---|
+.claude/skills/ld-s10y-lesson/SKILL.md:124:| 模型（看图） | 认对象：这是插图/表/第几题/哪一节；画个**粗框**；判断是否续到下页 |
+.claude/skills/ld-s10y-lesson/SKILL.md:125:| 机器（确定性） | 把粗框**吸附**到连通域上、裁图、矢量化、跨页拼接、全书对账 |
+.claude/skills/ld-s10y-lesson/SKILL.md:126:
+.claude/skills/ld-s10y-lesson/SKILL.md:127:吸附实测：粗框 `[780,1630,510,270]` → `[793,1643,488,244]`，与逐像素检测一致。
+.claude/skills/ld-s10y-lesson/SKILL.md:128:框歪十几像素、小一圈都能救回来，读图时照着网格估就够了。
+.claude/skills/ld-s10y-lesson/SKILL.md:129:
+.claude/skills/ld-s10y-lesson/SKILL.md:130:## 对账是对象级的
+.claude/skills/ld-s10y-lesson/SKILL.md:131:
+.claude/skills/ld-s10y-lesson/SKILL.md:132:页级像素对账（每一处墨迹归属某个块）代价大、判据脆。真正有力的是对象级对账，
+.claude/skills/ld-s10y-lesson/SKILL.md:133:既便宜又强，而且直接对着交付目标：
+.claude/skills/ld-s10y-lesson/SKILL.md:134:
+.claude/skills/ld-s10y-lesson/SKILL.md:135:1. **题号连续** —— 先按 source manifest 的 `exerciseNumbering` 确认范围：`book` 检查全书，
+.claude/skills/ld-s10y-lesson/SKILL.md:136:   `lesson` 逐课检查，`lesson-group` 逐课、逐栏目检查。开始处理一本新书前，必须核对源 PDF、
+.claude/skills/ld-s10y-lesson/SKILL.md:137:   TOC 和编号范围；不能根据其它物理教材推断本书也采用全书连续编号。
+.claude/skills/ld-s10y-lesson/SKILL.md:138:2. **图号连续** —— `图 1..图 N` 无缺号。
+.claude/skills/ld-s10y-lesson/SKILL.md:139:3. **引用双向齐全** —— 正文里提到的每个「图 N」都存在；每张图都至少被引用一次。
+.claude/skills/ld-s10y-lesson/SKILL.md:140:4. **TOC 覆盖** —— 目录说这段页码里有几个单元，就该装订出几个单元。
+.claude/skills/ld-s10y-lesson/SKILL.md:141:5. **公式 KaTeX** —— 在**拼完整之后**校验：跨页残片在单页上必然配不平，义务推到 cap2。
+.claude/skills/ld-s10y-lesson/SKILL.md:142:6. **行数对账**（页级，唯一保留的）—— 挖掉插图后的印刷行数 == 块体行数。
+.claude/skills/ld-s10y-lesson/SKILL.md:143:
+.claude/skills/ld-s10y-lesson/SKILL.md:144:## 目录布局
+.claude/skills/ld-s10y-lesson/SKILL.md:145:
+.claude/skills/ld-s10y-lesson/SKILL.md:146:```
+.claude/skills/ld-s10y-lesson/SKILL.md:147:ssot-resources/soviet10year-textbooks/sources/soviet10years/5m ….pdf
+.claude/skills/ld-s10y-lesson/SKILL.md:148:ssot-resources/soviet10year-textbooks/artifacts/5m/
+.claude/skills/ld-s10y-lesson/SKILL.md:149:├── pages/0015/              ← cap1 持久页级事实
+.claude/skills/ld-s10y-lesson/SKILL.md:150:│   ├── page.md              ★ 带类型的块
+.claude/skills/ld-s10y-lesson/SKILL.md:151:│   ├── page.json            结构化视图（cap2 的输入）
+.claude/skills/ld-s10y-lesson/SKILL.md:152:│   └── audit.json           行数、框和规范化审计
+.claude/skills/ld-s10y-lesson/SKILL.md:153:├── figures/fig-07.png|svg   ← 全书图库，按**原书图号**命名，跨页唯一
+.claude/skills/ld-s10y-lesson/SKILL.md:154:├── lessons/2-交集/          ← ★ 课程单元
+.claude/skills/ld-s10y-lesson/SKILL.md:155:│   ├── lesson.json          课文块 + 元数据
+.claude/skills/ld-s10y-lesson/SKILL.md:156:│   ├── lesson.md            完整课文（跨页、跨图都接好）
+.claude/skills/ld-s10y-lesson/SKILL.md:157:│   ├── exercises.json       ★ 每题独立：题号、栏目、题干、图号引用；共享图只挂到一题展示
+.claude/skills/ld-s10y-lesson/SKILL.md:158:├── editions/modern-us-neutral/
+.claude/skills/ld-s10y-lesson/SKILL.md:159:│   ├── figures/             ★ ld-s10y-image 产物 + 每图一份 FigureSpec
+.claude/skills/ld-s10y-lesson/SKILL.md:160:│   ├── lessons/<card-id>/   ★ 可发布的现代 lesson/exercises/figures JSON + 审计
+.claude/skills/ld-s10y-lesson/SKILL.md:161:│   └── book.json            edition 索引
+.claude/skills/ld-s10y-lesson/SKILL.md:162:└── book.json                全书索引 + 审计报告
+.claude/skills/ld-s10y-lesson/SKILL.md:163:
+.claude/skills/ld-s10y-lesson/SKILL.md:164:.tmp/ld-s10y-lesson/5m/
+.claude/skills/ld-s10y-lesson/SKILL.md:165:├── pages/0015/
+.claude/skills/ld-s10y-lesson/SKILL.md:166:│   ├── page.png / page.grid.png / layout.json / page.template.md
+.claude/skills/ld-s10y-lesson/SKILL.md:167:│   └── figures/fig-07.png|svg
+.claude/skills/ld-s10y-lesson/SKILL.md:168:└── render/<edition>/<card-id>/{text,exercises}.html
+.claude/skills/ld-s10y-lesson/SKILL.md:169:```
+.claude/skills/ld-s10y-lesson/SKILL.md:170:
+.claude/skills/ld-s10y-lesson/SKILL.md:171:**book id = 书名首段**（`5m`、`8a`、`9-10g`）。默认跨
+.claude/skills/ld-s10y-lesson/SKILL.md:172:`ssot-resources/soviet10year-textbooks/sources/` 下的书系列查找，撞名用 `--series`。
+.claude/skills/ld-s10y-lesson/SKILL.md:173:`.tmp/` 中的页面渲染、模板、页级裁图和离线 HTML 可随时删除；重新 `prepare`、`finalize`、
+.claude/skills/ld-s10y-lesson/SKILL.md:174:`vectorize`、`assemble` 即可恢复。持久 JSON 不得引用 `.tmp/`。
+.claude/skills/ld-s10y-lesson/SKILL.md:175:
+.claude/skills/ld-s10y-lesson/SKILL.md:176:工具入口：`.claude/skills/ld-s10y-lesson/.venv/bin/python .claude/skills/ld-s10y-lesson/tools/p2c.py`
+.claude/skills/ld-s10y-lesson/SKILL.md:177:
+.claude/skills/ld-s10y-lesson/SKILL.md:178:依赖引导（缺失时）：
+.claude/skills/ld-s10y-lesson/SKILL.md:179:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:180:uv venv <skill>/.venv --python 3.13
+.claude/skills/ld-s10y-lesson/SKILL.md:181:uv pip install --python <skill>/.venv/bin/python numpy pillow scipy potracer
+.claude/skills/ld-s10y-lesson/SKILL.md:182:cd <skill> && npm install katex @resvg/resvg-js
+.claude/skills/ld-s10y-lesson/SKILL.md:183:```
+.claude/skills/ld-s10y-lesson/SKILL.md:184:`scipy` 吸附连通域，`potracer` 描摹 SVG，`katex` 校验公式，`resvg` 校验 SVG 保真——
+.claude/skills/ld-s10y-lesson/SKILL.md:185:都不是可选的。
+.claude/skills/ld-s10y-lesson/SKILL.md:186:
+.claude/skills/ld-s10y-lesson/SKILL.md:187:---
+.claude/skills/ld-s10y-lesson/SKILL.md:188:
+.claude/skills/ld-s10y-lesson/SKILL.md:189:## cap1 — 单页识别
+.claude/skills/ld-s10y-lesson/SKILL.md:190:
+.claude/skills/ld-s10y-lesson/SKILL.md:191:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:192:p2c.py prepare  --book 5m --page 15     # 在 .tmp 渲染整页 + 100px 坐标网格图
+.claude/skills/ld-s10y-lesson/SKILL.md:193:#  ↓ 读 .tmp 中的 page.grid.png/template，写 artifacts/5m/pages/0015/page.md
+.claude/skills/ld-s10y-lesson/SKILL.md:194:p2c.py finalize --book 5m --page 15     # 吸附裁图 + 规范化 + 页级体检
+.claude/skills/ld-s10y-lesson/SKILL.md:195:```
+.claude/skills/ld-s10y-lesson/SKILL.md:196:
+.claude/skills/ld-s10y-lesson/SKILL.md:197:**逐页识别，不要多页一起喂。** 视觉模型的图像 token 预算固定，一次两页就等于把每页
+.claude/skills/ld-s10y-lesson/SKILL.md:198:分辨率减半；这批书恰好卡在这上面——西里尔 `а б в` 与拉丁 `a b e` 字形完全相同、
+.claude/skills/ld-s10y-lesson/SKILL.md:199:`⩽` 和 `≤` 只差一根横线，都是靠像素分辨的。需要跨页上下文时**传上一页的尾部文字**，
+.claude/skills/ld-s10y-lesson/SKILL.md:200:不要传像素。
+.claude/skills/ld-s10y-lesson/SKILL.md:201:
+.claude/skills/ld-s10y-lesson/SKILL.md:202:### 块格式
+.claude/skills/ld-s10y-lesson/SKILL.md:203:
+.claude/skills/ld-s10y-lesson/SKILL.md:204:md 里每块前面一行块头声明它是什么；块体里**一行 = 印刷一行**（行数对账靠这个）。
+.claude/skills/ld-s10y-lesson/SKILL.md:205:
+.claude/skills/ld-s10y-lesson/SKILL.md:206:```markdown
+.claude/skills/ld-s10y-lesson/SKILL.md:207:<!-- h1 --> 章    <!-- h2 --> §    <!-- h3 --> 单元标题
+.claude/skills/ld-s10y-lesson/SKILL.md:208:<!-- p -->        正文段
+.claude/skills/ld-s10y-lesson/SKILL.md:209:<!-- exhead -->   习题栏标题（复习题 / 家庭作业题）
+.claude/skills/ld-s10y-lesson/SKILL.md:210:<!-- ex 20 -->    第 20 题，20 是原书题号
+.claude/skills/ld-s10y-lesson/SKILL.md:211:<!-- fig 图 7 box 790,1640,490,250 -->   插图/表格，框照网格估
+.claude/skills/ld-s10y-lesson/SKILL.md:212:<!-- fig 表 box 790,1640,490,250 owner-ex 20 --> 无编号练习图，明确归第 20 题
+.claude/skills/ld-s10y-lesson/SKILL.md:213:<!-- cap 图 7 --> 印刷出来的图题行       <!-- foot --> 页码
+.claude/skills/ld-s10y-lesson/SKILL.md:214:```
+.claude/skills/ld-s10y-lesson/SKILL.md:215:
+.claude/skills/ld-s10y-lesson/SKILL.md:216:四个标记：
+.claude/skills/ld-s10y-lesson/SKILL.md:217:
+.claude/skills/ld-s10y-lesson/SKILL.md:218:- `open` —— 这个对象还没完，下面接着（**跨页、也跨插图**）
+.claude/skills/ld-s10y-lesson/SKILL.md:219:- `cont` —— 承接上一个同类对象
+.claude/skills/ld-s10y-lesson/SKILL.md:220:- `samerow` —— 本块与上一块共享印刷行（正文右侧的图题、并排的两个图题）；
+.claude/skills/ld-s10y-lesson/SKILL.md:221:  多行 `cap` 表示每一行都与相邻图题或正文同排，其他块只表示首行同排
+.claude/skills/ld-s10y-lesson/SKILL.md:222:- `labelrow` —— `ex` 块的小问标号在方程横排之间另占一条独立印刷行；
+.claude/skills/ld-s10y-lesson/SKILL.md:223:  只在原像素确证时使用，并排两组共享该行只加一行。完整公式和标号照常保留，
+.claude/skills/ld-s10y-lesson/SKILL.md:224:  不重复标号、不增加虚假的公式 `↵`；JSON 用 `offset_label_row: true` 记录此事实
+.claude/skills/ld-s10y-lesson/SKILL.md:225:
+.claude/skills/ld-s10y-lesson/SKILL.md:226:一个被插图从中间截断的段落，写成 `p open` … `fig` … `p cont`，cap2 会接成一段。
+.claude/skills/ld-s10y-lesson/SKILL.md:227:配对时 `fig`/`cap`/`foot` 是透明的。
+.claude/skills/ld-s10y-lesson/SKILL.md:228:
+.claude/skills/ld-s10y-lesson/SKILL.md:229:### 转写要点
+.claude/skills/ld-s10y-lesson/SKILL.md:230:
+.claude/skills/ld-s10y-lesson/SKILL.md:231:- **图题是文字**，单独成 `cap` 块；装订时跟随对应图的语义归属，不能一律塞进正文
+.claude/skills/ld-s10y-lesson/SKILL.md:232:- 一个「图 N」由几幅小图组成时整体一个框（语义上就是一张图）；框之间不许重叠
+.claude/skills/ld-s10y-lesson/SKILL.md:233:- 不带图号、题面也无法引用的练习表格或图，必须在 `fig` 块头写
+.claude/skills/ld-s10y-lesson/SKILL.md:234:  `owner-ex <稳定题目标识>`；同一课跨栏目重复印刷题号时用栏目限定标识（如 `g2-1`），
+.claude/skills/ld-s10y-lesson/SKILL.md:235:  不能只写有歧义的 `1`。这是归属的唯一事实来源，禁止靠页内最近距离猜测
+.claude/skills/ld-s10y-lesson/SKILL.md:236:- 半张表、撕掉一角的表：**按印出来的样子截**，缺口照留，写进 `notes`
+.claude/skills/ld-s10y-lesson/SKILL.md:237:- 页边缘、书脊或相邻页透出的重复字迹属于扫描串页，不是本页内容；对照相邻页确认后不写入
+.claude/skills/ld-s10y-lesson/SKILL.md:238:  块。无法确认时记入 `notes`，不得把可疑残片并进题干
+.claude/skills/ld-s10y-lesson/SKILL.md:239:- 一条公式被印刷从中间切开：公式写完整，断点处写 `↵`（行数照样对得上，公式也配得平）
+.claude/skills/ld-s10y-lesson/SKILL.md:240:- 大括号连接的多行方程组仍按各条方程的实际印刷行计数；并排方程组的同一横排只计一次。
+.claude/skills/ld-s10y-lesson/SKILL.md:241:  若完整转写与像素行带不符，先核对扫描里的独立行，再修计数器并验证多行正例和单行
+.claude/skills/ld-s10y-lesson/SKILL.md:242:  分式反例；禁止少写 `↵`、删除方程或改题面来迎合错误的行数。
+.claude/skills/ld-s10y-lesson/SKILL.md:243:- frontmatter 填 `printed_page`、`notes`；确认的数学印刷错误另填 `errata`，包含稳定 `id`、
+.claude/skills/ld-s10y-lesson/SKILL.md:244:  本页块引用、忠实 `original` 和核验 `reason`。哈希一类字段收口时用事实覆盖，不要手抄
+.claude/skills/ld-s10y-lesson/SKILL.md:245:- 印刷行末若本该有一个空格（半角句点后、中英之间），**把空格写在行尾**——
+.claude/skills/ld-s10y-lesson/SKILL.md:246:  拼接是直接首尾相接的，行尾不留空格，句子接起来就粘住了
+.claude/skills/ld-s10y-lesson/SKILL.md:247:
+.claude/skills/ld-s10y-lesson/SKILL.md:248:数学与字符由 `profiles/soviet-cn.json` 强制：
+.claude/skills/ld-s10y-lesson/SKILL.md:249:
+.claude/skills/ld-s10y-lesson/SKILL.md:250:- 行内 `$...$`；上下标一律 LaTeX（`x^2`），禁止 `x²`；分式 `\frac`，禁 `\dfrac`
+.claude/skills/ld-s10y-lesson/SKILL.md:251:- 数学区内减号用 ASCII `-`，禁 `−`(U+2212)
+.claude/skills/ld-s10y-lesson/SKILL.md:252:- **习题小问标号必须是西里尔** `а) б) в)`——与拉丁 `a) b) e)` 字形完全相同，
+.claude/skills/ld-s10y-lesson/SKILL.md:253:  只能按码点写对。这是最常见的错误来源
+.claude/skills/ld-s10y-lesson/SKILL.md:254:- 苏联教材用法式区间记号 `]a, b[`，**照抄，禁止改成 `(a, b)`**
+.claude/skills/ld-s10y-lesson/SKILL.md:255:- 含中文的集合 `{俄语、数学}`、含全角标点的数组 `{52 164，32 415}` 写成普通文本，
+.claude/skills/ld-s10y-lesson/SKILL.md:256:  不要塞进 `$...$`——CJK 混进数学区是"公式看着对、渲染歪"的主要来源
+.claude/skills/ld-s10y-lesson/SKILL.md:257:- 原书印错、破损、污点：**照抄原样**。不确定的识别问题记进 `notes`；确认的数学印刷错误
+.claude/skills/ld-s10y-lesson/SKILL.md:258:  还要登记 `errata`，例如
+.claude/skills/ld-s10y-lesson/SKILL.md:259:  `{"id":"p0013-math-1","block":"p0013#7","original":"$原式$","reason":"代入值核验不成立"}`。
+.claude/skills/ld-s10y-lesson/SKILL.md:260:  `finalize` 会拒绝不存在的块、找不到的原式和重复 id
+.claude/skills/ld-s10y-lesson/SKILL.md:261:- 确认的题号误印仍保留块头与题面印刷号；只在 frontmatter 的
+.claude/skills/ld-s10y-lesson/SKILL.md:262:  `exercise_numbering_errata` 登记 `{id, block, printed, corrected, reason}`，
+.claude/skills/ld-s10y-lesson/SKILL.md:263:  号值均用字符串，`block` 绑定本页非 `cont` 习题的精确引用。
+.claude/skills/ld-s10y-lesson/SKILL.md:264:  独立源审确认印刷号、连续编号上下文唯一确定顺序号后才能登记。
+.claude/skills/ld-s10y-lesson/SKILL.md:265:  装订的 `number` 使用修正顺序号，`source_number` 保留印刷号，
+.claude/skills/ld-s10y-lesson/SKILL.md:266:  `numbering_erratum` 保留绑定证据；全书对账和书后答案引用使用该修正顺序号，
+.claude/skills/ld-s10y-lesson/SKILL.md:267:  不得把前文同印刷号题的答案绑定到这里。
+.claude/skills/ld-s10y-lesson/SKILL.md:268:- 行数失败时对照原页与遮图后的行带：高分式的分子分母属于同一印刷行，扫描黑边和
+.claude/skills/ld-s10y-lesson/SKILL.md:269:  残留表格边线不是文字；嵌套分式的短分子、分母也可能因页边细线干扰而误拆。
+.claude/skills/ld-s10y-lesson/SKILL.md:270:  先核对行带和横向归属，再修复实际计行缺陷并补独立预期的正反例，禁止加空行、重复文字
+.claude/skills/ld-s10y-lesson/SKILL.md:271:  或伪造 `↵` 凑数。下一页只有同一题的插图时，用 `owner-ex` 绑定，不写空 `ex cont` 块。
+.claude/skills/ld-s10y-lesson/SKILL.md:272:
+.claude/skills/ld-s10y-lesson/SKILL.md:273:---
+.claude/skills/ld-s10y-lesson/SKILL.md:274:
+.claude/skills/ld-s10y-lesson/SKILL.md:275:## cap2 — 跨页装订
+.claude/skills/ld-s10y-lesson/SKILL.md:276:
+.claude/skills/ld-s10y-lesson/SKILL.md:277:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:278:p2c.py assemble --book 5m [--toc <toc.json>]
+.claude/skills/ld-s10y-lesson/SKILL.md:279:```
+.claude/skills/ld-s10y-lesson/SKILL.md:280:
+.claude/skills/ld-s10y-lesson/SKILL.md:281:四步纯拼接，不需要再猜（cap1 已经把类型和 open/cont 标好了）：
+.claude/skills/ld-s10y-lesson/SKILL.md:282:
+.claude/skills/ld-s10y-lesson/SKILL.md:283:1. **合流** —— `open` 的块与后面 `cont` 的块接成一个对象
+.claude/skills/ld-s10y-lesson/SKILL.md:284:2. **切单元** —— `h3` 开一个单元，`h1`/`h2` 是它的祖先标题
+.claude/skills/ld-s10y-lesson/SKILL.md:285:3. **分流** —— `ex`/`exhead` 进习题，其余进课文（块类型已经说明了一切）
+.claude/skills/ld-s10y-lesson/SKILL.md:286:4. **认领图** —— 真正文提到的图留在正文；只被练习引用的图和图题必须移出正文
+.claude/skills/ld-s10y-lesson/SKILL.md:287:   图号可为普通数字或 `$...$` 包装数字；装订后核对每道读图题的 `figure_refs`，不能只数全书图。
+.claude/skills/ld-s10y-lesson/SKILL.md:288:5. **共享图去重** —— 每道引用题保存 `figure_refs`，但同一张图在练习区只展示一次，
+.claude/skills/ld-s10y-lesson/SKILL.md:289:   挂到原书位置最近的引用题；不能因为两题都写了“图 7”就复制显示两遍
+.claude/skills/ld-s10y-lesson/SKILL.md:290:
+.claude/skills/ld-s10y-lesson/SKILL.md:291:每题同时保留四个不同事实：`number` 是 lesson 内部稳定标识，`source_number` 是原书印刷
+.claude/skills/ld-s10y-lesson/SKILL.md:292:题号（无编号时显式为 `null`），`group` 是印刷栏目名，`group_id` 是栏目在本课中的稳定
+.claude/skills/ld-s10y-lesson/SKILL.md:293:位置标识。`exerciseNumbering: "lesson-group"` 的书按栏目分别检查题号连续性；第一次出现的
+.claude/skills/ld-s10y-lesson/SKILL.md:294:印刷号继续使用原有 `number`，后续跨栏目碰撞才限定为 `gN-题号`，无编号题保持 `qN`。
+.claude/skills/ld-s10y-lesson/SKILL.md:295:
+.claude/skills/ld-s10y-lesson/SKILL.md:296:产出 `lessons/<单元>/`：`lesson.md`（完整课文，允许为空）、`exercises.json`
+.claude/skills/ld-s10y-lesson/SKILL.md:297:（每题独立编号、图号引用、唯一展示图和来源页）、`lesson.json`。然后跑上面对账。
+.claude/skills/ld-s10y-lesson/SKILL.md:298:
+.claude/skills/ld-s10y-lesson/SKILL.md:299:---
+.claude/skills/ld-s10y-lesson/SKILL.md:300:
+.claude/skills/ld-s10y-lesson/SKILL.md:301:## cap3 — 插图矢量化
+.claude/skills/ld-s10y-lesson/SKILL.md:302:
+.claude/skills/ld-s10y-lesson/SKILL.md:303:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:304:p2c.py vectorize --book 5m [--page N] [--turdsize 2]
+.claude/skills/ld-s10y-lesson/SKILL.md:305:```
+.claude/skills/ld-s10y-lesson/SKILL.md:306:
+.claude/skills/ld-s10y-lesson/SKILL.md:307:**位图描摹**（potrace），不是让模型看图重画。页级 PNG/SVG 只存在于 `.tmp/`，`assemble`
+.claude/skills/ld-s10y-lesson/SKILL.md:308:把最终版本提升到持久全书图库。描摹是确定性的、逐像素还原轮廓；
+.claude/skills/ld-s10y-lesson/SKILL.md:309:模型重画看着漂亮，但那是再创作——会把椭圆画成圆、把格子数画错、把标注挪位，
+.claude/skills/ld-s10y-lesson/SKILL.md:310:与"不增删改"直接冲突。图形和文字适用同一条原则。
+.claude/skills/ld-s10y-lesson/SKILL.md:311:
+.claude/skills/ld-s10y-lesson/SKILL.md:312:保真是被验证的：用 **resvg** 把生成的 SVG 回栅格化，与原 PNG 逐像素比对，
+.claude/skills/ld-s10y-lesson/SKILL.md:313:不匹配率超 2% 判失败（带 1px 容差——矢量边界落在像素中间，抗锯齿必然有 1px 差）。
+.claude/skills/ld-s10y-lesson/SKILL.md:314:
+.claude/skills/ld-s10y-lesson/SKILL.md:315:两个必须记住的坑：potrace 位图极性要**反相**；even-odd 填充规则只在**单个 `<path>`
+.claude/skills/ld-s10y-lesson/SKILL.md:316:元素内部**生效，所有轮廓必须合并进一个 `d`，否则孔洞抵消不掉、整张图被填死。
+.claude/skills/ld-s10y-lesson/SKILL.md:317:
+.claude/skills/ld-s10y-lesson/SKILL.md:318:SVG 用 `fill="currentColor"`，HTML 里可直接用 CSS 换色。
+.claude/skills/ld-s10y-lesson/SKILL.md:319:
+.claude/skills/ld-s10y-lesson/SKILL.md:320:---
+.claude/skills/ld-s10y-lesson/SKILL.md:321:
+.claude/skills/ld-s10y-lesson/SKILL.md:322:## cap4 — 现代主题 edition
+.claude/skills/ld-s10y-lesson/SKILL.md:323:
+.claude/skills/ld-s10y-lesson/SKILL.md:324:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:325:p2c.py adapt-prepare --book 5m --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:326:  --lesson math5-c1-s2-n12 --lesson math5-c1-s2-n13
+.claude/skills/ld-s10y-lesson/SKILL.md:327:# 编辑 .tmp/ld-s10y-lesson/adapt/5m/modern-us-neutral/lessons/<id>/*.template.json，
+.claude/skills/ld-s10y-lesson/SKILL.md:328:# 验收后分别提升为持久目录中的 lesson.json、exercises.json、figures.json，
+.claude/skills/ld-s10y-lesson/SKILL.md:329:# 并用 ld-s10y-image 生成图像产物和 *.spec.json
+.claude/skills/ld-s10y-lesson/SKILL.md:330:p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:331:  --lesson math5-c1-s2-n12 --lesson math5-c1-s2-n13
+.claude/skills/ld-s10y-lesson/SKILL.md:332:```
+.claude/skills/ld-s10y-lesson/SKILL.md:333:
+.claude/skills/ld-s10y-lesson/SKILL.md:334:这一层是忠实抽取与产品内容之间的唯一转换层：
+.claude/skills/ld-s10y-lesson/SKILL.md:335:
+.claude/skills/ld-s10y-lesson/SKILL.md:336:1. `adapt-prepare` 把原始 lesson/exercises 完整快照和 SHA 写入 `.tmp/` 模板，原始文件
+.claude/skills/ld-s10y-lesson/SKILL.md:337:   不动。编辑模板后，只有通过内容验收的结果才分别以 `lesson.json`、`exercises.json`
+.claude/skills/ld-s10y-lesson/SKILL.md:338:   和 `figures.json` 写入 `artifacts/<book>/editions/<edition>/lessons/<id>/`；模板本身
+.claude/skills/ld-s10y-lesson/SKILL.md:339:   不得进入持久目录。
+.claude/skills/ld-s10y-lesson/SKILL.md:340:2. 只改文化语境，不改知识点、题号、分组、未登记公式、图引用和题量；非公式数字确需更新时，
+.claude/skills/ld-s10y-lesson/SKILL.md:341:   必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。`adapt-prepare`
+.claude/skills/ld-s10y-lesson/SKILL.md:342:   会把来源页 `errata` 自动带进 lesson 模板；作者只填写 `corrected` 并把目标块的 `changes`
+.claude/skills/ld-s10y-lesson/SKILL.md:343:   标为 `math-correction`。`adapt-finalize` 会核对来源页、页 JSON 哈希、块引用、原式和修正式，
+.claude/skills/ld-s10y-lesson/SKILL.md:344:   并在 prepare、finalize 和发布前重验时从权威页流核验所有非空引用；旧 lesson 缺
+.claude/skills/ld-s10y-lesson/SKILL.md:345:   `source_refs` 时重建。未登记改写、错误绑定、无法恢复的缺失绑定、原式漂移、或把已知
+.claude/skills/ld-s10y-lesson/SKILL.md:346:   错误原样带入现代版都会失败。完整字段见
+.claude/skills/ld-s10y-lesson/SKILL.md:347:   [edition text contract](references/edition-text-contract.md)
+.claude/skills/ld-s10y-lesson/SKILL.md:348:3. 发布文本不得含未声明的 profile 禁词或西里尔字母；小问标号改用拉丁字母。
+.claude/skills/ld-s10y-lesson/SKILL.md:349:   虚构场景中的俄文或苏联人物姓名必须替换为常见的现代英文姓名，并在题面、图像上下文
+.claude/skills/ld-s10y-lesson/SKILL.md:350:   和答案中保持同一映射；不得只替换文化场景却保留阿廖沙、别佳、谢尔盖、瓦西亚等姓名。
+.claude/skills/ld-s10y-lesson/SKILL.md:351:   原书用于科学史教学的真实人物、地点、国家和机构应保留身份，并在对应正文或题目的
+.claude/skills/ld-s10y-lesson/SKILL.md:352:   `historical_entities` 中逐项声明 `term` 和来源绑定的 `reason`；声明项必须同时出现在
+.claude/skills/ld-s10y-lesson/SKILL.md:353:   原文快照与现代文本中，不能作为整本书的文化检查开关。
+.claude/skills/ld-s10y-lesson/SKILL.md:354:4. 原始层继续按印刷视觉行忠实保存；现代版正文按完整语句和单独引出的公式分行，并把
+.claude/skills/ld-s10y-lesson/SKILL.md:355:   连续 2–3 个语句组成短段落，发布时每个短段落成为独立正文块。若一道题含完整的数字、
+.claude/skills/ld-s10y-lesson/SKILL.md:356:   拉丁字母或西里尔字母小问序列，必须按自然顺序排列，
+.claude/skills/ld-s10y-lesson/SKILL.md:357:   **题干前缀和每个小问各自独占一行**，并移除原书多栏对齐所用的全角空格。
+.claude/skills/ld-s10y-lesson/SKILL.md:358:   两栏公式列表必须先按连续各行的明确全角对齐分隔符还原列归属，再分小问；
+.claude/skills/ld-s10y-lesson/SKILL.md:359:   只有首行标号、后续行续列时不得把右栏首题之后的全部公式串进同一小问。
+.claude/skills/ld-s10y-lesson/SKILL.md:360:   没有连续对齐证据的普通公式序列不猜列，保持原顺序并对照源页确认。
+.claude/skills/ld-s10y-lesson/SKILL.md:361:   `adapt-finalize` 会确定性执行这些排版规范并重写已有 edition，禁止手改原始
+.claude/skills/ld-s10y-lesson/SKILL.md:362:   `pages/` 或原始 lesson JSON。
+.claude/skills/ld-s10y-lesson/SKILL.md:363:   需要横线表达概念切换时，用 `prose_flow.mjs` 输出的相邻段落 `{before, after}` 对象填写
+.claude/skills/ld-s10y-lesson/SKILL.md:364:   `section_breaks`；工具会按实际发布流解析并验证两侧内容，不得手算或只数横线。
+.claude/skills/ld-s10y-lesson/SKILL.md:365:5. 每张产品图委托项目技能 `ld-s10y-image`，并配
+.claude/skills/ld-s10y-lesson/SKILL.md:366:   `ld-s10y-image/figure-spec@2`：
+.claude/skills/ld-s10y-lesson/SKILL.md:367:   - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
+.claude/skills/ld-s10y-lesson/SKILL.md:368:   - 动物、人物、树木和场景等语义素材用 Azure `gpt-image-2`
+.claude/skills/ld-s10y-lesson/SKILL.md:369:   - 同时需要自然对象与精确数学关系时，用分层的 GPT artwork + JSXGraph overlay hybrid；
+.claude/skills/ld-s10y-lesson/SKILL.md:370:     产品分别保存 PNG 素材层和 SVG 数学层，不生成或发布扁平合成 PNG
+.claude/skills/ld-s10y-lesson/SKILL.md:371:   - 输入必须包含完整相关 edition 题面/正文与原始抽取图 PNG；edition 文本是语义真相
+.claude/skills/ld-s10y-lesson/SKILL.md:372:   - 新建或复用已有现代图时，都必须重新打开 `source.image` 指向的原 PNG；先按原图列全
+.claude/skills/ld-s10y-lesson/SKILL.md:373:     对象、标签、行列与关系，再绑定稳定的 object/assertion id。已有 FigureSpec、SVG 或
+.claude/skills/ld-s10y-lesson/SKILL.md:374:     字节一致重建只能证明实现可复现，不能替代原图保真核对；现代规整或增补必须与原图事实
+.claude/skills/ld-s10y-lesson/SKILL.md:375:     分开说明。网格行列用 `gridDimensions`，点位移用 `displacement`，集合归属用 `inside`，
+.claude/skills/ld-s10y-lesson/SKILL.md:376:     语义连线用 `connects`，不能用 `objectCount` 代替关系断言；要求点关系的来源组中，
+.claude/skills/ld-s10y-lesson/SKILL.md:377:     每个来源点都必须被组内映射的多点断言覆盖，组外或只覆盖其他点的关系不能替代
+.claude/skills/ld-s10y-lesson/SKILL.md:378:   - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
+.claude/skills/ld-s10y-lesson/SKILL.md:379:   - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
+.claude/skills/ld-s10y-lesson/SKILL.md:380:     由产品主题和打印样式通过 CSS 变量决定实际颜色
+.claude/skills/ld-s10y-lesson/SKILL.md:381:   - 禁止使用答案键或添加原图没有的解答标注，不能让题图泄露答案
+.claude/skills/ld-s10y-lesson/SKILL.md:382:   - 禁止手改渲染器产物、直接发布原书截图，或让 GPT Image 猜精确刻度和标签位置
+.claude/skills/ld-s10y-lesson/SKILL.md:383:6. **图内语言固定为英文**：数字、拉丁字母和数学符号可直接使用；禁止中文、日文、
+.claude/skills/ld-s10y-lesson/SKILL.md:384:   西里尔文字、装饰性苏联文化符号、旧书纹理和手写体。课程正文仍为中文。来源绑定的
+.claude/skills/ld-s10y-lesson/SKILL.md:385:   历史人物须保持可识别身份，但生成肖像必须明确是现代教材插画，不能冒充史料照片。
+.claude/skills/ld-s10y-lesson/SKILL.md:386:7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
+.claude/skills/ld-s10y-lesson/SKILL.md:387:   渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；
+.claude/skills/ld-s10y-lesson/SKILL.md:388:   内容不符时最多针对缺陷修复一次；目录、权限等执行故障按技术恢复处理，不算内容批准。
+.claude/skills/ld-s10y-lesson/SKILL.md:389:8. `adapt-finalize` 校验原始快照、数学、FigureSpec、渲染或生成元数据；失败不能发布。
+.claude/skills/ld-s10y-lesson/SKILL.md:390:
+.claude/skills/ld-s10y-lesson/SKILL.md:391:原始层 cap3 的 potrace 只用于保存教材抽取事实；现代 edition 的图必须重新创作，两者用途不同。
+.claude/skills/ld-s10y-lesson/SKILL.md:392:
+.claude/skills/ld-s10y-lesson/SKILL.md:393:### 完整图生成流程
+.claude/skills/ld-s10y-lesson/SKILL.md:394:
+.claude/skills/ld-s10y-lesson/SKILL.md:395:context package、渲染路由、FigureSpec、`n-azure` 和视觉门禁见
+.claude/skills/ld-s10y-lesson/SKILL.md:396:[references/figure-generation.md](references/figure-generation.md)。预览批次只写 `.tmp/`；
+.claude/skills/ld-s10y-lesson/SKILL.md:397:用户验收后才提升到 edition。
+.claude/skills/ld-s10y-lesson/SKILL.md:398:
+.claude/skills/ld-s10y-lesson/SKILL.md:399:---
+.claude/skills/ld-s10y-lesson/SKILL.md:400:
+.claude/skills/ld-s10y-lesson/SKILL.md:401:## cap5 — 自包含 HTML
+.claude/skills/ld-s10y-lesson/SKILL.md:402:
+.claude/skills/ld-s10y-lesson/SKILL.md:403:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:404:p2c.py render --book 5m --edition modern-us-neutral [--lesson <cardId>]...
+.claude/skills/ld-s10y-lesson/SKILL.md:405:```
+.claude/skills/ld-s10y-lesson/SKILL.md:406:
+.claude/skills/ld-s10y-lesson/SKILL.md:407:每个单元两张白底预览：`text.html`（课文，原书无正文时为空）+ `exercises.html`
+.claude/skills/ld-s10y-lesson/SKILL.md:408:（每题独立编号，共享练习图只展示一次），只写
+.claude/skills/ld-s10y-lesson/SKILL.md:409:`.tmp/ld-s10y-lesson/render/<book>/<edition>/`。
+.claude/skills/ld-s10y-lesson/SKILL.md:410:自包含指不依赖网络也不依赖同级文件：KaTeX 服务端渲染成静态 HTML（页面不要 JS）、
+.claude/skills/ld-s10y-lesson/SKILL.md:411:CSS 与 20 个 woff2 字体内联成 data URI，插图 SVG 或 PNG 都内联。
+.claude/skills/ld-s10y-lesson/SKILL.md:412:
+.claude/skills/ld-s10y-lesson/SKILL.md:413:> 坑：`katex.min.css` 里 `src` 是 `@font-face` 的**最后一条**声明，以 `}` 结尾而非 `;`。
+.claude/skills/ld-s10y-lesson/SKILL.md:414:> 按 `;` 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
+.claude/skills/ld-s10y-lesson/SKILL.md:415:> 现在内联数为 0 直接抛错，不允许静默降级。
+.claude/skills/ld-s10y-lesson/SKILL.md:416:
+.claude/skills/ld-s10y-lesson/SKILL.md:417:---
+.claude/skills/ld-s10y-lesson/SKILL.md:418:
+.claude/skills/ld-s10y-lesson/SKILL.md:419:## cap6 — 生产入库
+.claude/skills/ld-s10y-lesson/SKILL.md:420:
+.claude/skills/ld-s10y-lesson/SKILL.md:421:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:422:node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+.claude/skills/ld-s10y-lesson/SKILL.md:423:  ssot-resources/soviet10year-textbooks/artifacts/5m \
+.claude/skills/ld-s10y-lesson/SKILL.md:424:  --edition modern-us-neutral [--lesson <cardId>]... [--dry]
+.claude/skills/ld-s10y-lesson/SKILL.md:425:```
+.claude/skills/ld-s10y-lesson/SKILL.md:426:
+.claude/skills/ld-s10y-lesson/SKILL.md:427:一个单元 = `sr_lessons` 一行，**id 就是 cap2 从 TOC 认领的卡片 id**——这是 app 定的
+.claude/skills/ld-s10y-lesson/SKILL.md:428:（见 `app/src/lib/deck-stats.ts`），所以不建新表。`content` 放课文块、`exercises` 放每道题，
+.claude/skills/ld-s10y-lesson/SKILL.md:429:两者都是可直接嵌入的 HTML 片段（KaTeX 已渲染、插图为内联图片数据），由产品自己排版；
+.claude/skills/ld-s10y-lesson/SKILL.md:430:`html` 列不再写入。幂等 upsert，重复跑不会伤到别的课。
+.claude/skills/ld-s10y-lesson/SKILL.md:431:
+.claude/skills/ld-s10y-lesson/SKILL.md:432:`--lesson` 可重复，用于只写本次已经完整闭合的单元。跨页抽取为了完成上一单元而读到了
+.claude/skills/ld-s10y-lesson/SKILL.md:433:下一单元开头时，必须指定它，禁止把只有标题或一道题的半个单元写进生产。
+.claude/skills/ld-s10y-lesson/SKILL.md:434:
+.claude/skills/ld-s10y-lesson/SKILL.md:435:发布器只读取 `editions/<edition>/lessons/`，要求 adaptation audit 为 `pass`，并验证
+.claude/skills/ld-s10y-lesson/SKILL.md:436:现代图、FigureSpec 与生成/渲染元数据。写入 DB 时只保留现代正文、现代题目、现代图片、edition 名和原始
+.claude/skills/ld-s10y-lesson/SKILL.md:437:SHA；完整原始快照不入库。重发同一 edition 的课文或图片时，必须按题号保留已有的
+.claude/skills/ld-s10y-lesson/SKILL.md:438:`answerKey` 和 `interaction`，不得让重发导致答案或数学键盘消失。
+.claude/skills/ld-s10y-lesson/SKILL.md:439:
+.claude/skills/ld-s10y-lesson/SKILL.md:440:`lesson_order` 取完整 TOC 的卡片阅读顺序，不取只含当前已抽取课程的 `book.json`，也不取
+.claude/skills/ld-s10y-lesson/SKILL.md:441:`Number(lesson.number)`：前者会在后补较早章节时移动旧序号，后者无法安置 `number=null`
+.claude/skills/ld-s10y-lesson/SKILL.md:442:的补充习题。发布器按学科分支分配稳定编号段，并在同一事务中重排同册既有课程，因此章节可以
+.claude/skills/ld-s10y-lesson/SKILL.md:443:按任意顺序生成而不会撞 `(subject, stage, lesson_order)` 唯一约束。edition `book.json`
+.claude/skills/ld-s10y-lesson/SKILL.md:444:仍按原始索引重建，禁止手工修排序。
+.claude/skills/ld-s10y-lesson/SKILL.md:445:
+.claude/skills/ld-s10y-lesson/SKILL.md:446:一批可作答课程的发布顺序固定为：`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 →
+.claude/skills/ld-s10y-lesson/SKILL.md:447:`ld-s10y-answer` 交互规格。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
+.claude/skills/ld-s10y-lesson/SKILL.md:448:交互规格。
+.claude/skills/ld-s10y-lesson/SKILL.md:449:
+.claude/skills/ld-s10y-lesson/SKILL.md:450:发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`
+.claude/skills/ld-s10y-lesson/SKILL.md:451:替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。
+.claude/skills/ld-s10y-lesson/SKILL.md:452:习题引用的图必须实际展示，并带经原 PNG 复核的 `source.inventory`；复用样本也不能沿用
+.claude/skills/ld-s10y-lesson/SKILL.md:453:未经复核的旧清单。字节一致只证明确定性，不证明与来源一致。图改动涉及点位、标签或题中
+.claude/skills/ld-s10y-lesson/SKILL.md:454:数据时，同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图
+.claude/skills/ld-s10y-lesson/SKILL.md:455:推导的答案。
+.claude/skills/ld-s10y-lesson/SKILL.md:456:
+.claude/skills/ld-s10y-lesson/SKILL.md:457:连接串取仓库根 `.env` 的 `LEMMADECK_DATABASE_URL`（Supabase，schema `lemmadeck-schema`）。
+.claude/skills/ld-s10y-lesson/SKILL.md:458:写入只用本技能的 Node `postgres` 发布器；只读核对使用项目 `operations.md` 当前指定的命令，
+.claude/skills/ld-s10y-lesson/SKILL.md:459:不要在技能里另造连接串解析规则。
+.claude/skills/ld-s10y-lesson/SKILL.md:460:
+.claude/skills/ld-s10y-lesson/SKILL.md:461:## cap7 — 产品验收
+.claude/skills/ld-s10y-lesson/SKILL.md:462:
+.claude/skills/ld-s10y-lesson/SKILL.md:463:### 已审查选择题接入
+.claude/skills/ld-s10y-lesson/SKILL.md:464:
+.claude/skills/ld-s10y-lesson/SKILL.md:465:`ld-s10y-choice` 保持离线。使用 `tools/retain_choices.py`，显式指定仓库、书册、课程
+.claude/skills/ld-s10y-lesson/SKILL.md:466:及已批准目录，将种子、题稿、审查报告保留到目标现代课程
+.claude/skills/ld-s10y-lesson/SKILL.md:467:`choice-set/{seed,draft,review}.json` 后，在调用方授权发布时使用本发布入口：
+.claude/skills/ld-s10y-lesson/SKILL.md:468:
+.claude/skills/ld-s10y-lesson/SKILL.md:469:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:470:node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+.claude/skills/ld-s10y-lesson/SKILL.md:471:  ssot-resources/soviet10year-textbooks/artifacts/6a --edition modern-us-neutral \
+.claude/skills/ld-s10y-lesson/SKILL.md:472:  --lesson <cardId> --choices-only
+.claude/skills/ld-s10y-lesson/SKILL.md:473:```
+.claude/skills/ld-s10y-lesson/SKILL.md:474:
+.claude/skills/ld-s10y-lesson/SKILL.md:475:该模式重新核验三份快照和所有引用图，只更新已有课程的 `exercises.choiceSet`，
+.claude/skills/ld-s10y-lesson/SKILL.md:476:不重发课文、书写题、答案或课程排序。种子实图按原清单读取；
+.claude/skills/ld-s10y-lesson/SKILL.md:477:新候选图必须先按图技能保留到本课 `choice-set/figures/`，配同名
+.claude/skills/ld-s10y-lesson/SKILL.md:478:`*.spec.json`、`*.render.json`、`*.review.json`，并取得独立图审查。
+.claude/skills/ld-s10y-lesson/SKILL.md:479:发布入口核验当前图稿与证据哈希，不得发布 scratch 路径。
+.claude/skills/ld-s10y-lesson/SKILL.md:480:离线 `intent`、完整题源、作者键及审查文件不作为客户端载荷；应用只投影题面，
+.claude/skills/ld-s10y-lesson/SKILL.md:481:单选点击提交，多选明确提交且由服务端按完整集合判分。
+.claude/skills/ld-s10y-lesson/SKILL.md:482:
+.claude/skills/ld-s10y-lesson/SKILL.md:483:生产写入不是完成；孩子在产品里能读到才是完成。
+.claude/skills/ld-s10y-lesson/SKILL.md:484:
+.claude/skills/ld-s10y-lesson/SKILL.md:485:1. 用 node + `app/node_modules/postgres` 查询目标 `sr_lessons` 行，核对
+.claude/skills/ld-s10y-lesson/SKILL.md:486:   `content.edition`、`exercises.edition`、`content.prose` 和 `exercises.count`；
+.claude/skills/ld-s10y-lesson/SKILL.md:487:   edition 必须等于本次发布值，只有练习的单元允许 `content.prose=[]`
+.claude/skills/ld-s10y-lesson/SKILL.md:488:2. 按项目 `operations.md` 启动服务：主 checkout 使用主端口，IntentFold 工单 worktree
+.claude/skills/ld-s10y-lesson/SKILL.md:489:   使用 `ticket.json` 记录的工单端口，禁止把 3200 写死到工单验收
+.claude/skills/ld-s10y-lesson/SKILL.md:490:3. 浏览器打开每个目标 `/card/<cardId>`，确认正文没有混入练习专用图、插图清晰、
+.claude/skills/ld-s10y-lesson/SKILL.md:491:   习题入口与题数；逐段检查无首行缩进，并按 `section_breaks` 的 `before`/`after` 断言横线
+.claude/skills/ld-s10y-lesson/SKILL.md:492:   两侧实际内容，正文外数字/拉丁字母和行内公式字体一致且不小于中文正文
+.claude/skills/ld-s10y-lesson/SKILL.md:493:4. 打开每节的书写题视图，确认所有原题和公式完整可读，并按 `figure id` 检查
+.claude/skills/ld-s10y-lesson/SKILL.md:494:   同一张共享图在该练习区只出现一次。当前书写题是只读材料，必须没有输入框、
+.claude/skills/ld-s10y-lesson/SKILL.md:495:   作答按钮、判分结果或标准答案；逐题比对当前 edition 发布题文，不要求旧数学键盘。
+.claude/skills/ld-s10y-lesson/SKILL.md:496:   选择题的点击、多选集合判分、分页与保存恢复在获授权的集成阶段验证，
+.claude/skills/ld-s10y-lesson/SKILL.md:497:   不能把只读书写题检查冒充选择题交互验收。
+.claude/skills/ld-s10y-lesson/SKILL.md:498:5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
+.claude/skills/ld-s10y-lesson/SKILL.md:499:
+.claude/skills/ld-s10y-lesson/SKILL.md:500:对本次全部课程执行可失败的浏览器检查，不能只抽一课或只数 SVG：
+.claude/skills/ld-s10y-lesson/SKILL.md:501:
+.claude/skills/ld-s10y-lesson/SKILL.md:502:```bash
+.claude/skills/ld-s10y-lesson/SKILL.md:503:node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
+.claude/skills/ld-s10y-lesson/SKILL.md:504:  --book-dir ssot-resources/soviet10year-textbooks/artifacts/6a \
+.claude/skills/ld-s10y-lesson/SKILL.md:505:  --edition modern-us-neutral --lesson <cardId> \
+.claude/skills/ld-s10y-lesson/SKILL.md:506:  --base-url http://localhost:<ticket-port> \
+.claude/skills/ld-s10y-lesson/SKILL.md:507:  --output .tmp/s10y-product-check
+.claude/skills/ld-s10y-lesson/SKILL.md:508:```
+.claude/skills/ld-s10y-lesson/SKILL.md:509:
+.claude/skills/ld-s10y-lesson/SKILL.md:510:`--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
+.claude/skills/ld-s10y-lesson/SKILL.md:511:在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取
+.claude/skills/ld-s10y-lesson/SKILL.md:512:`display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查
+.claude/skills/ld-s10y-lesson/SKILL.md:513:   横向滚动末端与宽表末列可达、逐题 edition 题文一致，以及书写题没有输入、
+.claude/skills/ld-s10y-lesson/SKILL.md:514:   判分或答案区域。检查不提交作答、不写学习记录。
+.claude/skills/ld-s10y-lesson/SKILL.md:515:   它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
+.claude/skills/ld-s10y-lesson/SKILL.md:516:无正文的补充习题卡按内容对象断言正文为空，不能要求空正文容器具有可见高度；
+.claude/skills/ld-s10y-lesson/SKILL.md:517:有正文或正文图的卡仍必须验证实际可见，且两类卡都要验证习题入口和全部题目。
+.claude/skills/ld-s10y-lesson/SKILL.md:518:
+.claude/skills/ld-s10y-lesson/SKILL.md:519:自动检查 `.sr-d-scroll` 的末尾可达性时，用瞬时滚动并轮询几何条件；CSS 平滑滚动后立即
+.claude/skills/ld-s10y-lesson/SKILL.md:520:读取位置会产生假失败。不要靠给容器留下内联样式来禁用平滑滚动，否则下一次 SPA 导航会
+.claude/skills/ld-s10y-lesson/SKILL.md:521:制造 React 水合告警。
+.claude/skills/ld-s10y-lesson/SKILL.md:522:
+.claude/skills/ld-s10y-lesson/SKILL.md:523:任一项失败都要修到通过。只生成文件、只 dry-run、只写库但没在产品验证，都不算完成。
+.claude/skills/ld-s10y-lesson/SKILL.md:524:
+.claude/skills/ld-s10y-lesson/SKILL.md:525:## 实测（5m 印刷页 1–11，PDF 10–20）
+.claude/skills/ld-s10y-lesson/SKILL.md:526:
+.claude/skills/ld-s10y-lesson/SKILL.md:527:11 页 → **4 个单元、55 道题（1–55 连续无缺号）、13 张编号插图 + 1 张无编号表格**。
+.claude/skills/ld-s10y-lesson/SKILL.md:528:15 张 SVG 全部通过保真自检，不匹配率 0.000%–0.093%（限 2%）。
+.claude/skills/ld-s10y-lesson/SKILL.md:529:跨页的第 29、36 题各由三段拼成，图自动跟到题上。
+.claude/skills/ld-s10y-lesson/SKILL.md:530:
+.claude/skills/ld-s10y-lesson/SKILL.md:531:## 已知行为
+.claude/skills/ld-s10y-lesson/SKILL.md:532:
+.claude/skills/ld-s10y-lesson/SKILL.md:533:- 一道题引用「图 6.2」时会保留对图 6 各子图的引用；每个实际 SVG 在练习区仍只展示一次
+.claude/skills/ld-s10y-lesson/SKILL.md:534:- `outside_ratio` 只是"文字占墨迹的比例"，不是错误指标
+.claude/skills/ld-s10y-lesson/SKILL.md:535:- 不做语义提取：表格一律当图裁，不拆成行列
+.claude/skills/ld-s10y-lesson/SKILL.md:536:- 一本书没抽完时，末尾会有若干块标着 `open` 接不上——这是正常的，只报告不失败
+.intentfold/charter/engineering.md:1:# Engineering
+.intentfold/charter/engineering.md:2:
+.intentfold/charter/engineering.md:3:Human-authored architecture and development rules. This file defines how the product is built, how
+.intentfold/charter/engineering.md:4:code changes are made, and how they land. Section shape is fixed by `.intentfold/readme.md`.
+.intentfold/charter/engineering.md:5:
+.intentfold/charter/engineering.md:6:The dependency inventory belongs to the lockfile; generated structure belongs to its generator.
+.intentfold/charter/engineering.md:7:Record here only decisions, boundaries, and commands that the repository cannot explain by itself.
+.intentfold/charter/engineering.md:8:
+.intentfold/charter/engineering.md:9:> Consolidated on 2026-09-12 from the former architecture and development dimensions. Existing
+.intentfold/charter/engineering.md:10:> project decisions and boundaries were preserved. Pull-request landing commands were added later
+.intentfold/charter/engineering.md:11:> that day with explicit human authorization. The resource boundary was revised on 2026-09-13 by
+.intentfold/charter/engineering.md:12:> explicit human direction. Hosting and database-variable rules were revised on 2026-09-23
+.intentfold/charter/engineering.md:13:> with explicit human approval for the Render migration and Azure hosting cleanup.
+.intentfold/charter/engineering.md:14:
+.intentfold/charter/engineering.md:15:## Contract
+.intentfold/charter/engineering.md:16:
+.intentfold/charter/engineering.md:17:**Stack**
+.intentfold/charter/engineering.md:18:
+.intentfold/charter/engineering.md:19:- **tanstack-start** is the application framework — SSR full-stack, a single app in `app/`, React 19,
+.intentfold/charter/engineering.md:20:  TypeScript, Node 24. Vite builds it through the TanStack Start and Nitro plugins. This is the one
+.intentfold/charter/engineering.md:21:  supported application structure for this repo; a second app or a framework change is out of scope without
+.intentfold/charter/engineering.md:22:  a charter decision.
+.intentfold/charter/engineering.md:23:- **`@tanstack/react-router`** is the router — file-based, under `app/src/routes/`.
+.intentfold/charter/engineering.md:24:- **Tailwind CSS 4** (+ tw-animate-css) is the styling authority; see `ui.md`.
+.intentfold/charter/engineering.md:25:- **zustand** is the client state library (`app/src/lib/layout-store.ts`).
+.intentfold/charter/engineering.md:26:- **PostgreSQL** via the `postgres` client is the datastore — the **shared Supabase project**, schema
+.intentfold/charter/engineering.md:27:  **`lemmadeck-schema`**, reached through `LEMMADECK_DATABASE_URL`. Never a second client.
+.intentfold/charter/engineering.md:28:  `app/src/lib/db.ts` and the shared content helper require `LEMMADECK_DATABASE_URL`; missing
+.intentfold/charter/engineering.md:29:  configuration fails instead of falling back to another database. Render and local development
+.intentfold/charter/engineering.md:30:  use the same existing Supabase schema.
+.intentfold/charter/engineering.md:31:- **Authentication is in-repo, no external provider**: scrypt password hashing (Node `crypto`) and an
+.intentfold/charter/engineering.md:32:  HMAC-signed httpOnly session cookie, both in `app/src/lib/session.server.ts`.
+.intentfold/charter/engineering.md:33:- **Content rendering**: markdown via `marked`; KaTeX is loaded from a CDN by the root document
+.intentfold/charter/engineering.md:34:  rather than bundled from npm.
+.intentfold/charter/engineering.md:35:
+.intentfold/charter/engineering.md:36:**Structure**
+.intentfold/charter/engineering.md:37:
+.intentfold/charter/engineering.md:38:- **Repo layout**: `app/` = the web app, a **standalone project** with its
+.intentfold/charter/engineering.md:39:  own `package.json`/`package-lock.json`/`node_modules` — **there is no repo-root `package.json`**;
+.intentfold/charter/engineering.md:40:  commands run from `app/` or via `npm --prefix app`. `ssot-schemas/db-schemas/` = DB SSOT.
+.intentfold/charter/engineering.md:41:  `ssot-resources/` is the only committed product-resource root: runtime public assets, design
+.intentfold/charter/engineering.md:42:  references, brand material, retained course sources, original textbooks, TOCs, durable
+.intentfold/charter/engineering.md:43:  transcriptions, final lessons, figures, answers and interactions all live below it. `.tmp/` is
+.intentfold/charter/engineering.md:44:  disposable scratch only and may be deleted as a whole after any ticket. Code-owned schemas,
+.intentfold/charter/engineering.md:45:  profiles, dependencies and test fixtures remain beside their code and are not product-resource
+.intentfold/charter/engineering.md:46:  roots. `.claude/skills/` = repository-local S10Y lesson and answer pipelines;
+.intentfold/charter/engineering.md:47:  `.agents/skills/` = project skills for modern figures, stories, the knowledge galaxy, and retained
+.intentfold/charter/engineering.md:48:  English generation tooling;
+.intentfold/charter/engineering.md:49:  `infra/` = deploy/substrate notes. No top-level `jobs/` — this project has no independently-packaged
+.intentfold/charter/engineering.md:50:  jobs. Root holds only cross-cutting files: the deploy `Dockerfile`, `.intentfold/`, `AGENTS.md`, and
+.intentfold/charter/engineering.md:51:  tooling config.
+.intentfold/charter/engineering.md:52:- **Routes**: public learner routes are `index.tsx` and `_app/card.$id.tsx` for the textbook
+.intentfold/charter/engineering.md:53:  catalog and cards. The legacy English lesson and recitation paths redirect to the public landing
+.intentfold/charter/engineering.md:54:  page and render no English-learning UI. `login.tsx` remains the account entry.
+.intentfold/charter/engineering.md:55:- **Domain libs** in `app/src/lib/`: `curriculum.ts` (course structure + lesson ordering/nav),
+.intentfold/charter/engineering.md:56:  `lessons.ts`, `stories.ts`, `quiz.ts` + `answer-normalize.ts` (practice, incl. `input`-mode
+.intentfold/charter/engineering.md:57:  server-side judging), `session*.ts` (auth), `db.ts` (postgres access, `search_path` = the project
+.intentfold/charter/engineering.md:58:  schema). `english.ts` remains only as preserved server/data capability and is not a learner-facing
+.intentfold/charter/engineering.md:59:  product module.
+.intentfold/charter/engineering.md:60:- **DB access is server-only**: every read and write goes through `app/src/lib/db.ts`'s `sql()`. The
+.intentfold/charter/engineering.md:61:  browser never holds the connection string.
+.intentfold/charter/engineering.md:62:- `app/vite.config.ts` sets `envDir: '..'` so build-time env resolves from the root `.env`.
+.intentfold/charter/engineering.md:63:
+.intentfold/charter/engineering.md:64:**Key decisions**
+.intentfold/charter/engineering.md:65:
+.intentfold/charter/engineering.md:66:- **Published content lives in the DB and is produced by named skills.** The sole math lesson entry is
+.intentfold/charter/engineering.md:67:  `.claude/skills/ld-s10y-lesson`: scanned textbook pages become faithful page artifacts, assembled
+.intentfold/charter/engineering.md:68:  lesson/exercise objects, and a `modern-us-neutral` edition under
+.intentfold/charter/engineering.md:69:  `ssot-resources/soviet10year-textbooks/artifacts/`.
+.intentfold/charter/engineering.md:70:  Modern figures are delegated to `ld-s10y-image`; answers and interaction specifications are added
+.intentfold/charter/engineering.md:71:  by `ld-s10y-answer`; their publishers upsert `sr_lessons`. The app reads the stored prose and
+.intentfold/charter/engineering.md:72:  exercise fragments at `/card/:id`. New math work does not use a concept ledger, neutral card tree,
+.intentfold/charter/engineering.md:73:  locale overlay, or retired concept-led lesson savers. Biographies use `sr-story`. Historical
+.intentfold/charter/engineering.md:74:  short-literature English rows and the `sr-voa1500` generator are retained but are not exposed by
+.intentfold/charter/engineering.md:75:  the application.
+.intentfold/charter/engineering.md:76:- **Website hosting and content storage are independent.** Render runs the web application;
+.intentfold/charter/engineering.md:77:  the original shared Supabase project remains the content database. Hosting migration does not
+.intentfold/charter/engineering.md:78:  migrate the database. Identify the database by its authoritative connection, never by schema
+.intentfold/charter/engineering.md:79:  name alone. Azure model/image/TTS services remain generation dependencies, not website hosting.
+.intentfold/charter/engineering.md:80:- **`ssot-schemas/db-schemas/lemmadeck.sql` is the single source of truth for the DB tables** — 18
+.intentfold/charter/engineering.md:81:  of them, generated from the live schema by STEMROBIN-124 and regenerated the same way whenever the
+.intentfold/charter/engineering.md:82:  schema changes deliberately. Reason: schema changes applied ad hoc drift away from anything
+.intentfold/charter/engineering.md:83:  reviewable, and a hand-maintained DDL drifts just as far (the file it replaced had fallen seven
+.intentfold/charter/engineering.md:84:  tables behind). It **describes**; it is never applied.
+.intentfold/charter/engineering.md:85:- **Vitest uses a separate `app/vitest.config.ts`** because the TanStack Start Vite plugin is
+.intentfold/charter/engineering.md:86:  incompatible with the Vitest runner.
+.intentfold/charter/engineering.md:87:- **Content tooling keeps its dependencies outside the deployed app.** Project skills under
+.intentfold/charter/engineering.md:88:  `.agents/skills/` share that directory's package; `ld-s10y-lesson` owns its package and Python
+.intentfold/charter/engineering.md:89:  environment under `.claude/skills/ld-s10y-lesson/`; `ld-s10y-answer` reuses the app's `postgres`
+.intentfold/charter/engineering.md:90:  dependency for its publishers.
+.intentfold/charter/engineering.md:91:
+.intentfold/charter/engineering.md:92:## Tools
+.intentfold/charter/engineering.md:93:
+.intentfold/charter/engineering.md:94:**Pull-request landing**
+.intentfold/charter/engineering.md:95:
+.intentfold/charter/engineering.md:96:Worktree tickets land through GitHub pull requests in `wang-chonghuan/lemmadeck`. Substitute the
+.intentfold/charter/engineering.md:97:ticket's recorded values for `<ticket-id>`, `<branch>`, and `<pr>`.
+.intentfold/charter/engineering.md:98:
+.intentfold/charter/engineering.md:99:Find an existing PR:
+.intentfold/charter/engineering.md:100:
+.intentfold/charter/engineering.md:101:```bash
+.intentfold/charter/engineering.md:102:gh pr list --repo wang-chonghuan/lemmadeck --head <branch> --state all \
+.intentfold/charter/engineering.md:103:  --json number,title,url,state,headRefOid,baseRefName,mergeStateStatus,statusCheckRollup
+.intentfold/charter/engineering.md:104:```
+.intentfold/charter/engineering.md:105:
+.intentfold/charter/engineering.md:106:Create one when absent:
+.intentfold/charter/engineering.md:107:
+.intentfold/charter/engineering.md:108:```bash
+.intentfold/charter/engineering.md:109:gh pr create --repo wang-chonghuan/lemmadeck --base main --head <branch> \
+.intentfold/charter/engineering.md:110:  --title "<ticket-id>" --body-file ".intentfold/tickets/<ticket-id>/handoff.md"
+.intentfold/charter/engineering.md:111:```
+.intentfold/charter/engineering.md:112:
+.intentfold/charter/engineering.md:113:Read its current head, state, and checks:
+.intentfold/charter/engineering.md:114:
+.intentfold/charter/engineering.md:115:```bash
+.intentfold/charter/engineering.md:116:gh pr view <pr> --repo wang-chonghuan/lemmadeck \
+.intentfold/charter/engineering.md:117:  --json number,url,state,headRefOid,mergeStateStatus,statusCheckRollup
+.intentfold/charter/engineering.md:118:```
+.intentfold/charter/engineering.md:119:
+.intentfold/charter/engineering.md:120:This repository currently configures no required GitHub checks, branch protection, rulesets,
+.intentfold/charter/engineering.md:121:overlap detector, or cap4 takeover gate. If that changes, update these Tools before landing the
+.intentfold/charter/engineering.md:122:next ticket. Merge with a merge commit, then confirm GitHub reports the merge commit:
+.intentfold/charter/engineering.md:123:
+.intentfold/charter/engineering.md:124:```bash
+.intentfold/charter/engineering.md:125:gh pr merge <pr> --repo wang-chonghuan/lemmadeck --merge
+.intentfold/charter/engineering.md:126:gh pr view <pr> --repo wang-chonghuan/lemmadeck --json state,mergedAt,mergeCommit
+.intentfold/charter/engineering.md:127:```
+.intentfold/charter/engineering.md:128:
+.intentfold/charter/engineering.md:129:Do not pass `--delete-branch`; IntentFold cap4 deletes the local and remote ticket branches only
+.intentfold/charter/engineering.md:130:after the ticket backend reaches Done.
+.intentfold/charter/engineering.md:131:
+.intentfold/charter/engineering.md:132:**Mechanical defence**
+.intentfold/charter/engineering.md:133:
+.intentfold/charter/engineering.md:134:Run once before handoff:
+.intentfold/charter/engineering.md:135:
+.intentfold/charter/engineering.md:136:```bash
+.intentfold/charter/engineering.md:137:python3 ssot-resources/audit.py
+.intentfold/charter/engineering.md:138:python3 ssot-resources/soviet10year-textbooks/validate.py
+.intentfold/charter/engineering.md:139:node --test .agents/skills/lib/content-db.test.mjs
+.intentfold/charter/engineering.md:140:cd app && npm run test && npm run build
+.intentfold/charter/engineering.md:141:```
+.intentfold/charter/engineering.md:142:
+.intentfold/charter/engineering.md:143:There is no separate lint or typecheck script today; `vite build` is the type-error boundary.
+.intentfold/charter/engineering.md:144:
+.intentfold/charter/engineering.md:145:**Architecture and generation**
+.intentfold/charter/engineering.md:146:
+.intentfold/charter/engineering.md:147:- Build output: `app/.output` (`app/.output/server/index.mjs`).
+.intentfold/charter/engineering.md:148:- Content generation: never hand-write `sr_*` rows. Math starts at
+.intentfold/charter/engineering.md:149:  `.claude/skills/ld-s10y-lesson/SKILL.md`, delegates modern figures to `ld-s10y-image`, delegates
+.intentfold/charter/engineering.md:150:  answers and interaction specifications to `ld-s10y-answer`, and persists only through those
+.intentfold/charter/engineering.md:151:  skills' publishers. Its original scans, TOCs and durable artifacts live under
+.intentfold/charter/engineering.md:152:  `ssot-resources/soviet10year-textbooks/`; its renders, templates and previews live under `.tmp/`.
+.intentfold/charter/engineering.md:153:  Biographies use `sr-story`; retained short-literature English generation uses `sr-voa1500` but
+.intentfold/charter/engineering.md:154:  does not publish a learner-facing application surface.
+.intentfold/charter/engineering.md:155:  Each skill's `SKILL.md` owns its exact generation and persistence commands.
+.intentfold/charter/engineering.md:156:- DB schema: `ssot-schemas/db-schemas/lemmadeck.sql` describes the live schema. It is generated from
+.intentfold/charter/engineering.md:157:  the database, never hand-edited and never applied to it. The inspection command lives in
+.intentfold/charter/engineering.md:158:  `operations.md`.
+.intentfold/charter/engineering.md:159:- `.agents/skills/lib/content-db.mjs` owns DB URL resolution for content scripts under
+.intentfold/charter/engineering.md:160:  `.agents/skills/`. Repository-local S10Y publishers live under `.claude/skills/`, read the
+.intentfold/charter/engineering.md:161:  repo-root `.env`, and must write through `LEMMADECK_DATABASE_URL`.
+.intentfold/charter/engineering.md:162:- `app/src/routeTree.gen.ts` is generated by the TanStack Start plugin and is never hand-edited.
+.intentfold/charter/engineering.md:163:
+.intentfold/charter/engineering.md:164:## Guidance
+.intentfold/charter/engineering.md:165:
+.intentfold/charter/engineering.md:166:**No gratuitous dependencies.** If the existing architecture and stack can implement the requirement,
+.intentfold/charter/engineering.md:167:do not add, remove, or change any library. Solve it with what is here. A dependency change is
+.intentfold/charter/engineering.md:168:admissible only when the existing stack genuinely cannot meet the requirement and the ticket carries
+.intentfold/charter/engineering.md:169:that human decision.
+.intentfold/charter/engineering.md:170:
+.intentfold/charter/engineering.md:171:**Reuse before inventing.** Existing helpers, config paths, schemas, components, and SSOT files come
+.intentfold/charter/engineering.md:172:first. A second way to do something that already has a way is a defect, even when it works.
+.intentfold/charter/engineering.md:173:
+.intentfold/charter/engineering.md:174:**Respect ownership boundaries.** Find the domain lib that already owns the concept before adding a
+.intentfold/charter/engineering.md:175:new one — `curriculum.ts` owns structure and ordering, `quiz.ts` owns practice and judging,
+.intentfold/charter/engineering.md:176:`session*.ts` owns auth. A route file composes; it does not hold domain logic. Anything that touches
+.intentfold/charter/engineering.md:177:the DB goes through `db.ts`'s `sql()` even when a direct query would be shorter.
+.intentfold/charter/engineering.md:178:
+.intentfold/charter/engineering.md:179:**No dirty code.** No TEMP markers, degradation branches, or mocks standing in for a failed external
+.intentfold/charter/engineering.md:180:dependency. A failing external premise is a stop and a report.
+.intentfold/charter/engineering.md:181:
+.intentfold/charter/engineering.md:182:**Surgical changes.** Touch what the ticket needs and nothing else. Do not improve adjacent code,
+.intentfold/charter/engineering.md:183:reformat unrelated files, or fix things noticed in passing.
+.intentfold/charter/engineering.md:184:
+.intentfold/charter/engineering.md:185:**Uncertainty surfaces.** Prefer stopping and asking over inventing a fallback or hidden compatibility
+.intentfold/charter/engineering.md:186:layer.
+.intentfold/charter/engineering.md:187:
+.intentfold/charter/engineering.md:188:**DB access is server-only.** All reads and writes go through `app/src/lib/db.ts`'s `sql()`; the
+.intentfold/charter/engineering.md:189:browser never holds the connection string.
+.intentfold/charter/engineering.md:190:
+.intentfold/charter/engineering.md:191:**Content is DB-driven and skill-generated.** Never hand-write `sr_*` rows and never apply a schema
+.intentfold/charter/engineering.md:192:change ad hoc; both have exactly one path named in `## Tools`.
+.intentfold/charter/engineering.md:193:
+.intentfold/charter/engineering.md:194:**Resource ownership is explicit.** Commit product resources only below `ssot-resources/`. Put
+.intentfold/charter/engineering.md:195:rebuildable renders, templates, previews, batch outputs and backups below `.tmp/`, and never make a
+.intentfold/charter/engineering.md:196:durable artifact depend on a `.tmp/` path. Keep schemas, profiles, dependency manifests and test
+.intentfold/charter/engineering.md:197:fixtures with the code that owns them.
+.intentfold/charter/engineering.md:198:
+.intentfold/charter/engineering.md:199:**Secrets.** `.env` holds DB and API secrets and is git-ignored. Never stage it, commit it, or echo
+.intentfold/charter/engineering.md:200:its contents; verify it is not staged before every commit.
+.intentfold/charter/engineering.md:201:
+.intentfold/charter/engineering.md:202:**Complexity hotspots**
+.intentfold/charter/engineering.md:203:
+.intentfold/charter/engineering.md:204:TODO(human) — the former architecture dimension's `Complexity hotspots` section was an empty
+.intentfold/charter/engineering.md:205:placeholder awaiting real aborts. Lessons from things that went wrong belong here; it is what makes
+.intentfold/charter/engineering.md:206:the next grill sharper.
+.intentfold/charter/engineering.md:207:
+.intentfold/charter/engineering.md:208:## Redlines
+.intentfold/charter/engineering.md:209:
+.intentfold/charter/engineering.md:210:1. **Committing credentials, tokens, connection strings, or hidden account data** — forbidden
+.intentfold/charter/engineering.md:211:   outright, in source, mocks, ticket artifacts, and commits alike. Concretely: `.env` and `app/.env`
+.intentfold/charter/engineering.md:212:   never appear in `git status`'s staged set.
+.intentfold/charter/engineering.md:213:2. **Discarding a change already present in a dirty worktree** — forbidden outright. It is the
+.intentfold/charter/engineering.md:214:   human's work until they say otherwise.
+.intentfold/charter/engineering.md:215:3. **Sending an answer key to the client** — forbidden outright. The quiz question fetchers
+.intentfold/charter/engineering.md:216:   (`getLessonQuestions` / `getStoryQuestions` in `app/src/lib/quiz.ts`) must never include
+.intentfold/charter/engineering.md:217:   `correct_index`, `answer`, or `accept` in what they return; correctness is judged server-side in
+.intentfold/charter/engineering.md:218:   the `record*` server functions.
+.intentfold/charter/engineering.md:219:4. **Opening a database connection anywhere under `app/` other than `app/src/lib/db.ts`** —
+.intentfold/charter/engineering.md:220:   forbidden outright. A second `postgres` client, or a connection string reaching any file under
+.intentfold/charter/engineering.md:221:   `app/src/routes/` or any `.tsx`, is the crossing this names. Content scripts under
+.intentfold/charter/engineering.md:222:   `.agents/skills/` are node CLIs governed by entry 9.
+.intentfold/charter/engineering.md:223:5. **Adding, removing, or changing a dependency** — not without the human's explicit approval, and
+.intentfold/charter/engineering.md:224:   only when a ticket carries that decision.
+.intentfold/charter/engineering.md:225:6. **Hand-editing a generated file** — forbidden outright: `app/src/routeTree.gen.ts`, anything under
+.intentfold/charter/engineering.md:226:   `app/.output/`.
+.intentfold/charter/engineering.md:227:7. **Changing the DB schema anywhere other than `ssot-schemas/db-schemas/lemmadeck.sql`** —
+.intentfold/charter/engineering.md:228:   forbidden outright. Ad hoc `ALTER`/`CREATE` against the shared server is drift.
+.intentfold/charter/engineering.md:229:8. **Using a database connection other than `LEMMADECK_DATABASE_URL` for application or content
+.intentfold/charter/engineering.md:230:   access** — forbidden outright. `DATABASE_URL` and `EASYAPP_DATABASE_URL` are not aliases;
+.intentfold/charter/engineering.md:231:   same-named schemas on other servers are not the product database.
+.intentfold/charter/engineering.md:232:9. **A content script under `.agents/skills/` calling `postgres(` directly** — forbidden outright.
+.intentfold/charter/engineering.md:233:   Every content script connects through `.agents/skills/lib/content-db.mjs`.
+.intentfold/charter/engineering.md:234:10. **Adding a repo-root `package.json`, or a second application** — not without the human's explicit
+.intentfold/charter/engineering.md:235:    approval. The standalone-`app/` layout is what the root `Dockerfile` builds.
+.intentfold/charter/engineering.md:236:11. **Committing a product resource outside `ssot-resources/`, or making durable content depend on
+.intentfold/charter/engineering.md:237:    `.tmp/`** — forbidden outright. Code-owned schemas, profiles, dependency files and test fixtures
+.intentfold/charter/engineering.md:238:    remain beside code. `python3 ssot-resources/audit.py` is the mechanical boundary.
+/Users/yong/.agents/skills/intentfold/SKILL.md:1:---
+/Users/yong/.agents/skills/intentfold/SKILL.md:2:name: intentfold
+/Users/yong/.agents/skills/intentfold/SKILL.md:3:description: Load for ticket-based product development with the .intentfold harness, from initialization and filing through development, handoff and closure; also for multi-ticket delivery planning with cap5 or supervising one or more workers with cap6. Triggers include "intentfold", "cap1/cap2/cap3/cap3setup/cap3handoff/cap4/cap5/cap6", "开发这个工单", "准备开放开发", "开发完成，做 handoff", "建个工单", "拆单安排并行", "监督工人直到完成", and charter-directed deployment of merged code.
+/Users/yong/.agents/skills/intentfold/SKILL.md:4:---
+/Users/yong/.agents/skills/intentfold/SKILL.md:5:
+/Users/yong/.agents/skills/intentfold/SKILL.md:6:# intentfold
+/Users/yong/.agents/skills/intentfold/SKILL.md:7:
+/Users/yong/.agents/skills/intentfold/SKILL.md:8:One ticket at a time **per developer session**; a supervisor can coordinate several. `.intentfold/`
+/Users/yong/.agents/skills/intentfold/SKILL.md:9:holds what persists, the ticket backend — **plane or linear**,
+/Users/yong/.agents/skills/intentfold/SKILL.md:10:whichever `project.json` names — holds the tickets. The ticket's acceptance criteria define acceptance;
+/Users/yong/.agents/skills/intentfold/SKILL.md:11:the project's required mechanical checks still apply.
+/Users/yong/.agents/skills/intentfold/SKILL.md:12:
+/Users/yong/.agents/skills/intentfold/SKILL.md:13:The release version lives in `intentfold.json` (`version`). Usage declarations continue to record
+/Users/yong/.agents/skills/intentfold/SKILL.md:14:the exact Git commit SHA, not this release number.
+/Users/yong/.agents/skills/intentfold/SKILL.md:15:
+/Users/yong/.agents/skills/intentfold/SKILL.md:16:**IntentFold** is the harness brand for three independent controls a project may name in
+/Users/yong/.agents/skills/intentfold/SKILL.md:17:`charter/engineering.md`'s `## Tools`: an IntentFold process declaration, an overlap check before rebasing,
+/Users/yong/.agents/skills/intentfold/SKILL.md:18:and an optional cap4 takeover gate before merging. The declaration records the ticket, repository,
+/Users/yong/.agents/skills/intentfold/SKILL.md:19:and IntentFold version. The verifier checks the committed `handoff.md` directly from the PR head. It
+/Users/yong/.agents/skills/intentfold/SKILL.md:20:is process evidence, not employee identity or proof that a binary ran.
+/Users/yong/.agents/skills/intentfold/SKILL.md:21:The overlap check detects when upstream and ticket changes touch the same code region. The ticket
+/Users/yong/.agents/skills/intentfold/SKILL.md:22:developer resolves these overlaps and Git conflicts, verifies the result, and continues without an
+/Users/yong/.agents/skills/intentfold/SKILL.md:23:additional team-leader approval. A cap4 takeover gate remains pending during
+/Users/yong/.agents/skills/intentfold/SKILL.md:24:normal PR and review events, then releases the current head only after cap4 has armed auto-merge and
+/Users/yong/.agents/skills/intentfold/SKILL.md:25:explicitly dispatched the trusted verifier.
+/Users/yong/.agents/skills/intentfold/SKILL.md:26:
+/Users/yong/.agents/skills/intentfold/SKILL.md:27:## Specification first
+/Users/yong/.agents/skills/intentfold/SKILL.md:28:
+/Users/yong/.agents/skills/intentfold/SKILL.md:29:During planning and implementation, **do not use existing unit tests, for example unit tests
+/Users/yong/.agents/skills/intentfold/SKILL.md:30:under `tests/`, as a reference for designing or changing code**. Do not infer requirements
+/Users/yong/.agents/skills/intentfold/SKILL.md:31:from their assertions or preserve an obsolete implementation just to satisfy them. Design
+/Users/yong/.agents/skills/intentfold/SKILL.md:32:from the approved ticket, Charter and valid external contracts; refactoring and optimization
+/Users/yong/.agents/skills/intentfold/SKILL.md:33:remain available within that scope.
+/Users/yong/.agents/skills/intentfold/SKILL.md:34:
+/Users/yong/.agents/skills/intentfold/SKILL.md:35:Run the project's required unit tests **after implementation is ready for verification**.
+/Users/yong/.agents/skills/intentfold/SKILL.md:36:When one fails, judge both the test and the code against those same specifications:
+/Users/yong/.agents/skills/intentfold/SKILL.md:37:correct an outdated test or an assertion tied only to replaced implementation details;
+/Users/yong/.agents/skills/intentfold/SKILL.md:38:correct the code when it violates a valid requirement. Do not weaken valid assertions,
+/Users/yong/.agents/skills/intentfold/SKILL.md:39:delete tests merely to get green, or infer expected values from the new code's output.
+/Users/yong/.agents/skills/intentfold/SKILL.md:40:
+/Users/yong/.agents/skills/intentfold/SKILL.md:41:Examples:
+/Users/yong/.agents/skills/intentfold/SKILL.md:42:
+/Users/yong/.agents/skills/intentfold/SKILL.md:43:- **Correct the test:** an approved refactor replaces per-item lookups with one batch
+/Users/yong/.agents/skills/intentfold/SKILL.md:44:  lookup while preserving required results and error behavior. An old unit test in
+/Users/yong/.agents/skills/intentfold/SKILL.md:45:  `tests/` asserts one private-helper call per item. Replace that obsolete assertion
+/Users/yong/.agents/skills/intentfold/SKILL.md:46:  with the required behavior; do not restore the old call pattern.
+/Users/yong/.agents/skills/intentfold/SKILL.md:47:- **Correct the code:** the contract forbids reading another user's private record.
+/Users/yong/.agents/skills/intentfold/SKILL.md:48:  After a refactor, a unit test catches such a read succeeding. Fix the authorization
+/Users/yong/.agents/skills/intentfold/SKILL.md:49:  regression; do not change the test to expect success.
+/Users/yong/.agents/skills/intentfold/SKILL.md:50:
+/Users/yong/.agents/skills/intentfold/SKILL.md:51:This does not prohibit reading production code, running the app, lint/type checks, or
+/Users/yong/.agents/skills/intentfold/SKILL.md:52:consulting authoritative acceptance and API-contract specifications. Classify by purpose,
+/Users/yong/.agents/skills/intentfold/SKILL.md:53:not directory name: `tests/` may also contain those specifications. Required checks still
+/Users/yong/.agents/skills/intentfold/SKILL.md:54:must pass; this rule changes what drives implementation, not the acceptance standard.
+/Users/yong/.agents/skills/intentfold/SKILL.md:55:
+/Users/yong/.agents/skills/intentfold/SKILL.md:56:## Proposed solutions
+/Users/yong/.agents/skills/intentfold/SKILL.md:57:
+/Users/yong/.agents/skills/intentfold/SKILL.md:58:A developable ticket's `## Proposed solution` is advisory, not another requirement.
+/Users/yong/.agents/skills/intentfold/SKILL.md:59:Read it before choosing the implementation route and prefer its applicable parts rather
+/Users/yong/.agents/skills/intentfold/SKILL.md:60:than starting over. Check its assumptions against the actual system; adapt or replace it
+/Users/yong/.agents/skills/intentfold/SKILL.md:61:when incomplete, outdated, infeasible, or unnecessarily complex.
+/Users/yong/.agents/skills/intentfold/SKILL.md:62:
+/Users/yong/.agents/skills/intentfold/SKILL.md:63:Scope, explicit constraints, acceptance criteria and the Charter remain binding. Do not
+/Users/yong/.agents/skills/intentfold/SKILL.md:64:silently demote an explicit user requirement into a suggestion. Explain material departures
+/Users/yong/.agents/skills/intentfold/SKILL.md:65:briefly in the existing plan, draft or handoff; no separate report or extra approval round
+/Users/yong/.agents/skills/intentfold/SKILL.md:66:is needed merely to change a proposal. A proposal neither replaces an agreed approach nor
+/Users/yong/.agents/skills/intentfold/SKILL.md:67:skips the normal alignment step, and matching it is not an acceptance criterion.
+/Users/yong/.agents/skills/intentfold/SKILL.md:68:
+/Users/yong/.agents/skills/intentfold/SKILL.md:69:## Capability freshness gate
+/Users/yong/.agents/skills/intentfold/SKILL.md:70:
+/Users/yong/.agents/skills/intentfold/SKILL.md:71:Before executing **any** IntentFold capability — cap1, cap2, cap3, cap3setup, cap3handoff, cap4, cap5, or cap6 —
+/Users/yong/.agents/skills/intentfold/SKILL.md:72:run this once for the current capability invocation:
+/Users/yong/.agents/skills/intentfold/SKILL.md:73:
+/Users/yong/.agents/skills/intentfold/SKILL.md:74:```bash
+/Users/yong/.agents/skills/intentfold/SKILL.md:75:skillhost update narrative-skills --agent <current-agent>
+/Users/yong/.agents/skills/intentfold/SKILL.md:76:```
+/Users/yong/.agents/skills/intentfold/SKILL.md:77:
+/Users/yong/.agents/skills/intentfold/SKILL.md:78:Use the current runtime's SkillHost agent name (`codex`, `claude`, `opencode`, `copilot`,
+/Users/yong/.agents/skills/intentfold/SKILL.md:79:`openclaw`, or `hermes`). If SkillHost is unavailable or the update fails, stop and report the
+/Users/yong/.agents/skills/intentfold/SKILL.md:80:failure; do not continue the capability with a stale skill. After a successful update, re-read the
+/Users/yong/.agents/skills/intentfold/SKILL.md:81:active SkillHost-linked `intentfold/SKILL.md` and the selected capability reference before
+/Users/yong/.agents/skills/intentfold/SKILL.md:82:continuing. That re-read does not trigger a second update in the same invocation.
+/Users/yong/.agents/skills/intentfold/SKILL.md:83:Recurring cap6 inspections and resumes of that inspection loop are the same invocation,
+/Users/yong/.agents/skills/intentfold/SKILL.md:84:not reasons to update the skill at each inspection. A newly invoked child capability keeps its own gate.
+/Users/yong/.agents/skills/intentfold/SKILL.md:85:
+/Users/yong/.agents/skills/intentfold/SKILL.md:86:## Start here — what is being asked?
+/Users/yong/.agents/skills/intentfold/SKILL.md:87:
+/Users/yong/.agents/skills/intentfold/SKILL.md:88:**Read this table before anything else and go where it points.** Not every request that mentions this
+/Users/yong/.agents/skills/intentfold/SKILL.md:89:skill is one of its capabilities, and forcing one onto the nearest capability is the most common
+/Users/yong/.agents/skills/intentfold/SKILL.md:90:way this skill gets misused.
+/Users/yong/.agents/skills/intentfold/SKILL.md:91:
+/Users/yong/.agents/skills/intentfold/SKILL.md:92:| The human wants… | Go to |
+/Users/yong/.agents/skills/intentfold/SKILL.md:93:|---|---|
+/Users/yong/.agents/skills/intentfold/SKILL.md:94:| a `.intentfold/` harness in this repo | **cap1** — `references/capability-1-init/init.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:95:| a ticket filed | **cap2** — `references/capability-2-ticket/create-ticket.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:96:| IntentFold to develop a ticket autonomously, end to end — including a generic "开发这个工单" | **cap3** — `references/capability-3-develop/dev.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:97:| the required IntentFold setup before vibe coding or another development skill | **cap3setup** — `references/capability-3-setup/setup.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:98:| completed open-development work verified and handed off | **cap3handoff** — `references/capability-3-handoff/handoff.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:99:| a verified ticket merged, landed, closed | **cap4** — `references/capability-4-close/close.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:100:| a goal organized into the necessary tickets, parallel groups and dependencies | **cap5** — `references/capability-5-orchestrate/orchestrate.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:101:| one existing ticket/worker, or an epic's workers, supervised through completion | **cap6** — `references/capability-6-supervise/supervise.md`; no mandatory cap5 or epic |
+/Users/yong/.agents/skills/intentfold/SKILL.md:102:| **to deploy** — "重新部署", "发布一下", "deploy this" | **Not a capability. Do not file a ticket.** See *Deploying on its own* below |
+/Users/yong/.agents/skills/intentfold/SKILL.md:103:| the app run, a page looked at, a log read | **Nothing here.** Follow `charter/operations.md` and do it |
+/Users/yong/.agents/skills/intentfold/SKILL.md:104:| a question answered about this project | **Nothing here.** Read `charter/`, answer, stop |
+/Users/yong/.agents/skills/intentfold/SKILL.md:105:| a code change, with no ticket for it | **cap2 first**, then cap3 or cap3setup. This is the case the no-ticket rule is for |
+/Users/yong/.agents/skills/intentfold/SKILL.md:106:
+/Users/yong/.agents/skills/intentfold/SKILL.md:107:When the request fits none of these, say so and ask — **do not map it onto the closest capability.**
+/Users/yong/.agents/skills/intentfold/SKILL.md:108:
+/Users/yong/.agents/skills/intentfold/SKILL.md:109:## Supervised delivery
+/Users/yong/.agents/skills/intentfold/SKILL.md:110:
+/Users/yong/.agents/skills/intentfold/SKILL.md:111:For cap5/cap6 and their explicitly supervised children, read
+/Users/yong/.agents/skills/intentfold/SKILL.md:112:`references/common/supervision.md`. It is the scoped override for finish, Grill, recoverable
+/Users/yong/.agents/skills/intentfold/SKILL.md:113:stops, the delivery decision and next-ticket selection below. Defaults are **no recurring
+/Users/yong/.agents/skills/intentfold/SKILL.md:114:monitoring, delegated ordinary decisions, and `finish: review`**: develop and verify, then
+/Users/yong/.agents/skills/intentfold/SKILL.md:115:keep the preview ports running for human review. Requested monitoring runs every **10 minutes**;
+/Users/yong/.agents/skills/intentfold/SKILL.md:116:automatic merge/closure or deployment requires its own explicit authorization.
+/Users/yong/.agents/skills/intentfold/SKILL.md:117:Unsupervised cap1-cap4 behavior is unchanged.
+/Users/yong/.agents/skills/intentfold/SKILL.md:118:
+/Users/yong/.agents/skills/intentfold/SKILL.md:119:cap5's arrangement must pass `references/gate-5-orchestrate/gate.md` inline before filing
+/Users/yong/.agents/skills/intentfold/SKILL.md:120:or dispatch. cap6 reuses the existing handoff decision, not a new review pipeline.
+/Users/yong/.agents/skills/intentfold/SKILL.md:121:Session names, model resolution, bootstrap and opt-in recurring continuation live only in
+/Users/yong/.agents/skills/intentfold/SKILL.md:122:`references/common/supervision-sessions.md`.
+/Users/yong/.agents/skills/intentfold/SKILL.md:123:
+/Users/yong/.agents/skills/intentfold/SKILL.md:124:## Deploying on its own
+/Users/yong/.agents/skills/intentfold/SKILL.md:125:
+/Users/yong/.agents/skills/intentfold/SKILL.md:126:Deploying already-merged code is **not a product change and needs no ticket**. `charter/operations.md`
+/Users/yong/.agents/skills/intentfold/SKILL.md:127:says it in its own words: a ticket ends at merge, and deploying is a separate, deliberate act. Three
+/Users/yong/.agents/skills/intentfold/SKILL.md:128:steps, and this skill contributes nothing else:
+/Users/yong/.agents/skills/intentfold/SKILL.md:129:
+/Users/yong/.agents/skills/intentfold/SKILL.md:130:1. Read `charter/operations.md`, including its `## Redlines`. A first-time or destructive deploy needs the
+/Users/yong/.agents/skills/intentfold/SKILL.md:131:   human; a routine redeploy of an already-deployed service does not.
+/Users/yong/.agents/skills/intentfold/SKILL.md:132:2. Do exactly what `operations.md` says. No assumed platform, no invented command. If it does not say how,
+/Users/yong/.agents/skills/intentfold/SKILL.md:133:   that is a stop.
+/Users/yong/.agents/skills/intentfold/SKILL.md:134:3. **Confirm it actually took** by its post-deploy check — hit the URL, look at the response. *"The
+/Users/yong/.agents/skills/intentfold/SKILL.md:135:   deploy command exited 0"* is not confirmation.
+/Users/yong/.agents/skills/intentfold/SKILL.md:136:
+/Users/yong/.agents/skills/intentfold/SKILL.md:137:The same three steps run inside cap4 for an `auto-deploy` ticket. Standalone, they are the whole job.
+/Users/yong/.agents/skills/intentfold/SKILL.md:138:
+/Users/yong/.agents/skills/intentfold/SKILL.md:139:## Why this skill is shaped the way it is
+/Users/yong/.agents/skills/intentfold/SKILL.md:140:
+/Users/yong/.agents/skills/intentfold/SKILL.md:141:The point of this skill is **speed with a trace**, not assurance. Autonomous cap3 has exactly one
+/Users/yong/.agents/skills/intentfold/SKILL.md:142:thinking step (a grill, before the code); cap3setup instead establishes the required boundary and
+/Users/yong/.agents/skills/intentfold/SKILL.md:143:leaves the development method open. Both routes have one IntentFold proof step in cap3handoff: run
+/Users/yong/.agents/skills/intentfold/SKILL.md:144:the product, check the AC, and look at the result once through the human's request. Everything
+/Users/yong/.agents/skills/intentfold/SKILL.md:145:else is just a record so a human can see later what happened. **No repeated review passes, no
+/Users/yong/.agents/skills/intentfold/SKILL.md:146:regression suite added by the workflow, no timeline, no ADR log.** Multi-ticket coordination belongs to cap5/cap6, not a developer's ticket. If you find
+/Users/yong/.agents/skills/intentfold/SKILL.md:147:yourself about to verify something a second time, stop — that is the thing this skill exists to not
+/Users/yong/.agents/skills/intentfold/SKILL.md:148:do.
+/Users/yong/.agents/skills/intentfold/SKILL.md:149:
+/Users/yong/.agents/skills/intentfold/SKILL.md:150:What this skill refuses is checking that is **frequent, repeated, and scattered everywhere** — the
+/Users/yong/.agents/skills/intentfold/SKILL.md:151:same question asked at five points because nobody could say which point was the real one. It does not
+/Users/yong/.agents/skills/intentfold/SKILL.md:152:refuse checking. **At a major joint, check.** The joints are few and named: before development starts
+/Users/yong/.agents/skills/intentfold/SKILL.md:153:(cap3's grill and route lookup, or cap3setup's boundary briefing), at the cap3handoff proof step, and
+/Users/yong/.agents/skills/intentfold/SKILL.md:154:before an irreversible act in cap4. A check at a joint costs seconds and catches what cannot be
+/Users/yong/.agents/skills/intentfold/SKILL.md:155:undone afterwards; the same check sprinkled through every step is the bureaucracy this skill exists
+/Users/yong/.agents/skills/intentfold/SKILL.md:156:to avoid. Judge a proposed check by **where** it sits, not by whether it is a check.
+/Users/yong/.agents/skills/intentfold/SKILL.md:157:
+/Users/yong/.agents/skills/intentfold/SKILL.md:158:## Persistent layer
+/Users/yong/.agents/skills/intentfold/SKILL.md:159:
+/Users/yong/.agents/skills/intentfold/SKILL.md:160:```text
+/Users/yong/.agents/skills/intentfold/SKILL.md:161:.intentfold/
+/Users/yong/.agents/skills/intentfold/SKILL.md:162:  readme.md            # session entry: what to read, in what order
+/Users/yong/.agents/skills/intentfold/SKILL.md:163:  project.json         # project/main/deploy/tickets + each service's main port and ticket prefix
+/Users/yong/.agents/skills/intentfold/SKILL.md:164:  charter/             # human-owned intent — read it; write it only when the human asks
+/Users/yong/.agents/skills/intentfold/SKILL.md:165:    product.md         #   product purpose, users, value, non-goals
+/Users/yong/.agents/skills/intentfold/SKILL.md:166:    engineering.md     #   architecture, development rules, checks, and landing
+/Users/yong/.agents/skills/intentfold/SKILL.md:167:    ui.md              #   design system and interface constraints
+/Users/yong/.agents/skills/intentfold/SKILL.md:168:    operations.md      #   local runtime, acceptance evidence, deploy, and operations
+/Users/yong/.agents/skills/intentfold/SKILL.md:169:  tickets/<ticket-id>/ # ticket.json (mode/stage/finish/branch/base/ports)  draft.md  plan.md  ac.md
+/Users/yong/.agents/skills/intentfold/SKILL.md:170:                       # grill.md  handoff.md  intentfold-usage.json  rework.md  tmp/
+/Users/yong/.agents/skills/intentfold/SKILL.md:171:  tmp/                 # project scratch
+/Users/yong/.agents/skills/intentfold/SKILL.md:172:```
+/Users/yong/.agents/skills/intentfold/SKILL.md:173:
+/Users/yong/.agents/skills/intentfold/SKILL.md:174:`tmp/` directories and env files are git-ignored; everything else is committed.
+/Users/yong/.agents/skills/intentfold/SKILL.md:175:
+/Users/yong/.agents/skills/intentfold/SKILL.md:176:In commands, `<intentfold-skill>` means the loaded skill directory containing this `SKILL.md`.
+/Users/yong/.agents/skills/intentfold/SKILL.md:177:
+/Users/yong/.agents/skills/intentfold/SKILL.md:178:The four-file Charter contract is exact. A project that still has `charter/readme.md`, `dev.md`,
+/Users/yong/.agents/skills/intentfold/SKILL.md:179:`arch.md`, `runbook.md`, `qa.md`, or `devops.md` has not migrated; cap3 and cap3setup stop rather
+/Users/yong/.agents/skills/intentfold/SKILL.md:180:than interpreting both layouts or combining human-owned files automatically.
+/Users/yong/.agents/skills/intentfold/SKILL.md:181:
+/Users/yong/.agents/skills/intentfold/SKILL.md:182:## The charter's shape — four sections, and how each is used
+/Users/yong/.agents/skills/intentfold/SKILL.md:183:
+/Users/yong/.agents/skills/intentfold/SKILL.md:184:Every charter file is made of these four, always in this order and always all four. They are not
+/Users/yong/.agents/skills/intentfold/SKILL.md:185:strength levels — they are four different things to state, and **each is consumed at a different
+/Users/yong/.agents/skills/intentfold/SKILL.md:186:moment, in a different way**. `.intentfold/readme.md` carries the full rules and the tests for
+/Users/yong/.agents/skills/intentfold/SKILL.md:187:deciding where a line goes; this is what the flow needs to know:
+/Users/yong/.agents/skills/intentfold/SKILL.md:188:
+/Users/yong/.agents/skills/intentfold/SKILL.md:189:| Section | States | The flow's use of it |
+/Users/yong/.agents/skills/intentfold/SKILL.md:190:|---|---|---|
+/Users/yong/.agents/skills/intentfold/SKILL.md:191:| **Contract** | what the artifact is | **referenced while authoring** — built from, never audited against at the end |
+/Users/yong/.agents/skills/intentfold/SKILL.md:192:| **Tools** | commands, paths, ports, URLs, viewports | **looked up at the moment of acting**, run as written; never recalled from earlier in the run, never restated into a plan or a ticket |
+/Users/yong/.agents/skills/intentfold/SKILL.md:193:| **Guidance** | how to do the work | **followed while writing**, judged by the author. **Nothing in this skill reviews a diff against Guidance** — that is deliberate, and adding such a review is the bureaucracy this skill refuses |
+/Users/yong/.agents/skills/intentfold/SKILL.md:194:| **Redlines** | the boundary | **looked up before the action**, table-style, never judged |
+/Users/yong/.agents/skills/intentfold/SKILL.md:195:
+/Users/yong/.agents/skills/intentfold/SKILL.md:196:**All four headings appear in every charter file**, in this order; a section with nothing to say
+/Users/yong/.agents/skills/intentfold/SKILL.md:197:keeps its heading and stays empty. An empty section states that the dimension has nothing of that
+/Users/yong/.agents/skills/intentfold/SKILL.md:198:kind — a missing heading would instead read as "somebody forgot", and it would break the addressing
+/Users/yong/.agents/skills/intentfold/SKILL.md:199:the capabilities rely on. Redlines live in the file whose dimension they belong to; there is **never
+/Users/yong/.agents/skills/intentfold/SKILL.md:200:a separate redline file**.
+/Users/yong/.agents/skills/intentfold/SKILL.md:201:
+/Users/yong/.agents/skills/intentfold/SKILL.md:202:**A rule is worth more mechanised than emphasised.** Where a Contract fact or a Redline can be
+/Users/yong/.agents/skills/intentfold/SKILL.md:203:checked by a command, the charter names that command in `Tools` and the build fails — that beats the
+/Users/yong/.agents/skills/intentfold/SKILL.md:204:same rule written more forcefully, and it is why the flow needs no review pass.
+/Users/yong/.agents/skills/intentfold/SKILL.md:205:
+/Users/yong/.agents/skills/intentfold/SKILL.md:206:**Where the flow touches each section**, once each, and nowhere else:
+/Users/yong/.agents/skills/intentfold/SKILL.md:207:
+/Users/yong/.agents/skills/intentfold/SKILL.md:208:- **cap3 step 1 or cap3setup step 1** reads `Contract` + `Guidance` as the constraints the ticket is
+/Users/yong/.agents/skills/intentfold/SKILL.md:209:  built under.
+/Users/yong/.agents/skills/intentfold/SKILL.md:210:- **cap3 step 4** looks the planned route up against `Redlines` — before any code exists, because an
+/Users/yong/.agents/skills/intentfold/SKILL.md:211:  approval collected afterwards is not an approval.
+/Users/yong/.agents/skills/intentfold/SKILL.md:212:- **cap3setup step 5** briefs the relevant `Redlines` before its open development phase, since
+/Users/yong/.agents/skills/intentfold/SKILL.md:213:  IntentFold does not own a route to look up.
+/Users/yong/.agents/skills/intentfold/SKILL.md:214:- **cap3handoff** reads `Tools` at the moment of acting (start the product, run the checks) and runs
+/Users/yong/.agents/skills/intentfold/SKILL.md:215:  the project's mechanical defence once before the handoff.
+/Users/yong/.agents/skills/intentfold/SKILL.md:216:- **cap4** runs the mechanical defence once on the final branch only when rework or synchronization
+/Users/yong/.agents/skills/intentfold/SKILL.md:217:  requires it, as its close reference specifies. It reads `engineering.md`'s PR commands at the
+/Users/yong/.agents/skills/intentfold/SKILL.md:218:  moment it uses them, and a deploying ticket reads `operations.md`'s `Tools` and `Redlines` at the
+/Users/yong/.agents/skills/intentfold/SKILL.md:219:  moment of deploying.
+/Users/yong/.agents/skills/intentfold/SKILL.md:220:
+/Users/yong/.agents/skills/intentfold/SKILL.md:221:Nothing reads the charter to audit finished work. That is the duplication this arrangement removes.
+/Users/yong/.agents/skills/intentfold/SKILL.md:222:
+/Users/yong/.agents/skills/intentfold/SKILL.md:223:**Requirements stay authoritative in the ticket backend** — read the ticket live each time through
+/Users/yong/.agents/skills/intentfold/SKILL.md:224:**n-plane** or **n-linear** as `project.json` `tickets.system` says. There is no `req.md`. `ac.md` is
+/Users/yong/.agents/skills/intentfold/SKILL.md:225:only the executable check plan and must match the live acceptance criteria. The routing, delegation
+/Users/yong/.agents/skills/intentfold/SKILL.md:226:rule and per-backend content language are in `references/common/ticket-backend.md`; read it before the
+/Users/yong/.agents/skills/intentfold/SKILL.md:227:first ticket read or write of a run.
+/Users/yong/.agents/skills/intentfold/SKILL.md:228:
+/Users/yong/.agents/skills/intentfold/SKILL.md:229:## Ticket types
+/Users/yong/.agents/skills/intentfold/SKILL.md:230:
+/Users/yong/.agents/skills/intentfold/SKILL.md:231:Set by the human when the ticket is filed — or, for a ticket the human wrote by hand in the backend's
+/Users/yong/.agents/skills/intentfold/SKILL.md:232:UI, inferred once from its prose when cap3 or cap3setup structures it
+/Users/yong/.agents/skills/intentfold/SKILL.md:233:(`references/capability-2-ticket/create-ticket.md`, "A ticket someone wrote by hand"). **The agent
+/Users/yong/.agents/skills/intentfold/SKILL.md:234:never changes a type** — in particular never promotes an `express` ticket into the full flow because
+/Users/yong/.agents/skills/intentfold/SKILL.md:235:the work turned out bigger. If a type looks wrong, say so and stop; the human re-decides.
+/Users/yong/.agents/skills/intentfold/SKILL.md:236:Cap5 may select the parent/child types under its explicit orchestration delegation, as cap2 describes.
+/Users/yong/.agents/skills/intentfold/SKILL.md:237:
+/Users/yong/.agents/skills/intentfold/SKILL.md:238:| Type | What it is | Worktree | Autonomous `plan.md` / `ac.md` | Autonomous grill | Proof | `handoff.md` |
+/Users/yong/.agents/skills/intentfold/SKILL.md:239:|---|---|---|---|---|---|---|
+/Users/yong/.agents/skills/intentfold/SKILL.md:240:| **story / enabler / fix** | shipped-code work | yes | yes | yes | playwright AC check | yes |
+/Users/yong/.agents/skills/intentfold/SKILL.md:241:| **chore** | **changes no code** — generating data, changing a configuration, a runtime or dashboard operation | yes | no | no | whatever settles its criterion — usually a command, the running product when only it can show it | yes |
+/Users/yong/.agents/skills/intentfold/SKILL.md:242:| **express** | the human wants to change something **directly on main**, interactively; unavailable when the project requires PRs or IntentFold | **no** | no | no | playwright AC check | yes |
+/Users/yong/.agents/skills/intentfold/SKILL.md:243:| **seed** | an idea or note, never developed | no | no | no | none | no |
+/Users/yong/.agents/skills/intentfold/SKILL.md:244:| **epic** | a multi-ticket delivery outcome and coordination, not code | no | no | no | overall outcome using child evidence | no; backend closing record |
+/Users/yong/.agents/skills/intentfold/SKILL.md:245:
+/Users/yong/.agents/skills/intentfold/SKILL.md:246:cap3setup writes `ac.md` but no IntentFold `plan.md` or grill; the open development middle chooses
+/Users/yong/.agents/skills/intentfold/SKILL.md:247:its own planning and interaction method.
+/Users/yong/.agents/skills/intentfold/SKILL.md:248:An epic stays in the backend: cap5 arranges it, cap6 supervises it, cap4 closes its overall
+/Users/yong/.agents/skills/intentfold/SKILL.md:249:outcome without Git artifacts. It is not a developed type and never enters cap3's worktree flow.
+/Users/yong/.agents/skills/intentfold/SKILL.md:250:
+/Users/yong/.agents/skills/intentfold/SKILL.md:251:**Autonomous cap3 has one alignment with the human before any code, in one of two orders.** When the human opens the run
+/Users/yong/.agents/skills/intentfold/SKILL.md:252:with *"discuss the approach first"*, cap3 talks it through and records the agreed approach in
+/Users/yong/.agents/skills/intentfold/SKILL.md:253:`draft.md`, then plans from it — and does not grill. Otherwise it drafts `plan.md` / `ac.md` first and
+/Users/yong/.agents/skills/intentfold/SKILL.md:254:grills them. Exactly one of the two runs; a draft is what the human reaches for when the ticket is
+/Users/yong/.agents/skills/intentfold/SKILL.md:255:unclear, is wrong, or when they already know how they want it built.
+/Users/yong/.agents/skills/intentfold/SKILL.md:256:
+/Users/yong/.agents/skills/intentfold/SKILL.md:257:Every developed type ends in a `handoff.md` — that is what makes the work readable later, and it is
+/Users/yong/.agents/skills/intentfold/SKILL.md:258:the one artifact none of them skip. A **seed** gets no `tickets/<id>/` directory at all and lives only
+/Users/yong/.agents/skills/intentfold/SKILL.md:259:in the ticket backend.
+/Users/yong/.agents/skills/intentfold/SKILL.md:260:
+/Users/yong/.agents/skills/intentfold/SKILL.md:261:`chore` gets a worktree like any other work even though it writes no code: its output still gets
+/Users/yong/.agents/skills/intentfold/SKILL.md:262:committed, and an isolated checkout is what keeps a half-done configuration change out of main.
+/Users/yong/.agents/skills/intentfold/SKILL.md:263:
+/Users/yong/.agents/skills/intentfold/SKILL.md:264:## The capabilities
+/Users/yong/.agents/skills/intentfold/SKILL.md:265:
+/Users/yong/.agents/skills/intentfold/SKILL.md:266:Paths are in the routing table above; this is what each one is for.
+/Users/yong/.agents/skills/intentfold/SKILL.md:267:
+/Users/yong/.agents/skills/intentfold/SKILL.md:268:1. **cap1 Initialize** — "初始化 intentfold". Lands `.intentfold/` in this repo and pushes it.
+/Users/yong/.agents/skills/intentfold/SKILL.md:269:2. **cap2 File a ticket** — "建个工单". The only birth channel for a product change.
+/Users/yong/.agents/skills/intentfold/SKILL.md:270:3. **cap3 Autonomous development** — the complete built-in path: the same required opening boundary
+/Users/yong/.agents/skills/intentfold/SKILL.md:271:   as cap3setup, IntentFold's own plan / grill / implementation, then the cap3handoff proof boundary.
+/Users/yong/.agents/skills/intentfold/SKILL.md:272:3setup. **cap3setup Open development setup** — creates the worktree, `ticket.json`, `ac.md`, and
+/Users/yong/.agents/skills/intentfold/SKILL.md:273:   boundary briefing, then stops. The middle may be ordinary vibe coding with the current agent or
+/Users/yong/.agents/skills/intentfold/SKILL.md:274:   any other development skill. IntentFold does not own that middle.
+/Users/yong/.agents/skills/intentfold/SKILL.md:275:3handoff. **cap3handoff Verify and hand off** — accepts the committed result of autonomous or open
+/Users/yong/.agents/skills/intentfold/SKILL.md:276:   development, runs the AC and mechanical defence, writes `handoff.md` and the usage declaration,
+/Users/yong/.agents/skills/intentfold/SKILL.md:277:   then finishes per the effective `finish` recorded in `ticket.json`. It does not merge or close the
+/Users/yong/.agents/skills/intentfold/SKILL.md:278:   ticket; that remains cap4.
+/Users/yong/.agents/skills/intentfold/SKILL.md:279:4. **cap4 Close a ticket** — "合了这个工单", "关掉这个工单". Rework record → rebase → merge → stop the
+/Users/yong/.agents/skills/intentfold/SKILL.md:280:   service → sync `.env` → deploy if requested → close → clean up → update the main checkout. **Every irreversible action lives
+/Users/yong/.agents/skills/intentfold/SKILL.md:281:   here.** cap3 calls it directly in an auto mode; in the default 验证模式 the human's approval usually
+/Users/yong/.agents/skills/intentfold/SKILL.md:282:   arrives in a later session, and this is what that session runs.
+/Users/yong/.agents/skills/intentfold/SKILL.md:283:5. **cap5 Orchestrate delivery** — understand/reuse, minimal decomposition, epic and child tickets,
+/Users/yong/.agents/skills/intentfold/SKILL.md:284:   parallel groups and actual dependency conditions. Planning alone does not start workers.
+/Users/yong/.agents/skills/intentfold/SKILL.md:285:6. **cap6 Supervise execution** — bind current work; default to development and a running preview
+/Users/yong/.agents/skills/intentfold/SKILL.md:286:   for human review, without recurring monitoring. When requested, inspect every 10 minutes,
+/Users/yong/.agents/skills/intentfold/SKILL.md:287:   correct drift and advance only to the authorized finish, including closure/deployment if approved.
+/Users/yong/.agents/skills/intentfold/SKILL.md:288:
+/Users/yong/.agents/skills/intentfold/SKILL.md:289:## Finish mode — declared on the ticket when it is filed
+/Users/yong/.agents/skills/intentfold/SKILL.md:290:
+/Users/yong/.agents/skills/intentfold/SKILL.md:291:Carried as the ticket's `Finish` row. **Default is 验证模式, including cap6** — a ticket that says
+/Users/yong/.agents/skills/intentfold/SKILL.md:292:nothing waits for the human after verification. Monitoring alone does not change its finish;
+/Users/yong/.agents/skills/intentfold/SKILL.md:293:supervised delegation uses `references/common/supervision.md`.
+/Users/yong/.agents/skills/intentfold/SKILL.md:294:
+/Users/yong/.agents/skills/intentfold/SKILL.md:295:- **`review` — 验证模式 (default)** — develop, check the AC, then **leave the service running** and
+/Users/yong/.agents/skills/intentfold/SKILL.md:296:  send cap3handoff's review message: the URL, what to check and where, and what was decided for
+/Users/yong/.agents/skills/intentfold/SKILL.md:297:  the human. Do not merge, do not close. Wait.
+/Users/yong/.agents/skills/intentfold/SKILL.md:298:- **`auto-merge` — 自动合并** — the human said so when filing. Develop, check the AC, merge, sync
+/Users/yong/.agents/skills/intentfold/SKILL.md:299:  `.env` back, clean up, close, pick the next ticket and keep going without asking.
+/Users/yong/.agents/skills/intentfold/SKILL.md:300:- **`auto-deploy` — 自动部署** — auto-merge, **then deploy** per `charter/operations.md` and confirm the
+/Users/yong/.agents/skills/intentfold/SKILL.md:301:  deploy actually took, then close and continue.
+/Users/yong/.agents/skills/intentfold/SKILL.md:302:
+/Users/yong/.agents/skills/intentfold/SKILL.md:303:A human instruction when cap3 or cap3setup starts overrides the row for that development run. Resolve
+/Users/yong/.agents/skills/intentfold/SKILL.md:304:the effective value once, record it as `ticket.json` `finish`, and leave a ticket comment when it
+/Users/yong/.agents/skills/intentfold/SKILL.md:305:differs from the row. The description itself is never amended.
+/Users/yong/.agents/skills/intentfold/SKILL.md:306:Supervised next-ticket selection is limited to assigned, dependency-ready work.
+/Users/yong/.agents/skills/intentfold/SKILL.md:307:
+/Users/yong/.agents/skills/intentfold/SKILL.md:308:## Hard rules
+/Users/yong/.agents/skills/intentfold/SKILL.md:309:
+/Users/yong/.agents/skills/intentfold/SKILL.md:310:- **No change to the product without a ticket.** File one first (cap2) if the user asks for a code
+/Users/yong/.agents/skills/intentfold/SKILL.md:311:  change and there is none. **Scope: the repo's shipped content.** Operating what is already landed is
+/Users/yong/.agents/skills/intentfold/SKILL.md:312:  not a product change and needs no ticket — deploying merged code, running the app, reading a log,
+/Users/yong/.agents/skills/intentfold/SKILL.md:313:  answering a question about the project, looking something up in the charter. When in doubt: does it
+/Users/yong/.agents/skills/intentfold/SKILL.md:314:  add a commit to the product? Then it needs a ticket.
+/Users/yong/.agents/skills/intentfold/SKILL.md:315:- **One backend, and it decides the language.** `project.json` `tickets.system` picks plane or linear,
+/Users/yong/.agents/skills/intentfold/SKILL.md:316:  and every ticket read and write goes through that skill — never a hand-written API call. All ticket
+/Users/yong/.agents/skills/intentfold/SKILL.md:317:  text, comments included: **linear → English, required; plane → Chinese by default**, English only
+/Users/yong/.agents/skills/intentfold/SKILL.md:318:  when the human explicitly asks. See `references/common/ticket-backend.md`.
+/Users/yong/.agents/skills/intentfold/SKILL.md:319:- **Autonomous cap3 grills once, before the code, on story / enabler / fix only** —
+/Users/yong/.agents/skills/intentfold/SKILL.md:320:  `references/common/grill.md`. Persist the complete question batch, recommendations and reasons
+/Users/yong/.agents/skills/intentfold/SKILL.md:321:  in the ticket's `grill.md` before asking or self-adjudicating; record answers in that same file.
+/Users/yong/.agents/skills/intentfold/SKILL.md:322:  cap3setup has no IntentFold grill because its development middle is
+/Users/yong/.agents/skills/intentfold/SKILL.md:323:  open. `chore` and `express` have no grill. The grill's coverage is the same in every mode;
+/Users/yong/.agents/skills/intentfold/SKILL.md:324:  default autonomous cap3 asks the human only the questions that pass the grill's bar, one line
+/Users/yong/.agents/skills/intentfold/SKILL.md:325:  each, and continues without stopping when none do;
+/Users/yong/.agents/skills/intentfold/SKILL.md:326:  the agent self-adjudicates **only** when the ticket's `Grill: self` row says the human authorized
+/Users/yong/.agents/skills/intentfold/SKILL.md:327:  it, and stops when it hits a question only a human can answer. The explicit supervised delegation in
+/Users/yong/.agents/skills/intentfold/SKILL.md:328:  `references/common/supervision.md` also grants self-adjudication within its scope.
+/Users/yong/.agents/skills/intentfold/SKILL.md:329:- **Irreversible or externally-consequential actions need the human.** Creating or deleting cloud
+/Users/yong/.agents/skills/intentfold/SKILL.md:330:  resources, publishing publicly, sending mail or messages to real recipients, deleting or polluting
+/Users/yong/.agents/skills/intentfold/SKILL.md:331:  production data, spending money. Route around it, or stop and hand it over — never approximate and
+/Users/yong/.agents/skills/intentfold/SKILL.md:332:  never decide on the human's behalf. This holds on every project; it is not something a charter
+/Users/yong/.agents/skills/intentfold/SKILL.md:333:  grants away.
+/Users/yong/.agents/skills/intentfold/SKILL.md:334:- **Redlines are lookup, and they live in the charter file they belong to** — as that file's closing
+/Users/yong/.agents/skills/intentfold/SKILL.md:335:  `## Redlines` section, which **every charter file carries, empty when there is nothing to forbid**
+/Users/yong/.agents/skills/intentfold/SKILL.md:336:  (the shape is `.intentfold/readme.md`'s; it is stated there and nowhere else). `charter/ui.md` owns
+/Users/yong/.agents/skills/intentfold/SKILL.md:337:  the token-registry one, `charter/operations.md` the deploy ones, and so on. **There is never a separate
+/Users/yong/.agents/skills/intentfold/SKILL.md:338:  `redline.md`**: a cross-cutting file is organised by severity while the rest are
+/Users/yong/.agents/skills/intentfold/SKILL.md:339:  organised by subject, so it attracts every important rule and fills with copies of them. The
+/Users/yong/.agents/skills/intentfold/SKILL.md:340:  prohibitions that hold on every project — destructive external writes, irreversible production data,
+/Users/yong/.agents/skills/intentfold/SKILL.md:341:  spend — are hard rules here instead. Check them before acting; do not ask "is this a big deal?", check
+/Users/yong/.agents/skills/intentfold/SKILL.md:342:  whether the action is listed. Each entry says whether it is forbidden outright or needs the human's
+/Users/yong/.agents/skills/intentfold/SKILL.md:343:  approval.
+/Users/yong/.agents/skills/intentfold/SKILL.md:344:- **The charter is binding, not advisory.** `charter/product.md`, `charter/engineering.md`,
+/Users/yong/.agents/skills/intentfold/SKILL.md:345:  `charter/ui.md`, and `charter/operations.md` are **obeyed**. They are not style suggestions,
+/Users/yong/.agents/skills/intentfold/SKILL.md:346:  defaults to weigh against convenience, or something a deadline overrides. When the ticket cannot
+/Users/yong/.agents/skills/intentfold/SKILL.md:347:  be done without breaking one of them, that is a **stop**: say which rule, say why the ticket needs
+/Users/yong/.agents/skills/intentfold/SKILL.md:348:  it broken, and hand it to the human. Deciding it yourself is never available, and "the charter
+/Users/yong/.agents/skills/intentfold/SKILL.md:349:  didn't literally cover this case" is not permission — ask.
+/Users/yong/.agents/skills/intentfold/SKILL.md:350:- **The charter binds the agent, not the human.** It exists to stop the agent changing things on
+/Users/yong/.agents/skills/intentfold/SKILL.md:351:  its own, not to stop the human changing them. When the human explicitly asks for something the
+/Users/yong/.agents/skills/intentfold/SKILL.md:352:  charter rules out, that request is the authorization to change the charter: amend the rule in
+/Users/yong/.agents/skills/intentfold/SKILL.md:353:  the same ticket so it matches what was asked, and say in the ticket which rule changed and why.
+/Users/yong/.agents/skills/intentfold/SKILL.md:354:  Do not stop to ask for the charter change a second time, and do not file it as "confirm before
+/Users/yong/.agents/skills/intentfold/SKILL.md:355:  changing the charter". The stop above is for conflicts the agent's own route or inference
+/Users/yong/.agents/skills/intentfold/SKILL.md:356:  creates, never for what the human asked for. The every-project hard rules (destructive external
+/Users/yong/.agents/skills/intentfold/SKILL.md:357:  writes, irreversible production data, spend) still need their own explicit approval.
+/Users/yong/.agents/skills/intentfold/SKILL.md:358:- **Charter is human-owned; report drift, do not quietly fix it.** The agent may edit `charter/` when
+/Users/yong/.agents/skills/intentfold/SKILL.md:359:  the human asks for that edit, and only for what they asked. A human request that only works if a
+/Users/yong/.agents/skills/intentfold/SKILL.md:360:  charter rule changes is such an ask, for that rule. What stays forbidden is editing it on
+/Users/yong/.agents/skills/intentfold/SKILL.md:361:  the agent's own initiative — deciding mid-ticket that a rule is inconvenient and rewriting it, or
+/Users/yong/.agents/skills/intentfold/SKILL.md:362:  "correcting" the charter to match code the agent just wrote. Prove the drift, say what is stale,
+/Users/yong/.agents/skills/intentfold/SKILL.md:363:  and let the human decide what the charter should say. The document that constrains every ticket
+/Users/yong/.agents/skills/intentfold/SKILL.md:364:  must not be the document every ticket rewrites to suit itself. The human's preferences are read
+/Users/yong/.agents/skills/intentfold/SKILL.md:365:  from earlier tickets' grill answers and rework asks (`references/common/grill.md`) and are not
+/Users/yong/.agents/skills/intentfold/SKILL.md:366:  written into the charter or any other file.
+/Users/yong/.agents/skills/intentfold/SKILL.md:367:- **IntentFold usage and overlap resolution stay separate.** Usage records the ticket identity,
+/Users/yong/.agents/skills/intentfold/SKILL.md:368:  repository, and IntentFold version once after handoff. It does not identify the PR author, duplicate
+/Users/yong/.agents/skills/intentfold/SKILL.md:369:  Git's content hashing, bind a Git tree, or include an overlap report. The overlap check compares
+/Users/yong/.agents/skills/intentfold/SKILL.md:370:  upstream and ticket code regions; the ticket developer owns resolution and verification, regardless
+/Users/yong/.agents/skills/intentfold/SKILL.md:371:  of PR author. IntentFold does not require an additional team-leader approval for this work.
+/Users/yong/.agents/skills/intentfold/SKILL.md:372:- **Cap4 takeover is not a signature and does not duplicate usage evidence.** When a project
+/Users/yong/.agents/skills/intentfold/SKILL.md:373:  configures it, normal PR and review events leave the required integrity status pending. Cap4 reads
+/Users/yong/.agents/skills/intentfold/SKILL.md:374:  the current head, arms auto-merge first, then dispatches the trusted verifier for that exact head.
+/Users/yong/.agents/skills/intentfold/SKILL.md:375:  A new head invalidates the authorization. The takeover proves only that cap4 controls the merge;
+/Users/yong/.agents/skills/intentfold/SKILL.md:376:  its resumable post-merge steps still establish backend closure and cleanup.
+/Users/yong/.agents/skills/intentfold/SKILL.md:377:- **Legacy IntentFold machinery is a stop.** If `charter/engineering.md` still names a comment-based approval
+/Users/yong/.agents/skills/intentfold/SKILL.md:378:  override, CI private-key signing, a CI-signed full-tree manifest, or a close-marker PR, report the
+/Users/yong/.agents/skills/intentfold/SKILL.md:379:  exact stale entries and wait for a human-authored charter migration. An overlap detector, cap4
+/Users/yong/.agents/skills/intentfold/SKILL.md:380:  takeover dispatch, and combined `intentfold / integrity` check are current controls, not legacy ones.
+/Users/yong/.agents/skills/intentfold/SKILL.md:381:  If an existing project still enforces team-leader overlap approval, report that policy mismatch for
+/Users/yong/.agents/skills/intentfold/SKILL.md:382:  an explicitly authorised migration; do not bypass its required check or fabricate an approval.
+/Users/yong/.agents/skills/intentfold/SKILL.md:383:- **Acceptance follows the AC**, checked against the running product, alongside the project's
+/Users/yong/.agents/skills/intentfold/SKILL.md:384:  existing required checks. Do not add unrelated regression or coverage work. Apply
+/Users/yong/.agents/skills/intentfold/SKILL.md:385:  **Specification first** above when unit tests fail. "The code implements it" is never evidence.
+/Users/yong/.agents/skills/intentfold/SKILL.md:386:- **Cap4 closure conditions are a closed set.** AC must pass, and only the existing explicit
+/Users/yong/.agents/skills/intentfold/SKILL.md:387:  conditions in `references/capability-4-close/close.md` apply. Never add a closure condition,
+/Users/yong/.agents/skills/intentfold/SKILL.md:388:  promote an optional check into a requirement, or infer a gate from a tool's default behavior.
+/Users/yong/.agents/skills/intentfold/SKILL.md:389:  Cap4's reference owns the waiting and commit rules; it is not a new verification round.
+/Users/yong/.agents/skills/intentfold/SKILL.md:390:- **No fake progress.** No TEMP markers, no degradation branches, no mock standing in for a failed
+/Users/yong/.agents/skills/intentfold/SKILL.md:391:  external dependency. A dead credential or unreachable service is a stop, not a workaround.
+/Users/yong/.agents/skills/intentfold/SKILL.md:392:- **Ticket-owned `.env` key changes sync back to the main checkout on every merge**, with the old file
+/Users/yong/.agents/skills/intentfold/SKILL.md:393:  backed up first. Preserve unrelated main-checkout values. Never commit env files. See
+/Users/yong/.agents/skills/intentfold/SKILL.md:394:  `references/common/worktree-env-port.md`.
+/Users/yong/.agents/skills/intentfold/SKILL.md:395:- **A dev server never outlives the run that started it.** Stopped at close, and stopped when a run
+/Users/yong/.agents/skills/intentfold/SKILL.md:396:  stops for any other reason. The only exception is 验证模式, where it is deliberately left running
+/Users/yong/.agents/skills/intentfold/SKILL.md:397:  for the human, or the short supervised delivery checkpoint described in the shared contract;
+/Users/yong/.agents/skills/intentfold/SKILL.md:398:  then cap4 kills it. Kill by the port `handoff.md` records as actually used,
+/Users/yong/.agents/skills/intentfold/SKILL.md:399:  not the computed one, and confirm the port is free.
+/Users/yong/.agents/skills/intentfold/SKILL.md:400:- **cap4 first checks whether the PR is already merged, then rebases the ticket branch onto freshly
+/Users/yong/.agents/skills/intentfold/SKILL.md:401:  fetched `origin/<main>` and lands it through the project's pull-request workflow.** Push the
+/Users/yong/.agents/skills/intentfold/SKILL.md:402:  rebased ticket branch explicitly to its remote branch with `--force-with-lease`. When the project
+/Users/yong/.agents/skills/intentfold/SKILL.md:403:  configures cap4 takeover, arm auto-merge for the exact current head before dispatching
+/Users/yong/.agents/skills/intentfold/SKILL.md:404:  authorization for that head; otherwise use the project's named required-check and merge commands.
+/Users/yong/.agents/skills/intentfold/SKILL.md:405:  Never move local `main` as part of another ticket.
+/Users/yong/.agents/skills/intentfold/SKILL.md:406:  The only exception is an express ticket in a project whose charter explicitly has no PR or
+/Users/yong/.agents/skills/intentfold/SKILL.md:407:  IntentFold requirement; cap4 handles that local-main route separately.
+/Users/yong/.agents/skills/intentfold/SKILL.md:408:- **The ticket developer owns overlap and conflict resolution.** When configured, cap4 runs the
+/Users/yong/.agents/skills/intentfold/SKILL.md:409:  overlap detector before rebasing onto current remote main. Overlap is an inspection signal, not an
+/Users/yong/.agents/skills/intentfold/SKILL.md:410:  approval gate. Resolve using both branches' intent, preserve unrelated upstream changes, verify
+/Users/yong/.agents/skills/intentfold/SKILL.md:411:  affected criteria, and continue cap4 without an additional team-leader approval. See cap4 step 3.
+/Users/yong/.agents/skills/intentfold/SKILL.md:412:- **Unresolvable intent is a stop, not every Git conflict.** Do not blindly select ours or theirs.
+/Users/yong/.agents/skills/intentfold/SKILL.md:413:  If the intended combined behaviour cannot be established, abort the rebase, retain the branch and
+/Users/yong/.agents/skills/intentfold/SKILL.md:414:  worktree, and ask the human with the conflict evidence.
+/Users/yong/.agents/skills/intentfold/SKILL.md:415:- **IntentFold usage is recorded once after the handoff is complete.** The repository verifier checks
+/Users/yong/.agents/skills/intentfold/SKILL.md:416:  the ticket, repository, IntentFold version, and committed `handoff.md`. It does not require
+/Users/yong/.agents/skills/intentfold/SKILL.md:417:  employee registration, an SSH key, or equality between the declaration creator and the PR author.
+/Users/yong/.agents/skills/intentfold/SKILL.md:418:- **Never `rm -rf`.** Worktree deletion is `git worktree remove`'s job; generated artifacts worth
+/Users/yong/.agents/skills/intentfold/SKILL.md:419:  keeping are **moved** out, not removed. Recursive deletes are unnecessary here and are commonly
+/Users/yong/.agents/skills/intentfold/SKILL.md:420:  blocked by local safety policy anyway.
+/Users/yong/.agents/skills/intentfold/SKILL.md:421:- **`handoff.md` freezes at the first-delivery commit.** Commit each human- or authorized
+/Users/yong/.agents/skills/intentfold/SKILL.md:422:  supervisor-requested rework round once, using that ask as the commit message. Do not combine
+/Users/yong/.agents/skills/intentfold/SKILL.md:423:  separate requested rounds into one commit. Cap4's own incidental changes and required records
+/Users/yong/.agents/skills/intentfold/SKILL.md:424:  are different: avoid new commits where possible, otherwise batch them into one final commit,
+/Users/yong/.agents/skills/intentfold/SKILL.md:425:  not one per workflow step. Reconstruct `rework.md` **once** at close from the diff since first
+/Users/yong/.agents/skills/intentfold/SKILL.md:426:  delivery. No per-round bookkeeping artifact. Never edit a frozen handoff to keep it current.
+/Users/yong/.agents/skills/intentfold/SKILL.md:427:
+/Users/yong/.agents/skills/intentfold/SKILL.md:428:## Stop conditions
+/Users/yong/.agents/skills/intentfold/SKILL.md:429:
+/Users/yong/.agents/skills/intentfold/SKILL.md:430:For supervised work, first apply `references/common/supervision.md`: a repo-correctable
+/Users/yong/.agents/skills/intentfold/SKILL.md:431:failure or ordinary design question stays within the delegation. A coordination checkpoint
+/Users/yong/.agents/skills/intentfold/SKILL.md:432:goes to the next inspection only when monitoring is active; otherwise report unresolved
+/Users/yong/.agents/skills/intentfold/SKILL.md:433:blockers in the worker's session, not to an absent supervisor. Only the affected step waits;
+/Users/yong/.agents/skills/intentfold/SKILL.md:434:other authorized work continues. Necessary checks still must pass. The preservation rules
+/Users/yong/.agents/skills/intentfold/SKILL.md:435:below also apply to such checkpoints.
+/Users/yong/.agents/skills/intentfold/SKILL.md:436:
+/Users/yong/.agents/skills/intentfold/SKILL.md:437:**When to stop:** an external premise failed; a redline blocks the only route; self-adjudication hit a
+/Users/yong/.agents/skills/intentfold/SKILL.md:438:question only a human can rule; the AC still fails after three attempts; an unresolved conflict; a
+/Users/yong/.agents/skills/intentfold/SKILL.md:439:required-check failure.
+/Users/yong/.agents/skills/intentfold/SKILL.md:440:
+/Users/yong/.agents/skills/intentfold/SKILL.md:441:**What stopping looks like — the same every time**, so a later session finds a known state:
+/Users/yong/.agents/skills/intentfold/SKILL.md:442:
+/Users/yong/.agents/skills/intentfold/SKILL.md:443:- Leave a ticket comment with the cause and the evidence.
+/Users/yong/.agents/skills/intentfold/SKILL.md:444:- **Ticket stays In Progress.** It is not done and it is not abandoned.
+/Users/yong/.agents/skills/intentfold/SKILL.md:445:- **Worktree and branch stay.** They are what a resumed run picks up; deleting them is what makes the
+/Users/yong/.agents/skills/intentfold/SKILL.md:446:  work unrecoverable.
+/Users/yong/.agents/skills/intentfold/SKILL.md:447:- **Dev server stops**, port confirmed free.
+/Users/yong/.agents/skills/intentfold/SKILL.md:448:- Say plainly in the worker session what is left where; an active cap6 monitor reads that
+/Users/yong/.agents/skills/intentfold/SKILL.md:449:  checkpoint. Without monitoring, report directly to the human.
+/Users/yong/.agents/skills/intentfold/SKILL.md:450:
+/Users/yong/.agents/skills/intentfold/SKILL.md:451:## Partner skills
+/Users/yong/.agents/skills/intentfold/SKILL.md:452:
+/Users/yong/.agents/skills/intentfold/SKILL.md:453:**n-plane** *or* **n-linear** — whichever backend `project.json` names, for every ticket read and write —
+/Users/yong/.agents/skills/intentfold/SKILL.md:454:and **n-grill** (the grill's coverage) are used by the flow itself. Deployment has no assumed
+/Users/yong/.agents/skills/intentfold/SKILL.md:455:tooling — follow whatever `charter/operations.md` says; **n-easyapp** is used only when that file
+/Users/yong/.agents/skills/intentfold/SKILL.md:456:or the human names it.

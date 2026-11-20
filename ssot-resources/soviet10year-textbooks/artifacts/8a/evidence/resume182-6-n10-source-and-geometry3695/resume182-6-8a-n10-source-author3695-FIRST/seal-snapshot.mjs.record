@@ -1,0 +1,46 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const work = path.join(R, '.tmp/resume182-6-8a-n10-source3695-FIRST');
+const author = path.join(R, '.tmp/resume182-6-8a-n10-source-author3695-FIRST');
+const [page, stage] = process.argv.slice(2);
+assert.match(page, /^006[0-3]$/);
+assert.match(stage, /^(author|failure)-FIRST$/);
+const out = path.join(author, `${page}-${stage}-snapshot`);
+fs.mkdirSync(out);
+const pdir = path.join(work, 'draft-root/8a/pages', page);
+const wdir = path.join(work, '8a/pages', page);
+const manifest = [];
+function retain(input, relative) {
+  if (!fs.existsSync(input)) return;
+  const bytes = fs.readFileSync(input);
+  const destination = path.join(out, relative);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.writeFileSync(destination, bytes, { flag: 'wx' });
+  manifest.push({
+    input, path: destination, bytes: bytes.length,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+  });
+}
+for (const file of ['page.md', 'audit.json', 'page.json']) {
+  retain(path.join(pdir, file), file);
+}
+const figures = path.join(wdir, 'figures');
+if (fs.existsSync(figures)) {
+  for (const file of fs.readdirSync(figures)) retain(path.join(figures, file), `figures/${file}`);
+}
+const original = stage === 'author-FIRST'
+  ? path.join(pdir, 'page.md')
+  : path.join(author, `${page}-author-FIRST-snapshot/page.md`);
+retain(original, 'input-coarse-boxes.page.md');
+fs.writeFileSync(path.join(out, 'manifest.record'), JSON.stringify({
+  schema: 'resume182-6/source-snapshot@1', page: Number(page), stage,
+  purpose: 'Immutable actual bytes, not an approval or counter reset.',
+  coarseBoxHeaders: fs.readFileSync(original, 'utf8').split('\n').filter(x => /^<!-- fig /.test(x)),
+  files: manifest,
+}, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ path: out, files: manifest.length, stage }));

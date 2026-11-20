@@ -1,0 +1,549 @@
+.intentfold/charter/operations.md:62:## Tools
+.intentfold/charter/operations.md-63-
+.intentfold/charter/operations.md-64-**Production**
+.intentfold/charter/operations.md-65-
+.intentfold/charter/operations.md-66-- Live URL: `https://lemmadeck.com`; `www` redirects to the apex.
+.intentfold/charter/operations.md-67-- Render origin: `https://lemmadeck.onrender.com`.
+.intentfold/charter/operations.md-68-- Workspace: `intentplex` (`tea-d229rofdiees73d7h4gg`).
+.intentfold/charter/operations.md-69-- Web service: `lemmadeck` (`srv-dapsio9srm7s73an5p60`), Frankfurt, one `0.5c-512mb` instance.
+.intentfold/charter/operations.md-70-- GitHub repository: `wang-chonghuan/lemmadeck`, branch `main`, `autoDeploy=no`.
+.intentfold/charter/operations.md-71-- Health endpoint: `/healthz`, requiring session configuration and the existing Supabase connection;
+.intentfold/charter/operations.md-72-  its response reports the deployed `RENDER_GIT_COMMIT`.
+.intentfold/charter/operations.md-73-- Cloudflare apex and `www`: DNS-only CNAMEs to `lemmadeck.onrender.com`, TTL 300.
+.intentfold/charter/operations.md-74-  Both custom domains are verified by Render, which provides TLS and the `www` redirect.
+.intentfold/charter/operations.md-75-- No Render database, disk, worker, cron, autoscaling, or preview service.
+.intentfold/charter/operations.md-76-- Retired domains `mynatree.com` and `stemrobin.com` serve nothing; their Cloudflare zones remain.
+.intentfold/charter/operations.md-77-
+.intentfold/charter/operations.md-78-**Install**
+.intentfold/charter/operations.md-79-
+.intentfold/charter/operations.md-80-```bash
+.intentfold/charter/operations.md-81-cd app && npm install
+.intentfold/charter/operations.md-82-```
+.intentfold/charter/operations.md-83-
+.intentfold/charter/operations.md-84-The content skills install separately:
+.intentfold/charter/operations.md-85-
+.intentfold/charter/operations.md-86-```bash
+.intentfold/charter/operations.md-87-npm --prefix .agents/skills install
+.intentfold/charter/operations.md-88-npm --prefix .claude/skills/ld-s10y-lesson install
+.intentfold/charter/operations.md-89-```
+.intentfold/charter/operations.md-90-
+.intentfold/charter/operations.md-91-`ld-s10y-lesson` also owns a Python virtual environment; its `SKILL.md` contains the exact `uv`
+.intentfold/charter/operations.md-92-bootstrap command and required packages.
+.intentfold/charter/operations.md-93-
+.intentfold/charter/operations.md-94-**Run locally**
+.intentfold/charter/operations.md-95-
+.intentfold/charter/operations.md-96-The fixed main port is recorded in `.intentfold/project.json` and set in `app/vite.config.ts`. Do not
+.intentfold/charter/operations.md-97-pass `--port` in the main checkout:
+.intentfold/charter/operations.md-98-
+.intentfold/charter/operations.md-99-```bash
+.intentfold/charter/operations.md-100-cd app && npm run dev
+.intentfold/charter/operations.md-101-```
+.intentfold/charter/operations.md-102-
+.intentfold/charter/operations.md-103-For a ticket worktree, resolve the port and pass it to Vite:
+.intentfold/charter/operations.md-104-
+.intentfold/charter/operations.md-105-```bash
+.intentfold/charter/operations.md-106-python3 <intentfold-skill>/scripts/ports.py .intentfold/project.json ticket <ticket-id>
+.intentfold/charter/operations.md-107-cd app && npm run dev -- --port <resolved-web-port>
+.intentfold/charter/operations.md-108-```
+.intentfold/charter/operations.md-109-
+.intentfold/charter/operations.md-110-**Build and tests**
+.intentfold/charter/operations.md-111-
+.intentfold/charter/operations.md-112-```bash
+.intentfold/charter/operations.md-113-cd app && npm run build
+.intentfold/charter/operations.md-114-cd app && npm run start
+.intentfold/charter/operations.md-115-cd app && npm run test
+.intentfold/charter/operations.md-116-cd app && npm run e2e
+.intentfold/charter/operations.md-117-```
+.intentfold/charter/operations.md-118-
+.intentfold/charter/operations.md-119-The combined mechanical-defence command is in `engineering.md`.
+.intentfold/charter/operations.md-120-
+.intentfold/charter/operations.md-121-**Acceptance**
+.intentfold/charter/operations.md-122-
+.intentfold/charter/operations.md-123-Use the Playwright copy installed in `app/`; do not install a second copy at the repo root. After a
+.intentfold/charter/operations.md-124-fresh clone or upgrade:
+.intentfold/charter/operations.md-125-
+.intentfold/charter/operations.md-126-```bash
+.intentfold/charter/operations.md-127-cd app && npx playwright install chromium
+.intentfold/charter/operations.md-128-```
+.intentfold/charter/operations.md-129-
+.intentfold/charter/operations.md-130-Run a ticket-scoped `.mjs` check from `app/` so it resolves the existing Playwright package:
+.intentfold/charter/operations.md-131-
+.intentfold/charter/operations.md-132-```bash
+--
+.intentfold/charter/operations.md:274:## Redlines
+.intentfold/charter/operations.md-275-
+.intentfold/charter/operations.md-276-1. **Recording a criterion as passed when its check did not run** — forbidden outright. An
+.intentfold/charter/operations.md-277-   environment or external limit that stopped the run is recorded exactly as it happened.
+.intentfold/charter/operations.md-278-2. **Writing to the real learner's data from a test** — forbidden outright. Tests use
+.intentfold/charter/operations.md-279-   `sr_users.id = 2`, never `sr_users.id = 1`.
+.intentfold/charter/operations.md-280-3. **Driving `https://lemmadeck.com` during acceptance** — forbidden outright. Signing in, clicking,
+.intentfold/charter/operations.md-281-   submitting, or any other write-capable interaction is prohibited; acceptance runs against
+.intentfold/charter/operations.md-282-   localhost. A read-only GET required by the post-deploy check is allowed.
+.intentfold/charter/operations.md-283-4. **Writing a real password, session secret, or DB connection string into a check script, ticket
+.intentfold/charter/operations.md-284-   artifact, or Charter file** — forbidden outright.
+.intentfold/charter/operations.md-285-5. **Running a destructive statement against `$LEMMADECK_DATABASE_URL`** — `DROP`, `TRUNCATE`, or an
+.intentfold/charter/operations.md-286-   unfiltered `DELETE`/`UPDATE` on any `sr_*` table — not without the human's explicit approval.
+.intentfold/charter/operations.md-287-6. **Creating or deleting cloud resources** — not without the human's explicit approval. Routine
+.intentfold/charter/operations.md-288-   Render releases update only the existing approved service.
+.intentfold/charter/operations.md-289-7. **Deploying for the first time** — not without the human's explicit approval.
+.intentfold/charter/operations.md-290-8. **A deploy that changes more than the image's application code** — not without the human's
+.intentfold/charter/operations.md-291-   explicit approval. This includes a schema statement run against the live database; a root
+.intentfold/charter/operations.md-292-   `Dockerfile` or `infra/` change; a required environment key the container does not already have;
+.intentfold/charter/operations.md-293-   or an ingress or scaling configuration change. Editing the descriptive DDL file without applying
+.intentfold/charter/operations.md-294-   a schema statement is not itself a runtime change.
+.intentfold/charter/operations.md-295-9. **Moving the root `Dockerfile`, or changing its build context away from the repo root** —
+.intentfold/charter/operations.md-296-   forbidden outright.
+.intentfold/charter/operations.md-297-10. **Allowing the production web service to scale to zero or sleep when idle** — forbidden
+.intentfold/charter/operations.md-298-    outright; retain the always-on single-instance baseline.
+.intentfold/charter/operations.md-299-11. **Pointing a production domain at anything new, or changing the `lemmadeck.com` Cloudflare
+.intentfold/charter/operations.md-300-    records or proxy state** — not without the human's explicit approval.
+.intentfold/charter/operations.md-301-12. **Reporting a deploy as done without running the post-deploy check** — forbidden outright.
+.intentfold/charter/operations.md-302-13. **Any action incurring new recurring cost, or a one-off cost above $5** — not without the
+.intentfold/charter/operations.md-303-    human's explicit approval.
+--
+.intentfold/charter/engineering.md:92:## Tools
+.intentfold/charter/engineering.md-93-
+.intentfold/charter/engineering.md-94-**Pull-request landing**
+.intentfold/charter/engineering.md-95-
+.intentfold/charter/engineering.md-96-Worktree tickets land through GitHub pull requests in `wang-chonghuan/lemmadeck`. Substitute the
+.intentfold/charter/engineering.md-97-ticket's recorded values for `<ticket-id>`, `<branch>`, and `<pr>`.
+.intentfold/charter/engineering.md-98-
+.intentfold/charter/engineering.md-99-Find an existing PR:
+.intentfold/charter/engineering.md-100-
+.intentfold/charter/engineering.md-101-```bash
+.intentfold/charter/engineering.md-102-gh pr list --repo wang-chonghuan/lemmadeck --head <branch> --state all \
+.intentfold/charter/engineering.md-103-  --json number,title,url,state,headRefOid,baseRefName,mergeStateStatus,statusCheckRollup
+.intentfold/charter/engineering.md-104-```
+.intentfold/charter/engineering.md-105-
+.intentfold/charter/engineering.md-106-Create one when absent:
+.intentfold/charter/engineering.md-107-
+.intentfold/charter/engineering.md-108-```bash
+.intentfold/charter/engineering.md-109-gh pr create --repo wang-chonghuan/lemmadeck --base main --head <branch> \
+.intentfold/charter/engineering.md-110-  --title "<ticket-id>" --body-file ".intentfold/tickets/<ticket-id>/handoff.md"
+.intentfold/charter/engineering.md-111-```
+.intentfold/charter/engineering.md-112-
+.intentfold/charter/engineering.md-113-Read its current head, state, and checks:
+.intentfold/charter/engineering.md-114-
+.intentfold/charter/engineering.md-115-```bash
+.intentfold/charter/engineering.md-116-gh pr view <pr> --repo wang-chonghuan/lemmadeck \
+.intentfold/charter/engineering.md-117-  --json number,url,state,headRefOid,mergeStateStatus,statusCheckRollup
+.intentfold/charter/engineering.md-118-```
+.intentfold/charter/engineering.md-119-
+.intentfold/charter/engineering.md-120-This repository currently configures no required GitHub checks, branch protection, rulesets,
+.intentfold/charter/engineering.md-121-overlap detector, or cap4 takeover gate. If that changes, update these Tools before landing the
+.intentfold/charter/engineering.md-122-next ticket. Merge with a merge commit, then confirm GitHub reports the merge commit:
+.intentfold/charter/engineering.md-123-
+.intentfold/charter/engineering.md-124-```bash
+.intentfold/charter/engineering.md-125-gh pr merge <pr> --repo wang-chonghuan/lemmadeck --merge
+.intentfold/charter/engineering.md-126-gh pr view <pr> --repo wang-chonghuan/lemmadeck --json state,mergedAt,mergeCommit
+.intentfold/charter/engineering.md-127-```
+.intentfold/charter/engineering.md-128-
+.intentfold/charter/engineering.md-129-Do not pass `--delete-branch`; IntentFold cap4 deletes the local and remote ticket branches only
+.intentfold/charter/engineering.md-130-after the ticket backend reaches Done.
+.intentfold/charter/engineering.md-131-
+.intentfold/charter/engineering.md-132-**Mechanical defence**
+.intentfold/charter/engineering.md-133-
+.intentfold/charter/engineering.md-134-Run once before handoff:
+.intentfold/charter/engineering.md-135-
+.intentfold/charter/engineering.md-136-```bash
+.intentfold/charter/engineering.md-137-python3 ssot-resources/audit.py
+.intentfold/charter/engineering.md-138-python3 ssot-resources/soviet10year-textbooks/validate.py
+.intentfold/charter/engineering.md-139-node --test .agents/skills/lib/content-db.test.mjs
+.intentfold/charter/engineering.md-140-cd app && npm run test && npm run build
+.intentfold/charter/engineering.md-141-```
+.intentfold/charter/engineering.md-142-
+.intentfold/charter/engineering.md-143-There is no separate lint or typecheck script today; `vite build` is the type-error boundary.
+.intentfold/charter/engineering.md-144-
+.intentfold/charter/engineering.md-145-**Architecture and generation**
+.intentfold/charter/engineering.md-146-
+.intentfold/charter/engineering.md-147-- Build output: `app/.output` (`app/.output/server/index.mjs`).
+.intentfold/charter/engineering.md-148-- Content generation: never hand-write `sr_*` rows. Math starts at
+.intentfold/charter/engineering.md-149-  `.claude/skills/ld-s10y-lesson/SKILL.md`, delegates modern figures to `ld-s10y-image`, delegates
+.intentfold/charter/engineering.md-150-  answers and interaction specifications to `ld-s10y-answer`, and persists only through those
+.intentfold/charter/engineering.md-151-  skills' publishers. Its original scans, TOCs and durable artifacts live under
+.intentfold/charter/engineering.md-152-  `ssot-resources/soviet10year-textbooks/`; its renders, templates and previews live under `.tmp/`.
+.intentfold/charter/engineering.md-153-  Biographies use `sr-story`; retained short-literature English generation uses `sr-voa1500` but
+.intentfold/charter/engineering.md-154-  does not publish a learner-facing application surface.
+.intentfold/charter/engineering.md-155-  Each skill's `SKILL.md` owns its exact generation and persistence commands.
+.intentfold/charter/engineering.md-156-- DB schema: `ssot-schemas/db-schemas/lemmadeck.sql` describes the live schema. It is generated from
+.intentfold/charter/engineering.md-157-  the database, never hand-edited and never applied to it. The inspection command lives in
+.intentfold/charter/engineering.md-158-  `operations.md`.
+.intentfold/charter/engineering.md-159-- `.agents/skills/lib/content-db.mjs` owns DB URL resolution for content scripts under
+.intentfold/charter/engineering.md-160-  `.agents/skills/`. Repository-local S10Y publishers live under `.claude/skills/`, read the
+.intentfold/charter/engineering.md-161-  repo-root `.env`, and must write through `LEMMADECK_DATABASE_URL`.
+.intentfold/charter/engineering.md-162-- `app/src/routeTree.gen.ts` is generated by the TanStack Start plugin and is never hand-edited.
+--
+.intentfold/charter/engineering.md:208:## Redlines
+.intentfold/charter/engineering.md-209-
+.intentfold/charter/engineering.md-210-1. **Committing credentials, tokens, connection strings, or hidden account data** — forbidden
+.intentfold/charter/engineering.md-211-   outright, in source, mocks, ticket artifacts, and commits alike. Concretely: `.env` and `app/.env`
+.intentfold/charter/engineering.md-212-   never appear in `git status`'s staged set.
+.intentfold/charter/engineering.md-213-2. **Discarding a change already present in a dirty worktree** — forbidden outright. It is the
+.intentfold/charter/engineering.md-214-   human's work until they say otherwise.
+.intentfold/charter/engineering.md-215-3. **Sending an answer key to the client** — forbidden outright. The quiz question fetchers
+.intentfold/charter/engineering.md-216-   (`getLessonQuestions` / `getStoryQuestions` in `app/src/lib/quiz.ts`) must never include
+.intentfold/charter/engineering.md-217-   `correct_index`, `answer`, or `accept` in what they return; correctness is judged server-side in
+.intentfold/charter/engineering.md-218-   the `record*` server functions.
+.intentfold/charter/engineering.md-219-4. **Opening a database connection anywhere under `app/` other than `app/src/lib/db.ts`** —
+.intentfold/charter/engineering.md-220-   forbidden outright. A second `postgres` client, or a connection string reaching any file under
+.intentfold/charter/engineering.md-221-   `app/src/routes/` or any `.tsx`, is the crossing this names. Content scripts under
+.intentfold/charter/engineering.md-222-   `.agents/skills/` are node CLIs governed by entry 9.
+.intentfold/charter/engineering.md-223-5. **Adding, removing, or changing a dependency** — not without the human's explicit approval, and
+.intentfold/charter/engineering.md-224-   only when a ticket carries that decision.
+.intentfold/charter/engineering.md-225-6. **Hand-editing a generated file** — forbidden outright: `app/src/routeTree.gen.ts`, anything under
+.intentfold/charter/engineering.md-226-   `app/.output/`.
+.intentfold/charter/engineering.md-227-7. **Changing the DB schema anywhere other than `ssot-schemas/db-schemas/lemmadeck.sql`** —
+.intentfold/charter/engineering.md-228-   forbidden outright. Ad hoc `ALTER`/`CREATE` against the shared server is drift.
+.intentfold/charter/engineering.md-229-8. **Using a database connection other than `LEMMADECK_DATABASE_URL` for application or content
+.intentfold/charter/engineering.md-230-   access** — forbidden outright. `DATABASE_URL` and `EASYAPP_DATABASE_URL` are not aliases;
+.intentfold/charter/engineering.md-231-   same-named schemas on other servers are not the product database.
+.intentfold/charter/engineering.md-232-9. **A content script under `.agents/skills/` calling `postgres(` directly** — forbidden outright.
+.intentfold/charter/engineering.md-233-   Every content script connects through `.agents/skills/lib/content-db.mjs`.
+.intentfold/charter/engineering.md-234-10. **Adding a repo-root `package.json`, or a second application** — not without the human's explicit
+.intentfold/charter/engineering.md-235-    approval. The standalone-`app/` layout is what the root `Dockerfile` builds.
+.intentfold/charter/engineering.md-236-11. **Committing a product resource outside `ssot-resources/`, or making durable content depend on
+.intentfold/charter/engineering.md-237-    `.tmp/`** — forbidden outright. Code-owned schemas, profiles, dependency files and test fixtures
+.intentfold/charter/engineering.md-238-    remain beside code. `python3 ssot-resources/audit.py` is the mechanical boundary.
+--
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:22:JUDGES = {"exact", "numeric", "expression"}
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-23-MODERN_US_PROFILE = (
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-24-    Path(__file__).resolve().parents[2]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-25-    / "ld-s10y-lesson"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-26-    / "profiles"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-27-    / "modern-us-neutral.json"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-28-)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:29:GRADING = {"auto", "ungraded"}
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-30-SOURCES = {"book", "derived", "reviewed"}
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-31-DEFAULT_ROOT = "ssot-resources/soviet10year-textbooks/artifacts"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-32-DEFAULT_WORK = ".tmp/ld-s10y-answer"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-33-TEXTBOOK_ROOT = (
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-34-    Path(__file__).resolve().parents[4]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-35-    / "ssot-resources"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-36-    / "soviet10year-textbooks"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-37-)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-38-REPO = Path(__file__).resolve().parents[4]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-39-MATHLIVE_CHECK = Path(__file__).resolve().parent / "check_mathlive_exact.mjs"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-40-OPTIONAL_IDENTITY_FIELDS = ("source_number", "group_id")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-41-PRESERVED_IDENTITY_FIELDS = ("number", "group", "figure_refs", "figures", "numbering_erratum")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-42-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-43-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-44-def load(path: Path) -> dict:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-45-    try:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-46-        return json.loads(path.read_text(encoding="utf-8"))
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-47-    except FileNotFoundError:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-48-        raise SystemExit(f"ERROR: 缺少 {path}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-49-    except json.JSONDecodeError as error:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-50-        raise SystemExit(f"ERROR: {path} 不是有效 JSON: {error}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-51-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-52-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-53-def dump(path: Path, value: object) -> None:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-54-    path.parent.mkdir(parents=True, exist_ok=True)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-55-    path.write_text(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-56-        json.dumps(value, ensure_ascii=False, indent=2) + "\n",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-57-        encoding="utf-8",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-58-    )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-59-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-60-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-61-def selected_lessons(args: argparse.Namespace) -> list[str]:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-62-    if not args.lesson:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-63-        raise SystemExit("ERROR: 至少指定一个 --lesson")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-64-    if len(args.lesson) != len(set(args.lesson)):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-65-        raise SystemExit("ERROR: --lesson 有重复")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-66-    return args.lesson
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-67-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-68-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-69-def book_dir(args: argparse.Namespace) -> Path:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-70-    return Path(args.root) / args.book
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-71-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-72-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-73-def lessons_dir(args: argparse.Namespace) -> Path:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-74-    root = book_dir(args)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-75-    return root / "editions" / args.edition / "lessons"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-76-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-77-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-78-def captured_answers(root: Path) -> list[dict]:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-79-    path = root / "answers.json"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-80-    if not path.exists():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-81-        return []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-82-    document = load(path)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-83-    return [
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-84-        answer
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-85-        for answer in document.get("answers", [])
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-86-        if isinstance(answer, dict)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-87-    ]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-88-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-89-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-90-def exercise_numbering(root: Path) -> str:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-91-    path = root / "book.json"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-92-    if not path.exists():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-93-        return "book"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-94-    value = load(path).get("exercise_numbering", "book")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-95-    if value not in {"book", "lesson", "lesson-group"}:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-96-        raise SystemExit(f"ERROR: {path} exercise_numbering 非法: {value!r}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-97-    return value
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-98-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-99-
+--
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:349:                "figureEvidence": evidence,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-350-                "grading": None,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-351-                "source": "book" if book_answer else "derived",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-352-                "displayAnswer": "",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-353-                "parts": [],
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-354-                "historical_entities": [],
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-355-            }
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-356-            if book_answer:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:357:                item["bookRaw"] = book_answer["raw"]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-358-            answers.append(item)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-359-        template = {
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-360-            "schema": SCHEMA,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-361-            "book": args.book,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-362-            "lesson": lesson,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-363-            "edition": args.edition,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-364-            "status": "draft",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-365-            "answers": answers,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-366-        }
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-367-        target = (
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-368-            Path(args.work)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-369-            / args.book
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-370-            / args.edition
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-371-            / "lessons"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-372-            / lesson
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-373-            / "answer-keys.template.json"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-374-        )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-375-        dump(target, template)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-376-        print(f"[prepare] {lesson}: {len(answers)} exercises -> {target}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-377-        print(f"  完成后写入 {lesson_dir / 'answer-keys.json'}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-378-    return 0
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-379-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-380-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:381:def validate_lesson(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-382-    path: Path,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-383-    exercise_path: Path,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-384-    book: str,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-385-    lesson: str,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-386-    edition: str | None,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-387-    forbidden_terms: list[str] | None = None,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-388-) -> tuple[dict, list[str]]:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-389-    document = load(path)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-390-    exercise_doc = load(exercise_path)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-391-    errors: list[str] = []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-392-    forbidden_terms = forbidden_terms or []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-393-    expected_numbers = [str(item["number"]) for item in exercise_doc.get("exercises", [])]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-394-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-395-    if document.get("schema") != SCHEMA:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-396-        errors.append(f"schema 必须是 {SCHEMA!r}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-397-    if document.get("book") != book:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-398-        errors.append(f"book 必须是 {book!r}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-399-    if document.get("lesson") != lesson:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-400-        errors.append(f"lesson 必须是 {lesson!r}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-401-    if document.get("edition") != edition:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-402-        errors.append(f"edition 必须是 {edition!r}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-403-    answers = document.get("answers")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-404-    if not isinstance(answers, list):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-405-        errors.append("answers 必须是数组")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-406-        answers = []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-407-    numbers = [str(answer.get("exercise")) for answer in answers if isinstance(answer, dict)]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-408-    if numbers != expected_numbers:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-409-        errors.append(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-410-            "answer exercise 顺序或集合与 exercises.json 不一致: "
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-411-            f"want={expected_numbers}, got={numbers}"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-412-        )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-413-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-414-    exercise_by_number = {
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-415-        str(item.get("number")): item
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-416-        for item in exercise_doc.get("exercises", [])
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-417-        if isinstance(item, dict)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-418-    }
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-419-    for index, answer in enumerate(answers):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-420-        label = f"answers[{index}]"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-421-        if not isinstance(answer, dict):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-422-            errors.append(f"{label} 必须是对象")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-423-            continue
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-424-        grading = answer.get("grading")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-425-        source = answer.get("source")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-426-        display = answer.get("displayAnswer")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-427-        parts = answer.get("parts")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-428-        if grading not in GRADING:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:429:            errors.append(f"{label}.grading 必须是 auto 或 ungraded")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-430-        if source not in SOURCES:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-431-            errors.append(f"{label}.source 非法")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-432-        if not isinstance(display, str) or not display.strip():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-433-            errors.append(f"{label}.displayAnswer 不能为空")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-434-        elif any(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-435-            phrase in display
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-436-            for phrase in ("题面未附图", "题面未提供图", "无法可靠确定")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-437-        ):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-438-            errors.append(f"{label}.displayAnswer 不得声称题图缺失")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-439-        historical_entities = answer.get("historical_entities")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-440-        allowed_historical = set()
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-441-        if historical_entities is not None:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-442-            if not isinstance(historical_entities, list):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-443-                errors.append(f"{label}.historical_entities 必须是数组")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-444-            else:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-445-                prompt = exercise_by_number.get(str(answer.get("exercise")), {}).get("text", "")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-446-                for entity_index, declaration in enumerate(historical_entities):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-447-                    entity_label = f"{label}.historical_entities[{entity_index}]"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-448-                    if not isinstance(declaration, dict):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-449-                        errors.append(f"{entity_label} 必须是对象")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-450-                        continue
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-451-                    term = declaration.get("term")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-452-                    reason = declaration.get("reason")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-453-                    if not isinstance(term, str) or not term.strip():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-454-                        errors.append(f"{entity_label}.term 不能为空")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-455-                        continue
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-456-                    if not isinstance(reason, str) or not reason.strip():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-457-                        errors.append(f"{entity_label}.reason 不能为空")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-458-                    if term not in prompt:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-459-                        errors.append(f"{entity_label}.term={term!r} 不在对应题面中")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-460-                    if isinstance(display, str) and term not in display:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-461-                        errors.append(f"{entity_label}.term={term!r} 不在标准答案中")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-462-                    allowed_historical.add(term)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-463-        if (
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-464-            isinstance(display, str)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-465-            and (hits := [
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-466-                term
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-467-                for term in forbidden_terms
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-468-                if term in display and term not in allowed_historical
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-469-            ])
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-470-        ):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-471-            errors.append(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-472-                f"{label}.displayAnswer 仍含旧文化词或俄文人名: {', '.join(hits)}"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-473-            )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-474-        if not isinstance(parts, list):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-475-            errors.append(f"{label}.parts 必须是数组")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-476-            parts = []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:477:        if grading == "ungraded" and parts:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:478:            errors.append(f"{label} ungraded 的 parts 必须为空")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-479-        if grading == "auto" and not parts:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-480-            errors.append(f"{label} auto 至少需要一个 part")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-481-        for part_index, part in enumerate(parts):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-482-            part_label = f"{label}.parts[{part_index}]"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-483-            if not isinstance(part, dict):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-484-                errors.append(f"{part_label} 必须是对象")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-485-                continue
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-486-            if part.get("judge") not in JUDGES:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-487-                errors.append(f"{part_label}.judge 非法")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-488-            expected = part.get("expected")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-489-            if (
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-490-                not isinstance(expected, list)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-491-                or not expected
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-492-                or any(not isinstance(value, str) or not value.strip() for value in expected)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-493-            ):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-494-                errors.append(f"{part_label}.expected 必须是非空字符串数组")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-495-            for optional in ("label", "unit"):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-496-                if optional in part and not isinstance(part[optional], str):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-497-                    errors.append(f"{part_label}.{optional} 必须是字符串")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-498-            tolerance = part.get("tolerance")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-499-            if tolerance is not None and (
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-500-                not isinstance(tolerance, (int, float)) or tolerance < 0
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-501-            ):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-502-                errors.append(f"{part_label}.tolerance 必须是非负数")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-503-    return document, errors
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-504-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-505-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-506-def cmd_finalize(args: argparse.Namespace) -> int:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-507-    root = book_dir(args)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-508-    failed = False
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-509-    ready: list[tuple[str, Path, dict]] = []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-510-    forbidden_terms: list[str] = []
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-511-    if args.edition == "modern-us-neutral":
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-512-        profile = load(MODERN_US_PROFILE)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-513-        forbidden_terms = [
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-514-            *profile.get("forbidden_terms", []),
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-515-            *profile.get("forbidden_person_names", []),
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-516-        ]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-517-    for lesson in selected_lessons(args):
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-518-        lesson_dir = lessons_dir(args) / lesson
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-519-        path = lesson_dir / "answer-keys.json"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-520-        document, errors = validate_lesson(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-521-            path,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-522-            lesson_dir / "exercises.json",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-523-            args.book,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-524-            lesson,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-525-            args.edition,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-526-            forbidden_terms,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-527-        )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-528-        if errors:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-529-            failed = True
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-530-            for error in errors:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-531-                print(f"ERROR {lesson}: {error}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-532-            continue
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-533-        ready.append((lesson, path, document))
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-534-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-535-    if ready:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:536:        expression_check = Path(__file__).with_name("check_math_expressions.mjs")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-537-        result = subprocess.run(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:538:            ["node", str(expression_check), *(str(path) for _, path, _ in ready)],
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-539-            cwd=REPO, text=True, capture_output=True,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-540-        )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-541-        if result.returncode:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-542-            failed = True
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:543:            print("ERROR: numeric/expression LaTeX 合同校验失败", file=sys.stderr)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-544-            print(result.stdout.strip() or result.stderr.strip(), file=sys.stderr)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-545-        command = ["node", str(MATHLIVE_CHECK)]
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-546-        for _, path, _ in ready:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-547-            command.extend(["--answer-key", str(path)])
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-548-        result = subprocess.run(command, cwd=REPO, text=True, capture_output=True)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-549-        if result.returncode:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-550-            failed = True
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-551-            print("ERROR: MathLive exact 输入合同校验失败", file=sys.stderr)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-552-            if result.stdout.strip():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-553-                print(result.stdout.strip(), file=sys.stderr)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-554-            if result.stderr.strip():
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-555-                print(result.stderr.strip(), file=sys.stderr)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-556-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-557-    if failed:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-558-        return 2
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-559-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-560-    for lesson, path, document in ready:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-561-        lesson_dir = lessons_dir(args) / lesson
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-562-        document["status"] = "ready"
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-563-        document["count"] = len(document["answers"])
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-564-        dump(path, document)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-565-        auto = sum(answer["grading"] == "auto" for answer in document["answers"])
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:566:        ungraded = len(document["answers"]) - auto
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-567-        audit = {
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-568-            "schema": "ld-s10y-answer/lesson-audit@1",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-569-            "book": args.book,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-570-            "lesson": lesson,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-571-            "edition": args.edition,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-572-            "status": "pass",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-573-            "answerCount": len(document["answers"]),
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-574-            "auto": auto,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:575:            "ungraded": ungraded,
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-576-        }
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-577-        dump(lesson_dir / "answer-keys.audit.json", audit)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py:578:        print(f"[finalize] {lesson}: PASS auto={auto} ungraded={ungraded}")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-579-    return 0
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-580-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-581-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-582-def add_common(parser: argparse.ArgumentParser) -> None:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-583-    parser.add_argument("--book", required=True)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-584-    parser.add_argument("--lesson", action="append")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-585-    parser.add_argument("--edition", required=True)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-586-    parser.add_argument("--root", default=DEFAULT_ROOT)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-587-    parser.add_argument("--work", default=DEFAULT_WORK)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-588-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-589-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-590-def build_parser() -> argparse.ArgumentParser:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-591-    parser = argparse.ArgumentParser(
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-592-        prog="lesson_answers.py",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-593-        description="为指定 Soviet 10 Years lesson 生产答案键",
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-594-    )
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-595-    subparsers = parser.add_subparsers(dest="command", required=True)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-596-    prepare = subparsers.add_parser("prepare")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-597-    add_common(prepare)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-598-    prepare.set_defaults(handler=cmd_prepare)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-599-    finalize = subparsers.add_parser("finalize")
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-600-    add_common(finalize)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-601-    finalize.set_defaults(handler=cmd_finalize)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-602-    return parser
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-603-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-604-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-605-def main() -> int:
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-606-    args = build_parser().parse_args()
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-607-    return args.handler(args)
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-608-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-609-
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-610-if __name__ == "__main__":
+.claude/skills/ld-s10y-answer/tools/lesson_answers.py-611-    raise SystemExit(main())

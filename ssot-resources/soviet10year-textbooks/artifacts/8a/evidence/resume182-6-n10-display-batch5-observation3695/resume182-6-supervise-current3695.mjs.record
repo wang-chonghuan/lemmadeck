@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const [due, agentsJSON] = process.argv.slice(2);
+const firstDue = Date.parse('2026-11-20T13:09:50Z');
+assert.equal((Date.parse(due) - firstDue) % (40 * 60 * 1000), 0);
+assert.ok(Date.now() >= Date.parse(due));
+const agents = JSON.parse(agentsJSON);
+assert.ok(Array.isArray(agents));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: file, sha256: sha(fs.readFileSync(file)) });
+const receipts = [];
+function visit(file) {
+  const stat = fs.lstatSync(file);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(file)) visit(path.join(file, name));
+  } else if (stat.isFile() && path.basename(file) === 'receipt.record') {
+    const value = JSON.parse(fs.readFileSync(file));
+    if (value.finished) receipts.push({ ...bind(file), finished: value.finished,
+      returncode: value.returncode ?? value.exitCode ?? null, error: value.error ?? null });
+  }
+}
+for (const name of fs.readdirSync(`${R}/.tmp`)) {
+  if (name.startsWith('resume182-6-')) visit(`${R}/.tmp/${name}`);
+}
+const git = spawnSync('git', ['rev-parse', 'HEAD', 'origin/codex/STEMROBIN-182-textbooks'],
+  { cwd: R, encoding: 'utf8' });
+assert.equal(git.status, 0, git.stderr);
+const [head, remote] = git.stdout.trim().split('\n');
+const value = {
+  schema: 'resume182-6/supervision-checkpoint@1',
+  scope: { root: R, books: ['6a', '7a', '8a'], ticket: 'STEMROBIN-182', chat: '182-6' },
+  anchoredDue: due, actual: new Date().toISOString(),
+  nextAnchoredDue: new Date(Date.parse(due) + 40 * 60 * 1000).toISOString(),
+  head, remote, originalDeliveryBranch: 'codex/STEMROBIN-182-textbooks',
+  remoteObservation: 'Local tracking ref only; supervision does not refetch or claim an external head.',
+  otherParentInFlightExecSessions: 0, supervisionExecutionExcluded: true,
+  agentsLastObserved: agents, agentCompletionNotInferredFromDirectoryPresence: true,
+  finishedReceiptCount: receipts.length,
+  latestFinished: receipts.sort((a, b) => a.finished.localeCompare(b.finished)).at(-1),
+  knownNonzeroOrErrorReceiptCount: receipts.filter(item =>
+    typeof item.returncode === 'number' && item.returncode !== 0 || item.error).length,
+  unknownReturncodeReceiptCount: receipts.filter(item => item.returncode === null).length,
+  oldChatsAndMenciusRussellNotResumed: true,
+  createWorktreeCallsThisContinuation: 0, attachCallsThisContinuation: 0,
+  replacementChatsCreated: 0, otherChatsMessaged: 0,
+  imageViewsThisSupervision: 0, oldSourceMathFigureOrScreenshotPassReruns: 0,
+  DBWrites: 0, merges: 0, deployments: 0, formalHandoffRuns: 0, finish: 'review',
+  removedProbeReceiptFilesStillUnrecovered: 8,
+  previousFailuresLocksBackupsAndPendingMessagesPreserved: true,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+};
+const stamp = due.replace(/[-:]/g, '');
+const output = `${R}/.tmp/resume182-6-supervision-${stamp}-3695.record`;
+fs.writeFileSync(output, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...bind(output), ...value }));

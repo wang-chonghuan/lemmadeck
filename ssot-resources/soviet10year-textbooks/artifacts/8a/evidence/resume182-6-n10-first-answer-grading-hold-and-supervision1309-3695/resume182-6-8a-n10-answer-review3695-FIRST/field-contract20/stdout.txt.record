@@ -1,0 +1,116 @@
+  const fieldId = useId()
+  const hostRef = useRef<HTMLDivElement>(null)
+  const fieldRef = useRef<MathField | null>(null)
+  const initialMode = kind === 'number' ? 'basic' : 'more'
+  const modeRef = useRef<KeyboardMode>(initialMode)
+  const [mode, setMode] = useState<KeyboardMode>(initialMode)
+  const [ready, setReady] = useState(false)
+  const lockedRef = useRef(locked)
+  lockedRef.current = locked
+
+  useEffect(() => {
+    const host = hostRef.current
+    if (!host) return
+    let disposed = false
+    let field: MathField | null = null
+    let onInput: (() => void) | null = null
+    let onFocus: (() => void) | null = null
+    setReady(false)
+
+    void import('mathlive').then(({
+      MathfieldElement,
+      initVirtualKeyboardInCurrentBrowsingContext,
+    }) => {
+      if (disposed) return
+      if (!sharedKeyboard) {
+        sharedKeyboard =
+          initVirtualKeyboardInCurrentBrowsingContext() as unknown as MathKeyboard
+        sharedKeyboard.addEventListener('geometrychange', () => syncKeyboardInset())
+      }
+      MathfieldElement.fontsDirectory = null
+      MathfieldElement.soundsDirectory = null
+      MathfieldElement.keypressSound = null
+      MathfieldElement.plonkSound = null
+
+      field = new MathfieldElement() as MathField
+      field.id = fieldId
+      field.className = 'sr-math-field'
+      field.smartFence = true
+      field.readOnly = lockedRef.current
+      field.mathVirtualKeyboardPolicy = 'manual'
+      field.placeholder = `\\text{${t(locale, 'exercise.answer.placeholder')}}`
+      field.setAttribute('aria-label', t(locale, 'exercise.answer'))
+      field.value = localStorage.getItem(storageKey) ?? ''
+      onValue(index, field.value)
+
+      onInput = () => {
+        const value = field?.value ?? ''
+        localStorage.setItem(storageKey, value)
+        onValue(index, value)
+      }
+      onFocus = () => {
+        if (lockedRef.current) return
+        setKeyboardMode(modeRef.current)
+        keyboard()?.show({ animate: true })
+        revealField(field)
+      }
+      field.addEventListener('input', onInput)
+      field.addEventListener('focusin', onFocus)
+      fieldRef.current = field
+      host.replaceChildren(field)
+      setReady(true)
+    })
+
+    return () => {
+      disposed = true
+      if (field && onInput) field.removeEventListener('input', onInput)
+      if (field && onFocus) field.removeEventListener('focusin', onFocus)
+      fieldRef.current = null
+      host.replaceChildren()
+      keyboard()?.hide({ animate: false })
+    }
+  }, [fieldId, index, locale, onValue, storageKey])
+
+  useEffect(() => {
+    if (fieldRef.current) fieldRef.current.readOnly = locked
+  }, [locked])
+
+  function activateMode(next: KeyboardMode) {
+    if (locked || !ready) return
+    modeRef.current = next
+    setMode(next)
+    setKeyboardMode(next)
+    fieldRef.current?.focus({ preventScroll: true })
+    keyboard()?.show({ animate: true })
+    revealField(fieldRef.current)
+  }
+
+  return (
+    <div className="sr-math-part" data-input-kind={kind}>
+      <div className="sr-math-answer-head">
+        <span className="sr-math-answer-label">{label}</span>
+        <div className="sr-math-modes" role="group" aria-label={t(locale, 'exercise.keyboard')}>
+          <button
+            type="button"
+            className={mode === 'basic' ? 'on' : ''}
+            aria-pressed={mode === 'basic'}
+            disabled={locked || !ready}
+            onClick={() => activateMode('basic')}
+          >
+            {t(locale, 'exercise.keyboard.basic')}
+          </button>
+          <button
+            type="button"
+            className={mode === 'more' ? 'on' : ''}
+            aria-pressed={mode === 'more'}
+            disabled={locked || !ready}
+            onClick={() => activateMode('more')}
+          >
+            {t(locale, 'exercise.keyboard.more')}
+          </button>
+          <button
+            type="button"
+            aria-label={t(locale, 'exercise.keyboard')}
+            title={t(locale, 'exercise.keyboard')}
+            aria-controls={fieldId}
+            disabled={locked || !ready}

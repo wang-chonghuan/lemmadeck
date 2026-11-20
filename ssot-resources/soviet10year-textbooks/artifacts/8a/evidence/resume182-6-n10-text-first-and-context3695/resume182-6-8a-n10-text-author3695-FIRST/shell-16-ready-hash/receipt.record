@@ -1,0 +1,13 @@
+{
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"node:fs\"),crypto=require(\"node:crypto\"),assert=require(\"node:assert/strict\"),path=require(\"node:path\"); const R=\"/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck\",W=R+\"/.tmp/resume182-6-8a-n10-text-author3695-FIRST\",file=W+\"/ready.record\"; const bytes=fs.readFileSync(file),ready=JSON.parse(bytes),report=JSON.parse(fs.readFileSync(W+\"/shell-15-author-integrity/stdout.txt\",\"utf8\")); const sha=p=>crypto.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\"); assert.equal(ready.repo,R); assert.equal(ready.work,W); assert.equal(ready.status,\"author-draft-ready-for-text-review\"); assert.deepEqual(ready.sources,report.sources); assert.deepEqual(ready.templates.map(({path,sha256,bytes})=>({path,sha256,bytes})),report.templates); for(const item of [...ready.sources,...ready.templates]){assert.equal(sha(item.path),item.sha256,item.path);assert.equal(fs.statSync(item.path).size,item.bytes);} for(const [relative,expected] of Object.entries(ready.contract_hashes))assert.equal(sha(path.join(R,relative)),expected); for(const item of ready.integrity_evidence.files)assert.equal(sha(path.join(W,item.path)),item.sha256); assert.equal(sha(path.join(W,ready.integrity_evidence.checker.path)),ready.integrity_evidence.checker.sha256); for(const key of Object.keys(report.counts))if(key in ready.counts)assert.equal(ready.counts[key],report.counts[key]); assert.deepEqual(ready.prose_changes,report.prose_changes); assert.deepEqual(ready.exercise_changes.map(({number,changes})=>({number,changes})),report.exercise_changes); for(const key of Object.keys(report.erratum))assert.deepEqual(ready.erratum[key],report.erratum[key]); console.log(JSON.stringify({ready:file,sha256:crypto.createHash(\"sha256\").update(bytes).digest(\"hex\"),bytes:bytes.length,status:ready.status,source_files_verified:ready.sources.length,templates_verified:ready.templates.length,TEXT_approval:false,math_PASS_reruns:0},null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T11:56:40.779Z",
+  "finished": "2026-11-20T11:56:40.831Z",
+  "returncode": 0,
+  "signal": null,
+  "error": null
+}

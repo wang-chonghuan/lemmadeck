@@ -1,0 +1,180 @@
+---
+name: intentfold
+description: Load for ticket-based product development with the .intentfold harness, from initialization and filing through development, handoff and closure; also for multi-ticket delivery planning with cap5 or supervising one or more workers with cap6. Triggers include "intentfold", "cap1/cap2/cap3/cap3setup/cap3handoff/cap4/cap5/cap6", "开发这个工单", "准备开放开发", "开发完成，做 handoff", "建个工单", "拆单安排并行", "监督工人直到完成", and charter-directed deployment of merged code.
+---
+
+# intentfold
+
+One ticket at a time **per developer session**; a supervisor can coordinate several. `.intentfold/`
+holds what persists, the ticket backend — **plane or linear**,
+whichever `project.json` names — holds the tickets. The ticket's acceptance criteria define acceptance;
+the project's required mechanical checks still apply.
+
+The release version lives in `intentfold.json` (`version`). Usage declarations continue to record
+the exact Git commit SHA, not this release number.
+
+**IntentFold** is the harness brand for three independent controls a project may name in
+`charter/engineering.md`'s `## Tools`: an IntentFold process declaration, an overlap check before rebasing,
+and an optional cap4 takeover gate before merging. The declaration records the ticket, repository,
+and IntentFold version. The verifier checks the committed `handoff.md` directly from the PR head. It
+is process evidence, not employee identity or proof that a binary ran.
+The overlap check detects when upstream and ticket changes touch the same code region. The ticket
+developer resolves these overlaps and Git conflicts, verifies the result, and continues without an
+additional team-leader approval. A cap4 takeover gate remains pending during
+normal PR and review events, then releases the current head only after cap4 has armed auto-merge and
+explicitly dispatched the trusted verifier.
+
+## Specification first
+
+During planning and implementation, **do not use existing unit tests, for example unit tests
+under `tests/`, as a reference for designing or changing code**. Do not infer requirements
+from their assertions or preserve an obsolete implementation just to satisfy them. Design
+from the approved ticket, Charter and valid external contracts; refactoring and optimization
+remain available within that scope.
+
+Run the project's required unit tests **after implementation is ready for verification**.
+When one fails, judge both the test and the code against those same specifications:
+correct an outdated test or an assertion tied only to replaced implementation details;
+correct the code when it violates a valid requirement. Do not weaken valid assertions,
+delete tests merely to get green, or infer expected values from the new code's output.
+
+Examples:
+
+- **Correct the test:** an approved refactor replaces per-item lookups with one batch
+  lookup while preserving required results and error behavior. An old unit test in
+  `tests/` asserts one private-helper call per item. Replace that obsolete assertion
+  with the required behavior; do not restore the old call pattern.
+- **Correct the code:** the contract forbids reading another user's private record.
+  After a refactor, a unit test catches such a read succeeding. Fix the authorization
+  regression; do not change the test to expect success.
+
+This does not prohibit reading production code, running the app, lint/type checks, or
+consulting authoritative acceptance and API-contract specifications. Classify by purpose,
+not directory name: `tests/` may also contain those specifications. Required checks still
+must pass; this rule changes what drives implementation, not the acceptance standard.
+
+## Proposed solutions
+
+A developable ticket's `## Proposed solution` is advisory, not another requirement.
+Read it before choosing the implementation route and prefer its applicable parts rather
+than starting over. Check its assumptions against the actual system; adapt or replace it
+when incomplete, outdated, infeasible, or unnecessarily complex.
+
+Scope, explicit constraints, acceptance criteria and the Charter remain binding. Do not
+silently demote an explicit user requirement into a suggestion. Explain material departures
+briefly in the existing plan, draft or handoff; no separate report or extra approval round
+is needed merely to change a proposal. A proposal neither replaces an agreed approach nor
+skips the normal alignment step, and matching it is not an acceptance criterion.
+
+## Capability freshness gate
+
+Before executing **any** IntentFold capability — cap1, cap2, cap3, cap3setup, cap3handoff, cap4, cap5, or cap6 —
+run this once for the current capability invocation:
+
+```bash
+skillhost update narrative-skills --agent <current-agent>
+```
+
+Use the current runtime's SkillHost agent name (`codex`, `claude`, `opencode`, `copilot`,
+`openclaw`, or `hermes`). If SkillHost is unavailable or the update fails, stop and report the
+failure; do not continue the capability with a stale skill. After a successful update, re-read the
+active SkillHost-linked `intentfold/SKILL.md` and the selected capability reference before
+continuing. That re-read does not trigger a second update in the same invocation.
+Recurring cap6 inspections and resumes of that inspection loop are the same invocation,
+not reasons to update the skill at each inspection. A newly invoked child capability keeps its own gate.
+
+## Start here — what is being asked?
+
+**Read this table before anything else and go where it points.** Not every request that mentions this
+skill is one of its capabilities, and forcing one onto the nearest capability is the most common
+way this skill gets misused.
+
+| The human wants… | Go to |
+|---|---|
+| a `.intentfold/` harness in this repo | **cap1** — `references/capability-1-init/init.md` |
+| a ticket filed | **cap2** — `references/capability-2-ticket/create-ticket.md` |
+| IntentFold to develop a ticket autonomously, end to end — including a generic "开发这个工单" | **cap3** — `references/capability-3-develop/dev.md` |
+| the required IntentFold setup before vibe coding or another development skill | **cap3setup** — `references/capability-3-setup/setup.md` |
+| completed open-development work verified and handed off | **cap3handoff** — `references/capability-3-handoff/handoff.md` |
+| a verified ticket merged, landed, closed | **cap4** — `references/capability-4-close/close.md` |
+| a goal organized into the necessary tickets, parallel groups and dependencies | **cap5** — `references/capability-5-orchestrate/orchestrate.md` |
+| one existing ticket/worker, or an epic's workers, supervised through completion | **cap6** — `references/capability-6-supervise/supervise.md`; no mandatory cap5 or epic |
+| **to deploy** — "重新部署", "发布一下", "deploy this" | **Not a capability. Do not file a ticket.** See *Deploying on its own* below |
+| the app run, a page looked at, a log read | **Nothing here.** Follow `charter/operations.md` and do it |
+| a question answered about this project | **Nothing here.** Read `charter/`, answer, stop |
+| a code change, with no ticket for it | **cap2 first**, then cap3 or cap3setup. This is the case the no-ticket rule is for |
+
+When the request fits none of these, say so and ask — **do not map it onto the closest capability.**
+
+## Supervised delivery
+
+For cap5/cap6 and their explicitly supervised children, read
+`references/common/supervision.md`. It is the scoped override for finish, Grill, recoverable
+stops, the delivery decision and next-ticket selection below. Defaults are **no recurring
+monitoring, delegated ordinary decisions, and `finish: review`**: develop and verify, then
+keep the preview ports running for human review. Requested monitoring runs every **10 minutes**;
+automatic merge/closure or deployment requires its own explicit authorization.
+Unsupervised cap1-cap4 behavior is unchanged.
+
+cap5's arrangement must pass `references/gate-5-orchestrate/gate.md` inline before filing
+or dispatch. cap6 reuses the existing handoff decision, not a new review pipeline.
+Session names, model resolution, bootstrap and opt-in recurring continuation live only in
+`references/common/supervision-sessions.md`.
+
+## Deploying on its own
+
+Deploying already-merged code is **not a product change and needs no ticket**. `charter/operations.md`
+says it in its own words: a ticket ends at merge, and deploying is a separate, deliberate act. Three
+steps, and this skill contributes nothing else:
+
+1. Read `charter/operations.md`, including its `## Redlines`. A first-time or destructive deploy needs the
+   human; a routine redeploy of an already-deployed service does not.
+2. Do exactly what `operations.md` says. No assumed platform, no invented command. If it does not say how,
+   that is a stop.
+3. **Confirm it actually took** by its post-deploy check — hit the URL, look at the response. *"The
+   deploy command exited 0"* is not confirmation.
+
+The same three steps run inside cap4 for an `auto-deploy` ticket. Standalone, they are the whole job.
+
+## Why this skill is shaped the way it is
+
+The point of this skill is **speed with a trace**, not assurance. Autonomous cap3 has exactly one
+thinking step (a grill, before the code); cap3setup instead establishes the required boundary and
+leaves the development method open. Both routes have one IntentFold proof step in cap3handoff: run
+the product, check the AC, and look at the result once through the human's request. Everything
+else is just a record so a human can see later what happened. **No repeated review passes, no
+regression suite added by the workflow, no timeline, no ADR log.** Multi-ticket coordination belongs to cap5/cap6, not a developer's ticket. If you find
+yourself about to verify something a second time, stop — that is the thing this skill exists to not
+do.
+
+What this skill refuses is checking that is **frequent, repeated, and scattered everywhere** — the
+same question asked at five points because nobody could say which point was the real one. It does not
+refuse checking. **At a major joint, check.** The joints are few and named: before development starts
+(cap3's grill and route lookup, or cap3setup's boundary briefing), at the cap3handoff proof step, and
+before an irreversible act in cap4. A check at a joint costs seconds and catches what cannot be
+undone afterwards; the same check sprinkled through every step is the bureaucracy this skill exists
+to avoid. Judge a proposed check by **where** it sits, not by whether it is a check.
+
+## Persistent layer
+
+```text
+.intentfold/
+  readme.md            # session entry: what to read, in what order
+  project.json         # project/main/deploy/tickets + each service's main port and ticket prefix
+  charter/             # human-owned intent — read it; write it only when the human asks
+    product.md         #   product purpose, users, value, non-goals
+    engineering.md     #   architecture, development rules, checks, and landing
+    ui.md              #   design system and interface constraints
+    operations.md      #   local runtime, acceptance evidence, deploy, and operations
+  tickets/<ticket-id>/ # ticket.json (mode/stage/finish/branch/base/ports)  draft.md  plan.md  ac.md
+                       # grill.md  handoff.md  intentfold-usage.json  rework.md  tmp/
+  tmp/                 # project scratch
+```
+
+`tmp/` directories and env files are git-ignored; everything else is committed.
+
+In commands, `<intentfold-skill>` means the loaded skill directory containing this `SKILL.md`.
+
+The four-file Charter contract is exact. A project that still has `charter/readme.md`, `dev.md`,
+`arch.md`, `runbook.md`, `qa.md`, or `devops.md` has not migrated; cap3 and cap3setup stop rather
+than interpreting both layouts or combining human-owned files automatically.

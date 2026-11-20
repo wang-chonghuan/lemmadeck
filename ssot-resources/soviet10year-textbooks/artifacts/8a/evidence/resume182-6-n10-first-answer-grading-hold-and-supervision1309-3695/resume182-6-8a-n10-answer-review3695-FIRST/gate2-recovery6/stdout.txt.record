@@ -1,0 +1,280 @@
+# Gate 2 — lesson 答案生产
+
+目标：指定 lesson 的每个 exercise 都有孩子提交后可看到的正确标准答案，并且自动判题
+不会对不适合的题伪造正误。
+
+逐题检查：
+
+1. exercise 与题面、插图、书后答案属于同一题号。
+2. 有 `bookRaw` 时已实际验算；原书答案不是未经检查直接复制。
+3. 没有书后答案时已完整求解，`source` 为 `derived`。
+4. 多小问和多个待求量已拆成独立 `parts`，标签和单位清楚。
+5. `expected` 是学生实际可输入的答案，不含只用于展示的解释文字；`exact` 必须通过
+   `lesson_answers.py finalize` 内置的真实 MathLive 编辑检查：setter 初始化后必须触发
+   键盘输入和删除、确认数学内容未变，再读取重新序列化的 `.value`。禁止把 setter 的原串
+   缓存或 expected 与自身的纯字符串比较冒充输入链验证。每个候选在独立文档中检查；只对
+   未完成的浏览器焦点事务最多重试三次，并在报告中保留尝试次数。
+6. `displayAnswer` 足以让学生理解标准答案；作图和证明题要写关键作法或理由。
+7. 只有能由 `exact`、`numeric` 或 `expression` 可靠判定的题才标 `auto`。
+8. 作图、证明、依赖图形位置的开放回答标 `ungraded`，没有因为“需要全覆盖”而硬判正误。
+9. 全 lesson 无漏题、重题，书后答案来源和模型推导来源没有混淆。
+
+Gate 失败时修正 `answer-keys.json` 后重跑；通过后执行 `lesson_answers.py finalize` 和
+真实 `publish.mjs`。可先运行
+`node .claude/skills/ld-s10y-answer/tools/check_mathlive_exact.mjs --cases
+.claude/skills/ld-s10y-answer/examples/mathlive-exact-contract.json` 检查共享正反例。
+#!/usr/bin/env python3
+"""Prepare and validate production answer keys for selected lessons."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+LESSON_TOOLS = (
+    Path(__file__).resolve().parents[2]
+    / "ld-s10y-lesson"
+    / "tools"
+)
+sys.path.insert(0, str(LESSON_TOOLS))
+
+import assemble
+
+SCHEMA = "ld-s10y-answer/lesson-answers@1"
+JUDGES = {"exact", "numeric", "expression"}
+MODERN_US_PROFILE = (
+    Path(__file__).resolve().parents[2]
+    / "ld-s10y-lesson"
+    / "profiles"
+    / "modern-us-neutral.json"
+)
+GRADING = {"auto", "ungraded"}
+SOURCES = {"book", "derived", "reviewed"}
+DEFAULT_ROOT = "ssot-resources/soviet10year-textbooks/artifacts"
+DEFAULT_WORK = ".tmp/ld-s10y-answer"
+TEXTBOOK_ROOT = (
+    Path(__file__).resolve().parents[4]
+    / "ssot-resources"
+    / "soviet10year-textbooks"
+)
+REPO = Path(__file__).resolve().parents[4]
+MATHLIVE_CHECK = Path(__file__).resolve().parent / "check_mathlive_exact.mjs"
+OPTIONAL_IDENTITY_FIELDS = ("source_number", "group_id")
+PRESERVED_IDENTITY_FIELDS = ("number", "group", "figure_refs", "figures", "numbering_erratum")
+
+
+def load(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise SystemExit(f"ERROR: 缺少 {path}")
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: {path} 不是有效 JSON: {error}")
+
+
+def dump(path: Path, value: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+def selected_lessons(args: argparse.Namespace) -> list[str]:
+    if not args.lesson:
+        raise SystemExit("ERROR: 至少指定一个 --lesson")
+    if len(args.lesson) != len(set(args.lesson)):
+        raise SystemExit("ERROR: --lesson 有重复")
+    return args.lesson
+
+
+def book_dir(args: argparse.Namespace) -> Path:
+    return Path(args.root) / args.book
+
+
+def lessons_dir(args: argparse.Namespace) -> Path:
+    root = book_dir(args)
+    return root / "editions" / args.edition / "lessons"
+
+
+def captured_answers(root: Path) -> list[dict]:
+    path = root / "answers.json"
+    if not path.exists():
+        return []
+    document = load(path)
+    return [
+        answer
+        for answer in document.get("answers", [])
+        if isinstance(answer, dict)
+    ]
+
+
+def exercise_numbering(root: Path) -> str:
+    path = root / "book.json"
+    if not path.exists():
+        return "book"
+    value = load(path).get("exercise_numbering", "book")
+    if value not in {"book", "lesson", "lesson-group"}:
+        raise SystemExit(f"ERROR: {path} exercise_numbering 非法: {value!r}")
+    return value
+
+
+def source_number(exercise: dict) -> object:
+    return (
+        exercise["source_number"]
+        if "source_number" in exercise
+        else exercise.get("number")
+    )
+
+
+def same_source_number(left: object, right: object) -> bool:
+    if left is None or right is None:
+        return left is right
+    return str(left) == str(right)
+
+
+def rebuilt_exercises(
+    root: Path,
+    book: str,
+    lesson_ids: set[str],
+) -> dict[str, dict]:
+    stream = assemble.load_stream(root)
+    if not stream:
+        raise SystemExit(f"ERROR: {root}/pages 下没有 page.json，无法解析旧题栏目身份")
+    merged, _ = assemble.merge_across_pages(stream)
+    lessons = assemble.cut_lessons(merged)
+    for lesson in lessons:
+        lesson["prose"], lesson["exercises"] = assemble.split_lesson(
+            lesson,
+            "lesson-group",
+        )
+    figure_errors, _ = assemble.claim_figures(lessons, merged)
+    if figure_errors:
+        raise SystemExit(
+            "ERROR: 无法从页级事实解析旧题栏目身份: " + "; ".join(figure_errors)
+        )
+    toc = TEXTBOOK_ROOT / "toc" / book / "zh.json"
+    if not toc.is_file():
+        raise SystemExit(f"ERROR: 缺少 {toc}，无法确定旧 lesson 身份")
+    assemble.check_toc(
+        lessons,
+        toc,
+        book,
+        {block["printed_page"] for block in stream if block.get("printed_page") is not None},
+    )
+    by_id = {
+        lesson["card_id"]: {
+            "lesson": lesson["card_id"],
+            "count": len(lesson["exercises"]),
+            "exercises": lesson["exercises"],
+        }
+        for lesson in lessons
+        if lesson.get("card_id") in lesson_ids
+    }
+    missing = sorted(lesson_ids - set(by_id))
+    if missing:
+        raise SystemExit(
+            f"ERROR: 无法从页级事实和 TOC 确定旧 lesson: {', '.join(missing)}"
+        )
+    return by_id
+
+
+def resolve_legacy_identities(
+    lesson: str,
+    source_doc: dict,
+    exercise_doc: dict,
+    rebuilt_doc: dict,
+) -> list[dict]:
+    if not assemble.can_reuse_exercises(source_doc, rebuilt_doc):
+        raise SystemExit(
+            f"ERROR: {lesson} 的旧 exercises.json 与页级事实不一致，"
+            "无法确定 groupId"
+        )
+    source_items = source_doc.get("exercises", [])
+    edition_items = exercise_doc.get("exercises", [])
+    rebuilt_items = rebuilt_doc.get("exercises", [])
+    if len(source_items) != len(edition_items):
+        raise SystemExit(f"ERROR: {lesson} 的 edition 题目数量与原书不一致")
+
+    resolved = []
+    for index, (source, edition_item, rebuilt) in enumerate(
+        zip(source_items, edition_items, rebuilt_items)
+    ):
+        label = f"{lesson}/exercises[{index}]"
+        mismatches = [
+            field
+            for field in PRESERVED_IDENTITY_FIELDS
+            if edition_item.get(field) != source.get(field)
+        ]
+        for field in OPTIONAL_IDENTITY_FIELDS:
+            if field in source and edition_item.get(field) != source[field]:
+                mismatches.append(field)
+            elif field in edition_item and edition_item[field] != rebuilt.get(field):
+                mismatches.append(field)
+        if mismatches:
+            raise SystemExit(
+                f"ERROR: {label} 的 edition 身份与原书或页级事实不一致: "
+                + ", ".join(dict.fromkeys(mismatches))
+            )
+        group_id = rebuilt.get("group_id")
+        if not isinstance(group_id, str) or not group_id:
+            raise SystemExit(f"ERROR: {label} 无法从页级事实确定 groupId")
+        item = dict(edition_item)
+        for field in OPTIONAL_IDENTITY_FIELDS:
+            item[field] = rebuilt.get(field)
+        resolved.append(item)
+    return resolved
+
+
+def captured_answer(
+    answers: list[dict],
+    lesson: str,
+    exercise: dict,
+    numbering: str,
+    source_book: Path | None = None,
+) -> dict | None:
+    printed_number = source_number(exercise)
+    if numbering == "book":
+        printed_number = assemble.bound_sequence_number(exercise, source_book)
+    if numbering == "lesson-group":
+        exercise_id = str(exercise.get("number"))
+        matches = [
+            answer
+            for answer in answers
+            if answer.get("lesson") == lesson
+            and str(answer.get("exerciseId")) == exercise_id
+        ]
+        if len(matches) == 1:
+            answer = matches[0]
+            evidence = (
+                ("groupId", exercise.get("group_id")),
+                ("group", exercise.get("group")),
+                ("sourceNumber", printed_number),
+            )
+            mismatches = [
+                field
+                for field, expected in evidence
+                if field not in answer
+                or (
+                    not same_source_number(answer.get(field), expected)
+                    if field == "sourceNumber"
+                    else answer.get(field) != expected
+                )
+            ]
+            if mismatches:
+                raise SystemExit(
+                    f"ERROR: {lesson}/{exercise_id} 的书后答案证据不一致: "
+                    + ", ".join(mismatches)
+                )
+    elif printed_number is None:
+        matches = []
+    else:
+        matches = [
+            answer
+            for answer in answers
+            if str(answer.get("exercise")) == str(printed_number)
+            and (numbering == "book" or answer.get("lesson") == lesson)
+        ]

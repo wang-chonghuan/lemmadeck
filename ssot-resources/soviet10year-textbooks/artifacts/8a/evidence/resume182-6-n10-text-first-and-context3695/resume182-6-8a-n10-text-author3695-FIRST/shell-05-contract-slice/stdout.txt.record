@@ -1,0 +1,363 @@
+            ("figures.template.json", figures_template),
+        ):
+            path = target / name
+            if path.exists() and not args.force:
+                raise SystemExit(f"ERROR: {path} 已存在；确认重建模板时加 --force")
+            dump(path, value)
+        print(
+            f"[adapt-prepare] {lesson_id}: "
+            f"正文 {len(raw_lesson.get('prose', []))} 块, "
+            f"题 {len(raw_exercises.get('exercises', []))} 道, "
+            f"图 {len(raw_lesson.get('figures', []))} 张 -> {target}"
+        )
+        print(f"  完成后写入 {edition / 'lessons' / lesson_id}")
+    return 0
+
+
+def math_signature(text: str) -> list[str]:
+    def normalize_text_literals(expression: str) -> str:
+        return MATH_TEXT_LITERAL.sub(
+            lambda match: (
+                "\\text{" + "|".join(NUMBER.findall(match.group(1))) + "}"
+            ),
+            expression,
+        )
+
+    signature = []
+    for match in MATH.finditer(text):
+        expression = normalize_text_literals(match.group(1) or match.group(2))
+        signature.extend(
+            re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
+            for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
+            if part.strip()
+        )
+    return signature
+
+
+def number_signature(text: str) -> list[str]:
+    without_math = MATH.sub("", text)
+    # Chinese units and printed line breaks must not change numeric tokens.
+    return ERRATA_NUMBER.findall(without_math)
+
+
+def masked_math(text: str) -> str:
+    masked = list(text)
+    for match in MATH.finditer(text):
+        masked[match.start():match.end()] = " " * (match.end() - match.start())
+    return "".join(masked)
+
+
+def nesting_depths(text: str) -> list[int]:
+    depths = []
+    depth = 0
+    for char in text:
+        depths.append(depth)
+        if char in "(（":
+            depth += 1
+        elif char in ")）":
+            depth = max(0, depth - 1)
+    return depths
+
+
+def normalize_prose_layout(text: str) -> str:
+    """Create short paragraphs while keeping complete sentences and formulas legible."""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"[\t \u3000]+", " ", text.replace("\r\n", "\n")).strip()
+    if not text:
+        return text
+
+    masked = masked_math(text)
+    depths = nesting_depths(masked)
+    boundaries = set()
+    for index, char in enumerate(masked):
+        if char == "\n":
+            boundaries.add(index + 1)
+            continue
+        if depths[index] != 0:
+            continue
+        if char in "。！？；;":
+            boundaries.add(index + 1)
+        elif char in "：:":
+            rest = text[index + 1:].lstrip()
+            if rest.startswith("$"):
+                boundaries.add(index + 1)
+
+    for match in MATH.finditer(text):
+        tex = (match.group(1) or match.group(2)).rstrip()
+        if (
+            depths[match.start()] == 0
+            and tex.endswith((".", "。", "!", "！", "?", "？"))
+            and text[match.end():].strip()
+        ):
+            boundaries.add(match.end())
+
+    initial_boundaries = sorted(boundaries)
+    for match in MATH.finditer(text):
+        previous = max(
+            (boundary for boundary in initial_boundaries if boundary <= match.start()),
+            default=0,
+        )
+        if text[previous:match.start()].strip():
+            continue
+        trailing = re.match(r"[，,；;]", text[match.end():])
+        if trailing and text[match.end() + trailing.end():].strip():
+            boundaries.add(match.end() + trailing.end())
+
+    lines = []
+    start = 0
+    for end in sorted(boundaries):
+        line = re.sub(r"\s*\n\s*", " ", text[start:end]).strip()
+        if line:
+            lines.append(line)
+        start = end
+    tail = re.sub(r"\s*\n\s*", " ", text[start:]).strip()
+    if tail:
+        lines.append(tail)
+
+    paragraphs = []
+    current = []
+    current_chars = 0
+    for line in lines:
+        bare = line.rstrip("，,；;。.!！?？")
+        standalone_formula = bool(MATH.fullmatch(bare))
+        attaches_to_previous = bool(
+            current
+            and (
+                current[-1].endswith(("：", ":"))
+                or standalone_formula
+            )
+        )
+        if current and not attaches_to_previous and (
+            len(current) >= 3 or current_chars + len(line) > 180
+        ):
+            paragraphs.append(current)
+            current = []
+            current_chars = 0
+        current.append(line)
+        current_chars += len(line)
+    if current:
+        paragraphs.append(current)
+    return "\n\n".join("\n".join(paragraph) for paragraph in paragraphs)
+
+
+def marker_order(markers: list[re.Match[str]]) -> dict[str, int] | None:
+    labels = [marker.group("label") for marker in markers]
+    if all(label.isdigit() for label in labels):
+        expected = [str(number) for number in range(1, len(labels) + 1)]
+    elif all(label in LATIN_PARTS for label in labels):
+        expected = list(LATIN_PARTS[:len(labels)])
+    elif all(label in CYRILLIC_PARTS for label in labels):
+        expected = list(CYRILLIC_PARTS[:len(labels)])
+    else:
+        return None
+    if (
+        len(labels) != len(set(labels))
+        or set(labels) != set(expected)
+        or sorted(labels, key=expected.index) != expected
+    ):
+        return None
+    return {label: index for index, label in enumerate(expected)}
+
+
+def normalize_numbered_subparts(text: str) -> str:
+    """Sort a complete numeric or lettered sequence and line-break its parts."""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"^(\s*\d+\.)\s*(?=1[)）])", r"\1\n", text)
+    masked_text = masked_math(text)
+    depths = nesting_depths(masked_text)
+    markers = [
+        marker
+        for marker in PART_MARKER.finditer(masked_text)
+        if depths[marker.start()] == 0
+        and (
+            not marker.group("open")
+            or (marker.group("open"), marker.group("close")) in {("(", ")"), ("（", "）")}
+        )
+        and not re.search(r"图\s*$", masked_text[max(0, marker.start() - 3):marker.start()])
+    ]
+    if len(markers) < 2:
+        return text
+    order = marker_order(markers)
+    if order is None:
+        return text
+    if len(markers) == 2:
+        formulas = list(MATH.finditer(text, markers[0].end()))
+        run = []
+        for formula in formulas:
+            previous = run[-1].end() if run else markers[0].end()
+            gap = text[previous:formula.start()]
+            if run and len(run) == 1:
+                gap = gap.replace(text[markers[1].start():markers[1].end()], "", 1)
+            if re.fullmatch(r"[\s,，;；。]*", gap) is None:
+                break
+            run.append(formula)
+        if len(run) >= 4 and len(run) % 2 == 0:
+            row_gaps = [
+                text[run[index].end():run[index + 1].start()]
+                for index in range(0, len(run), 2)
+            ]
+            if (
+                run[0].end() <= markers[1].start() < run[1].start()
+                and all("\u3000\u3000" in gap for gap in row_gaps)
+                and all(
+                    "\u3000\u3000" not in text[run[index].end():run[index + 1].start()]
+                    for index in range(1, len(run) - 1, 2)
+                )
+            ):
+                columns = [
+                    text[markers[column].start():markers[column].end()] + " " +
+                    " ".join(match.group() for match in run[column::2])
+                    for column in range(2)
+                ]
+                suffix = text[run[-1].end():].strip()
+                if suffix:
+                    columns[-1] += suffix
+                prefix = text[:markers[0].start()].rstrip()
+                return "\n".join(
+                    ([prefix] if prefix else []) + columns
+                )
+
+    prefix = text[:markers[0].start()].rstrip()
+    parts = []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        part = text[marker.start():end]
+        part = re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
+        parts.append((order[marker.group("label")], part))
+    ordered = [part for _, part in sorted(parts)]
+    return "\n".join(([prefix] if prefix else []) + ordered)
+
+
+def validate_numbered_subpart_layout(text: object) -> list[str]:
+    if not isinstance(text, str):
+        return []
+    if normalize_numbered_subparts(text) != text:
+        return ["完整数字或字母分题必须按自然顺序排列，并且每个分题独占一行"]
+    return []
+
+
+def normalize_lesson_layout(lesson: dict) -> None:
+    for block in lesson.get("prose", []):
+        if block.get("kind") != "p":
+            continue
+        text = block.get("text")
+        normalized = normalize_prose_layout(text)
+        if normalized == text:
+            continue
+        block["text"] = normalized
+        changes = block.get("changes")
+        if isinstance(changes, list) and "layout" not in changes:
+            changes.append("layout")
+
+
+def prose_flow_contract(prose: object, section_breaks: object) -> tuple[dict, list[str]]:
+    payload = json.dumps({
+        "prose": prose,
+        "section_breaks": section_breaks,
+    }, ensure_ascii=False)
+    result = subprocess.run(
+        ["node", str(Path(__file__).resolve().parent / "prose_flow.mjs"), "--stdin"],
+        input=payload,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        return {}, [f"lesson.section_breaks 无法由 proseFlow 解析: {detail}"]
+    try:
+        return json.loads(result.stdout), []
+    except json.JSONDecodeError as error:
+        return {}, [f"lesson.section_breaks proseFlow 输出无效: {error}"]
+
+
+def normalize_exercise_layout(exercises: dict) -> None:
+    for exercise in exercises.get("exercises", []):
+        text = exercise.get("text")
+        normalized = normalize_numbered_subparts(text)
+        if normalized == text:
+            continue
+        exercise["text"] = normalized
+        exercise["lines"] = normalized.splitlines()
+        changes = exercise.get("changes")
+        if isinstance(changes, list) and "layout" not in changes:
+            changes.append("layout")
+
+
+def validate_identity_fields(
+    source: dict,
+    modern: dict,
+    fields: tuple[str, ...],
+    label: str,
+) -> list[str]:
+    errors = []
+    for field in fields:
+        if (field in modern) != (field in source) or modern.get(field) != source.get(field):
+            errors.append(f"{label}.{field} 不得改变")
+    return errors
+
+
+def validate_text(
+    source: str,
+    modern: object,
+    changes: object,
+    numeric_changes: object,
+    label: str,
+    forbidden_terms: list[str],
+    historical_entities: object = None,
+    math_corrections: list[dict] | None = None,
+    source_lines: list[str] | None = None,
+) -> list[str]:
+    errors = []
+    if not isinstance(modern, str):
+        return [f"{label}.text 必须是字符串"]
+    if not isinstance(changes, list) or any(not isinstance(item, str) for item in changes):
+        errors.append(f"{label}.changes 必须是字符串数组")
+        changes = []
+    if modern != source and not changes:
+        errors.append(f"{label} 已改写但 changes 为空")
+    if modern == source and changes:
+        errors.append(f"{label} 未改写但 changes 非空")
+    comparison_source = source
+    if source_lines is not None:
+        if (
+            not isinstance(source_lines, list)
+            or not source_lines
+            or any(not isinstance(line, str) for line in source_lines)
+        ):
+            return errors + [f"{label}.source_lines 必须是非空字符串数组"]
+        if blocks.text_of({"lines": source_lines}) != source:
+            return errors + [f"{label}.source_lines 与原书 source 文本不一致"]
+        # Keep authoritative row boundaries without altering wrapped formulas.
+        boundaries = {
+            len(blocks.text_of({"lines": source_lines[:index]}))
+            for index in range(1, len(source_lines))
+        }
+        formulas = list(MATH.finditer(source))
+        for boundary in sorted(boundaries, reverse=True):
+            if not any(match.start() < boundary < match.end() for match in formulas):
+                comparison_source = (
+                    comparison_source[:boundary] + "\n" + comparison_source[boundary:]
+                )
+    canonical_source = normalize_numbered_subparts(comparison_source)
+    canonical_modern = normalize_numbered_subparts(modern)
+    expected_math_source = canonical_source
+    for correction in math_corrections or []:
+        expected_math_source = expected_math_source.replace(
+            correction["original"],
+            correction["corrected"],
+            1,
+        )
+    if math_signature(canonical_modern) != math_signature(expected_math_source):
+        errors.append(f"{label} 的数学公式变化没有匹配已绑定勘误")
+    if math_corrections and "math-correction" not in changes:
+        errors.append(f"{label} 应在 changes 中包含 math-correction")
+    if not math_corrections and "math-correction" in changes:
+        errors.append(f"{label} 声明 math-correction 但没有已绑定勘误")
+    source_numbers = number_signature(expected_math_source)
+    modern_numbers = number_signature(canonical_modern)
+    if not isinstance(numeric_changes, list):
+        errors.append(f"{label}.numeric_changes 必须是数组")
+        numeric_changes = []
+    expected_numbers = source_numbers[:]

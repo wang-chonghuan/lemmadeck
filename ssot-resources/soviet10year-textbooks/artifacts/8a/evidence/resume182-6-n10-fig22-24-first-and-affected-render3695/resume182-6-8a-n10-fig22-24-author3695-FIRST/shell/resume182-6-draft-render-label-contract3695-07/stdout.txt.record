@@ -1,0 +1,55 @@
+            let y = yOffset + (
+              Math.ceil((yMin - yOffset) / object.yStep - 1e-9) * object.yStep
+            );
+            y <= yMax + 1e-9 && index < 500;
+            y += object.yStep
+          ) {
+            createSegment(
+              `${object.id}-h-${index}`,
+              [xMin, y],
+              [xMax, y],
+              lineStyle(object, palette.grid),
+            )
+            index += 1
+          }
+        } else if (object.type === 'axis') {
+          createSegment(
+            object.id,
+            object.from,
+            object.to,
+            lineStyle(object, palette.ink),
+          )
+          const start = pointValue(object.from)
+          const end = pointValue(object.to)
+          const dx = end[0] - start[0]
+          const dy = end[1] - start[1]
+          const length = Math.hypot(dx, dy) || 1
+          const normal = [-dy / length, dx / length]
+          for (const [index, tick] of (object.ticks || []).entries()) {
+            const at = Array.isArray(tick.at)
+              ? tick.at
+              : [start[0] + dx * tick.at, start[1] + dy * tick.at]
+            const size = tick.size || object.tickSize || 0.12
+            createSegment(
+              `${object.id}-tick-${index}`,
+              [at[0] - normal[0] * size, at[1] - normal[1] * size],
+              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+              lineStyle(object, palette.ink),
+            )
+            if (tick.label !== undefined) {
+              addLabel(
+                {
+                  id: `${object.id}-tick-${index}`,
+                  labelPlacement: tick.labelPlacement || {
+                    position: Math.abs(dx) >= Math.abs(dy) ? 'S' : 'E',
+                  },
+                  fontSize: tick.fontSize || object.fontSize || 26,
+                  fontWeight: 600,
+                  labelColor: object.labelColor,
+                },
+                at,
+                String(tick.label),
+              )
+            }
+          }
+        } else if (object.type === 'measure') {

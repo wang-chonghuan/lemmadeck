@@ -1,0 +1,172 @@
+5. 每张产品图委托项目技能 `ld-s10y-image`，并配
+   `ld-s10y-image/figure-spec@2`：
+   - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
+   - 动物、人物、树木和场景等语义素材用 Azure `gpt-image-2`
+   - 同时需要自然对象与精确数学关系时，用分层的 GPT artwork + JSXGraph overlay hybrid；
+     产品分别保存 PNG 素材层和 SVG 数学层，不生成或发布扁平合成 PNG
+   - 输入必须包含完整相关 edition 题面/正文与原始抽取图 PNG；edition 文本是语义真相
+   - 新建或复用已有现代图时，都必须重新打开 `source.image` 指向的原 PNG；先按原图列全
+     对象、标签、行列与关系，再绑定稳定的 object/assertion id。已有 FigureSpec、SVG 或
+     字节一致重建只能证明实现可复现，不能替代原图保真核对；现代规整或增补必须与原图事实
+     分开说明。网格行列用 `gridDimensions`，点位移用 `displacement`，集合归属用 `inside`，
+     语义连线用 `connects`，不能用 `objectCount` 代替关系断言；要求点关系的来源组中，
+     每个来源点都必须被组内映射的多点断言覆盖，组外或只覆盖其他点的关系不能替代
+   - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
+   - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
+     由产品主题和打印样式通过 CSS 变量决定实际颜色
+   - 禁止使用答案键或添加原图没有的解答标注，不能让题图泄露答案
+   - 禁止手改渲染器产物、直接发布原书截图，或让 GPT Image 猜精确刻度和标签位置
+6. **图内语言固定为英文**：数字、拉丁字母和数学符号可直接使用；禁止中文、日文、
+   西里尔文字、装饰性苏联文化符号、旧书纹理和手写体。课程正文仍为中文。来源绑定的
+   历史人物须保持可识别身份，但生成肖像必须明确是现代教材插画，不能冒充史料照片。
+7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
+   渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；
+   内容不符时最多针对缺陷修复一次；目录、权限等执行故障按技术恢复处理，不算内容批准。
+8. `adapt-finalize` 校验原始快照、数学、FigureSpec、渲染或生成元数据；失败不能发布。
+
+原始层 cap3 的 potrace 只用于保存教材抽取事实；现代 edition 的图必须重新创作，两者用途不同。
+
+### 完整图生成流程
+
+context package、渲染路由、FigureSpec、`n-azure` 和视觉门禁见
+[references/figure-generation.md](references/figure-generation.md)。预览批次只写 `.tmp/`；
+用户验收后才提升到 edition。
+
+---
+
+## cap5 — 自包含 HTML
+
+```bash
+p2c.py render --book 5m --edition modern-us-neutral [--lesson <cardId>]...
+```
+
+每个单元两张白底预览：`text.html`（课文，原书无正文时为空）+ `exercises.html`
+（每题独立编号，共享练习图只展示一次），只写
+`.tmp/ld-s10y-lesson/render/<book>/<edition>/`。
+自包含指不依赖网络也不依赖同级文件：KaTeX 服务端渲染成静态 HTML（页面不要 JS）、
+CSS 与 20 个 woff2 字体内联成 data URI，插图 SVG 或 PNG 都内联。
+
+> 坑：`katex.min.css` 里 `src` 是 `@font-face` 的**最后一条**声明，以 `}` 结尾而非 `;`。
+> 按 `;` 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
+> 现在内联数为 0 直接抛错，不允许静默降级。
+
+---
+
+## cap6 — 生产入库
+
+```bash
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/5m \
+  --edition modern-us-neutral [--lesson <cardId>]... [--dry]
+```
+
+一个单元 = `sr_lessons` 一行，**id 就是 cap2 从 TOC 认领的卡片 id**——这是 app 定的
+（见 `app/src/lib/deck-stats.ts`），所以不建新表。`content` 放课文块、`exercises` 放每道题，
+两者都是可直接嵌入的 HTML 片段（KaTeX 已渲染、插图为内联图片数据），由产品自己排版；
+`html` 列不再写入。幂等 upsert，重复跑不会伤到别的课。
+
+`--lesson` 可重复，用于只写本次已经完整闭合的单元。跨页抽取为了完成上一单元而读到了
+下一单元开头时，必须指定它，禁止把只有标题或一道题的半个单元写进生产。
+
+发布器只读取 `editions/<edition>/lessons/`，要求 adaptation audit 为 `pass`，并验证
+现代图、FigureSpec 与生成/渲染元数据。写入 DB 时只保留现代正文、现代题目、现代图片、edition 名和原始
+SHA；完整原始快照不入库。重发同一 edition 的课文或图片时，必须按题号保留已有的
+`answerKey` 和 `interaction`，不得让重发导致答案或数学键盘消失。
+
+`lesson_order` 取完整 TOC 的卡片阅读顺序，不取只含当前已抽取课程的 `book.json`，也不取
+`Number(lesson.number)`：前者会在后补较早章节时移动旧序号，后者无法安置 `number=null`
+的补充习题。发布器按学科分支分配稳定编号段，并在同一事务中重排同册既有课程，因此章节可以
+按任意顺序生成而不会撞 `(subject, stage, lesson_order)` 唯一约束。edition `book.json`
+仍按原始索引重建，禁止手工修排序。
+
+一批可作答课程的发布顺序固定为：`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 →
+`ld-s10y-answer` 交互规格。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
+交互规格。
+
+发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`
+替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。
+习题引用的图必须实际展示，并带经原 PNG 复核的 `source.inventory`；复用样本也不能沿用
+未经复核的旧清单。字节一致只证明确定性，不证明与来源一致。图改动涉及点位、标签或题中
+数据时，同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图
+推导的答案。
+
+连接串取仓库根 `.env` 的 `LEMMADECK_DATABASE_URL`（Supabase，schema `lemmadeck-schema`）。
+写入只用本技能的 Node `postgres` 发布器；只读核对使用项目 `operations.md` 当前指定的命令，
+不要在技能里另造连接串解析规则。
+
+## cap7 — 产品验收
+
+### 已审查选择题接入
+
+`ld-s10y-choice` 保持离线。使用 `tools/retain_choices.py`，显式指定仓库、书册、课程
+及已批准目录，将种子、题稿、审查报告保留到目标现代课程
+`choice-set/{seed,draft,review}.json` 后，在调用方授权发布时使用本发布入口：
+
+```bash
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/6a --edition modern-us-neutral \
+  --lesson <cardId> --choices-only
+```
+
+该模式重新核验三份快照和所有引用图，只更新已有课程的 `exercises.choiceSet`，
+不重发课文、书写题、答案或课程排序。种子实图按原清单读取；
+新候选图必须先按图技能保留到本课 `choice-set/figures/`，配同名
+`*.spec.json`、`*.render.json`、`*.review.json`，并取得独立图审查。
+发布入口核验当前图稿与证据哈希，不得发布 scratch 路径。
+离线 `intent`、完整题源、作者键及审查文件不作为客户端载荷；应用只投影题面，
+单选点击提交，多选明确提交且由服务端按完整集合判分。
+
+生产写入不是完成；孩子在产品里能读到才是完成。
+
+1. 用 node + `app/node_modules/postgres` 查询目标 `sr_lessons` 行，核对
+   `content.edition`、`exercises.edition`、`content.prose` 和 `exercises.count`；
+   edition 必须等于本次发布值，只有练习的单元允许 `content.prose=[]`
+2. 按项目 `operations.md` 启动服务：主 checkout 使用主端口，IntentFold 工单 worktree
+   使用 `ticket.json` 记录的工单端口，禁止把 3200 写死到工单验收
+3. 浏览器打开每个目标 `/card/<cardId>`，确认正文没有混入练习专用图、插图清晰、
+   习题入口与题数；逐段检查无首行缩进，并按 `section_breaks` 的 `before`/`after` 断言横线
+   两侧实际内容，正文外数字/拉丁字母和行内公式字体一致且不小于中文正文
+4. 打开每节的书写题视图，确认所有原题和公式完整可读，并按 `figure id` 检查
+   同一张共享图在该练习区只出现一次。当前书写题是只读材料，必须没有输入框、
+   作答按钮、判分结果或标准答案；逐题比对当前 edition 发布题文，不要求旧数学键盘。
+   选择题的点击、多选集合判分、分页与保存恢复在获授权的集成阶段验证，
+   不能把只读书写题检查冒充选择题交互验收。
+5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
+
+对本次全部课程执行可失败的浏览器检查，不能只抽一课或只数 SVG：
+
+```bash
+node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
+  --book-dir ssot-resources/soviet10year-textbooks/artifacts/6a \
+  --edition modern-us-neutral --lesson <cardId> \
+  --base-url http://localhost:<ticket-port> \
+  --output .tmp/s10y-product-check
+```
+
+`--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
+在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取
+`display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查
+   横向滚动末端与宽表末列可达、逐题 edition 题文一致，以及书写题没有输入、
+   判分或答案区域。检查不提交作答、不写学习记录。
+   它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
+无正文的补充习题卡按内容对象断言正文为空，不能要求空正文容器具有可见高度；
+有正文或正文图的卡仍必须验证实际可见，且两类卡都要验证习题入口和全部题目。
+
+自动检查 `.sr-d-scroll` 的末尾可达性时，用瞬时滚动并轮询几何条件；CSS 平滑滚动后立即
+读取位置会产生假失败。不要靠给容器留下内联样式来禁用平滑滚动，否则下一次 SPA 导航会
+制造 React 水合告警。
+
+任一项失败都要修到通过。只生成文件、只 dry-run、只写库但没在产品验证，都不算完成。
+
+## 实测（5m 印刷页 1–11，PDF 10–20）
+
+11 页 → **4 个单元、55 道题（1–55 连续无缺号）、13 张编号插图 + 1 张无编号表格**。
+15 张 SVG 全部通过保真自检，不匹配率 0.000%–0.093%（限 2%）。
+跨页的第 29、36 题各由三段拼成，图自动跟到题上。
+
+## 已知行为
+
+- 一道题引用「图 6.2」时会保留对图 6 各子图的引用；每个实际 SVG 在练习区仍只展示一次
+- `outside_ratio` 只是"文字占墨迹的比例"，不是错误指标
+- 不做语义提取：表格一律当图裁，不拆成行列
+- 一本书没抽完时，末尾会有若干块标着 `open` 接不上——这是正常的，只报告不失败

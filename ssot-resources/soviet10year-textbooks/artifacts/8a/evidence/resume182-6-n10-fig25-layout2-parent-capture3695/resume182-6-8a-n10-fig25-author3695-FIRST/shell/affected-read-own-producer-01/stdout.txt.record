@@ -1,0 +1,315 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+assert.equal(process.cwd(), R);
+const bind = (path) => ({
+  path, sha256: crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex'),
+});
+const specPath = `${work}/draft-FIRST/fig-25.spec.json`;
+const svgPath = `${work}/render-FIRST/fig-25.svg`;
+const renderPath = `${work}/render-FIRST/fig-25.render.json`;
+const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'));
+const render = JSON.parse(fs.readFileSync(renderPath, 'utf8'));
+assert.equal(render.status, 'pass');
+assert.equal(render.spec.sha256, bind(specPath).sha256);
+assert.equal(render.output.svg.sha256, bind(svgPath).sha256);
+const output = `${work}/raster-FIRST`;
+assert.equal(fs.existsSync(output), false, 'Preserve every existing raster candidate.');
+fs.mkdirSync(output);
+const req = createRequire(`${R}/app/package.json`);
+const { chromium } = req('@playwright/test');
+const executablePath = chromium.executablePath();
+assert.ok(fs.existsSync(executablePath));
+const svgText = fs.readFileSync(svgPath, 'utf8');
+const record = {
+  schema: 'resume182-6/author-svg-rasterization@1',
+  status: 'STARTED', role: 'AUTHOR_NOT_REVIEWER',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral', figure: 'fig-25',
+  sourceSvg: bind(svgPath), spec: bind(specPath), render: bind(renderPath),
+  captureScript: bind(fileURLToPath(import.meta.url)),
+  runtime: { package: req.resolve('@playwright/test'), version: req('@playwright/test/package.json').version, executablePath, node: process.version },
+  deviceScaleFactor: 1, networkPolicy: 'abort every routed request',
+  browserLaunches: 0, contexts: 0, pages: 0, contentLoads: 0, screenshotCalls: 0,
+  abortedRequests: 0, consoleErrors: [], pageErrors: [],
+  candidateRasterViews: 0, sourceRasterReads: 0, rasterResizes: 0, rasterCrops: 0,
+  captures: [], closures: { page: false, context: false, browser: false },
+  closureErrors: [], independentVisualReview: 'NOT_RUN',
+  startedAt: new Date().toISOString(), cost: 'unknown',
+};
+let browser;
+let context;
+let page;
+let failure;
+try {
+  record.browserLaunches++;
+  browser = await chromium.launch({ headless: true, executablePath });
+  record.browserVersion = browser.version();
+  record.contexts++;
+  context = await browser.newContext({
+    viewport: { width: spec.canvas.width, height: spec.canvas.height },
+    deviceScaleFactor: 1,
+    serviceWorkers: 'block',
+  });
+  await context.route('**/*', (route) => {
+    record.abortedRequests++;
+    return route.abort();
+  });
+  record.pages++;
+  page = await context.newPage();
+  page.on('console', (message) => {
+    if (message.type() === 'error') record.consoleErrors.push(message.text());
+  });
+  page.on('pageerror', (error) => record.pageErrors.push(error.message));
+  for (const [name, width] of [['native', spec.canvas.width], ['width640', 640]]) {
+    const cssHeight = width * spec.canvas.height / spec.canvas.width;
+    const height = Math.ceil(cssHeight);
+    const pngPath = `${output}/fig-25.${name}.png`;
+    assert.equal(fs.existsSync(pngPath), false);
+    await page.setViewportSize({ width, height });
+    record.contentLoads++;
+    await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+      :root { --ld-figure-ink:#15201f; --ld-figure-muted:#4c5a58; --ld-figure-accent:#15201f; --ld-figure-accent-soft:#8a9795; --ld-figure-grid:#e3eae9; --ld-figure-paper:#ffffff; }
+      html,body { margin:0; width:${width}px; height:${height}px; overflow:hidden; background:#ffffff; }
+      svg { display:block; width:${width}px; height:${cssHeight}px; }
+      </style></head><body>${svgText}</body></html>`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    const observation = await page.evaluate(() => {
+      const svg = document.querySelector('svg');
+      const svgBox = svg.getBoundingClientRect();
+      const visible = (node) => {
+        const style = getComputedStyle(node);
+        return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0;
+      };
+      const labels = [...svg.querySelectorAll('text')].map((node) => {
+        const box = node.getBoundingClientRect();
+        const matrix = node.getScreenCTM();
+        return {
+          id: node.getAttribute('data-label-id'), text: node.textContent,
+          x: box.x, y: box.y, width: box.width, height: box.height,
+          finalFontPx: Number.parseFloat(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        };
+      });
+      const visibleRoundElements = [...svg.querySelectorAll('ellipse,circle')]
+        .filter(visible)
+        .map((node) => {
+          const box = node.getBoundingClientRect();
+          return { id: node.id, width: box.width, height: box.height };
+        });
+      return {
+        svgWidth: svgBox.width, svgHeight: svgBox.height, devicePixelRatio,
+        labels, visibleRoundElements,
+        visibleGeometryElements: [...svg.querySelectorAll('path,line,polygon,polyline,ellipse,circle')].filter(visible).length,
+      };
+    });
+    assert.equal(observation.svgWidth, width);
+    assert.ok(Math.abs(observation.svgHeight - cssHeight) < 0.03);
+    assert.equal(observation.devicePixelRatio, 1);
+    assert.equal(observation.labels.length, 28);
+    assert.ok(observation.labels.every((label) => label.finalFontPx >= 16));
+    assert.ok(observation.labels.every((label) =>
+      label.x >= 0 && label.y >= 0 && label.x + label.width <= width &&
+      label.y + label.height <= height));
+    assert.ok(observation.visibleGeometryElements > 100);
+    assert.ok(observation.visibleRoundElements.every((item) => item.width > 20 && item.height > 20), 'No visible point-size dots.');
+    record.screenshotCalls++;
+    await page.screenshot({ path: pngPath, type: 'png', fullPage: false, animations: 'disabled' });
+    const pngBytes = fs.readFileSync(pngPath);
+    assert.equal(pngBytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.equal(pngBytes.readUInt32BE(16), width);
+    assert.equal(pngBytes.readUInt32BE(20), height);
+    record.captures.push({
+      name, png: { ...bind(pngPath), width, height },
+      cssSize: { width, height: cssHeight }, viewport: { width, height },
+      rasterization: 'Original generated SVG loaded directly at this CSS width with DPR1; no existing PNG resize or crop.',
+      minMeasuredTextPx: Math.min(...observation.labels.map((label) => label.finalFontPx)),
+      observation,
+    });
+  }
+  assert.equal(record.consoleErrors.length, 0);
+  assert.equal(record.pageErrors.length, 0);
+  record.status = 'CAPTURE_COMPLETE_NOT_VISUAL_APPROVAL';
+} catch (error) {
+  failure = error;
+  record.status = 'CAPTURE_FAILED';
+  record.error = error.message;
+} finally {
+  for (const [name, resource] of [['page', page], ['context', context], ['browser', browser]]) {
+    if (!resource) continue;
+    try {
+      await resource.close();
+      record.closures[name] = true;
+    } catch (error) {
+      record.closureErrors.push({ resource: name, error: error.message });
+      failure ??= error;
+    }
+  }
+  record.finishedAt = new Date().toISOString();
+  const recordPath = `${output}/capture.record`;
+  fs.writeFileSync(recordPath, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({
+    capture: bind(recordPath), status: record.status,
+    captures: record.captures.map(({ name, png, minMeasuredTextPx }) => ({ name, png, minMeasuredTextPx })),
+    screenshotCalls: record.screenshotCalls, closures: record.closures,
+  }, null, 2));
+}
+if (failure) throw failure;
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+assert.equal(process.cwd(), R);
+const bind = (path) => ({
+  path, sha256: crypto.createHash('sha256').update(fs.readFileSync(path)).digest('hex'),
+});
+const read = (path) => JSON.parse(fs.readFileSync(path, 'utf8'));
+const inventory = bind(`${work}/ready.record`);
+assert.equal(inventory.sha256, '12dc00282ea205a5031beb8a47ee5a69c8c7e52574a674d24a1480fe87d150fa');
+const spec = bind(`${work}/draft-FIRST/fig-25.spec.json`);
+const svg = bind(`${work}/render-FIRST/fig-25.svg`);
+const render = bind(`${work}/render-FIRST/fig-25.render.json`);
+const report = read(render.path);
+const capture = bind(`${work}/raster-FIRST/capture.record`);
+const captured = read(capture.path);
+assert.equal(report.status, 'pass');
+assert.equal(report.spec.sha256, spec.sha256);
+assert.equal(report.output.svg.sha256, svg.sha256);
+assert.equal(captured.status, 'CAPTURE_COMPLETE_NOT_VISUAL_APPROVAL');
+assert.equal(captured.sourceSvg.sha256, svg.sha256);
+assert.deepEqual(captured.closures, { page: true, context: true, browser: true });
+assert.equal(captured.screenshotCalls, 2);
+const nativePng = captured.captures.find((item) => item.name === 'native').png;
+const width640Preview = captured.captures.find((item) => item.name === 'width640').png;
+assert.equal(bind(nativePng.path).sha256, nativePng.sha256);
+assert.equal(bind(width640Preview.path).sha256, width640Preview.sha256);
+const receipts = fs.readdirSync(`${work}/shell`)
+  .filter((directory) => fs.existsSync(`${work}/shell/${directory}/receipt.record`))
+  .map((directory) => {
+    const root = `${work}/shell/${directory}`;
+    return {
+      directory: root, receipt: bind(`${root}/receipt.record`),
+      stdout: bind(`${root}/stdout.txt`), stderr: bind(`${root}/stderr.txt`),
+      result: read(`${root}/receipt.record`),
+    };
+  });
+const failureReceipts = receipts.filter((item) => item.result.returncode !== 0);
+const notes = read(`${work}/draft-FIRST/authoring-notes.record`);
+for (const input of notes.inputs) assert.equal(bind(input.path).sha256, input.sha256);
+const sourceImage = read(spec.path).source.image;
+assert.equal(bind(sourceImage.path).sha256, sourceImage.sha256);
+const record = {
+  schema: 'resume182-6/figure-render-ready@1',
+  status: 'RENDER_READY_FOR_INDEPENDENT_REVIEW_NOT_FIGURE_APPROVAL',
+  role: 'AUTHOR_NOT_REVIEWER', createdAt: new Date().toISOString(),
+  cwd: R, authorizedWriteRoot: work,
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral', figure: 'fig-25',
+  spec, svg, render, nativePng, width640Preview,
+  sourceImage,
+  independentSourceInventory: inventory,
+  preservedInventoryStatus: 'SOURCE_INVENTORY_READY_NOT_FIGURE_APPROVAL',
+  frozenInputs: notes.inputs,
+  authoringNotes: bind(`${work}/draft-FIRST/authoring-notes.record`),
+  authoringScript: bind(`${work}/build-draft.mjs`),
+  capture, captureScript: bind(`${work}/capture-first.mjs`),
+  sealScript: bind(fileURLToPath(import.meta.url)),
+  frames: notes.frames,
+  preservedRequirements: [
+    'Four separate coordinate frames and every visible source row/column and origin phase are retained.',
+    'Rectangle bottom is one source unit above the x axis; it is not on that axis.',
+    'The complete circle and solid axial diameter remain, with hatching only in its right half.',
+    'The inner and outer solid circumferences remain, with hatching only in the annulus.',
+    'All source axis names, O and given numeric labels are retained; source has no visible dots and no visible point objects are authored.',
+    'Irregular scan blemishes are omitted as blemishes, not reinterpreted as boundaries.',
+    'Source labels а/б/в/г map to modern English a/b/c/d; this is explicitly a modern mapping.',
+  ],
+  authorProductionEvidence: {
+    explicitDraftValidator: {
+      script: bind(`${R}/.agents/skills/ld-s10y-image/scripts/validate_spec.py`),
+      interpreter: '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+      interpreterArgs: ['-B'], stage: 'draft',
+      receipt: bind(`${work}/shell/validate-spec-FIRST-01/receipt.record`),
+      result: read(`${work}/shell/validate-spec-FIRST-01/stdout.txt`),
+      explicitInvocations: 1,
+    },
+    renderer: {
+      script: bind(`${R}/.agents/skills/ld-s10y-image/scripts/render_spec.mjs`),
+      pythonAdapter: bind(`${work}/python-B.sh`),
+      receipt: bind(`${work}/shell/render-spec-FIRST-01/receipt.record`),
+      rendererAttempts: 1, successfulRuns: 1, repairRuns: 0,
+      mandatoryEmbeddedDraftValidatorRuns: 1,
+      separatelyRepeatedPassedValidatorRuns: 0,
+      name: report.renderer.name, version: report.renderer.version,
+      status: report.status, objects: report.objects, labels: report.labels,
+      collisions: report.collisions, displayChecks: report.displayChecks,
+      browserLaunches: 1, rendererScreenshotCalls: 0,
+      isNotIndependentSourceOrMathApproval: true,
+    },
+    rasterization: {
+      receipt: bind(`${work}/shell/capture-native-and-640-FIRST-01/receipt.record`),
+      runtime: captured.runtime, browserVersion: captured.browserVersion,
+      method: 'Two first rasterizations of the original generated SVG with current R/app Playwright; native canvas and actual CSS640 width, DPR1. Neither raster resizes an existing PNG.',
+      resvgUsed: false, otherProjectRuntimeUsed: false,
+      screenshotCalls: captured.screenshotCalls,
+      contentLoads: captured.contentLoads, browserLaunches: captured.browserLaunches,
+      contexts: captured.contexts, pages: captured.pages,
+      deviceScaleFactor: captured.deviceScaleFactor,
+      closures: captured.closures, closureErrors: captured.closureErrors,
+      abortedRequests: captured.abortedRequests,
+      networkPolicy: captured.networkPolicy,
+      consoleErrors: captured.consoleErrors, pageErrors: captured.pageErrors,
+      actual640CssHeight: captured.captures.find((item) => item.name === 'width640').cssSize.height,
+      actual640MinMeasuredTextPx: captured.captures.find((item) => item.name === 'width640').minMeasuredTextPx,
+      previewReusedNativePng: false,
+      rasterResizeOrCrop: false,
+      sourcePngUsedInRasterization: false,
+      authorCandidatePngViews: 0,
+      visualApproval: 'NOT_RUN',
+    },
+  },
+  counts: {
+    sourcePngViewsCumulative: 1, sourcePngViewsThisContinuation: 0,
+    sourcePageViews: 0, sourceReopens: 0, sourceCrops: 0, authorCandidateViews: 0,
+    imagesLoadedIntoAuthorContext: 1, imageBatchLimit: 8, contextImageLimit: 24,
+    explicitDraftValidationInvocations: 1, embeddedRendererDraftValidations: 1,
+    rendererInvocations: 1, successfulRendererInvocations: 1,
+    nativeRasterizations: 1, width640Rasterizations: 1, screenshotCalls: 2,
+    browserLaunches: 2, contentRepairs: 0, technicalCandidateRepairs: 0,
+    dependencyInstalls: 0, copiedRuntimes: 0, copiedSourcePngs: 0,
+    paidGenerationCalls: 0, independentFigureReviewCalls: 0,
+  },
+  preservedFailures: {
+    originalInventoryPhase: read(inventory.path).execution_evidence.failure,
+    originalReceiptRootDeviation: read(inventory.path).execution_evidence.receipt_root_deviation,
+    continuationNonzeroShellReceipts: failureReceipts,
+    interpretation: 'Nonzero discovery searches and MODULE_NOT_FOUND probe output are retained as execution evidence, not mathematical or image failures. No validator, renderer or raster candidate failed.',
+    allFirstCandidateBytesPreserved: true,
+  },
+  receipts,
+  readyCreationReceiptPath: `${work}/shell/seal-render-ready-FIRST-01/receipt.record`,
+  unknowns: ['Cost', 'Original exact subpixel/ink geometry', 'Independent figure review outcome'],
+  cost: 'unknown',
+  scopeBoundaries: [
+    'TEXT_PASS is recorded only as received/read hash-bound upstream input, not re-reviewed.',
+    'No source PNG or source page reopened; original inventory ready.record was not edited.',
+    'No answer or choice artifact read, no answer inequalities or formulas generated, no answer labels added.',
+    'No record_review, promotion, publish, DB, Plane write, chat/create/attach, merge, deploy or push.',
+    'No file in another project written; no dependency installed or runtime copied.',
+    'Draft validation and renderer PASS are producer technical evidence, not source/figure scientific approval.',
+    'The independent reviewer must receive these file bindings and inspect the candidate separately.',
+  ],
+};
+const readyPath = `${work}/render-ready.record`;
+fs.writeFileSync(readyPath, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  ready: bind(readyPath), spec, svg, render, nativePng, width640Preview,
+  cost: 'unknown', independentFigureApproval: false,
+}, null, 2));
+#!/bin/sh
+exec /Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python -B "$@"

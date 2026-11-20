@@ -1,0 +1,56 @@
+                for assertion_id in required_assertions:
+                    if assertion_id not in assertions_by_id:
+                        errors.append(
+                            f"{label}: missing assertion {assertion_id!r}"
+                        )
+                mapped_assertions = [
+                    assertions_by_id[assertion_id]
+                    for assertion_id in required_assertions
+                    if assertion_id in assertions_by_id
+                ]
+                mapped_objects = [
+                    by_id[object_id]
+                    for object_id in required_objects
+                    if object_id in by_id
+                ]
+                requirements = group.get("requires", [])
+                if (
+                    not isinstance(requirements, list)
+                    or any(
+                        requirement not in {
+                            "gridDimensions", "pointRelationships"
+                        }
+                        for requirement in requirements
+                    )
+                    or len(requirements) != len(set(requirements))
+                ):
+                    errors.append(
+                        f"{label}.requires must contain unique supported requirements"
+                    )
+                    requirements = []
+                mapped_grids = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "grid"
+                ]
+                if "gridDimensions" in requirements:
+                    if not mapped_grids:
+                        errors.append(
+                            f"{label}: gridDimensions requirement needs a mapped grid"
+                        )
+                    for grid_id in mapped_grids:
+                        if not any(
+                            item.get("type") == "gridDimensions"
+                            and item.get("grid") == grid_id
+                            for item in mapped_assertions
+                        ):
+                            errors.append(
+                                f"{label}: grid {grid_id!r} requires a mapped "
+                                "gridDimensions assertion; objectCount is insufficient"
+                            )
+                mapped_points = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "point"
+                ]
+                if "pointRelationships" in requirements:

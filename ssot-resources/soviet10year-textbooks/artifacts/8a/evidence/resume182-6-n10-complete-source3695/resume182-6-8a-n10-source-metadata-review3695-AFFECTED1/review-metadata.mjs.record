@@ -1,0 +1,217 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const outputRoot = '.tmp/resume182-6-8a-n10-source-metadata-review3695-AFFECTED1';
+const sourceBase = '.tmp/resume182-6-8a-n10-source3695-FIRST/draft-root/8a/pages';
+const stageBase = '.tmp/resume182-6-8a-n10-assembly3695-FIRST/artifacts/8a/pages';
+const evidenceBase = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence';
+const firstReadyPath = '.tmp/resume182-6-8a-n10-source-review3695-FIRST/ready.record';
+const firstReadyHash = '769e5e28e088114bd83bdf4256a3d072906e07a1312e97e7ea1ca667610a98a1';
+const sourceRetentionPath = `${evidenceBase}/resume182-6-n10-source-and-geometry3695/retention.record`;
+const reviewRetentionPath = `${evidenceBase}/resume182-6-n10-first-source-review3695/retention.record`;
+const failedPackage = '.tmp/resume182-6-n10-meta-inspect3695-AFFECTED1';
+const inputHashes = [];
+const checks = [];
+const pages = [];
+const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+
+function read(path) {
+  assert.ok(!path.startsWith('/') && !path.split('/').includes('..'));
+  assert.ok(!/\.(png|jpg|jpeg|webp|svg|pdf)(\.record)?$/i.test(path), 'No image/PDF reads');
+  const bytes = fs.readFileSync(`${R}/${path}`);
+  inputHashes.push({ path, sha256: sha256(bytes), bytes: bytes.length });
+  return bytes;
+}
+
+function check(id, fn) {
+  fn();
+  checks.push({ id, status: 'PASS' });
+}
+
+function markdownParts(bytes) {
+  const text = bytes.toString('utf8');
+  const match = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.exec(text);
+  assert.ok(match, 'JSON frontmatter required');
+  return { meta: JSON.parse(match[1]), body: text.slice(match[0].length) };
+}
+
+function changedPaths(before, after, path, allowed) {
+  if (isDeepStrictEqual(before, after)) return [];
+  if (allowed.includes(path)) return [path];
+  if (before === null || after === null || typeof before !== 'object' ||
+      typeof after !== 'object' || Array.isArray(before) !== Array.isArray(after)) return [path];
+  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
+  return keys.flatMap(key =>
+    changedPaths(before[key], after[key], `${path}/${key}`, allowed));
+}
+
+function retainedBytes(manifest, historicalPath) {
+  const matches = manifest.entries.filter(entry => entry.historical_path === historicalPath);
+  assert.equal(matches.length, 1, `Unique retained entry: ${historicalPath}`);
+  const entry = matches[0];
+  const bytes = read(entry.path);
+  assert.equal(sha256(bytes), entry.sha256);
+  assert.equal(bytes.length, entry.bytes);
+  return bytes;
+}
+
+try {
+  assert.equal(process.cwd(), R);
+  read('.tmp/resume182-6-run3695.mjs');
+  read(`${outputRoot}/review-metadata.mjs`);
+  const firstBytes = read(firstReadyPath);
+  const first = JSON.parse(firstBytes);
+  const sourceRetention = JSON.parse(read(sourceRetentionPath));
+  const reviewRetention = JSON.parse(read(reviewRetentionPath));
+  check('first-ready-pinned-and-retained', () => {
+    assert.equal(sha256(firstBytes), firstReadyHash);
+    assert.deepEqual(retainedBytes(reviewRetention, firstReadyPath), firstBytes);
+    assert.equal(first.status, 'HOLD');
+    assert.equal(first.decision.hold_reasons.length, 2);
+  });
+
+  const documents = {};
+  for (const page of ['0062', '0063']) {
+    const oldJsonBytes = read(`${stageBase}/${page}/page.json`);
+    const oldMdBytes = read(`${stageBase}/${page}/page.md`);
+    const jsonBytes = read(`${sourceBase}/${page}/page.json`);
+    const mdBytes = read(`${sourceBase}/${page}/page.md`);
+    const before = JSON.parse(oldJsonBytes);
+    const after = JSON.parse(jsonBytes);
+    const oldMd = markdownParts(oldMdBytes);
+    const md = markdownParts(mdBytes);
+    const allowed = page === '0062' ? ['/meta/errata'] : ['/meta/notes/3'];
+    const differences = changedPaths(before, after, '', allowed);
+    check(`p${page}-old-stage-is-retained-FIRST`, () => {
+      for (const [extension, bytes] of [['json', oldJsonBytes], ['md', oldMdBytes]]) {
+        const historical = `${sourceBase}/${page}/page.${extension}`;
+        const prior = first.input_hashes.files.find(entry => entry.path === historical);
+        assert.ok(prior);
+        assert.equal(sha256(bytes), prior.sha256);
+        assert.deepEqual(retainedBytes(sourceRetention, historical), bytes);
+      }
+    });
+    check(`p${page}-blocks-deep-equal`, () => assert.deepEqual(after.blocks, before.blocks));
+    check(`p${page}-only-authorized-metadata-difference`, () => {
+      assert.deepEqual(differences, allowed);
+      const maskedBefore = structuredClone(before);
+      const maskedAfter = structuredClone(after);
+      if (page === '0062') {
+        delete maskedBefore.meta.errata;
+        delete maskedAfter.meta.errata;
+      } else {
+        maskedBefore.meta.notes[3] = null;
+        maskedAfter.meta.notes[3] = null;
+      }
+      assert.deepEqual(maskedAfter, maskedBefore);
+    });
+    check(`p${page}-MD-JSON-metadata-match-and-body-unchanged`, () => {
+      assert.deepEqual(oldMd.meta, before.meta);
+      assert.deepEqual(md.meta, after.meta);
+      assert.equal(md.body, oldMd.body);
+    });
+    pages.push({
+      page: Number(page), status: 'PASS', changed_paths: differences,
+      blocks_deep_equal: true, all_other_fields_deep_equal: true,
+      markdown_metadata_matches_json: true, markdown_body_byte_equal: true,
+      old_stage_matches_pinned_FIRST_and_retained_bytes: true,
+    });
+    documents[page] = { before, after };
+  }
+
+  const { before: old62, after: new62 } = documents['0062'];
+  const issue = first.issues.find(entry => entry.id === 'p0062-ex134-third-label');
+  const expectedOriginal = String.raw`б) $\left\{\begin{aligned}y-3x-6&\leqslant0,\\2y-6x+3&\geqslant0;\end{aligned}\right.$`;
+  const erratum = new62.meta.errata[0];
+  const target = new62.blocks[1];
+  const matches = new62.blocks.flatMap((block, blockIndex) =>
+    block.lines.flatMap((line, lineIndex) => {
+      const occurrences = [];
+      let offset = line.indexOf(expectedOriginal);
+      while (offset !== -1) {
+        occurrences.push({ block_index: blockIndex, line_index: lineIndex, offset });
+        offset = line.indexOf(expectedOriginal, offset + expectedOriginal.length);
+      }
+      return occurrences;
+    }));
+  check('p62-ex134-complete-left-lower-unique-binding-not-right-upper', () => {
+    assert.deepEqual(old62.meta.errata, []);
+    assert.equal(new62.meta.errata.length, 1);
+    assert.equal(erratum.id, 'p0062-ex134-label-3');
+    assert.equal(erratum.block, 'p0062#2');
+    assert.equal(target.kind, 'ex');
+    assert.equal(target.label, '134');
+    assert.equal(erratum.original, expectedOriginal);
+    assert.equal(erratum.original, issue.original);
+    assert.equal(erratum.original, issue.proposed_bound_erratum.original);
+    assert.equal(issue.json_pointer, '/blocks/1/lines/3');
+    assert.deepEqual(matches, [{ block_index: 1, line_index: 3, offset: 0 }]);
+    assert.ok(target.lines[3].startsWith(`${expectedOriginal} г) `));
+    const rightUpperOffset = target.lines[2].indexOf(' б) ');
+    assert.ok(rightUpperOffset >= 0);
+    assert.ok(!target.lines[2].includes(expectedOriginal));
+    assert.equal(target.lines[2], old62.blocks[1].lines[2]);
+    assert.equal(target.lines[3], old62.blocks[1].lines[3]);
+    assert.ok(erratum.reason.includes('左下') && erratum.reason.includes('第三序位c)'));
+    assert.ok(erratum.reason.includes('只修标号') && erratum.reason.includes('不改两式'));
+  });
+
+  const note = documents['0063'].after.meta.notes[3];
+  const ownershipIssue = first.issues.find(entry => entry.id === 'p0063-ex137-ownership-note');
+  check('p63-notes3-agrees-with-FIRST-ownership-decision', () => {
+    assert.equal(documents['0063'].before.meta.notes[3], ownershipIssue.original);
+    assert.ok(note.includes('完整137(a,b)'));
+    assert.ok(note.includes('属于alg8-c2-s2-n10'));
+    assert.ok(note.includes('131\u2013137共7题'));
+    assert.ok(note.includes('137保留复习题分组'));
+    assert.ok(note.includes('在h2第二章补充习题之前'));
+    assert.ok(documents['0063'].after.meta.notes[4].includes('138不属于n10'));
+  });
+
+  const failure = JSON.parse(read(`${failedPackage}/receipt.record`));
+  console.log(JSON.stringify({
+    status: 'PASS', scope: 'Only two affected metadata items; not whole-lesson approval',
+    cwd: R, observed_at: new Date().toISOString(), pages, checks,
+    binding: {
+      id: erratum.id, block: erratum.block, original: erratum.original,
+      reason: erratum.reason, unique_occurrence: matches[0],
+      position: 'third subquestion, left lower; FIRST position reused, no image viewed',
+      right_upper_unchanged: true, equations_unchanged: true,
+    },
+    ownership: { before: documents['0063'].before.meta.notes[3], after: note,
+      excluded_138_note: documents['0063'].after.meta.notes[4] },
+    inherited_only: {
+      ready_path: firstReadyPath, ready_sha256: firstReadyHash,
+      faithful_printed_text_status: first.decision.faithful_printed_text_status,
+      printed_line_inventory_status: first.decision.printed_line_inventory_status,
+      example_mathematical_consistency_status: first.decision.example_mathematical_consistency_status,
+      source_page_figure_relationships_status: first.decision.source_page_figure_relationships_status,
+    },
+    execution_deviation: {
+      occurred: true, status: 'HOLD', package: `${R}/${failedPackage}`,
+      error: failure.error, command: failure.command,
+      source_inputs_changed: false, reverted_or_deleted: false,
+      disclosed_in_commentary: true,
+      subsequent_receipts_within_authorized_root: true,
+    },
+    usage: {
+      new_metadata_items_reviewed: 2, new_source_PASS_reruns: 0,
+      new_image_PASS_reruns: 0, new_math_PASS_reruns: 0,
+      new_printed_line_PASS_reruns: 0, image_reads_or_views: 0,
+      p2c_finalize_runs: 0, assemble_runs: 0, errata_contract_validation_runs: 0,
+      screenshots: 0, python_invocations: 0, paid_generation_calls: 0,
+      cost: 'unknown',
+    },
+    input_hashes: { algorithm: 'sha256', path_base: R, files: inputHashes },
+  }, null, 2));
+} catch (error) {
+  console.log(JSON.stringify({
+    status: 'HOLD', scope: 'Only two affected metadata items',
+    error: error.stack, checks, pages,
+    input_hashes: { algorithm: 'sha256', path_base: R, files: inputHashes },
+  }, null, 2));
+  process.exitCode = 1;
+}

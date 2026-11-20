@@ -1,0 +1,273 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const root = `${R}/.tmp/resume182-6-8a-n10-fig25-review3695-FIRST`;
+const authorRoot = `${R}/.tmp/resume182-6-8a-n10-fig25-author3695-FIRST`;
+const contextRoot = `${R}/.tmp/resume182-6-8a-n10-figure-context3695-FIRST`;
+assert.equal(process.cwd(), R);
+
+const load = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
+const bind = (p) => {
+  const full = path.isAbsolute(p) ? p : path.join(R, p);
+  assert.ok(full.startsWith(`${R}/`));
+  return {
+    path: full,
+    sha256: crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex'),
+  };
+};
+const current = (record) => {
+  const actual = bind(record.path);
+  assert.equal(actual.sha256, record.sha256, record.path);
+  return actual;
+};
+
+const renderReady = bind(`${authorRoot}/render-ready.record`);
+assert.equal(renderReady.sha256, 'ae72a6142b362639133f721e9b6e1831cd759097186554aa34829db5e06a8cc0');
+const author = load(renderReady.path);
+const evidence = load(`${root}/existing-evidence-inspection.json`);
+const inputs = {};
+for (const key of ['sourceImage', 'spec', 'svg', 'render', 'nativePng', 'width640Preview', 'capture', 'captureScript', 'independentSourceInventory']) {
+  inputs[key] = current(author[key]);
+  assert.deepEqual(inputs[key], evidence.bindings[key]);
+}
+const textReady = bind(`${R}/.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record`);
+assert.equal(textReady.sha256, '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7');
+assert.equal(load(textReady.path).status, 'TEXT_PASS');
+const context = bind(`${contextRoot}/fig-25.context.json`);
+assert.equal(context.sha256, '643596eef9c9f5f5fd794476456ac6ab2c72c3934c7e3e4b054808818693c21d');
+const lessonRoot = `${contextRoot}/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10`;
+const modernFiles = ['lesson.json', 'exercises.json', 'figures.json'].map((name) => bind(`${lessonRoot}/${name}`));
+assert.deepEqual(modernFiles.map((file) => file.sha256), [
+  'd13354560d681bb189cd3ed1310e1abebdde6bf5b517bf0cf981405090a8d676',
+  '54e9be6f97a199515ca25e0b1c33ea4235558c660e184cad45bab8da4a8f4ef2',
+  'a355a02d9450426f4097999d02db4de8140d8b3a1e29d310f8ebba16eab8274f',
+]);
+const spec = load(inputs.spec.path);
+const capture = load(inputs.capture.path);
+const hold = load(`${root}/fig-25.hold.json`);
+assert.equal(hold.status, 'HOLD');
+assert.equal(hold.actualViewCalls, 2);
+assert.equal(hold.thirdPlannedView.executed, false);
+assert.equal(fs.existsSync(`${root}/fig-25.review.json`), false);
+assert.equal(spec.objects.filter((object) => object.type === 'point').length, 0);
+assert.equal(spec.objects.filter((object) => object.type === 'text').length, 28);
+
+const sourcePanels = load(`${root}/source-first-observations.json`).panels;
+const prefixes = ['fig-25-a', 'fig-25-b', 'fig-25-v', 'fig-25-g'];
+const comparison = prefixes.map((prefix, index) => {
+  const panel = sourcePanels[index];
+  const inventory = spec.source.inventory.find((item) => item.id === prefix);
+  const grid = spec.objects.find((object) => object.id === `${prefix}-grid`);
+  const gridAssertion = spec.assertions.find((item) => item.id === `${prefix}-grid-dimensions`);
+  assert.equal(gridAssertion.columns, panel.grid.columns);
+  assert.equal(gridAssertion.rows, panel.grid.rows);
+  assert.ok(inventory.requires.includes('gridDimensions'));
+  const horizontalPhase = spec.assertions.find((item) => item.id === `${prefix}-origin-phase-horizontal`);
+  const verticalPhase = spec.assertions.find((item) => item.id === `${prefix}-origin-phase-vertical`);
+  assert.equal(horizontalPhase.dx, panel.grid.originColumnFromLeft);
+  assert.equal(verticalPhase.dy, panel.grid.originRowFromTop);
+  const relationships = spec.assertions.filter((item) =>
+    inventory.assertions.includes(item.id) && !item.id.includes('-hatch-') && item.type !== 'gridDimensions'
+  );
+  return {
+    sourcePanel: panel.id,
+    currentInventoryId: prefix,
+    grid,
+    mappedGridDimensions: gridAssertion,
+    mappedPhaseAssertions: [horizontalPhase.id, verticalPhase.id],
+    sourceGridCountAndPhaseAgree: true,
+    mappedRelationshipAssertions: relationships.map((item) => ({ id: item.id, type: item.type })),
+    pointRelationshipRequirement: 'No source point dots or spec point objects exist. Literal-coordinate displacement, circle, distance, collinearity, perpendicular and connects assertions cover the required geometry; objectCount was not used as a substitute.',
+    regionAndBoundaryNativeComparison: 'Observed once and agrees with independent source inventory.',
+    labelVisualStatus: index < 2 ? 'No label defect identified at native view' : 'HOLD: circle-intersection labels displaced one full grid cell',
+  };
+});
+
+const receipts = [];
+function collect(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const p = path.join(directory, entry.name);
+    if (entry.isDirectory()) collect(p);
+    else if (entry.name === 'receipt.record') receipts.push(bind(p));
+  }
+}
+collect(root);
+assert.equal(receipts.length, 11);
+for (const receipt of receipts) assert.equal(load(receipt.path).returncode, 0);
+const sealingStart = bind(`${root}/11-seal/start.record`);
+
+const payload = {
+  schema: 'resume182-6/first-independent-figure-review-ready@1',
+  status: 'HOLD',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  figure: 'fig-25',
+  role: 'FIRST_INDEPENDENT_FIGURE_REVIEWER_NOT_AUTHOR',
+  createdAt: new Date().toISOString(),
+  cwd: R,
+  authorizedWriteRoot: root,
+  source: inputs.sourceImage,
+  sourceImage: inputs.sourceImage,
+  spec: inputs.spec,
+  svg: inputs.svg,
+  render: inputs.render,
+  nativePng: { ...inputs.nativePng, width: 1320, height: 1080, visuallyViewed: true },
+  width640Preview: { ...inputs.width640Preview, width: 640, height: 524, visuallyViewed: false },
+  officialReview: null,
+  officialReviewReason: 'The native visual result contains a content defect. No --status pass command was authorized under the defect-free condition, so record_review was not run.',
+  holdEvidence: bind(`${root}/fig-25.hold.json`),
+  independentSourceObservations: bind(`${root}/source-first-observations.json`),
+  existingEvidenceInspection: bind(`${root}/existing-evidence-inspection.json`),
+  inspectionScript: bind(`${root}/inspect-bindings.py`),
+  sealScript: bind(`${root}/seal-ready.mjs`),
+  authorRenderReady: renderReady,
+  authorSourceInventory: inputs.independentSourceInventory,
+  capture: inputs.capture,
+  captureScript: inputs.captureScript,
+  captureBindingClosed: evidence.captureBindingClosed,
+  currentModernContext: context,
+  currentModernFiles: modernFiles,
+  acceptedTextReady: textReady,
+  textReviewStatusReused: 'TEXT_PASS',
+  exercise136ContextOnly: 'The current modern task asks the learner to write the inequality systems represented by the fine hatching. No answer was read, derived or printed by this reviewer.',
+  sourceToCurrentComparison: comparison,
+  sourceFactsVsModernAdditions: {
+    sourceFacts: 'Four independent grids, their exact counts and phases, axis labels and given numbers, quadrant fill, rectangle, full circle with right-half fill, concentric circles and annular fill.',
+    modernAdditions: 'Latin a)/b)/c)/d), repositioned panels and outside panel labels, equal square cells and clean regular circles, semantic colors and standardized typography/hatching.',
+    noExtraGivenLabels: true,
+    noVisiblePointDots: true,
+    incidentalUpperRightSourceMarkExcluded: true,
+    unacceptableModernPlacement: 'c) 4 centered on grid abscissa 5; d) 4 centered on 3 and 6 centered on 7, without linking marks. Correct hidden anchors do not remedy visible ambiguity.',
+  },
+  observations: {
+    nativeRasterNonblankAndNotBlack: true,
+    nativeCulturalResidueIdentified: false,
+    nativeAnswerLeakageIdentified: false,
+    currentSvgVisibleTextInventory: evidence.svgTextValues,
+    actual640TextMeasurementPxFromExistingCapture: capture.captures[1].minMeasuredTextPx,
+    actual640TextMeasurementAtLeast16: capture.captures[1].minMeasuredTextPx >= 16,
+    actual640VisualApproval: false,
+    actual640VisualReason: 'Not opened after first content defect; existing measurements are not visual approval.',
+  },
+  actualViewCalls: hold.views,
+  viewPlan: {
+    maximumImages: 3,
+    plannedViewSlots: [
+      { ordinal: 1, target: 'original source PNG', executed: true },
+      { ordinal: 2, target: 'current native PNG 1320x1080', executed: true },
+      { ordinal: 3, target: 'current width640 PNG 640x524', executed: false, reason: hold.thirdPlannedView.reason },
+    ],
+    actualCount: 2,
+    noFabricatedThirdCall: true,
+    conditionalStopApplied: 'The direct instruction to stop opening images after a content defect was applied at view 2.',
+  },
+  reopens: 0,
+  counts: {
+    actualImageViewCalls: 2,
+    sourceImageViews: 1,
+    currentNativeViews: 1,
+    current640Views: 0,
+    reopens: 0,
+    crops: 0,
+    zooms: 0,
+    rerenders: 0,
+    sourcePassReruns: 0,
+    mathPassReruns: 0,
+    textPassReruns: 0,
+    explicitValidateSpecCalls: 0,
+    rendererCalls: 0,
+    officialRecordReviewCalls: 0,
+    officialRecordReviewInternalValidationCalls: 0,
+    contentRevisions: 0,
+    authorEdits: 0,
+    imageGenerationCalls: 0,
+    paidApiCallsInitiatedByReviewer: 0,
+    newBrowserLaunches: 0,
+    sourcePageViews: 0,
+    answerReads: 0,
+    oldPassReviews: 0,
+    toolExecutionFailures: 1,
+    contentHoldFindings: 1,
+    affectedLabelObjects: 3,
+    shellCallsIssuedIncludingCurrentSealAndInitialFailure: 13,
+    wrapperCommandsCompletedSuccessfullyBeforeSeal: 11,
+    currentSealingWrapperCommands: 1,
+    pythonCommands: 1,
+    copiedOrInstalledRuntimes: 0,
+  },
+  failures: [
+    {
+      kind: 'tool-execution',
+      evidence: bind(`${root}/initial-wrapper-failure.record`),
+      preserved: true,
+      corrected: true,
+      doesNotResetUsageOrApproveContent: true,
+    },
+    {
+      kind: 'instructional-content',
+      evidence: bind(`${root}/fig-25.hold.json`),
+      objects: ['fig-25-v-x-four-label', 'fig-25-g-x-four-label', 'fig-25-g-x-six-label'],
+      corrected: false,
+      dependentVisualPromotionStopped: true,
+    },
+  ],
+  evidenceDisplayLimit: {
+    truncatedTextToolOutputs: 1,
+    receiptDirectory: `${root}/06-spec-render-inventory`,
+    completeOriginalStdoutRetained: true,
+    recovery: 'Read focused structured portions of the same existing JSON; no stage or image was rerun.',
+  },
+  receipts,
+  sealingInvocation: {
+    start: sealingStart,
+    receiptPath: `${root}/11-seal/receipt.record`,
+    receiptWrittenByWrapperAfterThisProcessReturns: true,
+  },
+  unknowns: [
+    'The 640px preview is hash-bound and measured in the existing capture, but its pixels were not visually reviewed after the native defect.',
+    'No exact source scan typography or incidental ink-stain path was measured; these are not the HOLD basis.',
+    'The author capture cost and review-tool billing are unknown; no paid image or API call was initiated by this reviewer.',
+  ],
+  cost: {
+    status: 'unknown',
+    reviewerImageGenerationCalls: 0,
+    reviewerPaidApiCalls: 0,
+    authorCaptureReportedCost: capture.cost,
+    modelAndToolBilling: 'unknown',
+  },
+  scopeBoundaries: {
+    authorFilesChanged: false,
+    sourcePagesReviewed: false,
+    answerKeysRead: false,
+    oldPassUsedAsVisualApproval: false,
+    modernTextReReviewed: false,
+    sourceMathTextPassStagesRerun: false,
+    chatsContactedOrManaged: false,
+    worktreesManaged: false,
+    databaseOrPlaneAccess: false,
+    gitMergeDeployOperations: false,
+    imagePayloadReturnedToParent: false,
+    writesOutsideAuthorizedRoot: false,
+  },
+};
+const output = `${root}/ready.record`;
+fs.writeFileSync(output, `${JSON.stringify(payload, null, 2)}\n`, { flag: 'wx' });
+const saved = load(output);
+assert.equal(saved.status, 'HOLD');
+assert.equal(saved.actualViewCalls.length, 2);
+assert.equal(saved.reopens, 0);
+assert.equal(saved.officialReview, null);
+console.log(JSON.stringify({
+  status: saved.status,
+  ready: bind(output),
+  hold: bind(`${root}/fig-25.hold.json`),
+  independentSourceObservations: saved.independentSourceObservations,
+  actualViewCalls: 2,
+  reopens: 0,
+  thirdViewExecuted: false,
+  officialReviewProduced: false,
+}, null, 2));

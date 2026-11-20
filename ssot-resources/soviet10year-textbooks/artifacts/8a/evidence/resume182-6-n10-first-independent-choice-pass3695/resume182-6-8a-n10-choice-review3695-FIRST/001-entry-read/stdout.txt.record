@@ -1,0 +1,187 @@
+FILE .intentfold/readme.md
+# .intentfold
+
+Read this first in every session. It is the single entry to project intent and ticket workflow.
+
+*Machine-owned: IntentFold cap1 refreshes this file. The four files in `charter/` are human-owned;
+do not edit them unless the human explicitly asks for a Charter change.*
+
+## Start here
+
+1. Read `.intentfold/project.json` for the project, main branch, ticket backend, deploy target, and
+   service ports.
+2. Read `charter/product.md` to understand what the product is, who it serves, and what it must not
+   become.
+3. Read `charter/engineering.md` before changing code or structure.
+4. Read `charter/ui.md` when the work touches a user interface.
+5. Read `charter/operations.md` when running, testing, querying, migrating, deploying, or operating
+   the product.
+6. Read the live ticket from the backend named by `project.json`, then its local artifacts under
+   `tickets/<ticket-id>/`.
+
+The Charter has exactly four files:
+
+| File | Owns |
+|---|---|
+| `product.md` | product purpose, users, value, and non-goals |
+| `engineering.md` | architecture, development rules, checks, dependencies, and landing |
+| `ui.md` | design system and interface constraints |
+| `operations.md` | local runtime, acceptance evidence, deployment, and operations |
+
+Requirements live in the ticket backend, not in a local `req.md`. Use the **n-plane** or
+**n-linear** skill selected by `project.json`. Linear ticket text is English; Plane ticket text is
+Chinese unless the human asks otherwise.
+
+## Charter format
+
+Every Charter file has these four headings, in this order, even when a section is empty:
+
+```markdown
+## Contract
+## Tools
+## Guidance
+## Redlines
+```
+
+They are different kinds of information:
+
+| Section | States | How it is used |
+|---|---|---|
+| `Contract` | what the artifact is | referenced while authoring |
+| `Tools` | commands, paths, ports, URLs, viewports | looked up at the moment of acting and run as written |
+| `Guidance` | how to approach the work | followed while writing |
+| `Redlines` | forbidden or approval-required actions | looked up before acting; never judged away |
+
+Use these tests when writing:
+
+1. **Contract or Guidance:** does the line describe the artifact, or the act of changing it?
+2. **Guidance or Redline:** can compliance be decided from a path, token, command, or structural
+   fact without reading and interpreting the implementation? If not, it is Guidance.
+3. **Tools:** could the concrete value go stale? Commands, paths, ports, URLs, and viewports belong
+   here once; other files point here rather than copy them.
+4. **Derive, do not enumerate:** a check derives targets from the product, manifest, sitemap, schema,
+   or registry and fails when derivation returns nothing. It does not preserve a second hand-written
+   list of routes, fields, or fixtures.
+
+Redlines live in the file whose subject they govern. There is no separate redline file. Each entry
+says either **forbidden outright** or **not without the human's explicit approval**.
+
+Write only what the code, configuration, schema, design system, or a command cannot answer more
+reliably. Prefer making a rule mechanical in `Tools` over emphasizing it in prose.
+
+## Ticket artifacts
+
+`tickets/<ticket-id>/` may contain:
+
+- `ticket.json` — mode, stage, finish, checkout, branch, base, and ports;
+- optional `draft.md`, `plan.md`, `ac.md`, and `grill.md`;
+- `handoff.md`, plus `intentfold-usage.json` when configured;
+- `rework.md` when the delivered branch changed after the first handoff;
+- `tmp/` for uncommitted evidence.
+
+The ticket backend decides whether work is live or Done. `handoff.md` freezes at first delivery;
+read it together with `rework.md`.
+
+Project scratch lives in `.intentfold/tmp/`. Scratch and environment files are not committed.
+
+## Workflow
+
+Use the **intentfold** skill:
+
+- cap1 initializes this harness;
+- cap2 files one ticket;
+- cap3 develops one ticket autonomously;
+- cap3setup prepares an open development phase;
+- cap3handoff verifies and records completed development;
+- cap4 merges and closes a verified ticket.
+
+No product change without a ticket.
+
+FILE .agents/skills/ld-s10y-choice/SKILL.md
+---
+name: ld-s10y-choice
+description: Load when asked to create or review single-choice or multiple-choice questions from original Soviet 10 Years written exercises. Uses the exercise prose, actual figures and lesson definitions as seeds; offline authoring only, not publishing or answer-input conversion.
+---
+
+# Written Mathematics to Choice Questions
+
+Create new questions that still require the mathematical thinking of the written
+task. The seed is a problem to understand, not a collection of answer slots.
+
+Before opening seed images, candidate figures or review screenshots, follow the
+shared [image batch rules](../ld-s10y-image/SKILL.md#image-batches).
+They also apply to delegated authors and reviewers.
+
+For batch continuation or a directory, permission or output-reading failure, use
+the lesson pipeline's [technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+Do not redo a passed content review to repair execution; offline authoring stays offline.
+
+## Boundary
+
+- Work offline. Do not read `.env`, connect to a database, install dependencies,
+  call a model service, publish, or change the application.
+- Do not consult previous choice questions, interaction specifications, keyboard
+  exercises, answer-box configurations, judging subparts, earlier skill versions,
+  their tests or ticket outputs. No history lookup or compatibility commands.
+- Input authority is the original written prose in the allowed modern lesson
+  files, the actual referenced images, and the lesson's concept definitions.
+  Do not inspect answers during authoring. This workflow needs no old answers.
+- Source relationships, solutions, keys, misconception derivations and reviews
+  are internal. Only a question's `view` is learner-facing; the offline draft is
+  never a client payload.
+
+## Author
+
+Read [authoring.md](references/authoring.md) and
+[contract.md](references/contract.md). Commands below run from the repository root.
+
+1. Inspect the whitelist projection, then explicitly choose seed numbers and
+   relevant definition paragraph indices. Do not include solved examples as
+   definitions.
+2. Prepare a seed file in the active ticket's `tmp/` or repository `.tmp/`.
+   Open its actual image assets. Stop on unreadable figures, missing data or
+   unresolved conventions; do not guess.
+3. Solve each seed independently **before** constructing options. Identify the
+   mathematical tasks, then choose meaningful response units and native `single`
+   or `multiple` mode. Create the draft by reasoning, not by script. When candidate
+   diagrams are needed, use the offline `ld-s10y-image` path in `authoring.md`;
+   register them separately in `new_figures`, never in the source seed.
+4. Run the structural checker. Then read [review.md](references/review.md) and
+   carry out the semantic gate. Prefer a separate reviewer when available and
+   authorized; otherwise record an honest `self_review`.
+5. Run the checker with the review. Repair real defects once at the smallest
+   affected unit and obtain a new review of the changed snapshot. If an essential
+   defect remains, report it as blocked. Do not hand off as approved.
+
+```bash
+python3 .agents/skills/ld-s10y-choice/scripts/prepare.py inspect \
+  --repo . --book <book> --lesson <lesson>
+python3 .agents/skills/ld-s10y-choice/scripts/prepare.py prepare \
+  --repo . --book <book> --lesson <lesson> \
+  --exercise <number> --concept-block <zero-based-index> \
+  --out .intentfold/tickets/<ticket>/tmp/seed.json
+python3 .agents/skills/ld-s10y-choice/scripts/validate.py \
+  --repo . --seed <seed.json> --draft <draft.json>
+python3 .agents/skills/ld-s10y-choice/scripts/validate.py \
+  --repo . --seed <seed.json> --draft <draft.json> --review <review.json>
+```
+
+Repeat `--exercise` / `--concept-block` as needed. Use explicit `--no-concepts`
+only when no lesson definition is relevant. `--concept-figure <id>` includes a
+figure necessary to interpret a selected definition. Existing outputs are not
+overwritten.
+
+## Review Only
+
+Read [review.md](references/review.md) and [contract.md](references/contract.md).
+Start with the seed and its images, not the author's solution or correct set.
+Review task fidelity, redundancy and leakage before independently checking the
+mathematics. Return the review and concrete findings without silently editing the
+draft. A failed gate is useful evidence, not an approval.
+
+## Handoff
+
+Return seed, draft, review and the exact validation command/results. State any
+capacity loss or deferred source task. Stop at offline handoff: no publisher,
+website integration, DB payload or claim of automatic semantic proof.
+

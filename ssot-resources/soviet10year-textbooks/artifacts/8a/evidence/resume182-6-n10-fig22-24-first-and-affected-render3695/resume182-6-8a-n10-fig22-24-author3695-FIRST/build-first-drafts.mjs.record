@@ -1,0 +1,311 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST');
+const contextRoot = path.join(R, '.tmp/resume182-6-8a-n10-figure-context3695-FIRST');
+const lessonRoot = path.join(contextRoot, 'artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10');
+assert.equal(process.cwd(), R);
+
+const hash = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const read = (file, expected) => {
+  const bytes = fs.readFileSync(file);
+  if (expected) assert.equal(hash(bytes), expected, `Input bytes changed: ${file}`);
+  return JSON.parse(bytes);
+};
+const write = (file, value) => {
+  assert.ok(file.startsWith(`${work}/`));
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return binding(file);
+};
+
+const inventoryPath = path.join(work, 'inventory.record');
+const inventory = read(inventoryPath, '2ef246fe83222f203f5b5b04589c888f0c94432f37b64cef08e0534ee939f8ad');
+const originalReadyPath = path.join(work, 'ready.record');
+read(originalReadyPath, '1f044caa3bb4ee515692c7583f8f2ef4dc133472260445b2fb5e1ad70ebab5ca');
+const lesson = read(path.join(lessonRoot, 'lesson.json'), 'd13354560d681bb189cd3ed1310e1abebdde6bf5b517bf0cf981405090a8d676');
+const exercisesBinding = binding(path.join(lessonRoot, 'exercises.json'));
+assert.equal(exercisesBinding.sha256, '54e9be6f97a199515ca25e0b1c33ea4235558c660e184cad45bab8da4a8f4ef2');
+const textReadyPath = path.join(R, '.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record');
+const textReady = read(textReadyPath, '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7');
+assert.equal(textReady.status, 'TEXT_PASS');
+const authoritativeText = lesson.prose
+  .filter((item) => item.kind === 'p' && item.text.trim())
+  .map((item) => ({ lesson: lesson.id, text: item.text }));
+const contextBindings = [];
+const provenanceFigures = [];
+const draftedFigures = [];
+
+const rounded = (n) => Number(n.toFixed(12));
+const tidy = (p) => p.map(rounded);
+function polygonLine(polygon, slope, intercept) {
+  const found = [];
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i];
+    const b = polygon[(i + 1) % polygon.length];
+    const fa = a[1] - slope * a[0] - intercept;
+    const fb = b[1] - slope * b[0] - intercept;
+    if (Math.abs(fa) < 1e-9) found.push(a);
+    if (fa * fb < -1e-12) {
+      const t = fa / (fa - fb);
+      found.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
+    }
+  }
+  const unique = found.map(tidy).filter((p, i, all) => all.findIndex(
+    (q) => Math.hypot(p[0] - q[0], p[1] - q[1]) < 1e-9,
+  ) === i).sort((a, b) => a[0] - b[0]);
+  return unique.length >= 2 ? [unique[0], unique.at(-1)] : null;
+}
+
+for (const original of inventory.figures) {
+  const n = Number(original.id.split('-')[1]);
+  const prefix = `fig${n}`;
+  const contextPath = path.join(contextRoot, `${original.id}.context.json`);
+  const context = read(contextPath);
+  assert.equal(context.sourceImage.sha256, original.source.image.sha256);
+  contextBindings.push(binding(contextPath));
+  const grid = original.source.grid;
+  const [xmin, ymax, xmax, ymin] = grid.bounds;
+  const box = n === 24 ? [-6, 12, 8, -9] : [xmin - 0.8, ymax + 0.8, xmax + 0.8, ymin - 0.8];
+  const objects = [];
+  const assertions = [];
+  const groups = new Map(original.source.inventory.map((item) => [
+    item.id,
+    { id: item.id, description: item.description, objects: [], assertions: [], ...(item.requires ? { requires: item.requires } : {}) },
+  ]));
+  const groupId = (suffix) => `${prefix}-source-${suffix}`;
+  const addObject = (object, group) => {
+    objects.push(object);
+    if (group) groups.get(group).objects.push(object.id);
+    return object;
+  };
+  const addAssertion = (id, type, values, group) => {
+    const item = { id, type, ...values };
+    assertions.push(item);
+    if (group) groups.get(group).assertions.push(id);
+    return item;
+  };
+  const line = (id, from, to, group, extra = {}) => {
+    const object = addObject({ id, type: 'segment', from: tidy(from), to: tidy(to), stroke: 'ink', strokeWidth: 2.8, dash: 0, ...extra }, group);
+    addAssertion(`${id}-endpoints`, 'connects', { arrow: id, from: object.from, to: object.to }, group);
+    return object;
+  };
+  const label = (id, text, at, position, group, gap = 16) => addObject({
+    id, type: 'text', at, text, fontSize: 20, fontWeight: 600,
+    labelColor: 'ink', labelPlacement: { position, gap },
+  }, group);
+  const frameGroup = groupId('grid');
+  const frame = [[xmin, ymax], [xmax, ymax], [xmax, ymin], [xmin, ymin]];
+  addObject({ id: `${prefix}-frame`, type: 'polygon', points: frame, stroke: 'ink', strokeWidth: 1.8, dash: 0, fill: 'paper', fillOpacity: 0 }, frameGroup);
+  addObject({ id: `${prefix}-grid`, type: 'grid', bounds: grid.bounds, xStep: 1, yStep: 1, xOffset: 0, yOffset: 0, stroke: 'grid', strokeWidth: 1, opacity: 0.55, dash: 0 }, frameGroup);
+  addAssertion(`${prefix}-grid-dimensions`, 'gridDimensions', { grid: `${prefix}-grid`, columns: grid.columns, rows: grid.rows }, frameGroup);
+  addAssertion(`${prefix}-grid-phase-units`, 'displacement', { from: frame[0], to: frame[2], dx: grid.columns, dy: -grid.rows }, frameGroup);
+  addAssertion(`${prefix}-grid-origin-left-top`, 'displacement', { from: frame[0], to: [0, 0], dx: -xmin, dy: -ymax }, frameGroup);
+  addAssertion(`${prefix}-grid-origin-right-bottom`, 'displacement', { from: [0, 0], to: frame[2], dx: xmax, dy: ymin }, frameGroup);
+  addAssertion(`${prefix}-grid-unit-equality`, 'equalDistance', { a: [0, 0], b: [1, 0], c: [0, 0], d: [0, 1] }, frameGroup);
+  groups.get(frameGroup).description += ` Source bounds ${JSON.stringify(grid.bounds)}, steps [1,1], offsets [0,0]; origin left/right/above/below ${JSON.stringify(grid.cellsLeftRightAboveBelowOrigin)}.`;
+
+  let shadeRegion;
+  let shadeGroup;
+  if (n === 22) {
+    shadeGroup = groupId('shading');
+    shadeRegion = [[-6, -6], [6, 6], [-6, 6]];
+    addObject({ id: 'fig22-upper-halfplane-region', type: 'polygon', points: shadeRegion, fill: 'accentSoft', fillOpacity: 0.06, strokeWidth: 0, stroke: 'paper', dash: 0 }, shadeGroup);
+  } else if (n === 23) {
+    shadeGroup = groupId('closed-quadrant');
+    shadeRegion = [[xmin, 0], [0, 0], [0, ymax], [xmin, ymax]];
+    addObject({ id: 'fig23-quadrant-region', type: 'polygon', points: shadeRegion, fill: 'accentSoft', fillOpacity: 0.08, strokeWidth: 0, stroke: 'paper', dash: 0 }, shadeGroup);
+  } else {
+    shadeGroup = groupId('strip-hatching');
+    shadeRegion = [[-4.5, -7], [-2, -7], [7, 11], [4.5, 11]];
+    addObject({ id: 'fig24-strip-region', type: 'polygon', points: shadeRegion, fill: 'accentSoft', fillOpacity: 0.08, strokeWidth: 0, stroke: 'paper', dash: 0 }, shadeGroup);
+  }
+
+  const slope = n === 22 ? 0 : n === 23 ? 1 : 0.65;
+  const pitch = n === 22 ? 0.28 : 0.32;
+  const values = shadeRegion.map(([x, y]) => y - slope * x);
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  const first = Math.ceil(minimum / pitch);
+  const last = Math.floor(maximum / pitch);
+  const family = n === 22 ? 'upper-halfplane-hatch' : n === 23 ? 'quadrant-hatch' : 'strip-hatch';
+  const regionId = n === 22 ? 'fig22-upper-halfplane-region' : n === 23 ? 'fig23-quadrant-region' : 'fig24-strip-region';
+  let hatchCount = 0;
+  for (let index = first; index <= last; index += 1) {
+    const intercept = (index + 0.5) * pitch;
+    if (intercept >= maximum - 1e-9) continue;
+    const endpoints = polygonLine(shadeRegion, slope, intercept);
+    if (!endpoints) continue;
+    hatchCount += 1;
+    const id = `${prefix}-${family}-${String(hatchCount).padStart(3, '0')}`;
+    const segment = line(id, endpoints[0], endpoints[1], shadeGroup, { stroke: 'muted', strokeWidth: 1.15, opacity: 0.85 });
+    addAssertion(`${id}-direction`, 'displacement', { from: segment.from, to: segment.to, dx: rounded(segment.to[0] - segment.from[0]), dy: rounded(segment.to[1] - segment.from[1]) }, shadeGroup);
+    addAssertion(`${id}-parallel-family`, 'parallel', { a: segment.from, b: segment.to, c: [0, 0], d: [1, slope] }, shadeGroup);
+    for (const [suffix, point] of [['from', segment.from], ['to', segment.to]]) {
+      addAssertion(`${id}-${suffix}-inside-region`, 'inside', { point, container: regionId }, shadeGroup);
+      addAssertion(`${id}-${suffix}-inside-frame`, 'inside', { point, container: `${prefix}-frame` }, shadeGroup);
+    }
+    if (n === 22) addAssertion(`${id}-ends-on-diagonal`, 'pointOnLine', { point: segment.to, a: [-6, -6], b: [6, 6] }, shadeGroup);
+  }
+  let diskHatchCount = 0;
+  if (n === 22) {
+    for (let index = -10; index <= 10; index += 1) {
+      diskHatchCount += 1;
+      const x = index * 0.28;
+      const y = Math.sqrt(9 - x * x);
+      const id = `fig22-disk-hatch-${String(diskHatchCount).padStart(3, '0')}`;
+      const segment = line(id, [x, -y], [x, y], shadeGroup, { stroke: 'muted', strokeWidth: 1.15, opacity: 0.85 });
+      addAssertion(`${id}-vertical`, 'displacement', { from: segment.from, to: segment.to, dx: 0, dy: rounded(2 * y) }, shadeGroup);
+      for (const [suffix, point] of [['from', segment.from], ['to', segment.to]]) {
+        addAssertion(`${id}-${suffix}-on-circle`, 'pointOnCircle', { point, center: [0, 0], radius: 3 }, shadeGroup);
+      }
+    }
+    const boundaryGroup = groupId('circle-diagonal');
+    addObject({ id: 'fig22-circle', type: 'circle', center: [0, 0], radius: 3, stroke: 'ink', strokeWidth: 2.8, fill: 'accentSoft', fillOpacity: 0.035, dash: 0 }, boundaryGroup);
+    line('fig22-diagonal', [-6, -6], [6, 6], boundaryGroup);
+    label('fig22-diagonal-label', 'y = x', [3.6, 3.6], 'NW', boundaryGroup, 22);
+    addAssertion('fig22-circle-center-radius', 'distance', { a: [0, 0], b: [3, 0], value: 3 }, boundaryGroup);
+    for (const [suffix, point] of [['right', [3, 0]], ['left', [-3, 0]], ['top', [0, 3]], ['bottom', [0, -3]]]) {
+      addAssertion(`fig22-circle-${suffix}-unit-intercept`, 'pointOnCircle', { point, center: [0, 0], radius: 3 }, boundaryGroup);
+    }
+    addAssertion('fig22-diagonal-equation', 'pointOnLine', { point: [0, 0], a: [-6, -6], b: [6, 6] }, boundaryGroup);
+    addAssertion('fig22-diagonal-equal-increments', 'displacement', { from: [-6, -6], to: [6, 6], dx: 12, dy: 12 }, boundaryGroup);
+  } else if (n === 24) {
+    const boundaryGroup = groupId('strip-boundaries');
+    const upper = line('fig24-upper-line', [-4.5, -7], [4.5, 11], boundaryGroup);
+    const lower = line('fig24-lower-line', [-2, -7], [7, 11], boundaryGroup);
+    label('fig24-upper-line-label', 'y = 2x + 2', [3.6, 9.2], 'NW', boundaryGroup, 18);
+    label('fig24-lower-line-label', 'y = 2x - 3', [4, 5], 'SE', boundaryGroup, 18);
+    addAssertion('fig24-lines-parallel', 'parallel', { a: upper.from, b: upper.to, c: lower.from, d: lower.to }, boundaryGroup);
+    for (const [name, object, xIntercept, yIntercept] of [
+      ['upper', upper, [-1, 0], [0, 2]],
+      ['lower', lower, [1.5, 0], [0, -3]],
+    ]) {
+      addAssertion(`fig24-${name}-equation-intercepts`, 'pointOnLine', { point: yIntercept, a: object.from, b: object.to }, boundaryGroup);
+      addAssertion(`fig24-${name}-x-intercept`, 'pointOnLine', { point: xIntercept, a: object.from, b: object.to }, boundaryGroup);
+      addAssertion(`fig24-${name}-intercept-displacement`, 'displacement', { from: xIntercept, to: yIntercept, dx: -xIntercept[0], dy: yIntercept[1] }, boundaryGroup);
+      addAssertion(`fig24-${name}-slope2`, 'parallel', { a: object.from, b: object.to, c: [0, 0], d: [1, 2] }, boundaryGroup);
+    }
+    addAssertion('fig24-lower-equation-intercepts-halfcell', 'displacement', { from: [1, 0], to: [1.5, 0], dx: 0.5, dy: 0 }, boundaryGroup);
+    addAssertion('fig24-boundary-vertical-gap5', 'displacement', { from: [0, -3], to: [0, 2], dx: 0, dy: 5 }, boundaryGroup);
+    addAssertion('fig24-strip-includes-origin', 'inside', { point: [0, 0], container: regionId }, shadeGroup);
+    for (const [index, point] of shadeRegion.entries()) {
+      const boundary = index === 0 || index === 3 ? upper : lower;
+      addAssertion(`fig24-strip-corner-${index}-on-boundary`, 'pointOnLine', { point, a: boundary.from, b: boundary.to }, shadeGroup);
+    }
+  }
+
+  const axesGroup = n === 22 ? groupId('frame-axes-labels') : groupId('axes-unit-labels');
+  const xAxis = addObject({ id: `${prefix}-x-axis`, type: 'axis', from: [xmin, 0], to: [xmax, 0], stroke: 'ink', strokeWidth: 2.2, dash: 0 }, axesGroup);
+  const yAxis = addObject({ id: `${prefix}-y-axis`, type: 'axis', from: [0, ymin], to: [0, ymax], stroke: 'ink', strokeWidth: 2.2, dash: 0 }, axesGroup);
+  const xArrow = addObject({ id: `${prefix}-x-positive-arrow`, type: 'arrow', from: [xmax - 1.7, 0], to: [xmax - 0.7, 0], stroke: 'ink', strokeWidth: 2.2, dash: 0 }, axesGroup);
+  const yArrow = addObject({ id: `${prefix}-y-positive-arrow`, type: 'arrow', from: [0, ymax - 1.7], to: [0, ymax - 0.7], stroke: 'ink', strokeWidth: 2.2, dash: 0 }, axesGroup);
+  addAssertion(`${prefix}-axes-orthogonal`, 'perpendicular', { a: xAxis.from, b: xAxis.to, c: yAxis.from, d: yAxis.to }, axesGroup);
+  addAssertion(`${prefix}-axes-origin`, 'pointOnLine', { point: [0, 0], a: xAxis.from, b: xAxis.to }, axesGroup);
+  addAssertion(`${prefix}-axes-origin-on-y`, 'pointOnLine', { point: [0, 0], a: yAxis.from, b: yAxis.to }, axesGroup);
+  for (const [name, arrow] of [['x', xArrow], ['y', yArrow]]) {
+    addAssertion(`${prefix}-${name}-arrow-connects`, 'connects', { arrow: arrow.id, from: arrow.from, to: arrow.to }, axesGroup);
+    addAssertion(`${prefix}-${name}-arrow-positive`, 'displacement', { from: arrow.from, to: arrow.to, dx: name === 'x' ? 1 : 0, dy: name === 'y' ? 1 : 0 }, axesGroup);
+  }
+  label(`${prefix}-origin-label`, '0', [0, 0], n === 22 ? 'SE' : 'SW', axesGroup, 18);
+  label(`${prefix}-x-label`, 'x', xArrow.to, 'SE', axesGroup, 16);
+  label(`${prefix}-y-label`, 'y', yArrow.to, 'W', axesGroup, 16);
+  if (n === 22) {
+    label('fig22-radius3-label', '3', [3, 0], 'SE', axesGroup, 14);
+    addAssertion('fig22-radius-label-unit-position', 'displacement', { from: [0, 0], to: [3, 0], dx: 3, dy: 0 }, axesGroup);
+  } else {
+    label(`${prefix}-x-unit-label`, '1', [1, 0], 'S', axesGroup, 16);
+    label(`${prefix}-y-unit-label`, '1', [0, 1], n === 23 ? 'W' : 'E', axesGroup, 14);
+    addAssertion(`${prefix}-x-unit-position`, 'displacement', { from: [0, 0], to: [1, 0], dx: 1, dy: 0 }, axesGroup);
+    addAssertion(`${prefix}-y-unit-position`, 'displacement', { from: [0, 0], to: [0, 1], dx: 0, dy: 1 }, axesGroup);
+  }
+  for (const object of objects.filter((item) => item.type === 'text')) {
+    const group = [...groups.values()].find((item) => item.objects.includes(object.id));
+    addAssertion(`${object.id}-anchor-inside-frame`, 'inside', { point: object.at, container: `${prefix}-frame` }, group.id);
+  }
+  groups.get(axesGroup).description += ` Original labels and sides: ${original.source.labels.filter((item) => !item.id.includes('line-label') && !item.id.includes('diagonal-label')).map((item) => `${item.text}: ${item.position}`).join(' ')}`;
+  groups.get(shadeGroup).description += ` Original shading: ${original.source.shading.map((item) => `${item.direction}; ${item.region}`).join(' ')} No deliberate dashed boundary.`;
+  const spec = {
+    schema: 'ld-s10y-image/figure-spec@2',
+    id: original.id,
+    mode: 'deterministic',
+    description: `Instructional figure for lesson ${lesson.id}: ${n === 22 ? 'horizontal-hatched closed half-plane and vertical-hatched radius-3 disk, with their crosshatched intersection' : n === 23 ? 'closed upper-left quadrant, including its two bounding axis rays and origin' : 'closed strip between the two solid slope-2 parallel boundary lines'}. Source cell dimensions, integer phase, source labels and boundary inclusion are retained.`,
+    source: {
+      image: { path: original.source.image.path, sha256: original.source.image.sha256 },
+      authoritativeText,
+      inventory: [...groups.values()],
+    },
+    canvas: { width: 640, height: n === 24 ? 960 : 640, boundingBox: box, background: 'paper', keepAspectRatio: true },
+    display: { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] },
+    objects,
+    assertions,
+    layout: { minLabelGap: 4 },
+  };
+  const directory = path.join(work, `${original.id}-FIRST`);
+  fs.mkdirSync(directory);
+  const specBinding = write(path.join(directory, `${original.id}.draft.spec.json`), spec);
+  draftedFigures.push({ id: original.id, spec: specBinding, objects: objects.length, assertions: assertions.length, labels: objects.filter((item) => item.type === 'text').length, hatchSegments: hatchCount + diskHatchCount });
+  provenanceFigures.push({
+    id: original.id,
+    spec: specBinding,
+    originalInventoryGroupIds: original.source.inventory.map((item) => item.id),
+    sourceGrid: grid,
+    sourceLabels: original.source.labels,
+    sourceBoundaries: original.source.boundaries,
+    sourceShading: original.source.shading,
+    sourceUnknownsRetained: original.unknowns,
+    modernAdditions: [
+      ...original.modernAdditionsProposedNotAuthored,
+      'Full coarse lattice remains visible under finer hatching as an explicit modern visibility addition, not a claim of separately visible source strokes.',
+      'Very light semantic accentSoft fill supports set legibility; source-defined hatch families still carry the set distinction.',
+      `Hatch pitch ${pitch} coordinate units and slope ${slope} are deliberate modern regularization. Source hatch direction is preserved; exact raster pitch was unknown.`,
+      'Equation labels use horizontal modern mathematical lettering, on the original boundary side. The current renderer supports label side/offset, but not rotated text; this departure is explicit and awaits independent figure review.',
+      'Canvas padding and one-unit positive arrow shafts are modern layout choices; source arrowhead subpixel locations were unknown.',
+    ],
+    pendingVisualChecks: [
+      'Independent reviewer must inspect native/actual640 SVG-derived PNG for source fidelity, solid inclusive boundaries, hatch clipping, line-label association and label readability.',
+      'Boundary inclusion and source label-side/dash/typographic requirements are not approved by a passing mathematical assertion alone.',
+      'Radius and center fields of the actual circle must be compared with the radius-3 executable intercept assertions; the current assertion contract does not directly dereference circle object properties.',
+    ],
+    mathematicalAssertionsExecutedAtDraftCreation: false,
+  });
+}
+
+const provenance = write(path.join(work, 'draft-provenance.record'), {
+  status: 'DRAFT_ONLY_NOT_FIGURE_APPROVAL',
+  book: '8a', lesson: lesson.id, edition: 'modern-us-neutral',
+  originalInventory: binding(inventoryPath), originalReady: binding(originalReadyPath),
+  frozenTemplates: [binding(path.join(lessonRoot, 'lesson.json')), exercisesBinding, binding(path.join(lessonRoot, 'figures.json'))],
+  contexts: contextBindings,
+  textReady: binding(textReadyPath),
+  textStatus: 'TEXT_PASS',
+  figureApproval: false,
+  proceduralHold: {
+    status: 'HOLD_UNRESOLVED',
+    reason: 'The first inventory stage deleted eight self-created probe receipt files; parent has recorded a real procedural HOLD. This continuation does not repair, cancel, relabel, or regenerate that lost evidence.',
+    accurateOriginalProbeBytesLocated: false,
+    probesRerun: false,
+    originalInventoryAndReadyUnchanged: true,
+  },
+  figures: provenanceFigures,
+  counts: { originalSourceViewsCumulative: 3, newSourceViews: 0, reopens: 0, newPNGViews: 0, validatorsAtDraftCreation: 0, rendersAtDraftCreation: 0, cost: 'unknown' },
+});
+const ready = write(path.join(work, 'draft-ready.record'), {
+  status: 'DRAFT_ONLY_NOT_FIGURE_APPROVAL',
+  book: '8a', lesson: lesson.id, edition: 'modern-us-neutral',
+  figures: draftedFigures,
+  provenance,
+  originalInventory: binding(inventoryPath),
+  originalReady: binding(originalReadyPath),
+  textReady: binding(textReadyPath),
+  counts: { draftSpecs: 3, originalSourceViewsCumulative: 3, newSourceViews: 0, reopens: 0, validatorsAtCheckpoint: 0, rendersAtCheckpoint: 0, figureApprovals: 0, cost: 'unknown' },
+  proceduralHold: 'HOLD_UNRESOLVED; see unchanged inventory and new provenance. No missing probe evidence regenerated.',
+  nextStage: 'User subsequently authorized FIRST draft validation/render. This immutable checkpoint records only draft creation, not downstream outcomes.',
+});
+console.log(JSON.stringify({ ready, figures: draftedFigures }, null, 2));

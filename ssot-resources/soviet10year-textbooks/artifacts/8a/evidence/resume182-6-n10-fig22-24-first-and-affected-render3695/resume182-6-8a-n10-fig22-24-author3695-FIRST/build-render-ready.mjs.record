@@ -1,0 +1,241 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST');
+assert.equal(process.cwd(), R);
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const json = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const originalInventoryPath = path.join(work, 'inventory.record');
+const originalReadyPath = path.join(work, 'ready.record');
+const draftReadyPath = path.join(work, 'draft-ready.record');
+const inventory = json(originalInventoryPath);
+const draftReady = json(draftReadyPath);
+const repairReady = json(path.join(work, 'repair-ready.record'));
+const rasterPath = path.join(work, 'raster-FIRST.record');
+const raster = json(rasterPath);
+assert.equal(binding(originalInventoryPath).sha256, '2ef246fe83222f203f5b5b04589c888f0c94432f37b64cef08e0534ee939f8ad');
+assert.equal(binding(originalReadyPath).sha256, '1f044caa3bb4ee515692c7583f8f2ef4dc133472260445b2fb5e1ad70ebab5ca');
+assert.equal(binding(draftReadyPath).sha256, 'fa5cc36e8c3d4c9172883e2a312cb3ec8c8a4e3a508abf69a49f7d10c4ef0337');
+
+const textReadyPath = path.join(R, '.tmp/resume182-6-8a-n10-text-review3695-FIRST/ready.record');
+assert.equal(binding(textReadyPath).sha256, '3e2ba118f29fedc3d96da0d8751b99cb416d49c4982c8484289c5021e15847c7');
+assert.equal(json(textReadyPath).status, 'TEXT_PASS');
+const templatesRoot = path.join(R, '.tmp/resume182-6-8a-n10-figure-context3695-FIRST/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10');
+const lessonBinding = binding(path.join(templatesRoot, 'lesson.json'));
+const exercisesBinding = binding(path.join(templatesRoot, 'exercises.json'));
+assert.equal(lessonBinding.sha256, 'd13354560d681bb189cd3ed1310e1abebdde6bf5b517bf0cf981405090a8d676');
+assert.equal(exercisesBinding.sha256, '54e9be6f97a199515ca25e0b1c33ea4235558c660e184cad45bab8da4a8f4ef2');
+
+const callBinding = (directory) => ({
+  start: binding(path.join(directory, 'start.record')),
+  stdout: binding(path.join(directory, 'stdout.txt')),
+  stderr: binding(path.join(directory, 'stderr.txt')),
+  receipt: binding(path.join(directory, 'receipt.record')),
+  returncode: json(path.join(directory, 'receipt.record')).returncode,
+});
+const figures = repairReady.figures.map((figure) => {
+  const n = figure.id.split('-')[1];
+  const directory = path.dirname(figure.spec.path);
+  const spec = json(figure.spec.path);
+  const originalDraft = draftReady.figures.find((item) => item.id === figure.id);
+  assert.equal(binding(originalDraft.spec.path).sha256, originalDraft.spec.sha256);
+  assert.equal(binding(figure.spec.path).sha256, figure.spec.sha256);
+  const renderPath = path.join(directory, `${figure.id}.FIRST.render.json`);
+  const render = json(renderPath);
+  assert.equal(render.spec.sha256, figure.spec.sha256);
+  const svg = binding(path.join(directory, `${figure.id}.FIRST.svg`));
+  assert.equal(svg.sha256, render.output.svg.sha256);
+  const capture = raster.captures.find((item) => item.id === figure.id);
+  assert.ok(capture, 'Required native and actual640 bindings must exist.');
+  assert.equal(binding(capture.nativePng.path).sha256, capture.nativePng.sha256);
+  assert.equal(capture.svg.sha256, svg.sha256);
+  const source = inventory.figures.find((item) => item.id === figure.id);
+  const sourceImage = binding(source.source.image.path);
+  assert.equal(sourceImage.sha256, source.source.image.sha256);
+  const firstValidationRoot = path.join(work, `shell/resume182-6-fig${n}-validate-FIRST3695-12`);
+  const repairedValidationRoot = path.join(work, `shell/resume182-6-fig${n}-validate-REPAIR13695-16`);
+  const renderRoot = path.join(work, `shell/resume182-6-fig${n}-render-FIRST3695-17`);
+  const firstValidation = json(path.join(firstValidationRoot, 'stdout.txt'));
+  const repairedValidation = json(path.join(repairedValidationRoot, 'stdout.txt'));
+  const repair = json(figure.repair.path);
+  return {
+    id: figure.id,
+    FIRSTRenderStatus: render.status,
+    validationStatus: repairedValidation.status,
+    originalFIRSTValidationStatus: firstValidation.status,
+    spec: binding(figure.spec.path),
+    svg,
+    render: binding(renderPath),
+    nativePng: capture.nativePng,
+    width640Preview: capture.width640Preview,
+    nativeAnd640SamePNG: true,
+    nativeAnd640ReuseReason: capture.reuseReason,
+    sourceImage,
+    originalFIRSTDraftSpec: originalDraft.spec,
+    assertionRepair: figure.repair,
+    originalInventory: binding(originalInventoryPath),
+    sourceGrid: {
+      columns: source.source.grid.columns,
+      rows: source.source.grid.rows,
+      bounds: source.source.grid.bounds,
+      steps: [1, 1],
+      offsets: [0, 0],
+      cellsLeftRightAboveBelowOrigin: source.source.grid.cellsLeftRightAboveBelowOrigin,
+    },
+    counts: {
+      objects: spec.objects.length,
+      assertions: spec.assertions.length,
+      visibleLabels: render.labels,
+      explicitDraftValidations: 2,
+      rendererInternalDraftValidations: 1,
+      renderAttempts: 1,
+      repairAttempts: 1,
+      assertionReplacements: repair.counts.replacements,
+      midpointAssertionsAdded: repair.counts.additions,
+      geometryChangesInRepair: 0,
+      sourceViewsThisContinuation: 0,
+      newPNGViewsByAuthor: 0,
+      SVGDerivedScreenshotCalls: 1,
+      PNGFilesCreated: 1,
+      cost: 'unknown',
+    },
+    actual640: {
+      displayLayout: spec.display.layout,
+      displayPurpose: spec.display.purpose,
+      displayWidths: spec.display.widths,
+      requiredMinimumTextPx: 16,
+      renderDisplayChecks: render.displayChecks,
+      rasterActualCssWidth: capture.observed.actualCssWidth,
+      rasterActualCssHeight: capture.observed.actualCssHeight,
+      rasterDPR: capture.observed.devicePixelRatio,
+      rasterMinimumActualCssTextPx: capture.observed.minimumActualCssTextPx,
+      PNGDimensions: capture.observedPixels,
+    },
+    firstValidation: {
+      status: firstValidation.status,
+      errors: firstValidation.errors,
+      call: callBinding(firstValidationRoot),
+    },
+    validationAfterOneAssertionRepair: {
+      status: repairedValidation.status,
+      errors: repairedValidation.errors,
+      call: callBinding(repairedValidationRoot),
+    },
+    firstRender: {
+      status: render.status,
+      collisions: render.collisions,
+      call: callBinding(renderRoot),
+    },
+    figureApproval: 'NOT_PERFORMED',
+    remainingRepairAllowance: 0,
+    downstream: render.status === 'fail'
+      ? 'BLOCKED: fig24-x-unit-label-label collision at source x=1, requested S, score10000. This FIRST failed SVG was rasterized without alteration only as failure evidence. No second repair, repeated render, review record, or promotion.'
+      : 'Await independent figure review; render pass is not figure approval.',
+  };
+});
+
+const shellRoot = path.join(work, 'shell');
+const receipts = fs.readdirSync(shellRoot).map((name) => path.join(shellRoot, name, 'receipt.record')).filter((file) => fs.existsSync(file));
+const retainedFailedReceipts = receipts.filter((file) => json(file).returncode !== 0).map(binding);
+const scripts = [
+  'build-first-drafts.mjs',
+  'repair-boundary-assertions-once.mjs',
+  'raster-first-svg.mjs',
+  'python-existing-venv-B',
+  'build-render-ready.mjs',
+].map((name) => binding(path.join(work, name)));
+const ready = {
+  status: 'FIRST_RENDER_PARTIAL_FAIL_NOT_FIGURE_APPROVAL',
+  book: '8a',
+  lesson: 'alg8-c2-s2-n10',
+  edition: 'modern-us-neutral',
+  root: R,
+  work,
+  owner: 'Same author A / same fig-22..24 responsibility; no new agent or chat.',
+  figures,
+  textReady: binding(textReadyPath),
+  textStatus: 'TEXT_PASS_INHERITED_ONLY',
+  frozenTemplates: [lessonBinding, exercisesBinding, binding(path.join(templatesRoot, 'figures.json'))],
+  frozenContexts: [22, 23, 24].map((n) => binding(path.join(R, `.tmp/resume182-6-8a-n10-figure-context3695-FIRST/fig-${n}.context.json`))),
+  originalInventory: binding(originalInventoryPath),
+  originalInventoryReady: binding(originalReadyPath),
+  immutableDraftReady: binding(draftReadyPath),
+  draftProvenance: binding(path.join(work, 'draft-provenance.record')),
+  assertionRepairReady: binding(path.join(work, 'repair-ready.record')),
+  rasterEvidence: binding(rasterPath),
+  rasterCall: callBinding(path.join(work, 'shell/resume182-6-svg-native640-raster-FIRST3695-18')),
+  scripts,
+  counts: {
+    FIRSTDraftSpecs: 3,
+    affectedAssertionRepairs: 3,
+    maximumRepairsUsedPerFigure: 1,
+    FIRSTExplicitDraftValidations: 3,
+    FIRSTExplicitDraftValidationFailures: 3,
+    explicitRepairedDraftValidations: 3,
+    rendererInternalDraftValidations: 3,
+    totalActualValidatorInvocations: 9,
+    FIRSTRenderAttempts: 3,
+    FIRSTRenderPasses: 2,
+    FIRSTRenderFailures: 1,
+    rendersRepeatedAfterPass: 0,
+    SVGDerivedNativeRasterCalls: 3,
+    additional640RasterCalls: 0,
+    PNGFilesCreated: 3,
+    native640PNGReuses: 3,
+    originalSourceImageViewsCumulative: 3,
+    originalSourceImageViewsThisContinuation: 0,
+    sourceImageReopensCumulative: 0,
+    newPNGImageViewsByAuthor: 0,
+    sourcePageViewsOrAuditsThisContinuation: 0,
+    sourcePNGByteHashReadsCumulative: 6,
+    figureReviewRecords: 0,
+    figureApprovals: 0,
+    promotions: 0,
+    DBPlaneWrites: 0,
+    answerChoiceReads: 0,
+    installsOrRuntimeCopies: 0,
+    resvgRasterCalls: 0,
+    retainedFailedCommandReceipts: retainedFailedReceipts.length,
+    knownEarlyProbeFailureWithoutRetainedReceipt: 1,
+    totalKnownFailedCommandsIncludingEarlyProbe: retainedFailedReceipts.length + 1,
+    cost: 'unknown',
+  },
+  retainedFailedReceipts,
+  proceduralHold: {
+    status: 'HOLD_UNRESOLVED',
+    reason: 'Eight early probe receipt files were actually deleted in the inventory turn. Parent explicitly recorded a procedural HOLD. Those bytes are not restored and this checkpoint does not claim recovery or erase the failure.',
+    originalDeletedProbeReceiptFiles: 8,
+    accurateOriginalProbeBytesLocatedThisContinuation: false,
+    probeCommandsRerun: false,
+    priorInventoryAndReadyEdited: false,
+    originalFIRSTDraftSpecsEdited: false,
+    newFailureReceiptsOrCandidatesDeleted: false,
+    noFailedStageMisrepresentedAsApproval: true,
+  },
+  unknownAndPending: [
+    'Cost remains unknown.',
+    'Exact source raster hatch pitch, subpixel stroke/arrow centers, and hidden lattice continuity were unknown in the original inventory and remain explicitly recorded.',
+    'Clean full lattice visibility, light semantic set fill, normalized hatch pitch and horizontal modern equation typography are declared modern additions in draft-provenance.record, not retroactive source facts.',
+    'Independent mathematical/visual/cultural figure review has not been performed by this author. Figure22/23 renderer pass is not approval or promotion readiness.',
+    'Figure24 remains a real FIRST render failure at x-unit label 1 despite actual640 text size passing at 20px. A further repair requires explicit new authorization; no second repair was attempted.',
+    'Early procedural evidence loss remains unresolved independently of successful source/text/spec/render stages.',
+  ],
+  rasterHandling: 'R/app installed Playwright rendered only current FIRST SVG bytes, with all requests aborted, service workers blocked, DPR1, and page/context/browser closed in finally. Native width640 PNG is reused for actual640; no existing PNG was overwritten, no manual redraw, no PNG view by author.',
+  conclusion: 'Author production checkpoint: fig-22 pass, fig-23 pass, fig-24 fail. FIRST specs, validation failures, one assertion repair per figure, FIRST SVG/render and native/640 raster bindings are retained. Not a figure approval, review record, promotion, source re-review, or publication.',
+};
+const readyPath = path.join(work, 'render-ready.record');
+fs.writeFileSync(readyPath, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  ready: binding(readyPath),
+  status: ready.status,
+  figures: figures.map((f) => ({ id: f.id, FIRSTRenderStatus: f.FIRSTRenderStatus, spec: f.spec, svg: f.svg, render: f.render, nativePng: f.nativePng, width640Preview: f.width640Preview })),
+  counts: ready.counts,
+  proceduralHold: ready.proceduralHold.status,
+}, null, 2));

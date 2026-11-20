@@ -1,0 +1,52 @@
+    points: dict[str, tuple[float, float]],
+    label: str,
+    errors: list[str],
+) -> tuple[float, float] | None:
+    if coordinate(value):
+        return float(value[0]), float(value[1])
+    if isinstance(value, str) and value in points:
+        return points[value]
+    errors.append(f"{label}: expected coordinate or point id")
+    return None
+
+
+def resolve_position(
+    value: Any,
+    objects_by_id: dict[str, dict],
+    points: dict[str, tuple[float, float]],
+    label: str,
+    errors: list[str],
+) -> tuple[float, float] | None:
+    if isinstance(value, str):
+        obj = objects_by_id.get(value)
+        if isinstance(obj, dict) and obj.get("type") in {"point", "text"}:
+            at = obj.get("at")
+            if coordinate(at):
+                return float(at[0]), float(at[1])
+    return resolve_point(value, points, label, errors)
+
+
+def distance(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return math.hypot(a[0] - b[0], a[1] - b[1])
+
+
+def vector(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
+    return b[0] - a[0], b[1] - a[1]
+
+
+def cross(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return a[0] * b[1] - a[1] * b[0]
+
+
+def dot(a: tuple[float, float], b: tuple[float, float]) -> float:
+    return a[0] * b[0] + a[1] * b[1]
+
+
+def point_to_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    segment = vector(start, end)
+    length_squared = dot(segment, segment)
+    if length_squared == 0:

@@ -1,0 +1,128 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const work = path.join(R, '.tmp/resume182-6-8a-n10-fig22-24-author3695-FIRST');
+assert.equal(process.cwd(), R);
+const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
+const binding = (p) => {
+  const b = fs.readFileSync(p);
+  return { path: p, sha256: sha(b), bytes: b.length };
+};
+const draftReady = JSON.parse(fs.readFileSync(path.join(work, 'draft-ready.record')));
+const repairs = [];
+for (const figure of draftReady.figures) {
+  const bytes = fs.readFileSync(figure.spec.path);
+  assert.equal(sha(bytes), figure.spec.sha256);
+  const spec = JSON.parse(bytes);
+  const n = spec.id.split('-')[1];
+  const failureRoot = path.join(work, `shell/resume182-6-fig${n}-validate-FIRST3695-12`);
+  const failure = JSON.parse(fs.readFileSync(path.join(failureRoot, 'stdout.txt')));
+  assert.equal(failure.status, 'fail');
+  const beforeObjects = JSON.stringify(spec.objects);
+  const objects = new Map(spec.objects.map((o) => [o.id, o]));
+  const replacements = [];
+  const additions = [];
+  for (let i = 0; i < spec.assertions.length; i += 1) {
+    const assertion = spec.assertions[i];
+    if (assertion.type !== 'inside' || !Array.isArray(assertion.point)) continue;
+    const polygon = objects.get(assertion.container);
+    if (!polygon || polygon.type !== 'polygon') continue;
+    const [px, py] = assertion.point;
+    let edge = null;
+    for (let j = 0; j < polygon.points.length; j += 1) {
+      const a = polygon.points[j];
+      const b = polygon.points[(j + 1) % polygon.points.length];
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const lengthSquared = dx * dx + dy * dy;
+      const t = ((px - a[0]) * dx + (py - a[1]) * dy) / lengthSquared;
+      const cross = dx * (py - a[1]) - dy * (px - a[0]);
+      if (Math.abs(cross) < 1e-7 && t >= -1e-9 && t <= 1 + 1e-9) {
+        edge = [a, b];
+        break;
+      }
+    }
+    if (!edge) continue;
+    const replacement = {
+      id: `${assertion.id}-closed-boundary`,
+      type: 'pointOnLine',
+      point: assertion.point,
+      a: edge[0],
+      b: edge[1],
+    };
+    spec.assertions[i] = replacement;
+    for (const group of spec.source.inventory) {
+      group.assertions = group.assertions.map((id) => id === assertion.id ? replacement.id : id);
+    }
+    replacements.push({ before: assertion, after: replacement });
+  }
+  for (const object of spec.objects) {
+    if (object.type !== 'segment' || !object.id.includes('-hatch-') || object.id.includes('-disk-hatch-')) continue;
+    const group = spec.source.inventory.find((g) => g.objects.includes(object.id));
+    const region = spec.id === 'fig-22' ? 'fig22-upper-halfplane-region' : spec.id === 'fig-23' ? 'fig23-quadrant-region' : 'fig24-strip-region';
+    const midpoint = object.from.map((value, i) => (value + object.to[i]) / 2);
+    const assertion = {
+      id: `${object.id}-midpoint-inside-closed-region`,
+      type: 'inside',
+      point: midpoint,
+      container: region,
+    };
+    spec.assertions.push(assertion);
+    group.assertions.push(assertion.id);
+    additions.push(assertion);
+  }
+  assert.equal(JSON.stringify(spec.objects), beforeObjects);
+  const directory = path.join(work, `${spec.id}-REPAIR1-boundary-assertions`);
+  fs.mkdirSync(directory);
+  const repairedPath = path.join(directory, `${spec.id}.spec.json`);
+  fs.writeFileSync(repairedPath, `${JSON.stringify(spec, null, 2)}\n`, { flag: 'wx' });
+  const repair = {
+    id: spec.id,
+    status: 'ONE_ASSERTION_REPAIR_PREPARED_NOT_APPROVED',
+    repairNumber: 1,
+    originalSpec: figure.spec,
+    repairedSpec: binding(repairedPath),
+    originalValidation: {
+      stdout: binding(path.join(failureRoot, 'stdout.txt')),
+      stderr: binding(path.join(failureRoot, 'stderr.txt')),
+      receipt: binding(path.join(failureRoot, 'receipt.record')),
+      status: failure.status,
+      errors: failure.errors,
+    },
+    diagnosis: 'The current ray-crossing inside predicate has no inclusive edge case; exact closed-set hatch endpoints fail on right/top/diagonal edges. Endpoints and source geometry are correct and unchanged. Use explicit pointOnLine boundary membership and an interior midpoint assertion, with the existing connects and direction assertions retained.',
+    sourceImageChanged: false,
+    authoritativeTextChanged: false,
+    objectsChanged: false,
+    objectsByteHashBeforeAndAfter: sha(Buffer.from(beforeObjects)),
+    sourceInventoryObjectMappingsChanged: false,
+    assertionReplacements: replacements,
+    midpointAssertionsAdded: additions,
+    counts: {
+      replacements: replacements.length,
+      additions: additions.length,
+      sourceGeometryChanges: 0,
+      repairAttemptsPrepared: 1,
+      validationsAfterRepairAtPreparation: 0,
+      renderAttemptsAtPreparation: 0,
+    },
+    remainingRepairAllowance: 0,
+    proceduralHold: 'HOLD_UNRESOLVED; early deleted probe receipts are not restored or rerun.',
+  };
+  const recordPath = path.join(directory, 'repair.record');
+  fs.writeFileSync(recordPath, `${JSON.stringify(repair, null, 2)}\n`, { flag: 'wx' });
+  repairs.push({ id: spec.id, originalSpec: figure.spec, spec: binding(repairedPath), repair: binding(recordPath) });
+}
+const recordPath = path.join(work, 'repair-ready.record');
+fs.writeFileSync(recordPath, `${JSON.stringify({
+  status: 'ASSERTION_REPAIR_PREPARED_NOT_FIGURE_APPROVAL',
+  book: '8a', lesson: 'alg8-c2-s2-n10', edition: 'modern-us-neutral',
+  figures: repairs,
+  originalDraftReady: binding(path.join(work, 'draft-ready.record')),
+  originalInventory: binding(path.join(work, 'inventory.record')),
+  originalReady: binding(path.join(work, 'ready.record')),
+  proceduralHold: 'HOLD_UNRESOLVED',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ready: binding(recordPath), figures: repairs }, null, 2));
