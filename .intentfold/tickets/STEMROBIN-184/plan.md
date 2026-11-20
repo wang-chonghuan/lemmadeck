@@ -1,5 +1,124 @@
 # 开发路线
 
+## 184-6 合法接管与实际生产（2026-11-19）
+
+实时读取184评论4b9fcf39-d624-4a9b-b445-3423973df95b及179评论
+830251c5-4c6f-48af-9bae-6e3a22118c80；最新直接授权只恢复新184-6，
+旧184-4及旧审者继续停止。现在只负责9c/10c；两册几何及其AC由188-6
+独占接管，本树旧几何字节只读。finish review / Grill self，巡检暂停，
+不等监督审批，不向监督或同伴发消息。下文旧四册路线只作历史。
+
+正式create_worktree完成，workspace
+`/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck`，
+detached HEAD `e130c0877b2adc71ea59557ca118dc33e4f48fc5`；
+所有生产命令明确使用该workdir，交付仍同一远端
+`codex/STEMROBIN-184-textbooks`。main只读核对，HEAD与origin/main
+同为fdadfcbfc1a07a90b47fc077836fd761270969f5；PR81修复已在祖先，
+不重做修复、不reset/rebase/force或推恢复快照祖先。
+
+只读来源`/Users/yong/.codex/worktrees/stemrobin-184-resume/lemmadeck`
+的顶部暂停检查点已全文读取。恢复§17所需source66–70、已存在的52祖先、
+原课、fig07/08 PNG/SVG、三个现代模板、14答案候选及直接源证据：
+177个逐文件SHA绑定，174个缺失文件复制、3个精确复用，共2357977bytes。
+不同已有字节会明确拒绝；原树、ignored/未提交、备份、锁和refs未改。
+恢复receipt在`.tmp/stemrobin-184-six/takeover/restore.receipt.json`；
+原完整plan/usage只读快照在同目录，不声称未知历史包全部恢复。
+
+n12/n13旧push和source67/68/69/70已过阶段复用，不重finalize/vectorize。
+旧source62/65、图8中央标记、几何116/N以及所有FAIL/HOLD/UNKNOWN、
+父24/24耗尽、旧图作者实际2/4、费用/限流历史均保留，不因新聊天清零。
+§17仍不是完整课。首项实际缺失生产动作：新唯一临时Jason
+01a1f617-56c9-7d43-85c2-1db34de13a27执行现代全文独立复核和两个
+确定性现代图候选；只写自己的scratch，不给自作图签独审PASS。
+父本地继续当前索引及答案绑定前置，不并发预取另一审者。
+
+接续顺序：先闭合§17现代文本、两图独审、答案门禁、自然选择题和
+完整桌面/手机离线显示，再处理其他有源9c/10c。约4完整课一批
+commit/push后立即继续，图题大课和尾批可单课。全项目机械防线
+只正式handoff前一次，不写DB、不生产旧输入交互、不合并部署或关单。
+
+父已独立验算旧14答案候选，而非照抄候选作权威：134两点次序与重合
+三种情形，135–138距离分别3.5/16.5/3.6/1.4；139–141等距两点、
+开闭区间与外部射线；142点集3/7，143区间]-4.5,2.5[，144闭区间
+[-4.7,-4.3]，145因坐标为-b，b中心+12，边界575/48与577/48；
+146分母非零排除(1,1)，147只含左上半平面交集且排除x=0。
+候选数学内容未发现缺陷；134/146/147保留不判分及完整证明/作图理由。
+该结论仅候选实质答案门禁，官方prepare/bind/finalize仍未完成。
+
+初始临时图作者提示错误允许新context四次；已在原任务内立即澄清，
+旧作者2/4保留，接替仅两次源PNG观察，合计最多4/4，禁止再开候选。
+实际发生次数待完成结果返回如实收存，不因提示纠正清零或猜测。
+
+Jason已正常完成：20个清单绑定文件170139bytes，另清单本身独立哈希；
+文本MD/JSON、两spec、render及completion和观察账本已完整消费，
+本地20项字节/长度/hash复核一致。正文29块/14题/106公式无变更；
+prose_flow唯一边界匹配。保留四条来源共享指令及独立完整题干，
+这是忠实来源的展示选择，不删原块或编造转录。
+两图机器PASS；首次label间距FAIL及一次gap修订全部保留。
+实际旧2+新2source=4/4耗尽，候选观察0，没有越界；Jason随后关闭。
+唯一新独审Ptolemy 01a1f622-0888-78c3-ba8e-dbd342567ede只检查
+两原图和两候选，至多4观察，不扩及源整页；批准后才可位置性推广。
+父只写现代图清单与答案绑定脚本，不重复渲染既过机器PASS或看图。
+
+Ptolemy结果已完整消费并逐文件校验：两源PNG与两完整多宽截图，
+实际4/4耗尽、零重开，fig07/08独审PASS。八个最终文件已位置性推广；
+SVG字节未变，spec仅源路径改相对路径，render仅路径/对应哈希重绑，
+官方record_review绑定最终文件，不重跑renderer。17项文件哈希已核验；
+清单本身SHA350abbd6a6a56487851d4f54db818e2897be37846e61af30cf974cc6f3e49429。
+图7源caption及图8旧中央glyph UNKNOWN/HOLD不因现代图批准解除。
+下一步仅执行尚缺adapt-finalize与答案prepare/bind/finalize，
+随后新盲作者与同一Ptolemy按seed/view/internal顺序闭合选择题。
+
+§17实际adapt-finalize0：29源对象、1boundary、14题、2现代图；
+官方render0报告33显示正文段落。答案prepare0/bind0/finalize0，
+14题严格按当前现代题干绑定，11auto/3ungraded（134、146、147），
+bookRaw未编造、不创建interactions。五个阶段原stdout/stderr/退出码
+在`.tmp/stemrobin-184-six/stages/`。仅最终正式handoff运行全项目防线。
+freshforkfalse Socrates01a1f627-3b8c-7be1-bc5f-047007b85df6只读取
+现代白名单、独立全解134–147并作者自然选择题；零图片/答案/旧题输入，
+尚未消费其在途输出，不把草稿存在算批准。
+
+2026-11-20接续：选择题作者Socrates已完成并关闭，独立先解14源题，
+初稿12题/48选项（11single、1multiple），零图片。Ptolemy冻结源解及
+全部48选项真值后初审REVISE：n17-distance-results第三个距离3.6在
+全部选项一致，泄漏137题答案。原拒绝及官方预期退出3完整保留。
+唯一内容修复只改B文本、推导及误解说明为绝对中点坐标，四值
+0.25/2.05/1.8/6.4；正确C、其他11题、覆盖和所有保护字段不变。
+修后canonical SHA f2478695917c68928962da44919a7ef11367c6e24b63fcfee9993ed7812d997e，
+结构验证0。修后view-only独审PASS已全文消费且MD/JSON哈希核验；
+实际审者UUID01a1f622-0888-78c3-ba8e-dbd342567ede已给其归属。
+已明确披露修后内部稿，最终完整review仍待返回；不能以此段算批准。
+源135/136审查证据中的旧B数值须随受影响内部比较更新，源解不重算。
+Ptolemy此前图观察4/4永久耗尽，选择审查零新图片。
+
+物理页104–107只复用四次官方prepare成功，33文件/779078bytes清单
+已在父层核验，不重prepare。原备料临时Chandrasekhar已正常关闭。
+新唯一忠实转录Pasteur01a1f647-8b3c-7f63-ae54-bd8a4f4ef8d1只写
+`.tmp/stemrobin-184-six/source104107-author/`，新context最多8图。
+没有转录审批、finalize或装订；不计完整课。旧23/24/71 HOLD不重开，
+几何与其AC继续只读，父24/24永久耗尽且零新图片/解码。
+
+§17已实际离线完成，作为大课单课批次：14标准答案（11auto、3ungraded）、
+12选择题/48选项、2独审现代图。Ptolemy最终完整选择review PASS，
+14源记录/12题/48选项（13真、35假）全文消费，16项清单核验；
+受影响135–138证据更新，其余11题和全部独立源解精确复用。
+修后官方with-review0、批准稿封存0、官方retain_choices0。
+只替换HTML中一个B片段，初始HTML与原拒绝保持不变，不重render正文。
+隔离headless浏览器一次六视图PASS：正文/书写/选择各1440和390宽，
+字体/数学/两图/四行表/所有题可达性、单选互斥、多选勾选撤销和返回
+导航均实际断言，书写题无输入。浏览器和服务已关闭。
+新视觉Volta01a1f64c-0560-7bb2-9d51-3cda733314b5逐张看六张忠实原
+像素分栏截图，实际6/8、零重开或补裁；六视图静态PASS，19哈希核验后关闭。
+机械分栏逐像素可逆，人工边界可能穿过字形且邻栏完整承接，不是原页裁切。
+正文源对象29，现代对象29，展示流33块包含图/图注，正文显示段落29；
+不能把render回执的33解释为33正文段落。
+148证据文件/5756419bytes一次留存于9c/evidence/nov19-1846-n17；
+manifest SHA68e0da69314af2c992e9c6248f6d17bd4ea57a91995c172e9cac933d66fe9fcc，
+completion SHA3c62149e779b4548db59ae102f4dcfecd96e395851167e0f10dbf0072d37f782。
+原7caption及8中央glyph UNKNOWN/HOLD仍保留，初始所有FAIL不覆写。
+当前fetch后HEAD/FETCH_HEAD同为e130c0877b2adc71ea59557ca118dc33e4f48fc5，
+窄commit/push待执行；推后直接继续9c/10c，不作全项目正式handoff。
+
 ## 184-4 n12/n13 两课窄交付（2026-11-19）
 
 复用已冻结 completion 及已过正文/答案/选择/显示证据，不重审、

@@ -1,0 +1,151 @@
+{
+  "status": "repair_complete_not_approval",
+  "contentRepairCount": 1,
+  "content_patches_this_run": 1,
+  "workdir_for_every_command": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "write_root": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n17-choices",
+  "target_question_id": "n17-distance-results",
+  "changed_fields": [
+    "/questions/1/view/options/1/text",
+    "/questions/1/key/rationales/1/derivation",
+    "/questions/1/key/rationales/1/misconception"
+  ],
+  "protected_field_equality": {
+    "exactly_three_fields_changed": true,
+    "entire_draft_excluding_three_changed_fields_equal": true,
+    "all_other_questions_equal": true,
+    "source_numbers_stem_table_data_response_unit_equal": true,
+    "correct_key_equal": true,
+    "option_ids_and_figure_ids_equal": true,
+    "rationale_truths_equal": true,
+    "coverage_equal": true,
+    "evidence": "repair-field-diff.json"
+  },
+  "hashes": {
+    "protected_projection_original": "673644c0eb284c103f3dddfbb509a91a6aed0f9106f5dd33cde632df2d97375c",
+    "protected_projection_repaired": "673644c0eb284c103f3dddfbb509a91a6aed0f9106f5dd33cde632df2d97375c",
+    "protected_projection_encoding": "jq -S -c 排序紧凑 UTF-8 JSON，含末尾换行；仅删除精确的三个允许改动字段。",
+    "original_draft_canonical": "c37e7b3ae1272e9cd34d056d26e2484ff1e1d78d37dee335a0778bd9184e06cc",
+    "repaired_draft_canonical": "f2478695917c68928962da44919a7ef11367c6e24b63fcfee9993ed7812d997e",
+    "repaired_draft_bytes": "237e77e8848d45a54b00978c7ad51c987eb4bdecd79c53516612283e90c9b37b",
+    "repaired_view_bytes": "b5c73bf4ece4ceed4353f53e21f2e3f82989cb6442666b1bd8a63b411412e77b"
+  },
+  "original_files": {
+    "explicit_author_files_hashed": 22,
+    "all_hash_checks_passed": true,
+    "manifest": "repair-originals.sha256.txt",
+    "check_stdout": "repair-originals-check.stdout.txt",
+    "check_stderr": "repair-originals-check.stderr.txt",
+    "original_bytes_or_permissions_changed": false,
+    "original_view_read_or_written": false
+  },
+  "internal_option_comparison": {
+    "new_B": [0.25, 2.05, 1.8, 6.4],
+    "new_B_wrong_rule": "两点中点到原点的距离 |(u+v)/2| 被误当作两点间距离。",
+    "correct_C_unchanged": [3.5, 16.5, 3.6, 1.4],
+    "no_unanimous_component": true,
+    "distinct_complete_results": 4,
+    "no_equivalent_complete_options": true,
+    "evidence": "repair-option-comparison.json"
+  },
+  "commands": [
+    {
+      "stage": "snapshot_original_author_files",
+      "operation": "shasum -a 256，显式列出 22 份原作者文件",
+      "exit_code": 0,
+      "stdout": "repair-originals.sha256.txt",
+      "result": "保存修复前原文件字节哈希，未读取其他作者或评审者文件。"
+    },
+    {
+      "stage": "new_draft_copy",
+      "command": "cp -n .tmp/stemrobin-184-six/n17-choices/draft.json .tmp/stemrobin-184-six/n17-choices/draft.repaired.json",
+      "exit_code": 0,
+      "result": "新文件机械复制成功，未覆盖原文件。"
+    },
+    {
+      "stage": "new_draft_writable",
+      "command": "chmod u+w .tmp/stemrobin-184-six/n17-choices/draft.repaired.json",
+      "exit_code": 0,
+      "result": "仅新草稿设为作者可写；原草稿权限不变。"
+    },
+    {
+      "stage": "single_manual_content_patch",
+      "operation": "apply_patch",
+      "result": "仅修改目标 B 项文本、derivation 与 misconception，三字段的精确差异见 repair-field-diff.json。"
+    },
+    {
+      "stage": "structural_validation_once",
+      "command": "python3 .agents/skills/ld-s10y-choice/scripts/validate.py --repo . --seed .tmp/stemrobin-184-six/n17-choices/seed.json --draft .tmp/stemrobin-184-six/n17-choices/draft.repaired.json > .tmp/stemrobin-184-six/n17-choices/repair-validate.stdout.txt 2> .tmp/stemrobin-184-six/n17-choices/repair-validate.stderr.txt",
+      "exit_code": 0,
+      "stdout": "repair-validate.stdout.txt",
+      "stderr": "repair-validate.stderr.txt",
+      "result": "mechanical checks passed; semantic review still required"
+    },
+    {
+      "stage": "new_view_projection",
+      "command": "jq '[.questions[] | {id, view}]' .tmp/stemrobin-184-six/n17-choices/draft.repaired.json > .tmp/stemrobin-184-six/n17-choices/view.repaired.json",
+      "exit_code": 0,
+      "result": "新视图仅含所有题的 id 与 view，无内部字段。"
+    },
+    {
+      "stage": "field_diff",
+      "operation": "jq -n --slurpfile original draft.json --slurpfile repaired draft.repaired.json；机械比较全部标量字段及仅删除三个授权字段后的整个 JSON",
+      "exit_code": 0,
+      "stdout": "repair-field-diff.json",
+      "result": "精确改变 3 字段，全部受保护内容相等。"
+    },
+    {
+      "stage": "component_frequency_and_equivalence",
+      "operation": "jq 从四个选项的数学数值文本提取有序分量，group_by 统计频次，unique 比较完整结果",
+      "exit_code": 0,
+      "stdout": "repair-option-comparison.json",
+      "result": "没有所有候选共同的分量；四个完整数值结果互不等价。"
+    },
+    {
+      "stage": "protected_projection_original_hash",
+      "command": "jq -S -c 'del(.questions[1].view.options[1].text,.questions[1].key.rationales[1].derivation,.questions[1].key.rationales[1].misconception)' .tmp/stemrobin-184-six/n17-choices/draft.json | shasum -a 256 > .tmp/stemrobin-184-six/n17-choices/repair-original-protected.sha256.txt",
+      "exit_code": 0,
+      "stdout": "repair-original-protected.sha256.txt"
+    },
+    {
+      "stage": "protected_projection_repaired_hash",
+      "command": "jq -S -c 'del(.questions[1].view.options[1].text,.questions[1].key.rationales[1].derivation,.questions[1].key.rationales[1].misconception)' .tmp/stemrobin-184-six/n17-choices/draft.repaired.json | shasum -a 256 > .tmp/stemrobin-184-six/n17-choices/repair-new-protected.sha256.txt",
+      "exit_code": 0,
+      "stdout": "repair-new-protected.sha256.txt"
+    },
+    {
+      "stage": "new_draft_canonical_digest",
+      "command": "python3 .agents/skills/ld-s10y-choice/scripts/prepare.py digest .tmp/stemrobin-184-six/n17-choices/draft.repaired.json > .tmp/stemrobin-184-six/n17-choices/repair-draft.canonical-sha256.txt 2> .tmp/stemrobin-184-six/n17-choices/repair-digest.stderr.txt",
+      "exit_code": 0,
+      "stdout": "repair-draft.canonical-sha256.txt",
+      "stderr": "repair-digest.stderr.txt"
+    },
+    {
+      "stage": "original_files_unchanged",
+      "command": "shasum -a 256 -c .tmp/stemrobin-184-six/n17-choices/repair-originals.sha256.txt > .tmp/stemrobin-184-six/n17-choices/repair-originals-check.stdout.txt 2> .tmp/stemrobin-184-six/n17-choices/repair-originals-check.stderr.txt",
+      "exit_code": 0,
+      "stdout": "repair-originals-check.stdout.txt",
+      "stderr": "repair-originals-check.stderr.txt",
+      "result": "22 份原文件均为 OK。"
+    },
+    {
+      "stage": "new_artifact_byte_hashes",
+      "command": "shasum -a 256 .tmp/stemrobin-184-six/n17-choices/draft.repaired.json .tmp/stemrobin-184-six/n17-choices/view.repaired.json > .tmp/stemrobin-184-six/n17-choices/repair-artifacts.sha256.txt",
+      "exit_code": 0,
+      "stdout": "repair-artifacts.sha256.txt"
+    },
+    {
+      "stage": "new_view_exact_projection_check",
+      "command": "jq -e --slurpfile draft .tmp/stemrobin-184-six/n17-choices/draft.repaired.json '(length == ($draft[0].questions | length)) and all(.[]; ((keys | sort) == [\"id\",\"view\"])) and (. == [$draft[0].questions[] | {id, view}])' .tmp/stemrobin-184-six/n17-choices/view.repaired.json > .tmp/stemrobin-184-six/n17-choices/repair-view-projection-check.stdout.txt 2> .tmp/stemrobin-184-six/n17-choices/repair-view-projection-check.stderr.txt",
+      "exit_code": 0,
+      "stdout": "repair-view-projection-check.stdout.txt",
+      "stderr": "repair-view-projection-check.stderr.txt",
+      "result": "true"
+    }
+  ],
+  "validation_attempts": 1,
+  "failures_file": "repair-failures.json",
+  "review_approval_produced": false,
+  "reviewer_reports_read": false,
+  "image_usage": 0
+}
