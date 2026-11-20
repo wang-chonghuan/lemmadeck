@@ -708,10 +708,11 @@ def normalize_exercise_layout(exercises: dict) -> None:
     for exercise in exercises.get("exercises", []):
         text = exercise.get("text")
         normalized = normalize_numbered_subparts(text)
+        if isinstance(normalized, str):
+            exercise["lines"] = normalized.splitlines()
         if normalized == text:
             continue
         exercise["text"] = normalized
-        exercise["lines"] = normalized.splitlines()
         changes = exercise.get("changes")
         if isinstance(changes, list) and "layout" not in changes:
             changes.append("layout")

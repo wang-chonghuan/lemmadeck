@@ -183,6 +183,7 @@
         "required": ["id", "type"],
         "properties": {
           "id": {"type": "string", "minLength": 1},
+          "layer": {"type": "integer", "minimum": 0, "maximum": 19},
           "type": {
             "enum": [
               "point",
@@ -200,7 +201,13 @@
               "svgPath"
             ]
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {"required": ["layer"]},
+            "then": {"properties": {"type": {"enum": ["segment", "polygon"]}}}
+          }
+        ]
       }
     },
     "assertions": {

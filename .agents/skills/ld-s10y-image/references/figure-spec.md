@@ -72,6 +72,11 @@ change invalidates the review evidence.
   contain labels, ticks, points, or measurements. Like other objects,
   `strokeWidth` is in output pixels, independent of unequal axis scales.
 
+`segment` and `polygon` may set `layer` to an integer from 0 through 19;
+higher layers paint above lower ones. A polygon's explicit layer applies to
+its fill and borders. Omit it to retain JSXGraph's existing defaults. Use
+explicit layers when opaque polygons must actually cover an underlying segment.
+
 Point references may be object ids. Coordinate literals are `[x, y]`.
 
 ## Labels

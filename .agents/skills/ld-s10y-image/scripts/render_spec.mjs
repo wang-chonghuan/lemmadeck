@@ -233,6 +233,9 @@ async function render(spec, output) {
         return pointValue(value)
       }
       const color = (value, fallback) => palette[value] || fallback
+      const layerStyle = (object) => (
+        object.layer === undefined ? {} : { layer: object.layer }
+      )
       const lineStyle = (object, fallback = palette.ink) => ({
         fixed: true,
         highlight: false,
@@ -289,7 +292,7 @@ async function render(spec, output) {
             object.id,
             object.from,
             object.to,
-            lineStyle(object),
+            { ...lineStyle(object), ...layerStyle(object) },
           )
           addLabel(object, [
             (pointValue(object.from)[0] + pointValue(object.to)[0]) / 2,
@@ -337,10 +340,11 @@ async function render(spec, output) {
               id: `ld-${object.id}`,
               fixed: true,
               highlight: false,
-            fillColor: color(object.fill, palette.accentSoft),
+              ...layerStyle(object),
+              fillColor: color(object.fill, palette.accentSoft),
               fillOpacity: object.fillOpacity ?? 0.15,
               vertices: { visible: false },
-              borders: lineStyle(object),
+              borders: { ...lineStyle(object), ...layerStyle(object) },
             },
           )
           elements.set(object.id, polygon)

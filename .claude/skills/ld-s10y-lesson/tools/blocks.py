@@ -28,7 +28,7 @@ HEAD = re.compile(r"^<!--\s+(?P<kind>h1|h2|h3|p|exhead|ex|fig|cap|foot)\b"
                   r"(?P<rest>.*?)\s*-->$")
 BOX = re.compile(r"\bbox\s+(\d+,\d+,\d+,\d+)")
 FLAG = re.compile(r"\b(cont|open|samerow|labelrow)\b")
-OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:-]+)\b")
+OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:-]+\*?)(?=\s|$)")
 WRAP = "↵"
 KINDS_TEXT = ("h1", "h2", "h3", "p", "exhead", "ex", "cap", "foot")
 

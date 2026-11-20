@@ -2,6 +2,7 @@
 
 import sys
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 
@@ -85,6 +86,44 @@ class SourceLinesTextTest(unittest.TestCase):
             ["layout"], [], "exercise", [],
         )
         self.assertTrue(any("非公式数字变化" in error for error in errors))
+
+
+class ModernLinesNormalizationTest(unittest.TestCase):
+    def test_cultural_edit_syncs_lines_without_changing_source(self):
+        document = {
+            "exercises": [{
+                "text": "105. Ethan has 123 stamps, three times Noah's count.",
+                "lines": ["105. Old names remain in this source line."],
+                "source_text": "105. Original source wording.",
+                "changes": ["names"],
+            }],
+            "source": {"data": {"text": "Immutable source snapshot"}},
+        }
+        before = deepcopy(document)
+        edition.normalize_exercise_layout(document)
+        self.assertEqual(
+            document["exercises"][0]["lines"],
+            [before["exercises"][0]["text"]],
+        )
+        document["exercises"][0]["lines"] = before["exercises"][0]["lines"]
+        self.assertEqual(document, before)
+
+    def test_canonical_latin_subparts_replace_stale_line_markers(self):
+        text = "49. Calculate:\na) $6+1$;\nb) $7-2$."
+        document = {"exercises": [{
+            "text": text,
+            "lines": ["49. Calculate:", "\u0430) $6+1$;", "\u0431) $7-2$."],
+            "changes": ["layout"],
+        }]}
+        edition.normalize_exercise_layout(document)
+        self.assertEqual(document["exercises"][0]["text"], text)
+        self.assertEqual(document["exercises"][0]["lines"], text.splitlines())
+
+    def test_invalid_text_is_not_coerced_into_modern_lines(self):
+        document = {"exercises": [{"text": None, "lines": ["source"]}]}
+        before = deepcopy(document)
+        edition.normalize_exercise_layout(document)
+        self.assertEqual(document, before)
 
 
 if __name__ == "__main__":

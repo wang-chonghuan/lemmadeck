@@ -1067,6 +1067,16 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         if kind not in SUPPORTED_TYPES:
             errors.append(f"{label}: unsupported type {kind!r}")
             continue
+        if "layer" in item:
+            layer = item["layer"]
+            if kind not in {"segment", "polygon"}:
+                errors.append(f"{label}.layer is supported only for segments and polygons")
+            if (
+                not isinstance(layer, int)
+                or isinstance(layer, bool)
+                or not 0 <= layer <= 19
+            ):
+                errors.append(f"{label}.layer must be an integer from 0 to 19")
         placements = [(label, item.get("labelPlacement"))]
         if kind == "axis":
             placements.extend(
