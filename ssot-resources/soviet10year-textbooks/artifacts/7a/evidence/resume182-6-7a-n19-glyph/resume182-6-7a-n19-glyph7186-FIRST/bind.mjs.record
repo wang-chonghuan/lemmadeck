@@ -1,0 +1,51 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck');
+const directory = '.tmp/resume182-6-7a-n19-glyph7186-FIRST';
+const before = '.tmp/resume182-6-7a-n19-glyph-before7186-FIRST';
+const reviewPath = '.tmp/resume182-6-7a-n19-glyph-review7186-FIRST/review.record';
+const prefix = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const read = filename => fs.readFileSync(filename);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const reviewBytes = read(reviewPath);
+assert.equal(sha(reviewBytes), '0a92bc696b566179cd9fa23687ce2fa423af4fd49c734f9c5da62a8a5c1f2424');
+const review = JSON.parse(reviewBytes);
+assert.equal(review.findings.find(item => item.source === '400e').glyph_verdict,
+  'PLUS_PRESENT_MINUS_ABSENT_IN_FIRST_FACTOR');
+const replacements = [
+  ['pages/0121/page.md', 1],
+  ['pages/0121/page.json', 1],
+  ['lessons/alg7-c2-s2-n19/exercises.json', 2],
+];
+const inputs = [];
+for (const [relative, count] of replacements) {
+  const filename = `${prefix}/${relative}`;
+  const original = read(`${before}/${filename}`).toString();
+  const current = read(filename).toString();
+  assert.equal(original.split('(5-7x)').length - 1, count);
+  assert.equal(current, original.replaceAll('(5-7x)', '(5+7x)'));
+  inputs.push({ path: filename, sha256: sha(read(filename)), replacedGlyphs: count });
+}
+const audit = `${prefix}/pages/0121/audit.json`;
+assert.deepEqual(read(audit), read(`${before}/${audit}`));
+for (const page of ['0121', '0122']) {
+  const input = `.tmp/ld-s10y-lesson/7a/pages/${page}/page.png`;
+  const output = `${directory}/pixels/page-${page}.png`;
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, read(input), { flag: 'wx' });
+}
+const data = {
+  status: 'AFFECTED_GLYPH_BINDING_PASS_WITH_SOURCE_HOLDS',
+  book: '7a', lesson: 'alg7-c2-s2-n19',
+  independentReview: { path: reviewPath, sha256: sha(reviewBytes) },
+  inputs, originalAuditBytesUnchanged: true,
+  unchangedSources: ['399', '404', '405a'], missingSignsGuessed: false,
+  rawExerciseCount: 22, completeLessonApproval: false,
+  newImagesMathOrSourceReviewRuns: 0, DBWrites: 0,
+  hostTokensCost: 'unknown',
+};
+fs.writeFileSync(`${directory}/binding.record`, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: data.status, corrections: 4, rawExercises: 22 }));

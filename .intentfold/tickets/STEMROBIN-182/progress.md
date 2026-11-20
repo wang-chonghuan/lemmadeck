@@ -2,6 +2,63 @@
 
 ### 182-6 2026-11-20 即时接续，官方新树注册成功
 
+- n19局部字形已实际修复：Meitner四处受影响独审确认，review SHA
+  `0a92bc696b566179cd9fa23687ce2fa423af4fd49c734f9c5da62a8a5c1f2424`，
+  两原生图各一次，已完成关闭；仅400e first factor减号→加号，
+  page.md/page.json各一处及原exercises text/lines两处，未动其他题/字符。
+  affected finalize FIRST exit0，20/20行、0图、0规范化，
+  audit.json与旧快照同字节；零图最终绑定FIRST exit0，其他二十一题同字节。
+  399/404/405a缺比较符号真实SOURCE_INSUFFICIENT仍保留，不计完整课。
+  23唯一实际文件/27引用/4旧引用已持久留存，retention SHA
+  `a03844f5aad0e92f336e42d2a0ccedd9837d1d59cca5e82c73880947d3ebacbd`。
+  原四文件备份/父观察/独审/两实际PNG/命令/计数保持；
+  当前准备仅这个局部修正/证据/本记录窄提交，不是提交成功收据。
+- n6十二原题首次盲解已封存，Beauvoir solutions SHA
+  `7d8732e381f340748fd198b0c78cf93a67c1a9c355f012f645e52febe8349b23`，
+  37任务/0HOLD/仅原fig12一次作解题输入，不重跑该图审；
+  新答案候选7auto/5ungraded等待首次候选比较，不读旧答案或选择。
+  Curie新文字候选已实际完成关闭，105公式跨度不变；
+  Einstein仅这批实际新增模板受影响文字独审，未重复历史TEXT PASS。
+  图10 Helmholtz独审PASS：新640与原10各一次，FIRST review SHA
+  `f25ecffec890b221e408ec5a35bc19c8ff33a60f13442d5ffbacf0599f539bc0`；
+  已另完成零图durable路径绑定，现review SHA
+  `55fec3a1cef79dc8076178729923f89eeaced168519c89afcae989fc59686dd4`，
+  原spec/SVG/截图同字节，仅render两个path字段变化；已完成关闭。
+  n6尚未modern finalize/答案finalize/选择/整课显示/提交，不计完整课。
+
+- 后续有源课缺口实际接续：7a n19两页备料各FIRST exit0，
+  父原生图121/122各一次，399/404/405a原印缺比较符号，真实SOURCE
+  不足不猜；400e原印`5+7x`与当前转写减号不同，尚未改源或计整课。
+  本局部观察已封存，Meitner仅这四处字形受影响独审，整页SOURCE不重跑。
+  8a n6新prepare FIRST exit0，历史TEXT通过仅原记录复用，
+  已审正文原字节尚未定位，不把新模板叫恢复字节或批准稿。
+  Curie仅新正文模板，Beauvoir仅十二原题首次盲解/原fig12输入，
+  两者写集分离；已过09/11/12图审与旧可见截图保持。
+  图10仅原点及既有y轴交点精确落在草稿自己声明的斜轴：
+  原点x274→273.75、交点x282→281.00245098039216，
+  同步原曲线一个采样x/两位移，根值/轴端/曲线端/比例不变，
+  没有放宽容差/改共享renderer/重跑三图；原FAIL原字节不改。
+  新draft gate/唯一renderer/实际640捕获FIRST均exit0，
+  minText37.35px；Helmholtz仅原10和新640两图独审，尚未批准/提升。
+- 一次新任务spawn实际因agent槽位上限失败，派发0；
+  状态查询确认本轮Bohr/Mendel/Peirce/Faraday四观察任务已completed，
+  只关闭这四完成槽位，旧Mencius/Russell及更早暂停聊天未唤醒或发消息。
+  一次过宽8a历史文件名盘点输出截断及缺失旧脚本sed exit1保留，
+  不把它们当数学HOLD/源遗失或反复重跑producer；宿主tokens/费用未知。
+
+- 本次上下文接续已实际交付8a n9：
+  `b8ece316a0ccd2645c5a4a3e2d8daed418b36a45`，
+  parent `a277f78c34e67dd9f99dfe45f9a02b744564460d`；
+  42暂存文件仅n9/本课证据/8a现代索引/本已有检查点，
+  staged scope/秘密路径及凭据模式/完整空白检查均exit0，
+  commit exit0、push exit0、独立ls-remote同SHA。
+  本接续没有重复任何n9内容/图像/显示producer或审查。
+  一次过宽progress rg输出截断保留，未据截断补造结论；
+  后续只读有界章节定位下一课，不重跑该查询。
+  本树仍detached，原分支/锁/备份/未决消息不改；
+  后续只在当前绝对workdir续6a/7a/8a有源课，finish=review，
+  不写DB/合并/部署，宿主tokens/费用未知，40分钟监督无新计时器声明。
+
 - n3已实际窄commit/push：
   `a277f78c34e67dd9f99dfe45f9a02b744564460d`，
   parent `820d6ce5a08c73e269845a2e8e7bcefea9dc1976`；
