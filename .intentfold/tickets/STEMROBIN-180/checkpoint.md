@@ -1,5 +1,194 @@
 # 生产检查点
 
+## 180-6 n130 complete offline; narrow commit/push next
+
+2026-11-20T01:52:52.693Z. n13011 prose/15 display paragraphs,5 full original written
+tasks,5 substantive derived/ungraded answers,1 naturalmultiple/6 options,0figures.
+TEXT/SOURCE, CHOICE SOURCE-first/BLIND/key-last and ANSWER FINAL independently
+PASS, all parent-bound. Actual adapt/answerfinalize and choiceretain exit0.
+Stable unbranched series and charge/time conditions retained; recognition
+does not demonstrate independent definitions or conservation arguments.
+
+One new headless offline render/check on6 desktop/mobile surfaces exit0;
+fresh independent six-image DISPLAY PASS parent-bound. Complete courses9->10
+only now. Corrected327 source3 files plus preservedFIRST FAIL and affectedPASS
+join this narrow commit. Raw36/modern28,105 canonical pages; no unrelated rows.
+Parent projection-binder FIRST failure kept, only type/byte handling corrected.
+No SOURCE/semantic/image/browser replay; original drafts and every budget kept.
+
+FirstANSWER metadataREVISE kept; one q1notes correction independently approved,
+five substantive answers unchanged. Next: narrow29-file commit/push on original
+codex/STEMROBIN-180-textbooks, then
+other authorized source-ready lessons. Old trees, locks, backups, stash, chats,
+failures and UNKNOWN billing/tokens unchanged. New image-service calls0.
+Finish=review; no DB/merge/deploy/closure/interactions/full-project checks.
+
+## 180-6 n130 all semantics sealed; fresh DISPLAY active
+
+2026-11-20. Sole notes-only affectedANSWER reviewPASS, manifeste
+faca9404ff714e897fcc217416d8e1b4b6e1668fe53155629b632c3203cc8bc5
+0444 parent-bound6exit0. Five substantiveanswers unchanged; q1notes+36bytes,
+oldFIRSTREVISE remains. Officialanswerfinalizeexit0, auto0/ungraded5.
+CHOICE FINAL/retainPASS already bound; Locke complete andclosed.
+
+Actualone offline renderexit0:15paragraphs/5originaltasks/1multiple6options.
+Actualnewnative six-surfacecheckexit0 on desktop1440/mobile390,overflow0,
+formulaerrors0,keyfields0 and terminalreachable. Notliveacceptance/headedcheck.
+Fresh nonforked soleDISPLAY Tesla01a1f6a4-1010-73c0-b4f5-1f44d101cb44
+will actually open exactly6new screenshots once; parentreceivesonlytext.
+No n129/n112 screenshot, browser or semanticreplay. No screenshotpayload
+opened byparent, noimage-servicecall.
+
+Await genuine independentDISPLAY final/manifest/parentbinding, then29-file
+completecoursemapping/commit/push. Completecoursesstill9; script existence or
+nativecheck alone is notcompletion. Canonicalraw36/modern28/pages105.
+Oldsource/candidate/failedreports, locks, backups, stash, spentbudgets and
+UNKNOWNfees/tokens kept. Finishreview, noDB/merge/deploy/closure/fullchecks.
+
+## 180-6 n130 CHOICE retained; one ANSWER notes correction pending
+
+2026-11-20. Same Locke FINAL CHOICE PASS, officialwith-reviewvalidator exit0,
+manifestf844b9bde19299b35b379c0ad0215a45214c4f9bb5e2fb9804cfc5d048e18b19
+0444 parent-bound17 exit0. Actualofficialchoiceretain exit0,1multiple/6options.
+No CHOICE reauthor/review/image replay.
+
+ANSWER FIRST FINAL REVISE onlyq1notes: absence ofbookRaw inprepare is not
+evidence that printedbook has no answer. Five substantive answers/19facets/
+derived/ungradedPASS; noHOLD orautomatickeys. FIRSTmanifestc648bbc7d698fa967f6d5dea028676c76a0bf82836a4163571dec7ac88b8ffc9
+0444 parent-bound13exit0, originalcandidate/reportunchanged.
+
+Onlychanged q1notes to “本题官方 prepare 未提供 bookRaw，答案按课内定义独立推导。”
+Affectedauthor manifeste6675e109c63080960933183f4e318fdf435c91c11c86928d90b533518c83d43
+0444, actualdiffassert exit0: changedmetadataunit1/substantiveanswers0.
+Same sole Locke now compares this exact unit and composescurrentANSWERPASS
+from prior5/19PASS; noSOURCE/fullanswer replay. Contentcorrection1,not a
+technical failure orbudgetreset. Awaitaffectedbinding beforeanswerfinalize.
+
+Completecourses9; noDISPLAY/count/staging/commit/push yet. Newimageopens0,
+image-servicecalls0, fees/tokensUNKNOWN. Oldtrees/locks/backups/stash/chat/
+failures and allallowances remain. Finishreview, noDB/merge/deploy/closure.
+
+## 180-6 n130 SOURCE/BLIND bound; FINAL comparison active
+
+2026-11-20. Official CHOICE SOURCE alignmentPASS5 questions/19facets/8concepts,
+manifest12666d424a6e5b92ceea2a6efd19bf494529b671551d2aa38af12574092cbbbe
+0444 parent-bound16 exit0. Parent FIRST bindingexit1 preserved: explicit
+selected-lessonprojection treated as wholebookhash; only binder type/byte
+handling corrected, secondbindingexit0, sealedreview unchanged, noSOURCEreplay.
+
+Same Locke completed view-onlyBLIND,6/6 decisions/0HOLD, independent true set
+a,b,c,d. Recognition-only fidelity/redundancy/leakagePASS; its loss of free
+definition/conservation argument production recorded before author disclosure.
+Manifestdd7a85832d794fe4ecbfe44e6651f10a22366b07dcb0f915c6b68f1192c090f3
+0444 parent-bound12 exit0, newimages0. Only now fullauthor draft/key and
+first-reviewanswer candidate disclosed for two FINAL comparisons.
+
+No answerfinalize/choiceretain/DISPLAY or fullcourse increment yet; complete9.
+TEXT/canonical105pages/raw36/modern28 retained. n109 remains oldCHOICEHOLD
+with spentbudget, not a substitute restart; n111 prepared sourcefig240/241
+still requires genuine modernfigure production/approval, no paidcall requested.
+Current final workdir remains officialsix; source/original trees, locks, backup,
+stash, oldchats, firstfailures, budgets and UNKNOWNtokens/fees preserved.
+Finish=review; noDB/merge/deploy/closure/interactions/fullchecks.
+
+## 180-6 n130 TEXT retained; CHOICE SOURCE-first active
+
+2026-11-20. Collected Locke's TEXT PASS and independent5/5 ANSWER SOURCE,
+19 facets/0 HOLD. Manifest16ba989cec5325c8f455a0aa66695cd0e0d2497c5d2768df60bed95a8414c73c
+0444 parent-bound23 exit0. Actual isolatedadapt-finalize exit0, narrowretain
+7 raw/modern files and2 index rows exit0. Existing rows unchanged; raw36/
+modern28, actual canonical105 pages. No complete-course increment.
+
+Official answerprepare5 derived/ungraded candidates, no bookRaw. Original
+parent draft preserved; first-review candidate clarifies onlyq1 cumulative
+chemical effect andq3 stable-current variables. Answer manifest3ffd4c4108a9298c11c197c32d2d622e1fcf2ae3b1ad97c6e98e27d3b7292a94
+0444; no author candidate disclosed to reviewer yet.
+
+Official CHOICE seed selects5 tasks and8 concept blocks,0 figures; digest
+ae5ba5bf779feb5cdc3b83554889c8dd19e4996951c9d506c9a8b4de127e2dab.
+One naturalmultiple/6 claims, structuralexit0; seed/draft/view0444.
+Same sole Locke now aligns seed with his saved independentSOURCE first;
+not sent view, author solution/key or answer candidate. Next: SOURCE binding,
+view-only BLIND, key-last/answer comparison, finalize/retain, one new six-surface
+offlineDISPLAY with fresh reviewer, then complete-course narrowcommit/push.
+
+Complete courses9. No n129/n112 image/browser/semantic replay; old source
+failures and own verifier whitespace failure preserved. New images0, image
+service calls0, costs/tokens UNKNOWN. Original tree, locks, backups, stash
+and old chats untouched. Finish=review; no DB/merge/deploy/closure/fullchecks.
+
+## 180-6 source327 retained; n130 TEXT/source independent active
+
+2026-11-20. SOURCE327 affected manifest
+dfae615cdd0e4f44f274c35cb95573fc154da6b2fe7475719dcd9c5e5d166163
+parent-bound20 exit0; independently composed current whole-page SOURCE PASS.
+Only corrected327 MD/JSON/audit retained,3 files, old FIRST/frozen bytes kept.
+New image opens0. Reviewer's “human supplied” exact counts/finalize wording
+means parent-observed receipts and parent forwarding, not a new human
+observation or added allowance; correction noted in the retention record.
+
+Actual isolated assembly exit0: n13011 prose/5 original tasks/0 structuralfigures.
+Incomingx1 and incompleten131/fig279 excluded; actualadapt-prepare exit0.
+Modern only: join two cross-line bold runs and add two exact shared-parser
+before/after concept boundaries. Actual proseflow15 display paragraphs.
+Author manifest82c403d84f6d2d4daf6dc01a0496f4a1efdd1476df7bff8facd648db51c171cd
+frozen0444; same Locke now independently reviews new TEXT and solves5 SOURCE
+tasks,0 further pictures. No author answer or CHOICE keys disclosed.
+Parent source-first concept reasoning and5 ungraded candidate answers saved
+separately; not approved, finalized, retained or published.
+
+Complete courses9; n11224-file push1cf5a5d8941c5f4dcfa2a6cc71ae57d2eadeece3
+verified. n130 not yet complete/canonical; raw index stays35/modern27.
+Current327 reconstruction1+single-character correction1, every old budget,
+FAIL, uncertainty and UNKNOWN cost/token counter retained. No DB/merge/deploy/
+closure, new interactions, old-chat message, source-image replay or full checks.
+
+## 180-6 source327 new FIRST FAIL; one-character affected correction
+
+2026-11-20. Locke actual original-first full-page review found one definite
+new omission: B09/L21 missing处 in “任何一个截面处的电量”.
+New FIRST SOURCE_FAIL manifest67ef100625482aba73a9d032ccc796eab970ccae1a0c33991d39b686283a5b68
+sealed0444 and parent-bound23 entries, exit0. Complete24 rows/10 blocks checked;
+two fractions, incomingcont, terminalsemicolon/open match. Glyph uncertainties
+remain non-defects. Old three italic failures and historicallimit1/used0 retained.
+
+Only one character added in workingMD; official affectedfinalize exit0,24/24,
+zero normalizations, unchanged pixels and audit. Old frozen candidate/report
+remain intact. This is a real content correction, not an execution failure or
+an approval. Reconstruction attempt1 plus affectedcorrection1 recorded;
+no spent count, failure or historical allowance reset. Latest delegated narrow
+reversible repair applied without a new ordinary approval wait.
+
+Next: same Locke compares only this new difference to his already observed,
+frozen original inventory/crops, no further image opens or full SOURCE replay.
+No assembly/adaptation/canonical promotion or completion increase. Complete
+courses9; n112 push verified. Parent conservative2 images; Locke8/24, payload0.
+No DB/merge/deploy/closure; costs/tokens UNKNOWN; original trees/locks/stash kept.
+
+## 180-6 n112 pushed; n130 source327 independent review active
+
+2026-11-20. Complete n11224-file narrow commit
+1cf5a5d8941c5f4dcfa2a6cc71ae57d2eadeece3 fast-forward pushed to original
+codex/STEMROBIN-180-textbooks; ls-remote matches. Complete courses9.
+All n112 semantic stages and one native six-surface offline DISPLAY are complete,
+with final results and parent bindings. No n129 image/browser/semantic replay.
+Only two actual assembler defects and4 focused passing tests included.
+No unrelated resources, new interactions, DB, merge, deploy or formalhandoff.
+
+Pascal's n112 work is complete and closed. New non-forked independent
+Locke01a1f675-980d-7590-97e5-c648d92403df owns only reconstructed327 SOURCE,
+using a fresh image context. One reviewer in flight; old reviewers/chats stay
+stopped. SOURCE327 must inspect the whole newly reconstructed page because
+missing old bytes cannot support a claim of unaffected-text recovery.
+Historical FIRST three omissions and limit1/used0 preserved; this new single
+reconstruction uses one corrective attempt, not a reset. Old uncertainties remain.
+
+Next local work: n130 concept/author reasoning while SOURCE327 is independently
+checked. Approved326/328 boundaries are unchanged. Only after SOURCE327 PASS:
+assemble/adapt n130 narrowly, exclude incomingn129/n131 and boundaryfig279.
+n111 modern figures remain unapproved scratch; no paid artwork request made.
+Original tree/locks/backups/stash/failures retained. Costs/tokens UNKNOWN.
+
 ## 180-6 n112 complete offline; narrow commit/push next
 
 2026-11-20T00:56:17.858Z. n1123 source/modern prose,2 full written tasks,
