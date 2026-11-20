@@ -1,0 +1,292 @@
+import hashlib
+import json
+import math
+import re
+import sys
+from fractions import Fraction as F
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+WORK = ROOT / ".tmp/resume182-6-8a-n8-blind3695-FIRST"
+INPUT = ROOT / ".tmp/resume182-6-8a-n8-current-input3695-FIRST/blind-input.record"
+INPUT_HASH = "1f423116dcd868b7fa566966e561d34cdecd0e04457d5849c7876e9695e63427"
+assert Path.cwd() == ROOT
+assert hashlib.sha256(INPUT.read_bytes()).hexdigest() == INPUT_HASH
+source = json.loads(INPUT.read_text())
+
+
+def linear(x, y, constant):
+    return (0, 0, 0, x, y, constant)
+
+
+# Polynomial residual rows: x^2, xy, y^2, x, y, constant.
+# Clearing reciprocal equations additionally requires x*y != 0.
+systems = {
+    "102": {
+        "а": [linear(5, 11, 1), linear(1, -3, -5)],
+        "б": [linear(1, 2, 1), linear(7, -20, -146)],
+        "в": [linear(12, -1, -16), linear(5, 3, -75)],
+        "г": [linear(7, 6, -2), linear(6, -5, -93)],
+        "д": [linear(4, 3, -43), linear(5, -7, -43)],
+        "е": [linear(8, -9, -4), linear(-3, 4, -1)]},
+    "103": {
+        "а": [(1, 0, -2, 0, 0, -7), linear(1, -1, -2)],
+        "б": [(1, -2, 0, 0, 0, -7), linear(1, -3, -2)],
+        "в": [(1, -5, 0, 0, 0, -10), linear(1, -5, -1)],
+        "г": [(0, 5, -1, 0, 0, -9), linear(2, -1, -3)],
+        "д": [(1, 0, 1, 0, 0, -100), linear(3, -2, -2)],
+        "е": [(2, 0, -3, 0, 0, -24), linear(2, -3, 0)],
+        "ж": [(4, 0, -9, 0, 0, -15), linear(2, 3, -5)],
+        "з": [(1, 1, -1, 0, 0, -11), linear(1, -2, -1)],
+        "и": [(1, 1, 0, 0, -3, -9), linear(3, 2, 1)]},
+    "104": {
+        "а": [(1, 0, 1, 0, 0, -25), linear(1, -1, -5)],
+        "б": [(1, 0, 1, 0, 0, -20), (0, 1, 0, 0, 0, 8)],
+        "в": [(1, 0, 1, 0, 0, -100), (F(-1, 2), 0, 0, 0, 1, 10)]},
+    "105": {
+        "а": [linear(1, 1, 0), linear(1, -1, -10), (1, 0, -1, 0, 0, -40)],
+        "б": [linear(3, -4, -3), linear(1, -2, -1), (1, 0, 1, 0, 0, -2)]},
+    "106": {
+        "а": [linear(1, 1, -10), (0, -5, 0, 12, 12, 0)],
+        "б": [linear(1, -1, -6), (0, -3, 0, 20, -20, 0)],
+        "в": [linear(2, 1, -5), (0, -6, 0, 5, 5, 0)],
+        "г": [linear(-2, 1, -3), (0, -1, 0, -10, 10, 0)]},
+    "107": {
+        "а": [linear(1, 1, -20), (0, 1, 0, 0, 0, -96)],
+        "б": [linear(1, -1, -6), (0, 1, 0, 0, 0, -216)]},
+    "108": {
+        "а": [linear(2, 2, -82), (1, 0, 1, 0, 0, -841)],
+        "б": [linear(1, 1, -47), (1, 0, 1, 0, 0, -1369)]},
+    "109": {
+        "а": [linear(1, 1, -22), (0, 1, 0, -8, -60, 240)],
+        "б": [linear(1, 1, -40), (0, F(-1, 2), 0, 2, 8, 16)]},
+    "110": {
+        "а": [linear(12, 3, -96), (10, 11, 1, 0, 0, -952)],
+        "б": [(1, 0, 1, 0, 0, -65), linear(-9, 9, -27)]},
+    "111": {
+        "а": [linear(1, 1, -28), (0, -1, 0, -48, 48, 0)],
+        "б": [linear(1, 1, -135), (0, -1, 0, 300, -300, 0)]},
+    "112": {
+        "а": [linear(1, 1, -50), (0, -1, 0, 12, 12, 0)],
+        "б": [linear(-1, 1, -24), (0, -1, 0, 35, 35, 0)]},
+}
+
+
+def sqrt_exact(q):
+    q = F(q)
+    assert q >= 0
+    n, d = math.isqrt(q.numerator), math.isqrt(q.denominator)
+    assert n*n == q.numerator and d*d == q.denominator
+    return F(n, d)
+
+
+def roots(coefficients):
+    a, b, c = map(F, coefficients)
+    if a == 0:
+        assert b != 0 or c != 0, "Unexpected identity: inspect independently."
+        return [] if b == 0 else [-c/b]
+    discriminant = b*b-4*a*c
+    if discriminant < 0:
+        return []
+    r = sqrt_exact(discriminant)
+    return sorted({(-b-r)/(2*a), (-b+r)/(2*a)})
+
+
+def evaluate(row, point):
+    a, b, c, d, e, f = map(F, row)
+    x, y = point
+    return a*x*x+b*x*y+c*y*y+d*x+e*y+f
+
+
+def restrict(row, alpha, beta):
+    a, b, c, d, e, f = map(F, row)
+    return (a+b*alpha+c*alpha*alpha,
+            b*beta+2*c*alpha*beta+d+e*alpha,
+            c*beta*beta+e*beta+f)
+
+
+def solve(number, part, rows):
+    if number == "104" and part == "б":
+        candidates = [(x, -F(8)/x) for z in roots((1, -20, 64)) if z > 0
+                      for x in {-sqrt_exact(z), sqrt_exact(z)}]
+    elif number == "104" and part == "в":
+        candidates = [(x, z/2-10) for z in roots((F(1, 4), -9, 0)) if z >= 0
+                      for x in {-sqrt_exact(z), sqrt_exact(z)}]
+    else:
+        i = next(i for i, row in enumerate(rows)
+                 if all(v == 0 for v in row[:3]) and any(v != 0 for v in row[3:5]))
+        row = list(map(F, rows[i]))
+        assert row[4] != 0
+        alpha, beta = -row[3]/row[4], -row[5]/row[4]
+        coefficients = next(q for j, r in enumerate(rows) if j != i
+                            for q in [restrict(r, alpha, beta)] if any(q))
+        candidates = [(x, alpha*x+beta) for x in roots(coefficients)]
+    points = sorted({p for p in candidates if all(evaluate(row, p) == 0 for row in rows)})
+    return [p for p in points if number not in {"106", "111", "112"} or all(p)]
+
+
+computed = {n: {p: solve(n, p, rows) for p, rows in parts.items()}
+            for n, parts in systems.items()}
+
+
+def strings(points):
+    return [[str(v) for v in p] for p in points]
+
+
+if sys.argv[1] == "--compute":
+    print(json.dumps({
+        "input_sha256": INPUT_HASH,
+        "engine": "Python standard library exact Fraction elimination",
+        "systems": {n: {p: strings(points) for p, points in parts.items()}
+                    for n, parts in computed.items()},
+        "digit_enumeration_110": {
+            p: [[a, b] for a in range(1, 10) for b in range(10)
+                if all(evaluate(r, (F(a), F(b))) == 0 for r in rows)]
+            for p, rows in systems["110"].items()},
+        "109_b_swapped_increments": strings(solve("109", "б", [
+            linear(1, 1, -40), (0, F(-1, 2), 0, 8, 2, 16)])),
+    }, ensure_ascii=False, indent=2))
+    sys.exit(0)
+
+assert sys.argv[1] == "--verify"
+record = json.loads((WORK / "solution-support.record").read_text())
+assert record["schema"] == "resume182-6/original-math-support@1"
+assert record["book"] == source["book"] == "8a"
+assert record["lesson"] == source["lesson"] == "alg8-c2-s1-n8"
+assert record["input"] == {"path": str(INPUT), "sha256": INPUT_HASH}
+assert record["status"] == "ORIGINAL_MATH_SUPPORT_COMPLETE"
+assert len(record["exercises"]) == len(source["exercises"]) == 15
+assert [e["source_number"] for e in record["exercises"]] == [str(n) for n in range(102, 117)]
+checks = []
+for exercise, original in zip(record["exercises"], source["exercises"]):
+    number = exercise["source_number"]
+    assert exercise["group"] == original["group"]
+    assert exercise["source_pages"] == original["pages"]
+    assert [p["part"] for p in exercise["parts"]] == re.findall(r"([абвгдежзи])\)", original["text"])
+    assert exercise["status"] == "ORIGINAL_MATH_SUPPORT_COMPLETE"
+    for part in exercise["parts"]:
+        label = part["part"]
+        assert part["original_conditions"] and part["domain"] and part["method"]
+        assert isinstance(part["limitations"], list)
+        if number in computed:
+            supplied = {tuple(F(v) for v in point) for point in part["algebraic_solution_set"]}
+            assert supplied == set(computed[number][label]), (number, label, supplied, computed[number][label])
+            feasible = {tuple(F(v) for v in point) for point in part["feasible_solution_set"]}
+            target = list(computed[number][label])
+            if number in {"108", "111", "112"} or number == "109" and label == "б":
+                target = [p for p in target if all(v > 0 for v in p)]
+            if number == "109" and label == "а":
+                target = [p for p in target if 0 < p[0] < 60 and 0 < p[1] < 8]
+            if number == "110":
+                target = [p for p in target if all(v.denominator == 1 for v in p)
+                          and 1 <= p[0] <= 9 and 0 <= p[1] <= 9]
+            assert feasible == set(target), (number, label, feasible, target)
+            if number == "104":
+                assert part["drawing_performed"] is False and part["drawing_viewed"] is False
+                assert part["source_method_completion"] == "NOT_EXECUTED"
+            if number == "106":
+                for x, y in feasible:
+                    residuals = {"а": 1/x+1/y-F(5, 12), "б": 1/y-1/x-F(3, 20),
+                                 "в": 1/x+1/y-F(6, 5), "г": 1/x-1/y-F(1, 10)}
+                    assert residuals[label] == 0
+        elif number in {"113", "114"}:
+            if number == "113":
+                x, y = map(F, part["tested_point"])
+                lhs, rhs = x*x+3*x*y+y*y, 41
+            elif label == "а":
+                assert part["tested_point"] == ["sqrt(12)", "sqrt(3)"]
+                lhs, rhs = F(12+6+3), 29
+            else:
+                assert part["tested_point"] == ["3+sqrt(2)", "3-sqrt(2)"]
+                lhs, rhs = F(2*(9+2)+(9-2)), 29
+            assert lhs == F(part["evaluated_lhs"])
+            assert part["is_solution"] == (lhs == rhs)
+        elif number == "115":
+            expected = {"x": "(t+1)^2" if label == "а" else "2*t+1",
+                        "y": "t^2", "parameter_domain": "t >= 0"}
+            assert part["parametric_solution_set"] == expected
+            assert part["completeness_argument"]
+            assert part["requested_two_solutions"] == (
+                [["1", "0"], ["4", "1"]] if label == "а" else [["1", "0"], ["3", "1"]])
+            for a, b in part["requested_two_solutions"]:
+                a, b = F(a), F(b)
+                assert sqrt_exact(a if label == "а" else a+b)-sqrt_exact(b) == 1
+        else:
+            assert number == "116"
+            assert part["occupied_open_quadrants"] == {
+                "а": ["I", "II"], "б": ["I", "II", "III", "IV"],
+                "в": ["I", "III"], "г": ["II", "IV"]}[label]
+            assert part["drawing_performed"] is False
+            for segment in part["sign_partition"]:
+                a, b = map(F, segment["witness_point"])
+                assert {"а": b-a*a-4, "б": b-9+a*a, "в": a*b-6, "г": a*b+12}[label] == 0
+                quadrant = ("I" if a > 0 and b > 0 else "II" if a < 0 and b > 0
+                            else "III" if a < 0 and b < 0 else "IV")
+                assert quadrant == segment["quadrant"]
+        checks.append(f"{number}/{label}")
+proof = record["exercises"][11]["additional_obligations"]
+assert len(proof) == 1 and proof[0]["identity"] == "unlettered-swap-proof"
+assert proof[0]["proof"] and proof[0]["scope"] == "all real a,b satisfying the equation"
+assert len(checks) == 46
+assert record["coverage"] == {"exercise_count": 15, "lettered_subpart_count": 46,
+                              "additional_proof_count": 1, "total_obligation_count": 47,
+                              "unresolved_source_count": 0}
+assert record["approval"]["whole_lesson_approval"] is False
+assert record["usage"]["historical_costs"] == record["usage"]["historical_tokens"] == "unknown"
+assert record["usage"]["current_paid_calls"] == record["usage"]["current_image_calls"] == 0
+by_number = {e["source_number"]: e for e in record["exercises"]}
+assert by_number["108"]["parts"][1]["result"]["area_cm2"] == "210" and F(12*35, 2) == 210
+assert by_number["108"]["parts"][0]["result"]["side_lengths_m"] == ["20", "21"]
+assert by_number["108"]["parts"][1]["result"]["leg_lengths_cm"] == ["12", "35"]
+assert by_number["110"]["parts"][0]["result"]["two_digit_number"] == 68
+assert by_number["110"]["parts"][1]["result"]["two_digit_number"] == 47
+assert 68+2*(6+8) == 96 and 68*(6+8) == 952
+assert 4**2+7**2 == 65 and sorted(str(47+27)) == sorted(str(47))
+assert by_number["107"]["parts"][1]["result"]["unordered_number_pairs"] == [
+    ["12", "18"], ["-18", "-12"]]
+assert by_number["109"]["parts"][0]["result"] == {
+    "length_reduction_m": "20", "width_reduction_m": "2",
+    "new_length_m": "40", "new_width_m": "6",
+    "new_area_m2": "240", "new_perimeter_m": "92"}
+for row in by_number["109"]["parts"][1]["result"]["checks"]:
+    a, b = map(F, row["original_sides_m"])
+    c, d = map(F, row["new_sides_m"])
+    assert 2*(a+b) == 80 and (c, d) == (a+8, b+2)
+    assert a*b == F(row["old_area_m2"]) and c*d == F(row["new_area_m2"])
+    assert c*d == F(3, 2)*a*b and c*d-a*b == F(row["increase_m2"])
+for p in by_number["111"]["parts"]:
+    result = p["result"]
+    for a, b in p["feasible_solution_set"]:
+        a, b = F(a), F(b)
+        if p["part"] == "а":
+            assert a < b and a+b == 28 and 28/a-28/b == F(35, 60)
+            assert a == F(result["first_from_A_kmh"]) and b == F(result["second_from_B_kmh"])
+            assert 60*28/a == F(result["first_full_trip_minutes"]) == 140
+            assert 60*28/b == F(result["second_full_trip_minutes"]) == 105
+        else:
+            assert a > b and (a+b)/3 == 45 and 45/b-45/a == F(9, 60)
+            assert a == F(result["from_M_kmh"]) and b == F(result["from_N_kmh"])
+            assert 60*45/a == F(result["M_train_full_trip_minutes"]) == 36
+            assert 60*45/b == F(result["N_train_full_trip_minutes"]) == 45
+for p in by_number["112"]["parts"]:
+    for a, b in p["feasible_solution_set"]:
+        a, b = F(a), F(b)
+        if p["part"] == "а":
+            assert 1/a+1/b == F(1, 12) and a/2+b/2 == 25
+        else:
+            assert a < b and b-a == 24 and 1/a+1/b == F(1, 35)
+            assert p["result"] == {
+                "faster_combine_hours": "60", "slower_combine_hours": "84", "together_hours": "35"}
+expected_axes = {"а": [["0", "4"]], "б": [["-3", "0"], ["3", "0"], ["0", "9"]],
+                 "в": [], "г": []}
+for p in by_number["116"]["parts"]:
+    assert p["axis_points"] == expected_axes[p["part"]]
+    for a, b in p["axis_points"]:
+        a, b = F(a), F(b)
+        assert a == 0 or b == 0
+        assert {"а": b-a*a-4, "б": b-9+a*a}[p["part"]] == 0
+assert record["sealed"] is True
+print(json.dumps({"status": "VERIFIED", "engine": "Python standard library exact Fraction elimination",
+                  "input_sha256": INPUT_HASH, "exercise_count": 15,
+                  "lettered_subpart_count": 46, "additional_proof_count": 1,
+                  "total_obligation_count": 47, "checked": checks}, ensure_ascii=False, indent=2))

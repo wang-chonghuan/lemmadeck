@@ -1,0 +1,90 @@
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = resolve(R, '.tmp/resume182-6-8a-n8-choice-review3695-FIRST');
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = name => JSON.parse(readFileSync(resolve(own, name)));
+const bound = path => {
+  const bytes = readFileSync(path);
+  return { path, sha256: hash(bytes), bytes: bytes.length };
+};
+const packetPath = resolve(R, '.tmp/resume182-6-8a-n8-choice-review-input3695-FIRST/packet.record');
+const packet = JSON.parse(readFileSync(packetPath));
+const comparison = read('key-comparison.json');
+const review = read('review.json');
+for (const entry of [packet.seed, packet.views, packet.authorDraftToReadOnlyAfterSourceAndViewSeals]) {
+  if (bound(entry.path).sha256 !== entry.sha256) throw new Error('Input changed after review');
+}
+const seals = ['source.seal.record', 'views.seal.record', 'author-comparison.seal.record', 'review.seal.record'].map(name => {
+  const seal = read(name);
+  if (bound(seal.evidence_path).sha256 !== seal.evidence_sha256) throw new Error('Sealed evidence changed');
+  return { ...bound(resolve(own, name)), stage: seal.stage, evidence: bound(seal.evidence_path) };
+});
+const sourceSealReceipt = read('009-source-seal.command.json');
+const firstViewsReceipt = read('010-pure-views.command.json');
+const viewsSealReceipt = read('012-view-seal.command.json');
+const firstAuthorReceipt = read('013-author-late-read.command.json');
+if (sourceSealReceipt.ended_at > firstViewsReceipt.started_at || viewsSealReceipt.ended_at > firstAuthorReceipt.started_at) throw new Error('Review-order violation');
+const receiptNames = readdirSync(own).filter(n => n.endsWith('.command.json')).sort();
+const receipts = receiptNames.map(name => ({ name, ...read(name) }));
+const validators = receipts.filter(r => r.command.some(x => x.endsWith('/ld-s10y-choice/scripts/validate.py')));
+if (validators.length !== 1 || validators[0].status !== 3 || !(validators[0].stdout + validators[0].stderr).includes('mechanical checks passed; semantic review outcome: revise')) throw new Error('Unexpected official gate evidence');
+const failures = receipts.filter(r => r.status !== 0).map(r => ({
+  receipt: bound(resolve(own, r.name)), exit_status: r.status, command: r.command,
+  classification: r.name === '018-official-review-validation.command.json' ? 'semantic_review_failed_as_required_not_execution_failure' : 'execution_failure',
+  stdout: r.stdout, stderr: r.stderr, error: r.error
+}));
+const record = {
+  schema: 'sealed-independent-choice-review-ready-v1',
+  status: 'SEALED_READY_REVISE_NOT_APPROVED',
+  root: R, owner_write_root: own,
+  ticket: 'STEMROBIN-182/182-6', book: '8a', lesson: 'alg8-c2-s1-n8',
+  packet: bound(packetPath),
+  seed: { ...bound(packet.seed.path), canonical_sha256: review.seed_sha256 },
+  views: bound(packet.views.path),
+  draft: { ...bound(packet.authorDraftToReadOnlyAfterSourceAndViewSeals.path), canonical_sha256: review.draft_sha256, mutated: false },
+  review: bound(resolve(own, 'review.json')),
+  seals,
+  outcome: review.outcome,
+  counts: {
+    source_reviews: review.source_reviews.length, original_source_tasks: 47,
+    question_reviews: review.question_reviews.length,
+    option_checks: review.question_reviews.reduce((n,q) => n + q.mathematics.option_checks.length, 0),
+    independently_true_options: review.question_reviews.reduce((n,q) => n + q.mathematics.correct.length, 0),
+    independently_false_options: review.question_reviews.reduce((n,q) => n + q.mathematics.option_checks.filter(o => o.truth === 'incorrect').length, 0),
+    author_keys_agree: 41, mathematical_truth_sets_changed_to_match_author: 0,
+    mathematics_pass: 40, mathematics_revise: 1, mathematics_blocked: 0,
+    internal_misconception_failures: 1, source_coverage_pass: 15,
+    figure_checks: 0, new_figure_reviews: 0,
+    official_review_validator_calls: 1, structural_only_validator_calls: 0,
+    observed_shell_command_failures: failures.length, execution_failures: failures.filter(x => x.classification === 'execution_failure').length
+  },
+  failed_gate: { question_id: 'q39', option_id: 'b', evidence: comparison.finding, preserved: true },
+  independent_evidence_order: {
+    original_source: 'source-independent.json and source.seal.record before 010-pure-views',
+    pure_view: 'view-independent.json and views.seal.record before 013-author-late-read',
+    later_key_comparison: 'key-comparison.json and author-comparison.seal.record after both seals',
+    chronology_checked: true
+  },
+  recognition_capacity_losses: 'All author-declared written derivation, graph construction, arbitrary-pair generation and proof-writing losses are retained, not converted into claims of production capacity. No essential intersection/sign/domain/general-quantifier task silently omitted.',
+  validation: { receipt: bound(resolve(own, validators[0].name)), command: validators[0].command, exit_status: 3, stdout: validators[0].stdout, stderr: validators[0].stderr },
+  command_failures: failures,
+  output_reading_recovery: comparison.command_output_recovery,
+  finish_recovery: '020-finish-ready exited1 before creating ready.record because its parser incorrectly expected the validator diagnostic in stdout. 021 inspected the preserved official receipt: the valid mechanical-pass/semantic-revise diagnostic is in stderr. Only the finish parser was corrected; no author, review, seal or validator was rerun.',
+  receipts: receiptNames.map(name => bound(resolve(own, name))),
+  accounting_note: 'The successful finish command itself receives its unique 022 receipt after this record is sealed by the outer owned runner; this list covers all completed preceding commands, including failed020. The initial pwd receipt is explicitly retrospective.',
+  costs: { host_tokens: 'unknown', total_cost: 'unknown', additional_model_service_calls: 0, paid_image_calls: 0 },
+  boundaries: { whole_lesson_approval: false, candidate_mutations: 0, edition_edits: 0, answer_reads: 0, old_solve_reads: 0, image_reads: 0, installs: 0, DB_writes: 0, Plane_calls: 0, Git_commands: 0, chat_messages_sent: 0, publish_calls: 0 }
+};
+const readyPath = resolve(own, 'ready.record');
+const readySealPath = resolve(own, 'ready.seal.record');
+if (existsSync(readyPath) || existsSync(readySealPath)) throw new Error('Do not overwrite final sealed records');
+writeFileSync(readyPath, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
+const ready = bound(readyPath);
+writeFileSync(readySealPath, JSON.stringify({
+  schema: 'independent-choice-stage-seal-v1', stage: 'FINAL_READY_REVISE_NOT_APPROVED',
+  sealed_at: new Date().toISOString(), evidence_path: readyPath,
+  evidence_sha256: ready.sha256, bytes: ready.bytes, immutable_by_protocol: true
+}, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ result_path: readyPath, sha256: ready.sha256, status: record.status, outcome: record.outcome, counts: record.counts, ready_seal: bound(readySealPath) }));

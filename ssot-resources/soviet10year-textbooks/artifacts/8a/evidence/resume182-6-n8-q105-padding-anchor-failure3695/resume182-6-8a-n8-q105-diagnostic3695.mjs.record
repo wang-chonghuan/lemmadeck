@@ -1,0 +1,61 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { R, OWN, ID, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const report = JSON.parse(fs.readFileSync(path.join(OWN, 'runtime-FIRST/report-FIRST.json')));
+const filename = path.join(OWN, 'runtime-FIRST/render', ID, 'exercises.html');
+const html = fs.readFileSync(filename);
+assert.equal(sha(html), report.inputs.find(item => item.path === filename).sha256);
+const output = path.join(OWN, 'q105-diagnostic-FIRST');
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const { chromium } = createRequire(path.join(R, 'app/package.json'))('@playwright/test');
+const browser = await chromium.launch({ headless: true });
+let data;
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+  await page.route('**/*', route => route.abort('blockedbyclient'));
+  await page.setContent(html.toString('utf8'));
+  await page.evaluate(() => document.fonts.ready);
+  data = await page.evaluate(() => {
+    const root = document.querySelector('#ex-105 .body');
+    root.scrollIntoView({ block: 'center', behavior: 'instant' });
+    return [...root.querySelectorAll('.katex-html')].map((formula, formulaIndex) => {
+      const walker = document.createTreeWalker(formula, NodeFilter.SHOW_TEXT);
+      const glyphs = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.data.trim()) continue;
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const rect = range.getBoundingClientRect();
+        const style = getComputedStyle(node.parentElement);
+        const clips = [];
+        for (let element = node.parentElement; element && element !== document.body; element = element.parentElement) {
+          const css = getComputedStyle(element);
+          if (!['auto', 'scroll', 'hidden', 'clip'].some(value => [css.overflowX, css.overflowY].includes(value))) continue;
+          clips.push({ tag: element.tagName, className: element.className,
+            overflowX: css.overflowX, overflowY: css.overflowY,
+            box: element.getBoundingClientRect().toJSON(),
+            clientWidth: element.clientWidth, clientHeight: element.clientHeight,
+            scrollWidth: element.scrollWidth, scrollHeight: element.scrollHeight,
+            scrollLeft: element.scrollLeft, scrollTop: element.scrollTop });
+        }
+        glyphs.push({ text: node.data, box: rect.toJSON(), font: style.font, clips });
+      }
+      return { formulaIndex, box: formula.getBoundingClientRect().toJSON(), glyphs: glyphs.slice(0, 5) };
+    });
+  });
+} finally {
+  await browser.close();
+}
+const result = { status: 'Q105_GEOMETRY_DIAGNOSTIC_NOT_APPROVAL',
+  input: { path: filename, sha256: sha(html) }, data,
+  rendererCalls: 0, browserLaunches: 1, setContentCalls: 1, pageNavigations: 0,
+  screenshotsCaptured: 0, imagesObserved: 0, browserClosed: true,
+  sourceMathFigureOrPASSReviews: 0, standardAnswerInjection: false };
+const target = path.join(output, 'geometry.record');
+fs.writeFileSync(target, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: target, sha256: sha(fs.readFileSync(target)), data }));

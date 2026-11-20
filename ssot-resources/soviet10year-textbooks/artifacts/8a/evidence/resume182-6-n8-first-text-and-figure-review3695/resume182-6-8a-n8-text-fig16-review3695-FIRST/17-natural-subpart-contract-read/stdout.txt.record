@@ -1,0 +1,91 @@
+def normalize_numbered_subparts(text: str) -> str:
+    """Sort a complete numeric or lettered sequence and line-break its parts."""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"^(\s*\d+\.)\s*(?=1[)）])", r"\1\n", text)
+    masked_text = masked_math(text)
+    depths = nesting_depths(masked_text)
+    markers = [
+        marker
+        for marker in PART_MARKER.finditer(masked_text)
+        if depths[marker.start()] == 0
+        and (
+            not marker.group("open")
+            or (marker.group("open"), marker.group("close")) in {("(", ")"), ("（", "）")}
+        )
+        and not re.search(r"图\s*$", masked_text[max(0, marker.start() - 3):marker.start()])
+    ]
+    if len(markers) < 2:
+        return text
+    order = marker_order(markers)
+    if order is None:
+        return text
+    if len(markers) == 2:
+        formulas = list(MATH.finditer(text, markers[0].end()))
+        run = []
+        for formula in formulas:
+            previous = run[-1].end() if run else markers[0].end()
+            gap = text[previous:formula.start()]
+            if run and len(run) == 1:
+                gap = gap.replace(text[markers[1].start():markers[1].end()], "", 1)
+            if re.fullmatch(r"[\s,，;；。]*", gap) is None:
+                break
+            run.append(formula)
+        if len(run) >= 4 and len(run) % 2 == 0:
+            row_gaps = [
+                text[run[index].end():run[index + 1].start()]
+                for index in range(0, len(run), 2)
+            ]
+            if (
+                run[0].end() <= markers[1].start() < run[1].start()
+                and all("\u3000\u3000" in gap for gap in row_gaps)
+                and all(
+                    "\u3000\u3000" not in text[run[index].end():run[index + 1].start()]
+                    for index in range(1, len(run) - 1, 2)
+                )
+            ):
+                columns = [
+                    text[markers[column].start():markers[column].end()] + " " +
+                    " ".join(match.group() for match in run[column::2])
+                    for column in range(2)
+                ]
+                suffix = text[run[-1].end():].strip()
+                if suffix:
+                    columns[-1] += suffix
+                prefix = text[:markers[0].start()].rstrip()
+                return "\n".join(
+                    ([prefix] if prefix else []) + columns
+                )
+
+    prefix = text[:markers[0].start()].rstrip()
+    parts = []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        part = text[marker.start():end]
+        part = re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
+        parts.append((order[marker.group("label")], part))
+    ordered = [part for _, part in sorted(parts)]
+    return "\n".join(([prefix] if prefix else []) + ordered)
+
+
+def validate_numbered_subpart_layout(text: object) -> list[str]:
+    if not isinstance(text, str):
+        return []
+    if normalize_numbered_subparts(text) != text:
+        return ["完整数字或字母分题必须按自然顺序排列，并且每个分题独占一行"]
+    return []
+
+
+def normalize_lesson_layout(lesson: dict) -> None:
+    for block in lesson.get("prose", []):
+        if block.get("kind") != "p":
+            continue
+        text = block.get("text")
+        normalized = normalize_prose_layout(text)
+        if normalized == text:
+            continue
+        block["text"] = normalized
+        changes = block.get("changes")
+        if isinstance(changes, list) and "layout" not in changes:
+            changes.append("layout")
+

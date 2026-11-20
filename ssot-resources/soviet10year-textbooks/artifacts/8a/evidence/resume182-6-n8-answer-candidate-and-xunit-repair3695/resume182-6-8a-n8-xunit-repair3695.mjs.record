@@ -1,0 +1,126 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n8-fig16-xunit-repair3695-AFFECTED2';
+const first = '.tmp/resume182-6-8a-n8-fig16-author3695-FIRST';
+const reviewFile = '.tmp/resume182-6-8a-n8-text-fig16-review3695-FIRST/review.record';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const json = file => JSON.parse(read(file));
+const save = (file, value) => fs.writeFileSync(file,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const bind = file => ({ path: path.resolve(file), sha256: sha(read(file)), bytes: read(file).length });
+const ready = json(`${first}/ready.record`);
+assert.equal(sha(read(`${first}/ready.record`)),
+  '06726d9abc1cda1db3effc6b84bc2704c02db1732e433142d94dc22028d28d30');
+assert.equal(sha(read(reviewFile)), '02f24f7bf78811a36feb9bc20a6ed73e7581a2cbcacebb2d95a5c521babc28da');
+const review = json(reviewFile);
+assert.equal(review.status, 'HOLD');
+assert.equal(review.textStatus, 'PASS');
+assert.deepEqual(review.blockingFindingIds, ['fig16-x-unit-placement']);
+const phase = process.argv[2];
+if (phase === 'prepare') {
+  assert.ok(!fs.existsSync(own));
+  assert.equal(sha(read(ready.spec.path)), ready.spec.sha256);
+  const original = json(ready.spec.path);
+  const spec = structuredClone(original);
+  const index = spec.objects.findIndex(object => object.id === 'fig-16-x-unit-label');
+  assert.ok(index >= 0);
+  assert.deepEqual(spec.objects[index].at, [1, -0.7]);
+  assert.ok(!Object.hasOwn(spec.objects[index], 'labelPlacement'));
+  spec.objects[index].labelPlacement = { position: 'S', offset: [0, 10] };
+  const comparison = structuredClone(spec);
+  delete comparison.objects[index].labelPlacement;
+  assert.deepEqual(comparison, original);
+  fs.mkdirSync(own);
+  fs.mkdirSync(`${own}/render`);
+  save(`${own}/candidate.spec.json`, spec);
+  const helperFile = `${first}/author.mjs`;
+  const helper = read(helperFile).toString('utf8');
+  const start = helper.indexOf('async function capture() {');
+  const end = helper.indexOf('\nfunction ready()', start);
+  assert.ok(start > 0 && end > start);
+  const bootstrap = [
+    "import assert from 'node:assert/strict';",
+    "import crypto from 'node:crypto';",
+    "import fs from 'node:fs';",
+    "import path from 'node:path';",
+    "import { createRequire } from 'node:module';",
+    "import { fileURLToPath } from 'node:url';",
+    `const R = ${JSON.stringify(repo)};`,
+    `const OWN = ${JSON.stringify(path.resolve(own))};`,
+    `const hiddenIds = ${JSON.stringify(original.objects.filter(object =>
+      object.type === 'point' && object.visible === false).map(object => object.id))};`,
+    'assert.equal(process.cwd(), R);',
+    'assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);',
+    "const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');",
+    "const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));",
+    "const bind = file => { const bytes = fs.readFileSync(file); return { path:file, sha256:hash(bytes), bytes:bytes.length }; };",
+    "const write = (name,value) => { const file=path.resolve(OWN,name); assert.ok(file.startsWith(`${OWN}/`)); fs.writeFileSync(file, `${JSON.stringify(value,null,2)}\\n`, {flag:'wx'}); return bind(file); };",
+    helper.slice(start, end),
+    'await capture();',
+  ].join('\n');
+  fs.writeFileSync(`${own}/capture.mjs`, `${bootstrap}\n`, { flag: 'wx' });
+  save(`${own}/repair.record`, {
+    status: 'AFFECTED_X_UNIT_PLACEMENT_AUTHOR_DRAFT',
+    root: repo, book: '8a', lesson: 'alg8-c2-s1-n8', edition: 'modern-us-neutral',
+    retainedFirstHOLD: bind(reviewFile), firstAuthorReady: bind(`${first}/ready.record`),
+    originalSpec: ready.spec, spec: bind(`${own}/candidate.spec.json`),
+    changedField: `/objects/${index}/labelPlacement`, before: null,
+    after: spec.objects[index].labelPlacement,
+    allOtherSpecDataUnchanged: true, atUnchanged: [1, -0.7],
+    reason: 'Fixed S anchor centers the unit glyph on x=1 below the x-axis instead of an automatic NW end anchor near the y-axis.',
+    captureFunctionReused: {
+      source: bind(helperFile), sourceFunctionRange: [start, end],
+      target: bind(`${own}/capture.mjs`), functionBytesUnchanged: true,
+    },
+    newContentRepairs: 1, cumulativeCurrentN8ContentRepairs: 2,
+    oldOrdinaryRepairBudgetRemaining: 0, oldRepairBudgetReset: false,
+    authorization: 'Direct human authorizes ordinary blocking fixes without further approval.',
+    oldSourceCompletenessAndMathematicalPASSReused: true, oldTextPASSReused: true,
+    imageViews: 0, rendererCalls: 0, browserCalls: 0, DBWrites: 0,
+    unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+  });
+  console.log(JSON.stringify({ spec: bind(`${own}/candidate.spec.json`), capture: `${own}/capture.mjs`,
+    changedField: `/objects/${index}/labelPlacement`, contentRepairs: 1 }));
+} else if (phase === 'ready') {
+  const render = json(`${own}/render/figure.render.json`);
+  const capture = json(`${own}/capture.record`);
+  assert.equal(render.status, 'pass');
+  assert.equal(render.spec.sha256, sha(read(`${own}/candidate.spec.json`)));
+  assert.equal(render.output.svg.sha256, sha(read(`${own}/render/figure.svg`)));
+  assert.equal(capture.technicalCaptureStatus, 'complete');
+  assert.deepEqual(capture.closures, { page: true, context: true, browser: true });
+  assert.equal(capture.screenshotCalls, 1);
+  const unit = capture.domTechnicalObservation.labels.find(label => label.id === 'fig-16-x-unit-label-label');
+  assert.ok(unit);
+  const xOne = 320 + 640 / 42;
+  const xAxis = 640 / 42 * 16;
+  assert.ok(unit.x <= xOne && unit.x + unit.width >= xOne);
+  assert.ok(unit.x > 320 && unit.y > xAxis);
+  save(`${own}/ready.record`, {
+    schema: 'resume182-6/affected-figure-ready@1',
+    status: 'AUTHOR_READY_REVIEW_PENDING',
+    root: repo, book: '8a', lesson: 'alg8-c2-s1-n8', edition: 'modern-us-neutral',
+    figure: 'fig-16', originalReady: bind(`${first}/ready.record`),
+    retainedFirstHOLD: bind(reviewFile), originalSpec: ready.spec,
+    repair: bind(`${own}/repair.record`), spec: bind(`${own}/candidate.spec.json`),
+    render: bind(`${own}/render/figure.render.json`), svg: bind(`${own}/render/figure.svg`),
+    nativePng: capture.png, capture: bind(`${own}/capture.record`),
+    actualUnitBounds: unit, unitAlignedOnFirstPositiveGridLine: true,
+    changedField: json(`${own}/repair.record`).changedField,
+    allOtherSpecDataUnchanged: true, newContentRepairs: 1,
+    cumulativeCurrentN8ContentRepairs: 2, oldOrdinaryRepairBudgetRemaining: 0,
+    oldRepairBudgetReset: false, rendererCalls: 1, browserCalls: 2, nativeCaptures: 1,
+    sourceMathTextPASSReruns: 0, imageViews: 0, independentReviews: 0,
+    wholeLessonApproval: false, unknownHistoricalBytesRecovered: false,
+    DBWrites: 0, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+  });
+  console.log(JSON.stringify({ ready: bind(`${own}/ready.record`), unit }));
+} else {
+  throw new Error('Expected prepare or ready.');
+}

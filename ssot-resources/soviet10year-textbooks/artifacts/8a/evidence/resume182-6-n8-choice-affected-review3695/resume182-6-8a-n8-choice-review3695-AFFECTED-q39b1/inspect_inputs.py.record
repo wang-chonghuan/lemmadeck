@@ -1,0 +1,158 @@
+import hashlib
+import json
+from pathlib import Path
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+W = R / ".tmp/resume182-6-8a-n8-choice-review3695-AFFECTED-q39b1"
+assert Path.cwd() == R
+
+EXPECTED = {
+    "repair": (
+        R / ".tmp/resume182-6-8a-n8-choice-repair3695-AFFECTED1/repair.record",
+        "04c153778f399742221d199a5b95c065168cc2d0ebff0645bae0a2135d443e9f",
+    ),
+    "original_draft": (
+        R / ".tmp/resume182-6-8a-n8-choice-author3695-FIRST/draft.json",
+        "df55fba908a3ecb84bc70d13bb59241960ce1043418769cd6b3bc1035e69b4a2",
+    ),
+    "original_review": (
+        R / ".tmp/resume182-6-8a-n8-choice-review3695-FIRST/review.json",
+        "ccc57072616fb326785539b20fd6be40301d4cb39758a3271f283cd226ebbcdf",
+    ),
+    "new_draft": (
+        R / ".tmp/resume182-6-8a-n8-choice-repair3695-AFFECTED1/draft.json",
+        "a2f5ee29d34316ad020b9dc82101a367e3646b14d435df2cb419585ebee0dacd",
+    ),
+}
+
+
+def canonical(value):
+    return json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def digest(value):
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def load_bound(name):
+    path, expected = EXPECTED[name]
+    data = path.read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    assert actual == expected, (name, actual, expected)
+    return json.loads(data)
+
+
+def differences(before, after, path=""):
+    if type(before) is not type(after):
+        return [{"path": path, "before": before, "after": after}]
+    if isinstance(before, dict):
+        assert before.keys() == after.keys(), ("changed object keys", path)
+        return [
+            change
+            for key in before
+            for change in differences(
+                before[key],
+                after[key],
+                path + "/" + key.replace("~", "~0").replace("/", "~1"),
+            )
+        ]
+    if isinstance(before, list):
+        assert len(before) == len(after), ("changed list length", path)
+        return [
+            change
+            for index, (left, right) in enumerate(zip(before, after))
+            for change in differences(left, right, f"{path}/{index}")
+        ]
+    return [] if before == after else [{"path": path, "before": before, "after": after}]
+
+
+repair = load_bound("repair")
+original = load_bound("original_draft")
+review = load_bound("original_review")
+repaired = load_bound("new_draft")
+assert digest(repaired) == "ba89d7998b0790e8075eb2dd3bd45628f6147ee45935b700dd3b5e1007cb46f0"
+assert review["draft_sha256"] == digest(original)
+assert original["seed_sha256"] == repaired["seed_sha256"] == review["seed_sha256"]
+assert repair["original"]["path"] == str(EXPECTED["original_draft"][0])
+assert repair["originalReview"]["path"] == str(EXPECTED["original_review"][0])
+assert repair["repaired"]["path"] == str(EXPECTED["new_draft"][0])
+
+delta = differences(original, repaired)
+assert delta == [repair["delta"]], delta
+assert delta[0]["path"] == "/questions/38/key/rationales/1/misconception"
+assert delta[0]["before"] == "Omit the cross term when squaring a difference of square roots."
+assert delta[0]["after"] == "Treat the square of a difference of square roots as the difference of their squares."
+q39 = repaired["questions"][38]
+assert q39["id"] == "q39"
+assert q39["key"]["rationales"][1]["option_id"] == "b"
+original_q39_review = next(
+    item for item in review["question_reviews"] if item["question_id"] == "q39"
+)
+source115 = next(
+    item for item in review["source_reviews"] if str(item["source_number"]) == "115"
+)
+assert original_q39_review["mathematics"]["verdict"] == "revise"
+assert review["outcome"] == "revise"
+assert original_q39_review["mathematics"]["correct"] == ["a", "c"]
+assert len(original_q39_review["mathematics"]["option_checks"]) == 4
+assert next(
+    item for item in original_q39_review["mathematics"]["option_checks"]
+    if item["option_id"] == "b"
+)["truth"] == "incorrect"
+
+for item in review["source_reviews"]:
+    assert item["coverage"]["verdict"] == "pass"
+for item in review["question_reviews"]:
+    for name in ("task_fidelity", "redundancy", "answer_leakage", "mathematics"):
+        if item["question_id"] == "q39" and name == "mathematics":
+            continue
+        assert item[name]["verdict"] == "pass"
+
+confirmation = {
+    "all_input_raw_sha256_match": True,
+    "original_review_canonical_draft_binding_matches": True,
+    "new_draft_canonical_sha256": digest(repaired),
+    "changed_leaves": delta,
+    "all_other_fields_deep_equal": True,
+    "all_views_deep_equal": all(
+        left["view"] == right["view"]
+        for left, right in zip(original["questions"], repaired["questions"])
+    ),
+    "coverage_deep_equal": original["coverage"] == repaired["coverage"],
+    "all_correct_sets_and_truth_and_derivations_deep_equal": all(
+        left["key"]["correct"] == right["key"]["correct"]
+        and all(
+            all(a[field] == b[field] for field in ("option_id", "truth", "derivation"))
+            for a, b in zip(left["key"]["rationales"], right["key"]["rationales"])
+        )
+        for left, right in zip(original["questions"], repaired["questions"])
+    ),
+    "inherited_counts": {
+        "source_reviews": len(review["source_reviews"]),
+        "question_true_sets": len(review["question_reviews"]),
+        "option_truth_checks": sum(
+            len(item["mathematics"]["option_checks"])
+            for item in review["question_reviews"]
+        ),
+    },
+    "original_review_metadata": {
+        key: review[key]
+        for key in ("schema", "seed_sha256", "draft_sha256", "reviewer", "outcome")
+    },
+    "q39_repaired": q39,
+    "q39_original_review": original_q39_review,
+    "source115_original_coverage": source115["coverage"],
+    "original_ready_inheritance_metadata": json.loads(
+        (R / ".tmp/resume182-6-8a-n8-choice-review3695-FIRST/ready.record").read_bytes()
+    ),
+}
+assert confirmation["inherited_counts"] == {
+    "source_reviews": 15, "question_true_sets": 41, "option_truth_checks": 126
+}
+output = W / "input-projection.json"
+with output.open("x", encoding="utf-8") as stream:
+    json.dump(confirmation, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+print(json.dumps(confirmation, ensure_ascii=True, indent=2))

@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, OWN, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const input = path.join(OWN, 'run-recovery-q105-padding1.mjs');
+const before = fs.readFileSync(input);
+assert.equal(sha(before), 'b1d33cafc691d34946fe6bfc9d92f40a61fab0c96e01c20ee90cb7c89f82fd2f');
+let text = before.toString('utf8');
+const changes = [
+  ["path.join(OWN, 'run-recovery-q105-padding1.mjs')", "path.join(OWN, 'run-recovery-q105-padding2.mjs')"],
+  ["originalMarkup.split('</head>')", "originalMarkup.split('</style>')"],
+  ["originalMarkup.replace('</head>', '<style>' + correctionCSS + '</style></head>')",
+    "originalMarkup.replace('</style>', '</style><style>' + correctionCSS + '</style>')"],
+];
+for (const [from, to] of changes) {
+  assert.equal(text.split(from).length - 1, 1);
+  text = text.replace(from, to);
+}
+const output = path.join(OWN, 'run-recovery-q105-padding2.mjs');
+fs.writeFileSync(output, text, { flag: 'wx' });
+const record = { status: 'HTML_STYLE_ANCHOR_RECOVERED_NOT_YET_EXECUTED',
+  input: { path: input, sha256: sha(before) },
+  output: { path: output, sha256: sha(Buffer.from(text)) }, changes,
+  firstScriptAndFailedReportUnchanged: true, browserOrRendererCalls: 0,
+  contentStyleAndThresholdChanges: false };
+const target = path.join(OWN, 'q105-anchor-recovery.record');
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...record.output, record: target, recordSHA: sha(fs.readFileSync(target)) }));

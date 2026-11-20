@@ -1,0 +1,442 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n8-fig16-author3695-FIRST');
+const OLD = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/evidence/fig-16/first-visual-FAIL');
+const TEMPLATE = path.join(R, '.tmp/resume182-6-8a-n8-current-input3695-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n8/lesson.template.json');
+const SOURCE = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-16.png');
+const SOURCE_SHA = '24b40725964951ef8af6597a21d32922015802b7a65ee427d5b52add78fe3ca4';
+const hiddenIds = [
+  'fig-16-origin', 'fig-16-left-extremum', 'fig-16-right-extremum',
+  'fig-16-top-extremum', 'fig-16-bottom-extremum',
+  'fig-16-top-terminal', 'fig-16-bottom-terminal',
+];
+const oldExpected = {
+  'spec.json.txt': 'cfa44048622b85d6b459e09b4ef5eeb17f0e01fe93c0eb5e5f45e331f256d2fb',
+  'context.json.txt': 'c1b0d1b2290ed158a6bc9ac231a7609587d4c15d59d6c3877fff114168e6a705',
+  'review.json.txt': 'd0f8e8b303f661e43ef2a83d55c12e5e0045d3ea5b482dd4a20fb37f3eaca7eb',
+  'render.json.txt': '67234492f9e792f417d1b6e99d27ab04374c7cfd6f282cddf3f391b05d1fedef',
+};
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const write = (name, value) => {
+  const file = path.resolve(OWN, name);
+  assert.ok(file.startsWith(`${OWN}/`));
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return bind(file);
+};
+const oldBindings = () => Object.fromEntries(Object.entries(oldExpected).map(([name, expected]) => {
+  const binding = bind(path.join(OLD, name));
+  assert.equal(binding.sha256, expected, `old immutable bytes changed: ${name}`);
+  return [name, binding];
+}));
+
+function diff(before, after, pointer = '') {
+  if (JSON.stringify(before) === JSON.stringify(after)) return [];
+  if (Array.isArray(before) && Array.isArray(after)) {
+    return Array.from({ length: Math.max(before.length, after.length) }, (_, index) => (
+      diff(before[index], after[index], `${pointer}/${index}`)
+    )).flat();
+  }
+  if (before && after && typeof before === 'object' && typeof after === 'object'
+      && !Array.isArray(before) && !Array.isArray(after)) {
+    return [...new Set([...Object.keys(before), ...Object.keys(after)])].sort().flatMap(key => (
+      diff(before[key], after[key], `${pointer}/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`)
+    ));
+  }
+  return [{
+    path: pointer,
+    operation: before === undefined ? 'add' : after === undefined ? 'remove' : 'replace',
+    ...(before !== undefined ? { before } : {}),
+    ...(after !== undefined ? { after } : {}),
+  }];
+}
+
+function prepare() {
+  const inventoryPath = path.join(OWN, 'independent.inventory.sealed.json');
+  const inventory = read(inventoryPath);
+  assert.equal(bind(inventoryPath).sha256, read(path.join(OWN, 'independent.inventory.seal.record')).sha256);
+  assert.equal(inventory.beforeOldPackageRead, true);
+  assert.equal(inventory.sourceView.count, 1);
+  assert.equal(inventory.source.sha256, SOURCE_SHA);
+  const old = oldBindings();
+  const previous = read(old['spec.json.txt'].path);
+  const oldReview = read(old['review.json.txt'].path);
+  assert.equal(oldReview.status, 'fail');
+  assert.ok(oldReview.notes.includes('rx=ry=5'));
+  assert.ok(oldReview.notes.includes('1280x960'));
+  const templateBinding = bind(TEMPLATE);
+  assert.equal(templateBinding.sha256, inventory.currentTemplate.sha256);
+  const template = read(TEMPLATE);
+  assert.equal(template.id, 'alg8-c2-s1-n8');
+  assert.equal(template.edition, 'modern-us-neutral');
+
+  // Same reference/nearby selection as build_context.py, from the full current template.
+  const normalize = value => String(value).replace(/\s+/gu, '').toLowerCase();
+  const prose = template.prose.flatMap((block, index, blocks) => {
+    if (block.kind !== 'fig' || block.id !== 'fig-16') return [];
+    const references = ['fig-16', block.label].map(normalize);
+    const direct = blocks.filter(candidate => candidate.kind === 'p'
+      && references.some(reference => reference && normalize(candidate.text).includes(reference)))
+      .map(candidate => candidate.text.trim());
+    const nearby = blocks.slice(Math.max(0, index - 3), index + 4)
+      .filter(candidate => ['p', 'cap'].includes(candidate.kind) && candidate.text.trim())
+      .map(candidate => candidate.text.trim());
+    return [{ figureLabel: block.label, nearbyText: [...new Set([...direct, ...nearby])] }];
+  });
+  assert.equal(prose.length, 1);
+  const authoritativeText = prose.flatMap(group => group.nearbyText.map(text => ({
+    lesson: template.id, text,
+  })));
+  assert.deepEqual(authoritativeText, previous.source.authoritativeText);
+  const context = {
+    schema: 'ld-s10y-image/context@1',
+    book: '8a', edition: 'modern-us-neutral', figure: 'fig-16',
+    authoritativeRule: 'Current full template text supplies the author context; original PNG supplies visual structure. This is an author candidate, not SOURCE, math, visual, edition or publishing approval.',
+    sourceImage: { path: SOURCE, sha256: SOURCE_SHA, width: 1763, height: 1309 },
+    suggestedSize: '1536x1024',
+    lessons: [{
+      lesson: template.id, title: template.printed_title || template.title,
+      prose, exercises: [], completeProse: template.prose,
+    }],
+    fullCurrentTemplate: template,
+    provenance: {
+      currentTemplate: templateBinding,
+      projection: 'Figure reference and three-block neighboring context, matching build_context.py prose_context; complete template and all prose also retained without edits.',
+      contextBuilder: bind(path.join(R, '.agents/skills/ld-s10y-image/scripts/build_context.py')),
+      authorHelper: bind(fileURLToPath(import.meta.url)),
+      independentInventory: bind(inventoryPath),
+      oldContextReferenceOnly: old['context.json.txt'],
+      finalizedEdition: false,
+    },
+  };
+  const contextBinding = write('context.json', context);
+  const candidate = structuredClone(previous);
+  candidate.description = `AUTHOR CANDIDATE ONLY: bounded human-authorized repair of the actual old first-visual-FAIL. Context: ${contextBinding.path}; SHA-256 ${contextBinding.sha256}. Independent source inventory was sealed after one original PNG view and before the old package was read. Preserve all old geometry/assertion values, the 38 by 27 grid, finite circle/line, A(-8,6), B(6,-8), and B label offset 60. Hide the seven unprinted construction anchors using existing visible:false; O is a separate text label at the unchanged origin/label offset. Only y and y-unit receive fixed left clearance. Exact lattice/circle/extrema/terminals, semantic colors, enlarged upright equation text and A/B point emphasis are modern regularization/additions, not extra source point glyphs. No candidate image has been opened, no visual or full-task math approval is claimed, and no promotion or publishing is authorized. One new content repair; the old ordinary repair budget is 0/exhausted and is not reset.`;
+  candidate.source.image.path = SOURCE;
+  assert.equal(candidate.source.image.sha256, SOURCE_SHA);
+  candidate.source.authoritativeText = authoritativeText;
+
+  for (const id of hiddenIds) {
+    const object = candidate.objects.find(item => item.id === id);
+    assert.equal(object.type, 'point');
+    assert.equal(object.size, 0);
+    assert.equal(object.strokeWidth, 0);
+    object.visible = false;
+  }
+  const origin = candidate.objects.find(item => item.id === 'fig-16-origin');
+  const originLabel = {
+    id: 'fig-16-origin-text', type: 'text', at: structuredClone(origin.at),
+    text: origin.label, fontSize: origin.fontSize,
+    labelColor: origin.labelColor, labelPlacement: structuredClone(origin.labelPlacement),
+  };
+  for (const key of ['label', 'fontSize', 'labelColor', 'labelPlacement']) delete origin[key];
+  candidate.objects.splice(candidate.objects.indexOf(origin) + 1, 0, originLabel);
+  for (const [id, at] of [['fig-16-y-label', [0, 13]], ['fig-16-y-unit-label', [0, 1]]]) {
+    const object = candidate.objects.find(item => item.id === id);
+    object.at = at;
+    object.labelPlacement = { position: 'W', offset: [-18, 0] };
+  }
+  const groups = candidate.source.inventory;
+  const axes = groups.find(group => group.id === 'fig-16-source-axes-labels');
+  axes.objects = axes.objects.map(id => id === 'fig-16-origin' ? originLabel.id : id);
+  axes.description = 'Visible ink: solid coordinate axes, positive right/up arrowheads, x, y, O text and two positive unit 1 labels. O has no source point glyph; the mapped O is text, not the hidden origin anchor. The hidden origin is an unchanged construction addition retained for circle and displacement assertions. y and y-unit text have fixed left clearance as the bounded old-FAIL repair; axis geometry, labels and units are unchanged.';
+  const circle = groups.find(group => group.id === 'fig-16-source-circle-and-extrema');
+  circle.objects = ['fig-16-circle', 'fig-16-circle-equation'];
+  circle.description = 'Visible ink: one solid unfilled closed circle centered at the axes crossing and the existing upper-right x^2+y^2=100 equation. Source has no independent point dots at O or the four circle-axis extrema. Radius 10 and exact extrema are equation-bound regularization. Hidden origin/extrema are construction additions only, not source-visible point objects, and need no source pointRelationships group. All unchanged radius/displacement assertions remain mapped and executable.';
+  delete circle.requires;
+  const line = groups.find(group => group.id === 'fig-16-source-line-terminals-intersections');
+  line.objects = ['fig-16-source-line', 'fig-16-line-equation', 'fig-16-A', 'fig-16-B'];
+  line.description = 'Visible ink: one solid descending finite line with x+y=-2 text, two labelled intersections A(-8,6) upper-left and B(6,-8) lower-right. Source has no independent dots at its top/bottom frame cuts. Exact (-16,14) and (11,-13) hidden terminals are unchanged equation/frame-bound construction additions, not mapped source-visible points. A/B point emphasis and upright equation typography remain existing modern additions. A and B are the only mapped point objects; unchanged A-to-B displacement covers both wholly within this group. All old terminal/incidence/origin relationships remain executable without claiming those anchors are visible.';
+
+  assert.deepEqual(candidate.canvas, previous.canvas);
+  assert.deepEqual(candidate.display, previous.display);
+  assert.deepEqual(candidate.assertions, previous.assertions);
+  assert.equal(candidate.assertions.length, 23);
+  assert.deepEqual(candidate.source.inventory[0], previous.source.inventory[0]);
+  const allowedObjects = new Set([...hiddenIds, 'fig-16-y-label', 'fig-16-y-unit-label']);
+  for (const object of previous.objects) {
+    const next = candidate.objects.find(item => item.id === object.id);
+    if (!allowedObjects.has(object.id)) assert.deepEqual(next, object, `unrelated object changed: ${object.id}`);
+    if (object.type === 'point') assert.deepEqual(next.at, object.at);
+  }
+  for (const group of candidate.source.inventory) {
+    for (const id of group.objects) {
+      assert.notEqual(candidate.objects.find(object => object.id === id)?.visible, false);
+    }
+  }
+  assert.deepEqual(candidate.objects.find(object => object.id === 'fig-16-B').labelPlacement.offset, [60, 0]);
+  const specBinding = write('candidate.spec.json', candidate);
+  const fullDiff = diff(previous, candidate);
+  const objectIdDiff = diff(
+    Object.fromEntries(previous.objects.map(object => [object.id, object])),
+    Object.fromEntries(candidate.objects.map(object => [object.id, object])),
+  );
+  const diffBinding = write('full.diff.record', {
+    schema: 'bounded-author-full-diff@1',
+    before: old['spec.json.txt'], after: specBinding,
+    recursiveDiff: fullDiff, recursiveDiffCount: fullDiff.length,
+    objectIdDiff, objectIdDiffCount: objectIdDiff.length,
+    identicalAssertions: { count: 23, sha256: hash(JSON.stringify(candidate.assertions)) },
+    identicalCanvas: true, identicalDisplay: true, identicalGridInventory: true,
+    identicalRelevantCurrentText: true,
+    changedObjectIds: [...allowedObjects, originLabel.id],
+    unrelatedObjectsUnchanged: true,
+  });
+  write('author.record', {
+    schema: 'bounded-author-candidate@1', role: 'AUTHOR_NOT_REVIEWER',
+    ticket: 'STEMROBIN-182/182-6', book: '8a', lesson: template.id, figure: 'fig-16',
+    cwd: R, ownedWriteRoot: OWN, createdAt: new Date().toISOString(),
+    source: { path: SOURCE, sha256: SOURCE_SHA },
+    currentTemplate: templateBinding, context: contextBinding,
+    independentInventory: bind(inventoryPath), independentSeal: bind(path.join(OWN, 'independent.inventory.seal.record')),
+    oldFirstVisualFail: old, spec: specBinding, fullDiff: diffBinding,
+    oldDefectsConfirmedFromActualOldReview: [
+      'Seven nominal zero-size anchors were visible filled ellipses: O, four extrema, two frame terminals.',
+      'y overlapped the positive arrowhead; y-unit 1 sat on the vertical axis.',
+      'Old preview IHDR1280x960 was not an actual native640 certification.',
+      'Old B label offset 60 was already clear and is retained exactly.',
+    ],
+    repairAccounting: {
+      newContentRepairs: 1, newRemainingContentRepairs: 0,
+      oldContentRepairCount: 'unknown total; at least one old label repair is documented',
+      oldOrdinaryRepairBudgetRemaining: 0, oldOrdinaryRepairBudgetExhausted: true,
+      oldRepairBudgetReset: false,
+      directHumanAuthorization: 'This request authorizes one ordinary bounded author repair directly; not a reviewer re-interpretation or old-agent resume.',
+      technicalRepairs: 0,
+      oldRendererCalls: 'unknown', oldBrowserLaunches: 'unknown',
+      oldCaptureCount: 'unknown', oldSourceViews: 'unknown total; the old review reports one original source view',
+    },
+    observationCounts: {
+      sourceImageViews: 1, oldPngViews: 0, sourceCrops: 0, sourceReopens: 0,
+      candidateImageViews: 0, visualReviewCalls: 0,
+    },
+    unchangedGeometry: {
+      grid: { columns: 38, rows: 27, cells: 1026 }, assertions: 23,
+      circleRadius: 10, finiteLineTerminals: [[-16, 14], [11, -13]],
+      A: [-8, 6], B: [6, -8], BOffset: [60, 0],
+    },
+    constructionAdditions: hiddenIds,
+    authoringNotes: [
+      'No renderer patch; explicit visible:false uses the existing FigureSpec contract.',
+      'O text retains [0,0], font size 32, NE offset [10,-12]; anchor and all assertions retained.',
+      'y/y-unit use W with offset [-18,0], yielding 32.4 source-canvas pixels to the text right edge before glyph width, or 16.2 native640 CSS pixels from the axis.',
+      'Source inventory maps visible ink only; construction assertions retain hidden dependencies.',
+      'The initial runner --help probe failed before any file read; it wrote no files and is disclosed here. All file-read commands and subsequent commands use unique owned wrapper directories.',
+    ],
+    workflowState: 'author candidate only; separate reviewer required',
+    reviewStatus: 'NOT_RUN', promotionStatus: 'NOT_AUTHORIZED',
+    prohibitedStagesRun: [], paidCalls: 0, dependencyInstalls: 0,
+  });
+  console.log(JSON.stringify({ spec: specBinding, context: contextBinding, fullDiff: diffBinding, assertions: 23, hiddenAnchors: 7, sourceViews: 1, newContentRepairs: 1 }));
+}
+
+async function capture() {
+  const render = read(path.join(OWN, 'render', 'figure.render.json'));
+  assert.equal(render.status, 'pass', 'native capture depends on successful official render');
+  assert.equal(render.spec.sha256, bind(path.join(OWN, 'candidate.spec.json')).sha256);
+  const svgPath = path.join(OWN, 'render', 'figure.svg');
+  const svgBinding = bind(svgPath);
+  assert.equal(render.output.svg.sha256, svgBinding.sha256);
+  const req = createRequire(path.join(R, 'app', 'package.json'));
+  const { chromium } = req('@playwright/test');
+  const executablePath = chromium.executablePath();
+  assert.ok(fs.existsSync(executablePath));
+  const outputPath = path.join(OWN, 'native640.png');
+  assert.ok(!fs.existsSync(outputPath), 'only one native raster is authorized');
+  const record = {
+    schema: 'bounded-author-native-capture@1', role: 'AUTHOR_NOT_REVIEWER',
+    sourceSvg: svgBinding, captureScript: bind(fileURLToPath(import.meta.url)),
+    runtime: { package: req.resolve('@playwright/test'), version: req('@playwright/test/package.json').version, executablePath, node: process.version },
+    isolatedHeadless: true, browserLaunches: 0, contexts: 0, pages: 0,
+    screenshotCalls: 0, contentLoads: 0, deviceScaleFactor: 1,
+    viewport: { width: 640, height: 480 },
+    rasterization: 'Original generated SVG rendered directly at CSS640x480 with DPR1; no existing raster resize/crop.',
+    candidateRasterViews: 0, visualReview: 'NOT_RUN',
+    closures: { page: false, context: false, browser: false },
+    startedAt: new Date().toISOString(),
+  };
+  let browser;
+  let context;
+  let page;
+  try {
+    record.browserLaunches++;
+    browser = await chromium.launch({ headless: true, executablePath });
+    record.contexts++;
+    context = await browser.newContext({ viewport: record.viewport, deviceScaleFactor: 1 });
+    await context.route('**/*', route => route.abort());
+    record.pages++;
+    page = await context.newPage();
+    record.browserVersion = browser.version();
+    record.contentLoads++;
+    await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+      :root { --ld-figure-ink:#15201f; --ld-figure-muted:#4c5a58; --ld-figure-accent:#15201f; --ld-figure-accent-soft:#8a9795; --ld-figure-grid:#e3eae9; --ld-figure-paper:#ffffff; }
+      html,body { margin:0; width:640px; height:480px; overflow:hidden; background:#ffffff; }
+      svg { display:block; width:640px; height:480px; }
+      </style></head><body>${fs.readFileSync(svgPath, 'utf8')}</body></html>`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    record.domTechnicalObservation = await page.evaluate(ids => {
+      const svg = document.querySelector('svg');
+      const anchors = ids.map(id => {
+        const node = document.getElementById(`ld-fig-16_ld-${id}`);
+        const style = node && getComputedStyle(node);
+        return { id, found: Boolean(node), display: style?.display, visibility: style?.visibility, visible: Boolean(node) && style.display !== 'none' && style.visibility !== 'hidden' };
+      });
+      const labels = [...svg.querySelectorAll('text')].map(node => {
+        const box = node.getBoundingClientRect();
+        const matrix = node.getScreenCTM();
+        return {
+          id: node.getAttribute('data-label-id'), text: node.textContent,
+          x: box.x, y: box.y, width: box.width, height: box.height,
+          finalFontPx: Number.parseFloat(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        };
+      });
+      const svgBox = svg.getBoundingClientRect();
+      return {
+        svgWidth: svgBox.width, svgHeight: svgBox.height,
+        devicePixelRatio: devicePixelRatio, anchors, labels,
+        yLabelRightEdgeClearanceFromAxisPx: 320 - (labels.find(label => label.text === 'y').x + labels.find(label => label.text === 'y').width),
+        yUnitRightEdgeClearanceFromAxisPx: 320 - (labels.find(label => label.id === 'fig-16-y-unit-label-label').x + labels.find(label => label.id === 'fig-16-y-unit-label-label').width),
+      };
+    }, hiddenIds);
+    assert.equal(record.domTechnicalObservation.svgWidth, 640);
+    assert.equal(record.domTechnicalObservation.svgHeight, 480);
+    assert.equal(record.domTechnicalObservation.devicePixelRatio, 1);
+    assert.equal(record.domTechnicalObservation.labels.length, 9);
+    assert.ok(record.domTechnicalObservation.anchors.every(anchor => anchor.found && !anchor.visible));
+    assert.ok(record.domTechnicalObservation.labels.every(label => label.finalFontPx >= 16));
+    assert.ok(record.domTechnicalObservation.yLabelRightEdgeClearanceFromAxisPx >= 16);
+    assert.ok(record.domTechnicalObservation.yUnitRightEdgeClearanceFromAxisPx >= 16);
+    record.screenshotCalls++;
+    await page.screenshot({ path: outputPath, type: 'png', fullPage: false, animations: 'disabled' });
+    const bytes = fs.readFileSync(outputPath);
+    assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.equal(bytes.subarray(12, 16).toString('ascii'), 'IHDR');
+    record.png = { ...bind(outputPath), width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+    assert.equal(record.png.width, 640);
+    assert.equal(record.png.height, 480);
+    record.technicalCaptureStatus = 'complete';
+  } catch (error) {
+    record.technicalCaptureStatus = 'failed';
+    record.error = error.message;
+    throw error;
+  } finally {
+    if (page) { await page.close(); record.closures.page = true; }
+    if (context) { await context.close(); record.closures.context = true; }
+    if (browser) { await browser.close(); record.closures.browser = true; }
+    record.finishedAt = new Date().toISOString();
+    const binding = write('capture.record', record);
+    console.log(JSON.stringify({ capture: binding, png: record.png, screenshotCalls: record.screenshotCalls, closures: record.closures, candidateViews: 0 }));
+  }
+}
+
+function ready() {
+  const author = read(path.join(OWN, 'author.record'));
+  const captureRecord = read(path.join(OWN, 'capture.record'));
+  const renderPath = path.join(OWN, 'render', 'figure.render.json');
+  const render = read(renderPath);
+  const rendererReceiptPath = path.join(OWN, '16-official-render', 'receipt.record');
+  const captureReceiptPath = path.join(OWN, '17-native640-capture', 'receipt.record');
+  assert.equal(read(rendererReceiptPath).returncode, 0);
+  assert.equal(read(captureReceiptPath).returncode, 0);
+  assert.equal(render.status, 'pass');
+  assert.equal(captureRecord.technicalCaptureStatus, 'complete');
+  assert.equal(captureRecord.screenshotCalls, 1);
+  assert.deepEqual(captureRecord.closures, { page: true, context: true, browser: true });
+  assert.equal(bind(TEMPLATE).sha256, author.currentTemplate.sha256);
+  assert.equal(bind(path.join(OWN, 'candidate.spec.json')).sha256, author.spec.sha256);
+  assert.equal(bind(captureRecord.png.path).sha256, captureRecord.png.sha256);
+  const logs = fs.readdirSync(OWN, { withFileTypes: true })
+    .filter(entry => entry.isDirectory() && fs.existsSync(path.join(OWN, entry.name, 'receipt.record')))
+    .map(entry => ({
+      directory: path.join(OWN, entry.name),
+      start: bind(path.join(OWN, entry.name, 'start.record')),
+      receipt: bind(path.join(OWN, entry.name, 'receipt.record')),
+      stdout: bind(path.join(OWN, entry.name, 'stdout.txt')),
+      stderr: bind(path.join(OWN, entry.name, 'stderr.txt')),
+    }));
+  const record = {
+    schema: 'bounded-author-ready@1', role: 'AUTHOR_NOT_REVIEWER',
+    status: 'READY_FOR_SEPARATE_REVIEWER_AUTHOR_CANDIDATE_ONLY',
+    ticket: author.ticket, book: '8a', lesson: author.lesson, figure: 'fig-16',
+    cwd: R, ownedWriteRoot: OWN, createdAt: new Date().toISOString(),
+    source: author.source, currentTemplate: bind(TEMPLATE),
+    context: bind(path.join(OWN, 'context.json')),
+    independentInventory: bind(path.join(OWN, 'independent.inventory.sealed.json')),
+    independentInventorySeal: bind(path.join(OWN, 'independent.inventory.seal.record')),
+    sourceViewEvidence: { tool: 'functions.view_image', path: SOURCE, count: 1, beforeInventorySeal: true, beforeOldSpecRead: true, oldPngViews: 0, reopens: 0, crops: 0 },
+    oldFirstVisualFail: oldBindings(),
+    spec: bind(path.join(OWN, 'candidate.spec.json')),
+    fullDiff: bind(path.join(OWN, 'full.diff.record')),
+    author: bind(path.join(OWN, 'author.record')),
+    authorHelper: bind(fileURLToPath(import.meta.url)),
+    render: bind(renderPath), svg: bind(path.join(OWN, 'render', 'figure.svg')),
+    nativePng: captureRecord.png, capture: bind(path.join(OWN, 'capture.record')),
+    actualRenderer: {
+      script: bind(path.join(R, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs')),
+      validator: bind(path.join(R, '.agents/skills/ld-s10y-image/scripts/validate_spec.py')),
+      receipt: bind(rendererReceiptPath),
+      name: render.renderer.name, version: render.renderer.version,
+      attempts: 1, successfulRuns: 1, technicalFailures: 0,
+      builtInDraftValidationRuns: 1, separatelyRerunValidation: 0,
+      browserLaunches: 1, screenshotCalls: 0,
+      reportStatus: render.status, reportDoesNotCertifyVisualFidelity: true,
+    },
+    actualBrowserCapture: {
+      receipt: bind(captureReceiptPath), runtime: captureRecord.runtime,
+      browserVersion: captureRecord.browserVersion,
+      browserLaunches: captureRecord.browserLaunches,
+      contexts: captureRecord.contexts, pages: captureRecord.pages,
+      contentLoads: captureRecord.contentLoads,
+      screenshotCalls: captureRecord.screenshotCalls,
+      deviceScaleFactor: 1, viewport: captureRecord.viewport,
+      pngIHDR: { width: captureRecord.png.width, height: captureRecord.png.height },
+      closures: captureRecord.closures,
+      sourceRasterLoadedByCapture: false, candidateRasterViews: 0,
+    },
+    totalsThisAuthor: {
+      sourceViews: 1, allImagesOpenedIntoAuthorContext: 1,
+      candidateViews: 0, oldPngViews: 0,
+      contentRepairs: 1, technicalRepairs: 0, rendererAttempts: 1,
+      rendererSuccesses: 1, browserLaunches: 2, nativeRasterCaptures: 1,
+      paidCalls: 0, dependencyInstalls: 0, reviewerCalls: 0,
+    },
+    repairAccounting: author.repairAccounting,
+    preserved: author.unchangedGeometry,
+    inventoryVisibility: {
+      hiddenConstructionAnchors: hiddenIds, visibleTextLabels: 9,
+      visiblePointObjects: ['fig-16-A', 'fig-16-B'],
+      originMappedAs: 'fig-16-origin-text',
+      sourceABRelationship: 'fig-16-A-to-B',
+      independentSourceSeparatePointGlyphs: 0,
+      existingABPointEmphasisClassifiedAsModernAddition: true,
+    },
+    review: { visual: 'NOT_RUN', mathFullTask: 'NOT_RUN', sourceApproval: 'NOT_CLAIMED', promotion: 'NOT_AUTHORIZED' },
+    oldRemainingOrdinaryRepairBudget: 0, oldRepairBudgetReset: false,
+    ordinaryRepairDirectlyHumanAuthorized: true,
+    logs,
+    readyCreationLogDirectory: path.join(OWN, '18-ready-seal'),
+    prohibitedStagesRun: [],
+  };
+  const binding = write('ready.record', record);
+  const seal = write('ready.sha256.record', { ready: binding, counts: record.totalsThisAuthor, authorOnly: true });
+  console.log(JSON.stringify({ ready: binding, seal, spec: record.spec, png: record.nativePng, counts: record.totalsThisAuthor }));
+}
+
+const phase = process.argv[2];
+if (phase === 'prepare') prepare();
+else if (phase === 'capture') await capture();
+else if (phase === 'ready') ready();
+else throw new Error('Expected prepare, capture or ready phase');

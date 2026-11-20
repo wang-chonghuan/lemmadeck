@@ -1,0 +1,316 @@
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+W = R / ".tmp/resume182-6-8a-n8-choice-review3695-AFFECTED-q39b1"
+assert Path.cwd() == R
+
+EXPECTED = {
+    "repair": (
+        R / ".tmp/resume182-6-8a-n8-choice-repair3695-AFFECTED1/repair.record",
+        "04c153778f399742221d199a5b95c065168cc2d0ebff0645bae0a2135d443e9f",
+    ),
+    "original_draft": (
+        R / ".tmp/resume182-6-8a-n8-choice-author3695-FIRST/draft.json",
+        "df55fba908a3ecb84bc70d13bb59241960ce1043418769cd6b3bc1035e69b4a2",
+    ),
+    "original_review": (
+        R / ".tmp/resume182-6-8a-n8-choice-review3695-FIRST/review.json",
+        "ccc57072616fb326785539b20fd6be40301d4cb39758a3271f283cd226ebbcdf",
+    ),
+    "new_draft": (
+        R / ".tmp/resume182-6-8a-n8-choice-repair3695-AFFECTED1/draft.json",
+        "a2f5ee29d34316ad020b9dc82101a367e3646b14d435df2cb419585ebee0dacd",
+    ),
+}
+
+
+def canonical(value):
+    return json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def digest(value):
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def differences(before, after, path=""):
+    if type(before) is not type(after):
+        return [{"path": path, "before": before, "after": after}]
+    if isinstance(before, dict):
+        assert before.keys() == after.keys(), ("changed object keys", path)
+        return [
+            change
+            for key in before
+            for change in differences(
+                before[key], after[key],
+                path + "/" + key.replace("~", "~0").replace("/", "~1"),
+            )
+        ]
+    if isinstance(before, list):
+        assert len(before) == len(after), ("changed list length", path)
+        return [
+            change
+            for index, (left, right) in enumerate(zip(before, after))
+            for change in differences(left, right, f"{path}/{index}")
+        ]
+    return [] if before == after else [{"path": path, "before": before, "after": after}]
+
+
+def load(path):
+    return json.loads(path.read_bytes())
+
+
+def write_once(path, value):
+    assert path.parent == W
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+
+
+def bind(path, expected=None, include_canonical=False):
+    data = path.read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    if expected is not None:
+        assert actual == expected, (str(path), actual, expected)
+    result = {"path": str(path), "sha256": actual, "bytes": len(data)}
+    if include_canonical:
+        result["canonical_sha256"] = digest(json.loads(data))
+    return result
+
+
+projection = load(W / "input-projection.json")
+old_ready = projection["original_ready_inheritance_metadata"]
+original = load(EXPECTED["original_draft"][0])
+draft = load(EXPECTED["new_draft"][0])
+old_review = load(EXPECTED["original_review"][0])
+repair = load(EXPECTED["repair"][0])
+assert differences(original, draft) == projection["changed_leaves"] == [repair["delta"]]
+assert old_ready["outcome"] == "revise"
+assert old_ready["failed_gate"]["preserved"] is True
+assert old_ready["counts"]["official_review_validator_calls"] == 1
+assert len(old_ready["command_failures"]) == 2
+
+inputs = {
+    name: bind(path, expected, name in ("original_draft", "new_draft", "original_review"))
+    for name, (path, expected) in EXPECTED.items()
+}
+inputs["original_seed"] = bind(
+    Path(old_ready["seed"]["path"]), old_ready["seed"]["sha256"], True
+)
+assert inputs["original_seed"]["canonical_sha256"] == old_review["seed_sha256"]
+inputs["original_ready"] = bind(
+    R / ".tmp/resume182-6-8a-n8-choice-review3695-FIRST/ready.record"
+)
+inputs["input_projection"] = bind(W / "input-projection.json")
+preserved_failures = [
+    {
+        **failure,
+        "receipt": bind(
+            Path(failure["receipt"]["path"]), failure["receipt"]["sha256"]
+        ),
+    }
+    for failure in old_ready["command_failures"]
+]
+
+scope_evidence = (
+    "Affected-only independent semantic check of q39:b's internal misconception label. "
+    "The repaired label explicitly applies the wrong transformation "
+    "(sqrt(x)-sqrt(y))^2 -> (sqrt(x))^2-(sqrt(y))^2=x-y. "
+    "Squaring the original right-hand side 1 leaves 1, so this stated wrong procedure "
+    "reproduces the already sealed false relation x-y=1; the already specified choice "
+    "y=1 therefore yields x=2 and the unchanged displayed option b, (2,1). "
+    "This is a difference-of-squares substitution, not omission of the cross term. "
+    "The original FIRST review's a,c true set, all four option truth values, and its "
+    "independent mathematical results are inherited verbatim in substance; no original "
+    "source or visible question was solved again and no other original PASS was re-reviewed."
+)
+affected = {
+    "schema": "s10y-choice-affected-review-record-v1",
+    "status": "AFFECTED_ONLY_PASS",
+    "root": str(R),
+    "owner_write_root": str(W),
+    "ticket": "STEMROBIN-182/182-6",
+    "book": "8a",
+    "lesson": "alg8-c2-s1-n8",
+    "question_id": "q39",
+    "option_id": "b",
+    "scope": "/questions/38/key/rationales/1/misconception",
+    "verdict": "pass",
+    "evidence": scope_evidence,
+    "inputs": inputs,
+    "actual_draft_leaf_changes": projection["changed_leaves"],
+    "all_other_draft_fields_deep_equal": True,
+    "views_correct_sets_truth_derivations_coverage_unchanged": True,
+    "inherited_source_reviews": 15,
+    "inherited_true_sets": 41,
+    "inherited_option_truth_checks": 126,
+    "source_recomputations": 0,
+    "question_recomputations": 0,
+    "option_truth_recomputations": 0,
+    "other_original_PASS_reviews_repeated": 0,
+    "source_pure_view_key_chronology": {
+        "basis": "Inherited FIRST independent Halley chronology, not newly performed.",
+        "original_record": inputs["original_ready"],
+        "metadata": old_ready["independent_evidence_order"],
+    },
+    "FIRST_failures": {
+        "original_outcome": old_review["outcome"],
+        "original_status": old_ready["status"],
+        "original_failed_gate": old_ready["failed_gate"],
+        "original_validation": old_ready["validation"],
+        "command_failures": preserved_failures,
+        "all_preserved_not_reset": True,
+    },
+    "current_execution_failure": {
+        "receipt": str(W / "exec-011.record"),
+        "exit_code": 1,
+        "error": "StopIteration: integer selector did not match string source_number '115'.",
+        "classification": "projection_selector_technical_failure",
+        "recovery_receipt": str(W / "exec-013.record"),
+        "recovery": "Compare the source identifier as a string; no author or source solving was run.",
+        "preserved_not_reset": True,
+    },
+    "accounting": {
+        "inherited_content_repair_runs": repair["contentRepairRuns"],
+        "additional_content_repair_runs": 0,
+        "affected_only_semantic_reviews": 1,
+        "new_whole_package_semantic_reviews": 0,
+        "official_validator_calls_before_this_record": 0,
+        "new_structural_only_validator_calls": 0,
+        "actual_current_execution_failures": 1,
+        "host_tokens": "unknown",
+        "total_cost": "unknown",
+    },
+}
+
+write_once(W / "affected-review.record", affected)
+print(json.dumps({"affected_review": affected}, ensure_ascii=True, indent=2), flush=True)
+
+review = copy.deepcopy(old_review)
+review["draft_sha256"] = digest(draft)
+review["reviewer"]["identity"] = (
+    "Composite approval: FIRST independent Halley, "
+    + old_review["reviewer"]["identity"]
+    + "; inherited source->pure-view->key sealed mathematical results and unchanged PASS checks. "
+    "Codex reviewer3695-AFFECTED-q39b1, not the author, independently reviews only "
+    "the repaired q39:b internal misconception label. No new full-package review "
+    "and no source/question/option-truth recomputation."
+)
+qindex = next(
+    index for index, item in enumerate(review["question_reviews"])
+    if item["question_id"] == "q39"
+)
+sindex = next(
+    index for index, item in enumerate(review["source_reviews"])
+    if str(item["source_number"]) == "115"
+)
+old_q39 = old_review["question_reviews"][qindex]
+q39 = review["question_reviews"][qindex]
+clarification = "FIRST mismatch preserved in history, now corrected by affected-only review"
+q39["task_fidelity"]["evidence"] += " " + clarification
+review["source_reviews"][sindex]["coverage"]["evidence"] += " " + clarification
+mathematics = q39["mathematics"]
+mathematics["verdict"] = "pass"
+old_diagnostic = (
+    " The author key agrees, but q39:b has the concrete internal misconception/derivation "
+    "mismatch recorded below; it is not normalized to pass."
+)
+assert mathematics["independent_solution"].endswith(old_diagnostic)
+mathematics["independent_solution"] = mathematics["independent_solution"][:-len(old_diagnostic)]
+mathematics["independent_solution"] += (
+    " The author key agrees. These FIRST independent mathematical results are inherited, "
+    "not recomputed; only the q39:b internal label was reviewed for the repaired snapshot."
+)
+old_b = next(
+    item for item in old_q39["mathematics"]["option_checks"] if item["option_id"] == "b"
+)
+b = next(item for item in mathematics["option_checks"] if item["option_id"] == "b")
+prefix, old_late = b["evidence"].split(" Late internal check: ", 1)
+assert old_late.startswith("REVISE:")
+b["evidence"] = (
+    prefix + " Late internal check: " + clarification + ". "
+    "The repaired misconception 'Treat the square of a difference of square roots as "
+    "the difference of their squares.' states precisely the wrong rule "
+    "(sqrt(x)-sqrt(y))^2 -> x-y. It reproduces the unchanged derivation x-y=1, "
+    "then y=1 gives x=2, exactly displayed b=(2,1). FIRST's incorrect truth for b "
+    "and correct set a,c are inherited without recomputation. The original omission-of-"
+    "cross-term mismatch and REVISE remain immutable in FIRST review.json."
+)
+review["outcome"] = "pass"
+
+expected_review_paths = {
+    "/draft_sha256",
+    "/reviewer/identity",
+    "/outcome",
+    f"/source_reviews/{sindex}/coverage/evidence",
+    f"/question_reviews/{qindex}/task_fidelity/evidence",
+    f"/question_reviews/{qindex}/mathematics/verdict",
+    f"/question_reviews/{qindex}/mathematics/independent_solution",
+    f"/question_reviews/{qindex}/mathematics/option_checks/1/evidence",
+}
+review_delta = differences(old_review, review)
+assert {change["path"] for change in review_delta} == expected_review_paths
+assert review["reviewer"]["kind"] == old_review["reviewer"]["kind"] == "independent_agent"
+assert mathematics["correct"] == old_q39["mathematics"]["correct"] == ["a", "c"]
+assert len(mathematics["option_checks"]) == 4
+for before, after in zip(
+    old_q39["mathematics"]["option_checks"], mathematics["option_checks"]
+):
+    assert before["option_id"] == after["option_id"]
+    assert before["truth"] == after["truth"]
+    if before["option_id"] != "b":
+        assert canonical(before) == canonical(after)
+assert mathematics["independent_solution"].startswith(
+    old_q39["mathematics"]["independent_solution"][:-len(old_diagnostic)]
+)
+for index, (before, after) in enumerate(
+    zip(old_review["question_reviews"], review["question_reviews"])
+):
+    if index != qindex:
+        assert canonical(before) == canonical(after)
+for index, (before, after) in enumerate(
+    zip(old_review["source_reviews"], review["source_reviews"])
+):
+    if index != sindex:
+        assert canonical(before) == canonical(after)
+    else:
+        assert before["independent_solution"] == after["independent_solution"]
+assert q39["redundancy"] == old_q39["redundancy"]
+assert q39["answer_leakage"] == old_q39["answer_leakage"]
+assert review["figure_checks"] == old_review["figure_checks"]
+assert review["new_figure_reviews"] == old_review["new_figure_reviews"]
+assert review["seed_sha256"] == old_review["seed_sha256"]
+
+write_once(W / "review.json", review)
+proof = {
+    "status": "COMPOSITE_REVIEW_DEEP_EQUALITY_VERIFIED",
+    "affected_review": bind(W / "affected-review.record"),
+    "review": bind(W / "review.json", include_canonical=True),
+    "draft": inputs["new_draft"],
+    "seed": inputs["original_seed"],
+    "original_review": inputs["original_review"],
+    "actual_review_leaf_changes": review_delta,
+    "unchanged_source_review_objects_deep_equal": 14,
+    "unchanged_question_review_objects_deep_equal": 40,
+    "q39_nonmathematics_PASS_verdicts_preserved": True,
+    "q39_redundancy_and_leakage_objects_deep_equal": True,
+    "source115_independent_solution_deep_equal": True,
+    "q39_correct_and_all_four_option_truth_values_deep_equal": True,
+    "q39_a_c_d_option_check_objects_deep_equal": True,
+    "q39_sealed_independent_math_prefix_verbatim_preserved": True,
+    "only_historical_diagnostics_removed_from_current_q39_math": True,
+    "all_other_review_fields_deep_equal": True,
+    "originals_and_FIRST_failed_receipts_unchanged": all(
+        bind(Path(item["path"]))["sha256"] == item["sha256"]
+        for item in inputs.values()
+    ) and all(
+        bind(Path(item["receipt"]["path"]))["sha256"] == item["receipt"]["sha256"]
+        for item in preserved_failures
+    ),
+}
+write_once(W / "combination-proof.record", proof)
+print(json.dumps({"combination_proof": proof}, ensure_ascii=True, indent=2), flush=True)

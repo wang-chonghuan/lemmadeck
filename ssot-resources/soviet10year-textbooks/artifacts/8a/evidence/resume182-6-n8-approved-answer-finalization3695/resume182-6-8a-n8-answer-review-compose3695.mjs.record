@@ -1,0 +1,54 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n8-parent-answer-review3695-AFFECTED-wording1';
+assert.ok(!fs.existsSync(own));
+const parentFile = '.tmp/resume182-6-8a-n8-parent-answer-review3695-FIRST/review.record';
+const wordingFile = '.tmp/resume182-6-8a-n8-answer-wording-review3695-AFFECTED1/review.record';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const check = binding => {
+  assert.equal(sha(read(binding.path)), binding.sha256, binding.path);
+  return binding;
+};
+const parent = JSON.parse(read(parentFile));
+assert.equal(sha(read(wordingFile)), '32e07e324da7bf3a99d0fbf1dac30706c8bbded0180911646c10115c5a40bd19');
+const wording = JSON.parse(read(wordingFile));
+assert.equal(parent.status, 'HOLD');
+assert.equal(parent.mathematicalComparisonStatus, 'PASS');
+assert.equal(wording.status, 'TEXT_PASS');
+assert.equal(wording.mathematicalComparisonStatus, 'PASS');
+assert.equal(wording.resolvedFinding, 'answer-display-production-narration');
+assert.deepEqual(wording.blockingFindings, []);
+for (const [key, value] of Object.entries(wording.preservation)) {
+  if (typeof value === 'boolean') assert.equal(value, key !== 'graphicalExecutionClaimed', key);
+}
+check(wording.inputs.parentHOLD);
+assert.equal(path.resolve(parentFile), wording.inputs.parentHOLD.path);
+const inputs = [
+  check(wording.inputs.candidate),
+  ...parent.inputs.filter(item => !item.path.endsWith('answers.draft.json')).map(check),
+];
+const value = {
+  schema: 'resume182-6/sealed-answer-candidate-comparison@1',
+  status: 'PASS', ticket: 'STEMROBIN-182', root: repo,
+  book: '8a', lesson: 'alg8-c2-s1-n8', edition: 'modern-us-neutral',
+  scope: 'Compose unchanged first 47-obligation mathematical comparison and independent affected nonmathematical wording PASS; no repeated solving or mathematical review.',
+  inheritedMathematicalComparison: { path: parentFile, sha256: sha(read(parentFile)), retainedStatus: 'HOLD' },
+  affectedIndependentWordingReview: { path: wordingFile, sha256: sha(read(wordingFile)) },
+  inputs, counts: parent.counts, comparisons: parent.comparisons,
+  blockers: [], candidateMathematicsAndAllOtherFieldsUnchanged: true,
+  graphicalConstructionAnswerSupported: true, actualGraphicalExecutionOrVisualCorrectnessApproved: false,
+  gradingBoundary: parent.gradingBoundary,
+  newSourceOriginalSolvesMathOrImageReviews: 0, newApprovalCompositions: 1,
+  officialAnswerValidationPending: true, wholeLessonApproval: false, DBWrites: 0,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+};
+fs.mkdirSync(own);
+fs.writeFileSync(`${own}/review.record`, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.resolve(`${own}/review.record`),
+  sha256: sha(read(`${own}/review.record`)), matched: parent.counts.matched }));

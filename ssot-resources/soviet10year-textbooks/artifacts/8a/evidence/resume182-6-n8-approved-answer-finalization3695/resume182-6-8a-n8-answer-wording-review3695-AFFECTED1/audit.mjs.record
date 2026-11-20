@@ -1,0 +1,51 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = `${root}/.tmp/resume182-6-8a-n8-answer-wording-review3695-AFFECTED1`;
+assert.equal(process.cwd(), root);
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const reviewPath = `${own}/review.record`;
+const reviewBytes = fs.readFileSync(reviewPath);
+const review = JSON.parse(reviewBytes);
+assert.equal(review.status, 'TEXT_PASS');
+assert.equal(review.replacementReviews.length, 5);
+assert.equal(review.counts.replacements, 5);
+for (const count of ['mathChanges', 'originalSolves', 'mathReviewReruns', 'images']) {
+  assert.equal(review.counts[count], 0);
+}
+const checkedInputs = [];
+for (const binding of [...Object.values(review.inputs), review.comparisonEvidence]) {
+  const sha256 = digest(fs.readFileSync(binding.path));
+  assert.equal(sha256, binding.sha256, binding.path);
+  checkedInputs.push({ path: binding.path, sha256 });
+}
+const receipts = review.executionReceipts.slice(0, 2).map((path, index) => {
+  const bytes = fs.readFileSync(path);
+  const receipt = JSON.parse(bytes);
+  assert.equal(receipt.cwd, root);
+  assert.equal(receipt.returncode, index === 0 ? 1 : 0);
+  assert.ok(receipt.finished);
+  return { path, sha256: digest(bytes), returncode: receipt.returncode };
+});
+const audit = {
+  schema: 'resume182-6/affected-wording-final-byte-audit@1',
+  status: 'PASS',
+  root,
+  book: review.book,
+  lesson: review.lesson,
+  edition: review.edition,
+  checkedInputs,
+  review: { path: reviewPath, sha256: digest(reviewBytes), status: review.status },
+  receipts,
+  counts: review.counts,
+  inputBytesUnchanged: true,
+};
+fs.writeFileSync(`${own}/final-byte-audit.record`, `${JSON.stringify(audit, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  path: reviewPath,
+  sha256: audit.review.sha256,
+  status: review.status,
+  counts: review.counts,
+}, null, 2));

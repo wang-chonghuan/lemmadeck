@@ -1,0 +1,97 @@
+import copy
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+assert Path.cwd() == ROOT
+sys.path.insert(0, str(ROOT / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+ID = "alg8-c2-s1-n8"
+INPUT = ROOT / ".tmp/resume182-6-8a-n8-current-input3695-FIRST"
+OWN = ROOT / ".tmp/resume182-6-8a-n8-text-author3695-FIRST"
+assert not OWN.exists()
+inputs = json.loads((INPUT / "inputs.record").read_text())
+assert edition.sha256(INPUT / "inputs.record") == "6eaaa9c449a0fd95f26a9cd188916d9b68e8a0237bfd36bb3b39aa6cafad97ce"
+values = {}
+for item in inputs["outputs"]:
+    file = Path(item["path"])
+    assert edition.sha256(file) == item["sha256"]
+    values[file.name] = json.loads(file.read_text())
+lesson = copy.deepcopy(values["lesson.template.json"])
+exercise = values["exercises.template.json"]
+assert lesson["id"] == ID
+assert len(lesson["prose"]) == 33
+assert exercise["count"] == len(exercise["exercises"]) == 15
+block = lesson["prose"][29]
+before = block["text"]
+phrase = "用$y$表示变量$x$"
+assert before.count(phrase) == 1
+block["text"] = before.replace(phrase, "将$y$用变量$x$表示", 1)
+block["changes"] = list(dict.fromkeys(block["changes"] + ["direction-clarification"]))
+assert edition.math_signature(before) == edition.math_signature(block["text"])
+assert edition.number_signature(before) == edition.number_signature(block["text"])
+assert block["source_text"] == values["lesson.template.json"]["prose"][29]["source_text"]
+OWN.mkdir(parents=True)
+
+def save(file, value):
+    with file.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=False, indent=2)
+        stream.write("\n")
+    return {"path": str(file), "sha256": edition.sha256(file)}
+
+draft = save(OWN / "lesson-before-flow.record", lesson)
+command = ["node", ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs", "--stdin"]
+started = datetime.now(timezone.utc).isoformat()
+save(OWN / "flow-start.record", {"command": command, "cwd": str(ROOT), "started": started,
+                               "input": draft})
+result = subprocess.run(command, cwd=ROOT, input=json.dumps(lesson, ensure_ascii=False),
+                        text=True, capture_output=True)
+for name, text in [("flow-stdout.txt", result.stdout), ("flow-stderr.txt", result.stderr)]:
+    with (OWN / name).open("x", encoding="utf-8") as stream:
+        stream.write(text)
+save(OWN / "flow-receipt.record", {
+    "command": command, "cwd": str(ROOT), "started": started,
+    "finished": datetime.now(timezone.utc).isoformat(), "returncode": result.returncode,
+})
+assert result.returncode == 0, result.stderr
+flow = json.loads(result.stdout)
+boundaries = []
+for phrase in ["例1", "例2", "如果方程组是由两个二次方程组成的"]:
+    matches = [index for index, item in enumerate(flow["paragraphs"])
+               if phrase in item["text"]]
+    assert len(matches) == 1 and matches[0] > 0
+    index = matches[0]
+    boundaries.append({"before": flow["paragraphs"][index - 1]["text"],
+                       "after": flow["paragraphs"][index]["text"]})
+lesson["section_breaks"] = boundaries
+values["lesson.template.json"] = lesson
+target = OWN / "adapt/8a/modern-us-neutral/lessons" / ID
+target.mkdir(parents=True)
+outputs = [save(target / name, value) for name, value in values.items()]
+record = {
+    "schema": "resume182-6/modern-text-author@1",
+    "status": "AUTHOR_DRAFT_NOT_TEXT_APPROVAL",
+    "root": str(ROOT), "book": "8a", "lesson": ID,
+    "currentInputs": {"path": str(INPUT / "inputs.record"),
+                      "sha256": edition.sha256(INPUT / "inputs.record")},
+    "outputs": outputs, "proseCount": 33, "exerciseCount": 15, "figureCount": 1,
+    "directionClarification": {
+        "index": 29, "sourceRefs": block["source_refs"], "before": before,
+        "after": block["text"], "mathematicalFormulaOrderAndNumbersUnchanged": True,
+        "reason": "The unchanged substitution y=21/x expresses y using x. Clarify the prose direction while preserving its original ordered math tokens y then x.",
+        "newLocalTextClarifications": 1, "historicalClarificationTotals": "unknown",
+    },
+    "sectionBreaks": boundaries,
+    "flow": {"path": str(OWN / "flow-stdout.txt"), "sha256": edition.sha256(OWN / "flow-stdout.txt")},
+    "rawSourceFilesEdited": 0, "registeredFormulaErrataAdded": 0,
+    "sourceMathAnswerChoiceImagePASSReruns": 0, "imageViews": 0,
+    "paidCalls": 0, "DBWrites": 0, "wholeLessonApproval": False,
+    "unknownHistoricalBytesRecovered": False, "hostTokens": "unknown", "totalCost": "unknown",
+}
+ready = save(OWN / "ready.record", record)
+print(json.dumps({"ready": ready, "outputs": outputs, "status": record["status"],
+                  "sectionBreaks": len(boundaries), "newLocalTextClarifications": 1}))

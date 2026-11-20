@@ -1,0 +1,1641 @@
+{"path":".agents/skills/ld-s10y-image/scripts/render_spec.mjs"}
+#!/usr/bin/env node
+
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import process from 'node:process'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+import { chromium } from 'playwright-core'
+import { materializeArrowheads } from './materialize_arrowheads.mjs'
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url))
+const skillDir = path.dirname(scriptDir)
+const skillsDir = path.dirname(skillDir)
+const validator = path.join(scriptDir, 'validate_spec.py')
+const jsxgraphPath = path.join(
+  skillsDir,
+  'node_modules',
+  'jsxgraph',
+  'distrib',
+  'jsxgraphcore.js',
+)
+const jsxgraphCssPath = path.join(
+  skillsDir,
+  'node_modules',
+  'jsxgraph',
+  'distrib',
+  'jsxgraph.css',
+)
+const FIGURE_SPEC_SCHEMA = 'ld-s10y-image/figure-spec@2'
+const RENDER_SCHEMA = 'ld-s10y-image/render@2'
+
+function parseArgs(argv) {
+  const result = {}
+  for (let index = 0; index < argv.length; index += 1) {
+    const key = argv[index]
+    if (!key.startsWith('--')) {
+      throw new Error(`unexpected argument: ${key}`)
+    }
+    const value = argv[index + 1]
+    if (!value || value.startsWith('--')) {
+      throw new Error(`missing value for ${key}`)
+    }
+    result[key.slice(2)] = value
+    index += 1
+  }
+  if (!result.spec || (!result.svg && !result.png && !result.artwork)) {
+    throw new Error(
+      'usage: render_spec.mjs --spec spec.json [--svg out.svg] ' +
+      '[--artwork artwork.png] [--png preview.png] [--report render.json]',
+    )
+  }
+  return result
+}
+
+function sha256File(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex')
+}
+
+function ensureParent(filePath) {
+  fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true })
+}
+
+function validateSpec(specPath) {
+  const result = spawnSync(
+    process.env.PYTHON || 'python3',
+    [validator, specPath, '--stage', 'draft', '--json'],
+    { encoding: 'utf8' },
+  )
+  if (result.status !== 0) {
+    const detail = result.stdout.trim() || result.stderr.trim()
+    throw new Error(`FigureSpec validation failed:\n${detail}`)
+  }
+}
+
+function imageMime(filePath) {
+  const extension = path.extname(filePath).toLowerCase()
+  if (extension === '.png') return 'image/png'
+  if (extension === '.jpg' || extension === '.jpeg') return 'image/jpeg'
+  if (extension === '.webp') return 'image/webp'
+  throw new Error(`unsupported artwork format: ${filePath}`)
+}
+
+function embedAssets(spec) {
+  const assets = new Map()
+  for (const asset of spec.assets || []) {
+    const assetPath = path.isAbsolute(asset.path)
+      ? asset.path
+      : path.resolve(asset.path)
+    if (!fs.existsSync(assetPath)) {
+      throw new Error(`missing artwork asset: ${assetPath}`)
+    }
+    const data = fs.readFileSync(assetPath).toString('base64')
+    assets.set(asset.id, {
+      ...asset,
+      dataUri: `data:${imageMime(assetPath)};base64,${data}`,
+    })
+  }
+  return {
+    ...spec,
+    assets: [...assets.values()],
+    objects: spec.objects.map((object) => (
+      object.type === 'image'
+        ? { ...object, dataUri: assets.get(object.asset)?.dataUri }
+        : object
+    )),
+  }
+}
+
+function portablePath(filePath) {
+  const absolute = path.resolve(filePath)
+  const relative = path.relative(process.cwd(), absolute)
+  return relative.startsWith('..') ? absolute : relative || '.'
+}
+
+function rendererBoardId(figureId) {
+  return `ld-${String(figureId).replace(/[^A-Za-z0-9_-]/g, '-')}`
+}
+
+function chromeExecutable() {
+  const candidates = [
+    process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+    process.env.CHROME_PATH,
+    chromium.executablePath(),
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+  ].filter(Boolean)
+  const executable = candidates.find((candidate) => fs.existsSync(candidate))
+  if (!executable) {
+    throw new Error(
+      'Chrome/Chromium not found; set PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH',
+    )
+  }
+  return executable
+}
+
+async function render(spec, output) {
+  const boardId = rendererBoardId(spec.id)
+  const browser = await chromium.launch({
+    executablePath: chromeExecutable(),
+    headless: true,
+  })
+  try {
+    const page = await browser.newPage({
+      viewport: {
+        width: spec.canvas.width,
+        height: spec.canvas.height,
+      },
+      deviceScaleFactor: 1,
+    })
+    await page.setContent(`
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            :root {
+              --ld-figure-ink: #15201f;
+              --ld-figure-muted: #4c5a58;
+              --ld-figure-accent: #15201f;
+              --ld-figure-accent-soft: #8a9795;
+              --ld-figure-grid: #e3eae9;
+              --ld-figure-paper: #ffffff;
+            }
+            html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+            #${boardId} {
+              width: ${spec.canvas.width}px;
+              height: ${spec.canvas.height}px;
+              background: ${
+                spec.canvas.background === 'transparent'
+                  ? 'transparent'
+                  : 'var(--ld-figure-paper)'
+              };
+              border: 0;
+            }
+          </style>
+        </head>
+        <body><div id="${boardId}" class="jxgbox"></div></body>
+      </html>
+    `)
+    await page.addStyleTag({ path: jsxgraphCssPath })
+    await page.addScriptTag({ path: jsxgraphPath })
+    await page.addScriptTag({
+      content: `window.materializeArrowheads = ${materializeArrowheads.toString()}`,
+    })
+
+    const result = await page.evaluate(({ figureSpec, boardId }) => {
+      const SVG_NS = 'http://www.w3.org/2000/svg'
+      const palette = {
+        ink: 'var(--ld-figure-ink, #15201f)',
+        muted: 'var(--ld-figure-muted, #4c5a58)',
+        accent: 'var(--ld-figure-accent, #15201f)',
+        accentSoft: 'var(--ld-figure-accent-soft, #8a9795)',
+        grid: 'var(--ld-figure-grid, #e3eae9)',
+        paper: 'var(--ld-figure-paper, #ffffff)',
+      }
+      const box = figureSpec.canvas.boundingBox
+      const board = JXG.JSXGraph.initBoard(boardId, {
+        boundingbox: box,
+        axis: false,
+        grid: false,
+        keepaspectratio: figureSpec.canvas.keepAspectRatio !== false,
+        pan: { enabled: false },
+        zoom: { enabled: false },
+        showNavigation: false,
+        showCopyright: false,
+        renderer: 'svg',
+      })
+      board.suspendUpdate()
+
+      const elements = new Map()
+      const definitions = new Map(
+        figureSpec.objects.map((object) => [object.id, object]),
+      )
+      const labels = []
+      const visiblePoints = []
+      const imageRegions = []
+      const rawPaths = []
+
+      const pointValue = (value) => {
+        if (Array.isArray(value)) return value
+        const definition = definitions.get(value)
+        if (definition?.type === 'point') return definition.at
+        throw new Error(`unresolved point: ${String(value)}`)
+      }
+      const jsxPoint = (value) => {
+        if (typeof value === 'string' && elements.has(value)) {
+          return elements.get(value)
+        }
+        return pointValue(value)
+      }
+      const color = (value, fallback) => palette[value] || fallback
+      const lineStyle = (object, fallback = palette.ink) => ({
+        fixed: true,
+        highlight: false,
+        strokeColor: color(object.stroke, fallback),
+        strokeWidth: object.strokeWidth ?? 3,
+        dash: object.dash || 0,
+        opacity: object.opacity ?? 1,
+      })
+      const addLabel = (object, at, text = object.label) => {
+        if (!text) return
+        labels.push({
+          id: `${object.id}-label`,
+          at: pointValue(at),
+          text,
+          placement: object.labelPlacement || {},
+          fontSize: object.fontSize || 28,
+          fontWeight: object.fontWeight || 600,
+          fill: color(object.labelColor, palette.ink),
+          textAnchor: object.textAnchor,
+          dominantBaseline: object.dominantBaseline || 'middle',
+        })
+      }
+      const createSegment = (id, from, to, style) => {
+        const segment = board.create('segment', [jsxPoint(from), jsxPoint(to)], {
+          id: `ld-${id}`,
+          ...style,
+        })
+        elements.set(id, segment)
+        return segment
+      }
+
+      for (const object of figureSpec.objects) {
+        if (object.type === 'point') {
+          const point = board.create('point', object.at, {
+            id: `ld-${object.id}`,
+            name: '',
+            withLabel: false,
+            fixed: true,
+            highlight: false,
+            visible: object.visible !== false,
+            face: object.face || 'o',
+            size: object.size || 4,
+            strokeWidth: object.strokeWidth || 2,
+            strokeColor: color(object.stroke, palette.accent),
+            fillColor: color(object.fill, palette.accent),
+          })
+          elements.set(object.id, point)
+          if (object.visible !== false) {
+            visiblePoints.push({ at: object.at, radius: (object.size || 4) + 5 })
+          }
+          addLabel(object, object.at)
+        } else if (object.type === 'segment') {
+          createSegment(
+            object.id,
+            object.from,
+            object.to,
+            lineStyle(object),
+          )
+          addLabel(object, [
+            (pointValue(object.from)[0] + pointValue(object.to)[0]) / 2,
+            (pointValue(object.from)[1] + pointValue(object.to)[1]) / 2,
+          ])
+        } else if (object.type === 'line') {
+          const line = board.create('line', [
+            jsxPoint(object.from),
+            jsxPoint(object.to),
+          ], {
+            id: `ld-${object.id}`,
+            straightFirst: true,
+            straightLast: true,
+            ...lineStyle(object),
+          })
+          elements.set(object.id, line)
+        } else if (object.type === 'arrow') {
+          const arrow = board.create('arrow', [
+            jsxPoint(object.from),
+            jsxPoint(object.to),
+          ], {
+            id: `ld-${object.id}`,
+            ...lineStyle(object, palette.accent),
+          })
+          elements.set(object.id, arrow)
+        } else if (object.type === 'circle') {
+          const circle = board.create('circle', [
+            jsxPoint(object.center),
+            object.radius,
+          ], {
+            id: `ld-${object.id}`,
+            fixed: true,
+            highlight: false,
+            strokeColor: color(object.stroke, palette.accent),
+            strokeWidth: object.strokeWidth || 3,
+            fillColor: color(object.fill, 'none'),
+            fillOpacity: object.fillOpacity ?? 0,
+          })
+          elements.set(object.id, circle)
+        } else if (object.type === 'polygon') {
+          const polygon = board.create(
+            'polygon',
+            object.points.map(jsxPoint),
+            {
+              id: `ld-${object.id}`,
+              fixed: true,
+              highlight: false,
+            fillColor: color(object.fill, palette.accentSoft),
+              fillOpacity: object.fillOpacity ?? 0.15,
+              vertices: { visible: false },
+              borders: lineStyle(object),
+            },
+          )
+          elements.set(object.id, polygon)
+        } else if (object.type === 'arc') {
+          const arcPoint = (value, role) => {
+            if (typeof value === 'string') return jsxPoint(value)
+            return board.create('point', pointValue(value), {
+              id: `ld-${object.id}-${role}`,
+              name: '',
+              withLabel: false,
+              visible: false,
+              fixed: true,
+              highlight: false,
+            })
+          }
+          const arc = board.create('arc', [
+            arcPoint(object.center, 'center'),
+            arcPoint(object.start, 'start'),
+            arcPoint(object.end, 'end'),
+          ], {
+            id: `ld-${object.id}`,
+            ...lineStyle(object, palette.accent),
+          })
+          elements.set(object.id, arc)
+        } else if (object.type === 'grid') {
+          const [xMin, yMax, xMax, yMin] = object.bounds || box
+          const xOffset = object.xOffset ?? 0
+          const yOffset = object.yOffset ?? 0
+          let index = 0
+          for (
+            let x = xOffset + (
+              Math.ceil((xMin - xOffset) / object.xStep - 1e-9) * object.xStep
+            );
+            x <= xMax + 1e-9 && index < 500;
+            x += object.xStep
+          ) {
+            createSegment(
+              `${object.id}-v-${index}`,
+              [x, yMin],
+              [x, yMax],
+              lineStyle(object, palette.grid),
+            )
+            index += 1
+          }
+          index = 0
+          for (
+            let y = yOffset + (
+              Math.ceil((yMin - yOffset) / object.yStep - 1e-9) * object.yStep
+            );
+            y <= yMax + 1e-9 && index < 500;
+            y += object.yStep
+          ) {
+            createSegment(
+              `${object.id}-h-${index}`,
+              [xMin, y],
+              [xMax, y],
+              lineStyle(object, palette.grid),
+            )
+            index += 1
+          }
+        } else if (object.type === 'axis') {
+          createSegment(
+            object.id,
+            object.from,
+            object.to,
+            lineStyle(object, palette.ink),
+          )
+          const start = pointValue(object.from)
+          const end = pointValue(object.to)
+          const dx = end[0] - start[0]
+          const dy = end[1] - start[1]
+          const length = Math.hypot(dx, dy) || 1
+          const normal = [-dy / length, dx / length]
+          for (const [index, tick] of (object.ticks || []).entries()) {
+            const at = Array.isArray(tick.at)
+              ? tick.at
+              : [start[0] + dx * tick.at, start[1] + dy * tick.at]
+            const size = tick.size || object.tickSize || 0.12
+            createSegment(
+              `${object.id}-tick-${index}`,
+              [at[0] - normal[0] * size, at[1] - normal[1] * size],
+              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+              lineStyle(object, palette.ink),
+            )
+            if (tick.label !== undefined) {
+              addLabel(
+                {
+                  id: `${object.id}-tick-${index}`,
+                  labelPlacement: tick.labelPlacement || {
+                    position: Math.abs(dx) >= Math.abs(dy) ? 'S' : 'E',
+                  },
+                  fontSize: tick.fontSize || object.fontSize || 26,
+                  fontWeight: 600,
+                  labelColor: object.labelColor,
+                },
+                at,
+                String(tick.label),
+              )
+            }
+          }
+        } else if (object.type === 'measure') {
+          const start = pointValue(object.from)
+          const end = pointValue(object.to)
+          createSegment(
+            object.id,
+            start,
+            end,
+            lineStyle(object, palette.accent),
+          )
+          const dx = end[0] - start[0]
+          const dy = end[1] - start[1]
+          const length = Math.hypot(dx, dy) || 1
+          const normal = [-dy / length, dx / length]
+          const size = object.capSize || 0.15
+          for (const [index, at] of [start, end].entries()) {
+            createSegment(
+              `${object.id}-cap-${index}`,
+              [at[0] - normal[0] * size, at[1] - normal[1] * size],
+              [at[0] + normal[0] * size, at[1] + normal[1] * size],
+              lineStyle(object, palette.accent),
+            )
+          }
+          addLabel(object, [
+            (start[0] + end[0]) / 2,
+            (start[1] + end[1]) / 2,
+          ])
+        } else if (object.type === 'text') {
+          addLabel(object, object.at, object.text)
+        } else if (object.type === 'image') {
+          if (!object.dataUri) throw new Error(`missing asset: ${object.asset}`)
+          const image = board.create('image', [
+            object.dataUri,
+            object.at,
+            object.size,
+          ], {
+            id: `ld-${object.id}`,
+            fixed: true,
+            highlight: false,
+            opacity: object.opacity ?? 1,
+          })
+          if (object.rotation) {
+            const center = board.create('point', object.rotation.center, {
+              name: '',
+              visible: false,
+              fixed: true,
+            })
+            const transform = board.create('transform', [
+              object.rotation.angleDegrees * Math.PI / 180,
+              center,
+            ], {
+              type: 'rotate',
+            })
+            transform.bindTo(image)
+          }
+          elements.set(object.id, image)
+          if (object.avoidLabels === true) {
+            imageRegions.push([
+              object.at[0],
+              object.at[1] + object.size[1],
+              object.at[0] + object.size[0],
+              object.at[1],
+            ])
+          }
+        } else if (object.type === 'svgPath') {
+          rawPaths.push(object)
+        }
+      }
+
+      board.unsuspendUpdate()
+      board.fullUpdate()
+
+      const svg = document.getElementById(boardId)?.querySelector('svg')
+      if (!svg) throw new Error('JSXGraph did not create an SVG renderer')
+      svg.setAttribute('xmlns', SVG_NS)
+      svg.setAttribute('width', String(figureSpec.canvas.width))
+      svg.setAttribute('height', String(figureSpec.canvas.height))
+      svg.setAttribute(
+        'viewBox',
+        `0 0 ${figureSpec.canvas.width} ${figureSpec.canvas.height}`,
+      )
+      svg.style.background = figureSpec.canvas.background === 'transparent'
+        ? 'transparent'
+        : palette.paper
+
+      const imageFits = figureSpec.objects
+        .filter((object) => object.type === 'image')
+        .map((object) => {
+          const node = document.getElementById(`${boardId}_ld-${object.id}`)
+          if (!node) {
+            return {
+              id: object.id,
+              status: 'fail',
+              reason: 'missing rendered image node',
+            }
+          }
+          // JSXGraph defaults SVG images to preserveAspectRatio="none".
+          // Treat FigureSpec size as a fit box and never distort artwork.
+          node.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+          node.setAttribute('data-ld-layer', 'artwork')
+          return {
+            id: object.id,
+            status: node.getAttribute('preserveAspectRatio') === 'xMidYMid meet'
+              ? 'pass'
+              : 'fail',
+            preserveAspectRatio: node.getAttribute('preserveAspectRatio'),
+          }
+        })
+
+      if (rawPaths.length) {
+        const rawLayer = document.createElementNS(SVG_NS, 'g')
+        rawLayer.setAttribute('id', `${boardId}-raw-path-layer`)
+        const scaleX = figureSpec.canvas.width / (
+          figureSpec.canvas.boundingBox[2] - figureSpec.canvas.boundingBox[0]
+        )
+        const scaleY = figureSpec.canvas.height / (
+          figureSpec.canvas.boundingBox[1] - figureSpec.canvas.boundingBox[3]
+        )
+        rawLayer.setAttribute('transform', `scale(${scaleX} ${scaleY})`)
+        for (const object of rawPaths) {
+          const node = document.createElementNS(SVG_NS, 'path')
+          node.setAttribute('d', object.d)
+          node.setAttribute('fill', color(object.fill, 'none'))
+          node.setAttribute('stroke', color(object.stroke, 'none'))
+          node.setAttribute(
+            'stroke-width',
+            String(object.strokeWidth || 1),
+          )
+          node.setAttribute('vector-effect', 'non-scaling-stroke')
+          const dashPatterns = [
+            [2, 2], [5, 5], [10, 10], [20, 20],
+            [20, 10, 10, 10], [20, 5, 10, 5], [0, 5],
+          ]
+          const dashPattern = dashPatterns[(object.dash || 0) - 1]
+          if (dashPattern) {
+            node.setAttribute(
+              'stroke-dasharray',
+              dashPattern.map(value => value * (object.strokeWidth || 1)).join(','),
+            )
+          }
+          if (object.fillOpacity !== undefined) {
+            node.setAttribute('fill-opacity', String(object.fillOpacity))
+          }
+          if (object.strokeOpacity !== undefined) {
+            node.setAttribute('stroke-opacity', String(object.strokeOpacity))
+          }
+          rawLayer.appendChild(node)
+        }
+        svg.appendChild(rawLayer)
+      }
+
+      const toScreen = (at) => {
+        const coords = new JXG.Coords(JXG.COORDS_BY_USER, at, board)
+        return [coords.scrCoords[1], coords.scrCoords[2]]
+      }
+      const rectFromRegion = (region) => {
+        const topLeft = toScreen([region[0], region[1]])
+        const bottomRight = toScreen([region[2], region[3]])
+        return {
+          x: Math.min(topLeft[0], bottomRight[0]),
+          y: Math.min(topLeft[1], bottomRight[1]),
+          width: Math.abs(bottomRight[0] - topLeft[0]),
+          height: Math.abs(bottomRight[1] - topLeft[1]),
+        }
+      }
+      const labelLayer = document.createElementNS(SVG_NS, 'g')
+      labelLayer.setAttribute('id', `${boardId}-label-layer`)
+      svg.appendChild(labelLayer)
+      const geometryNodes = [...svg.querySelectorAll(
+        'line, path, polygon, polyline, circle, ellipse, rect',
+      )].filter((node) => (
+        !node.closest('defs') &&
+        node.getAttribute('display') !== 'none' &&
+        node.getAttribute('stroke') !== 'none' &&
+        Number.parseFloat(node.getAttribute('stroke-width') || '0') > 2.5
+      ))
+
+      const minGap = figureSpec.layout?.minLabelGap ?? 4
+      const avoid = [
+        ...visiblePoints.map((point) => {
+          const [x, y] = toScreen(point.at)
+          return {
+            x: x - point.radius,
+            y: y - point.radius,
+            width: point.radius * 2,
+            height: point.radius * 2,
+          }
+        }),
+        ...imageRegions.map(rectFromRegion),
+        ...(figureSpec.layout?.avoidRegions || []).map(rectFromRegion),
+      ]
+      const occupied = []
+      const collisions = []
+
+      const overlapArea = (a, b) => {
+        const width = Math.max(
+          0,
+          Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
+        )
+        const height = Math.max(
+          0,
+          Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y),
+        )
+        return width * height
+      }
+      const inflate = (rect, amount) => ({
+        x: rect.x - amount,
+        y: rect.y - amount,
+        width: rect.width + amount * 2,
+        height: rect.height + amount * 2,
+      })
+      const outsideArea = (rect) => {
+        const clippedWidth = Math.max(
+          0,
+          Math.min(rect.x + rect.width, figureSpec.canvas.width) -
+            Math.max(rect.x, 0),
+        )
+        const clippedHeight = Math.max(
+          0,
+          Math.min(rect.y + rect.height, figureSpec.canvas.height) -
+            Math.max(rect.y, 0),
+        )
+        return rect.width * rect.height - clippedWidth * clippedHeight
+      }
+      const strokeHitsRect = (node, rect) => {
+        if (typeof node.getTotalLength !== 'function') return false
+        let length
+        try {
+          length = node.getTotalLength()
+        } catch {
+          return false
+        }
+        if (!Number.isFinite(length) || length <= 0) return false
+        const ctm = node.getCTM()
+        const samples = Math.min(500, Math.max(2, Math.ceil(length / 4)))
+        for (let index = 0; index <= samples; index += 1) {
+          const point = node.getPointAtLength(length * index / samples)
+          const transformed = ctm
+            ? new DOMPoint(point.x, point.y).matrixTransform(ctm)
+            : point
+          if (
+            transformed.x >= rect.x &&
+            transformed.x <= rect.x + rect.width &&
+            transformed.y >= rect.y &&
+            transformed.y <= rect.y + rect.height
+          ) {
+            return true
+          }
+        }
+        return false
+      }
+      const placements = {
+        CENTER: [0, 0, 'middle'],
+        NE: [1, -1, 'start'],
+        NW: [-1, -1, 'end'],
+        SE: [1, 1, 'start'],
+        SW: [-1, 1, 'end'],
+        E: [1, 0, 'start'],
+        W: [-1, 0, 'end'],
+        N: [0, -1, 'middle'],
+        S: [0, 1, 'middle'],
+      }
+
+      for (const label of labels) {
+        const node = document.createElementNS(SVG_NS, 'text')
+        node.textContent = label.text
+        node.setAttribute('fill', label.fill)
+        node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
+        node.setAttribute('font-size', String(label.fontSize))
+        node.setAttribute('font-weight', String(label.fontWeight))
+        node.setAttribute('dominant-baseline', label.dominantBaseline)
+        node.setAttribute('data-label-id', label.id)
+        labelLayer.appendChild(node)
+
+        const [anchorX, anchorY] = toScreen(label.at)
+        const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
+        const offset = label.placement.offset || [0, 0]
+        const requested = label.placement.position
+        const automatic = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
+        const candidates = requested
+          ? (
+              label.placement.fallback
+                ? [requested, ...automatic.filter((item) => item !== requested)]
+                : [requested]
+            )
+          : automatic
+        let best = null
+
+        for (const position of candidates) {
+          if (!placements[position]) {
+            throw new Error(`Unsupported label placement: ${position}`)
+          }
+          const [xDirection, yDirection, anchor] = placements[position]
+          node.setAttribute(
+            'x',
+            String(anchorX + xDirection * gap + offset[0]),
+          )
+          node.setAttribute(
+            'y',
+            String(anchorY + yDirection * gap + offset[1]),
+          )
+          node.setAttribute('text-anchor', label.textAnchor || anchor)
+          const rect = node.getBBox()
+          const padded = inflate(rect, minGap)
+          const overlap = [...avoid, ...occupied].reduce(
+            (sum, other) => sum + overlapArea(padded, other),
+            0,
+          )
+          const strokeCollision = geometryNodes.some(
+            (geometry) => strokeHitsRect(geometry, padded),
+          )
+          const score =
+            overlap +
+            outsideArea(padded) * 100 +
+            (strokeCollision ? 10000 : 0)
+          if (!best || score < best.score) {
+            best = {
+              position,
+              x: node.getAttribute('x'),
+              y: node.getAttribute('y'),
+              anchor: label.textAnchor || anchor,
+              rect: {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+              },
+              score,
+            }
+          }
+        }
+
+        node.setAttribute('x', best.x)
+        node.setAttribute('y', best.y)
+        node.setAttribute('text-anchor', best.anchor)
+        occupied.push(inflate(best.rect, minGap))
+        if (best.score > 0.5) {
+          collisions.push({
+            id: label.id,
+            text: label.text,
+            position: best.position,
+            score: best.score,
+          })
+        }
+      }
+
+      svg.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+      window.materializeArrowheads(svg)
+      const displayChecks = figureSpec.display.widths.map((width) => {
+        const host = document.createElement('div')
+        host.style.cssText =
+          `position:absolute;left:-10000px;top:0;width:${width}px;overflow:visible`
+        const candidate = svg.cloneNode(true)
+        candidate.setAttribute('width', String(width))
+        candidate.removeAttribute('height')
+        candidate.style.width = `${width}px`
+        candidate.style.height = 'auto'
+        host.appendChild(candidate)
+        document.body.appendChild(host)
+        const textSizes = [...candidate.querySelectorAll('text')].map((node) => {
+          const fontSize = Number.parseFloat(node.getAttribute('font-size') || '0')
+          const matrix = node.getScreenCTM()
+          const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0
+          return {
+            id: node.getAttribute('data-label-id'),
+            text: node.textContent,
+            px: fontSize * scale,
+          }
+        })
+        const failures = textSizes.filter(
+          (item) => item.px + 0.01 < figureSpec.display.minTextPx,
+        )
+        host.remove()
+        return {
+          width,
+          minTextPx: figureSpec.display.minTextPx,
+          measuredMinPx: textSizes.length
+            ? Math.min(...textSizes.map((item) => item.px))
+            : null,
+          failures,
+          status: failures.length ? 'fail' : 'pass',
+        }
+      })
+      const cloneFor = (layer) => {
+        const clone = svg.cloneNode(true)
+        clone.style.background = layer === 'composite'
+          ? svg.style.background
+          : 'transparent'
+        if (layer === 'overlay') {
+          clone.querySelectorAll('image').forEach((node) => node.remove())
+        } else if (layer === 'artwork') {
+          clone.querySelectorAll(
+            'line, path, polygon, polyline, circle, ellipse, rect, text',
+          ).forEach((node) => {
+            if (!node.closest('defs')) node.remove()
+          })
+        }
+        clone.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+        return clone.outerHTML
+      }
+      return {
+        svg: cloneFor(figureSpec.mode === 'hybrid' ? 'overlay' : 'composite'),
+        compositeSvg: cloneFor('composite'),
+        artworkSvg: figureSpec.mode === 'hybrid' ? cloneFor('artwork') : null,
+        labels: labels.length,
+        collisions,
+        objects: figureSpec.objects.length,
+        imageFits,
+        displayChecks,
+      }
+    }, { figureSpec: spec, boardId })
+
+    const screenshotSvg = async (svg, filePath, transparent) => {
+      ensureParent(filePath)
+      await page.setContent(`
+        <!doctype html>
+        <style>
+          :root {
+            --ld-figure-ink: #15201f;
+            --ld-figure-muted: #4c5a58;
+            --ld-figure-accent: #15201f;
+            --ld-figure-accent-soft: #8a9795;
+            --ld-figure-grid: #e3eae9;
+            --ld-figure-paper: #ffffff;
+          }
+          html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+          body { background: ${transparent ? 'transparent' : '#ffffff'}; }
+          svg { display: block; }
+        </style>
+        ${svg}
+      `)
+      await page.screenshot({
+        path: filePath,
+        type: 'png',
+        omitBackground: transparent,
+        animations: 'disabled',
+      })
+    }
+    if (output.svg) {
+      ensureParent(output.svg)
+      fs.writeFileSync(output.svg, `${result.svg}\n`, 'utf8')
+    }
+    if (output.png) {
+      await screenshotSvg(result.compositeSvg, output.png, false)
+    }
+    if (output.artwork) {
+      await screenshotSvg(result.artworkSvg, output.artwork, true)
+    }
+    return result
+  } finally {
+    await browser.close()
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  const specPath = path.resolve(args.spec)
+  validateSpec(specPath)
+  const rawSpec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  if (rawSpec.schema !== FIGURE_SPEC_SCHEMA) {
+    throw new Error(
+      `renderer accepts only ${FIGURE_SPEC_SCHEMA}; migrate the source-first spec`,
+    )
+  }
+  if (rawSpec.mode === 'generated') {
+    throw new Error('generated mode must be produced with n-azure cap4')
+  }
+  const spec = embedAssets(rawSpec)
+  if (spec.mode === 'deterministic' && !args.svg) {
+    throw new Error('deterministic mode requires --svg')
+  }
+  if (spec.mode === 'hybrid' && (!args.svg || !args.artwork)) {
+    throw new Error('hybrid mode requires --svg and --artwork')
+  }
+  const result = await render(spec, {
+    svg: args.svg && path.resolve(args.svg),
+    png: args.png && path.resolve(args.png),
+    artwork: args.artwork && path.resolve(args.artwork),
+  })
+  const report = {
+    schema: RENDER_SCHEMA,
+    figure: spec.id,
+    mode: spec.mode,
+    renderer: {
+      name: 'JSXGraph',
+      version: JSON.parse(
+        fs.readFileSync(
+          path.join(skillsDir, 'node_modules', 'jsxgraph', 'package.json'),
+          'utf8',
+        ),
+      ).version,
+    },
+    spec: {
+      path: portablePath(specPath),
+      sha256: sha256File(specPath),
+    },
+    output: {
+      ...(spec.mode === 'deterministic'
+        ? { svg: { path: portablePath(args.svg), sha256: sha256File(args.svg) } }
+        : {}),
+      ...(spec.mode === 'hybrid'
+        ? {
+            artwork: {
+              path: portablePath(args.artwork),
+              sha256: sha256File(args.artwork),
+            },
+            svg: {
+              path: portablePath(args.svg),
+              sha256: sha256File(args.svg),
+            },
+          }
+        : {}),
+    },
+    assets: (spec.assets || []).map((asset) => ({
+      id: asset.id,
+      path: portablePath(asset.path),
+      sha256: sha256File(asset.path),
+      ...(asset.metadata
+        ? {
+            metadata: {
+              path: portablePath(asset.metadata),
+              sha256: sha256File(asset.metadata),
+            },
+          }
+        : {}),
+    })),
+    theme: {
+      roles: ['ink', 'muted', 'accent', 'accentSoft', 'grid', 'paper'],
+      output: 'css-variables',
+    },
+    objects: result.objects,
+    labels: result.labels,
+    collisions: result.collisions,
+    imageFits: result.imageFits,
+    displayChecks: result.displayChecks,
+    status: (
+      result.collisions.length ||
+      result.imageFits.some((item) => item.status !== 'pass') ||
+      result.displayChecks.some((item) => item.status !== 'pass')
+    ) ? 'fail' : 'pass',
+  }
+  if (args.report) {
+    ensureParent(args.report)
+    fs.writeFileSync(
+      args.report,
+      `${JSON.stringify(report, null, 2)}\n`,
+      'utf8',
+    )
+  }
+  if (report.status === 'fail') {
+    console.error(JSON.stringify(report, null, 2))
+    process.exitCode = 2
+  } else {
+    console.log(`PASS: ${spec.id} (${result.objects} objects, ${result.labels} labels)`)
+  }
+}
+
+main().catch((error) => {
+  console.error(`ERROR: ${error.message}`)
+  process.exitCode = 1
+})
+
+{"path":".agents/skills/ld-s10y-image/scripts/build_context.py"}
+#!/usr/bin/env python3
+"""Build authoritative edition-text context for one lesson figure."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+import struct
+from pathlib import Path
+
+
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def load(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def png_size(path: Path) -> tuple[int, int]:
+    header = path.read_bytes()[:24]
+    if len(header) < 24 or not header.startswith(PNG_SIGNATURE):
+        raise SystemExit(f"ERROR: source figure is not a PNG: {path}")
+    return struct.unpack(">II", header[16:24])
+
+
+def suggested_size(width: int, height: int) -> str:
+    ratio = width / height
+    if ratio >= 1.2:
+        return "1536x1024"
+    if ratio <= 0.83:
+        return "1024x1536"
+    return "1024x1024"
+
+
+def normalized_reference(text: str) -> str:
+    return re.sub(r"\s+", "", text).lower()
+
+
+def prose_context(blocks: list[dict], figure_id: str) -> list[dict]:
+    result = []
+    for index, block in enumerate(blocks):
+        if block.get("kind") != "fig" or block.get("id") != figure_id:
+            continue
+        figure_label = block.get("label", "")
+        references = {
+            normalized_reference(figure_id),
+            normalized_reference(figure_label),
+        }
+        direct = []
+        for candidate in blocks:
+            if candidate.get("kind") != "p":
+                continue
+            text = candidate.get("text", "").strip()
+            normalized = normalized_reference(text)
+            if text and any(reference and reference in normalized for reference in references):
+                direct.append(text)
+        nearby = []
+        for candidate in blocks[max(0, index - 3):index + 4]:
+            if candidate.get("kind") in {"p", "cap"}:
+                text = candidate.get("text", "").strip()
+                if text:
+                    nearby.append(text)
+        context = list(dict.fromkeys(direct + nearby))
+        result.append({
+            "figureLabel": figure_label,
+            "nearbyText": context,
+        })
+    return result
+
+
+def exercise_context(items: list[dict], figure_id: str) -> list[dict]:
+    result = []
+    for item in items:
+        refs = item.get("figure_refs", [])
+        figures = [figure.get("id") for figure in item.get("figures", [])]
+        if figure_id not in refs and figure_id not in figures:
+            continue
+        text = item.get("text", "").strip()
+        if text:
+            result.append({
+                "exercise": str(item.get("number")),
+                "group": item.get("group"),
+                "text": text,
+            })
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--book", required=True)
+    parser.add_argument("--edition", required=True)
+    parser.add_argument("--figure", required=True)
+    parser.add_argument(
+        "--root",
+        default="ssot-resources/soviet10year-textbooks/artifacts",
+    )
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+
+    book = Path(args.root) / args.book
+    edition = book / "editions" / args.edition
+    source_image = book / "figures" / f"{args.figure}.png"
+    if not source_image.is_file():
+        raise SystemExit(f"ERROR: missing original PNG: {source_image}")
+
+    lessons = []
+    lesson_root = edition / "lessons"
+    if not lesson_root.is_dir():
+        raise SystemExit(f"ERROR: missing edition lessons: {lesson_root}")
+    for lesson_dir in sorted(lesson_root.iterdir()):
+        if not lesson_dir.is_dir():
+            continue
+        lesson_path = lesson_dir / "lesson.json"
+        exercise_path = lesson_dir / "exercises.json"
+        if not lesson_path.is_file() or not exercise_path.is_file():
+            continue
+        lesson = load(lesson_path)
+        exercises = load(exercise_path)
+        prose = prose_context(lesson.get("prose", []), args.figure)
+        exercise_items = exercise_context(
+            exercises.get("exercises", []), args.figure
+        )
+        if prose or exercise_items:
+            lessons.append({
+                "lesson": lesson_dir.name,
+                "title": lesson.get("printed_title") or lesson.get("title"),
+                "prose": prose,
+                "exercises": exercise_items,
+            })
+    if not lessons:
+        raise SystemExit(
+            f"ERROR: {args.figure} is not referenced by edition {args.edition}"
+        )
+
+    width, height = png_size(source_image)
+    payload = {
+        "schema": "ld-s10y-image/context@1",
+        "book": args.book,
+        "edition": args.edition,
+        "figure": args.figure,
+        "authoritativeRule": (
+            "Modern-edition text is authoritative. The original PNG supplies "
+            "visual structure only. Never use an answer key or derive answer "
+            "annotations."
+        ),
+        "sourceImage": {
+            "path": source_image.as_posix(),
+            "sha256": sha256(source_image),
+            "width": width,
+            "height": height,
+        },
+        "suggestedSize": suggested_size(width, height),
+        "lessons": lessons,
+    }
+    text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(text, encoding="utf-8")
+        print(args.output)
+    else:
+        print(text, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
+{"path":"/Users/yong/.agents/skills/intentfold/SKILL.md"}
+---
+name: intentfold
+description: Load for ticket-based product development with the .intentfold harness, from initialization and filing through development, handoff and closure; also for multi-ticket delivery planning with cap5 or supervising one or more workers with cap6. Triggers include "intentfold", "cap1/cap2/cap3/cap3setup/cap3handoff/cap4/cap5/cap6", "开发这个工单", "准备开放开发", "开发完成，做 handoff", "建个工单", "拆单安排并行", "监督工人直到完成", and charter-directed deployment of merged code.
+---
+
+# intentfold
+
+One ticket at a time **per developer session**; a supervisor can coordinate several. `.intentfold/`
+holds what persists, the ticket backend — **plane or linear**,
+whichever `project.json` names — holds the tickets. The ticket's acceptance criteria define acceptance;
+the project's required mechanical checks still apply.
+
+The release version lives in `intentfold.json` (`version`). Usage declarations continue to record
+the exact Git commit SHA, not this release number.
+
+**IntentFold** is the harness brand for three independent controls a project may name in
+`charter/engineering.md`'s `## Tools`: an IntentFold process declaration, an overlap check before rebasing,
+and an optional cap4 takeover gate before merging. The declaration records the ticket, repository,
+and IntentFold version. The verifier checks the committed `handoff.md` directly from the PR head. It
+is process evidence, not employee identity or proof that a binary ran.
+The overlap check detects when upstream and ticket changes touch the same code region. The ticket
+developer resolves these overlaps and Git conflicts, verifies the result, and continues without an
+additional team-leader approval. A cap4 takeover gate remains pending during
+normal PR and review events, then releases the current head only after cap4 has armed auto-merge and
+explicitly dispatched the trusted verifier.
+
+## Specification first
+
+During planning and implementation, **do not use existing unit tests, for example unit tests
+under `tests/`, as a reference for designing or changing code**. Do not infer requirements
+from their assertions or preserve an obsolete implementation just to satisfy them. Design
+from the approved ticket, Charter and valid external contracts; refactoring and optimization
+remain available within that scope.
+
+Run the project's required unit tests **after implementation is ready for verification**.
+When one fails, judge both the test and the code against those same specifications:
+correct an outdated test or an assertion tied only to replaced implementation details;
+correct the code when it violates a valid requirement. Do not weaken valid assertions,
+delete tests merely to get green, or infer expected values from the new code's output.
+
+Examples:
+
+- **Correct the test:** an approved refactor replaces per-item lookups with one batch
+  lookup while preserving required results and error behavior. An old unit test in
+  `tests/` asserts one private-helper call per item. Replace that obsolete assertion
+  with the required behavior; do not restore the old call pattern.
+- **Correct the code:** the contract forbids reading another user's private record.
+  After a refactor, a unit test catches such a read succeeding. Fix the authorization
+  regression; do not change the test to expect success.
+
+This does not prohibit reading production code, running the app, lint/type checks, or
+consulting authoritative acceptance and API-contract specifications. Classify by purpose,
+not directory name: `tests/` may also contain those specifications. Required checks still
+must pass; this rule changes what drives implementation, not the acceptance standard.
+
+## Proposed solutions
+
+A developable ticket's `## Proposed solution` is advisory, not another requirement.
+Read it before choosing the implementation route and prefer its applicable parts rather
+than starting over. Check its assumptions against the actual system; adapt or replace it
+when incomplete, outdated, infeasible, or unnecessarily complex.
+
+Scope, explicit constraints, acceptance criteria and the Charter remain binding. Do not
+silently demote an explicit user requirement into a suggestion. Explain material departures
+briefly in the existing plan, draft or handoff; no separate report or extra approval round
+is needed merely to change a proposal. A proposal neither replaces an agreed approach nor
+skips the normal alignment step, and matching it is not an acceptance criterion.
+
+## Capability freshness gate
+
+Before executing **any** IntentFold capability — cap1, cap2, cap3, cap3setup, cap3handoff, cap4, cap5, or cap6 —
+run this once for the current capability invocation:
+
+```bash
+skillhost update narrative-skills --agent <current-agent>
+```
+
+Use the current runtime's SkillHost agent name (`codex`, `claude`, `opencode`, `copilot`,
+`openclaw`, or `hermes`). If SkillHost is unavailable or the update fails, stop and report the
+failure; do not continue the capability with a stale skill. After a successful update, re-read the
+active SkillHost-linked `intentfold/SKILL.md` and the selected capability reference before
+continuing. That re-read does not trigger a second update in the same invocation.
+Recurring cap6 inspections and resumes of that inspection loop are the same invocation,
+not reasons to update the skill at each inspection. A newly invoked child capability keeps its own gate.
+
+## Start here — what is being asked?
+
+**Read this table before anything else and go where it points.** Not every request that mentions this
+skill is one of its capabilities, and forcing one onto the nearest capability is the most common
+way this skill gets misused.
+
+| The human wants… | Go to |
+|---|---|
+| a `.intentfold/` harness in this repo | **cap1** — `references/capability-1-init/init.md` |
+| a ticket filed | **cap2** — `references/capability-2-ticket/create-ticket.md` |
+| IntentFold to develop a ticket autonomously, end to end — including a generic "开发这个工单" | **cap3** — `references/capability-3-develop/dev.md` |
+| the required IntentFold setup before vibe coding or another development skill | **cap3setup** — `references/capability-3-setup/setup.md` |
+| completed open-development work verified and handed off | **cap3handoff** — `references/capability-3-handoff/handoff.md` |
+| a verified ticket merged, landed, closed | **cap4** — `references/capability-4-close/close.md` |
+| a goal organized into the necessary tickets, parallel groups and dependencies | **cap5** — `references/capability-5-orchestrate/orchestrate.md` |
+| one existing ticket/worker, or an epic's workers, supervised through completion | **cap6** — `references/capability-6-supervise/supervise.md`; no mandatory cap5 or epic |
+| **to deploy** — "重新部署", "发布一下", "deploy this" | **Not a capability. Do not file a ticket.** See *Deploying on its own* below |
+| the app run, a page looked at, a log read | **Nothing here.** Follow `charter/operations.md` and do it |
+| a question answered about this project | **Nothing here.** Read `charter/`, answer, stop |
+| a code change, with no ticket for it | **cap2 first**, then cap3 or cap3setup. This is the case the no-ticket rule is for |
+
+When the request fits none of these, say so and ask — **do not map it onto the closest capability.**
+
+## Supervised delivery
+
+For cap5/cap6 and their explicitly supervised children, read
+`references/common/supervision.md`. It is the scoped override for finish, Grill, recoverable
+stops, the delivery decision and next-ticket selection below. Defaults are **no recurring
+monitoring, delegated ordinary decisions, and `finish: review`**: develop and verify, then
+keep the preview ports running for human review. Requested monitoring runs every **10 minutes**;
+automatic merge/closure or deployment requires its own explicit authorization.
+Unsupervised cap1-cap4 behavior is unchanged.
+
+cap5's arrangement must pass `references/gate-5-orchestrate/gate.md` inline before filing
+or dispatch. cap6 reuses the existing handoff decision, not a new review pipeline.
+Session names, model resolution, bootstrap and opt-in recurring continuation live only in
+`references/common/supervision-sessions.md`.
+
+## Deploying on its own
+
+Deploying already-merged code is **not a product change and needs no ticket**. `charter/operations.md`
+says it in its own words: a ticket ends at merge, and deploying is a separate, deliberate act. Three
+steps, and this skill contributes nothing else:
+
+1. Read `charter/operations.md`, including its `## Redlines`. A first-time or destructive deploy needs the
+   human; a routine redeploy of an already-deployed service does not.
+2. Do exactly what `operations.md` says. No assumed platform, no invented command. If it does not say how,
+   that is a stop.
+3. **Confirm it actually took** by its post-deploy check — hit the URL, look at the response. *"The
+   deploy command exited 0"* is not confirmation.
+
+The same three steps run inside cap4 for an `auto-deploy` ticket. Standalone, they are the whole job.
+
+## Why this skill is shaped the way it is
+
+The point of this skill is **speed with a trace**, not assurance. Autonomous cap3 has exactly one
+thinking step (a grill, before the code); cap3setup instead establishes the required boundary and
+leaves the development method open. Both routes have one IntentFold proof step in cap3handoff: run
+the product, check the AC, and look at the result once through the human's request. Everything
+else is just a record so a human can see later what happened. **No repeated review passes, no
+regression suite added by the workflow, no timeline, no ADR log.** Multi-ticket coordination belongs to cap5/cap6, not a developer's ticket. If you find
+yourself about to verify something a second time, stop — that is the thing this skill exists to not
+do.
+
+What this skill refuses is checking that is **frequent, repeated, and scattered everywhere** — the
+same question asked at five points because nobody could say which point was the real one. It does not
+refuse checking. **At a major joint, check.** The joints are few and named: before development starts
+(cap3's grill and route lookup, or cap3setup's boundary briefing), at the cap3handoff proof step, and
+before an irreversible act in cap4. A check at a joint costs seconds and catches what cannot be
+undone afterwards; the same check sprinkled through every step is the bureaucracy this skill exists
+to avoid. Judge a proposed check by **where** it sits, not by whether it is a check.
+
+## Persistent layer
+
+```text
+.intentfold/
+  readme.md            # session entry: what to read, in what order
+  project.json         # project/main/deploy/tickets + each service's main port and ticket prefix
+  charter/             # human-owned intent — read it; write it only when the human asks
+    product.md         #   product purpose, users, value, non-goals
+    engineering.md     #   architecture, development rules, checks, and landing
+    ui.md              #   design system and interface constraints
+    operations.md      #   local runtime, acceptance evidence, deploy, and operations
+  tickets/<ticket-id>/ # ticket.json (mode/stage/finish/branch/base/ports)  draft.md  plan.md  ac.md
+                       # grill.md  handoff.md  intentfold-usage.json  rework.md  tmp/
+  tmp/                 # project scratch
+```
+
+`tmp/` directories and env files are git-ignored; everything else is committed.
+
+In commands, `<intentfold-skill>` means the loaded skill directory containing this `SKILL.md`.
+
+The four-file Charter contract is exact. A project that still has `charter/readme.md`, `dev.md`,
+`arch.md`, `runbook.md`, `qa.md`, or `devops.md` has not migrated; cap3 and cap3setup stop rather
+than interpreting both layouts or combining human-owned files automatically.
+
+## The charter's shape — four sections, and how each is used
+
+Every charter file is made of these four, always in this order and always all four. They are not
+strength levels — they are four different things to state, and **each is consumed at a different
+moment, in a different way**. `.intentfold/readme.md` carries the full rules and the tests for
+deciding where a line goes; this is what the flow needs to know:
+
+| Section | States | The flow's use of it |
+|---|---|---|
+| **Contract** | what the artifact is | **referenced while authoring** — built from, never audited against at the end |
+| **Tools** | commands, paths, ports, URLs, viewports | **looked up at the moment of acting**, run as written; never recalled from earlier in the run, never restated into a plan or a ticket |
+| **Guidance** | how to do the work | **followed while writing**, judged by the author. **Nothing in this skill reviews a diff against Guidance** — that is deliberate, and adding such a review is the bureaucracy this skill refuses |
+| **Redlines** | the boundary | **looked up before the action**, table-style, never judged |
+
+**All four headings appear in every charter file**, in this order; a section with nothing to say
+keeps its heading and stays empty. An empty section states that the dimension has nothing of that
+kind — a missing heading would instead read as "somebody forgot", and it would break the addressing
+the capabilities rely on. Redlines live in the file whose dimension they belong to; there is **never
+a separate redline file**.
+
+**A rule is worth more mechanised than emphasised.** Where a Contract fact or a Redline can be
+checked by a command, the charter names that command in `Tools` and the build fails — that beats the
+same rule written more forcefully, and it is why the flow needs no review pass.
+
+**Where the flow touches each section**, once each, and nowhere else:
+
+- **cap3 step 1 or cap3setup step 1** reads `Contract` + `Guidance` as the constraints the ticket is
+  built under.
+- **cap3 step 4** looks the planned route up against `Redlines` — before any code exists, because an
+  approval collected afterwards is not an approval.
+- **cap3setup step 5** briefs the relevant `Redlines` before its open development phase, since
+  IntentFold does not own a route to look up.
+- **cap3handoff** reads `Tools` at the moment of acting (start the product, run the checks) and runs
+  the project's mechanical defence once before the handoff.
+- **cap4** runs the mechanical defence once on the final branch only when rework or synchronization
+  requires it, as its close reference specifies. It reads `engineering.md`'s PR commands at the
+  moment it uses them, and a deploying ticket reads `operations.md`'s `Tools` and `Redlines` at the
+  moment of deploying.
+
+Nothing reads the charter to audit finished work. That is the duplication this arrangement removes.
+
+**Requirements stay authoritative in the ticket backend** — read the ticket live each time through
+**n-plane** or **n-linear** as `project.json` `tickets.system` says. There is no `req.md`. `ac.md` is
+only the executable check plan and must match the live acceptance criteria. The routing, delegation
+rule and per-backend content language are in `references/common/ticket-backend.md`; read it before the
+first ticket read or write of a run.
+
+## Ticket types
+
+Set by the human when the ticket is filed — or, for a ticket the human wrote by hand in the backend's
+UI, inferred once from its prose when cap3 or cap3setup structures it
+(`references/capability-2-ticket/create-ticket.md`, "A ticket someone wrote by hand"). **The agent
+never changes a type** — in particular never promotes an `express` ticket into the full flow because
+the work turned out bigger. If a type looks wrong, say so and stop; the human re-decides.
+Cap5 may select the parent/child types under its explicit orchestration delegation, as cap2 describes.
+
+| Type | What it is | Worktree | Autonomous `plan.md` / `ac.md` | Autonomous grill | Proof | `handoff.md` |
+|---|---|---|---|---|---|---|
+| **story / enabler / fix** | shipped-code work | yes | yes | yes | playwright AC check | yes |
+| **chore** | **changes no code** — generating data, changing a configuration, a runtime or dashboard operation | yes | no | no | whatever settles its criterion — usually a command, the running product when only it can show it | yes |
+| **express** | the human wants to change something **directly on main**, interactively; unavailable when the project requires PRs or IntentFold | **no** | no | no | playwright AC check | yes |
+| **seed** | an idea or note, never developed | no | no | no | none | no |
+| **epic** | a multi-ticket delivery outcome and coordination, not code | no | no | no | overall outcome using child evidence | no; backend closing record |
+
+cap3setup writes `ac.md` but no IntentFold `plan.md` or grill; the open development middle chooses
+its own planning and interaction method.
+An epic stays in the backend: cap5 arranges it, cap6 supervises it, cap4 closes its overall
+outcome without Git artifacts. It is not a developed type and never enters cap3's worktree flow.
+
+**Autonomous cap3 has one alignment with the human before any code, in one of two orders.** When the human opens the run
+with *"discuss the approach first"*, cap3 talks it through and records the agreed approach in
+`draft.md`, then plans from it — and does not grill. Otherwise it drafts `plan.md` / `ac.md` first and
+grills them. Exactly one of the two runs; a draft is what the human reaches for when the ticket is
+unclear, is wrong, or when they already know how they want it built.
+
+Every developed type ends in a `handoff.md` — that is what makes the work readable later, and it is
+the one artifact none of them skip. A **seed** gets no `tickets/<id>/` directory at all and lives only
+in the ticket backend.
+
+`chore` gets a worktree like any other work even though it writes no code: its output still gets
+committed, and an isolated checkout is what keeps a half-done configuration change out of main.
+
+## The capabilities
+
+Paths are in the routing table above; this is what each one is for.
+
+1. **cap1 Initialize** — "初始化 intentfold". Lands `.intentfold/` in this repo and pushes it.
+2. **cap2 File a ticket** — "建个工单". The only birth channel for a product change.
+3. **cap3 Autonomous development** — the complete built-in path: the same required opening boundary
+   as cap3setup, IntentFold's own plan / grill / implementation, then the cap3handoff proof boundary.
+3setup. **cap3setup Open development setup** — creates the worktree, `ticket.json`, `ac.md`, and
+   boundary briefing, then stops. The middle may be ordinary vibe coding with the current agent or
+   any other development skill. IntentFold does not own that middle.
+3handoff. **cap3handoff Verify and hand off** — accepts the committed result of autonomous or open
+   development, runs the AC and mechanical defence, writes `handoff.md` and the usage declaration,
+   then finishes per the effective `finish` recorded in `ticket.json`. It does not merge or close the
+   ticket; that remains cap4.
+4. **cap4 Close a ticket** — "合了这个工单", "关掉这个工单". Rework record → rebase → merge → stop the
+   service → sync `.env` → deploy if requested → close → clean up → update the main checkout. **Every irreversible action lives
+   here.** cap3 calls it directly in an auto mode; in the default 验证模式 the human's approval usually
+   arrives in a later session, and this is what that session runs.
+5. **cap5 Orchestrate delivery** — understand/reuse, minimal decomposition, epic and child tickets,
+   parallel groups and actual dependency conditions. Planning alone does not start workers.
+6. **cap6 Supervise execution** — bind current work; default to development and a running preview
+   for human review, without recurring monitoring. When requested, inspect every 10 minutes,
+   correct drift and advance only to the authorized finish, including closure/deployment if approved.
+
+## Finish mode — declared on the ticket when it is filed
+
+Carried as the ticket's `Finish` row. **Default is 验证模式, including cap6** — a ticket that says
+nothing waits for the human after verification. Monitoring alone does not change its finish;
+supervised delegation uses `references/common/supervision.md`.
+
+- **`review` — 验证模式 (default)** — develop, check the AC, then **leave the service running** and
+  send cap3handoff's review message: the URL, what to check and where, and what was decided for
+  the human. Do not merge, do not close. Wait.
+- **`auto-merge` — 自动合并** — the human said so when filing. Develop, check the AC, merge, sync
+  `.env` back, clean up, close, pick the next ticket and keep going without asking.
+- **`auto-deploy` — 自动部署** — auto-merge, **then deploy** per `charter/operations.md` and confirm the
+  deploy actually took, then close and continue.
+
+A human instruction when cap3 or cap3setup starts overrides the row for that development run. Resolve
+the effective value once, record it as `ticket.json` `finish`, and leave a ticket comment when it
+differs from the row. The description itself is never amended.
+Supervised next-ticket selection is limited to assigned, dependency-ready work.
+
+## Hard rules
+
+- **No change to the product without a ticket.** File one first (cap2) if the user asks for a code
+  change and there is none. **Scope: the repo's shipped content.** Operating what is already landed is
+  not a product change and needs no ticket — deploying merged code, running the app, reading a log,
+  answering a question about the project, looking something up in the charter. When in doubt: does it
+  add a commit to the product? Then it needs a ticket.
+- **One backend, and it decides the language.** `project.json` `tickets.system` picks plane or linear,
+  and every ticket read and write goes through that skill — never a hand-written API call. All ticket
+  text, comments included: **linear → English, required; plane → Chinese by default**, English only
+  when the human explicitly asks. See `references/common/ticket-backend.md`.
+- **Autonomous cap3 grills once, before the code, on story / enabler / fix only** —
+  `references/common/grill.md`. Persist the complete question batch, recommendations and reasons
+  in the ticket's `grill.md` before asking or self-adjudicating; record answers in that same file.
+  cap3setup has no IntentFold grill because its development middle is
+  open. `chore` and `express` have no grill. The grill's coverage is the same in every mode;
+  default autonomous cap3 asks the human only the questions that pass the grill's bar, one line
+  each, and continues without stopping when none do;
+  the agent self-adjudicates **only** when the ticket's `Grill: self` row says the human authorized
+  it, and stops when it hits a question only a human can answer. The explicit supervised delegation in
+  `references/common/supervision.md` also grants self-adjudication within its scope.
+- **Irreversible or externally-consequential actions need the human.** Creating or deleting cloud
+  resources, publishing publicly, sending mail or messages to real recipients, deleting or polluting
+  production data, spending money. Route around it, or stop and hand it over — never approximate and
+  never decide on the human's behalf. This holds on every project; it is not something a charter
+  grants away.
+- **Redlines are lookup, and they live in the charter file they belong to** — as that file's closing
+  `## Redlines` section, which **every charter file carries, empty when there is nothing to forbid**
+  (the shape is `.intentfold/readme.md`'s; it is stated there and nowhere else). `charter/ui.md` owns
+  the token-registry one, `charter/operations.md` the deploy ones, and so on. **There is never a separate
+  `redline.md`**: a cross-cutting file is organised by severity while the rest are
+  organised by subject, so it attracts every important rule and fills with copies of them. The
+  prohibitions that hold on every project — destructive external writes, irreversible production data,
+  spend — are hard rules here instead. Check them before acting; do not ask "is this a big deal?", check
+  whether the action is listed. Each entry says whether it is forbidden outright or needs the human's
+  approval.
+- **The charter is binding, not advisory.** `charter/product.md`, `charter/engineering.md`,
+  `charter/ui.md`, and `charter/operations.md` are **obeyed**. They are not style suggestions,
+  defaults to weigh against convenience, or something a deadline overrides. When the ticket cannot
+  be done without breaking one of them, that is a **stop**: say which rule, say why the ticket needs
+  it broken, and hand it to the human. Deciding it yourself is never available, and "the charter
+  didn't literally cover this case" is not permission — ask.
+- **The charter binds the agent, not the human.** It exists to stop the agent changing things on
+  its own, not to stop the human changing them. When the human explicitly asks for something the
+  charter rules out, that request is the authorization to change the charter: amend the rule in
+  the same ticket so it matches what was asked, and say in the ticket which rule changed and why.
+  Do not stop to ask for the charter change a second time, and do not file it as "confirm before
+  changing the charter". The stop above is for conflicts the agent's own route or inference
+  creates, never for what the human asked for. The every-project hard rules (destructive external
+  writes, irreversible production data, spend) still need their own explicit approval.
+- **Charter is human-owned; report drift, do not quietly fix it.** The agent may edit `charter/` when
+  the human asks for that edit, and only for what they asked. A human request that only works if a
+  charter rule changes is such an ask, for that rule. What stays forbidden is editing it on
+  the agent's own initiative — deciding mid-ticket that a rule is inconvenient and rewriting it, or
+  "correcting" the charter to match code the agent just wrote. Prove the drift, say what is stale,
+  and let the human decide what the charter should say. The document that constrains every ticket
+  must not be the document every ticket rewrites to suit itself. The human's preferences are read
+  from earlier tickets' grill answers and rework asks (`references/common/grill.md`) and are not
+  written into the charter or any other file.
+- **IntentFold usage and overlap resolution stay separate.** Usage records the ticket identity,
+  repository, and IntentFold version once after handoff. It does not identify the PR author, duplicate
+  Git's content hashing, bind a Git tree, or include an overlap report. The overlap check compares
+  upstream and ticket code regions; the ticket developer owns resolution and verification, regardless
+  of PR author. IntentFold does not require an additional team-leader approval for this work.
+- **Cap4 takeover is not a signature and does not duplicate usage evidence.** When a project
+  configures it, normal PR and review events leave the required integrity status pending. Cap4 reads
+  the current head, arms auto-merge first, then dispatches the trusted verifier for that exact head.
+  A new head invalidates the authorization. The takeover proves only that cap4 controls the merge;
+  its resumable post-merge steps still establish backend closure and cleanup.
+- **Legacy IntentFold machinery is a stop.** If `charter/engineering.md` still names a comment-based approval
+  override, CI private-key signing, a CI-signed full-tree manifest, or a close-marker PR, report the
+  exact stale entries and wait for a human-authored charter migration. An overlap detector, cap4
+  takeover dispatch, and combined `intentfold / integrity` check are current controls, not legacy ones.
+  If an existing project still enforces team-leader overlap approval, report that policy mismatch for
+  an explicitly authorised migration; do not bypass its required check or fabricate an approval.
+- **Acceptance follows the AC**, checked against the running product, alongside the project's
+  existing required checks. Do not add unrelated regression or coverage work. Apply
+  **Specification first** above when unit tests fail. "The code implements it" is never evidence.
+- **Cap4 closure conditions are a closed set.** AC must pass, and only the existing explicit
+  conditions in `references/capability-4-close/close.md` apply. Never add a closure condition,
+  promote an optional check into a requirement, or infer a gate from a tool's default behavior.
+  Cap4's reference owns the waiting and commit rules; it is not a new verification round.
+- **No fake progress.** No TEMP markers, no degradation branches, no mock standing in for a failed
+  external dependency. A dead credential or unreachable service is a stop, not a workaround.
+- **Ticket-owned `.env` key changes sync back to the main checkout on every merge**, with the old file
+  backed up first. Preserve unrelated main-checkout values. Never commit env files. See
+  `references/common/worktree-env-port.md`.
+- **A dev server never outlives the run that started it.** Stopped at close, and stopped when a run
+  stops for any other reason. The only exception is 验证模式, where it is deliberately left running
+  for the human, or the short supervised delivery checkpoint described in the shared contract;
+  then cap4 kills it. Kill by the port `handoff.md` records as actually used,
+  not the computed one, and confirm the port is free.
+- **cap4 first checks whether the PR is already merged, then rebases the ticket branch onto freshly
+  fetched `origin/<main>` and lands it through the project's pull-request workflow.** Push the
+  rebased ticket branch explicitly to its remote branch with `--force-with-lease`. When the project
+  configures cap4 takeover, arm auto-merge for the exact current head before dispatching
+  authorization for that head; otherwise use the project's named required-check and merge commands.
+  Never move local `main` as part of another ticket.
+  The only exception is an express ticket in a project whose charter explicitly has no PR or
+  IntentFold requirement; cap4 handles that local-main route separately.
+- **The ticket developer owns overlap and conflict resolution.** When configured, cap4 runs the
+  overlap detector before rebasing onto current remote main. Overlap is an inspection signal, not an
+  approval gate. Resolve using both branches' intent, preserve unrelated upstream changes, verify
+  affected criteria, and continue cap4 without an additional team-leader approval. See cap4 step 3.
+- **Unresolvable intent is a stop, not every Git conflict.** Do not blindly select ours or theirs.
+  If the intended combined behaviour cannot be established, abort the rebase, retain the branch and
+  worktree, and ask the human with the conflict evidence.
+- **IntentFold usage is recorded once after the handoff is complete.** The repository verifier checks
+  the ticket, repository, IntentFold version, and committed `handoff.md`. It does not require
+  employee registration, an SSH key, or equality between the declaration creator and the PR author.
+- **Never `rm -rf`.** Worktree deletion is `git worktree remove`'s job; generated artifacts worth
+  keeping are **moved** out, not removed. Recursive deletes are unnecessary here and are commonly
+  blocked by local safety policy anyway.
+- **`handoff.md` freezes at the first-delivery commit.** Commit each human- or authorized
+  supervisor-requested rework round once, using that ask as the commit message. Do not combine
+  separate requested rounds into one commit. Cap4's own incidental changes and required records
+  are different: avoid new commits where possible, otherwise batch them into one final commit,
+  not one per workflow step. Reconstruct `rework.md` **once** at close from the diff since first
+  delivery. No per-round bookkeeping artifact. Never edit a frozen handoff to keep it current.
+
+## Stop conditions
+
+For supervised work, first apply `references/common/supervision.md`: a repo-correctable
+failure or ordinary design question stays within the delegation. A coordination checkpoint
+goes to the next inspection only when monitoring is active; otherwise report unresolved
+blockers in the worker's session, not to an absent supervisor. Only the affected step waits;
+other authorized work continues. Necessary checks still must pass. The preservation rules
+below also apply to such checkpoints.
+
+**When to stop:** an external premise failed; a redline blocks the only route; self-adjudication hit a
+question only a human can rule; the AC still fails after three attempts; an unresolved conflict; a
+required-check failure.
+
+**What stopping looks like — the same every time**, so a later session finds a known state:
+
+- Leave a ticket comment with the cause and the evidence.
+- **Ticket stays In Progress.** It is not done and it is not abandoned.
+- **Worktree and branch stay.** They are what a resumed run picks up; deleting them is what makes the
+  work unrecoverable.
+- **Dev server stops**, port confirmed free.
+- Say plainly in the worker session what is left where; an active cap6 monitor reads that
+  checkpoint. Without monitoring, report directly to the human.
+
+## Partner skills
+
+**n-plane** *or* **n-linear** — whichever backend `project.json` names, for every ticket read and write —
+and **n-grill** (the grill's coverage) are used by the flow itself. Deployment has no assumed
+tooling — follow whatever `charter/operations.md` says; **n-easyapp** is used only when that file
+or the human names it.
+

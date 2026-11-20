@@ -1,0 +1,43 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const input = path.join(R, '.tmp/resume182-6-8a-n8-display-select3695.mjs');
+const before = fs.readFileSync(input);
+let text = before.toString('utf8');
+const replacements = [
+  ['.tmp/resume182-6-8a-n8-display-select3695.mjs',
+    '.tmp/resume182-6-8a-n8-display-select3695-AFFECTED-media-contract1.mjs'],
+  ['item.figureCoverage.every(figure => figure.complete)',
+    'item.figureCoverage.every(figure => figure.completeAcrossNativeScreenshots)'],
+  ["    assert.equal(figure.complete, true);",
+    `    assert.equal(figure.completeAcrossNativeScreenshots, true);
+    const domName = \`\${group.viewport.width}-\${group.surface}-dom.json\`;
+    const domRef = report.inputs.filter(item => path.basename(item.path) === domName).at(-1);
+    assert.ok(domRef, 'Missing hash-bound actual DOM media geometry');
+    const domBytes = fs.readFileSync(domRef.path);
+    assert.equal(sha(domBytes), domRef.sha256);
+    const media = JSON.parse(domBytes).figures.find(item => item.key === figure.key);
+    assert.ok(media && media.mediaWidth > 0 && media.mediaHeight > 0);
+    const nativeWidth = media.mediaWidth, nativeHeight = media.mediaHeight;`],
+];
+for (const [from, to] of replacements) {
+  assert.equal(text.split(from).length - 1, 1, from);
+  text = text.replace(from, to);
+}
+assert.ok(text.includes('figure.nativeWidth') && text.includes('figure.nativeHeight'));
+text = text.replaceAll('figure.nativeWidth', 'nativeWidth').replaceAll('figure.nativeHeight', 'nativeHeight');
+const output = path.join(R, '.tmp/resume182-6-8a-n8-display-select3695-AFFECTED-media-contract1.mjs');
+fs.writeFileSync(output, text, { flag: 'wx' });
+const record = {
+  status: 'SELECTOR_ACTUAL_MEDIA_CONTRACT_PREPARED',
+  input: { path: input, sha256: sha(before) },
+  output: { path: output, sha256: sha(Buffer.from(text)) },
+  scope: 'Use completeAcrossNativeScreenshots and bound actual DOM media dimensions; same exact coverage/minimality algorithm',
+  imagesObserved: 0, rendererBrowserCaptureOrValidatorRuns: 0, originalFailurePreserved: true,
+};
+const target = path.join(R, '.tmp/resume182-6-8a-n8-display3695-FIRST/selector-contract-recovery.record');
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...record.output, record: target, recordSHA: sha(fs.readFileSync(target)) }));

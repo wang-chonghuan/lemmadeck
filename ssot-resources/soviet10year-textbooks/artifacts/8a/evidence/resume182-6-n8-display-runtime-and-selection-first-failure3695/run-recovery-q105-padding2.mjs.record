@@ -1,0 +1,521 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { createDisplayHelpers } from './display-helper.mjs';
+import { R, OWN, BOOK, EDITION, ID, MODERN, LESSON, CHOICES, TOOLS, sha, norm,
+  implementation, usageCounters, addUsage, location, preparedInputs, receiptFile } from './prepare.mjs';
+
+await location();
+const argv = process.argv.slice(2), options = {};
+for (let index = 0; index < argv.length; index += 1) {
+  const flag = argv[index];
+  assert.ok(['--first', '--check-inputs', '--recover', '--from', '--parent-ready', '--parent-sha'].includes(flag));
+  assert.ok(!Object.hasOwn(options, flag), `Duplicate flag ${flag}`);
+  options[flag] = ['--first', '--check-inputs'].includes(flag) ? true : argv[++index];
+}
+const modes = ['--first', '--check-inputs', '--recover'].filter(flag => Object.hasOwn(options, flag));
+assert.equal(modes.length, 1, 'Choose exactly one explicit operation');
+const mode = modes[0], from = options['--from'];
+if (mode === '--recover') {
+  assert.match(options[mode], /^[a-z][a-z0-9-]{0,63}$/u);
+  assert.ok(path.isAbsolute(from) && from.startsWith(`${OWN}/runtime-`) && from.endsWith('/report-FIRST.json'));
+} else assert.equal(from, undefined);
+assert.ok(path.isAbsolute(options['--parent-ready']), 'A future parentREADY receipt must be named explicitly');
+assert.match(options['--parent-sha'], /^[a-f0-9]{64}$/u);
+const ready = JSON.parse(await readFile(path.join(OWN, 'ready-FIRST.record')));
+assert.equal(ready.status, 'SCRIPTS_PREPARED_RUNTIME_NOT_EXECUTED');
+assert.equal(ready.workdir, R);
+for (const name of implementation) {
+  const filename = path.join(OWN, name);
+  const record = ready.files.find(file => file.path === filename);
+  assert.ok(record); assert.equal(sha(await readFile(filename)), record.sha256);
+}
+let prepared;
+try {
+  prepared = await preparedInputs(options['--parent-ready'], options['--parent-sha'], ready);
+} catch (error) {
+  console.log(JSON.stringify({ status: 'PRECONDITIONS_NOT_READY', message: error.message,
+    rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0, runtimeCreated: false }));
+  process.exitCode = 1;
+}
+if (prepared && mode === '--check-inputs') {
+  console.log(JSON.stringify({ status: 'APPROVED_INPUTS_BOUND_RUNTIME_NOT_EXECUTED',
+    inputs: prepared.entries, sourceBlocks: prepared.lesson.source.data.prose.length, originalExercises: prepared.exercises.count,
+    standardAnswers: prepared.answerDisplay.length, choiceQuestions: prepared.views.length,
+    rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0 }));
+}
+if (prepared && mode !== '--check-inputs') {
+  const FIRST = path.join(OWN, 'runtime-FIRST');
+  const RUN = mode === '--first' ? FIRST : path.join(OWN, `runtime-recovery-${options[mode]}`);
+  assert.equal(path.resolve(RUN), RUN);
+  await mkdir(RUN);
+  assert.equal(await realpath(RUN), RUN);
+  const own = filename => {
+    assert.ok(path.resolve(filename) === filename && filename.startsWith(`${RUN}/`));
+    return filename;
+  };
+  const report = { schema: 'bounded-n8-offline-display@1', status: 'RUNNING',
+    started: new Date().toISOString(),
+    scope: { ticket: 'STEMROBIN-182', root: R, book: BOOK, edition: EDITION, lesson: ID, writeRoot: OWN },
+    boundary: 'Isolated headless offline display only; not formal headed APP acceptance or content approval',
+    parentReady: { path: options['--parent-ready'], sha256: options['--parent-sha'] },
+    inputs: [...prepared.entries], staged: [], checks: [], screenshots: [], coverage: [],
+    completedViews: [], faults: [],
+    cleanup: { rendererClosed: true, contextsClosed: true, browserClosed: true, serverClosed: true } };
+  const usage = Object.fromEntries(usageCounters.map(counter => [counter, 0]));
+  const network = { served: [], blocked: [], failures: [], pageErrors: [], consoleErrors: [], warnings: [], badResponses: [] };
+  const contexts = [], passed = new Set();
+  let rendererChild, browser, server, model, prior, priorUsage, renderRoot, scratchRoot;
+  const save = async (name, value) => writeFile(own(path.join(RUN, name)),
+    `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  const event = value => appendFile(own(path.join(RUN, 'events.ndjson')),
+    `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+  const assertOfflineRuntime = () => assert.ok(['blocked', 'failures', 'pageErrors', 'consoleErrors', 'badResponses']
+    .every(key => !network[key].length), 'Stop on actual console, page or network faults');
+  const check = async (name, success, facts = {}) => {
+    assertOfflineRuntime();
+    const result = { name, status: success ? 'PASS' : 'FAIL', ...facts };
+    report.checks.push(result); await event({ check: result });
+    assert.ok(success, name);
+  };
+  const bound = async (filename, expectedHash) => {
+    const known = report.inputs.find(input => input.path === filename);
+    const hash = expectedHash ?? known?.sha256;
+    const pin = ready.pins.find(input => input.path === filename);
+    let bytes;
+    if (pin && filename.includes('/node_modules/')) {
+      assert.equal(await realpath(filename), pin.realpath);
+      bytes = await readFile(filename);
+      assert.equal(sha(bytes), hash);
+    } else bytes = await receiptFile(filename, hash);
+    if (!known) report.inputs.push({ path: filename, sha256: sha(bytes), bytes: bytes.length });
+    return bytes;
+  };
+  const stage = async (filename, bytes) => {
+    await mkdir(path.dirname(own(filename)), { recursive: true });
+    await writeFile(filename, bytes, { flag: 'wx' });
+    report.staged.push({ path: filename, sha256: sha(bytes), bytes: bytes.length });
+  };
+  const recordFile = async filename => {
+    const bytes = await readFile(filename);
+    const record = { path: filename, sha256: sha(bytes), bytes: bytes.length };
+    report.inputs.push(record);
+    return record;
+  };
+  try {
+    await save('start.record', { argv, workdir: R, mode, rendererBudget: mode === '--first' ? 1 : 0 });
+    report.implementation = ready.files.filter(file => implementation.some(name => file.path === path.join(OWN, name)));
+    report.implementation.push(await recordFile(path.join(OWN, 'run-recovery-q105-padding2.mjs')));
+    if (mode === '--recover') {
+      assert.notEqual(path.dirname(from), RUN);
+      assert.equal(await realpath(from), from);
+      const priorBytes = await readFile(from);
+      prior = JSON.parse(priorBytes);
+      assert.equal(prior.status, 'FAIL'); assert.equal(prior.schema, report.schema);
+      assert.deepEqual(prior.scope, report.scope);
+      assert.deepEqual(prior.parentReady, report.parentReady, 'Recovery cannot change the approval scope');
+      assert.ok(Object.values(prior.cleanup).every(Boolean));
+      assert.equal(prior.renderer?.ok, true, 'A failed renderer may not be invoked a second time');
+      const usageRef = prior.usageReceipt;
+      priorUsage = JSON.parse(await bound(usageRef.path, usageRef.sha256));
+      for (const input of prior.inputs) await bound(input.path, input.sha256);
+      for (const input of prior.staged) await bound(input.path, input.sha256);
+      for (const image of prior.screenshots) await bound(image.path, image.sha256);
+      model = JSON.parse(await bound(prior.model.path, prior.model.sha256));
+      renderRoot = prior.renderRoot; scratchRoot = prior.scratchRoot;
+      assert.ok(renderRoot.startsWith(`${FIRST}/`) && scratchRoot.startsWith(`${FIRST}/`));
+      report.staged = structuredClone(prior.staged);
+      report.model = prior.model; report.renderer = prior.renderer;
+      report.checks = prior.checks.filter(item => item.status === 'PASS');
+      report.screenshots = structuredClone(prior.screenshots);
+      report.coverage = structuredClone(prior.coverage);
+      report.completedViews = [...prior.completedViews];
+      for (const result of report.checks) passed.add(result.name);
+      report.recovery = { from, sha256: sha(priorBytes), rendererReused: true,
+        passedViewsReused: [...prior.completedViews], originalFailureUnmodified: true };
+    } else {
+      scratchRoot = path.join(FIRST, 'scratch', BOOK); renderRoot = path.join(FIRST, 'render');
+      const contentRoot = path.join(scratchRoot, 'editions', EDITION);
+      const targetLesson = path.join(contentRoot, 'lessons', ID);
+      const lesson = Object.fromEntries(['id', 'card_id', 'chapter', 'section', 'title', 'printed_title',
+        'start_printed', 'exercise_count', 'section_breaks', 'figures'].filter(key => Object.hasOwn(prepared.lesson, key))
+        .map(key => [key, prepared.lesson[key]]));
+      lesson.prose = prepared.lesson.prose.map(block => Object.fromEntries(['kind', 'id', 'label', 'text']
+        .filter(key => Object.hasOwn(block, key)).map(key => [key, block[key]])));
+      const exercises = { lesson: ID, count: prepared.exercises.count,
+        exercises: prepared.exercises.exercises.map(exercise => Object.fromEntries(
+          ['number', 'source_number', 'group', 'text', 'figures'].filter(key => Object.hasOwn(exercise, key))
+            .map(key => [key, exercise[key]]))) };
+      const sourceMap = prepared.lesson.source.data.prose.map((source, sourceBlock) => ({
+        sourceBlock, kind: source.kind, modernBlocks: prepared.lesson.prose.flatMap((block, index) =>
+          (source.source_refs ?? []).some(ref => (block.source_refs ?? []).includes(ref))
+            || source.kind !== 'p' && source.id && source.id === block.id ? [index] : []),
+      }));
+      assert.ok(sourceMap.every(item => item.modernBlocks.length > 0), 'Every retained source block needs a retained modern binding');
+      model = { lesson, exercises, manifest: { figures: prepared.manifest.figures },
+        views: prepared.views, standardDisplay: prepared.answerDisplay,
+        figureContracts: prepared.figureContracts, sourceMap };
+      for (const [name, value] of [['lesson.json', lesson], ['exercises.json', exercises],
+        ['figures.json', model.manifest]])
+        await stage(path.join(targetLesson, name), Buffer.from(`${JSON.stringify(value)}\n`));
+      // The renderer only receives question views, never keys, intentions or grading parts.
+      const scratchDraft = { schema: prepared.draft.schema, questions: prepared.views.map(view => ({ view })),
+        new_figures: [] };
+      const scratchSeed = { schema: prepared.seed.schema, source: { book: BOOK, lesson: ID },
+        figures: prepared.seed.figures.map(figure => ({ id: figure.id })) };
+      for (const asset of prepared.assetsToStage) {
+        const choice = asset.directory.startsWith(`${CHOICES}/`);
+        const targetDirectory = choice ? path.join(targetLesson, 'choice-set/figures') : path.join(contentRoot, 'figures');
+        const filename = path.join(targetDirectory, path.basename(asset.filename));
+        await stage(filename, prepared.bytesByPath.get(asset.filename));
+        for (const ext of ['spec.json', 'render.json', 'review.json'])
+          await stage(path.join(targetDirectory, `${asset.id}.${ext}`),
+            prepared.bytesByPath.get(path.join(asset.directory, `${asset.id}.${ext}`)));
+        if (choice) scratchDraft.new_figures.push({ id: asset.id, path: filename });
+      }
+      await stage(path.join(targetLesson, 'choice-set/seed.json'), Buffer.from(`${JSON.stringify(scratchSeed)}\n`));
+      await stage(path.join(targetLesson, 'choice-set/draft.json'), Buffer.from(`${JSON.stringify(scratchDraft)}\n`));
+      await save('display-model.json', model);
+      report.model = await recordFile(path.join(RUN, 'display-model.json'));
+      report.renderRoot = renderRoot; report.scratchRoot = scratchRoot;
+      await mkdir(path.join(RUN, 'browser-tmp'));
+      const command = [path.join(TOOLS, 'render_lesson.js'), scratchRoot, '--out', renderRoot,
+        '--edition', EDITION, '--lesson', ID];
+      await save('renderer-start.record', { command: [process.execPath, ...command], workdir: R });
+      usage.rendererCalls += 1; report.cleanup.rendererClosed = false;
+      const receipt = await new Promise(resolve => {
+        let stdout = '', stderr = '', error, timedOut = false;
+        rendererChild = spawn(process.execPath, command, { cwd: R, stdio: ['ignore', 'pipe', 'pipe'],
+          env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8', TMPDIR: path.join(RUN, 'browser-tmp') } });
+        const timer = setTimeout(() => { timedOut = true; rendererChild.kill('SIGKILL'); }, 120000);
+        rendererChild.stdout.on('data', bytes => { stdout += bytes; });
+        rendererChild.stderr.on('data', bytes => { stderr += bytes; });
+        rendererChild.once('error', failure => { error = failure.message; });
+        rendererChild.once('close', (exitCode, signal) => {
+          clearTimeout(timer); rendererChild = null; report.cleanup.rendererClosed = true;
+          resolve({ stdout, stderr, error, exitCode, signal, timedOut });
+        });
+      });
+      await save('renderer-receipt.record', receipt);
+      assert.equal(receipt.exitCode, 0); assert.ok(!receipt.error && !receipt.timedOut);
+      const result = JSON.parse(receipt.stdout);
+      assert.equal(result.ok, true); assert.equal(result.lessons.length, 1);
+      assert.equal(result.lessons[0].lesson, ID);
+      assert.equal(result.lessons[0].exercises, model.exercises.count);
+      assert.equal(result.lessons[0].choices, model.views.length);
+      for (const name of ['text.html', 'exercises.html', 'choices.html'])
+        await recordFile(path.join(renderRoot, ID, name));
+      report.renderer = result;
+    }
+    report.renderRoot = renderRoot; report.scratchRoot = scratchRoot;
+    await mkdir(path.join(RUN, 'screenshots'));
+    if (mode === '--recover') await mkdir(path.join(RUN, 'browser-tmp'));
+    assert.deepEqual((await readdir(path.join(renderRoot, ID))).sort(), ['choices.html', 'exercises.html', 'text.html']);
+    const html = new Map();
+    const leakage = /\b(?:key|correct|accept|expected|seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|correctIndex|answerKey|answer_key|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent)\b/iu;
+    for (const name of ['text.html', 'exercises.html', 'choices.html']) {
+      const filename = path.join(renderRoot, ID, name);
+      const old = report.inputs.find(input => input.path === filename);
+      assert.ok(old, 'Only hash-bound FIRST renderer output may be served');
+      const bytes = await bound(filename, old.sha256);
+      if (!passed.has(`${name}:no-private-payload`))
+        await check(`${name}:no-private-payload`, !leakage.test(bytes.toString('utf8')));
+      html.set(`/${name}`, bytes);
+    }
+    const originalExerciseHTML = html.get('/exercises.html');
+    const originalMarkup = originalExerciseHTML.toString('utf8');
+    assert.equal(originalMarkup.split('</style>').length - 1, 1);
+    const correctionCSS = '#ex-105 .body .nb{padding-block:1em;margin-block:0}';
+    const correctedExerciseHTML = Buffer.from(originalMarkup.replace('</style>', '</style><style>' + correctionCSS + '</style>'));
+    const correctedPath = own(path.join(RUN, 'affected-display/exercises.html'));
+    await stage(correctedPath, correctedExerciseHTML);
+    const correctedBinding = await recordFile(correctedPath);
+    html.set('/exercises.html', correctedExerciseHTML);
+    report.displayCorrection = {
+      kind: 'q105-formula-wrapper-padding-only',
+      originalSHA: sha(originalExerciseHTML), corrected: correctedBinding,
+      CSS: correctionCSS, rendererCalls: 0, originalHTMLPreserved: true,
+      contentFormulaAndValidationThresholdChanges: false,
+    };
+    process.env.TMPDIR = path.join(RUN, 'browser-tmp');
+    const requireApp = createRequire(path.join(R, 'app/package.json'));
+    const { chromium, expect } = requireApp('@playwright/test');
+    const core = path.dirname(requireApp.resolve('playwright-core/package.json'));
+    const { PNG } = requireApp(path.join(core, 'lib/utilsBundle.js'));
+    const { projection, pageSafety, install, captureCoverage } = createDisplayHelpers({
+      norm, own, RUN, assertOfflineRuntime, PNG, same: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+      sha, report, usage, event, save, check });
+    const { inline, proseFlow, proseOutline, sectionBreakIndices } =
+      createRequire(path.join(TOOLS, 'htmlfrag.js'))('./htmlfrag.js');
+    const { marked } = await import(path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js'));
+    const expectedChoice = text => {
+      const tokens = marked.lexer(text), tables = [], pieces = [];
+      if (!tokens.some(token => token.type === 'table')) return { ...projection(text), tables, literalLF: true };
+      for (const token of tokens) {
+        if (token.type !== 'table') { pieces.push(token.raw); continue; }
+        const rows = [token.header, ...token.rows].map(row => row.map(cell => cell.text));
+        tables.push(rows.map(row => row.map(projection))); pieces.push(...rows.map(row => row.join(' ')));
+      }
+      return { ...projection(pieces.join(' ')), tables, literalLF: false };
+    };
+    const { lesson, exercises, manifest, views, standardDisplay, figureContracts } = model;
+    const flow = proseFlow(lesson.prose, lesson.section_breaks), outline = proseOutline(lesson.prose);
+    const paragraphs = flow.filter(block => block.kind === 'p');
+    const boundaries = sectionBreakIndices(lesson.prose, lesson.section_breaks);
+    report.projection = { sourceBlocks: model.sourceMap.length, sourceMap: model.sourceMap,
+      modernBlocks: lesson.prose.length, sourceBlockParagraphs: model.sourceMap.map(source => ({
+        ...source, paragraphIndices: outline.filter(item => source.modernBlocks.includes(item.blockIndex)).map(item => item.index) })),
+      paragraphs: paragraphs.length, boundaries, exerciseIds: exercises.exercises.map(item => String(item.number)),
+      standardDisplayCount: standardDisplay.length, choices: views.length,
+      options: views.reduce((sum, view) => sum + view.options.length, 0),
+      privateChoiceKeysAndGradingPartsProjected: false };
+    const standardFragments = standardDisplay.map(item => ({ exercise: item.exercise, html: inline(item.text) }));
+    assert.ok(standardFragments.every(item => !leakage.test(item.html)), 'No grading payload in standard-display fragments');
+    report.standardDisplay = { source: path.join(LESSON, 'answer-keys.json'),
+      fields: ['exercise', 'displayAnswer'], fragmentSha256: sha(JSON.stringify(standardFragments)),
+      note: 'Approved standard display only, not choice keys or accepted grading values' };
+    server = createServer((request, response) => {
+      network.served.push({ method: request.method, path: request.url });
+      if (request.method === 'GET' && request.url === '/favicon.ico') return void response.writeHead(204).end();
+      const bytes = request.method === 'GET' ? html.get(request.url) : undefined;
+      if (!bytes) { network.badResponses.push({ path: request.url, status: 404 }); return void response.writeHead(404).end(); }
+      response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; script-src 'none'; connect-src 'none'; frame-src 'none'; form-action 'none';" }).end(bytes);
+    });
+    await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+    report.cleanup.serverClosed = false;
+    const origin = `http://127.0.0.1:${server.address().port}`;
+    for (const [route, bytes] of html) {
+      const response = await fetch(`${origin}${route}`, { signal: AbortSignal.timeout(5000) });
+      assert.equal(response.status, 200); assert.equal(sha(Buffer.from(await response.arrayBuffer())), sha(bytes));
+    }
+    usage.browserLaunches += 1;
+    browser = await chromium.launch({ headless: true, timeout: 30000, downloadsPath: path.join(RUN, 'browser-tmp'),
+      env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8', TMPDIR: path.join(RUN, 'browser-tmp') },
+      args: ['--disable-background-networking', '--disable-component-update', '--disable-sync', '--no-first-run',
+        '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'] });
+    report.cleanup.browserClosed = false;
+    report.browser = { version: browser.version(), headless: true, isolated: true,
+      dependency: 'existing app Playwright', limitation: 'Headless offline display only after preserved headed navigation interference; not headed or APP acceptance' };
+    for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+      const pending = ['text', 'exercises', 'choices'].filter(surface => !report.completedViews.includes(`${viewport.width}:${surface}`));
+      if (!pending.length) continue;
+      const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block', acceptDownloads: false });
+      contexts.push(context); usage.browserContexts += 1; context.setDefaultTimeout(20000);
+      await context.route('**/*', async route => {
+        const request = route.request(), url = new URL(request.url());
+        if (request.method() === 'GET' && url.origin === origin && !url.search && !url.hash
+          && [...html.keys(), '/favicon.ico'].includes(url.pathname)) await route.continue();
+        else { network.blocked.push({ method: request.method(), url: request.url() }); await route.abort('blockedbyclient'); }
+      });
+      await context.routeWebSocket(/.*/, async socket => { network.blocked.push({ kind: 'websocket' }); await socket.close(); });
+      const page = await context.newPage();
+      page.on('pageerror', error => network.pageErrors.push(error.message));
+      page.on('console', message => {
+        if (message.type() === 'error') network.consoleErrors.push(message.text());
+        if (message.type() === 'warning') network.warnings.push(message.text());
+      });
+      page.on('requestfailed', request => network.failures.push({ url: request.url(), error: request.failure() }));
+      page.on('response', response => { if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() }); });
+      for (const surface of pending) {
+        usage.pageNavigations += 1;
+        assert.equal((await page.goto(`${origin}/${surface}.html`, { waitUntil: 'load' })).status(), 200);
+        if (surface === 'exercises') await page.evaluate(fragments => {
+          const style = document.createElement('style');
+          style.textContent = '.standard-display{grid-column:2;min-width:0;line-height:1.9}'
+            + '.standard-label{font-size:.85em;color:var(--sub);margin:.3em 0}'
+            + '.standard-text{min-width:0;overflow-x:auto;overflow-y:hidden;padding-block:calc(.2em + 1px);margin-block:-.2em}';
+          document.head.append(style);
+          for (const fragment of fragments) {
+            const exercise = document.getElementById(`ex-${fragment.exercise}`);
+            if (!exercise || exercise.querySelector('.standard-display')) throw new Error('Missing or duplicate standard display');
+            const container = document.createElement('div'); container.className = 'standard-display';
+            const label = document.createElement('p'); label.className = 'standard-label'; label.textContent = '\u6807\u51c6\u7b54\u6848';
+            const text = document.createElement('div'); text.className = 'standard-text'; text.innerHTML = fragment.html;
+            container.append(label, text); exercise.append(container);
+          }
+        }, standardFragments);
+        await page.evaluate(() => document.fonts.ready);
+        assertOfflineRuntime(); await expect(page.locator('h1')).toBeVisible();
+        const materials = [];
+        const add = (key, selector, index, expected, paragraph = false) => materials.push({ key, selector, index, expected, paragraph });
+        const title = lesson.printed_title || lesson.title;
+        add('title', 'h1', 0, projection(surface === 'text' ? title : `${title} \u00b7 ${surface === 'exercises' ? '\u4e60\u9898' : '\u9009\u62e9\u9898'}`));
+        add('crumb', '.crumb', 0, projection(surface === 'choices' ? ''
+          : [lesson.chapter, lesson.section, `\u5370\u5237\u9875 ${lesson.start_printed ?? '?'}`].filter(Boolean).join(' \u00b7 ')));
+        if (surface === 'text') {
+          await expect(page.locator('p.para')).toHaveCount(paragraphs.length);
+          paragraphs.forEach((block, index) => add(`prose-${index}`, 'p.para', index, projection(block.text), true));
+          const caps = flow.filter(block => block.kind === 'cap');
+          await expect(page.locator('.figcap')).toHaveCount(caps.length);
+          caps.forEach((block, index) => add(`caption-${index}`, '.figcap', index, projection(block.text)));
+          assert.deepEqual(await page.locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+            flow.filter(block => block.kind === 'fig').map(block => block.id));
+          const actualBreaks = await page.locator('p.para').evaluateAll(nodes => nodes.flatMap((node, index) =>
+            parseFloat(getComputedStyle(node).borderTopWidth) > 0 ? [index] : []));
+          await check(`${viewport.width}:source-anchored-paragraph-rules`, JSON.stringify(actualBreaks) === JSON.stringify(boundaries));
+          add('jump', '.jump', 0, projection(`\u53bb\u505a\u9898 \u00b7 ${exercises.count} \u9053 \u2192`));
+          await expect(page.getByRole('link')).toHaveAttribute('href', 'exercises.html');
+        } else if (surface === 'exercises') {
+          await expect(page.locator('li.ex')).toHaveCount(exercises.count);
+          await expect(page.locator('.standard-text')).toHaveCount(standardDisplay.length);
+          assert.deepEqual(await page.locator('li.ex').evaluateAll(nodes => nodes.map(node => node.id)),
+            exercises.exercises.map(item => `ex-${item.number}`));
+          for (const exercise of exercises.exercises) {
+            const number = String(exercise.source_number ?? exercise.number), suffix = exercise.text.slice(number.length);
+            const prefix = exercise.text.startsWith(number) && (/^\.\s/u.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/u.test(suffix));
+            add(`exercise-${exercise.number}`, `#ex-${exercise.number} .body`, 0, projection(prefix ? suffix.slice(1).trimStart() : exercise.text));
+            add(`number-${exercise.number}`, `#ex-${exercise.number} .no`, 0, projection(`${number}.`));
+            const answer = standardDisplay.find(item => item.exercise === String(exercise.number));
+            add(`standard-${exercise.number}`, `#ex-${exercise.number} .standard-text`, 0, projection(answer.text));
+            add(`standard-label-${exercise.number}`, `#ex-${exercise.number} .standard-label`, 0, projection('\u6807\u51c6\u7b54\u6848'));
+          }
+          const groups = exercises.exercises.filter((item, index, all) => item.group !== (index ? all[index - 1].group : null));
+          await expect(page.locator('.exgroup')).toHaveCount(groups.length);
+          groups.forEach((group, index) => add(`group-${index}`, '.exgroup', index, projection(group.group || '\u7ec3\u4e60')));
+          assert.deepEqual(await page.locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+            exercises.exercises.flatMap(item => (item.figures ?? []).map(figure => figure.id)));
+          add('jump', '.jump', 0, projection('\u2190 \u56de\u8bfe\u6587'));
+          await expect(page.getByRole('link')).toHaveAttribute('href', 'text.html');
+        } else {
+          await expect(page.locator('.choice')).toHaveCount(views.length);
+          await expect(page.locator('.choice-options > li')).toHaveCount(report.projection.options);
+          await expect(page.locator('a,link')).toHaveCount(0);
+          for (const [index, view] of views.entries()) {
+            const selector = `.choice:nth-of-type(${index + 1})`;
+            add(`choice-${index}-heading`, '.choice-heading', index, projection(`${index + 1}. ${view.mode === 'multiple' ? '\u591a\u9009' : '\u5355\u9009'}`));
+            add(`choice-${index}-stem`, '.choice-stem', index, expectedChoice(view.stem));
+            view.options.forEach((option, optionIndex) => {
+              add(`choice-${index}-option-${optionIndex}`, `${selector} .choice-option-body`, optionIndex, expectedChoice(option.text));
+              add(`choice-${index}-label-${optionIndex}`, `${selector} .option-id`, optionIndex, projection(option.id));
+            });
+            assert.deepEqual(await page.locator(selector).locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+              [...view.figure_ids, ...view.options.flatMap(option => option.figure_ids)]);
+          }
+        }
+        const dom = await install(page, { materials: materials.map(({ expected, paragraph, ...descriptor }) => descriptor), figureContracts });
+        const oldDom = prior?.inputs.find(input => input.path.endsWith(`/${viewport.width}-${surface}-dom.json`));
+        if (oldDom) assert.deepEqual(dom.targets, JSON.parse(await bound(oldDom.path, oldDom.sha256)).targets);
+        else assert.ok(!report.screenshots.some(image => image.viewport.width === viewport.width && image.surface === surface),
+          'Cannot reuse screenshots without their bound target map');
+        await save(`${viewport.width}-${surface}-dom.json`, dom);
+        await recordFile(path.join(RUN, `${viewport.width}-${surface}-dom.json`));
+        const reachableName = `${viewport.width}:${surface}:glyph-rules-media-and-formula-boxes-reachable`;
+        if (!passed.has(reachableName)) await check(reachableName, dom.targetCount > 0 && !dom.hidden.length
+          && !dom.failed.length && !dom.internalClips.length
+          && dom.formulaGlyphFonts.every(font => /^KaTeX/u.test(font.family) && font.px > 0 && font.loaded && font.available)
+          && dom.ends.every(end => Math.abs(end.actual - end.maximum) <= 1)
+          && dom.horizontalEnds.every(end => end.left === 0 && Math.abs(end.right - end.maximum) <= 1),
+        { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed,
+          internalClips: dom.internalClips, horizontalEnds: dom.horizontalEnds,
+          formulaGlyphFonts: dom.formulaGlyphFonts });
+        for (const material of materials) {
+          const name = `${viewport.width}:${surface}:${material.key}:text-formulas-and-rows`;
+          if (passed.has(name)) continue;
+          const actual = dom.roots.find(root => root.key === material.key), expected = material.expected;
+          assert.equal(actual.serialized, expected.serialized, name);
+          assert.deepEqual(actual.formulas.map(formula => formula.tex), expected.formulas, name);
+          if (expected.literalLF !== false) assert.deepEqual(actual.lines, expected.lines, name);
+          assert.deepEqual(actual.tables.map(rows => rows.map(row => row.map(cell => ({
+            serialized: cell.serialized, formulas: cell.formulas, lines: cell.lines })))), expected.tables ?? [], name);
+          const rowPairs = actual.lines.flatMap((line, index) => {
+            if (!/^(?:[a-z]|\d+)\)\s/u.test(line)) return [];
+            let previous = index - 1;
+            while (previous >= 0 && !actual.lines[previous]) previous -= 1;
+            return [{ index, previous, current: actual.lineGeometry[index], preceding: actual.lineGeometry[previous] }];
+          });
+          const typography = !material.paragraph || parseFloat(actual.textIndent) === 0
+            && actual.mathTypography.every(font => /KaTeX_Main/u.test(font.family) && font.px >= actual.fontPx * 1.1 - 0.02);
+          await check(name, typography && actual.formulas.every(formula => formula.visible && formula.nonempty)
+            && rowPairs.every(pair => pair.previous < 0 || pair.current && pair.preceding && pair.current.top > pair.preceding.top + 0.5),
+          { textSha256: sha(actual.serialized), formulas: expected.formulas.length, rowPairs, typography });
+        }
+        for (const figure of dom.figures) {
+          const name = `${viewport.width}:${surface}:${figure.key}:approved-svg-and-labels`;
+          if (passed.has(name)) continue;
+          await check(name, figure.exactSvg && figure.labelBindings && figure.minimumPx >= 16
+            && figure.labels.every(label => label.insideSvg && label.px >= figure.minimumPx)
+            && figure.layout === figure.expectedLayout && figure.mediaWidth > 0 && figure.mediaHeight > 0
+            && figure.svgWidth === figure.mediaWidth && (figure.expectedWidth === null || figure.mediaWidth === figure.expectedWidth),
+          { id: figure.id, labels: figure.labels, width: figure.mediaWidth, height: figure.mediaHeight });
+        }
+        const safety = await page.evaluate(pageSafety);
+        await check(`${viewport.width}:${surface}:readonly-contained-loaded-fonts`, safety.documentWidth <= viewport.width
+          && safety.bodyWidth <= viewport.width && safety.scrollX === 0 && !safety.errors && !safety.widgets
+          && !safety.scripts && !safety.dangerousAttributes.length && !safety.labelBodyCollisions.length
+          && safety.sections.every((box, index, boxes) => box.left >= 0 && box.right <= viewport.width && box.height > 0
+            && (!index || box.top >= boxes[index - 1].bottom))
+          && safety.fonts.some(font => font.family.startsWith('KaTeX') && font.status === 'loaded')
+          && safety.fonts.every(font => font.status !== 'error'), safety);
+        await captureCoverage(page, viewport, surface, dom);
+        await recordFile(path.join(RUN, `${viewport.width}-${surface}-coverage.json`));
+        const after = await page.evaluate(pageSafety);
+        await check(`${viewport.width}:${surface}:contained-after-native-scrolls`,
+          after.documentWidth <= viewport.width && after.bodyWidth <= viewport.width && after.scrollX === 0);
+        report.completedViews.push(`${viewport.width}:${surface}`);
+      }
+      await context.close(); contexts.splice(contexts.indexOf(context), 1);
+    }
+    await check('one-renderer-six-combinations', usage.rendererCalls === (mode === '--first' ? 1 : 0)
+      && (mode !== '--first' || usage.browserContexts === 2 && usage.pageNavigations === 6)
+      && new Set(report.completedViews).size === 6
+      && new Set(report.coverage.map(item => `${item.viewport.width}:${item.surface}`)).size === 6);
+    await check('only-offline-requests-no-console-or-network-errors',
+      network.served.every(request => request.method === 'GET' && [...html.keys(), '/favicon.ico'].includes(request.path)), network);
+  } catch (error) {
+    report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+    report.faults.push({ stage: mode, ...report.executionFailure, preserved: true });
+    await event({ failure: report.executionFailure });
+  } finally {
+    if (rendererChild) {
+      const child = rendererChild, closed = new Promise(resolve => child.once('close', resolve));
+      child.kill('SIGKILL'); await closed; report.cleanup.rendererClosed = true;
+    }
+    for (const context of contexts) {
+      try { await context.close(); }
+      catch (error) { report.cleanup.contextsClosed = false; report.faults.push({ stage: 'context-close', message: error.message }); }
+    }
+    try { if (browser) await browser.close(); report.cleanup.browserClosed = true; }
+    catch (error) { report.cleanup.browserClosed = false; report.faults.push({ stage: 'browser-close', message: error.message }); }
+    try {
+      if (server?.listening) {
+        server.closeAllConnections();
+        await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+      }
+      report.cleanup.serverClosed = true;
+    } catch (error) { report.cleanup.serverClosed = false; report.faults.push({ stage: 'server-close', message: error.message }); }
+    for (const input of [...report.inputs, ...report.staged, ...report.screenshots]) {
+      try { assert.equal(sha(await readFile(input.path)), input.sha256); }
+      catch (error) { report.faults.push({ stage: 'input-preservation', path: input.path, message: error.message }); }
+    }
+    usage.schema = 'bounded-n8-display-usage@1';
+    usage.displayCumulative = Object.fromEntries(usageCounters.map(counter =>
+      [counter, addUsage(usage[counter], priorUsage ? priorUsage.displayCumulative[counter] : 0)]));
+    usage.cumulative = Object.fromEntries(Object.entries(usage.displayCumulative)
+      .map(([counter, value]) => [counter, addUsage(value, prepared.upstreamUsage[counter])]));
+    usage.unknownCounterRepresentation = 'null means unknown; known local usage is retained separately';
+    usage.upstreamReceipt = prepared.parent.upstreamUsage;
+    usage.observationBatchLimit = 8; usage.observationContextLimit = 24;
+    report.network = network; report.finished = new Date().toISOString();
+    report.status = report.executionFailure || report.faults.length || Object.values(report.cleanup).some(closed => !closed)
+      ? 'FAIL' : 'RUNTIME_PASS_VISUAL_PENDING';
+    if (report.status === 'FAIL') await save('failure-receipt.record', {
+      firstFailure: report.executionFailure ?? report.faults[0], faults: report.faults,
+      cleanup: report.cleanup, screenshotsAndOldReportsPreserved: true, noAutomaticRetry: true });
+    await save('usage-FIRST.json', usage);
+    const usageBytes = await readFile(path.join(RUN, 'usage-FIRST.json'));
+    report.usageReceipt = { path: path.join(RUN, 'usage-FIRST.json'), sha256: sha(usageBytes) };
+    await save('report-FIRST.json', report);
+    await save('visual-handoff.json', { status: 'PENDING', imagesObserved: 0, batchLimit: 8, contextLimit: 24,
+      report: path.join(RUN, 'report-FIRST.json'),
+      screenshots: report.screenshots.map(image => ({ path: image.path, sha256: image.sha256,
+        viewport: image.viewport, surface: image.surface, targets: image.visibleIds })),
+      rule: 'Parent arranges fresh bounded visual observation; target coverage is not content or APP approval' });
+    console.log(JSON.stringify({ status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+      usage: report.usageReceipt, screenshots: report.screenshots.length, imagesObserved: 0, cleanup: report.cleanup }));
+    if (report.status === 'FAIL') process.exitCode = 1;
+  }
+}

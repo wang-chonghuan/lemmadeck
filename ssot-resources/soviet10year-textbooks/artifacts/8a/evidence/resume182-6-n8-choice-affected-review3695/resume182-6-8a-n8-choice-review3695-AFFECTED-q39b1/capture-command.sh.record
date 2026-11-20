@@ -1,0 +1,23 @@
+#!/bin/zsh
+set -u
+R=/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck
+W=$R/.tmp/resume182-6-8a-n8-choice-review3695-AFFECTED-q39b1
+id=$1
+shift
+if [[ "$PWD" != "$R" ]]; then
+  print -u2 -- "Unexpected working directory: $PWD"
+  exit 90
+fi
+if [[ -e "$W/exec-$id.record" || -e "$W/exec-$id.stdout" ]]; then
+  print -u2 -- "Receipt already exists: exec-$id"
+  exit 91
+fi
+printf 'command:' > "$W/exec-$id.record"
+printf ' %q' "$@" >> "$W/exec-$id.record"
+printf '\nworkdir: %s\n' "$PWD" >> "$W/exec-$id.record"
+"$@" > "$W/exec-$id.stdout" 2> "$W/exec-$id.stderr"
+result=$?
+printf 'exit_code: %s\nstdout_artifact: exec-%s.stdout\nstderr_artifact: exec-%s.stderr\n' "$result" "$id" "$id" >> "$W/exec-$id.record"
+cat "$W/exec-$id.stdout"
+cat "$W/exec-$id.stderr" >&2
+exit "$result"

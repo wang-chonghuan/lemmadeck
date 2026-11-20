@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n8-display-binder-prepared3695-FIRST';
+const source = '.tmp/resume182-6-8a-n7-display-bind3695.mjs';
+const target = '.tmp/resume182-6-8a-n8-display-bind3695.mjs';
+assert.ok(!fs.existsSync(own) && !fs.existsSync(target));
+const original = fs.readFileSync(source);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+let text = original.toString('utf8').replaceAll('n7', 'n8');
+const insertion = 'const lesson = `${root}/editions/modern-us-neutral/lessons/alg8-c2-s1-n8`;';
+assert.equal(text.split(insertion).length - 1, 1);
+text = text.replace(insertion, [
+  '// Resolve every required durable reference before writing any final HTML.',
+  'for (const binding of bindings) durable(binding);',
+  insertion,
+].join('\n'));
+fs.mkdirSync(own);
+fs.writeFileSync(target, text, { flag: 'wx' });
+const command = [process.execPath, '--check', target];
+const result = spawnSync(command[0], command.slice(1), { cwd: repo, encoding: 'utf8' });
+for (const stream of ['stdout', 'stderr']) {
+  fs.writeFileSync(`${own}/${stream}.txt`, result[stream] ?? '', { flag: 'wx' });
+}
+const save = (file, value) => fs.writeFileSync(file,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+save(`${own}/syntax-receipt.record`, {
+  command, cwd: repo, returncode: result.status, signal: result.signal,
+  error: result.error?.message ?? null,
+});
+assert.equal(result.status, 0, result.stderr);
+assert.equal(sha(fs.readFileSync(source)), sha(original));
+save(`${own}/ready.record`, {
+  status: 'FINAL_BINDER_PREPARED_NOT_EXECUTED',
+  root: repo, book: '8a', lesson: 'alg8-c2-s1-n8',
+  source: { path: source, sha256: sha(original) },
+  output: { path: target, sha256: sha(fs.readFileSync(target)) },
+  changes: ['Lesson and scratch n7 -> n8', 'Preflight durable references before all final writes'],
+  syntaxCalls: 1, runtimeExecutions: 0, imageViews: 0, rendererCalls: 0,
+  newSemanticReviews: 0, sourceMathAnswerChoiceFigurePASSReruns: 0,
+  wholeLessonApproval: false, DBWrites: 0, finish: 'review',
+  oldFailuresAndUsagePreserved: true, unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({
+  path: `${own}/ready.record`, sha256: sha(fs.readFileSync(`${own}/ready.record`)),
+  runtimeExecutions: 0,
+}));

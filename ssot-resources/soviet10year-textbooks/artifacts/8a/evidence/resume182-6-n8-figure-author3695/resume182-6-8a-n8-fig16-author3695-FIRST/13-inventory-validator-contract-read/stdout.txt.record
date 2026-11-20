@@ -1,0 +1,128 @@
+                    if obj is None or obj.get("visible") is False:
+                        errors.append(f"{label}: missing visible object {object_id!r}")
+                for assertion_id in required_assertions:
+                    if assertion_id not in assertions_by_id:
+                        errors.append(
+                            f"{label}: missing assertion {assertion_id!r}"
+                        )
+                mapped_assertions = [
+                    assertions_by_id[assertion_id]
+                    for assertion_id in required_assertions
+                    if assertion_id in assertions_by_id
+                ]
+                mapped_objects = [
+                    by_id[object_id]
+                    for object_id in required_objects
+                    if object_id in by_id
+                ]
+                requirements = group.get("requires", [])
+                if (
+                    not isinstance(requirements, list)
+                    or any(
+                        requirement not in {
+                            "gridDimensions", "pointRelationships"
+                        }
+                        for requirement in requirements
+                    )
+                    or len(requirements) != len(set(requirements))
+                ):
+                    errors.append(
+                        f"{label}.requires must contain unique supported requirements"
+                    )
+                    requirements = []
+                mapped_grids = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "grid"
+                ]
+                if "gridDimensions" in requirements:
+                    if not mapped_grids:
+                        errors.append(
+                            f"{label}: gridDimensions requirement needs a mapped grid"
+                        )
+                    for grid_id in mapped_grids:
+                        if not any(
+                            item.get("type") == "gridDimensions"
+                            and item.get("grid") == grid_id
+                            for item in mapped_assertions
+                        ):
+                            errors.append(
+                                f"{label}: grid {grid_id!r} requires a mapped "
+                                "gridDimensions assertion; objectCount is insufficient"
+                            )
+                mapped_points = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "point"
+                ]
+                if "pointRelationships" in requirements:
+                    if len(mapped_points) < 2:
+                        errors.append(
+                            f"{label}: pointRelationships requirement needs "
+                            "at least two mapped points"
+                        )
+                    else:
+                        mapped_point_ids = set(mapped_points)
+                        relationship_coverages = []
+                        for item in mapped_assertions:
+                            references = assertion_point_ids(
+                                item, set(points)
+                            )
+                            if (
+                                len(references) >= 2
+                                and references <= mapped_point_ids
+                            ):
+                                relationship_coverages.append(references)
+                        if not relationship_coverages:
+                            errors.append(
+                                f"{label}: multiple source points require a "
+                                "mapped relationship assertion wholly within "
+                                "the inventory group; objectCount or unrelated "
+                                "relationships are insufficient"
+                            )
+                        else:
+                            covered_points = set().union(
+                                *relationship_coverages
+                            )
+                            missing_points = sorted(
+                                mapped_point_ids - covered_points
+                            )
+                            if missing_points:
+                                errors.append(
+                                    f"{label}: pointRelationships missing "
+                                    "mapped relation coverage for "
+                                    + ", ".join(repr(item) for item in missing_points)
+                                )
+            if current and len(inventory_ids) != len(set(inventory_ids)):
+                errors.append("source.inventory ids must be unique")
+
+    box = spec.get("canvas", {}).get("boundingBox")
+    if not isinstance(box, list) or len(box) != 4 or not all(map(finite_number, box)):
+        return errors
+    xmin, ymax, xmax, ymin = box
+    for obj in objects:
+        if not isinstance(obj, dict) or obj.get("visible") is False:
+            continue
+        kind = obj.get("type")
+        # Infinite lines and viewport grids are intentionally bounded by the viewport.
+        if kind in {"line", "svgPath", "image"}:
+            continue
+        coordinates = []
+        if kind == "grid":
+            bounds = obj.get("bounds")
+            if isinstance(bounds, list) and len(bounds) == 4:
+                coordinates = [
+                    [bounds[0], bounds[1]],
+                    [bounds[2], bounds[3]],
+                ]
+            else:
+                continue
+        elif kind in {"point", "text"}:
+            coordinates = [obj.get("at")]
+        elif kind in {"segment", "arrow", "measure", "axis"}:
+            coordinates = [obj.get("from"), obj.get("to")]
+        elif kind == "polygon":
+            coordinates = obj.get("points", [])
+        elif kind == "circle" and finite_number(obj.get("radius")):
+            center = obj.get("center")
+            center = points.get(center) if isinstance(center, str) else center

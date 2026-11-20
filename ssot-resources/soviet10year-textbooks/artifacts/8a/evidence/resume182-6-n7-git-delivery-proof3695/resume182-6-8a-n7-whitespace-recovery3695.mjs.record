@@ -1,0 +1,51 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const failed = '.tmp/resume182-6-8a-n7-whitespace3695-FIRST';
+assert.equal(JSON.parse(fs.readFileSync(`${failed}/receipt.record`)).returncode, 2);
+const errors = fs.readFileSync(`${failed}/stdout.txt`, 'utf8').trim().split('\n');
+const diagnosed = errors.filter(line => !line.startsWith('+')).map(line => {
+  const match = /^(.*):(\d+): (new blank line at EOF|trailing whitespace)\.$/.exec(line);
+  assert.ok(match, `Unexpected whitespace diagnosis: ${line}`);
+  return match[1];
+});
+const paths = [...new Set(diagnosed)];
+assert.equal(paths.length, 11);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence';
+const bindings = new Map();
+for (const name of fs.readdirSync(root)) {
+  if (!name.startsWith('resume182-6-n7-')) continue;
+  const recordPath = `${root}/${name}/retention.record`;
+  if (!fs.existsSync(recordPath)) continue;
+  const record = JSON.parse(fs.readFileSync(recordPath));
+  for (const entry of record.entries ?? []) {
+    bindings.set(`${entry.path}:${entry.sha256}`, { recordPath, ...entry });
+  }
+}
+const exceptions = [];
+for (const file of paths) {
+  assert.ok(file.startsWith(`${root}/resume182-6-n7-`));
+  assert.ok(file.endsWith('/stdout.txt.record') || file.endsWith('/command.record'));
+  const bytes = fs.readFileSync(file);
+  const hash = sha(bytes);
+  const binding = bindings.get(`${file}:${hash}`);
+  assert.ok(binding, `Historical raw bytes lack a retention binding: ${file}`);
+  const staged = spawnSync('git', ['show', `:${file}`], { cwd: repo });
+  assert.equal(staged.status, 0);
+  assert.equal(sha(staged.stdout), hash);
+  exceptions.push({ path: file, sha256: hash, bytes: bytes.length,
+    retentionRecord: binding.recordPath, reason: 'Unmodified immutable command/stdout evidence; whitespace retained as recorded.' });
+}
+const result = spawnSync('git',
+  ['diff', '--cached', '--check', '--', '.', ...paths.map(file => `:(exclude)${file}`)],
+  { cwd: repo, encoding: 'utf8' });
+process.stdout.write(result.stdout);
+process.stderr.write(result.stderr);
+assert.equal(result.status, 0);
+console.log(JSON.stringify({ status: 'CONTENT_WHITESPACE_PASS_WITH_HASH_VERIFIED_RAW_LOG_EXCEPTIONS',
+  exceptions, rawEvidenceBytesEdited: 0, originalFailurePreserved: true }));

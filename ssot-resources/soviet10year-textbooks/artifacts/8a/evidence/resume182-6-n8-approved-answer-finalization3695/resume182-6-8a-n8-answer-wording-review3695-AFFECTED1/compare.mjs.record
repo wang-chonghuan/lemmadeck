@@ -1,0 +1,211 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = `${root}/.tmp/resume182-6-8a-n8-answer-wording-review3695-AFFECTED1`;
+assert.equal(process.cwd(), root);
+const paths = {
+  repair: `${root}/.tmp/resume182-6-8a-n8-answers-wording3695-AFFECTED1/repair.record`,
+  original: `${root}/.tmp/resume182-6-8a-n8-answers3695-FIRST/answers.draft.json`,
+  candidate: `${root}/.tmp/resume182-6-8a-n8-answers-wording3695-AFFECTED1/answers.draft.json`,
+  parentHOLD: `${root}/.tmp/resume182-6-8a-n8-parent-answer-review3695-FIRST/review.record`,
+};
+const expectedHashes = {
+  repair: 'a4499db2914b97d42107f382422380950697e159319a46d6e409b5d3d953a515',
+  original: '0cffe5e0b33898354a3e81437fa22e8278e52dd9eb884eea635aaefaf722d24a',
+  candidate: '348d8d15aeb081e045041607623bd139a13c26c612a800900c7cc6bf8d7a6a07',
+  parentHOLD: '36b7f3c6e644dd3c369e83ec5c8e79fd27e61b335353f51a91f32e6ea0a0032b',
+};
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const inputs = {};
+const docs = {};
+for (const [name, path] of Object.entries(paths)) {
+  const bytes = fs.readFileSync(path);
+  inputs[name] = { path, sha256: digest(bytes) };
+  assert.equal(inputs[name].sha256, expectedHashes[name], `${name} hash`);
+  docs[name] = JSON.parse(bytes);
+}
+const { repair, original, candidate, parentHOLD } = docs;
+assert.equal(parentHOLD.status, 'HOLD');
+assert.equal(parentHOLD.mathematicalComparisonStatus, 'PASS');
+assert.equal(parentHOLD.counts.matched, 47);
+assert.equal(parentHOLD.blockingFindings.length, 1);
+assert.equal(parentHOLD.blockingFindings[0].id, 'answer-display-production-narration');
+assert.equal(repair.replacements.length, 5);
+for (const doc of [repair, original, candidate, parentHOLD]) {
+  assert.equal(doc.book, '8a');
+  assert.equal(doc.lesson, 'alg8-c2-s1-n8');
+  assert.equal(doc.edition, 'modern-us-neutral');
+}
+assert.equal(repair.source.path, paths.original);
+assert.equal(repair.source.sha256, expectedHashes.original);
+assert.equal(repair.candidate.path, paths.candidate);
+assert.equal(repair.candidate.sha256, expectedHashes.candidate);
+assert.equal(repair.comparison.path, paths.parentHOLD);
+assert.equal(repair.comparison.sha256, expectedHashes.parentHOLD);
+assert.equal(original.answers.length, 15);
+assert.equal(candidate.answers.length, 15);
+
+const changedPaths = [];
+function differences(before, after, path = '$') {
+  if (Object.is(before, after)) return;
+  if (before === null || after === null ||
+      typeof before !== 'object' || typeof after !== 'object') {
+    changedPaths.push(path);
+    return;
+  }
+  assert.equal(Array.isArray(before), Array.isArray(after), `${path} container`);
+  assert.deepEqual(Object.keys(before), Object.keys(after), `${path} ordered keys`);
+  for (const key of Object.keys(before)) {
+    differences(before[key], after[key], `${path}.${key}`);
+  }
+}
+differences(original, candidate);
+const projected = structuredClone(original);
+const contexts = [];
+const unchangedSegments = [];
+for (const [index, replacement] of repair.replacements.entries()) {
+  const answer = projected.answers.find(item => String(item.exercise) === replacement.exercise);
+  assert.ok(answer, `exercise ${replacement.exercise}`);
+  const oldDisplay = answer.displayAnswer;
+  const position = oldDisplay.indexOf(replacement.before);
+  assert.ok(position >= 0, `replacement ${index + 1} present`);
+  assert.equal(oldDisplay.indexOf(replacement.before, position + replacement.before.length), -1);
+  assert.ok(!/[A-Za-z0-9$\\=<>+*/^{}]/u.test(replacement.before + replacement.after),
+    `replacement ${index + 1} prose only`);
+  answer.displayAnswer = oldDisplay.slice(0, position) + replacement.after +
+    oldDisplay.slice(position + replacement.before.length);
+  unchangedSegments.push({
+    replacement: index + 1,
+    exercise: replacement.exercise,
+    beforePrefixSha256: digest(oldDisplay.slice(0, position)),
+    afterPrefixSha256: digest(answer.displayAnswer.slice(0, position)),
+    beforeSuffixSha256: digest(oldDisplay.slice(position + replacement.before.length)),
+    afterSuffixSha256: digest(answer.displayAnswer.slice(position + replacement.after.length)),
+  });
+  const nearby = (text, at, length) => {
+    const previous = Math.max(
+      text.lastIndexOf('\n', at - 1),
+      text.lastIndexOf('。', at - 1),
+      text.lastIndexOf('；', at - 1),
+    );
+    const nextSentence = text.indexOf('。', at + length);
+    const nextLine = text.indexOf('\n', at + length);
+    const end = nextSentence >= 0 ? nextSentence + 1 :
+      nextLine >= 0 ? nextLine : text.length;
+    return text.slice(Math.max(0, previous + 1), end);
+  };
+  const oldAt = Math.max(0, position - 1);
+  contexts.push({
+    replacement: index + 1,
+    exercise: replacement.exercise,
+    before: replacement.before,
+    after: replacement.after,
+    precedingSentence: nearby(oldDisplay, oldAt, 0),
+    resultingContext: nearby(answer.displayAnswer, position, replacement.after.length),
+  });
+}
+assert.deepEqual(projected, candidate, 'exactly the five declared replacements');
+const changedExercises = ['102', '103', '104', '106'];
+assert.deepEqual(changedPaths, changedExercises.map(exercise =>
+  `$.answers.${original.answers.findIndex(item => String(item.exercise) === exercise)}.displayAnswer`));
+
+const withoutDisplay = doc => {
+  const copy = structuredClone(doc);
+  for (const answer of copy.answers) delete answer.displayAnswer;
+  return copy;
+};
+assert.deepEqual(withoutDisplay(original), withoutDisplay(candidate));
+const mathSpans = display => [...display.matchAll(
+  /\$\$[\s\S]*?\$\$|(?<!\\)\$(?!\$)[\s\S]*?(?<!\\)\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)/gu,
+)].map(match => match[0]);
+const orderedMath = original.answers.map((answer, index) => {
+  const oldSpans = mathSpans(answer.displayAnswer);
+  const newSpans = mathSpans(candidate.answers[index].displayAnswer);
+  assert.deepEqual(oldSpans, newSpans, `exercise ${answer.exercise} ordered math`);
+  return {
+    exercise: String(answer.exercise),
+    spans: oldSpans.length,
+    beforeSha256: digest(JSON.stringify(oldSpans)),
+    afterSha256: digest(JSON.stringify(newSpans)),
+  };
+});
+const grading = {
+  auto: candidate.answers.filter(answer => answer.grading === 'auto').length,
+  ungraded: candidate.answers.filter(answer => answer.grading === 'ungraded').length,
+  numericParts: candidate.answers.flatMap(answer => answer.parts ?? [])
+    .filter(part => part.judge === 'numeric').length,
+};
+assert.deepEqual(grading, { auto: 2, ungraded: 13, numericParts: 6 });
+const graphAnswer = candidate.answers.find(answer => String(answer.exercise) === '104');
+const internalDrawingLimitations = [];
+function internalStrings(value, path) {
+  if (typeof value === 'string' && /绘图|渲染|查看图形|作图|draw|render|graph|execut/iu.test(value)) {
+    internalDrawingLimitations.push({ path, text: value });
+  } else if (value && typeof value === 'object') {
+    for (const [key, child] of Object.entries(value)) internalStrings(child, `${path}.${key}`);
+  }
+}
+for (const [key, value] of Object.entries(graphAnswer)) {
+  if (key !== 'displayAnswer') internalStrings(value, `104.${key}`);
+}
+assert.ok(internalDrawingLimitations.length > 0, 'internal drawing limitation retained');
+const prohibitedReads = { sealSolutions: 0, originalSources: 0, images: 0 };
+const evidence = {
+  schema: 'resume182-6/affected-answer-wording-comparison@1',
+  status: 'STRUCTURED_COMPARISON_PASS',
+  root,
+  book: '8a',
+  lesson: 'alg8-c2-s1-n8',
+  edition: 'modern-us-neutral',
+  inputs,
+  changedPaths,
+  unchangedSegments,
+  orderedMath,
+  preservation: {
+    exactDeclaredReplacementsOnly: true,
+    orderedMathematicalSpansUnchanged: true,
+    allUntouchedDisplaySegmentsUnchanged: true,
+    allOtherAnswerAndTopLevelFieldsUnchanged: true,
+    internalNotesAndLimitationsUnchanged: true,
+    originalAndParentHOLDBytesUnchanged: true,
+  },
+  inheritedMathematicalComparison: {
+    status: parentHOLD.mathematicalComparisonStatus,
+    matched: parentHOLD.counts.matched,
+    reruns: 0,
+  },
+  counts: {
+    replacements: 5,
+    changedDisplayAnswers: 4,
+    answerKeys: 15,
+    inheritedLetteredSubparts: 46,
+    inheritedAdditionalProofs: 1,
+    inheritedObligations: 47,
+    ...grading,
+    mathChanges: 0,
+    originalSolves: 0,
+    mathReviewReruns: 0,
+    images: 0,
+    candidateEdits: 0,
+    validatorCalls: 0,
+    normalizerCalls: 0,
+    rendererCalls: 0,
+    finalizeCalls: 0,
+    DBWrites: 0,
+  },
+  prohibitedReads,
+};
+for (const [name, path] of Object.entries(paths)) {
+  assert.equal(digest(fs.readFileSync(path)), expectedHashes[name], `${name} unchanged at completion`);
+}
+fs.writeFileSync(`${own}/comparison.record`, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  status: evidence.status,
+  counts: evidence.counts,
+  changedPaths,
+  contexts,
+  internalDrawingLimitations,
+  comparison: { path: `${own}/comparison.record`, sha256: digest(fs.readFileSync(`${own}/comparison.record`)) },
+}, null, 2));

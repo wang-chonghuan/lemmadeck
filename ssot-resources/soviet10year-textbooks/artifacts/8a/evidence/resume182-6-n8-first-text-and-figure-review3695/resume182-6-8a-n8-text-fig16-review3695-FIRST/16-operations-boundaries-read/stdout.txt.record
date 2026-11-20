@@ -1,0 +1,210 @@
+# Operations
+
+Human-authored instructions for running, verifying, deploying, and operating this project. Commands
+are repo-root-relative and executable as written. Section shape is fixed by
+`.intentfold/readme.md`.
+
+Most tickets end at merge. `Finish: auto-deploy` runs this file's deploy and post-deploy tools after
+merge. Acceptance verification also uses this file, so stale commands block delivery.
+
+> Consolidated on 2026-09-12 from the former local runbook, QA, and deployment dimensions. Existing
+> commands, evidence rules, and operational boundaries were preserved. Hosting instructions were
+> replaced on 2026-09-23 with explicit human approval for the Render migration and Azure cleanup.
+
+## Contract
+
+**Runtime**
+
+One long-running service: the TanStack Start web app in `app/`, SSR. It serves both pages and server
+functions; there is no separate API process. "Start the product" means the Vite dev server on the
+fixed main port recorded in `.intentfold/project.json`.
+
+The database is remote: the shared Supabase project, schema `lemmadeck-schema`, reached through
+`LEMMADECK_DATABASE_URL`. There is no local database. Content generation (`ld-s10y-lesson`,
+`ld-s10y-image`, `ld-s10y-answer`, `sr-story`, `sr-voa1500`, `ld-galaxy`) runs as one-off scripts,
+not as a service. Their committed resource inputs and outputs live under `ssot-resources/`;
+rebuildable working files live under `.tmp/` and may be removed after the run.
+
+**Environments**
+
+One environment: **production**, hosted on Render. There is no staging or preview environment.
+Render builds the root `Dockerfile` with the repo root as context, installing the standalone
+project in `app/` and shipping only `app/.output`. Production remains a single always-on instance.
+
+The service is API-managed, not Blueprint-managed. `render.yaml` records intended configuration;
+editing it does not apply infrastructure changes. Automatic deployment and preview creation are
+disabled. A merge is not a release; publication is a separate explicit operation.
+
+Azure hosting is retired from the normal deployment path. Remaining guarded retirement targets
+are recorded in `infra/README.md`; Azure model/image/TTS generation services are unaffected.
+
+**Evidence**
+
+Acceptance verification is acceptance-criteria only. A ticket proves its own criteria against an
+authoritative surface and stops; no regression pass is added to the flow.
+
+Evidence must be reproducible and capable of failing. Use the smallest observation that settles the
+criterion: a command, query, or browser interaction. Code inspection alone is not evidence that
+behavior works.
+
+A ticket-scoped browser check is a command-line script under
+`.intentfold/tickets/<ticket-id>/tmp/`, uncommitted. One script covering all criteria is the normal
+case, with a screenshot per visual criterion. `app/tests/` remains the project's long-lived
+Playwright suite and is not where ticket-scoped checks live.
+
+`playwright-cli open <url>` is useful for debugging but is never acceptance evidence. A criterion
+check asserts the reachable page or flow, required controls and regions, accepted action, correctly
+placed result, resolved loading state, absence of an error-only state, and the expected value shape.
+
+A chore's proof is whatever settles its criterion. When the criterion is visible only in the running
+product, verify it there even when a query proves the underlying row exists.
+
+## Tools
+
+**Production**
+
+- Live URL: `https://lemmadeck.com`; `www` redirects to the apex.
+- Render origin: `https://lemmadeck.onrender.com`.
+- Workspace: `intentplex` (`tea-d229rofdiees73d7h4gg`).
+- Web service: `lemmadeck` (`srv-dapsio9srm7s73an5p60`), Frankfurt, one `0.5c-512mb` instance.
+- GitHub repository: `wang-chonghuan/lemmadeck`, branch `main`, `autoDeploy=no`.
+- Health endpoint: `/healthz`, requiring session configuration and the existing Supabase connection;
+  its response reports the deployed `RENDER_GIT_COMMIT`.
+- Cloudflare apex and `www`: DNS-only CNAMEs to `lemmadeck.onrender.com`, TTL 300.
+  Both custom domains are verified by Render, which provides TLS and the `www` redirect.
+- No Render database, disk, worker, cron, autoscaling, or preview service.
+- Retired domains `mynatree.com` and `stemrobin.com` serve nothing; their Cloudflare zones remain.
+
+**Install**
+
+```bash
+cd app && npm install
+```
+
+The content skills install separately:
+
+```bash
+npm --prefix .agents/skills install
+npm --prefix .claude/skills/ld-s10y-lesson install
+```
+
+`ld-s10y-lesson` also owns a Python virtual environment; its `SKILL.md` contains the exact `uv`
+bootstrap command and required packages.
+
+**Run locally**
+
+The fixed main port is recorded in `.intentfold/project.json` and set in `app/vite.config.ts`. Do not
+pass `--port` in the main checkout:
+
+```bash
+cd app && npm run dev
+```
+
+For a ticket worktree, resolve the port and pass it to Vite:
+
+```bash
+python3 <intentfold-skill>/scripts/ports.py .intentfold/project.json ticket <ticket-id>
+cd app && npm run dev -- --port <resolved-web-port>
+```
+
+**Build and tests**
+
+```bash
+cd app && npm run build
+cd app && npm run start
+cd app && npm run test
+cd app && npm run e2e
+```
+
+The combined mechanical-defence command is in `engineering.md`.
+
+**Acceptance**
+
+Use the Playwright copy installed in `app/`; do not install a second copy at the repo root. After a
+fresh clone or upgrade:
+
+```bash
+cd app && npx playwright install chromium
+```
+
+Run a ticket-scoped `.mjs` check from `app/` so it resolves the existing Playwright package:
+
+```bash
+cd app && node ../.intentfold/tickets/<ticket-id>/tmp/ac-check.mjs
+```
+
+For UI criteria, use headed Chromium at desktop `1440x960` and mobile `390x844`. The layout
+breakpoint is `860px`.
+
+Test accounts and data:
+
+- Test learner: `edwinbiz+clerk_test@hotmail.com`, `sr_users.user_id = 2`.
+- Real learner: `edwinbiz@hotmail.com`, `sr_users.user_id = 1`; acceptance checks never write to it.
+- The local authenticated session cookie is
+  `sr_session = "<userId>.<hmac_sha256(SESSION_SECRET, userId)>"`. `SESSION_SECRET` is absent from the
+  repo `.env`, so local development uses the in-code default. Mint the test learner cookie without a
+  password:
+
+```bash
+node -e "const c=require('crypto');console.log('2.'+c.createHmac('sha256', process.env.SESSION_SECRET || 'stemrobin-dev-session-secret').update('2').digest('hex'))"
+```
+
+Inject it with Playwright `context.addCookies`. Password login is unavailable to the agent; a
+criterion that genuinely requires the login form is a stop and a handoff to the human.
+
+Any rows a check creates, such as `sr_answer_events`, are cleaned up by the same script.
+
+Read acceptance data from the live schema:
+
+```bash
+psql "$LEMMADECK_DATABASE_URL" -c 'select * from "lemmadeck-schema".sr_answer_events where user_id = 2 order by created_at desc limit 10;'
+```
+
+**Environment**
+
+- The single local source file is repo-root `.env`, git-ignored. `LEMMADECK_DATABASE_URL` is the
+  only supported DB variable. Generation credentials, including Azure models/images and
+  `AZURE_TTS_*`, remain available to their one-off skills; they are not website runtime keys.
+- The app reads the same values through a git-ignored symlink:
+
+```bash
+ln -sf ../.env app/.env
+```
+
+- Content scripts read the repo-root `.env`. Skills under `.agents/skills/` resolve shared Node
+  dependencies there; `ld-s10y-lesson` uses its own Node package and Python virtual environment;
+  `ld-s10y-answer` publishers resolve `postgres` from `app/`.
+- Render securely stores the existing `LEMMADECK_DATABASE_URL` and a random production
+  `SESSION_SECRET`. The container does not load the repo `.env`. Use `ips-render-ops` capability 6
+  for approved runtime changes, never bake secrets into the image. Do not copy generation
+  credentials to the website. Session-secret rotation invalidates existing login cookies and
+  requires explicit approval.
+
+Read the live content schema:
+
+```bash
+psql "$LEMMADECK_DATABASE_URL" -c 'set search_path to "lemmadeck-schema"; \dt'
+```
+
+There is no local database: this command reaches the same shared Supabase project used by production.
+Legacy database variables are not supported; no alternate database is acceptance evidence for
+data the product reads.
+
+**Deploy**
+
+The only routine release path is `ips-render-ops` capability 3, targeting an approved merged
+revision. Load the current skill and use its secret-safe authentication setup. Replace the skill
+path and commit placeholders below with the loaded skill directory and approved main commit:
+
+```bash
+python3 <ips-render-ops>/scripts/release.py --dry-run --only lemmadeck --commit <merged-sha>
+python3 <ips-render-ops>/scripts/release.py --only lemmadeck --commit <merged-sha>
+```
+
+The dry run must select exactly the web service above. Reconcile approved infrastructure changes
+explicitly with the Render API; a change to `render.yaml` alone is not a deployment.
+
+**Post-deploy check**
+
+```bash
+render deploys list srv-dapsio9srm7s73an5p60 --output json --confirm

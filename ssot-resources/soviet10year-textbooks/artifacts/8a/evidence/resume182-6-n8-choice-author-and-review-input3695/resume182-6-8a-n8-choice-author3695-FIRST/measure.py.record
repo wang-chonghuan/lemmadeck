@@ -1,0 +1,57 @@
+"""Report artifact hashes and structural counts only; do not judge content."""
+
+import hashlib
+import json
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+ROOT = REPO / ".tmp/resume182-6-8a-n8-choice-author3695-FIRST"
+assert Path.cwd() == REPO
+
+
+def file_snapshot(name):
+    path = ROOT / name
+    raw = path.read_bytes()
+    value = json.loads(raw)
+    canonical = json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return value, {
+        "path": str(path),
+        "file_sha256": hashlib.sha256(raw).hexdigest(),
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+        "bytes": len(raw),
+    }
+
+
+seed, seed_snapshot = file_snapshot("seed.json")
+draft, draft_snapshot = file_snapshot("draft.json")
+assert draft["seed_sha256"] == seed_snapshot["canonical_sha256"]
+questions = draft["questions"]
+option_counts = {q["id"]: len(q["view"]["options"]) for q in questions}
+result = {
+    "seed": seed_snapshot,
+    "draft": draft_snapshot,
+    "counts": {
+        "questions": len(questions),
+        "options": sum(option_counts.values()),
+        "single": sum(q["view"]["mode"] == "single" for q in questions),
+        "multiple": sum(q["view"]["mode"] == "multiple" for q in questions),
+        "selected_sources": len(seed["exercises"]),
+        "covered_sources": len(draft["coverage"]),
+        "source_question_links": sum(len(c["question_ids"]) for c in draft["coverage"]),
+        "concepts": len(seed["concepts"]),
+        "seed_figures": len(seed["figures"]),
+        "new_figures": len(draft["new_figures"]),
+        "authored_correct_options": sum(len(q["key"]["correct"]) for q in questions),
+    },
+    "selected_source_numbers": [e["number"] for e in seed["exercises"]],
+    "concept_blocks": [c["block"] for c in seed["concepts"]],
+    "options_by_question": option_counts,
+    "receipt_paths_existing": [
+        str(p.relative_to(REPO)) for p in sorted((ROOT / "receipts").rglob("*"))
+        if p.is_file()
+    ],
+    "scope": "Hashing and counting only. No semantic review or approval.",
+}
+print(json.dumps(result, ensure_ascii=False, indent=2))

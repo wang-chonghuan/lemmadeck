@@ -1,0 +1,115 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+const R = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+const OWN = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n8-fig16-xunit-repair3695-AFFECTED2";
+const hiddenIds = ["fig-16-origin","fig-16-left-extremum","fig-16-right-extremum","fig-16-top-extremum","fig-16-bottom-extremum","fig-16-top-terminal","fig-16-bottom-terminal"];
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const bind = file => { const bytes = fs.readFileSync(file); return { path:file, sha256:hash(bytes), bytes:bytes.length }; };
+const write = (name,value) => { const file=path.resolve(OWN,name); assert.ok(file.startsWith(`${OWN}/`)); fs.writeFileSync(file, `${JSON.stringify(value,null,2)}\n`, {flag:'wx'}); return bind(file); };
+async function capture() {
+  const render = read(path.join(OWN, 'render', 'figure.render.json'));
+  assert.equal(render.status, 'pass', 'native capture depends on successful official render');
+  assert.equal(render.spec.sha256, bind(path.join(OWN, 'candidate.spec.json')).sha256);
+  const svgPath = path.join(OWN, 'render', 'figure.svg');
+  const svgBinding = bind(svgPath);
+  assert.equal(render.output.svg.sha256, svgBinding.sha256);
+  const req = createRequire(path.join(R, 'app', 'package.json'));
+  const { chromium } = req('@playwright/test');
+  const executablePath = chromium.executablePath();
+  assert.ok(fs.existsSync(executablePath));
+  const outputPath = path.join(OWN, 'native640.png');
+  assert.ok(!fs.existsSync(outputPath), 'only one native raster is authorized');
+  const record = {
+    schema: 'bounded-author-native-capture@1', role: 'AUTHOR_NOT_REVIEWER',
+    sourceSvg: svgBinding, captureScript: bind(fileURLToPath(import.meta.url)),
+    runtime: { package: req.resolve('@playwright/test'), version: req('@playwright/test/package.json').version, executablePath, node: process.version },
+    isolatedHeadless: true, browserLaunches: 0, contexts: 0, pages: 0,
+    screenshotCalls: 0, contentLoads: 0, deviceScaleFactor: 1,
+    viewport: { width: 640, height: 480 },
+    rasterization: 'Original generated SVG rendered directly at CSS640x480 with DPR1; no existing raster resize/crop.',
+    candidateRasterViews: 0, visualReview: 'NOT_RUN',
+    closures: { page: false, context: false, browser: false },
+    startedAt: new Date().toISOString(),
+  };
+  let browser;
+  let context;
+  let page;
+  try {
+    record.browserLaunches++;
+    browser = await chromium.launch({ headless: true, executablePath });
+    record.contexts++;
+    context = await browser.newContext({ viewport: record.viewport, deviceScaleFactor: 1 });
+    await context.route('**/*', route => route.abort());
+    record.pages++;
+    page = await context.newPage();
+    record.browserVersion = browser.version();
+    record.contentLoads++;
+    await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+      :root { --ld-figure-ink:#15201f; --ld-figure-muted:#4c5a58; --ld-figure-accent:#15201f; --ld-figure-accent-soft:#8a9795; --ld-figure-grid:#e3eae9; --ld-figure-paper:#ffffff; }
+      html,body { margin:0; width:640px; height:480px; overflow:hidden; background:#ffffff; }
+      svg { display:block; width:640px; height:480px; }
+      </style></head><body>${fs.readFileSync(svgPath, 'utf8')}</body></html>`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    record.domTechnicalObservation = await page.evaluate(ids => {
+      const svg = document.querySelector('svg');
+      const anchors = ids.map(id => {
+        const node = document.getElementById(`ld-fig-16_ld-${id}`);
+        const style = node && getComputedStyle(node);
+        return { id, found: Boolean(node), display: style?.display, visibility: style?.visibility, visible: Boolean(node) && style.display !== 'none' && style.visibility !== 'hidden' };
+      });
+      const labels = [...svg.querySelectorAll('text')].map(node => {
+        const box = node.getBoundingClientRect();
+        const matrix = node.getScreenCTM();
+        return {
+          id: node.getAttribute('data-label-id'), text: node.textContent,
+          x: box.x, y: box.y, width: box.width, height: box.height,
+          finalFontPx: Number.parseFloat(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        };
+      });
+      const svgBox = svg.getBoundingClientRect();
+      return {
+        svgWidth: svgBox.width, svgHeight: svgBox.height,
+        devicePixelRatio: devicePixelRatio, anchors, labels,
+        yLabelRightEdgeClearanceFromAxisPx: 320 - (labels.find(label => label.text === 'y').x + labels.find(label => label.text === 'y').width),
+        yUnitRightEdgeClearanceFromAxisPx: 320 - (labels.find(label => label.id === 'fig-16-y-unit-label-label').x + labels.find(label => label.id === 'fig-16-y-unit-label-label').width),
+      };
+    }, hiddenIds);
+    assert.equal(record.domTechnicalObservation.svgWidth, 640);
+    assert.equal(record.domTechnicalObservation.svgHeight, 480);
+    assert.equal(record.domTechnicalObservation.devicePixelRatio, 1);
+    assert.equal(record.domTechnicalObservation.labels.length, 9);
+    assert.ok(record.domTechnicalObservation.anchors.every(anchor => anchor.found && !anchor.visible));
+    assert.ok(record.domTechnicalObservation.labels.every(label => label.finalFontPx >= 16));
+    assert.ok(record.domTechnicalObservation.yLabelRightEdgeClearanceFromAxisPx >= 16);
+    assert.ok(record.domTechnicalObservation.yUnitRightEdgeClearanceFromAxisPx >= 16);
+    record.screenshotCalls++;
+    await page.screenshot({ path: outputPath, type: 'png', fullPage: false, animations: 'disabled' });
+    const bytes = fs.readFileSync(outputPath);
+    assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.equal(bytes.subarray(12, 16).toString('ascii'), 'IHDR');
+    record.png = { ...bind(outputPath), width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+    assert.equal(record.png.width, 640);
+    assert.equal(record.png.height, 480);
+    record.technicalCaptureStatus = 'complete';
+  } catch (error) {
+    record.technicalCaptureStatus = 'failed';
+    record.error = error.message;
+    throw error;
+  } finally {
+    if (page) { await page.close(); record.closures.page = true; }
+    if (context) { await context.close(); record.closures.context = true; }
+    if (browser) { await browser.close(); record.closures.browser = true; }
+    record.finishedAt = new Date().toISOString();
+    const binding = write('capture.record', record);
+    console.log(JSON.stringify({ capture: binding, png: record.png, screenshotCalls: record.screenshotCalls, closures: record.closures, candidateViews: 0 }));
+  }
+}
+
+await capture();

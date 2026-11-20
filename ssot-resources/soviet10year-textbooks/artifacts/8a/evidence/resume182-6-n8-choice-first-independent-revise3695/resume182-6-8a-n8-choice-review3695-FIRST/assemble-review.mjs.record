@@ -1,0 +1,81 @@
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = resolve(R, '.tmp/resume182-6-8a-n8-choice-review3695-FIRST');
+const read = name => JSON.parse(readFileSync(resolve(own, name)));
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+for (const name of ['source.seal.record', 'views.seal.record', 'author-comparison.seal.record']) {
+  const seal = read(name);
+  if (hash(readFileSync(seal.evidence_path)) !== seal.evidence_sha256) throw new Error(`Changed evidence: ${name}`);
+}
+const packetPath = resolve(R, '.tmp/resume182-6-8a-n8-choice-review-input3695-FIRST/packet.record');
+const packetBytes = readFileSync(packetPath);
+if (hash(packetBytes) !== '013f2f793609c86cf0ee4448e006cc2a967c0e62b2799c2dfef6f4d666c87903') throw new Error('Packet changed');
+const packet = JSON.parse(packetBytes);
+for (const input of [packet.seed, packet.views, packet.authorDraftToReadOnlyAfterSourceAndViewSeals]) {
+  if (hash(readFileSync(input.path)) !== input.sha256) throw new Error(`Input changed: ${input.path}`);
+}
+const draft = JSON.parse(readFileSync(packet.authorDraftToReadOnlyAfterSourceAndViewSeals.path));
+const views = JSON.parse(readFileSync(packet.views.path));
+const source = read('source-independent.json');
+const pure = read('view-independent.json');
+const late = read('key-comparison.json');
+const bindings = JSON.parse(read('015-canonical-bindings.command.json').stdout);
+const seedDigest = bindings.find(x => x.path.endsWith('/seed.json')).canonical_sha256;
+const draftDigest = bindings.find(x => x.path.endsWith('/draft.json')).canonical_sha256;
+if (draft.seed_sha256 !== seedDigest) throw new Error('Draft seed digest mismatch');
+const expected = views.map(q => ({ id: q.id, view: q.view }));
+const actual = draft.questions.map(q => ({ id: q.id, view: q.view }));
+if (JSON.stringify(expected) !== JSON.stringify(actual)) throw new Error('Pure views differ from original draft');
+const pass = evidence => ({ verdict: 'pass', evidence });
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: seedDigest,
+  draft_sha256: draftDigest,
+  reviewer: { kind: 'independent_agent', identity: 'STEMROBIN-182/182-6 n8 FIRST pure-view reviewer3695; not the author; source and views sealed before key disclosure' },
+  source_reviews: source.sources.map(s => ({
+    source_number: s.number,
+    independent_solution: s.solution,
+    coverage: pass(late.coverage[s.number])
+  })),
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: pure.questions.map(q => {
+    const comparison = late.questions.find(x => x.id === q.id);
+    const authored = draft.questions.find(x => x.id === q.id);
+    if (!comparison || !authored) throw new Error(`Missing comparison ${q.id}`);
+    if (JSON.stringify([...q.correct].sort()) !== JSON.stringify([...authored.key.correct].sort())) throw new Error(`Unexpected key disagreement ${q.id}`);
+    for (const option of q.checks) {
+      const rationale = authored.key.rationales.find(x => x.option_id === option[0]);
+      if (!rationale || rationale.truth !== option[1] || !comparison.options[option[0]]) throw new Error(`Incomplete option comparison ${q.id}:${option[0]}`);
+    }
+    return {
+      question_id: q.id,
+      task_fidelity: pass(q.fidelity + ' Late coverage comparison: ' + late.coverage[q.source]),
+      redundancy: pass(q.redundancy),
+      answer_leakage: pass(q.leakage),
+      mathematics: {
+        verdict: comparison.verdict,
+        independent_solution: q.solution + ' This true set was sealed before reading the author. ' +
+          (comparison.verdict === 'revise' ? 'The author key agrees, but q39:b has the concrete internal misconception/derivation mismatch recorded below; it is not normalized to pass.' : 'Later author key and source derivation agree.'),
+        correct: q.correct,
+        option_checks: q.checks.map(([option_id, truth, evidence]) => ({
+          option_id, truth, evidence: evidence + ' Late internal check: ' + comparison.options[option_id]
+        }))
+      }
+    };
+  }),
+  outcome: late.outcome
+};
+const nOptions = review.question_reviews.reduce((n, q) => n + q.mathematics.option_checks.length, 0);
+if (review.source_reviews.length !== 15 || review.question_reviews.length !== 41 || nOptions !== 126) throw new Error('Wrong evidence cardinality');
+if (draft.new_figures.length !== 0 || source.images.length !== 0 || views.some(q => q.view.figure_ids.length || q.view.options.some(o => o.figure_ids.length))) throw new Error('Unexpected figures');
+const path = resolve(own, 'review.json');
+if (existsSync(path)) throw new Error('Do not overwrite a review');
+writeFileSync(path, JSON.stringify(review, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({
+  path, sha256: hash(readFileSync(path)), outcome: review.outcome,
+  counts: { sources: 15, original_tasks: 47, questions: 41, option_checks: nOptions, figure_checks: 0, new_figure_reviews: 0 },
+  failed_checks: [{ question_id: 'q39', option_id: 'b', type: 'internal_misconception_derivation_mismatch' }]
+}));

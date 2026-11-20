@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, BOOK, ID, canonical, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const original = path.join(R, '.tmp/resume182-6-8a-n8-choice-author3695-FIRST/draft.json');
+const reviewPath = path.join(R, '.tmp/resume182-6-8a-n8-choice-review3695-FIRST/review.json');
+const originalBytes = fs.readFileSync(original);
+const reviewBytes = fs.readFileSync(reviewPath);
+assert.equal(sha(originalBytes), 'df55fba908a3ecb84bc70d13bb59241960ce1043418769cd6b3bc1035e69b4a2');
+assert.equal(sha(reviewBytes), 'ccc57072616fb326785539b20fd6be40301d4cb39758a3271f283cd226ebbcdf');
+const before = JSON.parse(originalBytes);
+const after = structuredClone(before);
+const review = JSON.parse(reviewBytes);
+assert.equal(review.outcome, 'revise');
+assert.equal(review.question_reviews.filter(item => item.mathematics.verdict !== 'pass').length, 1);
+const questionIndex = after.questions.findIndex(question => question.id === 'q39');
+const rationaleIndex = after.questions[questionIndex].key.rationales.findIndex(item => item.option_id === 'b');
+const rationale = after.questions[questionIndex].key.rationales[rationaleIndex];
+assert.equal(rationale.misconception, 'Omit the cross term when squaring a difference of square roots.');
+const old = rationale.misconception;
+rationale.misconception = 'Treat the square of a difference of square roots as the difference of their squares.';
+const reverted = structuredClone(after);
+reverted.questions[questionIndex].key.rationales[rationaleIndex].misconception = old;
+assert.deepEqual(reverted, before, 'Exactly one internal leaf may change');
+assert.deepEqual(after.questions.map(question => question.view), before.questions.map(question => question.view));
+const output = path.join(R, '.tmp/resume182-6-8a-n8-choice-repair3695-AFFECTED1');
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const draftPath = path.join(output, 'draft.json');
+const draftBytes = Buffer.from(`${JSON.stringify(after, null, 2)}\n`);
+fs.writeFileSync(draftPath, draftBytes, { flag: 'wx' });
+const packet = {
+  status: 'AFFECTED_INTERNAL_MISCONCEPTION_REPAIRED_NOT_REVIEWED',
+  book: BOOK, lesson: ID, edition: 'modern-us-neutral',
+  original: { path: original, sha256: sha(originalBytes) },
+  originalReview: { path: reviewPath, sha256: sha(reviewBytes) },
+  repaired: { path: draftPath, sha256: sha(draftBytes), canonical_sha256: canonical(after) },
+  delta: { path: `/questions/${questionIndex}/key/rationales/${rationaleIndex}/misconception`,
+    before: old, after: rationale.misconception },
+  originalREVISEPreserved: true, changedLeaves: 1,
+  viewsKeysDerivationsAndAllOtherFieldsChanged: false,
+  inheritedSourceReviews: 15, inheritedTrueSets: 41, inheritedOptionTruthChecks: 126,
+  contentRepairRuns: 1, newSemanticReviews: 0, rendererBrowserOrValidatorCalls: 0,
+  unknownHistoricalBytesRecovered: false, DBWrites: 0, hostTokens: 'unknown', totalCost: 'unknown',
+};
+const readyPath = path.join(output, 'repair.record');
+fs.writeFileSync(readyPath, `${JSON.stringify(packet, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...packet.repaired, packet: readyPath, packetSHA: sha(fs.readFileSync(readyPath)) }));

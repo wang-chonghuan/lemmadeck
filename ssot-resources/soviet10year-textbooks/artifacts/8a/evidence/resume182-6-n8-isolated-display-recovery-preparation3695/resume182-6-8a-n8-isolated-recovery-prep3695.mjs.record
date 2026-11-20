@@ -1,0 +1,39 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, OWN, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const source = path.join(OWN, 'run.mjs');
+const before = fs.readFileSync(source);
+assert.equal(sha(before), 'd2081f65155b79aec95db8d097f24793e58f29c46e0621d9f399cc21a3d60cdf');
+let text = before.toString('utf8');
+const replacements = [
+  ["boundary: 'Offline display only; not formal headed APP acceptance or content approval'",
+    "boundary: 'Isolated headless offline display only; not formal headed APP acceptance or content approval'"],
+  ["chromium.launch({ headless: false", "chromium.launch({ headless: true"],
+  ["version: browser.version(), headless: false", "version: browser.version(), headless: true"],
+  ["limitation: 'Headed offline display only; not APP acceptance'",
+    "limitation: 'Headless offline display only after preserved headed navigation interference; not headed or APP acceptance'"],
+  ["report.implementation = ready.files.filter(file => implementation.some(name => file.path === path.join(OWN, name)));",
+    "report.implementation = ready.files.filter(file => implementation.some(name => file.path === path.join(OWN, name)));\n"
+    + "    report.implementation.push(await recordFile(path.join(OWN, 'run-recovery-isolated1.mjs')));"],
+];
+for (const [from, to] of replacements) {
+  assert.equal(text.split(from).length - 1, 1, from);
+  text = text.replace(from, to);
+}
+const output = path.join(OWN, 'run-recovery-isolated1.mjs');
+assert.ok(!fs.existsSync(output));
+fs.writeFileSync(output, text, { flag: 'wx' });
+const record = {
+  status: 'ISOLATED_BROWSER_RECOVERY_PREPARED_NOT_EXECUTED',
+  root: R, original: { path: source, sha256: sha(before) },
+  output: { path: output, sha256: sha(Buffer.from(text)) },
+  replacements, contentAssertionsOrBudgetsChanged: false,
+  firstFailurePreserved: true, rendererCalls: 0, browserLaunches: 0,
+  imageObservations: 0, formalHeadedOrAPPApproval: false,
+};
+const target = path.join(OWN, 'isolated-recovery-preparation.record');
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...record.output, preparation: target, preparationSHA: sha(fs.readFileSync(target)) }));

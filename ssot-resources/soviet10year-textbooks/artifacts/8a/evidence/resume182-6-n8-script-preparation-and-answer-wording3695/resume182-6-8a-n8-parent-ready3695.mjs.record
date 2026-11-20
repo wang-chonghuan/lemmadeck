@@ -1,0 +1,96 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {
+  R, OWN, BOOK, EDITION, ID, MODERN, LESSON, CHOICES, sha,
+  mandatory, usageCounters, approvedReceipt,
+} from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const [textReview, textSHA, answerReview, answerSHA, figureReview, figureSHA] = process.argv.slice(2);
+const own = path.join(R, '.tmp/resume182-6-8a-n8-parent-ready3695-FIRST');
+const record = filename => {
+  const bytes = fs.readFileSync(filename);
+  return { path: path.resolve(filename), sha256: sha(bytes), bytes: bytes.length };
+};
+const read = filename => JSON.parse(fs.readFileSync(filename));
+const save = (filename, value) => fs.writeFileSync(filename,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+for (const [file, hash, status] of [
+  [textReview, textSHA, 'TEXT_PASS'], [answerReview, answerSHA, 'PASS'],
+  [figureReview, figureSHA, 'PASS'],
+]) {
+  assert.match(hash, /^[a-f0-9]{64}$/);
+  assert.equal(record(file).sha256, hash);
+  const value = read(file);
+  assert.equal(value.status, status);
+  assert.equal(value.book, BOOK);
+  assert.equal(value.lesson, ID);
+  assert.equal(value.edition, EDITION);
+}
+const draft = read(path.join(CHOICES, 'draft.json'));
+const figureFiles = draft.new_figures.flatMap(figure => {
+  const filename = path.resolve(R, figure.path);
+  assert.ok(filename.startsWith(`${CHOICES}/figures/`));
+  assert.equal(record(filename).sha256, figure.sha256);
+  return [filename, ...['spec.json', 'render.json', 'review.json']
+    .map(suffix => path.join(path.dirname(filename), `${figure.id}.${suffix}`))];
+});
+const files = [...new Set([...mandatory, ...figureFiles])];
+const groups = {
+  modern: files.filter(file => path.dirname(file) === LESSON
+    && !path.basename(file).startsWith('answer-keys')),
+  answers: files.filter(file => path.basename(file).startsWith('answer-keys')),
+  choices: files.filter(file => file.startsWith(`${CHOICES}/`)),
+  figures: files.filter(file => file.startsWith(`${MODERN}/figures/`)),
+};
+const receipts = {
+  modern: [textReview, path.join(LESSON, 'adaptation.audit.json')],
+  answers: [answerReview, path.join(LESSON, 'answer-keys.audit.json')],
+  choices: [path.join(CHOICES, 'review.json')],
+  figures: [path.join(MODERN, 'figures/fig-16.review.json')],
+};
+for (const [stage, names] of Object.entries(receipts)) {
+  for (const file of names) assert.ok(approvedReceipt(read(file), stage), file);
+}
+const answers = read(path.join(LESSON, 'answer-keys.json'));
+assert.equal(answers.status, 'ready');
+assert.equal(answers.count, 15);
+const candidate = read(answerReview).inputs.find(item => item.path.endsWith('answers.draft.json'));
+assert.ok(candidate);
+assert.equal(record(candidate.path).sha256, candidate.sha256);
+assert.deepEqual(answers.answers, read(candidate.path).answers);
+assert.equal(read(path.join(LESSON, 'adaptation.audit.json')).status, 'pass');
+assert.equal(read(path.join(CHOICES, 'review.json')).outcome, 'pass');
+assert.ok(draft.questions.length > 0);
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+const upstream = path.join(own, 'upstream-usage.record');
+save(upstream, {
+  schema: 'n8-upstream-usage@1', book: BOOK, lesson: ID, edition: EDITION,
+  cumulative: Object.fromEntries(usageCounters.map(counter => [counter, null])),
+  evidence: [textReview, answerReview, figureReview,
+    path.join(R, '.tmp/resume182-6-8a-n8-fig16-author3695-FIRST/ready.record'),
+    path.join(R, '.tmp/resume182-6-8a-n8-blind3695-FIRST/solution-support.record'),
+    path.join(R, '.tmp/resume182-6-8a-n8-answers3695-FIRST/answers-author.record'),
+  ].map(record),
+  policy: 'Historical totals remain unknown; actual counts/failures remain in original receipts. No unknown counter is zero.',
+  cost: 'unknown', hostTokens: 'unknown',
+});
+const parent = {
+  schema: 'n8-parent-display-ready@1', status: 'parentREADY', ticket: 'STEMROBIN-182',
+  scope: { root: R, book: BOOK, edition: EDITION, lesson: ID },
+  authorization: { offlineDisplay: true, rendererCalls: 1, appAcceptance: false, production: false },
+  files: files.map(record),
+  approvals: Object.fromEntries(Object.entries(groups).map(([stage, names]) => [stage, {
+    status: 'pass', files: names.map(record), receipts: receipts[stage].map(record),
+    ...(stage === 'answers' ? { finalized: true } : {}),
+    ...(stage === 'choices' ? { retained: true } : {}),
+    ...(stage === 'figures' ? { ids: ['fig-16'] } : {}),
+  }])),
+  upstreamUsage: record(upstream), preparation: record(path.join(OWN, 'ready-FIRST.record')),
+  rendererOrBrowserCalls: 0, created: new Date().toISOString(), wholeLessonApproval: false,
+};
+const target = path.join(own, 'parent-ready.record');
+save(target, parent);
+console.log(JSON.stringify({ status: parent.status, ...record(target) }));

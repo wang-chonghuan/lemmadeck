@@ -1,0 +1,184 @@
+            ? Math.min(...textSizes.map((item) => item.px))
+            : null,
+          failures,
+          status: failures.length ? 'fail' : 'pass',
+        }
+      })
+      const cloneFor = (layer) => {
+        const clone = svg.cloneNode(true)
+        clone.style.background = layer === 'composite'
+          ? svg.style.background
+          : 'transparent'
+        if (layer === 'overlay') {
+          clone.querySelectorAll('image').forEach((node) => node.remove())
+        } else if (layer === 'artwork') {
+          clone.querySelectorAll(
+            'line, path, polygon, polyline, circle, ellipse, rect, text',
+          ).forEach((node) => {
+            if (!node.closest('defs')) node.remove()
+          })
+        }
+        clone.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+        return clone.outerHTML
+      }
+      return {
+        svg: cloneFor(figureSpec.mode === 'hybrid' ? 'overlay' : 'composite'),
+        compositeSvg: cloneFor('composite'),
+        artworkSvg: figureSpec.mode === 'hybrid' ? cloneFor('artwork') : null,
+        labels: labels.length,
+        collisions,
+        objects: figureSpec.objects.length,
+        imageFits,
+        displayChecks,
+      }
+    }, { figureSpec: spec, boardId })
+
+    const screenshotSvg = async (svg, filePath, transparent) => {
+      ensureParent(filePath)
+      await page.setContent(`
+        <!doctype html>
+        <style>
+          :root {
+            --ld-figure-ink: #15201f;
+            --ld-figure-muted: #4c5a58;
+            --ld-figure-accent: #15201f;
+            --ld-figure-accent-soft: #8a9795;
+            --ld-figure-grid: #e3eae9;
+            --ld-figure-paper: #ffffff;
+          }
+          html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+          body { background: ${transparent ? 'transparent' : '#ffffff'}; }
+          svg { display: block; }
+        </style>
+        ${svg}
+      `)
+      await page.screenshot({
+        path: filePath,
+        type: 'png',
+        omitBackground: transparent,
+        animations: 'disabled',
+      })
+    }
+    if (output.svg) {
+      ensureParent(output.svg)
+      fs.writeFileSync(output.svg, `${result.svg}\n`, 'utf8')
+    }
+    if (output.png) {
+      await screenshotSvg(result.compositeSvg, output.png, false)
+    }
+    if (output.artwork) {
+      await screenshotSvg(result.artworkSvg, output.artwork, true)
+    }
+    return result
+  } finally {
+    await browser.close()
+  }
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+  const specPath = path.resolve(args.spec)
+  validateSpec(specPath)
+  const rawSpec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  if (rawSpec.schema !== FIGURE_SPEC_SCHEMA) {
+    throw new Error(
+      `renderer accepts only ${FIGURE_SPEC_SCHEMA}; migrate the source-first spec`,
+    )
+  }
+  if (rawSpec.mode === 'generated') {
+    throw new Error('generated mode must be produced with n-azure cap4')
+  }
+  const spec = embedAssets(rawSpec)
+  if (spec.mode === 'deterministic' && !args.svg) {
+    throw new Error('deterministic mode requires --svg')
+  }
+  if (spec.mode === 'hybrid' && (!args.svg || !args.artwork)) {
+    throw new Error('hybrid mode requires --svg and --artwork')
+  }
+  const result = await render(spec, {
+    svg: args.svg && path.resolve(args.svg),
+    png: args.png && path.resolve(args.png),
+    artwork: args.artwork && path.resolve(args.artwork),
+  })
+  const report = {
+    schema: RENDER_SCHEMA,
+    figure: spec.id,
+    mode: spec.mode,
+    renderer: {
+      name: 'JSXGraph',
+      version: JSON.parse(
+        fs.readFileSync(
+          path.join(skillsDir, 'node_modules', 'jsxgraph', 'package.json'),
+          'utf8',
+        ),
+      ).version,
+    },
+    spec: {
+      path: portablePath(specPath),
+      sha256: sha256File(specPath),
+    },
+    output: {
+      ...(spec.mode === 'deterministic'
+        ? { svg: { path: portablePath(args.svg), sha256: sha256File(args.svg) } }
+        : {}),
+      ...(spec.mode === 'hybrid'
+        ? {
+            artwork: {
+              path: portablePath(args.artwork),
+              sha256: sha256File(args.artwork),
+            },
+            svg: {
+              path: portablePath(args.svg),
+              sha256: sha256File(args.svg),
+            },
+          }
+        : {}),
+    },
+    assets: (spec.assets || []).map((asset) => ({
+      id: asset.id,
+      path: portablePath(asset.path),
+      sha256: sha256File(asset.path),
+      ...(asset.metadata
+        ? {
+            metadata: {
+              path: portablePath(asset.metadata),
+              sha256: sha256File(asset.metadata),
+            },
+          }
+        : {}),
+    })),
+    theme: {
+      roles: ['ink', 'muted', 'accent', 'accentSoft', 'grid', 'paper'],
+      output: 'css-variables',
+    },
+    objects: result.objects,
+    labels: result.labels,
+    collisions: result.collisions,
+    imageFits: result.imageFits,
+    displayChecks: result.displayChecks,
+    status: (
+      result.collisions.length ||
+      result.imageFits.some((item) => item.status !== 'pass') ||
+      result.displayChecks.some((item) => item.status !== 'pass')
+    ) ? 'fail' : 'pass',
+  }
+  if (args.report) {
+    ensureParent(args.report)
+    fs.writeFileSync(
+      args.report,
+      `${JSON.stringify(report, null, 2)}\n`,
+      'utf8',
+    )
+  }
+  if (report.status === 'fail') {
+    console.error(JSON.stringify(report, null, 2))
+    process.exitCode = 2
+  } else {
+    console.log(`PASS: ${spec.id} (${result.objects} objects, ${result.labels} labels)`)
+  }
+}
+
+main().catch((error) => {
+  console.error(`ERROR: ${error.message}`)
+  process.exitCode = 1
+})

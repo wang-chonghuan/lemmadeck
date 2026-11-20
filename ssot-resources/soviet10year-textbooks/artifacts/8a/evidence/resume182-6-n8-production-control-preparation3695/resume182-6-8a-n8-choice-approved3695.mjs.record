@@ -1,0 +1,41 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, BOOK, ID, canonical, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const [reviewPath, reviewSHA] = process.argv.slice(2);
+assert.ok(path.isAbsolute(reviewPath) && reviewPath.startsWith(`${R}/.tmp/resume182-6-8a-n8-choice-review`));
+assert.match(reviewSHA, /^[a-f0-9]{64}$/);
+const source = path.join(R, '.tmp/resume182-6-8a-n8-choice-author3695-FIRST');
+const output = path.join(R, '.tmp/resume182-6-8a-n8-choice-approved3695-FIRST');
+const files = [
+  ['seed.json', path.join(source, 'seed.json'), '17c2282c00838f8ec6c7e7cb9fcd6efbe91b610fffb5d95af72a9475038e20d6'],
+  ['draft.json', path.join(source, 'draft.json'), 'df55fba908a3ecb84bc70d13bb59241960ce1043418769cd6b3bc1035e69b4a2'],
+  ['review.json', reviewPath, reviewSHA],
+].map(([name, filename, expected]) => {
+  const bytes = fs.readFileSync(filename);
+  assert.equal(sha(bytes), expected, filename);
+  return { name, filename, bytes, sha256: expected, data: JSON.parse(bytes) };
+});
+const [seed, draft, review] = files.map(file => file.data);
+assert.equal(seed.source.book, BOOK);
+assert.equal(seed.source.lesson, ID);
+assert.equal(review.outcome, 'pass');
+assert.equal(review.seed_sha256, canonical(seed));
+assert.equal(review.draft_sha256, canonical(draft));
+assert.equal(draft.seed_sha256, canonical(seed));
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+for (const file of files) fs.writeFileSync(path.join(output, file.name), file.bytes, { flag: 'wx' });
+const record = {
+  status: 'APPROVED_CHOICE_BYTES_BOUND_NOT_YET_RETAINED',
+  book: BOOK, lesson: ID, edition: 'modern-us-neutral',
+  inputs: files.map(file => ({ path: file.filename, sha256: file.sha256, bytes: file.bytes.length })),
+  outputs: files.map(file => ({ path: path.join(output, file.name), sha256: file.sha256, bytes: file.bytes.length })),
+  candidateEdits: 0, newSemanticReviews: 0, rendererBrowserOrValidatorCalls: 0,
+  unknownHistoricalBytesRecovered: false, DBWrites: 0, hostTokens: 'unknown', totalCost: 'unknown',
+};
+fs.writeFileSync(path.join(output, 'binding.record'), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, source: output, questions: draft.questions.length,
+  bindingSHA: sha(fs.readFileSync(path.join(output, 'binding.record'))) }));

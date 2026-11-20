@@ -1,0 +1,333 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const root = path.join(R, '.tmp/resume182-6-8a-n8-answers3695-FIRST');
+const started = new Date();
+const id = `${started.toISOString().replace(/[:.]/g, '-')}-${process.pid}-${crypto.randomUUID()}`;
+const receiptPath = path.join(root, 'receipts', `${id}.json`);
+const receipt = {
+  kind: 'answers-author-command-receipt',
+  startedAt: started.toISOString(),
+  cwd: process.cwd(),
+  argv: process.argv,
+  inputs: [],
+  outputs: [],
+  status: 'running',
+};
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+
+fs.mkdirSync(path.dirname(receiptPath), { recursive: true });
+try {
+  if (process.cwd() !== R) throw new Error('Command cwd must be the sole repository root.');
+  const [mode, ...args] = process.argv.slice(2);
+  const files = mode === 'read' ? args : args.slice(0, 1);
+  if (!['read', 'modern', 'support-range', 'inventory'].includes(mode)) throw new Error(`Unsupported receipt helper mode: ${mode}`);
+  if (mode === 'inventory') {
+    const templatePath = path.join(R, '.tmp/resume182-6-8a-n8-text-author3695-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n8/exercises.template.json');
+    const supportPath = path.join(R, '.tmp/resume182-6-8a-n8-blind3695-FIRST/solution-support.record');
+    const candidatePath = path.join(root, 'answers.draft.json');
+    const load = (absolute) => {
+      const bytes = fs.readFileSync(absolute);
+      const entry = { path: absolute, sha256: sha(bytes), bytes: bytes.length };
+      receipt.inputs.push(entry);
+      return { entry, data: JSON.parse(bytes.toString('utf8')) };
+    };
+    const template = load(templatePath);
+    const support = load(supportPath);
+    const candidate = load(candidatePath);
+    const requireFact = (condition, message) => {
+      if (!condition) throw new Error(message);
+    };
+    requireFact(template.entry.sha256 === '907b360828c83146d168c695a47339553e932ba1fa23d3530823bed023d1a724', 'Modern template hash changed.');
+    requireFact(support.entry.sha256 === '34a5ceef40894ad89e7823f7c4528a8f6dce2746f48f7be842902234aab3f42b', 'Sealed support hash changed.');
+    requireFact(support.data.sealed === true, 'Support is not sealed.');
+    requireFact(candidate.data.schema === 'ld-s10y-answer/lesson-answers@1', 'Unexpected candidate schema identifier.');
+    requireFact(candidate.data.book === '8a' && candidate.data.lesson === 'alg8-c2-s1-n8' && candidate.data.edition === 'modern-us-neutral' && candidate.data.status === 'draft', 'Candidate identity/status mismatch.');
+    const modernNumbers = template.data.exercises.map((item) => item.number);
+    requireFact(JSON.stringify(candidate.data.answers.map((item) => item.exercise)) === JSON.stringify(modernNumbers), 'Candidate exercise coverage/order mismatch.');
+    requireFact(new Set(modernNumbers).size === modernNumbers.length, 'Duplicate modern exercise number.');
+    const labelsOf = (text) => [...text.matchAll(/(?:^|\n)([a-z])\)/g)].map((match) => match[1]);
+    const coverageDescriptions = {
+      '102': 'Six complete singleton system solution sets, substitution steps, real domain and uniqueness reasons.',
+      '103': 'Nine complete system solution sets, all root signs and pairings, fractional roots and sealed completeness reasons.',
+      '104': 'Three equal-scale concrete construction plans; all 2+4+3 intersections including (0,-10) tangency; no drawing/render/view executed.',
+      '105': 'Both complete three-equation common solution sets are empty; reasons reject the first-two-equation candidates.',
+      '106': 'Four complete reciprocal solution sets, nonzero denominators, both negative pairs and exact decimal-as-fraction roles.',
+      '107': 'Both word-model results, unordered number meanings and every positive/negative pair.',
+      '108': 'Both side-label arrangements in each geometry model, positive lengths, units, triangle feasibility and requested area.',
+      '109': 'Side-specific reductions, all algebraic candidates and rejection; both increase-labelled rectangle solutions with area checks.',
+      '110': 'Both requested numbers, complete digit candidates and bounds, rejected digit roots, explicit same-two-digits reversal reasoning.',
+      '111': 'Every requested role-labelled speed, signed time differences, all algebraic candidates, rejected negative speeds and full-trip checks.',
+      '112': 'Both pipe assignments, half-tank rates/times; faster/slower combine roles, all algebraic candidates and rejected negative time.',
+      '113': 'Both Boolean tests plus the unlettered swap proof for all real a,b satisfying the equation.',
+      '114': 'Both exact principal-radical substitutions and Boolean results with reasons.',
+      '115': 'Both complete t>=0 parameter families, original radical domains, converse reasons and two examples each; other legitimate pairs remain allowed.',
+      '116': 'All occupied open quadrants, every sign interval and witness, complete graph sets, forbidden zero and axis points separate from quadrants.',
+    };
+    const coverage = template.data.exercises.map((modern, index) => {
+      const answer = candidate.data.answers[index];
+      const sealed = support.data.exercises.find((item) => item.source_number === modern.number);
+      requireFact(Boolean(sealed), `Missing sealed exercise ${modern.number}.`);
+      const modernLabels = labelsOf(modern.text);
+      const displayLabels = labelsOf(answer.displayAnswer);
+      requireFact(JSON.stringify(modernLabels) === JSON.stringify(displayLabels), `Display label coverage/order mismatch in ${modern.number}.`);
+      requireFact(modernLabels.length === sealed.parts.length, `Sealed subpart count mismatch in ${modern.number}.`);
+      requireFact(answer.source === 'derived' && !Object.hasOwn(answer, 'bookRaw'), `Unexpected book answer claim in ${modern.number}.`);
+      requireFact(Array.isArray(answer.parts) && ['auto', 'ungraded'].includes(answer.grading), `Unexpected grading structure in ${modern.number}.`);
+      requireFact(answer.grading !== 'ungraded' || answer.parts.length === 0, `Ungraded exercise ${modern.number} has grading parts.`);
+      requireFact(answer.grading !== 'auto' || ['110', '111'].includes(modern.number), `Unexpected auto exercise ${modern.number}.`);
+      const additional = sealed.additional_obligations || [];
+      if (additional.length) {
+        requireFact(modern.number === '113' && additional.length === 1 && additional[0].identity === 'unlettered-swap-proof', 'Unexpected extra sealed obligation.');
+        requireFact(answer.displayAnswer.includes('一般交换证明（题末未编号的要求）') && answer.displayAnswer.includes('任取实数 $a,b$'), 'Missing unlettered proof transcription marker.');
+      }
+      requireFact(modern.figure_refs.length === 0 && modern.figures.length === 0, `Unexpected figure input in ${modern.number}.`);
+      return {
+        exercise: modern.number,
+        modern_subparts: modernLabels,
+        sealed_subparts_in_position_order: sealed.parts.map((part) => part.part),
+        display_subparts: displayLabels,
+        lettered_subpart_count: displayLabels.length,
+        additional_obligations: additional.map((item) => item.identity),
+        total_obligation_count: displayLabels.length + additional.length,
+        grading: answer.grading,
+        grading_part_count: answer.parts.length,
+        source: answer.source,
+        authored_coverage: coverageDescriptions[modern.number],
+        status: 'TRANSCRIBED_CANDIDATE_NOT_REVIEWED',
+      };
+    });
+    const answer110 = candidate.data.answers.find((item) => item.exercise === '110');
+    const answer111 = candidate.data.answers.find((item) => item.exercise === '111');
+    const support110 = support.data.exercises.find((item) => item.source_number === '110');
+    const support111 = support.data.exercises.find((item) => item.source_number === '111');
+    const expectedNumericKeys = [
+      String(support110.parts[0].result.two_digit_number),
+      String(support110.parts[1].result.two_digit_number),
+      support111.parts[0].result.first_from_A_kmh,
+      support111.parts[0].result.second_from_B_kmh,
+      support111.parts[1].result.from_M_kmh,
+      support111.parts[1].result.from_N_kmh,
+    ];
+    const numericParts = [...answer110.parts, ...answer111.parts];
+    requireFact(numericParts.length === expectedNumericKeys.length, 'Numeric key count mismatch.');
+    numericParts.forEach((part, index) => {
+      requireFact(part.judge === 'numeric' && JSON.stringify(part.expected) === JSON.stringify([expectedNumericKeys[index]]), 'Literal numeric-key transcription mismatch.');
+    });
+    const counts = {
+      exercise_count: coverage.length,
+      lettered_subpart_count: coverage.reduce((sum, item) => sum + item.lettered_subpart_count, 0),
+      additional_proof_count: coverage.reduce((sum, item) => sum + item.additional_obligations.length, 0),
+      total_obligation_count: coverage.reduce((sum, item) => sum + item.total_obligation_count, 0),
+      auto_exercise_count: coverage.filter((item) => item.grading === 'auto').length,
+      ungraded_exercise_count: coverage.filter((item) => item.grading === 'ungraded').length,
+      numeric_grading_part_count: numericParts.length,
+      expression_grading_part_count: 0,
+      exact_grading_part_count: 0,
+      book_raw_count: 0,
+      input_figure_count: 0,
+      images_read_or_created: 0,
+      missing_exercise_count: 0,
+      duplicate_exercise_count: 0,
+      missing_lettered_subpart_count: 0,
+      missing_additional_proof_count: 0,
+      structural_inventory_failure_count: 0,
+      independent_math_review_count: 0,
+      new_solver_call_count: 0,
+      graphical_execution_count: 0,
+      official_gate_call_count: 0,
+    };
+    requireFact(counts.exercise_count === 15 && counts.lettered_subpart_count === 46 && counts.additional_proof_count === 1 && counts.total_obligation_count === 47, 'Coverage count mismatch.');
+    const writeOutput = (absolute, data) => {
+      requireFact(path.dirname(absolute) === root, 'Output is outside the owned write root.');
+      fs.writeFileSync(absolute, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+      const bytes = fs.readFileSync(absolute);
+      const output = { path: absolute, sha256: sha(bytes), bytes: bytes.length };
+      receipt.outputs.push(output);
+      return output;
+    };
+    const inventoryPath = path.join(root, 'author-inventory.record');
+    const inventory = writeOutput(inventoryPath, {
+      schema: 'resume182-6/answers-author-inventory@1',
+      status: 'STRUCTURAL_COUNTS_ONLY_NOT_MATH_REVIEW',
+      inputs: [template.entry, support.entry],
+      candidate: candidate.entry,
+      counts,
+      coverage,
+      checks: [
+        'JSON parsing and exact identity/status fields.',
+        'Exact allowed CONTENT input hashes, with sealed support flag.',
+        'Current modern exercise and letter-label coverage/order, compared to sealed support counts.',
+        'All source=derived; no invented bookRaw; ungraded parts arrays empty.',
+        'Six numeric keys copied literally from sealed result fields; no computation or judging engine.',
+        'Presence of the unlettered general-proof transcription marker, not a proof validity check.',
+        'No input figure references in the modern exercises.',
+      ],
+      official_schema_validation: 'NOT_RUN',
+      mathematical_validity: 'NOT_REVIEWED_BY_ANSWERS_AUTHOR',
+      actual_input_read_limitation: 'The first combined full-file read exceeded the tool display limit. The valid receipt was preserved, then modern-only text and bounded sealed-support views were read. Embedded source snapshots in the allowed template were not used as authoring authority.',
+    });
+    const previousReceipts = fs.readdirSync(path.join(root, 'receipts')).filter((name) => name.endsWith('.json')).map((name) => {
+      const absolute = path.join(root, 'receipts', name);
+      const bytes = fs.readFileSync(absolute);
+      return { path: absolute, sha256: sha(bytes), data: JSON.parse(bytes.toString('utf8')) };
+    });
+    const instructionInputs = [...new Map(previousReceipts.flatMap((item) => item.data.inputs).filter((item) => item.path !== templatePath && item.path !== supportPath).map((item) => [item.path, item])).values()];
+    const helperPath = path.join(root, 'receipt-helper.mjs');
+    const helperBytes = fs.readFileSync(helperPath);
+    const helperOutput = { path: helperPath, sha256: sha(helperBytes), bytes: helperBytes.length };
+    const authorRecord = writeOutput(path.join(root, 'answers-author.record'), {
+      schema: 'resume182-6/answers-author@1',
+      status: 'ANSWERS_AUTHOR_CANDIDATE_ONLY',
+      book: '8a',
+      lesson: 'alg8-c2-s1-n8',
+      edition: 'modern-us-neutral',
+      recorded_at: new Date().toISOString(),
+      sole_repository_root: R,
+      sole_new_write_root: root,
+      role: 'Author/transcriber only. No new mathematical solving, independent mathematical review, content approval or publishing authority.',
+      input_authority: 'Use only top-level current modern exercise text and the exact sealed independent solution-support record. No selected bookRaw was supplied.',
+      content_inputs: [template.entry, support.entry],
+      procedural_inputs: instructionInputs,
+      outputs: [candidate.entry, inventory, helperOutput],
+      self_hash_note: 'The exact answers-author.record SHA256 is emitted by the same receipted command after writing and reading these bytes; it is not embedded in itself.',
+      coverage,
+      counts: {
+        ...counts,
+        command_execution_count_through_closeout: previousReceipts.length + 1,
+        current_command_failure_count: previousReceipts.filter((item) => item.data.status === 'failed').length,
+        retained_tool_output_truncation_count: 1,
+        apply_patch_rejection_count: 0,
+        inherited_sealed_support_execution_failure_count: support.data.evidence.retained_execution_failures.length,
+        explicit_external_model_api_call_count: 0,
+        image_api_call_count: 0,
+        db_call_count: 0,
+        plane_call_count: 0,
+        git_call_count: 0,
+        browser_call_count: 0,
+        install_call_count: 0,
+        official_prepare_finalize_validator_solver_normalizer_choice_call_count: 0,
+        publish_call_count: 0,
+        created_or_attached_chat_count: 0,
+        sent_thread_message_count: 0,
+      },
+      grading_decisions: {
+        auto: [
+          { exercise: '110', reason: 'Each subpart asks for one uniquely identified two-digit number. Two plain numeric keys cover the complete requested output.' },
+          { exercise: '111', reason: 'Four unique positive speeds belong to explicitly named journey roles. All four requested values and units are represented; no generic solution-set input is fragmented.' },
+        ],
+        ungraded: [
+          { exercises: ['102', '103', '105', '106'], reason: 'Complete system solution sets and method/reasons lack a proven full tuple/set input contract; do not grade fragmentary x/y values.' },
+          { exercises: ['107', '108', '109', '112'], reason: 'Whole exercises contain unordered or alternative complete word-problem results; do not grade only a scalar fragment of a mixed exercise.' },
+          { exercises: ['104'], reason: 'Graphical task requires a concrete construction and all intersections; plans/results are present but actual drawing/render/view is not performed.' },
+          { exercises: ['113', '114'], reason: 'Boolean task contracts are not proven; 113 also includes a general proof, not only the two Boolean tests.' },
+          { exercises: ['115'], reason: 'Any two distinct legitimate solutions are allowed, not only the two displayed examples; full radical domains and t>=0 parameter families are included.' },
+          { exercises: ['116'], reason: 'Open-quadrant set answers and sign reasoning lack a proven full contract; axis points are separately recorded.' },
+        ],
+        actual_runtime_judge_validation: 'NOT_RUN',
+      },
+      graphical_task_104: {
+        construction_transcribed: true,
+        equal_scale_plan_for_each_subpart: true,
+        sealed_intersection_counts_in_modern_order: [2, 4, 3],
+        tangency_point_transcribed: ['0', '-10'],
+        drawing_performed: false,
+        rendering_performed: false,
+        drawing_viewed: false,
+        graphical_pass: false,
+      },
+      approval: {
+        answer_candidate_authored: true,
+        author_structural_inventory_only: true,
+        independently_solved_by_this_author: false,
+        independently_math_reviewed_by_this_author: false,
+        source_review_performed_by_this_author: false,
+        gate_2_run: false,
+        gate_2_approved: false,
+        official_finalize_run: false,
+        mathlive_edit_contract_test_run: false,
+        runtime_judging_test_run: false,
+        publish_run: false,
+        whole_lesson_approval: false,
+      },
+      actual_failures: {
+        current_command_failures: previousReceipts.filter((item) => item.data.status === 'failed').map((item) => ({ path: item.path, error: item.data.error })),
+        tool_output_truncations: [
+          { command_receipt: previousReceipts.find((item) => item.data.argv[2] === 'read' && item.data.inputs.some((input) => input.path === supportPath))?.path, kind: 'Combined full CONTENT read display was truncated; corrected with modern-only projection and four bounded sealed-support ranges. This was not a content failure or approval.' },
+        ],
+        inherited_sealed_support_execution_failures: support.data.evidence.retained_execution_failures,
+      },
+      limitations: [
+        'This is an offline draft answer candidate, not a math review or approval. Results and reasons were transcribed without new solving.',
+        'Graph 104 has useful equal-scale construction text and every sealed intersection, including tangency (0,-10), but no drawing/render/view was executed. Graphical fulfillment remains unverified.',
+        '110b uses the explicitly sealed same-two-digit interpretation: adding 27 prevents unchanged order, so the two digits reverse. No raw source wording review was performed.',
+        'No selected bookRaw was supplied. All answer sources are derived from the sealed independent support; no bookRaw was invented.',
+        'No official schema validator, normalizer, judging engine, MathLive edit test, gate, prepare/finalize, solver, browser, choice, publishing, installation, DB, Plane or Git call was made.',
+        'The inventory establishes labels/counts, input binding and literal numeric-key transcription only. It does not approve mathematical validity or a complete runtime judging contract.',
+        'The first full allowed-template read exposed its embedded source snapshot and was display-truncated; all authoring used current top-level modern text and subsequent modern-only projection, not the embedded snapshot.',
+        'No independent workers, raw lesson, worked examples, old answers or choices were consulted. Other workers and all paths outside the owned new write root were preserved.',
+        'The upstream support failure/usage history was retained as evidence, not rerun or reset. Historical and current model cost/token usage remain unknown.',
+      ],
+      inherited_sealed_support_limitations: support.data.actual_limitations,
+      cost: {
+        historical_cost: 'unknown',
+        historical_tokens: 'unknown',
+        current_model_cost: 'unknown',
+        current_model_tokens: 'unknown',
+        explicit_external_model_api_calls: 0,
+        current_image_calls: 0,
+        current_images_read_or_created: 0,
+        independent_support_reruns: 0,
+      },
+      receipts: {
+        completed_before_closeout: previousReceipts.map(({ path: absolute, sha256 }) => ({ path: absolute, sha256 })),
+        closeout_command_receipt_path: receiptPath,
+        closeout_receipt_self_hash: 'Not embedded; current receipt is written after this record and includes exact output hashes.',
+      },
+      editing: 'All manual helper and answer candidate edits used apply_patch. Inventory, closeout record and unique command receipts are generated only under the owned new write root.',
+    });
+    process.stdout.write(`${JSON.stringify({ candidate: candidate.entry, author_record: authorRecord, inventory, counts: { ...counts, command_execution_count: previousReceipts.length + 1, current_command_failure_count: previousReceipts.filter((item) => item.data.status === 'failed').length } }, null, 2)}\n`);
+  }
+  for (const file of files) {
+    const absolute = path.resolve(R, file);
+    const bytes = fs.readFileSync(absolute);
+    receipt.inputs.push({ path: absolute, sha256: sha(bytes), bytes: bytes.length });
+    let content = bytes.toString('utf8');
+    if (mode === 'modern') {
+      const data = JSON.parse(content);
+      content = JSON.stringify({
+        schema: data.schema,
+        lesson: data.lesson,
+        edition: data.edition,
+        count: data.count,
+        exercises: data.exercises.map(({ number, text, figure_refs, figures }) => ({ number, text, figure_refs, figures })),
+      }, null, 2);
+    } else if (mode === 'support-range') {
+      const data = JSON.parse(content);
+      const entries = Object.entries(data);
+      const collections = entries.filter(([, value]) => Array.isArray(value) && value.some((item) => item && typeof item === 'object' && 'source_number' in item));
+      if (collections.length !== 1) throw new Error(`Expected one sealed support exercise collection; got ${collections.length}.`);
+      const [key, values] = collections[0];
+      const first = Number(args[1]);
+      const last = Number(args[2]);
+      content = JSON.stringify({
+        metadata: Object.fromEntries(entries.filter(([name]) => name !== key)),
+        [key]: values.filter((item) => Number(item.source_number) >= first && Number(item.source_number) <= last),
+      }, null, 2);
+    }
+    process.stdout.write(`\nFILE ${absolute}\nSHA256 ${sha(bytes)}\n${content}\n`);
+  }
+  receipt.status = 'success';
+} catch (error) {
+  receipt.status = 'failed';
+  receipt.error = String(error.stack || error);
+  process.stderr.write(`${receipt.error}\n`);
+  process.exitCode = 1;
+} finally {
+  receipt.finishedAt = new Date().toISOString();
+  receipt.durationMs = Date.now() - started.getTime();
+  fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
+  process.stderr.write(`RECEIPT ${receiptPath}\n`);
+}

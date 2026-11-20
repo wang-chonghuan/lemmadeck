@@ -1,0 +1,246 @@
+import hashlib
+import json
+from pathlib import Path
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+W = R / ".tmp/resume182-6-8a-n8-choice-review3695-AFFECTED-q39b1"
+assert Path.cwd() == R
+
+
+def load(path):
+    return json.loads(path.read_bytes())
+
+
+def bind(path, expected=None):
+    data = path.read_bytes()
+    actual = hashlib.sha256(data).hexdigest()
+    if expected is not None:
+        assert actual == expected, (str(path), actual, expected)
+    return {"path": str(path), "sha256": actual, "bytes": len(data)}
+
+
+def parse_receipt(path):
+    result = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if ": " in line and not line.startswith("/"):
+            key, value = line.split(": ", 1)
+            result[key] = value
+    assert result["workdir"] == str(R), path
+    assert "exit_code" in result, path
+    result["exit_code"] = int(result["exit_code"])
+    result["receipt"] = bind(path)
+    for key in ("stdout_artifact", "stderr_artifact"):
+        if key in result:
+            result[key] = bind(W / result[key])
+    return result
+
+
+affected = load(W / "affected-review.record")
+proof = load(W / "combination-proof.record")
+for value in affected["inputs"].values():
+    bind(Path(value["path"]), value["sha256"])
+for name in ("affected_review", "review", "draft", "seed", "original_review"):
+    bind(Path(proof[name]["path"]), proof[name]["sha256"])
+for failure in affected["FIRST_failures"]["command_failures"]:
+    bind(Path(failure["receipt"]["path"]), failure["receipt"]["sha256"])
+
+review = load(W / "review.json")
+assert review["outcome"] == "pass"
+assert review["draft_sha256"] == proof["draft"]["canonical_sha256"]
+assert review["seed_sha256"] == proof["seed"]["canonical_sha256"]
+assert proof["originals_and_FIRST_failed_receipts_unchanged"] is True
+assert len(review["source_reviews"]) == 15
+assert len(review["question_reviews"]) == 41
+assert sum(len(item["mathematics"]["option_checks"]) for item in review["question_reviews"]) == 126
+assert all(item["coverage"]["verdict"] == "pass" for item in review["source_reviews"])
+assert all(
+    item[field]["verdict"] == "pass"
+    for item in review["question_reviews"]
+    for field in ("mathematics", "task_fidelity", "redundancy", "answer_leakage")
+)
+
+receipts = [
+    parse_receipt(W / f"exec-{index:03d}.record") for index in range(1, 16)
+]
+failures = [item for item in receipts if item["exit_code"] != 0]
+assert len(failures) == 1
+assert failures[0]["receipt"]["path"] == str(W / "exec-011.record")
+assert failures[0]["exit_code"] == 1
+assert receipts[12]["exit_code"] == 0
+validation = receipts[14]
+assert validation["exit_code"] == 0
+expected_validation_command = (
+    "command: /Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/"
+    ".venv/bin/python -B "
+    + str(R / ".agents/skills/ld-s10y-choice/scripts/validate.py")
+    + " --repo " + str(R)
+    + " --seed " + proof["seed"]["path"]
+    + " --draft " + proof["draft"]["path"]
+    + " --review " + proof["review"]["path"]
+)
+assert (W / "exec-015.record").read_text(encoding="utf-8").splitlines()[0] == expected_validation_command
+stdout = (W / "exec-015.stdout").read_text(encoding="utf-8")
+stderr = (W / "exec-015.stderr").read_text(encoding="utf-8")
+assert stdout == "mechanical checks passed; declared semantic review: pass (not automatically proved)\n"
+assert stderr == ""
+validator_receipts = [
+    item for item in receipts
+    if ".agents/skills/ld-s10y-choice/scripts/validate.py" in item["command"]
+]
+assert len(validator_receipts) == 1
+
+scripts = [
+    bind(W / name)
+    for name in (
+        "capture-command.sh",
+        "restore-initial-stdout.sh",
+        "inspect_inputs.py",
+        "assemble_affected.py",
+        "finish_ready.py",
+    )
+]
+ready = {
+    "schema": "hash-bound-affected-choice-review-ready-v1",
+    "status": "READY_AFFECTED_ONLY_COMPOSITE_PASS",
+    "outcome": "pass",
+    "root": str(R),
+    "owner_write_root": str(W),
+    "ticket": "STEMROBIN-182/182-6",
+    "book": "8a",
+    "lesson": "alg8-c2-s1-n8",
+    "scope": "/questions/38/key/rationales/1/misconception",
+    "approval_kind": "FIRST independent Halley inherited results plus Codex affected-only q39:b label PASS",
+    "whole_package_re_review": False,
+    "approval_combination": {
+        "original_seed": proof["seed"],
+        "repaired_draft": proof["draft"],
+        "composite_review": proof["review"],
+        "affected_review": bind(W / "affected-review.record"),
+        "deep_equality_proof": bind(W / "combination-proof.record"),
+        "original_review": proof["original_review"],
+        "repair_record": affected["inputs"]["repair"],
+        "original_ready": affected["inputs"]["original_ready"],
+    },
+    "invariants": {
+        "actual_draft_changed_leaves": 1,
+        "all_other_draft_fields_deep_equal": True,
+        "views_correct_sets_truth_derivations_coverage_deep_equal": True,
+        "unchanged_source_review_objects_deep_equal": 14,
+        "unchanged_question_review_objects_deep_equal": 40,
+        "q39_correct_and_four_truth_checks_inherited": True,
+        "q39_sealed_independent_math_preserved": True,
+        "q39_a_c_d_option_check_objects_deep_equal": True,
+        "source115_and_q39_fidelity_only_append_historical_clarification": True,
+        "all_other_review_fields_deep_equal": True,
+        "FIRST_original_review_ready_and_all_failed_receipts_hash_unchanged": True,
+    },
+    "counts": {
+        "inherited_source_reviews": 15,
+        "inherited_question_true_sets": 41,
+        "inherited_option_truth_checks": 126,
+        "unchanged_source_review_objects": 14,
+        "unchanged_question_review_objects": 40,
+        "current_source_coverage_pass": 15,
+        "current_mathematics_pass": 41,
+        "current_mathematics_revise": 0,
+        "current_mathematics_blocked": 0,
+        "affected_only_semantic_review_calls": 1,
+        "new_whole_package_review_calls": 0,
+        "new_source_solves": 0,
+        "new_question_solves": 0,
+        "new_option_truth_solves": 0,
+        "other_original_PASS_re_reviews": 0,
+        "new_content_repairs": 0,
+        "inherited_content_repairs_not_reset": 1,
+        "new_official_review_validator_calls": 1,
+        "new_structural_only_validator_calls": 0,
+        "FIRST_official_review_validator_calls_not_reset": 1,
+        "FIRST_review_and_current_official_validator_calls_cumulative": 2,
+        "current_official_validator_failures": 0,
+        "actual_current_exec_calls_including_finish": 16,
+        "completed_exec_receipts_before_finish": 15,
+        "actual_current_exec_failures": 1,
+        "current_exec_technical_recoveries": 1,
+        "FIRST_exec_failures_not_reset": 2,
+        "FIRST_semantic_gate_failures_not_reset": 1,
+        "FIRST_technical_exec_failures_not_reset": 1,
+        "FIRST_review_and_current_exec_failures_cumulative": 3,
+        "currently_unresolved_failures": 0,
+    },
+    "validation": {
+        "receipt": validation,
+        "stdout": stdout,
+        "stderr": stderr,
+        "mechanical_pass": True,
+        "declared_semantic_outcome": "pass",
+        "semantic_proof_automatic": False,
+        "no_extra_structural_only_call": True,
+    },
+    "actual_failures": {
+        "FIRST_history_untouched": affected["FIRST_failures"],
+        "current": [{
+            "receipt": failures[0],
+            "classification": "projection_selector_technical_failure",
+            "error": (W / "exec-011.stderr").read_text(encoding="utf-8"),
+            "recovery": receipts[12],
+            "recovered_only_technical_selector": True,
+            "failure_retained_and_count_not_reset": True,
+        }],
+    },
+    "receipts": receipts,
+    "finish_receipt": {
+        "path": str(W / "exec-016.record"),
+        "stdout_path": str(W / "exec-016.stdout"),
+        "stderr_path": str(W / "exec-016.stderr"),
+        "note": "The outer capture runner completes this receipt after ready.record is sealed; no validator or semantic stage is rerun.",
+    },
+    "initial_receipt_note": (
+        "exec-001 stores the actual initial pwd tool output. exec-002 and exec-003 "
+        "store the actual tool exit statuses; their exact text-file stdout was restored "
+        "by exec-004 after the owner directory was established. They are explicitly "
+        "retrospective, not claimed as contemporaneous stdout capture."
+    ),
+    "scripts": scripts,
+    "boundaries": {
+        "candidate_mutations": 0,
+        "formal_resource_writes": 0,
+        "progress_writes": 0,
+        "DB_writes": 0,
+        "Plane_calls": 0,
+        "Git_commands": 0,
+        "installs": 0,
+        "browser_calls": 0,
+        "image_reads": 0,
+        "old_answer_reads": 0,
+        "other_lesson_reads": 0,
+        "author_or_source_solving_scripts_run": 0,
+        "other_editors_changes_modified": 0,
+        "publishing_or_retention_authorized": False,
+        "offline_handoff_only": True,
+    },
+    "costs": {
+        "host_tokens": "unknown",
+        "total_cost": "unknown",
+        "additional_model_service_calls": 0,
+        "paid_image_calls": 0,
+    },
+}
+path = W / "ready.record"
+with path.open("x", encoding="utf-8") as stream:
+    json.dump(ready, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+sealed = bind(path)
+print(json.dumps(
+    {
+        "ready": sealed,
+        "status": ready["status"],
+        "counts": ready["counts"],
+        "actual_failures": {
+            "current": "1 recovered StopIteration selector failure, exec-011 retained",
+            "FIRST": "2 retained failures: semantic validator exit 3 and finish-parser exit 1",
+        },
+        "costs": ready["costs"],
+    },
+    ensure_ascii=True,
+    indent=2,
+), flush=True)

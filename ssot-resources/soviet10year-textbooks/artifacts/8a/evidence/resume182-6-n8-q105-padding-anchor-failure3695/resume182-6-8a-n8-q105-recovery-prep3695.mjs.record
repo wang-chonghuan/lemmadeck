@@ -1,0 +1,45 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, OWN, sha } from './resume182-6-8a-n8-display3695-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const source = path.join(OWN, 'run-recovery-isolated1.mjs');
+const before = fs.readFileSync(source);
+assert.equal(sha(before), '7b070c5e937180ce7ce7db1ce9b979fec5ff346b355fb9ca778e27ba998b5439');
+let text = before.toString('utf8');
+const pin = "report.implementation.push(await recordFile(path.join(OWN, 'run-recovery-isolated1.mjs')));";
+assert.equal(text.split(pin).length - 1, 1);
+text = text.replace(pin, "report.implementation.push(await recordFile(path.join(OWN, 'run-recovery-q105-padding1.mjs')));");
+const anchor = "    process.env.TMPDIR = path.join(RUN, 'browser-tmp');";
+assert.equal(text.split(anchor).length - 1, 1);
+const patch = `    const originalExerciseHTML = html.get('/exercises.html');
+    const originalMarkup = originalExerciseHTML.toString('utf8');
+    assert.equal(originalMarkup.split('</head>').length - 1, 1);
+    const correctionCSS = '#ex-105 .body .nb{padding-block:1em;margin-block:0}';
+    const correctedExerciseHTML = Buffer.from(originalMarkup.replace('</head>', '<style>' + correctionCSS + '</style></head>'));
+    const correctedPath = own(path.join(RUN, 'affected-display/exercises.html'));
+    await stage(correctedPath, correctedExerciseHTML);
+    const correctedBinding = await recordFile(correctedPath);
+    html.set('/exercises.html', correctedExerciseHTML);
+    report.displayCorrection = {
+      kind: 'q105-formula-wrapper-padding-only',
+      originalSHA: sha(originalExerciseHTML), corrected: correctedBinding,
+      CSS: correctionCSS, rendererCalls: 0, originalHTMLPreserved: true,
+      contentFormulaAndValidationThresholdChanges: false,
+    };
+`;
+text = text.replace(anchor, `${patch}${anchor}`);
+const output = path.join(OWN, 'run-recovery-q105-padding1.mjs');
+assert.ok(!fs.existsSync(output));
+fs.writeFileSync(output, text, { flag: 'wx' });
+const record = { status: 'Q105_PADDING_RECOVERY_PREPARED_NOT_EXECUTED',
+  original: { path: source, sha256: sha(before) },
+  output: { path: output, sha256: sha(Buffer.from(text)) },
+  diagnosis: { path: path.join(OWN, 'q105-diagnostic-FIRST/geometry.record'),
+    sha256: '7a2973bb184e182559b69163ad2044f6a0480c872076e8329e523134b4feafb4' },
+  scope: 'Only #ex-105 .body .nb in served exercises HTML; preserve text PASS',
+  rendererCalls: 0, browserLaunches: 0, sourceOrMathChanges: 0 };
+const target = path.join(OWN, 'q105-recovery-preparation.record');
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...record.output, record: target, recordSHA: sha(fs.readFileSync(target)) }));

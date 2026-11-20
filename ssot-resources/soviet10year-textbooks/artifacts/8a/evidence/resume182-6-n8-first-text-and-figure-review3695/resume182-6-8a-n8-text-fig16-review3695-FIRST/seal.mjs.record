@@ -1,0 +1,210 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const owned = path.join(root, '.tmp/resume182-6-8a-n8-text-fig16-review3695-FIRST');
+assert.equal(process.cwd(), root);
+const author = '.tmp/resume182-6-8a-n8-text-author3695-FIRST';
+const templates = `${author}/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n8`;
+const figure = '.tmp/resume182-6-8a-n8-fig16-author3695-FIRST';
+const raw = 'ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c2-s1-n8';
+const sourcePng = 'ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-16.png';
+const load = name => JSON.parse(fs.readFileSync(path.resolve(root, name), 'utf8'));
+const digest = name => {
+  const absolute = path.resolve(root, name);
+  assert.ok(absolute.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(absolute);
+  return {
+    path: absolute,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length,
+  };
+};
+const files = Object.fromEntries(Object.entries({
+  textReady: `${author}/ready.record`,
+  figureReady: `${figure}/ready.record`,
+  lessonTemplate: `${templates}/lesson.template.json`,
+  exercisesTemplate: `${templates}/exercises.template.json`,
+  figuresTemplate: `${templates}/figures.template.json`,
+  rawLesson: `${raw}/lesson.json`,
+  rawExercises: `${raw}/exercises.json`,
+  rawLessonMarkdown: `${raw}/lesson.md`,
+  originalPng: sourcePng,
+  candidateSpec: `${figure}/candidate.spec.json`,
+  renderReport: `${figure}/render/figure.render.json`,
+  renderedSvg: `${figure}/render/figure.svg`,
+  nativePng: `${figure}/native640.png`,
+  captureMetadata: `${figure}/capture.record`,
+  textObservations: `${owned}/observations.json`,
+  independentInventory: `${owned}/source.inventory.json`,
+  figureReview: `${owned}/fig16.review.json`,
+  commandRunner: '.tmp/resume182-6-run3695.mjs',
+  officialReviewTool: '.agents/skills/ld-s10y-image/scripts/record_review.py',
+  inspectionHelper: `${owned}/inspect.mjs`,
+  sealHelper: `${owned}/seal.mjs`,
+}).map(([name, file]) => [name, digest(file)]));
+
+const expected = {
+  textReady: 'aa98066f0b8da07ffceeb8739c5d0edca92cf62204832bf73a1bd572f60e7683',
+  figureReady: '06726d9abc1cda1db3effc6b84bc2704c02db1732e433142d94dc22028d28d30',
+  lessonTemplate: 'e08301492d693e8e265bcae0242234d3163db441361571fe62a4d1a9e71ae0aa',
+  exercisesTemplate: '907b360828c83146d168c695a47339553e932ba1fa23d3530823bed023d1a724',
+  figuresTemplate: 'd9dee65677592c9d8cbbf3d08d865056a612d38a1a085052824ea13f9b419536',
+  rawLesson: 'e4c5169b5817378812f084f21579b9325d80a6f2811575174823aba2138c3000',
+  rawExercises: '5d429ec37e2ab50c34063214ad52c93405f8e8b94e5219e57b38f07ea5bd7853',
+  rawLessonMarkdown: 'e8bedb18a0f80269c479fc4d0162c78c11d47a1382d23b4e6d5e4234e35c53b4',
+  originalPng: '24b40725964951ef8af6597a21d32922015802b7a65ee427d5b52add78fe3ca4',
+  candidateSpec: '931891ebf8faf3ccfa1304513a42471ce750f3285031e58e186f8b8fee76976d',
+  renderReport: '48e1c88d29261312c3702a2be8b7f4b785c13d6c2c70927d968b2e090fcf5660',
+  renderedSvg: 'b773ded8bb179390e42db3642d71297dab20401cd062ee0db007b288960acb16',
+  nativePng: 'f61f6f3a52d724848d7a73f6553c877e43ac7ad061437d9e8d46a986fb3fdbf5',
+  independentInventory: '49427a7a8e4ad2483c1f7aadf95343a43eca0943a25f58b4dd0233b188bfedb8',
+};
+for (const [name, sha256] of Object.entries(expected)) {
+  assert.equal(files[name].sha256, sha256, `Input changed during review: ${name}`);
+}
+
+const lesson = load(files.lessonTemplate.path);
+const exercises = load(files.exercisesTemplate.path);
+const rawLesson = load(files.rawLesson.path);
+const rawExercises = load(files.rawExercises.path);
+const math = text => [...text.matchAll(/\$([^$]*?)\$/gs)].map(match => match[1]);
+const compact = text => text.replace(/\s/gu, '');
+const letters = ['\u0430', '\u0431', '\u0432', '\u0433', '\u0434', '\u0435', '\u0436', '\u0437', '\u0438'];
+const normalizeParts = text => compact(text.replace(
+  /([\u0430\u0431\u0432\u0433\u0434\u0435\u0436\u0437\u0438])\)/gu,
+  (_, letter) => `${String.fromCharCode(97 + letters.indexOf(letter))})`,
+));
+assert.equal(lesson.prose.length, rawLesson.prose.length);
+assert.equal(exercises.exercises.length, rawExercises.exercises.length);
+assert.deepEqual(lesson.source.data, rawLesson);
+assert.deepEqual(exercises.source.data, rawExercises);
+const proseComparisons = lesson.prose.map((item, index) => {
+  const source = rawLesson.prose[index];
+  return {
+    index,
+    orderedMathSpansEqual: JSON.stringify(math(item.text)) === JSON.stringify(math(source.text)),
+    sourceTextEqualsRaw: item.source_text === source.text,
+    sourceRefsEqual: JSON.stringify(item.source_refs) === JSON.stringify(source.source_refs),
+    differsIgnoringWhitespace: compact(item.text) !== compact(source.text),
+  };
+});
+const exerciseComparisons = exercises.exercises.map((item, index) => {
+  const source = rawExercises.exercises[index];
+  return {
+    number: item.number,
+    sourceNumberEqual: item.source_number === source.source_number,
+    orderedMathSpansEqual: JSON.stringify(math(item.text)) === JSON.stringify(math(source.text)),
+    contentEqualAfterWhitespaceAndMarkerMapping: normalizeParts(item.text) === normalizeParts(source.text),
+    provenanceEqual: ['pages', 'group', 'group_id', 'figure_refs', 'figures'].every(
+      field => JSON.stringify(item[field]) === JSON.stringify(source[field]),
+    ),
+    markers: [...item.text.matchAll(/^([a-i])\)/gm)].map(match => match[1]),
+  };
+});
+assert.ok(proseComparisons.every(item => item.orderedMathSpansEqual && item.sourceTextEqualsRaw && item.sourceRefsEqual));
+assert.deepEqual(proseComparisons.filter(item => item.differsIgnoringWhitespace).map(item => item.index), [29]);
+assert.ok(exerciseComparisons.every(item => item.sourceNumberEqual && item.orderedMathSpansEqual && item.contentEqualAfterWhitespaceAndMarkerMapping && item.provenanceEqual));
+const paragraphs = lesson.prose.flatMap((item, blockIndex) => (
+  item.kind === 'p' ? item.text.split(/\n{2,}/).map(text => ({ text: text.trim(), blockIndex })) : []
+));
+const sectionPairs = lesson.section_breaks.map(boundary => {
+  const matches = paragraphs.map((item, index) => ({
+    index,
+    blockIndex: item.blockIndex,
+    matches: index > 0 && paragraphs[index - 1].text === boundary.before && item.text === boundary.after,
+  })).filter(item => item.matches);
+  assert.equal(matches.length, 1);
+  return { ...boundary, paragraphOutlineIndex: matches[0].index, proseBlockIndex: matches[0].blockIndex };
+});
+
+const observations = load(files.textObservations.path);
+const figReview = load(files.figureReview.path);
+const receipts = fs.readdirSync(owned, { withFileTypes: true })
+  .filter(entry => entry.isDirectory())
+  .map(entry => path.join(owned, entry.name, 'receipt.record'))
+  .filter(file => fs.existsSync(file))
+  .map(file => ({ ...digest(file), returncode: load(file).returncode }));
+const record = {
+  schema: 'resume182-6/bounded-independent-text-figure-review@1',
+  status: 'HOLD',
+  createdAt: new Date().toISOString(),
+  ticket: 'STEMROBIN-182/182-6',
+  book: '8a',
+  lesson: 'alg8-c2-s1-n8',
+  figure: 'fig-16',
+  cwd: root,
+  ownedWriteRoot: owned,
+  textStatus: observations.status,
+  textReview: files.textObservations,
+  figureStatus: 'FAIL',
+  figureDisposition: figReview.disposition,
+  figureReview: files.figureReview,
+  blockingFindingIds: figReview.blockingFindings.map(item => item.id),
+  officialReview: null,
+  officialReviewReason: figReview.officialReviewNotRunReason,
+  files,
+  exactInputsUnchangedAtSeal: true,
+  textualComparisonEvidenceOnly: {
+    notAnOfficialValidationOrRender: true,
+    proseComparisons,
+    exerciseComparisons,
+    sectionPairs,
+    embeddedSourceSnapshotsEqualRaw: true,
+  },
+  counts: {
+    originalImageViews: 1,
+    candidateNativeImageViews: 1,
+    totalImageViews: 2,
+    oldImageViews: 0,
+    reopens: 0,
+    crops: 0,
+    zooms: 0,
+    rendererRuns: 0,
+    standaloneValidationRuns: 0,
+    screenshots: 0,
+    officialRecordReviewCalls: 0,
+    proseObjectsReviewed: lesson.prose.length,
+    proseParagraphsReviewed: paragraphs.length,
+    workedExamplesReviewed: 3,
+    exerciseTextsReviewed: exercises.exercises.length,
+    exerciseSubpartsReviewed: exerciseComparisons.reduce((sum, item) => sum + item.markers.length, 0),
+    allExerciseSolutionReruns: 0,
+    answerReviews: 0,
+    choiceReviews: 0,
+    assertionSpecificationsInspected: 23,
+    hiddenConstructionAnchorsInspected: 7,
+    contentRepairs: 0,
+    candidateWrites: 0,
+    paidCalls: 0,
+    installs: 0,
+    dbCalls: 0,
+    planeCalls: 0,
+    gitCalls: 0,
+    publishCalls: 0,
+    threadCalls: 0,
+    failedReadCommands: receipts.filter(item => item.returncode !== 0).length,
+  },
+  commandReceipts: receipts,
+  activeSealReceipt: {
+    start: path.join(owned, '19-seal-review', 'start.record'),
+    receipt: path.join(owned, '19-seal-review', 'receipt.record'),
+    note: 'Runner writes the final receipt after this command returns.',
+  },
+  costs: { totalCost: 'unknown', hostTokens: 'unknown', historicalUsage: 'unknown' },
+  wholeLessonApproval: false,
+  durableEditionBindingReviewed: false,
+  repaired: false,
+  parentContacted: false,
+};
+const output = path.join(owned, 'review.record');
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  result: digest(output),
+  status: record.status,
+  textStatus: record.textStatus,
+  figureStatus: record.figureStatus,
+  counts: record.counts,
+}, null, 2));

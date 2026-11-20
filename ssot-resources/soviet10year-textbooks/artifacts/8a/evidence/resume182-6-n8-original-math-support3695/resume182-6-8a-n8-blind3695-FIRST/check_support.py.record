@@ -1,0 +1,282 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import sympy as s
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+WORK = ROOT / ".tmp/resume182-6-8a-n8-blind3695-FIRST"
+INPUT = ROOT / ".tmp/resume182-6-8a-n8-current-input3695-FIRST/blind-input.record"
+INPUT_HASH = "1f423116dcd868b7fa566966e561d34cdecd0e04457d5849c7876e9695e63427"
+assert Path.cwd() == ROOT
+assert hashlib.sha256(INPUT.read_bytes()).hexdigest() == INPUT_HASH
+source = json.loads(INPUT.read_text())
+x, y = s.symbols("x y", real=True)
+t = s.symbols("t", nonnegative=True)
+R = s.Rational
+
+# Residuals use the isolated exercise conditions, not any prior solution.
+systems = {
+    "102": {
+        "а": [5*x + 11*y + 1, x - 3*y - 5],
+        "б": [x + 2*y + 1, 7*x - 20*y - 146],
+        "в": [12*x - y - 16, 5*x + 3*y - 75],
+        "г": [7*x + 6*y - 2, 6*x - 5*y - 93],
+        "д": [4*x + 3*y - 43, 5*x - 7*y - 43],
+        "е": [8*x - 9*y - 4, -3*x + 4*y - 1],
+    },
+    "103": {
+        "а": [x**2 - 2*y**2 - 7, x - y - 2],
+        "б": [x**2 - 2*x*y - 7, x - 3*y - 2],
+        "в": [x**2 - 5*x*y - 10, x - 5*y - 1],
+        "г": [5*x*y - y**2 - 9, 2*x - y - 3],
+        "д": [x**2 + y**2 - 100, 3*x - 2*y - 2],
+        "е": [2*x**2 - 3*y**2 - 24, 2*x - 3*y],
+        "ж": [4*x**2 - 9*y**2 - 15, 2*x + 3*y - 5],
+        "з": [x**2 + x*y - y**2 - 11, x - 2*y - 1],
+        "и": [x**2 + x*y - 3*y - 9, 3*x + 2*y + 1],
+    },
+    "104": {
+        "а": [x**2 + y**2 - 25, x - y - 5],
+        "б": [x**2 + y**2 - 20, x*y + 8],
+        "в": [x**2 + y**2 - 100, y - x**2/2 + 10],
+    },
+    "105": {
+        "а": [x + y, x - y - 10, x**2 - y**2 - 40],
+        "б": [3*x - 4*y - 3, x - 2*y - 1, x**2 + y**2 - 2],
+    },
+    "106": {
+        "а": [x + y - 10, 1/x + 1/y - R(5, 12)],
+        "б": [x - y - 6, 1/y - 1/x - R(3, 20)],
+        "в": [2*x + y - 5, 1/x + 1/y - R(6, 5)],
+        "г": [y - 2*x - 3, 1/x - 1/y - R(1, 10)],
+    },
+    "107": {
+        "а": [x + y - 20, x*y - 96],
+        "б": [x - y - 6, x*y - 216],
+    },
+    "108": {
+        "а": [2*(x+y) - 82, x**2 + y**2 - 29**2],
+        "б": [x + y + 37 - 84, x**2 + y**2 - 37**2],
+    },
+    "109": {
+        "а": [2*((60-x)+(8-y)) - (2*(60+8)-44),
+              (60-x)*(8-y) - R(60*8, 2)],
+        "б": [2*(x+y)-80, (x+8)*(y+2) - R(3, 2)*x*y],
+    },
+    "110": {
+        "а": [10*x+y+2*(x+y)-96, (10*x+y)*(x+y)-952],
+        "б": [x**2+y**2-65, 10*x+y+27-(10*y+x)],
+    },
+    "111": {
+        "а": [x+y-28, 28/x-28/y-R(35, 60)],
+        "б": [(x+y)*R(20, 60)-45, 45/y-45/x-R(9, 60)],
+    },
+    "112": {
+        "а": [1/x+1/y-R(1, 12), x/2+y/2-25],
+        "б": [y-x-24, 1/x+1/y-R(1, 35)],
+    },
+}
+
+
+def same_point(a, b):
+    return all(s.simplify(v-w) == 0 for v, w in zip(a, b))
+
+
+def same_points(a, b):
+    return len(a) == len(b) and all(any(same_point(p, q) for q in b) for p in a)
+
+
+def solve_system(number, part, residuals):
+    points = [
+        (s.simplify(row[x]), s.simplify(row[y]))
+        for row in s.solve(residuals, (x, y), dict=True)
+        if x in row and y in row
+    ]
+    points = [p for p in points if all(v.is_real is True for v in p)]
+    if number in {"106", "111", "112"}:
+        points = [p for p in points if all(v != 0 for v in p)]
+    for point in points:
+        assert all(s.simplify(expr.subs(dict(zip((x, y), point)))) == 0
+                   for expr in residuals), (number, part, point)
+    return points
+
+
+computed = {}
+for number, parts in systems.items():
+    computed[number] = {}
+    for part, residuals in parts.items():
+        computed[number][part] = solve_system(number, part, residuals)
+
+
+def string_points(points):
+    return [[s.sstr(v) for v in p] for p in points]
+
+
+if len(sys.argv) == 1 or sys.argv[1] == "--compute":
+    print(json.dumps({
+        "input_sha256": INPUT_HASH,
+        "sympy_version": s.__version__,
+        "systems": {
+            n: {p: string_points(points) for p, points in parts.items()}
+            for n, parts in computed.items()
+        },
+        "substitution_polynomials_103": {
+            p: s.sstr(s.factor(residuals[0].subs(
+                x, s.solve(residuals[1], x)[0])))
+            for p, residuals in systems["103"].items()
+        },
+        "digit_enumeration_110": {
+            p: [[a, b] for a in range(1, 10) for b in range(10)
+                if all(expr.subs({x: a, y: b}) == 0 for expr in residuals)]
+            for p, residuals in systems["110"].items()
+        },
+        "109_b_swapped_increment_branch": string_points(
+            solve_system("109", "б", [
+                2*(x+y)-80, (x+2)*(y+8)-R(3, 2)*x*y])),
+    }, ensure_ascii=False, indent=2))
+    sys.exit(0)
+
+assert sys.argv[1] == "--verify"
+record = json.loads((WORK / "solution-support.record").read_text())
+assert record["schema"] == "resume182-6/original-math-support@1"
+assert record["book"] == source["book"] == "8a"
+assert record["lesson"] == source["lesson"] == "alg8-c2-s1-n8"
+assert record["input"]["path"] == str(INPUT)
+assert record["input"]["sha256"] == INPUT_HASH
+assert record["status"] == "ORIGINAL_MATH_SUPPORT_COMPLETE"
+assert [e["source_number"] for e in record["exercises"]] == [
+    str(n) for n in range(102, 117)]
+assert len(record["exercises"]) == len(source["exercises"]) == 15
+expected_parts = {
+    "102": list("абвгде"), "103": list("абвгдежзи"),
+    "104": list("абв"), "105": list("аб"), "106": list("абвг"),
+    **{str(n): list("аб") for n in range(107, 116)},
+    "116": list("абвг"),
+}
+expected_parts["103"] = ["а", "б", "в", "г", "д", "е", "ж", "з", "и"]
+
+checks = []
+for exercise, original in zip(record["exercises"], source["exercises"]):
+    number = exercise["source_number"]
+    assert exercise["group"] == original["group"]
+    assert exercise["source_pages"] == original["pages"]
+    assert [p["part"] for p in exercise["parts"]] == expected_parts[number]
+    assert exercise["status"] == "ORIGINAL_MATH_SUPPORT_COMPLETE"
+    for part in exercise["parts"]:
+        label = part["part"]
+        assert part["original_conditions"] and part["domain"]
+        assert part["method"] and part["limitations"] is not None
+        if number in computed:
+            supplied = [tuple(s.sympify(v) for v in point)
+                        for point in part["algebraic_solution_set"]]
+            assert same_points(supplied, computed[number][label]), (
+                "algebraic set mismatch", number, label,
+                supplied, computed[number][label])
+            feasible = [tuple(s.sympify(v) for v in point)
+                        for point in part["feasible_solution_set"]]
+            target = list(computed[number][label])
+            if number in {"108", "111", "112"}:
+                target = [p for p in target if all(v > 0 for v in p)]
+            if number == "109" and label == "а":
+                target = [p for p in target if 0 < p[0] < 60 and 0 < p[1] < 8]
+            if number == "109" and label == "б":
+                target = [p for p in target if all(v > 0 for v in p)]
+            if number == "110":
+                target = [p for p in target
+                          if all(v.is_integer is True for v in p)
+                          and 1 <= p[0] <= 9 and 0 <= p[1] <= 9]
+            assert same_points(feasible, target), (
+                "feasible set mismatch", number, label, feasible, target)
+            if number == "104":
+                assert part["drawing_performed"] is False
+                assert part["drawing_viewed"] is False
+                assert part["source_method_completion"] == "NOT_EXECUTED"
+        elif number in {"113", "114"}:
+            px, py = [s.sympify(v) for v in part["tested_point"]]
+            expression = x**2 + (3 if number == "113" else 1)*x*y + y**2
+            value = s.simplify(expression.subs({x: px, y: py}))
+            rhs = 41 if number == "113" else 29
+            assert s.simplify(value-s.sympify(part["evaluated_lhs"])) == 0
+            assert part["is_solution"] == (value == rhs)
+        elif number == "115":
+            px = s.sympify(part["parametric_solution_set"]["x"], locals={"t": t})
+            py = s.sympify(part["parametric_solution_set"]["y"], locals={"t": t})
+            residual = s.sqrt(px if label == "а" else px+py)-s.sqrt(py)-1
+            assert s.simplify(s.refine(residual)) == 0
+            assert part["parametric_solution_set"]["parameter_domain"] == "t >= 0"
+            assert len(part["requested_two_solutions"]) == 2
+            for a, b in part["requested_two_solutions"]:
+                a, b = s.sympify(a), s.sympify(b)
+                assert b >= 0 and (a if label == "а" else a+b) >= 0
+                assert s.sqrt(a if label == "а" else a+b)-s.sqrt(b) == 1
+        elif number == "116":
+            expected_quadrants = {
+                "а": ["I", "II"], "б": ["I", "II", "III", "IV"],
+                "в": ["I", "III"], "г": ["II", "IV"],
+            }
+            assert part["occupied_open_quadrants"] == expected_quadrants[label]
+            assert part["drawing_performed"] is False
+            for segment in part["sign_partition"]:
+                a, b = (s.sympify(v) for v in segment["witness_point"])
+                formulas = {
+                    "а": b-a**2-4, "б": b-9+a**2,
+                    "в": a*b-6, "г": a*b+12,
+                }
+                assert s.simplify(formulas[label]) == 0
+                quadrant = ("I" if a > 0 and b > 0 else
+                            "II" if a < 0 and b > 0 else
+                            "III" if a < 0 and b < 0 else
+                            "IV" if a > 0 and b < 0 else None)
+                assert quadrant == segment["quadrant"]
+        checks.append(f"{number}/{label}")
+
+a, b = s.symbols("a b", real=True)
+assert s.expand((a*a+3*a*b+b*b)-(b*b+3*b*a+a*a)) == 0
+proof = record["exercises"][11]["additional_obligations"]
+assert len(proof) == 1 and proof[0]["identity"] == "unlettered-swap-proof"
+assert proof[0]["proof"] and proof[0]["scope"] == "all real a,b satisfying the equation"
+assert len(checks) == 46
+assert record["coverage"] == {
+    "exercise_count": 15,
+    "lettered_subpart_count": 46,
+    "additional_proof_count": 1,
+    "total_obligation_count": 47,
+    "unresolved_source_count": 0,
+}
+assert record["approval"]["whole_lesson_approval"] is False
+assert record["usage"]["historical_costs"] == "unknown"
+assert record["usage"]["historical_tokens"] == "unknown"
+
+# Independent word-result checks retain the roles and original units.
+by_number = {e["source_number"]: e for e in record["exercises"]}
+assert by_number["108"]["parts"][1]["result"]["area_cm2"] == "210"
+assert s.Rational(20*21, 2) == 210
+assert by_number["110"]["parts"][0]["result"]["two_digit_number"] == 68
+assert by_number["110"]["parts"][1]["result"]["two_digit_number"] == 47
+assert 68+2*(6+8) == 96 and 68*(6+8) == 952
+assert 4**2+7**2 == 65 and sorted(str(47+27)) == sorted(str(47))
+assert same_points(computed["111"]["а"], [(12, 16), (112, -84)])
+assert same_points(computed["111"]["б"], [(75, 60), (-540, 675)])
+assert same_points(computed["112"]["б"], [(60, 84), (-14, 10)])
+assert record["usage"]["current_paid_calls"] == 0
+assert record["usage"]["current_image_calls"] == 0
+print(json.dumps({
+    "status": "VERIFIED",
+    "input_sha256": INPUT_HASH,
+    "solution_support_sha256": hashlib.sha256(
+        (WORK / "solution-support.record").read_bytes()).hexdigest(),
+    "sympy_version": s.__version__,
+    "exercise_count": 15,
+    "lettered_subpart_count": len(checks),
+    "additional_proof_count": 1,
+    "total_obligation_count": 47,
+    "exact_equation_and_domain_checks": checks,
+    "limitations": [
+        "104 graphical method has not been drawn or viewed.",
+        "113 proof is symbolic; no source/content approval is asserted.",
+        "No raw lesson, prior solutions, other workers, images, or paid calls used.",
+    ],
+}, ensure_ascii=False, indent=2))

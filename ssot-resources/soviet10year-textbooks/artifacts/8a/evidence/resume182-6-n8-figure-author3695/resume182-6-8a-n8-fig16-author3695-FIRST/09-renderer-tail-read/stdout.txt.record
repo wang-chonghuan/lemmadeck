@@ -1,0 +1,321 @@
+      const svg = document.getElementById(boardId)?.querySelector('svg')
+      if (!svg) throw new Error('JSXGraph did not create an SVG renderer')
+      svg.setAttribute('xmlns', SVG_NS)
+      svg.setAttribute('width', String(figureSpec.canvas.width))
+      svg.setAttribute('height', String(figureSpec.canvas.height))
+      svg.setAttribute(
+        'viewBox',
+        `0 0 ${figureSpec.canvas.width} ${figureSpec.canvas.height}`,
+      )
+      svg.style.background = figureSpec.canvas.background === 'transparent'
+        ? 'transparent'
+        : palette.paper
+
+      const imageFits = figureSpec.objects
+        .filter((object) => object.type === 'image')
+        .map((object) => {
+          const node = document.getElementById(`${boardId}_ld-${object.id}`)
+          if (!node) {
+            return {
+              id: object.id,
+              status: 'fail',
+              reason: 'missing rendered image node',
+            }
+          }
+          // JSXGraph defaults SVG images to preserveAspectRatio="none".
+          // Treat FigureSpec size as a fit box and never distort artwork.
+          node.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+          node.setAttribute('data-ld-layer', 'artwork')
+          return {
+            id: object.id,
+            status: node.getAttribute('preserveAspectRatio') === 'xMidYMid meet'
+              ? 'pass'
+              : 'fail',
+            preserveAspectRatio: node.getAttribute('preserveAspectRatio'),
+          }
+        })
+
+      if (rawPaths.length) {
+        const rawLayer = document.createElementNS(SVG_NS, 'g')
+        rawLayer.setAttribute('id', `${boardId}-raw-path-layer`)
+        const scaleX = figureSpec.canvas.width / (
+          figureSpec.canvas.boundingBox[2] - figureSpec.canvas.boundingBox[0]
+        )
+        const scaleY = figureSpec.canvas.height / (
+          figureSpec.canvas.boundingBox[1] - figureSpec.canvas.boundingBox[3]
+        )
+        rawLayer.setAttribute('transform', `scale(${scaleX} ${scaleY})`)
+        for (const object of rawPaths) {
+          const node = document.createElementNS(SVG_NS, 'path')
+          node.setAttribute('d', object.d)
+          node.setAttribute('fill', color(object.fill, 'none'))
+          node.setAttribute('stroke', color(object.stroke, 'none'))
+          node.setAttribute(
+            'stroke-width',
+            String(object.strokeWidth || 1),
+          )
+          node.setAttribute('vector-effect', 'non-scaling-stroke')
+          const dashPatterns = [
+            [2, 2], [5, 5], [10, 10], [20, 20],
+            [20, 10, 10, 10], [20, 5, 10, 5], [0, 5],
+          ]
+          const dashPattern = dashPatterns[(object.dash || 0) - 1]
+          if (dashPattern) {
+            node.setAttribute(
+              'stroke-dasharray',
+              dashPattern.map(value => value * (object.strokeWidth || 1)).join(','),
+            )
+          }
+          if (object.fillOpacity !== undefined) {
+            node.setAttribute('fill-opacity', String(object.fillOpacity))
+          }
+          if (object.strokeOpacity !== undefined) {
+            node.setAttribute('stroke-opacity', String(object.strokeOpacity))
+          }
+          rawLayer.appendChild(node)
+        }
+        svg.appendChild(rawLayer)
+      }
+
+      const toScreen = (at) => {
+        const coords = new JXG.Coords(JXG.COORDS_BY_USER, at, board)
+        return [coords.scrCoords[1], coords.scrCoords[2]]
+      }
+      const rectFromRegion = (region) => {
+        const topLeft = toScreen([region[0], region[1]])
+        const bottomRight = toScreen([region[2], region[3]])
+        return {
+          x: Math.min(topLeft[0], bottomRight[0]),
+          y: Math.min(topLeft[1], bottomRight[1]),
+          width: Math.abs(bottomRight[0] - topLeft[0]),
+          height: Math.abs(bottomRight[1] - topLeft[1]),
+        }
+      }
+      const labelLayer = document.createElementNS(SVG_NS, 'g')
+      labelLayer.setAttribute('id', `${boardId}-label-layer`)
+      svg.appendChild(labelLayer)
+      const geometryNodes = [...svg.querySelectorAll(
+        'line, path, polygon, polyline, circle, ellipse, rect',
+      )].filter((node) => (
+        !node.closest('defs') &&
+        node.getAttribute('display') !== 'none' &&
+        node.getAttribute('stroke') !== 'none' &&
+        Number.parseFloat(node.getAttribute('stroke-width') || '0') > 2.5
+      ))
+
+      const minGap = figureSpec.layout?.minLabelGap ?? 4
+      const avoid = [
+        ...visiblePoints.map((point) => {
+          const [x, y] = toScreen(point.at)
+          return {
+            x: x - point.radius,
+            y: y - point.radius,
+            width: point.radius * 2,
+            height: point.radius * 2,
+          }
+        }),
+        ...imageRegions.map(rectFromRegion),
+        ...(figureSpec.layout?.avoidRegions || []).map(rectFromRegion),
+      ]
+      const occupied = []
+      const collisions = []
+
+      const overlapArea = (a, b) => {
+        const width = Math.max(
+          0,
+          Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
+        )
+        const height = Math.max(
+          0,
+          Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y),
+        )
+        return width * height
+      }
+      const inflate = (rect, amount) => ({
+        x: rect.x - amount,
+        y: rect.y - amount,
+        width: rect.width + amount * 2,
+        height: rect.height + amount * 2,
+      })
+      const outsideArea = (rect) => {
+        const clippedWidth = Math.max(
+          0,
+          Math.min(rect.x + rect.width, figureSpec.canvas.width) -
+            Math.max(rect.x, 0),
+        )
+        const clippedHeight = Math.max(
+          0,
+          Math.min(rect.y + rect.height, figureSpec.canvas.height) -
+            Math.max(rect.y, 0),
+        )
+        return rect.width * rect.height - clippedWidth * clippedHeight
+      }
+      const strokeHitsRect = (node, rect) => {
+        if (typeof node.getTotalLength !== 'function') return false
+        let length
+        try {
+          length = node.getTotalLength()
+        } catch {
+          return false
+        }
+        if (!Number.isFinite(length) || length <= 0) return false
+        const ctm = node.getCTM()
+        const samples = Math.min(500, Math.max(2, Math.ceil(length / 4)))
+        for (let index = 0; index <= samples; index += 1) {
+          const point = node.getPointAtLength(length * index / samples)
+          const transformed = ctm
+            ? new DOMPoint(point.x, point.y).matrixTransform(ctm)
+            : point
+          if (
+            transformed.x >= rect.x &&
+            transformed.x <= rect.x + rect.width &&
+            transformed.y >= rect.y &&
+            transformed.y <= rect.y + rect.height
+          ) {
+            return true
+          }
+        }
+        return false
+      }
+      const placements = {
+        CENTER: [0, 0, 'middle'],
+        NE: [1, -1, 'start'],
+        NW: [-1, -1, 'end'],
+        SE: [1, 1, 'start'],
+        SW: [-1, 1, 'end'],
+        E: [1, 0, 'start'],
+        W: [-1, 0, 'end'],
+        N: [0, -1, 'middle'],
+        S: [0, 1, 'middle'],
+      }
+
+      for (const label of labels) {
+        const node = document.createElementNS(SVG_NS, 'text')
+        node.textContent = label.text
+        node.setAttribute('fill', label.fill)
+        node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
+        node.setAttribute('font-size', String(label.fontSize))
+        node.setAttribute('font-weight', String(label.fontWeight))
+        node.setAttribute('dominant-baseline', label.dominantBaseline)
+        node.setAttribute('data-label-id', label.id)
+        labelLayer.appendChild(node)
+
+        const [anchorX, anchorY] = toScreen(label.at)
+        const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
+        const offset = label.placement.offset || [0, 0]
+        const requested = label.placement.position
+        const automatic = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
+        const candidates = requested
+          ? (
+              label.placement.fallback
+                ? [requested, ...automatic.filter((item) => item !== requested)]
+                : [requested]
+            )
+          : automatic
+        let best = null
+
+        for (const position of candidates) {
+          if (!placements[position]) {
+            throw new Error(`Unsupported label placement: ${position}`)
+          }
+          const [xDirection, yDirection, anchor] = placements[position]
+          node.setAttribute(
+            'x',
+            String(anchorX + xDirection * gap + offset[0]),
+          )
+          node.setAttribute(
+            'y',
+            String(anchorY + yDirection * gap + offset[1]),
+          )
+          node.setAttribute('text-anchor', label.textAnchor || anchor)
+          const rect = node.getBBox()
+          const padded = inflate(rect, minGap)
+          const overlap = [...avoid, ...occupied].reduce(
+            (sum, other) => sum + overlapArea(padded, other),
+            0,
+          )
+          const strokeCollision = geometryNodes.some(
+            (geometry) => strokeHitsRect(geometry, padded),
+          )
+          const score =
+            overlap +
+            outsideArea(padded) * 100 +
+            (strokeCollision ? 10000 : 0)
+          if (!best || score < best.score) {
+            best = {
+              position,
+              x: node.getAttribute('x'),
+              y: node.getAttribute('y'),
+              anchor: label.textAnchor || anchor,
+              rect: {
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+              },
+              score,
+            }
+          }
+        }
+
+        node.setAttribute('x', best.x)
+        node.setAttribute('y', best.y)
+        node.setAttribute('text-anchor', best.anchor)
+        occupied.push(inflate(best.rect, minGap))
+        if (best.score > 0.5) {
+          collisions.push({
+            id: label.id,
+            text: label.text,
+            position: best.position,
+            score: best.score,
+          })
+        }
+      }
+
+      svg.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+      window.materializeArrowheads(svg)
+      const displayChecks = figureSpec.display.widths.map((width) => {
+        const host = document.createElement('div')
+        host.style.cssText =
+          `position:absolute;left:-10000px;top:0;width:${width}px;overflow:visible`
+        const candidate = svg.cloneNode(true)
+        candidate.setAttribute('width', String(width))
+        candidate.removeAttribute('height')
+        candidate.style.width = `${width}px`
+        candidate.style.height = 'auto'
+        host.appendChild(candidate)
+        document.body.appendChild(host)
+        const textSizes = [...candidate.querySelectorAll('text')].map((node) => {
+          const fontSize = Number.parseFloat(node.getAttribute('font-size') || '0')
+          const matrix = node.getScreenCTM()
+          const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0
+          return {
+            id: node.getAttribute('data-label-id'),
+            text: node.textContent,
+            px: fontSize * scale,
+          }
+        })
+        const failures = textSizes.filter(
+          (item) => item.px + 0.01 < figureSpec.display.minTextPx,
+        )
+        host.remove()
+        return {
+          width,
+          minTextPx: figureSpec.display.minTextPx,
+          measuredMinPx: textSizes.length
+            ? Math.min(...textSizes.map((item) => item.px))
+            : null,
+          failures,
+          status: failures.length ? 'fail' : 'pass',
+        }
+      })
+      const cloneFor = (layer) => {
+        const clone = svg.cloneNode(true)
+        clone.style.background = layer === 'composite'
+          ? svg.style.background
+          : 'transparent'
+        if (layer === 'overlay') {
+          clone.querySelectorAll('image').forEach((node) => node.remove())
+        } else if (layer === 'artwork') {
+          clone.querySelectorAll(
+            'line, path, polygon, polyline, circle, ellipse, rect, text',

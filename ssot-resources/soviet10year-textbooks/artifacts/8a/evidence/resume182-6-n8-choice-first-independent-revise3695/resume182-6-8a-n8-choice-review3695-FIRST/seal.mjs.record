@@ -1,0 +1,18 @@
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { resolve } from 'node:path';
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = resolve(R, '.tmp/resume182-6-8a-n8-choice-review3695-FIRST');
+const [inputName, sealName, stage] = process.argv.slice(2);
+if ([inputName, sealName].some(x => !x || x.includes('/') || x.includes('..'))) throw new Error('Owned basenames required');
+const bytes = readFileSync(resolve(own, inputName));
+const path = resolve(own, sealName);
+if (existsSync(path)) throw new Error('Seal already exists');
+const record = {
+  schema: 'independent-choice-stage-seal-v1', stage, sealed_at: new Date().toISOString(),
+  evidence_path: resolve(own, inputName),
+  evidence_sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length,
+  immutable_by_protocol: true
+};
+writeFileSync(path, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify(record));
