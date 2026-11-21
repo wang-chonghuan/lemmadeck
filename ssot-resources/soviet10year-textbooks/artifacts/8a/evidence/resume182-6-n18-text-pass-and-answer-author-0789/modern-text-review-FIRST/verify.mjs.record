@@ -1,0 +1,313 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const id = 'alg8-c3-s3-n18';
+const base = `${repo}/.tmp/resume182-6-8a-n18-0789`;
+const book = `${repo}/ssot-resources/soviet10year-textbooks/artifacts/8a`;
+const raw = `${book}/lessons/${id}`;
+const final = `${book}/editions/modern-us-neutral/lessons/${id}`;
+const template = `${base}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/${id}`;
+const tools = `${repo}/.claude/skills/ld-s10y-lesson/tools`;
+const retentionRoot = `${book}/evidence/resume182-6-n18-source-pass-and-modern-first-failure-0789`;
+const identity = '01a1fd3e-aeaa-70b1-bc5b-d2f172adb9a4';
+assert.equal(process.cwd(), repo);
+assert.equal(process.env.CODEX_THREAD_ID, identity);
+
+const files = new Map();
+const sha = value => crypto.createHash('sha256').update(value).digest('hex');
+function bytes(file) {
+  const absolute = path.resolve(file);
+  assert.ok(absolute.startsWith(`${repo}/`));
+  assert.equal(fs.realpathSync(absolute), absolute);
+  assert.ok(!/\.(?:png|jpe?g|webp|pdf|svg)(?:\.record)?$/iu.test(absolute));
+  assert.ok(!/(?:answer-keys|choice-set|\.env)/u.test(absolute));
+  if (!files.has(absolute)) files.set(absolute, fs.readFileSync(absolute));
+  return files.get(absolute);
+}
+const binding = file => ({ path: path.resolve(file), sha256: sha(bytes(file)), bytes: bytes(file).length });
+function read(file, expected) {
+  if (expected) assert.equal(sha(bytes(file)), expected, file);
+  return JSON.parse(bytes(file));
+}
+const compact = text => text.replace(/\s/gu, '');
+const formulas = text => [...text.matchAll(/\$([^$]*)\$/gu)].map(m => compact(m[1]));
+const numbers = text => [...text.matchAll(/\d+(?:\.\d+)?/gu)].map(m => m[0]);
+const cyrillic = 'абвгде';
+const latin = 'abcdef';
+const latinize = text => text.replace(/[абвгде](?=\))/gu, ch => latin[cyrillic.indexOf(ch)]);
+
+const approvalPath = `${base}/source-review-FIRST/result-AFFECTED1.record`;
+const approval = read(approvalPath, '42acca233918931e5b887012cba9a895ade6a3f50481e4e68ce02fb750376a25');
+assert.equal(approval.status, 'SOURCE_PASS');
+assert.equal(approval.book, '8a');
+assert.equal(approval.lesson, id);
+assert.notEqual(approval.reviewer.identity, identity);
+assert.equal(approval.scope.completeN18SourceApproved, true);
+assert.deepEqual(approval.affected_verification.assembly.figures, []);
+assert.deepEqual(approval.affected_verification.assembly.figure_refs, []);
+assert.equal(approval.affected_verification.assembly.prose_count, 12);
+assert.equal(approval.affected_verification.assembly.exercise_count, 20);
+const rawLesson = read(`${raw}/lesson.json`);
+const rawExercises = read(`${raw}/exercises.json`);
+for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  const sourcePath = `${approval.scope.approved_assembly_directory}/${name}`;
+  const sourceBinding = approval.bindings.find(item => item.path === sourcePath);
+  assert.ok(sourceBinding);
+  assert.equal(sha(bytes(sourcePath)), sourceBinding.sha256);
+  assert.equal(bytes(sourcePath).length, sourceBinding.bytes);
+  assert.ok(bytes(`${raw}/${name}`).equals(bytes(sourcePath)), name);
+}
+
+const assembly = read(`${base}/assembly-AFFECTED1/assembly.record`,
+  '5cfc5826c4b87345347200a66ffb06cd7499bc4babb87c9bd23a892accef73fe');
+assert.equal(assembly.entries.length, 18);
+for (const entry of assembly.entries) {
+  for (const file of [entry.source, entry.path]) {
+    assert.equal(sha(bytes(`${repo}/${file}`)), entry.sha256);
+    assert.equal(bytes(`${repo}/${file}`).length, entry.bytes);
+  }
+}
+const blocks = new Map();
+for (const page of [105, 106, 107, 108, 109, 110]) {
+  const prefix = `p${String(page).padStart(4, '0')}`;
+  const doc = read(`${book}/pages/${prefix.slice(1)}/page.json`);
+  for (const erratum of doc.errata ?? []) {
+    assert.ok(!selectedRefForErratum(erratum), 'source-bound erratum must not be silently dropped');
+  }
+  doc.blocks.forEach((block, index) => blocks.set(`${prefix}#${index + 1}`, block));
+}
+function selectedRefForErratum(erratum) {
+  return assembly.selected_refs.includes(erratum.block);
+}
+const selected = new Set(assembly.selected_refs);
+function sourceText(refs, kind) {
+  assert.ok(refs.length);
+  const objects = refs.map(ref => {
+    assert.ok(selected.has(ref), ref);
+    const block = blocks.get(ref);
+    assert.equal(block.kind, kind, ref);
+    return block;
+  });
+  assert.equal(objects.at(-1).open, false);
+  return objects.flatMap(block => block.lines).join('');
+}
+for (const block of rawLesson.prose) assert.equal(sourceText(block.source_refs, 'p'), block.text);
+for (const exercise of rawExercises.exercises) {
+  assert.equal(sourceText(exercise.pages, 'ex'), exercise.text);
+  assert.deepEqual(exercise.lines, exercise.pages.flatMap(ref => blocks.get(ref).lines));
+}
+const targetRefs = [...rawLesson.prose.flatMap(b => b.source_refs),
+  ...rawExercises.exercises.flatMap(e => e.pages)];
+assert.deepEqual(new Set(targetRefs), new Set(assembly.selected_refs.filter(ref =>
+  ['p', 'ex'].includes(blocks.get(ref)?.kind))));
+assert.equal(assembly.boundary_refs.start, 'p0105#6');
+assert.equal(assembly.boundary_refs.excluded_right, 'p0110#2');
+assert.ok(!targetRefs.includes('p0110#2'));
+
+const lesson = read(`${final}/lesson.json`);
+const exercises = read(`${final}/exercises.json`);
+const figures = read(`${final}/figures.json`);
+const audit = read(`${final}/adaptation.audit.json`);
+const lessonTemplate = read(`${template}/lesson.template.json`);
+const exercisesTemplate = read(`${template}/exercises.template.json`);
+const figuresTemplate = read(`${template}/figures.template.json`);
+for (const [candidate, source, name] of [
+  [lesson, rawLesson, 'lesson'], [lessonTemplate, rawLesson, 'lesson'],
+  [exercises, rawExercises, 'exercises'], [exercisesTemplate, rawExercises, 'exercises'],
+]) {
+  assert.equal(candidate.source.path, `lessons/${id}/${name}.json`);
+  assert.equal(candidate.source.sha256, sha(bytes(`${raw}/${name}.json`)));
+  assert.deepEqual(candidate.source.data, source);
+}
+for (const key of ['id', 'card_id', 'chapter', 'section', 'number', 'title',
+  'printed_title', 'start_page', 'start_printed', 'exercise_count', 'figures']) {
+  assert.deepEqual(lesson[key], rawLesson[key], key);
+}
+const proseChecks = lesson.prose.map((block, index) => {
+  const source = rawLesson.prose[index];
+  for (const key of ['kind', 'id', 'label', 'printed_page', 'source_refs']) {
+    assert.deepEqual(block[key], source[key]);
+  }
+  assert.equal(block.source_text, source.text);
+  assert.equal(compact(block.text), compact(source.text));
+  assert.deepEqual(formulas(block.text), formulas(source.text));
+  assert.deepEqual(numbers(block.text), numbers(source.text));
+  assert.deepEqual(block.numeric_changes, []);
+  assert.deepEqual(block.historical_entities, []);
+  assert.deepEqual(block.changes, block.text === source.text ? [] : ['layout']);
+  return { index, source_refs: block.source_refs, mathExpressions: formulas(block.text).length,
+    textChange: block.changes, exactNonWhitespacePreserved: true };
+});
+const exerciseChecks = exercises.exercises.map((exercise, index) => {
+  const source = rawExercises.exercises[index];
+  for (const key of ['number', 'source_number', 'group', 'group_id', 'pages', 'figures', 'figure_refs']) {
+    assert.deepEqual(exercise[key], source[key]);
+  }
+  assert.equal(exercise.source_text, source.text);
+  let expected = latinize(source.text);
+  if (exercise.number === '291') {
+    assert.equal((source.text.match(/1000卢布/gu) ?? []).length, 1);
+    expected = expected.replace('1000卢布', '1000美元');
+    assert.equal(exercise.text, expected);
+  }
+  assert.equal(compact(exercise.text), compact(expected));
+  assert.deepEqual(formulas(exercise.text), formulas(source.text));
+  assert.deepEqual(numbers(exercise.text), numbers(source.text));
+  assert.deepEqual(exercise.lines, exercise.text.split('\n'));
+  assert.deepEqual(exercise.numeric_changes, []);
+  assert.deepEqual(exercise.historical_entities, []);
+  const markers = [...exercise.text.matchAll(/([a-f])\)/gu)].map(m => m[1]);
+  assert.deepEqual(markers, [...latin.slice(0, markers.length)]);
+  if (markers.length) {
+    assert.equal(exercise.lines.length, markers.length + 1);
+    assert.ok(!/[a-f]\)/u.test(exercise.lines[0]));
+    markers.forEach((marker, i) => assert.ok(exercise.lines[i + 1].startsWith(`${marker}) `)));
+  }
+  assert.ok(!/\u3000|\t/u.test(exercise.text));
+  const changes = exercise.number === '291' ? ['currency'] :
+    markers.length ? ['layout', 'enum-latin'] : [];
+  assert.deepEqual(exercise.changes, changes);
+  return { number: exercise.number, group_id: exercise.group_id, refs: exercise.pages,
+    markers, lines: exercise.lines.length, changes, mathExpressions: formulas(exercise.text).length,
+    formulationsAndNumbersPreserved: true, linesExactTextSplit: true };
+});
+assert.deepEqual(exercises.exercises.map(e => e.number),
+  Array.from({ length: 20 }, (_, i) => String(278 + i)));
+assert.equal(exercises.count, 20);
+assert.equal(lesson.exercise_count, 20);
+assert.equal(lesson.prose.length, 12);
+assert.equal(exercises.exercises[7].lines[1], 'a) $b_1=2$，$b_8=256$；');
+for (const doc of [lesson, exercises, figures]) assert.equal(doc.status, 'ready');
+assert.deepEqual(rawLesson.figures, []);
+assert.deepEqual(lesson.figures, []);
+assert.deepEqual(figures.figures, []);
+assert.deepEqual(figuresTemplate.figures, []);
+assert.deepEqual({ ...figuresTemplate, status: 'ready' }, figures);
+assert.deepEqual(assembly.figures, []);
+assert.deepEqual(assembly.figure_sources, {});
+assert.ok(!assembly.selected_refs.some(ref => blocks.get(ref)?.kind === 'fig'));
+
+const profile = read(`${repo}/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json`);
+const visibleTexts = [
+  lesson.chapter, lesson.section, lesson.title, lesson.printed_title,
+  ...lesson.prose.map(b => b.text), ...exercises.exercises.map(e => e.text),
+];
+for (const text of visibleTexts) {
+  assert.ok(!/[\u0400-\u04ff]/u.test(text));
+  assert.ok(!/<span|<img|!\[/iu.test(text));
+  assert.equal((text.match(/\$/gu) ?? []).length % 2, 0);
+  for (const formula of formulas(text)) assert.ok(!/[、，；。？！：]/u.test(formula));
+  for (const term of [...profile.forbidden_terms, ...profile.forbidden_person_names]) {
+    assert.ok(!text.includes(term), term);
+  }
+}
+
+const require = createRequire(import.meta.url);
+const { proseOutline, sectionBreakIndices } = require(`${tools}/htmlfrag.js`);
+const outline = proseOutline(lesson.prose);
+const indices = sectionBreakIndices(lesson.prose, lesson.section_breaks);
+assert.deepEqual(indices, [1, 2, 5, 7]);
+assert.equal(outline.length, 13);
+assert.deepEqual(lessonTemplate.section_breaks, lesson.section_breaks);
+assert.deepEqual(audit.resolvedSectionBreaks, indices.map(index => ({
+  index, before: outline[index - 1].text, after: outline[index].text,
+})));
+assert.equal(audit.status, 'pass');
+assert.deepEqual(audit.errors, []);
+assert.equal(audit.proseBlocks, 12);
+assert.equal(audit.exercises, 20);
+assert.equal(audit.figures, 0);
+assert.equal(audit.sectionBreaks, 4);
+assert.equal(audit.changedProseBlocks, proseChecks.filter(b => b.textChange.length).length);
+assert.equal(audit.changedExercises, exerciseChecks.filter(e => e.changes.length).length);
+assert.equal(audit.sourceLessonSha256, sha(bytes(`${raw}/lesson.json`)));
+assert.equal(audit.sourceExercisesSha256, sha(bytes(`${raw}/exercises.json`)));
+assert.equal(audit.errata, 0);
+assert.deepEqual(lesson.errata, []);
+
+const recovery = read(`${base}/modern-flow-recovery1/result.record`,
+  '43f74acfc97a25aa05cf2c78d9ef2970980a504cf663996827a48ee06007083f');
+const oldTemplate = read(recovery.before.path, recovery.before.sha256);
+read(recovery.firstFailedAudit.path, recovery.firstFailedAudit.sha256);
+assert.equal(recovery.after.sha256, sha(bytes(`${template}/lesson.template.json`)));
+assert.deepEqual(recovery.section_breaks, lesson.section_breaks);
+for (let i = 0; i < oldTemplate.prose.length; i++) {
+  assert.equal(compact(oldTemplate.prose[i].text), compact(lessonTemplate.prose[i].text));
+  assert.deepEqual({ ...oldTemplate.prose[i], text: lessonTemplate.prose[i].text }, lessonTemplate.prose[i]);
+}
+assert.deepEqual({ ...oldTemplate, prose: lessonTemplate.prose,
+  section_breaks: lessonTemplate.section_breaks }, lessonTemplate);
+const firstReceipt = read(`${base}/stages/modern-finalize-FIRST/receipt.record`);
+assert.equal(firstReceipt.returncode, 2);
+assert.equal(read(recovery.firstFailedAudit.path).status, 'fail');
+const receipt = read(`${base}/stages/modern-finalize-RECOVERY-flow1/receipt.record`,
+  '0e4649bf15771bd3276bd9da92bd02b7cd9414ac64196c66f40faec61cbb940a');
+assert.equal(receipt.returncode, 0);
+assert.equal(receipt.cwd, repo);
+assert.equal(receipt.signal, null);
+assert.equal(receipt.error, null);
+assert.ok(bytes(`${base}/stages/modern-finalize-RECOVERY-flow1/stdout.txt`)
+  .toString().includes('PASS 正文改写 7/12, 题改写 15/20, 新图 0'));
+assert.equal(bytes(`${base}/stages/modern-finalize-RECOVERY-flow1/stderr.txt`).length, 0);
+const retention = read(`${retentionRoot}/retention.record`,
+  '4385c2f4c14283bda685f2fc2efbb208fea08b54f8a5cb7e814c67abf270d356');
+for (const entry of retention.entries.filter(e =>
+  /(?:modern-finalize-FIRST|modern-author-FIRST\/result|modern-FIRST\/adapt.*lessons.*template|source-review-FIRST\/result-AFFECTED1)/u.test(e.historical_path))) {
+  assert.equal(sha(bytes(`${repo}/${entry.path}`)), entry.sha256);
+  assert.equal(bytes(`${repo}/${entry.path}`).length, entry.bytes);
+}
+assert.ok(bytes(`${template}/exercises.template.json`).equals(bytes(
+  `${retentionRoot}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/${id}/exercises.template.json.record`)));
+const author = read(`${base}/modern-author-FIRST/result.record`,
+  '4bfe18edaa9204b5bd120f6e87fa15b666e6babb2d6fd4e8876e57235fb1a0ef');
+assert.equal(author.status, 'MODERN_TEXT_AUTHORED_NOT_APPROVED');
+assert.ok(author.outputs[0].sha256 !== sha(bytes(`${template}/lesson.template.json`)));
+
+const normalization = spawnSync(`${repo}/.claude/skills/ld-s10y-lesson/.venv/bin/python`,
+  ['-B', '-c', [
+    'import sys,json,copy',
+    `sys.path.insert(0,${JSON.stringify(tools)})`,
+    'import edition',
+    'payload=json.load(sys.stdin)',
+    'result={}',
+    'for name,documents in payload.items():',
+    '    template,final=documents',
+    '    normalized=copy.deepcopy(template)',
+    '    helper=edition.normalize_lesson_layout if name=="lesson" else edition.normalize_exercise_layout',
+    '    helper(normalized)',
+    '    assert normalized==template,(name,"not identity")',
+    '    normalized["status"]="ready"',
+    '    normalized["exercise_count" if name=="lesson" else "count"]=20',
+    '    assert normalized==final,(name,"final differs")',
+    '    result[name]={"normalizationIdentity":True,"entireNormalizedReadyCountTemplateEqualsFinal":True}',
+    'print(json.dumps(result))',
+  ].join('\n')], {
+    cwd: repo, input: JSON.stringify({ lesson: [lessonTemplate, lesson],
+      exercises: [exercisesTemplate, exercises] }),
+    encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+    maxBuffer: 4 * 1024 * 1024,
+  });
+assert.equal(normalization.status, 0, normalization.stderr);
+assert.equal(normalization.stderr, '');
+for (const file of [`${tools}/edition.py`, `${tools}/htmlfrag.js`,
+  `${tools}/prose_flow.mjs`, `${repo}/.claude/skills/ld-s10y-lesson/SKILL.md`,
+  `${repo}/.claude/skills/ld-s10y-lesson/references/production-resume.md`,
+  `${repo}/.claude/skills/ld-s10y-lesson/references/edition-text-contract.md`,
+  `${base}/modern-flow-recovery1/flow-check.stdout.record`]) binding(file);
+for (const [file, original] of files) {
+  assert.ok(original.equals(fs.readFileSync(file)), `changed during verification: ${file}`);
+}
+console.log(JSON.stringify({
+  status: 'READ_ONLY_BINDING_AND_LAYOUT_CHECK_PASS_NOT_SUBSTITUTE_FOR_INDEPENDENT_TEXT_JUDGMENT',
+  identity, proseChecks, exerciseChecks,
+  flow: { paragraphs: outline.length, resolvedBreaks: indices },
+  nativeHelperProof: JSON.parse(normalization.stdout),
+  sourceSnapshotFilesVerified: assembly.entries.length,
+  readBindings: [...files.keys()].map(binding),
+  imageViews: 0, producerReruns: 0, writes: 0,
+}, null, 2));

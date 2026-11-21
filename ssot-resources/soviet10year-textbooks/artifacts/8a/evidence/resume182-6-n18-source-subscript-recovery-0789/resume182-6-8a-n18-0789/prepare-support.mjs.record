@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const previous = '.tmp/resume182-6-8a-n17-0789';
+const base = '.tmp/resume182-6-8a-n18-0789';
+const id = 'alg8-c3-s3-n18';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length,
+    realpath: fs.realpathSync(file) };
+};
+assert.equal(binding(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'SOURCE_PASS');
+assert.equal(review.lesson, id);
+const assembly = JSON.parse(fs.readFileSync(`${base}/assembly-AFFECTED1/assembly.record`));
+const raw = JSON.parse(fs.readFileSync(`${root}/lessons/${id}/exercises.json`));
+const numbers = raw.exercises.map(item => String(item.number));
+assert.ok(numbers.length && new Set(numbers).size === numbers.length);
+assert.equal(numbers.length, assembly.exercise_count);
+const figures = assembly.figures, outputs = [];
+const replace = (text, before, after) => {
+  assert.equal(text.split(before).length, 2, before);
+  return text.replace(before, after);
+};
+const adapted = (name, rewrite = text => text) => {
+  const source = `${previous}/${name}`, target = `${base}/${name}`;
+  assert.ok(!fs.existsSync(target), target);
+  const text = rewrite(fs.readFileSync(source, 'utf8')
+    .replaceAll('alg8-c3-s3-n17', id).replaceAll('n17', 'n18'));
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, text, { flag: 'wx' });
+  outputs.push({ source: binding(source), output: binding(target) });
+};
+adapted('prepare-choice-review.mjs');
+adapted('bind-choice-review.mjs', text => replace(text,
+  'assert.equal(review.source_reviews.length, 9);',
+  `assert.equal(review.source_reviews.length, ${numbers.length});`));
+adapted('promote-answers.mjs', text => replace(text,
+  'assert.equal(data.answers.length, 9);',
+  `assert.equal(data.answers.length, ${numbers.length});`));
+adapted('observe-tools.mjs');
+adapted('scope-index-pages.mjs', text => replace(text,
+  '[102, ...bootstrap.scope.newPhysicalPages]', 'bootstrap.scope.newPhysicalPages'));
+adapted('delivery.mjs', text => {
+  text = replace(text, '[102, ...bootstrap.scope.newPhysicalPages]', 'bootstrap.scope.newPhysicalPages');
+  text = replace(text,
+    "  '.claude/skills/ld-s10y-lesson/tools/layout.py',\n  '.claude/skills/ld-s10y-lesson/tools/p2c.py',\n  '.claude/skills/ld-s10y-lesson/tests/test_scan_noise.py'",
+    '');
+  return replace(text,
+    "name.startsWith('resume182-6-n16-') || name.startsWith('resume182-6-n18-')",
+    "name.startsWith('resume182-6-n18-')");
+});
+for (const name of ['run.mjs', 'display-helper.mjs', 'display-helper-base.mjs']) adapted(`display-FIRST/${name}`);
+adapted('display-FIRST/prepare.mjs', text => replace(text,
+  'export const requiredFigures = [];', `export const requiredFigures = ${JSON.stringify(figures)};`));
+adapted('ready-display.mjs', text => {
+  text = replace(text, 'assert.equal(count, 9);', `assert.equal(count, ${numbers.length});`);
+  text = replace(text, '["269","270","271","272","273","274","275","276","277"]', JSON.stringify(numbers));
+  return replace(text, 'assert.deepEqual(figureIds, []);', `assert.deepEqual(figureIds, ${JSON.stringify(figures)});`);
+});
+const priorReadyPath = `${previous}/display-FIRST/ready-standard-padding1.record`;
+const priorReady = JSON.parse(fs.readFileSync(priorReadyPath));
+const names = ['prepare.mjs', 'run.mjs', 'display-helper.mjs', 'display-helper-base.mjs'];
+const displayFiles = names.map(name => binding(`${base}/display-FIRST/${name}`));
+const pins = priorReady.pins.filter(item => !names.some(name =>
+  item.path === path.resolve(`${previous}/display-FIRST/${name}`)));
+for (const pin of pins) assert.equal(binding(pin.path).sha256, pin.sha256);
+pins.push(...displayFiles);
+const readyPath = `${base}/display-FIRST/ready-FIRST.record`;
+fs.writeFileSync(readyPath, `${JSON.stringify({
+  status: 'SCRIPTS_PREPARED_RUNTIME_NOT_EXECUTED', workdir: repo,
+  files: displayFiles, pins, figureIds: figures, exerciseCount: numbers.length,
+  parentGate: { schema: 'n18-parent-display-ready@1', statusRequired: 'parentREADY',
+    textAnswerChoiceApprovalsMustBeIndependentlyPinned: true, independentFigureReviewRequired: true },
+  correctedPriorImplementation: binding(priorReadyPath), runtimeExecuted: false,
+  rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0, imagesObserved: 0,
+  oldPassReruns: 0, databaseWrites: 0, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+const file = `${base}/support-preparation.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'SOURCE_DERIVED_SUPPORT_PREPARED_NOT_DOWNSTREAM_APPROVAL',
+  book: '8a', lesson: id, sourceApproval: binding(reviewPath),
+  inventory: { numbers, figures }, outputs, displayReady: binding(readyPath),
+  oldPassReruns: 0, imageViews: 0, databaseWrites: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(binding(file)));

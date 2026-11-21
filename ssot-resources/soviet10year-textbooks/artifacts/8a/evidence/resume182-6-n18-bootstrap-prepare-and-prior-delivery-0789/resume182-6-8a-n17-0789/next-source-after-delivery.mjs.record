@@ -1,0 +1,125 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const prior = '.tmp/resume182-6-8a-n17-0789';
+const next = '.tmp/resume182-6-8a-n18-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c3-s3-n18';
+const commit = 'f417e5c36f3c43cdad6a799e71548a5b02490717';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const read = file => JSON.parse(fs.readFileSync(file));
+const write = (file, value) => fs.writeFileSync(file,
+  typeof value === 'string' ? value : `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const git = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+assert.equal(git.status, 0);
+assert.equal(git.stdout.trim(), commit);
+for (const stage of ['delivery-check-FIRST', 'delivery-commit-FIRST',
+  'delivery-push-FIRST', 'delivery-remote-confirm-FIRST']) {
+  assert.equal(read(`${prior}/stages/${stage}/receipt.record`).returncode, 0);
+}
+assert.equal(fs.readFileSync(`${prior}/stages/delivery-remote-confirm-FIRST/stdout.txt`, 'utf8')
+  .trim().split(/\s+/u)[0], commit);
+const approvalPath = `${prior}/source-review-FIRST/result-AFFECTED1.record`;
+const approval = read(approvalPath);
+assert.equal(entry(approvalPath).sha256,
+  '7a4fc1d0336ca97d627192aa0dfb3b8b1c275593d971b2c7c037b7d1fb4dc889');
+assert.equal(approval.status, 'SOURCE_PASS');
+const pageApproval = approval.perPageApprovals.find(item => item.page === 105);
+assert.equal(pageApproval.status, 'SOURCE_PAGE_PASS');
+assert.equal(pageApproval.whole_current_raw_page_approved, true);
+assert.deepEqual(pageApproval.blockers, []);
+const files = ['page.md', 'page.json', 'audit.json'].map(name => entry(`${root}/pages/0105/${name}`));
+for (const file of files) assert.equal(
+  approval.bindings.find(item => item.path === file.path)?.sha256, file.sha256);
+const page = read(`${root}/pages/0105/page.json`);
+assert.equal(page.blocks[5].kind, 'h3');
+assert.match(page.blocks[5].lines.join('\n'), /^18\.\s/u);
+assert.equal(page.blocks[6].open, true);
+assert.deepEqual(read(`${root}/pages/0105/audit.json`).errors, []);
+const objects = [];
+const visit = value => {
+  if (!value || typeof value !== 'object') return;
+  if (!Array.isArray(value)) objects.push(value);
+  for (const child of Object.values(value)) visit(child);
+};
+const toc = 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json';
+visit(read(toc));
+const target = objects.find(item => item.id === id);
+const right = objects.find(item => item.id === 'alg8-c3-s3-n19');
+const offset = page.meta.page - page.meta.printed_page;
+assert.equal(target.page, page.meta.printed_page);
+const newPages = Array.from({ length: right.page + offset - page.meta.page },
+  (_, index) => page.meta.page + index + 1);
+assert.deepEqual(newPages, [106, 107, 108, 109, 110]);
+assert.ok(!fs.existsSync(next));
+assert.ok(!fs.existsSync(`${root}/lessons/${id}`));
+for (const number of newPages) assert.ok(!fs.existsSync(`${root}/pages/${String(number).padStart(4, '0')}`));
+fs.mkdirSync(next);
+const copied = [];
+const adapt = code => code.replaceAll('alg8-c3-s3-n17', id)
+  .replaceAll('resume182-6-8a-n17-0789', 'resume182-6-8a-n18-0789')
+  .replaceAll('resume182-6-n17-', 'resume182-6-n18-')
+  .replaceAll('assembly-AFFECTED1', 'assembly-FIRST');
+for (const name of ['run-stage.mjs', 'retain.mjs', 'promote-source.mjs', 'snapshot-source-author.mjs']) {
+  const source = `${prior}/${name}`, output = `${next}/${name}`;
+  const code = adapt(fs.readFileSync(source, 'utf8'))
+    .replace('[103, 104, 105]', '[106, 107, 108, 109, 110]');
+  write(output, code);
+  copied.push({ source: entry(source), output: entry(output) });
+}
+const assembler = adapt(fs.readFileSync(`${prior}/assemble.py`, 'utf8'))
+  .replaceAll('reusedPage102', 'reusedPage105')
+  .replace('[102, *bootstrap["scope"]["newPhysicalPages"]]', '[105, *bootstrap["scope"]["newPhysicalPages"]]')
+  .replaceAll('== "17"', '== "18"').replaceAll('!= "17"', '!= "18"');
+write(`${next}/assemble.py`, assembler);
+copied.push({ source: entry(`${prior}/assemble.py`), output: entry(`${next}/assemble.py`) });
+const inherited = read(`${prior}/upstream-usage.record`);
+const display = read(`${prior}/display-FIRST/runtime-recovery-standard-padding1/usage-FIRST.json`);
+const upstream = {
+  ...inherited, previous: entry(`${prior}/upstream-usage.record`),
+  currentEvidence: [...inherited.currentEvidence, entry(approvalPath),
+    entry(`${root}/editions/modern-us-neutral/lessons/alg8-c3-s3-n17/offline-display.json`),
+    entry(`${prior}/display-FIRST/runtime-recovery-standard-padding1/usage-FIRST.json`),
+    ...['modern-text-review-FIRST/result-AFFECTED1.record', 'answer-review-FIRST/result.record',
+      'choice-review-FIRST/review.record'].map(file => entry(`${prior}/${file}`)),
+    ...Array.from({ length: 8 }, (_, index) => entry(`${prior}/observations/bindings/batch${index + 1}.record`))],
+  knownLocalSourceN17: { imageViews: 12, authorViews: 6, sourceReviewerViews: 6, parentViews: 0 },
+  knownLocalDisplayN17: { ...display.displayCumulative, imagesObserved: 62 },
+  N17Status: 'COMPLETE_OFFLINE_LESSON_COMMITTED_PUSHED_REMOTE_CONFIRMED',
+  unknownHistoricalBytesRecovered: false,
+};
+write(`${next}/upstream-usage.record`, upstream);
+const bootstrap = read(`${prior}/bootstrap.record`);
+write(`${next}/bootstrap.record`, {
+  status: 'NEXT_SOURCED_LESSON_READY_AFTER_COMPLETE_DELIVERY_NOT_APPROVAL',
+  time: new Date().toISOString(), ticket: 'STEMROBIN-182', book: '8a', lesson: id,
+  workdir: repo, copied,
+  deliveredPriorLesson: { commit, receipts: ['delivery-check-FIRST', 'delivery-commit-FIRST',
+    'delivery-push-FIRST', 'delivery-remote-confirm-FIRST']
+    .map(stage => entry(`${prior}/stages/${stage}/receipt.record`)) },
+  heldPriorLesson: bootstrap.heldPriorLesson,
+  reusedPage105: { approval: entry(approvalPath), page: 105, files,
+    sourceWork: path.resolve(`${prior}/source/8a/pages/0105`),
+    sourcePixelsAndRecognitionRerun: false, nativeFinalizationRerun: false },
+  reusedSectionAncestor: entry(`${root}/pages/0102/page.json`),
+  inheritedSectionApproval: entry(approvalPath),
+  upstreamUsage: entry(`${next}/upstream-usage.record`),
+  toc: { file: entry(toc), target, next: right, offset },
+  scope: { start: 'p0105#6', sectionAncestor: 'p0102#1', newPhysicalPages: newPages,
+    rightBoundary: 'Locate exact N19 heading on physical110; preserve raw, exclude incomplete lesson.',
+    preserveNextLessonFragments: true, promoteOnlyCompleteN18: true },
+  previousFailuresLocksBackupsPendingMessagesAndUnknownUsagePreserved: true,
+  parentImageViews: 0, unknownHistoricalBytesRecovered: false, createOrAttachCalls: 0,
+  databaseWrites: 0, merges: 0, deployments: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({ output: entry(`${next}/bootstrap.record`), newPages }));

@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789';
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length };
+};
+assert.equal(bind(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'SOURCE_BLOCKED');
+assert.equal(review.lesson, 'alg8-c3-s3-n18');
+assert.ok(review.blockers.some(item => item.id === 'B108-ex285a-term-subscript'));
+const original = `${base}/assemble.py`, target = `${base}/assemble-affected1.py`;
+const before = fs.readFileSync(original, 'utf8');
+assert.equal(before.split('assembly-FIRST').length, 2);
+fs.writeFileSync(target, before.replace('assembly-FIRST', 'assembly-AFFECTED1'), { flag: 'wx' });
+const file = `${base}/source-affected1-preparation.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'AFFECTED_ASSEMBLY_ENTRY_PREPARED_NOT_SOURCE_APPROVAL',
+  failedReview: bind(reviewPath), original: bind(original), output: bind(target),
+  expectedRepair: { ref: 'p0108#6', exercise: '285', from: 'b_3=256', to: 'b_8=256' },
+  sourceWrites: 0, sourceViews: 0, oldPassReruns: 0,
+  unknownHistoricalBytesRecovered: false, databaseWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

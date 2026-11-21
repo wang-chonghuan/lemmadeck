@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789';
+const source = `${base}/choices-REVIEW1`;
+const target = `${base}/choices-AFFECTED1`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+assert.equal(bind(`${source}/draft.json`).sha256,
+  'bf49a67e3e63fcb53a841c268e7183003b5c8ed522644d65e7b87e3470c73cc3');
+const original = JSON.parse(fs.readFileSync(`${source}/draft.json`));
+const repaired = structuredClone(original);
+const question = repaired.questions.find(item => item.id === 'q03');
+const option = question.view.options.find(item => item.id === 'd');
+const rationale = question.key.rationales.find(item => item.option_id === 'd');
+assert.equal(option.text, '$(3,\\ -2,\\ -\\frac12,\\ 0.3\\sqrt{10})$');
+assert.equal(rationale.truth, 'incorrect');
+const changes = [
+  { field: 'q03.view.options[d].text', before: option.text,
+    after: '$(3,\\ 2,\\ -\\frac12,\\ 0.3\\sqrt{10})$' },
+  { field: 'q03.key.rationales[d].derivation', before: rationale.derivation,
+    after: 'Using n-2 gives 96/32=3,(1/8)*(-2)^4=(1/8)*16=2,'
+      + '4sqrt(2)*(-1/sqrt(2))^7=-1/2,0.003*(sqrt(10))^5=0.3sqrt(10).' },
+];
+option.text = changes[0].after;
+rationale.derivation = changes[1].after;
+assert.deepEqual(question.key.correct, ['a']);
+const unchanged = structuredClone(repaired);
+unchanged.questions.find(item => item.id === 'q03').view.options
+  .find(item => item.id === 'd').text = changes[0].before;
+unchanged.questions.find(item => item.id === 'q03').key.rationales
+  .find(item => item.option_id === 'd').derivation = changes[1].before;
+assert.deepEqual(unchanged, original);
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+fs.writeFileSync(`${target}/seed.json`, fs.readFileSync(`${source}/seed.json`), { flag: 'wx' });
+fs.writeFileSync(`${target}/draft.json`, `${JSON.stringify(repaired, null, 2)}\n`, { flag: 'wx' });
+const record = {
+  status: 'CHOICE_Q03_D_REPAIRED_AFFECTED_REVIEW_PENDING',
+  book: '8a', lesson: 'alg8-c3-s3-n18', edition: 'modern-us-neutral',
+  source: bind(`${source}/draft.json`), candidate: bind(`${target}/draft.json`),
+  seed: bind(`${target}/seed.json`), changes,
+  failedReview: bind(`${base}/choice-review-FIRST/review.record`),
+  sourcePromptsKeysAndAllOtherOptionsUnchanged: true,
+  nativeChecksOrNewImages: 0, databaseWrites: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+};
+fs.writeFileSync(`${target}/repair.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(`${target}/repair.record`)));

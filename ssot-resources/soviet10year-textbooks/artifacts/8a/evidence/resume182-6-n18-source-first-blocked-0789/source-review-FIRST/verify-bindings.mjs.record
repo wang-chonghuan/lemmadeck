@@ -1,0 +1,286 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+assert.equal(process.env.CODEX_THREAD_ID, '01a1fd2b-dd56-7112-a3ec-6b968c37455a');
+const base = '.tmp/resume182-6-8a-n18-0789';
+const scratch = `${base}/source-review-FIRST`;
+const raw = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const assembled = `${base}/assembly-FIRST/artifacts/8a`;
+const lessonId = 'alg8-c3-s3-n18';
+const bindings = [];
+const seen = new Set();
+const absolute = value => path.resolve(root, value);
+const read = value => fs.readFileSync(absolute(value), 'utf8');
+const json = value => JSON.parse(read(value));
+const bind = (value, expected) => {
+  const full = absolute(value);
+  const bytes = fs.readFileSync(full);
+  const result = {
+    path: full,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length,
+  };
+  if (expected) {
+    assert.equal(result.sha256, expected.sha256, full);
+    if (expected.bytes !== undefined) assert.equal(result.bytes, expected.bytes, full);
+  }
+  if (!seen.has(full)) {
+    seen.add(full);
+    bindings.push(result);
+  }
+  return result;
+};
+const parse = md => {
+  const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(md);
+  assert.ok(match);
+  const meta = JSON.parse(match[1]);
+  const blocks = [];
+  let current;
+  for (const line of match[2].split('\n')) {
+    const header = /^<!--\s+(h1|h2|h3|p|exhead|ex|foot)(.*?)\s*-->$/.exec(line.trim());
+    if (header) {
+      const rest = header[2].trim().split(/\s+/).filter(Boolean);
+      current = {
+        kind: header[1],
+        label: rest.filter(token => !['open', 'cont', 'samerow'].includes(token)).join(' ') || null,
+        box: null,
+        owner_exercise: null,
+        cont: rest.includes('cont'),
+        open: rest.includes('open'),
+        samerow: rest.includes('samerow'),
+        lines: [],
+      };
+      blocks.push(current);
+    } else if (current && line.trim()) {
+      current.lines.push(line);
+    }
+  }
+  return {meta, blocks, body: match[2]};
+};
+
+bind(`${base}/source-author-snapshot/manifest.record`, {sha256: '89b314c43725668b27ebb3c9847031b2a4e0ddec18a5f7dffb391d6366ac4fad'});
+bind(`${base}/bootstrap.record`, {sha256: '91b3b81a6f1e67c98b1ad4fadd820fb1a51d7b39e72ca34263a7991d6b073c2f'});
+const approvalPath = '.tmp/resume182-6-8a-n17-0789/source-review-FIRST/result-AFFECTED1.record';
+bind(approvalPath, {sha256: '7a4fc1d0336ca97d627192aa0dfb3b8b1c275593d971b2c7c037b7d1fb4dc889'});
+const approval = json(approvalPath);
+assert.equal(approval.status, 'SOURCE_PASS');
+assert.equal(approval.scope.wholeRaw105BoundaryFragmentApproved, true);
+assert.equal(approval.perPageApprovals.find(item => item.page === 105).whole_current_raw_page_approved, true);
+const bootstrap = json(`${base}/bootstrap.record`);
+for (const item of bootstrap.reusedPage105.files) {
+  bind(item.path, item);
+  const prior = approval.bindings.find(candidate => candidate.path === item.path);
+  assert.ok(prior);
+  assert.equal(prior.sha256, item.sha256);
+  assert.equal(prior.bytes, item.bytes);
+}
+bind(`${base}/assembly-FIRST/assembly.record`, {sha256: 'd8deb28373c44aa3cd95aa1dedb3a52aba13e5186bbe48b2d7022001407d3c81'});
+const assembly = json(`${base}/assembly-FIRST/assembly.record`);
+const stream = [];
+const counts = [];
+for (let page = 105; page <= 110; page++) {
+  const stem = `pages/${String(page).padStart(4, '0')}`;
+  const doc = json(`${raw}/${stem}/page.json`);
+  const parsed = parse(read(`${raw}/${stem}/page.md`));
+  assert.deepEqual({meta: parsed.meta, blocks: parsed.blocks}, doc);
+  assert.equal(doc.meta.page, page);
+  assert.equal(doc.meta.book, '8a');
+  assert.equal(doc.meta.printed_page, page - 7);
+  const audit = json(`${raw}/${stem}/audit.json`);
+  const count = doc.blocks.reduce((sum, block) => sum + block.lines.length, 0);
+  assert.equal(count, audit.lines_md);
+  assert.equal(count, audit.lines_printed);
+  assert.deepEqual(audit.errors, []);
+  assert.deepEqual(doc.meta.figures, []);
+  assert.deepEqual(audit.figures, []);
+  assert.ok(doc.blocks.every(block => !block.samerow && block.box === null && block.owner_exercise === null));
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    const source = `${raw}/${stem}/${name}`;
+    const destination = `${assembled}/${stem}/${name}`;
+    const entry = assembly.entries.find(item => item.source === source);
+    assert.ok(entry);
+    assert.equal(entry.path, destination);
+    bind(source, entry);
+    assert.equal(bind(destination, entry).sha256, bind(source).sha256);
+  }
+  counts.push({page, printed: page - 7, block_line_counts: doc.blocks.map(block => block.lines.length), lines: count});
+  stream.push(...doc.blocks.map((block, index) => ({
+    ...structuredClone(block), page, printed_page: doc.meta.printed_page,
+    ref: `p${String(page).padStart(4, '0')}#${index + 1}`,
+  })));
+  if (page >= 106) {
+    const snap = json(`${base}/source-author-snapshot/manifest.record`).outputs.find(item => item.source === absolute(`${raw}/${stem}/page.md`));
+    assert.ok(snap);
+    bind(snap.path, snap);
+    const original = parse(read(snap.path));
+    assert.equal(parsed.body, original.body);
+    const meta = structuredClone(parsed.meta);
+    delete meta.printed_lines;
+    delete meta.provenance;
+    assert.deepEqual(meta, original.meta);
+    assert.deepEqual(original.blocks, doc.blocks);
+    const stage = `${base}/stages/source-finalize${page}-FIRST`;
+    const receipt = json(`${stage}/receipt.record`);
+    assert.equal(receipt.cwd, root);
+    assert.equal(receipt.returncode, 0);
+    assert.equal(receipt.error, null);
+    assert.deepEqual(receipt.command, [
+      '.claude/skills/ld-s10y-lesson/.venv/bin/python',
+      '.claude/skills/ld-s10y-lesson/tools/p2c.py',
+      'finalize', '--book', '8a', '--page', String(page),
+      '--work', absolute(`${base}/source`),
+    ]);
+    assert.equal(read(`${stage}/stderr.txt`), '');
+    assert.ok(read(`${stage}/stdout.txt`).includes(`${count} 行（印刷 ${count}）, 插图 0 张`));
+    for (const name of ['receipt.record', 'stdout.txt', 'stderr.txt']) bind(`${stage}/${name}`);
+  }
+}
+assert.deepEqual(counts.map(item => item.lines), [21, 23, 22, 22, 23, 24]);
+
+const ancestors = [];
+for (const [page, kind] of [[74, 'h1'], [102, 'h2']]) {
+  const file = `${raw}/pages/${String(page).padStart(4, '0')}/page.json`;
+  const prior = approval.bindings.find(item => item.path === absolute(file));
+  assert.ok(prior);
+  bind(file, prior);
+  const doc = json(file);
+  assert.equal(doc.blocks[0].kind, kind);
+  ancestors.push({...doc.blocks[0], page, printed_page: doc.meta.printed_page, ref: `p${String(page).padStart(4, '0')}#1`});
+}
+const text = block => block.lines.join('').trim();
+assert.equal(text(ancestors[0]), '第三章　等差数列和等比数列');
+assert.equal(text(ancestors[1]), '§7. 等比数列');
+const start = stream.findIndex(block => block.ref === 'p0105#6');
+const end = stream.findIndex(block => block.ref === 'p0110#2');
+assert.ok(start >= 0 && end > start);
+assert.equal(stream[start].kind, 'h3');
+assert.equal(text(stream[start]), '18. 等比数列的通项公式');
+assert.equal(stream[end].kind, 'h3');
+assert.equal(text(stream[end]), '19. 等比数列前$n$项的和的公式');
+const selected = [...ancestors, ...stream.slice(start, end)];
+assert.deepEqual(selected.map(block => block.ref), assembly.selected_refs);
+assert.equal(assembly.boundary_refs.start, 'p0105#6');
+assert.equal(assembly.boundary_refs.excluded_right, 'p0110#2');
+assert.equal(assembly.boundary_refs.excluded_heading, text(stream[end]));
+const merged = [];
+for (const original of selected) {
+  if (original.kind === 'foot') continue;
+  const block = {...structuredClone(original), refs: [original.ref]};
+  if (block.cont) {
+    const previous = merged.at(-1);
+    assert.ok(previous?.open, block.ref);
+    assert.equal(previous.kind, block.kind);
+    assert.equal(previous.label, block.label);
+    previous.lines.push(...block.lines);
+    previous.refs.push(block.ref);
+    previous.open = block.open;
+  } else {
+    assert.ok(!merged.at(-1)?.open, block.ref);
+    merged.push(block);
+  }
+}
+assert.ok(merged.every(block => !block.open));
+const expectedProse = [];
+const expectedExercises = [];
+let group = null;
+let groupId = 'g0';
+for (const block of merged) {
+  if (block.kind === 'p') {
+    expectedProse.push({kind: 'p', text: text(block), id: null, label: null, printed_page: block.printed_page, source_refs: block.refs});
+  } else if (block.kind === 'exhead') {
+    group = text(block);
+    groupId = 'g1';
+  } else if (block.kind === 'ex') {
+    expectedExercises.push({
+      number: block.label, source_number: block.label, group, group_id: groupId,
+      text: text(block), lines: block.lines, pages: block.refs, figure_refs: [], figures: [],
+    });
+  } else {
+    assert.ok(['h1', 'h2', 'h3'].includes(block.kind));
+  }
+}
+const dir = `${assembled}/lessons/${lessonId}`;
+const lesson = json(`${dir}/lesson.json`);
+const exercises = json(`${dir}/exercises.json`);
+const expectedLesson = {
+  id: lessonId, card_id: lessonId,
+  chapter: text(ancestors[0]), section: text(ancestors[1]),
+  number: '18', title: '等比数列的通项公式', printed_title: text(stream[start]),
+  start_page: 105, start_printed: 98, figures: [], exercise_count: 20, prose: expectedProse,
+};
+assert.deepEqual(lesson, expectedLesson);
+assert.deepEqual(exercises, {lesson: lessonId, count: 20, exercises: expectedExercises});
+assert.deepEqual(exercises.exercises.map(item => item.number), Array.from({length: 20}, (_, index) => String(278 + index)));
+const expectedMd = `# ${lesson.printed_title}\n\n> ${lesson.chapter} · ${lesson.section}\n\n${expectedProse.map(item => item.text).join('\n\n')}\n`;
+assert.equal(read(`${dir}/lesson.md`), expectedMd);
+assert.equal(expectedProse.length, 12);
+assert.deepEqual(expectedProse[0].source_refs, ['p0105#7', 'p0106#1']);
+assert.ok(expectedProse[0].text.includes('但是，'));
+assert.deepEqual(expectedProse[8].source_refs, ['p0106#9', 'p0107#1']);
+assert.ok(expectedProse[8].text.includes('空气的20%'));
+assert.deepEqual(expectedExercises[2].pages, ['p0107#7', 'p0108#1']);
+assert.equal(expectedExercises[2].lines.length, 6);
+assert.deepEqual(expectedExercises.filter(item => item.group === '复习题').map(item => item.number), ['294', '295', '296', '297']);
+assert.ok(expectedExercises[7].text.includes('$b_3=256$'));
+assert.ok(json(`${scratch}/inventory-0108.record`).lines[11].includes('b_8=256'));
+assert.ok(json(`${raw}/pages/0110/page.json`).blocks[9].lines[1].endsWith('(I)'));
+const boundaryTail = json(`${raw}/pages/0110/page.json`).blocks[11];
+assert.equal(boundaryTail.open, true);
+assert.ok(text(boundaryTail).endsWith('第'));
+assert.ok([...expectedProse.flatMap(item => item.source_refs), ...expectedExercises.flatMap(item => item.pages)].every(ref => ref !== 'p0110#2' && !/^p0110#(?:[2-9]|1[0-3])$/.test(ref)));
+const index = json(`${assembled}/book.json`);
+assert.deepEqual(index.lessons.map(item => item.id), [lessonId]);
+assert.deepEqual(index.audit.errors, []);
+assert.equal(index.audit.warnings.length, 1);
+assert.ok(index.audit.warnings[0].includes('11. 数列的概念'));
+assert.ok(index.audit.warnings[0].includes('17. 等比数列的定义'));
+assert.ok(index.audit.warnings[0].includes('19. 等比数列前 n 项的和的公式'));
+assert.ok(!index.audit.warnings[0].includes('18.'));
+bind(bootstrap.toc.file.path, bootstrap.toc.file);
+const toc = json(bootstrap.toc.file.path);
+const tocNodes = [];
+const visit = value => {
+  if (!value || typeof value !== 'object') return;
+  if (value.id) tocNodes.push(value);
+  for (const child of Object.values(value)) {
+    if (Array.isArray(child)) child.forEach(visit);
+    else if (child && typeof child === 'object') visit(child);
+  }
+};
+visit(toc);
+assert.equal(tocNodes.find(item => item.id === lessonId).page, 98);
+assert.equal(tocNodes.find(item => item.id === 'alg8-c3-s3-n19').page, 103);
+for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) bind(`${dir}/${name}`);
+bind(`${assembled}/book.json`);
+bind(`${base}/assemble.py`);
+for (const name of ['receipt.record', 'stdout.txt', 'stderr.txt']) bind(`${base}/stages/source-assemble-FIRST/${name}`);
+for (const page of [106, 107, 108, 109, 110]) {
+  bind(`${scratch}/inventory-${String(page).padStart(4, '0')}.record`);
+  bind(`${base}/source/8a/pages/${String(page).padStart(4, '0')}/page.grid.png`);
+}
+for (const name of [
+  'inventory-0106-count-reconciliation.record', 'inventory-0109-crop-resolution.record',
+  'crop-resolutions-0108-0110.record', 'first-failed-verdict.record',
+  'crop-0109.py', 'crops-0108-0110.py', 'verify-bindings.mjs',
+  'crop-0109-ex293.png', 'crop-0108-ex285a.png', 'crop-0110-formula-label.png',
+]) bind(`${scratch}/${name}`);
+console.log(JSON.stringify({
+  status: 'READ_ONLY_BINDINGS_AND_EXACT_RAW_TO_ASSEMBLY_COMPARISON_PASS_NOT_SOURCE_APPROVAL',
+  counts, body_counts_new_pages: [22, 21, 21, 22, 23],
+  initial_author_body_bytes_unchanged: true,
+  initial_author_metadata_changes_only: ['printed_lines', 'provenance'],
+  all18_scoped_raw_snapshots_equal_current_raw: true,
+  all3_assembled_outputs_equal_exact_raw_projection: true,
+  prose_refs: expectedProse.map(item => item.source_refs),
+  exercise_refs: expectedExercises.map(item => ({number: item.number, refs: item.pages, group: item.group, line_count: item.lines.length})),
+  selected_refs: selected.map(block => block.ref),
+  no_open_selected_merged_object: true,
+  excluded_right_and_after_refs: stream.slice(end).map(block => block.ref),
+  confirmed_source_defect: {ref: 'p0108#6', printed: 'b_8=256', current: 'b_3=256'},
+  binding_count: bindings.length,
+  bindings,
+}, null, 2));

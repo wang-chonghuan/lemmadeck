@@ -1,0 +1,185 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789';
+const bookRoot = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const lesson = 'alg8-c3-s3-n18';
+const [mode, ...args] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const read = (file, expected) => {
+  const bound = entry(file);
+  if (expected) assert.equal(bound.sha256, expected, file);
+  return JSON.parse(fs.readFileSync(file));
+};
+const write = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return entry(file);
+};
+const selectionFile = `${base}/observations/selection.record`;
+if (mode === 'select') {
+  const [runtimePath, runtimeHash] = args;
+  const runtime = read(runtimePath, runtimeHash);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  assert.equal(runtime.scope.root, repo);
+  assert.equal(runtime.scope.lesson, lesson);
+  assert.ok(Object.values(runtime.cleanup).every(Boolean));
+  assert.ok(runtime.checks.every(item => item.status === 'PASS'));
+  assert.equal(runtime.completedViews.length, 6);
+  assert.equal(runtime.coverage.length, 6);
+  assert.ok(runtime.coverage.every(item => !item.missingTargets.length
+    && item.materialCoverage.every(value => value.completeAcrossNativeScreenshots)
+    && item.figureCoverage.every(value => value.completeAcrossNativeScreenshots)));
+  const images = runtime.screenshots.map(image => {
+    const bound = entry(image.path);
+    assert.equal(bound.sha256, image.sha256);
+    assert.equal(image.captureChecks, 'PASS');
+    assert.equal(image.nativeSize, true);
+    assert.equal(image.croppedOrResized, false);
+    return { ...bound, viewport: image.viewport, surface: image.surface,
+      visibleIds: image.visibleIds, figureRegions: image.figureRegions };
+  });
+  assert.ok(images.length);
+  assert.equal(new Set(images.map(image => image.path)).size, images.length);
+  const batches = [];
+  for (let index = 0; index < images.length; index += 8) {
+    const batch = { id: `batch${batches.length + 1}`, images: images.slice(index, index + 8) };
+    batch.assignment = write(`${base}/observations/assignments/${batch.id}.record`, {
+      schema: 'stemrobin-182/native-display-assignment@1',
+      book: '8a', lesson, edition: 'modern-us-neutral',
+      runtime: { path: path.resolve(runtimePath), sha256: runtimeHash },
+      ...batch, imageBudget: batch.images.length,
+    });
+    batches.push(batch);
+  }
+  const output = write(selectionFile, {
+    schema: 'stemrobin-182/native-display-selection@1',
+    status: 'VISUAL_PENDING', book: '8a', lesson, edition: 'modern-us-neutral',
+    authority: { path: path.resolve(runtimePath), sha256: runtimeHash },
+    method: 'Every newly captured native viewport; no old PASS screenshot opened.',
+    selected: images, batches, counts: { captured: images.length, selected: images.length, missing: 0 },
+    parentImageViews: 0, databaseWrites: 0, finish: 'review',
+  });
+  console.log(JSON.stringify({ output, batches: batches.length, images: images.length }));
+} else if (mode === 'bind') {
+  const [batchId, agent, resultPath, resultHash] = args;
+  assert.match(agent, /^[a-f0-9-]{36}$/u);
+  const selection = read(selectionFile);
+  const batch = selection.batches.find(item => item.id === batchId);
+  assert.ok(batch);
+  const assignment = read(batch.assignment.path, batch.assignment.sha256);
+  const result = read(resultPath, resultHash);
+  assert.equal(result.status, 'DISPLAY_PASS');
+  assert.equal(result.blockers.length, 0);
+  assert.equal(result.images.length, assignment.images.length);
+  assert.equal(result.imageAccounting.views, assignment.images.length);
+  assert.equal(result.imageAccounting.uniqueImages, assignment.images.length);
+  for (const key of ['reopens', 'crops', 'resizes', 'rerenders']) {
+    assert.equal(result.imageAccounting[key], 0);
+  }
+  for (const image of assignment.images) {
+    const observed = result.images.find(item => item.path === image.path);
+    assert.ok(observed?.observations.length);
+    assert.equal(observed.sha256, image.sha256);
+    assert.equal(observed.blockers.length, 0);
+    assert.equal(entry(image.path).sha256, image.sha256);
+  }
+  console.log(JSON.stringify(write(`${base}/observations/bindings/${batchId}.record`, {
+    schema: 'stemrobin-182/native-observer-binding@1',
+    book: '8a', lesson, edition: 'modern-us-neutral', status: 'DISPLAY_PASS',
+    batch: batchId, agent, assignment: batch.assignment, result: entry(resultPath),
+    actualImageAccounting: result.imageAccounting, agentCompletedAndClosed: true,
+    parentImageViewsThisBinding: 0, oldPassReruns: 0, databaseWrites: 0, finish: 'review',
+    hostTokens: 'unknown', totalCost: 'unknown',
+  })));
+} else if (mode === 'finalize') {
+  const selection = read(selectionFile);
+  const runtime = read(selection.authority.path, selection.authority.sha256);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  assert.ok(runtime.checks.every(item => item.status === 'PASS'));
+  assert.ok(Object.values(runtime.cleanup).every(Boolean));
+  const bindings = [entry(selectionFile), selection.authority];
+  const observed = new Map();
+  for (const batch of selection.batches) {
+    const bindingFile = `${base}/observations/bindings/${batch.id}.record`;
+    const binding = read(bindingFile);
+    assert.equal(binding.status, 'DISPLAY_PASS');
+    assert.equal(binding.assignment.sha256, batch.assignment.sha256);
+    const result = read(binding.result.path, binding.result.sha256);
+    bindings.push(entry(bindingFile), batch.assignment, binding.result);
+    for (const image of result.images) {
+      assert.ok(!observed.has(image.path));
+      observed.set(image.path, { ...image, batch: batch.id });
+    }
+  }
+  assert.equal(observed.size, selection.selected.length);
+  bindings.push(...runtime.inputs, ...runtime.staged);
+  const retained = new Map();
+  for (const name of fs.readdirSync(`${bookRoot}/evidence`).sort()) {
+    const file = `${bookRoot}/evidence/${name}/retention.record`;
+    if (!fs.existsSync(file)) continue;
+    for (const item of read(file).entries ?? []) {
+      if (fs.existsSync(item.path) && entry(item.path).sha256 === item.sha256) {
+        retained.set(item.sha256, item.path);
+      }
+    }
+  }
+  const durable = binding => {
+    assert.equal(entry(binding.path).sha256, binding.sha256);
+    const relative = path.relative(repo, path.resolve(binding.path));
+    if (relative.includes('/node_modules/')) {
+      const owner = relative.split('/node_modules/')[0];
+      return { sha256: binding.sha256, bytes: binding.bytes,
+        historical_path: binding.path, kind: 'existing-dependency-provenance-only',
+        dependencyLock: { ...entry(`${owner}/package-lock.json`), path: `${owner}/package-lock.json` },
+        dependencyBytesCopied: false, activeRuntimeDependency: false };
+    }
+    if (!relative.startsWith('../') && ['ssot-resources/', '.claude/', '.agents/', 'app/']
+      .some(prefix => relative.startsWith(prefix))) return { ...binding, path: relative };
+    const output = retained.get(binding.sha256);
+    assert.ok(output, `Not yet retained: ${binding.path}`);
+    return { ...binding, path: output, historical_path: binding.path };
+  };
+  for (const binding of bindings) durable(binding);
+  for (const image of selection.selected) durable(image);
+  assert.equal(runtime.deliveredSurfaces.length, 3);
+  const names = runtime.deliveredSurfaces.map(item => path.basename(item.path)).sort();
+  assert.deepEqual(names, ['choices.html', 'exercises.html', 'text.html']);
+  const output = `${bookRoot}/editions/modern-us-neutral/lessons/${lesson}/offline`;
+  assert.ok(!fs.existsSync(output));
+  fs.mkdirSync(output);
+  const surfaces = runtime.deliveredSurfaces.map(input => {
+    assert.equal(entry(input.path).sha256, input.sha256);
+    const file = `${output}/${path.basename(input.path)}`;
+    fs.writeFileSync(file, fs.readFileSync(input.path), { flag: 'wx' });
+    return { ...entry(file), path: file };
+  });
+  console.log(JSON.stringify(write(`${path.dirname(output)}/offline-display.json`, {
+    schema: 'stemrobin-182/offline-display-binding@1',
+    ticket: 'STEMROBIN-182', book: '8a', lesson, edition: 'modern-us-neutral',
+    status: 'OFFLINE_DISPLAY_PASS', date: new Date().toISOString(), surfaces,
+    images: selection.selected.map(image => ({ ...durable(image),
+      batch: observed.get(image.path).batch, verdict: 'PASS' })),
+    runtime: { ...durable(selection.authority), checks: runtime.checks.length },
+    coverage: { ...selection.counts, pending: 0, reusedObserved: 0,
+      newlyObserved: observed.size, method: selection.method },
+    inputsAndObserverReports: [...new Map(bindings.map(binding =>
+      [binding.path, durable(binding)])).values()],
+    parentImageViewsThisBinding: 0, bindingRendererBrowserOrValidatorRuns: 0,
+    parentCumulativeImageAccounting: 'Inherited checkpoint and receipts preserved; not reset.',
+    historicalFailuresAndUnknownCountsPreserved: true,
+    unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+    databaseWrites: 0, merges: 0, deployments: 0, finish: 'review',
+    boundary: 'Complete offline lesson only; no APP/DB acceptance or whole-ticket handoff.',
+  })));
+} else {
+  throw new Error('Use select, bind or finalize');
+}

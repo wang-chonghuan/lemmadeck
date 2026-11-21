@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = `${repo}/.tmp/resume182-6-8a-n18-0789`;
+const [name, reportPath, reportHash] = process.argv.slice(2);
+assert.match(name, /^[a-z][a-z0-9-]{0,63}$/u);
+assert.ok(path.isAbsolute(reportPath) && reportPath.startsWith(`${base}/display-FIRST/runtime-`));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+assert.equal(sha(fs.readFileSync(reportPath)), reportHash);
+const report = JSON.parse(fs.readFileSync(reportPath));
+assert.equal(report.scope.root, repo);
+assert.equal(report.scope.lesson, 'alg8-c3-s3-n18');
+assert.ok(Object.values(report.cleanup).every(Boolean));
+const files = new Set([reportPath]);
+const bindings = [
+  ...report.inputs, ...report.staged, ...report.screenshots,
+  report.model, report.usageReceipt, ...(report.deliveredSurfaces ?? []),
+].filter(Boolean);
+for (const binding of bindings) {
+  assert.equal(sha(fs.readFileSync(binding.path)), binding.sha256);
+  if (binding.path.startsWith(`${repo}/.tmp/resume182-6-`)) files.add(binding.path);
+}
+for (const filename of fs.readdirSync(path.dirname(reportPath))) {
+  const file = path.join(path.dirname(reportPath), filename);
+  if (fs.lstatSync(file).isFile() && /\.(?:json|record|ndjson)$/u.test(filename)) files.add(file);
+}
+for (const file of files) {
+  assert.ok(!file.includes('/browser-tmp/') && !file.includes('/node_modules/'));
+  assert.ok(fs.lstatSync(file).isFile());
+}
+const result = spawnSync(process.execPath, [
+  `${base}/retain.mjs`, name,
+  ...[...files].sort().map(file => path.relative(repo, file)),
+], { cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+assert.equal(result.status, 0, result.error?.message);

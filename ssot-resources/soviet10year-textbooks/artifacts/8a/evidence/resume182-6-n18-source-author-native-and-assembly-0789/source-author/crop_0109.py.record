@@ -1,0 +1,16 @@
+from pathlib import Path
+
+from PIL import Image
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+SOURCE = ROOT / ".tmp/resume182-6-8a-n18-0789/source/8a/pages/0109/page.png"
+OUTPUT = ROOT / ".tmp/resume182-6-8a-n18-0789/source-author/0109-quantity-formulas.crop.png"
+
+if Path.cwd() != ROOT:
+    raise SystemExit("Wrong working directory")
+if OUTPUT.exists():
+    raise SystemExit("Preserve existing crop; do not overwrite")
+with Image.open(SOURCE) as image:
+    image.crop((450, 1840, 2050, 2580)).save(OUTPUT)
+print(OUTPUT)

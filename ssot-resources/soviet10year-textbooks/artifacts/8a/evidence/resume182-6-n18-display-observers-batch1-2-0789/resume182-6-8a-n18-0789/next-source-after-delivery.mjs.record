@@ -1,0 +1,128 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const prior = '.tmp/resume182-6-8a-n18-0789';
+const next = '.tmp/resume182-6-8a-n19-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c3-s3-n19';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const read = file => JSON.parse(fs.readFileSync(file));
+const write = (file, value) => fs.writeFileSync(file,
+  typeof value === 'string' ? value : `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const git = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+assert.equal(git.status, 0);
+const commit = git.stdout.trim();
+const stages = ['delivery-check-FIRST', 'delivery-commit-FIRST',
+  'delivery-push-FIRST', 'delivery-remote-confirm-FIRST'];
+for (const stage of stages) {
+  assert.equal(read(`${prior}/stages/${stage}/receipt.record`).returncode, 0);
+}
+assert.equal(fs.readFileSync(`${prior}/stages/delivery-remote-confirm-FIRST/stdout.txt`, 'utf8')
+  .trim().split(/\s+/u)[0], commit);
+const displayPath = `${root}/editions/modern-us-neutral/lessons/alg8-c3-s3-n18/offline-display.json`;
+const display = read(displayPath);
+assert.equal(display.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(display.coverage.pending, 0);
+assert.equal(display.coverage.newlyObserved, 132);
+const approvalPath = `${prior}/source-review-FIRST/result-AFFECTED1.record`;
+const approval = read(approvalPath);
+assert.equal(entry(approvalPath).sha256,
+  '42acca233918931e5b887012cba9a895ade6a3f50481e4e68ce02fb750376a25');
+assert.equal(approval.status, 'SOURCE_PASS');
+const pageApproval = approval.perPageApprovals.find(item => item.page === 110);
+assert.equal(pageApproval.status, 'SOURCE_PAGE_PASS');
+assert.equal(pageApproval.whole_current_raw_page_approved, true);
+assert.deepEqual(approval.blockers, []);
+const files = ['page.md', 'page.json', 'audit.json'].map(name => entry(`${root}/pages/0110/${name}`));
+for (const file of files) assert.equal(
+  approval.bindings.find(item => item.path === file.path)?.sha256, file.sha256);
+const page = read(`${root}/pages/0110/page.json`);
+assert.equal(page.blocks[1].kind, 'h3');
+assert.match(page.blocks[1].lines.join('\n'), /^19\.\s/u);
+assert.equal(page.blocks[11].open, true);
+assert.deepEqual(read(`${root}/pages/0110/audit.json`).errors, []);
+const objects = [];
+const visit = value => {
+  if (!value || typeof value !== 'object') return;
+  if (!Array.isArray(value)) objects.push(value);
+  for (const child of Object.values(value)) visit(child);
+};
+const toc = 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json';
+visit(read(toc));
+const target = objects.find(item => item.id === id);
+const right = objects.find(item => item.id === 'alg8-c3-s3-n20');
+const offset = page.meta.page - page.meta.printed_page;
+assert.equal(target.page, page.meta.printed_page);
+const newPages = Array.from({ length: right.page + offset - page.meta.page },
+  (_, index) => page.meta.page + index + 1);
+assert.deepEqual(newPages, [111, 112, 113]);
+assert.ok(!fs.existsSync(next));
+assert.ok(!fs.existsSync(`${root}/lessons/${id}`));
+for (const number of newPages) {
+  assert.ok(!fs.existsSync(`${root}/pages/${String(number).padStart(4, '0')}`));
+}
+fs.mkdirSync(next);
+const copied = [];
+const adapt = code => code.replaceAll('alg8-c3-s3-n18', id)
+  .replaceAll('resume182-6-8a-n18-0789', 'resume182-6-8a-n19-0789')
+  .replaceAll('resume182-6-n18-', 'resume182-6-n19-')
+  .replaceAll('assembly-AFFECTED1', 'assembly-FIRST');
+for (const name of ['run-stage.mjs', 'retain.mjs', 'promote-source.mjs', 'snapshot-source-author.mjs']) {
+  const source = `${prior}/${name}`, output = `${next}/${name}`;
+  const code = adapt(fs.readFileSync(source, 'utf8'))
+    .replace('[106, 107, 108, 109, 110]', '[111, 112, 113]');
+  write(output, code);
+  copied.push({ source: entry(source), output: entry(output) });
+}
+const assembler = adapt(fs.readFileSync(`${prior}/assemble.py`, 'utf8'))
+  .replaceAll('reusedPage105', 'reusedPage110')
+  .replace('[105, *bootstrap["scope"]["newPhysicalPages"]]', '[110, *bootstrap["scope"]["newPhysicalPages"]]')
+  .replaceAll('== "18"', '== "19"').replaceAll('!= "18"', '!= "19"');
+write(`${next}/assemble.py`, assembler);
+copied.push({ source: entry(`${prior}/assemble.py`), output: entry(`${next}/assemble.py`) });
+const inherited = read(`${prior}/upstream-usage.record`);
+const runtimeUsage = read(`${prior}/display-FIRST/runtime-FIRST/usage-FIRST.json`);
+write(`${next}/upstream-usage.record`, {
+  ...inherited, previous: entry(`${prior}/upstream-usage.record`),
+  currentEvidence: [...inherited.currentEvidence, entry(approvalPath), entry(displayPath),
+    entry(`${prior}/display-FIRST/runtime-FIRST/usage-FIRST.json`),
+    ...['modern-text-review-FIRST/result.record', 'answer-review-FIRST/result-AFFECTED2.record',
+      'choice-review-FIRST/review-AFFECTED1.record'].map(file => entry(`${prior}/${file}`)),
+    ...Array.from({ length: 17 }, (_, index) => entry(`${prior}/observations/bindings/batch${index + 1}.record`))],
+  knownLocalSourceN18: inherited.knownLocalSourceN18,
+  knownLocalDisplayN18: { ...runtimeUsage.displayCumulative, imagesObserved: 132 },
+  N18Status: 'COMPLETE_OFFLINE_LESSON_COMMITTED_PUSHED_REMOTE_CONFIRMED',
+  unknownHistoricalBytesRecovered: false,
+});
+const bootstrap = read(`${prior}/bootstrap.record`);
+write(`${next}/bootstrap.record`, {
+  status: 'NEXT_SOURCED_LESSON_READY_AFTER_COMPLETE_DELIVERY_NOT_APPROVAL',
+  time: new Date().toISOString(), ticket: 'STEMROBIN-182', book: '8a', lesson: id,
+  workdir: repo, copied,
+  deliveredPriorLesson: { commit, receipts: stages.map(stage => entry(`${prior}/stages/${stage}/receipt.record`)) },
+  heldPriorLesson: bootstrap.heldPriorLesson,
+  reusedPage110: { approval: entry(approvalPath), page: 110, files,
+    sourceWork: path.resolve(`${prior}/source/8a/pages/0110`),
+    sourcePixelsAndRecognitionRerun: false, nativeFinalizationRerun: false },
+  reusedSectionAncestor: entry(`${root}/pages/0102/page.json`),
+  inheritedSectionApproval: entry(approvalPath),
+  upstreamUsage: entry(`${next}/upstream-usage.record`),
+  toc: { file: entry(toc), target, next: right, offset },
+  scope: { start: 'p0110#2', sectionAncestor: 'p0102#1', newPhysicalPages: newPages,
+    rightBoundary: 'Locate exact N20 heading on physical113; preserve raw, exclude incomplete lesson.',
+    preserveNextLessonFragments: true, promoteOnlyCompleteN19: true },
+  previousFailuresLocksBackupsPendingMessagesAndUnknownUsagePreserved: true,
+  parentImageViews: 0, unknownHistoricalBytesRecovered: false, createOrAttachCalls: 0,
+  databaseWrites: 0, merges: 0, deployments: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({ output: entry(`${next}/bootstrap.record`), newPages }));

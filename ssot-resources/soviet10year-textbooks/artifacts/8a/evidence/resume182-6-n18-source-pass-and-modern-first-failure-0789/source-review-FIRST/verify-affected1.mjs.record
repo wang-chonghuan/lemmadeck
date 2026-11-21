@@ -1,0 +1,236 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const base = '.tmp/resume182-6-8a-n18-0789';
+const review = `${base}/source-review-FIRST`;
+const raw = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const firstAssembly = `${base}/assembly-FIRST`;
+const newAssembly = `${base}/assembly-AFFECTED1`;
+const lesson = 'alg8-c3-s3-n18';
+const bindings = [];
+const seen = new Set();
+assert.equal(process.cwd(), root);
+assert.equal(process.env.CODEX_THREAD_ID, '01a1fd2b-dd56-7112-a3ec-6b968c37455a');
+const absolute = value => path.resolve(root, value);
+const read = value => fs.readFileSync(absolute(value));
+const json = value => JSON.parse(read(value));
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = value => {
+  const filename = absolute(value);
+  assert.ok(filename.startsWith(`${root}/`));
+  const bytes = read(filename);
+  return {path: filename, sha256: digest(bytes), bytes: bytes.length};
+};
+const verify = (value, expected, include = true) => {
+  const actual = binding(value);
+  if (expected) {
+    assert.equal(actual.sha256, expected.sha256, actual.path);
+    if (expected.bytes !== undefined) assert.equal(actual.bytes, expected.bytes, actual.path);
+  }
+  if (include && !seen.has(actual.path)) {
+    seen.add(actual.path);
+    bindings.push(actual);
+  }
+  return actual;
+};
+const firstFile = `${review}/result.record`;
+verify(firstFile, {sha256: '9d2e327a25f5d24720de3f8299732279659ecfb3fe3401cdd671990306090ae9'});
+const first = json(firstFile);
+assert.equal(first.status, 'SOURCE_BLOCKED');
+assert.equal(first.reviewer.CODEX_THREAD_ID, process.env.CODEX_THREAD_ID);
+assert.equal(first.blockers.length, 1);
+assert.equal(first.blockers[0].id, 'B108-ex285a-term-subscript');
+const changedRaw = new Set(['page.md', 'page.json'].map(name => absolute(`${raw}/pages/0108/${name}`)));
+let unchangedFirstBindings = 0;
+for (const item of first.bindings) {
+  if (changedRaw.has(item.path)) continue;
+  verify(item.path, item, false);
+  unchangedFirstBindings++;
+}
+const retentionFile = `${raw}/evidence/resume182-6-n18-source-first-blocked-0789/retention.record`;
+verify(retentionFile, {sha256: '97e3cf708cc930a33dde47ba53cdcddfe157d0f30be20270b2084eb416d79a22'});
+const retention = json(retentionFile);
+for (const item of retention.entries) {
+  verify(item.path, item, false);
+  assert.equal(digest(read(item.historical_path)), item.sha256, item.historical_path);
+}
+assert.equal(retention.unknownHistoricalBytesRecovered, false);
+const retainedResult = retention.entries.find(item => item.historical_path === firstFile);
+assert.ok(retainedResult);
+verify(retainedResult.path, retainedResult);
+const replaceExactly = (value, count) => {
+  assert.equal(value.split('b_3=256').length - 1, count);
+  return value.replaceAll('b_3=256', 'b_8=256');
+};
+const oldRecordFile = `${firstAssembly}/assembly.record`;
+const newRecordFile = `${newAssembly}/assembly.record`;
+verify(oldRecordFile, {sha256: 'd8deb28373c44aa3cd95aa1dedb3a52aba13e5186bbe48b2d7022001407d3c81'});
+verify(newRecordFile, {sha256: '5cfc5826c4b87345347200a66ffb06cd7499bc4babb87c9bd23a892accef73fe'});
+const oldRecord = json(oldRecordFile);
+const newRecord = json(newRecordFile);
+assert.equal(oldRecord.entries.length, 18);
+assert.equal(newRecord.entries.length, 18);
+const withoutEntries = value => {
+  const result = structuredClone(value);
+  delete result.entries;
+  return result;
+};
+assert.deepEqual(withoutEntries(newRecord), withoutEntries(oldRecord));
+for (let index = 0; index < oldRecord.entries.length; index++) {
+  const previous = oldRecord.entries[index];
+  const current = newRecord.entries[index];
+  verify(previous.path, previous, false);
+  assert.equal(current.source, previous.source);
+  assert.equal(current.path, previous.path.replace('/assembly-FIRST/', '/assembly-AFFECTED1/'));
+  assert.equal(current.bytes, previous.bytes);
+  verify(current.path, current, false);
+  verify(current.source, current);
+  assert.ok(read(current.path).equals(read(current.source)));
+  if (!changedRaw.has(absolute(current.source))) {
+    assert.equal(current.sha256, previous.sha256);
+    assert.ok(read(current.source).equals(read(previous.path)));
+  }
+}
+for (const name of ['page.md', 'page.json']) {
+  const oldFile = `${firstAssembly}/artifacts/8a/pages/0108/${name}`;
+  const currentFile = `${raw}/pages/0108/${name}`;
+  const firstBinding = first.bindings.find(item => item.path === absolute(currentFile));
+  verify(oldFile, firstBinding);
+  const before = read(oldFile).toString('utf8');
+  const after = read(currentFile).toString('utf8');
+  assert.equal(after, replaceExactly(before, 1));
+  const beforeBytes = Buffer.from(before);
+  const afterBytes = Buffer.from(after);
+  assert.equal(beforeBytes.length, afterBytes.length);
+  const differences = [];
+  for (let i = 0; i < beforeBytes.length; i++) {
+    if (beforeBytes[i] !== afterBytes[i]) differences.push(i);
+  }
+  assert.equal(differences.length, 1);
+  assert.equal(beforeBytes[differences[0]], '3'.charCodeAt(0));
+  assert.equal(afterBytes[differences[0]], '8'.charCodeAt(0));
+}
+const oldPage = json(`${firstAssembly}/artifacts/8a/pages/0108/page.json`);
+const newPage = json(`${raw}/pages/0108/page.json`);
+const expectedPage = structuredClone(oldPage);
+expectedPage.blocks[5].lines[1] = replaceExactly(expectedPage.blocks[5].lines[1], 1);
+assert.deepEqual(newPage, expectedPage);
+assert.equal(newPage.blocks[5].label, '285');
+assert.equal(newPage.blocks[5].kind, 'ex');
+assert.equal(newPage.blocks[5].open, false);
+assert.equal(newPage.blocks[5].cont, false);
+assert.equal(newPage.blocks[5].lines[1], 'а) $b_1=2$，$b_8=256$；　б) $b_1=5$，$b_9=1280$；');
+assert.ok(read(`${raw}/pages/0108/audit.json`).equals(read(`${firstAssembly}/artifacts/8a/pages/0108/audit.json`)));
+verify(`${firstAssembly}/artifacts/8a/pages/0108/audit.json`, first.bindings.find(item => item.path === absolute(`${raw}/pages/0108/audit.json`)));
+const audit = json(`${raw}/pages/0108/audit.json`);
+assert.equal(audit.lines_printed, 22);
+assert.equal(audit.lines_md, 22);
+assert.deepEqual(audit.errors, []);
+assert.deepEqual(audit.figures, []);
+const oldLessonDir = `${firstAssembly}/artifacts/8a/lessons/${lesson}`;
+const newLessonDir = `${newAssembly}/artifacts/8a/lessons/${lesson}`;
+for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  verify(`${oldLessonDir}/${name}`, first.bindings.find(item => item.path === absolute(`${oldLessonDir}/${name}`)));
+  verify(`${newLessonDir}/${name}`);
+  if (name !== 'exercises.json') {
+    assert.ok(read(`${newLessonDir}/${name}`).equals(read(`${oldLessonDir}/${name}`)));
+  } else {
+    assert.equal(read(`${newLessonDir}/${name}`).toString('utf8'), replaceExactly(read(`${oldLessonDir}/${name}`).toString('utf8'), 2));
+  }
+}
+const beforeExercises = json(`${oldLessonDir}/exercises.json`);
+const afterExercises = json(`${newLessonDir}/exercises.json`);
+const expectedExercises = structuredClone(beforeExercises);
+expectedExercises.exercises[7].text = replaceExactly(expectedExercises.exercises[7].text, 1);
+expectedExercises.exercises[7].lines[1] = replaceExactly(expectedExercises.exercises[7].lines[1], 1);
+assert.deepEqual(afterExercises, expectedExercises);
+assert.equal(afterExercises.exercises[7].number, '285');
+assert.deepEqual(afterExercises.exercises[7].pages, ['p0108#6']);
+assert.deepEqual(afterExercises.exercises[7].lines, newPage.blocks[5].lines);
+assert.equal(afterExercises.exercises[7].text, newPage.blocks[5].lines.join(''));
+assert.equal(afterExercises.count, 20);
+assert.deepEqual(afterExercises.exercises.map(item => item.number), Array.from({length: 20}, (_, i) => String(278 + i)));
+assert.ok(afterExercises.exercises.every(item => item.figure_refs.length === 0 && item.figures.length === 0));
+assert.ok(read(`${newAssembly}/artifacts/8a/book.json`).equals(read(`${firstAssembly}/artifacts/8a/book.json`)));
+verify(`${newAssembly}/artifacts/8a/book.json`);
+const oldInventory = json(`${review}/inventory-0108.record`);
+assert.ok(oldInventory.lines[11].includes('b_8=256'));
+const decision = json(`${review}/crop-resolutions-0108-0110.record`).observations[0];
+assert.equal(decision.printed, 'b_8=256;');
+assert.equal(decision.status, 'SOURCE_MISMATCH_CONFIRMED');
+const evidenceNames = [
+  'inventory-0108.record', 'crop-resolutions-0108-0110.record', 'crop-0108-ex285a.png',
+  'first-failed-verdict.record', 'verification-FIRST-failure.record',
+];
+for (const name of evidenceNames) {
+  const filename = absolute(`${review}/${name}`);
+  verify(filename, first.bindings.find(item => item.path === filename));
+}
+for (const suffix of [
+  'bootstrap.record', 'source-author-snapshot/manifest.record',
+]) verify(`${base}/${suffix}`, first.bindings.find(item => item.path === absolute(`${base}/${suffix}`)));
+for (const suffix of [
+  'pages/0074/page.json', 'pages/0102/page.json',
+]) verify(`${raw}/${suffix}`, first.bindings.find(item => item.path === absolute(`${raw}/${suffix}`)));
+const priorApproval = '.tmp/resume182-6-8a-n17-0789/source-review-FIRST/result-AFFECTED1.record';
+verify(priorApproval, first.bindings.find(item => item.path === absolute(priorApproval)));
+const toc = 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json';
+verify(toc, first.bindings.find(item => item.path === absolute(toc)));
+for (const [stageName, expectedSha, command] of [
+  [
+    'source-finalize108-AFFECTED-subscript1',
+    '502f3796ec5fa98ea05708936f65a326121aeb23479f5fab254e630e843793c1',
+    [
+      '.claude/skills/ld-s10y-lesson/.venv/bin/python', '.claude/skills/ld-s10y-lesson/tools/p2c.py',
+      'finalize', '--book', '8a', '--page', '108', '--work', absolute(`${base}/source`),
+    ],
+  ],
+  [
+    'source-assemble-AFFECTED-subscript1',
+    '16d96fd1684e01d179c9df882f9b504418b85fb3b82cac272d539e409b3cd72f',
+    ['.claude/skills/ld-s10y-lesson/.venv/bin/python', `${base}/assemble-affected1.py`],
+  ],
+]) {
+  const stage = `${base}/stages/${stageName}`;
+  verify(`${stage}/receipt.record`, {sha256: expectedSha});
+  const receipt = json(`${stage}/receipt.record`);
+  assert.equal(receipt.cwd, root);
+  assert.equal(receipt.returncode, 0);
+  assert.equal(receipt.signal, null);
+  assert.equal(receipt.error, null);
+  assert.deepEqual(receipt.command, command);
+  assert.equal(read(`${stage}/stderr.txt`).length, 0);
+  const stdout = read(`${stage}/stdout.txt`).toString('utf8');
+  if (stageName.startsWith('source-finalize')) {
+    assert.ok(stdout.includes('22 行（印刷 22）, 插图 0 张'));
+  } else {
+    assert.ok(stdout.includes('正文 12 块  题 20 道  图 0 张'));
+    assert.ok(stdout.includes(newRecordFile));
+    assert.ok(stdout.includes('5cfc5826c4b87345347200a66ffb06cd7499bc4babb87c9bd23a892accef73fe'));
+  }
+  verify(`${stage}/stdout.txt`);
+  verify(`${stage}/stderr.txt`);
+}
+verify(`${review}/verify-AFFECTED1.mjs`);
+console.log(JSON.stringify({
+  status: 'AFFECTED_ONLY_EXACT_BINDING_PASS',
+  reviewer: process.env.CODEX_THREAD_ID,
+  unchanged_FIRST_bindings: unchangedFirstBindings,
+  changed_mutable_FIRST_paths: [...changedRaw],
+  retention_entries_verified: retention.entries.length,
+  all18_FIRST_assembly_raw_snapshots_unchanged: true,
+  all18_AFFECTED_assembly_raw_snapshots_match_current_raw: true,
+  raw108_md_json_exact_single_3_to_8_change: true,
+  raw108_audit_byte_identical: true,
+  other15_raw_files_byte_unchanged: true,
+  new_lesson_json_md_byte_identical_FIRST: true,
+  new_exercises_json_only_285_text_and_one_line_subscript_change: true,
+  assembly_non_entry_metadata_and_ref_stream_deep_equal_FIRST: true,
+  blocker_closed_against_saved_pixel_decision: 'B108-ex285a-term-subscript',
+  new_image_views: 0,
+  cumulative_image_views: 8,
+  bindings,
+}, null, 2));

@@ -1,0 +1,16 @@
+from pathlib import Path
+
+from PIL import Image
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+SCRATCH = ROOT / ".tmp/resume182-6-8a-n18-0789/source-review-FIRST"
+SOURCE = ROOT / ".tmp/resume182-6-8a-n18-0789/source/8a/pages"
+REQUESTS = [
+    ("0108", (930, 1795, 1230, 1900), "crop-0108-ex285a.png"),
+    ("0110", (2070, 2610, 2220, 2735), "crop-0110-formula-label.png"),
+]
+
+for page, box, name in REQUESTS:
+    with Image.open(SOURCE / page / "page.png") as image:
+        image.crop(box).save(SCRATCH / name)
+    print({"page": page, "box": box, "output": str(SCRATCH / name)})

@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789';
+const [reviewFile, expectedReviewHash] = process.argv.slice(2);
+assert.ok(path.isAbsolute(reviewFile) && reviewFile.startsWith(`${repo}/${base}/choice-review-FIRST/`));
+assert.match(expectedReviewHash, /^[a-f0-9]{64}$/);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bytes = fs.readFileSync(reviewFile);
+assert.equal(sha(bytes), expectedReviewHash);
+const review = JSON.parse(bytes);
+assert.equal(review.schema, 's10y-choice-review-v1');
+assert.equal(review.outcome, 'pass');
+assert.equal(review.reviewer.kind, 'independent_agent');
+const draft = JSON.parse(fs.readFileSync(`${base}/choices-REBIND1/draft.json`));
+assert.equal(review.question_reviews.length, draft.questions.length);
+assert.equal(review.source_reviews.length, 20);
+const target = `${base}/choices-REBIND1/review.json`;
+fs.writeFileSync(target, bytes, { flag: 'wx' });
+assert.equal(sha(fs.readFileSync(target)), sha(bytes));
+const record = {
+  status: 'APPROVED_REVIEW_BYTES_BOUND_NATIVE_RETENTION_PENDING',
+  source: { path: path.resolve(reviewFile), sha256: sha(bytes) },
+  target: { path: path.resolve(target), sha256: sha(bytes) },
+  candidateDraft: { path: path.resolve(`${base}/choices-REBIND1/draft.json`),
+    sha256: sha(fs.readFileSync(`${base}/choices-REBIND1/draft.json`)) },
+  imagesViewed: 0, sourceOrDraftChanged: false, oldPassReruns: 0,
+  databaseWrites: 0, finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+};
+fs.writeFileSync(`${base}/choice-review-binding.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record));

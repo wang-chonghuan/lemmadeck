@@ -1,0 +1,62 @@
+{
+  "schema": "s10y-choice-phase2-verification-first-failure-record-v1",
+  "status": "FIRST_TECHNICAL_VERIFIER_FAILURE_PRESERVED_RECOVERY_NOT_SEMANTIC_APPROVAL",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "01a1fd53-9b80-7e30-af7a-ea3e21789631",
+    "identity_source": "Actual CODEX_THREAD_ID of the same reviewer"
+  },
+  "first_failure": {
+    "stage": "Post-write owned phase2 record verification",
+    "exit_code": 1,
+    "executable": "node",
+    "argument": "-e",
+    "checker_javascript_exact": "const fs=require(\"fs\"),crypto=require(\"crypto\"),assert=require(\"assert/strict\"); const root=\".tmp/resume182-6-8a-n18-0789/choice-review-FIRST/\"; const load=n=>{const bytes=fs.readFileSync(root+n);return {value:JSON.parse(bytes),sha:crypto.createHash(\"sha256\").update(bytes).digest(\"hex\")};}; const v=load(\"views.record\"),f=load(\"phase2-fidelity.record\"),m=load(\"phase2-visible.record\"); const phase1sha=crypto.createHash(\"sha256\").update(fs.readFileSync(root+\"phase1-source.record\")).digest(\"hex\"); assert.equal(phase1sha,\"552d8600bf5c18ede4397291f2168c2e8c67208029bdb7f3c45ff055415a0ce9\"); assert.equal(v.sha,\"feaf76195a7397d34729aa0b4430bf61a1725cb3d24eec9af07eb2610784c094\"); assert.equal(f.sha,m.value.prior_evidence.fidelity_file_sha256); for(const r of [f.value,m.value]){assert.equal(r.reviewer.identity,process.env.CODEX_THREAD_ID);assert.equal(r.input.actual_file_sha256,v.sha);assert.equal(r.boundaries.final_semantic_approval,false);assert.equal(r.boundaries.author_material_read,false);assert.equal(r.boundaries.images_opened,0);assert.equal(r.boundaries.database_accesses,0);assert.equal(r.boundaries.finite_sessions_started,0);} const ids=v.value.questions.map(q=>q.id);assert.equal(ids.length,21);assert.deepEqual(f.value.question_reviews.map(q=>q.question_id),ids);assert.deepEqual(m.value.question_reviews.map(q=>q.question_id),ids);let options=0;for(const q of v.value.questions){const r=m.value.question_reviews.find(x=>x.question_id===q.id);assert.deepEqual(r.source_numbers,q.source_numbers);assert.equal(r.mode,q.view.mode);assert.deepEqual(r.option_checks.map(o=>o.option_id),q.view.options.map(o=>o.id));assert.deepEqual(r.correct,r.option_checks.filter(o=>o.truth===\"correct\").map(o=>o.option_id));assert.ok(r.correct.length>0);if(r.mode===\"single\")assert.equal(r.correct.length,1);for(const o of r.option_checks)assert.ok(o.evidence.length>30);options+=r.option_checks.length;}assert.equal(options,84);const expected=Array.from({length:20},(_,i)=>String(278+i));assert.deepEqual(m.value.source_coverage.map(c=>c.source_number),expected);for(const c of m.value.source_coverage){assert.deepEqual(c.question_ids,v.value.questions.filter(q=>q.source_numbers.includes(c.source_number)).map(q=>q.id));assert.deepEqual(c.essential_omitted_tasks,[]);assert.ok(c.coverage.length>30);assert.ok(c.production_losses.length>0);}assert.deepEqual(m.value.visible_findings.defects,[]);assert.deepEqual(m.value.visible_findings.blockers,[]);console.log(JSON.stringify({verification:\"Owned-record checks only; all 21 identities, 84 option checks and 20 source-coverage identities bound; phase1 unchanged\",records:[{path:process.cwd()+\"/\"+root+\"phase2-fidelity.record\",sha256:f.sha,status:f.value.status},{path:process.cwd()+\"/\"+root+\"phase2-visible.record\",sha256:m.sha,status:m.value.status}],defects:[],blockers:[],phase3_not_started:true},null,2));",
+    "actual_error_excerpt_verbatim": "node:internal/assert/utils:77\n    throw err;\n    ^\n\nAssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\n\n  assert.ok(o.evidence.length>30)\n\n    at [eval]:1:1857\n    at [eval]:1:2874",
+    "actual_error_fields": {
+      "code": "ERR_ASSERTION",
+      "actual": false,
+      "expected": true,
+      "operator": "==",
+      "runtime": "Node.js v24.16.0"
+    },
+    "failed_assertion": "assert.ok(o.evidence.length>30)",
+    "question_id": "q10",
+    "option_id": "a",
+    "actual_evidence": "243=27*3^2 is c_7, not c_8.",
+    "actual_evidence_character_count": 27
+  },
+  "diagnosis": "The helper imposed an arbitrary greater-than-30-character quota. q10(a)'s 27-character evidence gives a concrete calculation and identifies the wrong target index. No semantic requirement calls for that quota. This was a technical verifier criterion defect, not a failure of source mathematics or option truth.",
+  "technical_repair": {
+    "option_evidence_check_before": "assert.ok(o.evidence.length>30)",
+    "option_evidence_check_after": "assert.ok(o.evidence.trim().length>0)",
+    "coverage_evidence_check_before": "assert.ok(c.coverage.length>30)",
+    "coverage_evidence_check_after": "assert.ok(c.coverage.trim().length>0)",
+    "unchanged_checks": "Actual hashes, actual reviewer identity, all 21 question identities, all 84 exact option identifiers and truth-set structure, single/multiple cardinality, all 20 exact source-coverage identities, preserved phase1 bytes, zero-image/zero-DB boundaries and undisclosed-author state.",
+    "semantic_evidence_policy": "Nonempty text is only a structural requirement, never proof of semantics. The existing concrete per-option calculations and source coverage remain the separate semantic evidence; no verdict was changed to recover execution."
+  },
+  "prior_recovery": {
+    "corrected_verifier_exit_code": 0,
+    "observed_result": "Owned-record checks passed; all 21 identities, 84 option checks and 20 source-coverage identities bound; phase1 unchanged; first execution failure retained.",
+    "inline_failure_receipt_path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n18-0789/choice-review-FIRST/phase2-visible.record",
+    "inline_failure_receipt_file_sha256": "b1eeaec5f81bc607d5bda2f60d0cebcb689a23319872aa800865d71c8147b094"
+  },
+  "preservation": {
+    "first_failed_attempt_count": 1,
+    "count_reset": false,
+    "first_failure_erased": false,
+    "candidate_changed": false,
+    "phase1_changed": false,
+    "phase2_fidelity_changed_by_recovery": false,
+    "phase2_option_verdicts_changed_by_recovery": false,
+    "source_math_redone": false,
+    "all_options_resolved_again": false,
+    "author_material_disclosed_or_read": false,
+    "images_opened": 0,
+    "database_accesses": 0,
+    "finite_sessions_started": 0,
+    "native_validator_run": false,
+    "final_semantic_approval": false
+  }
+}

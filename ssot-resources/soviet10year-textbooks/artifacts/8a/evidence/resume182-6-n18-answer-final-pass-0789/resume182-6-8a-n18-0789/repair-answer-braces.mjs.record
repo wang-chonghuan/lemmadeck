@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789';
+const oldFile = `${base}/answer-author-RECOVERY1/answer-keys.json`;
+const newFile = `${base}/answer-author-RECOVERY2/answer-keys.json`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/'
+  + 'modern-us-neutral/lessons/alg8-c3-s3-n18/answer-keys.json';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const write = (file, value) =>
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+assert.equal(bind(oldFile).sha256,
+  '4d19d3283d21022e76c8f0d249385f9fb6eb4922edf8152cf7446cfaa85e49ca');
+const expected = JSON.parse(fs.readFileSync(oldFile));
+const changes = [
+  ['294', 0, '-\\frac{2x^{n+2}}y', '-\\frac{2x^{n+2}}{y}'],
+  ['294', 1, '\\frac a{25}', '\\frac{a}{25}'],
+  ['296', 0, '\\frac{9^{n-1}}4', '\\frac{9^{n-1}}{4}'],
+];
+for (const [number, index, before, after] of changes) {
+  const part = expected.answers.find(answer => answer.exercise === number).parts[index];
+  assert.deepEqual(part.expected, [before]);
+  part.expected = [after];
+}
+const [mode, reviewPath, reviewHash] = process.argv.slice(2);
+if (mode === 'prepare') {
+  const directory = path.dirname(newFile);
+  assert.ok(!fs.existsSync(directory));
+  fs.mkdirSync(directory);
+  write(newFile, expected);
+  const record = {
+    status: 'LATEX_ARGUMENT_BRACES_REPAIRED_AFFECTED_REVIEW_PENDING',
+    book: '8a', lesson: 'alg8-c3-s3-n18', edition: 'modern-us-neutral',
+    original: bind(oldFile), candidate: bind(newFile), changes,
+    failure: bind(`${base}/stages/answer-finalize-RECOVERY1/receipt.record`),
+    displayAnswersAndMathematicalValuesUnchanged: true,
+    rendererCalls: 0, browserLaunches: 0, imagesObserved: 0,
+    oldMathematicalPassReused: true, databaseWrites: 0, finish: 'review',
+    hostTokens: 'unknown', totalCost: 'unknown',
+  };
+  write(`${directory}/result.record`, record);
+  console.log(JSON.stringify(bind(`${directory}/result.record`)));
+} else if (mode === 'promote') {
+  assert.equal(bind(reviewPath).sha256, reviewHash);
+  const review = JSON.parse(fs.readFileSync(reviewPath));
+  assert.equal(review.status, 'pass');
+  assert.equal(review.reviewer.kind, 'independent_agent');
+  assert.equal(review.book, '8a');
+  assert.equal(review.lesson, 'alg8-c3-s3-n18');
+  assert.equal(review.edition, 'modern-us-neutral');
+  assert.equal(review.answerKey.path, path.resolve(newFile));
+  assert.equal(bind(newFile).sha256, review.answerKey.sha256);
+  assert.deepEqual(JSON.parse(fs.readFileSync(newFile)), expected);
+  assert.equal(bind(target).sha256, bind(oldFile).sha256);
+  fs.writeFileSync(target, fs.readFileSync(newFile));
+  const record = {
+    status: 'AFFECTED_LATEX_APPROVED_BYTES_PROMOTED_NATIVE_FINALIZE_PENDING',
+    review: bind(reviewPath), original: bind(oldFile), candidate: bind(newFile),
+    target: bind(target), changes, previousFailuresPreserved: true,
+    displayAnswersAndMathematicalValuesUnchanged: true, imagesObserved: 0,
+    databaseWrites: 0, finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+  };
+  write(`${base}/answer-promotion-RECOVERY2.record`, record);
+  console.log(JSON.stringify(record));
+} else {
+  throw new Error('Use prepare or promote');
+}

@@ -1,0 +1,136 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789', id = 'alg8-c3-s3-n18';
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+assert.equal(bind(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'TEXT_PASS');
+assert.equal(review.lesson, id);
+const template = `${base}/answers-FIRST/8a/modern-us-neutral/lessons/${id}/answer-keys.template.json`;
+const input = JSON.parse(fs.readFileSync(template));
+const modern = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}`;
+const exercises = JSON.parse(fs.readFileSync(`${modern}/exercises.json`));
+assert.deepEqual(input.answers.map(item => item.exercise),
+  exercises.exercises.map(item => String(item.number)));
+assert.equal(input.answers.length, 20);
+const part = (label, judge, expected, unit) => ({ label, judge, expected: [expected], ...(unit ? { unit } : {}) });
+const numeric = (label, value, unit) => part(label, 'numeric', value, unit);
+const expression = (label, value) => part(label, 'expression', value);
+const cases = [
+  ['278', 'auto',
+    '由$x_j=x_1q^{j-1}$：\na) $x_5=x_1q^4$；\nb) $x_{21}=x_1q^{20}$；\nc) $x_{150}=x_1q^{149}$；\nd) $x_m=x_1q^{m-1}$；\ne) $x_{m+2}=x_1q^{m+1}$；\nf) $x_{2k+1}=x_1q^{2k}$。',
+    ['x_1q^4', 'x_1q^{20}', 'x_1q^{149}', 'x_1q^{m-1}', 'x_1q^{m+1}', 'x_1q^{2k}']
+      .map((value, i) => expression(`${'abcdef'[i]})`, value)),
+    'Each requested term index j requires exactly j-1 ratio multiplications.'],
+  ['279', 'auto',
+    '$u_j=256\\left(\\frac12\\right)^{j-1}$。\na) $u_3=64$；\nb) $u_5=16$；\nc) $u_{10}=\\frac12$；\nd) $u_n=256\\left(\\frac12\\right)^{n-1}=2^{9-n}$。',
+    [numeric('a)', '64'), numeric('b)', '16'), numeric('c)', '\\frac12'),
+      expression('d)', '256\\left(\\frac12\\right)^{n-1}')],
+    'Substitute exponents2,4,9;256 is2^8.'],
+  ['280', 'auto',
+    '使用$b_n=b_1q^{n-1}$。\na) $b_7=96\\left(\\frac12\\right)^6=\\frac32$；\nb) $b_6=0.125(-2)^5=-4$；\nc) $b_9=4\\sqrt2\\left(-\\frac1{\\sqrt2}\\right)^8=\\frac{\\sqrt2}{4}$；\nd) $b_7=0.003(\\sqrt{10})^6=3$。',
+    [numeric('a)', '\\frac32'), numeric('b)', '-4'), numeric('c)', '\\frac{\\sqrt2}{4}'), numeric('d)', '3')],
+  ['281', 'auto',
+    '由递推关系分别读出公比$2,-3,5,\\frac12$，再用第1项乘公比的$n-1$次幂。\na) $b_n=3\\cdot2^{n-1}$；\nb) $b_n=4(-3)^{n-1}$；\nc) $b_n=25\\cdot5^{n-1}$；\nd) $b_n=12\\left(\\frac12\\right)^{n-1}$。',
+    ['3\\cdot2^{n-1}', '4(-3)^{n-1}', '25\\cdot5^{n-1}', '12\\left(\\frac12\\right)^{n-1}']
+      .map((value, i) => expression(`${'abcd'[i]})`, value))],
+  ['282', 'ungraded',
+    '三个数列各项均非零，且相邻两项的比与$n$无关，因此都是等比数列。\na) $\\frac{c_{n+1}}{c_n}=\\frac{2^{n+1}}{2^n}=2$；\nb) $\\frac{c_{n+1}}{c_n}=\\frac{5\\cdot3^{n+1}}{5\\cdot3^n}=3$；\nc) $\\frac{c_{n+1}}{c_n}=\\frac{3\\cdot2^{n+2}}{3\\cdot2^{n+1}}=2$。',
+    [numeric('a) 公比', '2'), numeric('b) 公比', '3'), numeric('c) 公比', '2')],
+    'A proof is required, not merely numerical ratios; the complete ratio argument is displayed.'],
+  ['283', 'auto',
+    '由$b_1=\\frac{b_k}{q^{k-1}}$。\na) $b_1=\\frac{384}{2^7}=3$；\nb) $b_1=\\frac{32/81}{(-2/3)^5}=-3$。',
+    [numeric('a)', '3'), numeric('b)', '-3')]],
+  ['284', 'auto',
+    '从第5项起，索引每增加1就乘一次$q$。\n$a_7=a_5q^2$，$a_{16}=a_5q^{11}$，$a_{40}=a_5q^{35}$。',
+    [expression('a_7', 'a_5q^2'), expression('a_16', 'a_5q^{11}'), expression('a_40', 'a_5q^{35}')]],
+  ['285', 'ungraded',
+    '用两项的比确定公比的相应整数次幂；偶次幂须保留正负两根。\na) $q^7=\\frac{256}{2}=128$，所以$q=2$；\nb) $q^8=\\frac{1280}{5}=256$，所以$q=2$或$q=-2$；\nc) $q^2=\\frac9{25}$，所以$q=\\frac35$或$q=-\\frac35$；\nd) $q^3=\\frac{-54}{2}=-27$，所以$q=-3$。',
+    [numeric('a)', '2'), numeric('b) 正公比', '2'), numeric('b) 负公比', '-2'),
+      numeric('c) 正公比', '\\frac35'), numeric('c) 负公比', '-\\frac35'), numeric('d)', '-3')],
+    'The complete alternative sets for b/c are not a single numeric response; no forced single-sign auto grading.'],
+  ['286', 'auto',
+    '从第8项到第10项相隔2步，到第13项相隔5步。\n$b_{10}=13(-3)^2=117$，$b_{13}=13(-3)^5=-3159$。',
+    [numeric('第10项', '117'), numeric('第13项', '-3159')]],
+  ['287', 'auto',
+    '$q=\\frac{c_5}{c_4}=\\frac{27}{9}=3$，所以$c_8=c_5q^3=27\\cdot27=729$。',
+    [numeric('c_8', '729')]],
+  ['288', 'auto',
+    '将$b_n=b_1q^{n-1}$改为$q^{n-1}=b_n/b_1$。\na) $3^{n-1}=81=3^4$，$n=5$；\nb) $\\left(\\frac12\\right)^{n-1}=\\frac1{64}=\\left(\\frac12\\right)^6$，$n=7$；\nc) $\\left(\\frac13\\right)^{n-1}=\\frac1{81}=\\left(\\frac13\\right)^4$，$n=5$；\nd) $0.1^{n-1}=0.001=0.1^3$，$n=4$。',
+    [numeric('a)', '5'), numeric('b)', '7'), numeric('c)', '5'), numeric('d)', '4')]],
+  ['289', 'ungraded',
+    'a) 插入3个数后共有5项，故$q^4=16$，$q=2$或$-2$。\n$q=2$时插入$2,4,8$；$q=-2$时插入$-2,4,-8$。\nb) 插入5个数后共有7项，故$q^6=\\frac{15/16}{60}=\\frac1{64}$，$q=\\frac12$或$-\\frac12$。\n$q=\\frac12$时插入$30,15,\\frac{15}2,\\frac{15}4,\\frac{15}8$；$q=-\\frac12$时插入$-30,15,-\\frac{15}2,\\frac{15}4,-\\frac{15}8$。',
+    [['a) 正公比', ['2', '4', '8']], ['a) 负公比', ['-2', '4', '-8']],
+      ['b) 正公比', ['30', '15', '\\frac{15}2', '\\frac{15}4', '\\frac{15}8']],
+      ['b) 负公比', ['-30', '15', '-\\frac{15}2', '\\frac{15}4', '-\\frac{15}8']]]
+      .flatMap(([label, values]) => values.map((value, i) => numeric(`${label} 第${i + 1}个插入数`, value))),
+    'Each subtask admits two ordered insertions. Preserve both, not only positive-ratio sequences.'],
+  ['290', 'auto',
+    'a) $q=3$，$0.1\\cdot3^{n-1}=218.7$，故$3^{n-1}=2187=3^7$，$n=8$。\nb) $q=\\frac12$，$1280\\left(\\frac12\\right)^{n-1}=20$，故$n-1=6$，$n=7$。',
+    [numeric('a)', '8'), numeric('b)', '7')]],
+  ['291', 'auto',
+    '每年本利和乘以$1.02$；4年后的总额为$1000(1.02)^4=1082.43216$美元。若金额按美分表示，约为1082.43美元。',
+    [numeric('本利和总额', '1082.43216', '美元')],
+    'The mathematical exact value is expected. Cents rounding is explicitly an optional display convention, not imposed on the source.'],
+  ['292', 'auto',
+    '10小时包含$10\\div0.5=20$次分裂，故细菌数为$1\\cdot2^{20}=1048576$个。',
+    [numeric('细菌数', '1048576', '个')]],
+  ['293', 'auto',
+    '每年数量乘以$1.1$；6年后的木材数量为$20\\times10^4(1.1)^6=354312.2\\mathrm{m}^3$。',
+    [numeric('木材数量', '354312.2', '立方米')]],
+  ['294', 'auto',
+    '在原式有定义的条件下：\na) 系数为$-16/8=-2$，指数相减得到$x^{(4n+7)-(3n+5)}=x^{n+2}$，所以原式$=-\\frac{2x^{n+2}}y$；\nb) $81^3=27^4=3^{12}$，$5^4/25^3=1/25$，$a$的指数为$3(4n-1)-4(3n-1)=1$，所以原式$=\\frac a{25}$。',
+    [expression('a)', '-\\frac{2x^{n+2}}y'), expression('b)', '\\frac a{25}')],
+    'Simplification retains the original domain; it does not newly allow undefined original inputs.'],
+  ['295', 'auto',
+    '提取共同的幂：\na) $4^n-4^{n-2}=4^{n-2}(4^2-1)=15\\cdot4^{n-2}$；\nb) $9^n-3^{2n-1}=3^{2n-1}(3-1)=2\\cdot3^{2n-1}$。',
+    [expression('a)', '15\\cdot4^{n-2}'), expression('b)', '2\\cdot3^{2n-1}')]],
+  ['296', 'auto',
+    'a) $\\frac{9^n-7\\cdot9^{n-1}}8=\\frac{(9-7)9^{n-1}}8=\\frac{9^{n-1}}4$；\nb) $\\frac{3^{2n+1}-3^{2n-1}}{4\\cdot3^n}=\\frac{(9-1)3^{2n-1}}{4\\cdot3^n}=2\\cdot3^{n-1}$。',
+    [expression('a)', '\\frac{9^{n-1}}4'), expression('b)', '2\\cdot3^{n-1}')]],
+  ['297', 'ungraded',
+    'a) 不存在实数$x$使$y=3$，因为$4x^2-5x+4=0$的判别式$25-64=-39<0$。\nb) 存在。$4x^2-5x+1=0$，判别式为9，故$x=\\frac{5-3}8=\\frac14$或$x=\\frac{5+3}8=1$。',
+    [numeric('b) 较小的x值', '\\frac14'), numeric('b) 较大的x值', '1')],
+    'Existence/nonexistence and the full two-root set require a compound response; numerical roots alone are not the whole task.'],
+];
+assert.deepEqual(cases.map(item => item[0]), input.answers.map(item => item.exercise));
+const candidate = { schema: input.schema, book: input.book, lesson: input.lesson,
+  edition: input.edition, status: 'draft', answers: [] };
+const solutions = [];
+for (const [number, grading, displayAnswer, parts, note] of cases) {
+  const prepared = input.answers.find(item => item.exercise === number);
+  assert.equal(prepared.figureEvidence.length, 0);
+  assert.equal(prepared.source, 'derived');
+  candidate.answers.push({ exercise: number, grading, source: prepared.source,
+    ...(prepared.bookRaw ? { bookRaw: prepared.bookRaw } : {}),
+    displayAnswer, parts, historical_entities: [], ...(note ? { notes: note } : {}) });
+  solutions.push({ exercise: number, prompt: prepared.prompt, reasoning: displayAnswer,
+    grading, reason: note ?? 'A finite number or a supported symbolic expression is determined.',
+    figureObservations: [] });
+}
+const out = `${base}/answer-author-FIRST`;
+assert.ok(!fs.existsSync(out));
+fs.mkdirSync(out);
+const answerPath = `${out}/answer-keys.json`, solutionPath = `${out}/source-solutions.record`;
+fs.writeFileSync(answerPath, `${JSON.stringify(candidate, null, 2)}\n`, { flag: 'wx' });
+fs.writeFileSync(solutionPath, `${JSON.stringify({
+  status: 'AUTHOR_SOLUTIONS_NOT_INDEPENDENT_REVIEW', book: '8a', lesson: id, solutions,
+}, null, 2)}\n`, { flag: 'wx' });
+const record = `${out}/result.record`;
+fs.writeFileSync(record, `${JSON.stringify({
+  status: 'ANSWER_AUTHORED_NOT_APPROVED', book: '8a', lesson: id, edition: input.edition,
+  textApproval: bind(reviewPath), inputs: [bind(template), bind(`${modern}/exercises.json`)],
+  answerKey: bind(answerPath), solutions: bind(solutionPath), count: candidate.answers.length,
+  automatic: candidate.answers.filter(item => item.grading === 'auto').length,
+  ungraded: candidate.answers.filter(item => item.grading === 'ungraded').length,
+  exactParts: 0, imagesObserved: 0, productionWrites: 0, databaseWrites: 0,
+  hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(record)));

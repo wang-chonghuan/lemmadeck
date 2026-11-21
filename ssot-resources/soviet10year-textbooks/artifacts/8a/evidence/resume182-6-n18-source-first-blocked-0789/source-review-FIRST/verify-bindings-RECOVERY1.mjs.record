@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const filename = `${root}/.tmp/resume182-6-8a-n18-0789/source-review-FIRST/verify-bindings.mjs`;
+const bytes = fs.readFileSync(filename);
+assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), '9419f0a59d5280aae3bda07084d50c65b1eb04dfb8d940fa4faf6af98b3443cc');
+let code = bytes.toString('utf8');
+const replaceOnce = (before, after) => {
+  assert.equal(code.split(before).length, 2);
+  code = code.replace(before, after);
+};
+replaceOnce(
+  '    delete meta.provenance;',
+  '    delete meta.provenance;\n    assert.deepEqual(meta.figures, []);\n    delete meta.figures;',
+);
+replaceOnce(
+  "initial_author_metadata_changes_only: ['printed_lines', 'provenance'],",
+  "initial_author_metadata_changes_only: ['printed_lines', 'provenance', 'figures:[]'],",
+);
+replaceOnce(
+  "'crop-0109.py', 'crops-0108-0110.py', 'verify-bindings.mjs',",
+  "'crop-0109.py', 'crops-0108-0110.py', 'verify-bindings.mjs', 'verify-bindings-RECOVERY1.mjs', 'verification-FIRST-failure.record',",
+);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

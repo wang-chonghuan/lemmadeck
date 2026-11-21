@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n18-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const runtimeFile = `${base}/display-FIRST/runtime-FIRST/report-FIRST.json`;
+assert.equal(entry(runtimeFile).sha256,
+  'eaeed26f07d2584aa20932224ec37c6b1cb9b4f3cec0e46fc1bf35ffbad69ed2');
+const runtime = JSON.parse(fs.readFileSync(runtimeFile));
+const selection = JSON.parse(fs.readFileSync(`${base}/observations/selection.record`));
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+const report = {
+  schema: 'stemrobin-182/saved-native-scroll-context@1',
+  status: 'SAVED_RUNTIME_METADATA_NOT_PIXEL_APPROVAL',
+  runtime: entry(runtimeFile),
+  originalObserverInstructions: entry(`${base}/observations/instructions.md`),
+  clarification: entry(`${base}/observations/instructions-scroll-context.md`),
+  priorBlockedObservation: entry(`${base}/observations/results/batch5.record`),
+  rendererCalls: 0, browserLaunches: 0, imageViews: 0,
+  oldPassReruns: 0, sourceOrMathApprovalsChanged: false,
+  databaseWrites: 0, finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+};
+fs.mkdirSync(`${base}/observations/contexts`);
+const outputs = [];
+for (const batch of selection.batches) {
+  const images = batch.images.map(image => {
+    const saved = runtime.screenshots.find(item => item.path === image.path);
+    assert.equal(saved.sha256, image.sha256);
+    const coverage = runtime.coverage.find(item => item.surface === saved.surface
+      && item.viewport.width === saved.viewport.width);
+    return {
+      path: saved.path, sha256: saved.sha256, surface: saved.surface,
+      viewport: saved.viewport, scroll: saved.scroll, scrollables: saved.scrollables,
+      newTargetCount: saved.newIds.length,
+      horizontalFrames: coverage.horizontalEnds,
+      completeTargetCoverageIsNotPixelApproval: coverage.missingTargets.length === 0,
+    };
+  });
+  const file = `${base}/observations/contexts/${batch.id}.record`;
+  fs.writeFileSync(file, `${JSON.stringify({
+    schema: report.schema, status: report.status, runtime: report.runtime,
+    batch: batch.id, images, imageViews: 0, runtimeReruns: 0,
+  }, null, 2)}\n`, { flag: 'wx' });
+  outputs.push(entry(file));
+}
+const file = `${base}/observations/scroll-context.record`;
+fs.writeFileSync(file, `${JSON.stringify({ ...report, outputs }, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(entry(file)));

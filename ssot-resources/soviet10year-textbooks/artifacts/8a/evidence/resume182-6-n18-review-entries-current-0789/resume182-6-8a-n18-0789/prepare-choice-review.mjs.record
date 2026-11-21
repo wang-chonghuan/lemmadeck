@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = `${repo}/.tmp/resume182-6-8a-n18-0789`;
+const [authorDraftPath, authorDraftHash] = process.argv.slice(2);
+assert.ok(path.isAbsolute(authorDraftPath)
+  && authorDraftPath.startsWith(`${base}/choices-FIRST/author/`));
+assert.equal(fs.realpathSync(authorDraftPath), authorDraftPath);
+assert.match(authorDraftHash, /^[a-f0-9]{64}$/u);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const draftBytes = fs.readFileSync(authorDraftPath);
+assert.equal(sha(draftBytes), authorDraftHash);
+const draft = JSON.parse(draftBytes);
+assert.equal(draft.schema, 's10y-choice-draft-v1');
+assert.equal(draft.seed_sha256,
+  '98cf14972ab4c44ff5b8248439acb61e0224d1ca9ab608658b227e37cb4e987c');
+assert.equal(draft.new_figures.length, 0);
+const snapshot = `${base}/choices-REVIEW1`;
+assert.ok(!fs.existsSync(snapshot));
+fs.mkdirSync(snapshot);
+const seedPath = `${snapshot}/seed.json`, draftPath = `${snapshot}/draft.json`;
+fs.writeFileSync(seedPath, fs.readFileSync(`${base}/choices-FIRST/seed.json`), { flag: 'wx' });
+fs.writeFileSync(draftPath, draftBytes, { flag: 'wx' });
+const target = `${base}/choice-review-FIRST`;
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+const projection = {
+  schema: 'stemrobin-182/choice-visible-review-projection@1',
+  book: '8a', lesson: 'alg8-c3-s3-n18', edition: 'modern-us-neutral',
+  draft: { path: draftPath, sha256: sha(draftBytes) },
+  questions: draft.questions.map(question => ({
+    id: question.id, source_numbers: question.source_numbers, view: question.view,
+  })),
+  new_figures: draft.new_figures,
+  authorKeysAndIntentDisclosed: false,
+};
+const file = `${target}/views.record`;
+fs.writeFileSync(file, `${JSON.stringify(projection, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)),
+  draft: projection.draft, authorDraft: { path: authorDraftPath, sha256: authorDraftHash },
+  seed: { path: seedPath, sha256: sha(fs.readFileSync(seedPath)) },
+  questions: projection.questions.length, authorKeysAndIntentDisclosed: false }));

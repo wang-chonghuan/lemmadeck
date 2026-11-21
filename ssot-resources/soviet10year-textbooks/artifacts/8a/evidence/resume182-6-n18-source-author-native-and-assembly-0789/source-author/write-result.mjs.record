@@ -1,0 +1,277 @@
+import { createHash } from "node:crypto";
+import { readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck";
+const scratch = ".tmp/resume182-6-8a-n18-0789/source-author";
+const source = ".tmp/resume182-6-8a-n18-0789/source/8a/pages";
+const artifacts = "ssot-resources/soviet10year-textbooks/artifacts/8a/pages";
+if (process.cwd() !== root) throw new Error("Wrong working directory");
+
+function file(relative) {
+  const absolute = path.join(root, relative);
+  const bytes = readFileSync(absolute);
+  return {
+    path: absolute,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    bytes: bytes.length,
+  };
+}
+
+function requireHash(relative, expected) {
+  const actual = file(relative);
+  if (actual.sha256 !== expected) throw new Error(`Changed retained binding: ${relative}`);
+  return actual;
+}
+
+function parsePage(relative) {
+  const text = readFileSync(path.join(root, relative), "utf8");
+  const match = text.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!match) throw new Error(`Invalid frontmatter: ${relative}`);
+  const meta = JSON.parse(match[1]);
+  const blocks = [];
+  let current;
+  for (const line of match[2].split("\n")) {
+    if (!line.trim()) continue;
+    if (line.startsWith("<!--")) {
+      const header = line.match(/^<!-- ([a-z0-9 ]+) -->$/);
+      if (!header) throw new Error(`Unexpected block header: ${relative}`);
+      current = { header: header[1], lines: [] };
+      blocks.push(current);
+    } else {
+      if (!current) throw new Error(`Unowned body row: ${relative}`);
+      current.lines.push(line);
+    }
+  }
+  for (const block of blocks) {
+    if (!block.lines.length) throw new Error(`Empty block: ${relative}`);
+    for (const line of block.lines) {
+      if ((line.match(/\$/g)?.length ?? 0) % 2) throw new Error(`Unpaired math delimiter: ${relative}`);
+      if (/[абвгде]\)/u.test(line) && /(?:^|\s)[a-z]\)/.test(line)) {
+        throw new Error(`Latin subpart label: ${relative}`);
+      }
+    }
+  }
+  return { meta, blocks };
+}
+
+const expected = {
+  "0106": { printed: 99, rows: 23, headers: ["p cont", "p", "p", "p", "p", "p", "p", "p", "p open", "foot"] },
+  "0107": { printed: 100, rows: 22, headers: ["p cont", "p", "p", "p", "ex 278", "ex 279", "ex 280 open", "foot"] },
+  "0108": { printed: 101, rows: 22, headers: ["ex 280 cont", "ex 281", "ex 282", "ex 283", "ex 284", "ex 285", "ex 286", "ex 287", "ex 288", "foot"] },
+  "0109": { printed: 102, rows: 23, headers: ["ex 289", "ex 290", "ex 291", "ex 292", "ex 293", "exhead", "ex 294", "ex 295", "ex 296", "foot"] },
+  "0110": { printed: 103, rows: 24, headers: ["ex 297", "h3", "p", "p", "p", "p", "p", "p", "p", "p", "p", "p open", "foot"] },
+};
+
+const pages = Object.entries(expected).map(([id, expect]) => {
+  const relative = `${artifacts}/${id}/page.md`;
+  const parsed = parsePage(relative);
+  const templateText = readFileSync(path.join(root, source, id, "page.template.md"), "utf8");
+  const template = JSON.parse(templateText.match(/^---\n([\s\S]*?)\n---/)[1]);
+  const image = file(`${source}/${id}/page.png`);
+  const grid = file(`${source}/${id}/page.grid.png`);
+  for (const key of ["schema", "book", "page", "source", "render", "profile"]) {
+    if (JSON.stringify(parsed.meta[key]) !== JSON.stringify(template[key])) {
+      throw new Error(`Template binding drift in ${id}: ${key}`);
+    }
+  }
+  if (image.sha256 !== parsed.meta.render.sha256) throw new Error(`Image binding drift in ${id}`);
+  if (parsed.meta.printed_page !== expect.printed) throw new Error(`Wrong footer in ${id}`);
+  if (JSON.stringify(parsed.blocks.map(block => block.header)) !== JSON.stringify(expect.headers)) {
+    throw new Error(`Block ordering drift in ${id}`);
+  }
+  const totalRows = parsed.blocks.reduce((sum, block) => sum + block.lines.length, 0);
+  if (totalRows !== expect.rows) throw new Error(`Authored row count drift in ${id}`);
+  if (id === "0110" && parsed.blocks[1].lines[0] !== "19. 等比数列前$n$项的和的公式") {
+    throw new Error("Right-boundary heading drift");
+  }
+  const inventory = JSON.parse(readFileSync(path.join(root, scratch, `${id}.after.record`)));
+  if (inventory.rows.total !== totalRows) throw new Error(`Inventory row mismatch in ${id}`);
+  return {
+    physicalPage: Number(id),
+    printedPagePixelConfirmed: expect.printed,
+    sourcePage: { pdf: parsed.meta.source, template: file(`${source}/${id}/page.template.md`), layout: file(`${source}/${id}/layout.json`) },
+    sourceImage: image,
+    sourceGrid: grid,
+    authoredMd: file(relative),
+    authoredBlockCount: parsed.blocks.length,
+    authoredBodyLines: totalRows - parsed.blocks.at(-1).lines.length,
+    authoredFooterLines: parsed.blocks.at(-1).lines.length,
+    authoredTotalLines: totalRows,
+    blockOrdering: parsed.blocks.map((block, index) => ({
+      ref: `p${id}#${index + 1}`,
+      header: block.header,
+      printedLines: block.lines.length,
+    })),
+    inventory: file(`${scratch}/${id}.after.record`),
+    figureInventory: inventory.figureInventory,
+    unresolvedUncertainties: inventory.uncertainties,
+    gridViews: 1,
+    cropViews: inventory.cropViews,
+  };
+});
+
+const reused = {
+  page105: {
+    mode: "TEXT_AND_HASH_ONLY",
+    md: requireHash(`${artifacts}/0105/page.md`, "d6d4f44611a02541c72c51c62eaf48efd14549e89339332fd36105ccfa5a91c3"),
+    json: requireHash(`${artifacts}/0105/page.json`, "061221071ca839759876f08944a036720a13557bfea3acd0d177157c8aaff774"),
+    audit: requireHash(`${artifacts}/0105/audit.json`, "8cfff7a0a0044acb2692e75f9fe2adfc6ca664098abb448cfc613b1518356a5f"),
+    imageViews: 0,
+    sourceRecognitionRerun: false,
+    nativeFinalizationRerun: false,
+  },
+  sectionAncestor: {
+    ref: "p0102#1",
+    text: "§7. 等比数列",
+    file: requireHash(`${artifacts}/0102/page.json`, "ac50e478a1389c3acaa76e5125773e9572f4fdc0faea9dbf9053f293de2a0fe6"),
+    mode: "TEXT_AND_HASH_ONLY",
+    imageViews: 0,
+  },
+  chapterAncestor: {
+    ref: "p0074#1",
+    text: "第三章　等差数列和等比数列",
+    file: requireHash(`${artifacts}/0074/page.json`, "41004e2c1e79bbf3545cb6609d630fe446b11b3c7ecc61bfaa536f844c35c0c0"),
+    mode: "TEXT_AND_HASH_ONLY",
+    imageViews: 0,
+  },
+};
+
+const crops = [
+  { page: 109, box: [450, 1840, 2050, 2580], relative: `${scratch}/0109-quantity-formulas.crop.png`, purpose: "Resolve quantity exponent/unit and dense compound formulas in exercises293/294." },
+  { page: 110, box: [2080, 2610, 2240, 2730], relative: `${scratch}/0110-formula-label.crop.png`, purpose: "Resolve final formula label as Roman uppercase(I), not digit(1)." },
+].map(crop => ({
+  physicalPage: crop.page,
+  input: file(`${source}/${String(crop.page).padStart(4, "0")}/page.png`),
+  box: crop.box,
+  output: file(crop.relative),
+  views: 1,
+  purpose: crop.purpose,
+}));
+
+const scratchFiles = [
+  "inventory-before.record",
+  "0106.after.record",
+  "0107.after.record",
+  "0108.after.record",
+  "0109.after-grid.record",
+  "crop_0109.py",
+  "0109-quantity-formulas.crop.png",
+  "0109.after.record",
+  "0110.after-grid.record",
+  "crop_0110.py",
+  "0110-formula-label.crop.png",
+  "0110.after.record",
+  "write-result.mjs",
+];
+
+const result = {
+  schema: "bounded-source-author/result@1",
+  status: "SOURCE_AUTHORED_NOT_APPROVED",
+  ticket: "STEMROBIN-182",
+  workdir: root,
+  book: "8a",
+  lesson: "alg8-c3-s3-n18",
+  reviewerKind: "author_not_independent",
+  reviewer: { kind: "author_not_independent", independent: false },
+  sourceAuthored: true,
+  completeLessonApproved: false,
+  lessonPromoted: false,
+  bootstrap: file(".tmp/resume182-6-8a-n18-0789/bootstrap.record"),
+  beforeInventory: file(`${scratch}/inventory-before.record`),
+  reused,
+  pages,
+  boundary: {
+    start: { ref: "p0105#6", kind: "h3", printedText: "18. 等比数列的通项公式", reusedApprovedTextOnly: true },
+    section: "p0102#1",
+    chapter: "p0074#1",
+    joins: [
+      { from: "p0105#7", fromHeader: "p open", to: "p0106#1", toHeader: "p cont", previousTail: "但", continuationHead: "是，" },
+      { from: "p0106#9", fromHeader: "p open", to: "p0107#1", toHeader: "p cont", previousTail: "空气", continuationHead: "的20%" },
+      { from: "p0107#7", fromHeader: "ex 280 open", to: "p0108#1", toHeader: "ex 280 cont", previousLastSubpart: "б", continuationFirstSubpart: "в" },
+    ],
+    targetLastContent: { ref: "p0110#1", kind: "ex", exercise: "297", open: false },
+    exclusiveRightBoundary: { ref: "p0110#2", kind: "h3", printedText: "19. 等比数列前 n 项的和的公式", authoredText: "19. 等比数列前$n$项的和的公式" },
+    targetBlocksOnNewPages: ["p0106#1..p0106#9", "p0107#1..p0107#7", "p0108#1..p0108#9", "p0109#1..p0109#9", "p0110#1"],
+    nextLessonRaw: { firstRef: "p0110#2", lastContentRef: "p0110#12", lastHeader: "p open", lastPrintedLine: "数列的第1项等于1，而公比等于2. 求出这个数列的第", complete: false, promoted: false },
+    newExerciseObjects: { first: "278", last: "297", count: 20, exercise280HasContinuation: true, numberingUsedToInferUnreadableGlyphs: false },
+  },
+  images: {
+    budgetMaximum: 8,
+    gridViews: 5,
+    cropViews: 2,
+    totalViews: 7,
+    everyRequiredGridViewedExactlyOnce: true,
+    gridLedger: pages.map(page => ({ file: page.sourceGrid, views: 1 })),
+    crops,
+    originalFullPageViews: 0,
+    originalPagesUsedOnlyAsMechanicalCropInput: true,
+    olderImagesViewed: 0,
+    reopens: 0,
+    parentImageViews: 0,
+    furtherImageViewsPlanned: false,
+  },
+  figureInventory: pages.map(page => ({ page: page.physicalPage, ...page.figureInventory })),
+  resolvedUncertainties: [
+    { id: "p0109-ex293-quantity-exponent", ref: "p0109#5", status: "RESOLVED_FROM_ORIGINAL_PIXELS", transcription: "$20\\times10^4\\mathrm{m}^3$", evidence: file(`${scratch}/0109.after.record`) },
+    { id: "p0109-ex294-dense-powers", ref: "p0109#7", status: "RESOLVED_FROM_ORIGINAL_PIXELS", evidence: file(`${scratch}/0109.after.record`) },
+    { id: "p0110-final-formula-label", ref: "p0110#10", status: "RESOLVED_FROM_ORIGINAL_PIXELS", transcription: "(I)", evidence: file(`${scratch}/0110.after.record`) },
+  ],
+  unresolvedUncertainties: [],
+  blockedSourceGlyphs: [],
+  arithmeticUsedToRecoverGlyphs: false,
+  numberingUsedToRecoverGlyphs: false,
+  sourceAuthorshipChecks: {
+    kind: "TEXT_STRUCTURE_AND_HASH_ONLY_NOT_NATIVE_FINALIZATION_OR_REVIEW",
+    templateFrontmatterBindingsMatch: true,
+    actualSourceImageHashesMatchTemplate: true,
+    authoredLineCountsMatchAuthorPixelInventories: true,
+    exactBlockOrderingVerified: true,
+    inlineMathDelimitersPaired: true,
+    retainedPage105AndAncestorsHashesUnchanged: true,
+    nativePageAuditRun: false,
+    independentSourceReviewRun: false,
+  },
+  preservation: {
+    allowedWriteSetOnly: true,
+    newMdDestinationsAbsentBeforeAuthoring: true,
+    unrelatedEditsSourcesLocksBackupsHistoricalFailuresPreserved: true,
+    heldN16Raw0098Through0101Touched: false,
+    n17OrOtherPassedBytesTouched: false,
+    unknownHistoricalBytesRecovered: false,
+  },
+  operations: {
+    gitCalls: 0,
+    skillhostUpdates: 0,
+    createOrAttachOrInitOrNewChatCalls: 0,
+    databaseReads: 0,
+    databaseWrites: 0,
+    appOrDependencyEdits: 0,
+    nativeFinalizationCalls: 0,
+    assemblyCalls: 0,
+    approvalCalls: 0,
+    formalHandoffCalls: 0,
+  },
+  unknownHistoricalBytesRecovered: false,
+  parentImageViews: 0,
+  databaseWrites: 0,
+  scratchEvidence: scratchFiles.map(name => file(`${scratch}/${name}`)),
+  changedPaths: [
+    ...Object.keys(expected).map(id => path.join(root, artifacts, id, "page.md")),
+    ...scratchFiles.map(name => path.join(root, scratch, name)),
+    path.join(root, scratch, "result.record"),
+  ],
+  nextOwnerActionsNotExecuted: "Parent performs native finalization and independent review. This record is source authorship, not approval or assembly.",
+};
+
+const output = path.join(root, scratch, "result.record");
+writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: result.status,
+  result: file(`${scratch}/result.record`),
+  authoredPages: pages.map(page => ({ page: page.physicalPage, md: page.authoredMd, blocks: page.authoredBlockCount, lines: page.authoredTotalLines })),
+  boundary: result.boundary.exclusiveRightBoundary,
+  totalImageViews: result.images.totalViews,
+  unresolvedUncertainties: result.unresolvedUncertainties,
+  changedPaths: result.changedPaths,
+}, null, 2));
