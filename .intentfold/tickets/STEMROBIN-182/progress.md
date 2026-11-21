@@ -1,5 +1,418 @@
 # 当前开发状态
 
+### 182-6 2026-11-21 05:39Z N15完整离线PASS，窄提交准备
+
+- 13个新隔离观察批均completed/关闭后绑定exit0，101/101新原生截图
+  DISPLAY_PASS，0待看/0漏图/0重开裁缩重渲染，父图0；
+  最后实际观察/绑定/回执留存SHA
+  `f0afaec0e0ef1867a613872f7df91f291e5a2a155471af5f4462da29c4b7ba1a`。
+- 整课display-final-binding FIRST exit0，OFFLINE_DISPLAY_PASS SHA
+  `4b228b1f9e3451f6ebad3265d4a2fa0d5af79deb3beb79ba952d3666d53c6c0c`：
+  20源正文/22原题232–253/22标准答案14auto8ungraded/62parts0exact/
+  40选择178选项/1图30/6桌面手机视图，三离线HTML已留存。
+  最终绑定无新renderer/browser/validator/图观察，
+  绑定与交付入口实际字节留存SHA
+  `88c1fcff23f122880f9ad13d440ea679ba387dce31170a8d6148c64f3174eaa1`。
+- 原分支再次fetch exit0；接下来仅完整N15、源92至97、两个索引追加、
+  95真实计行缺陷的窄工具修复/新测试、实际证据/progress窄暂存检查，
+  不含N16半课或应用/依赖/DB。聚焦11测试10过1既有厚分数负例失败
+  已有原码复现，未修无关函数、不声称全绿；正式handoff全检查未运行。
+- commit/push/远端确认尚未执行，N16入口仍未执行；有限exec在途0，
+  下一监督05:49:50Z。同0789/仅6a7a8a/review，原树锁备份失败计数费用
+  unknown未决消息与旧暂停全保留，N13/N14/N22 PASS不重跑；
+  无DB/合并部署/正式handoff，不认领未知字节恢复。
+
+### 182-6 2026-11-21 05:28Z 显示八批64图PASS闭审绑定，batch9在途
+
+- batch1至8共64/101新原生截图DISPLAY_PASS/无blocker，每批8张各一次；
+  八个观察者均completed/关闭后绑定exit0，父图0/本显示64views、
+  64unique/0重开裁缩重渲染。batch5–8实际结果/绑定/回执留存SHA
+  `b07e10e3756d6de88ea1f4d7ffa1002377484bfe5b518b5a25481155c77d474a`。
+- Dirac `01a1fc93-ad1c-7262-8ff3-d2aee4d6dd78`唯一在途独立观察者，
+  仅batch9新8图，不承接图片历史；batch10至13未观察，未记视觉PASS。
+  全源/现代/图/答案/选择批准保持，最终显示/整课commit-push/N16未做，
+  有限exec在途0，下一监督05:49:50Z；同0789/仅6a7a8a/review，
+  原树锁备份失败计数费用unknown未决消息与旧暂停保持，无DB/合并部署/handoff。
+
+### 182-6 2026-11-21 05:19Z 显示前四批32图PASS闭审绑定，手机正文batch5在途
+
+- batch1至4均新隔离各8原生PNG实际一次观察，DISPLAY_PASS/无blocker，
+  观察者completed后逐一关闭、原生绑定exit0，共32/101新截图已绑定；
+  本显示批累计32views/32unique/0重开裁缩重渲染，父图0。
+  batch2–4结果/绑定/回执实际留存SHA
+  `c4524e1c5f568248a817e487ed5c1531e048f25a802941455b144c8c4e5306e5`。
+- Dewey `01a1fc8a-c706-7e40-b199-a216ded95e8f`是唯一在途独立观察者，
+  仅batch5/8张新手机正文截图，不承接图片历史，不重开前四批或旧PASS。
+  后续batch6至13尚未观察，无最终OFFLINE_DISPLAY_PASS/整课commit-push/
+  N16生产。源/现代/图/答案/选择已PASS保持，有限exec在途0，
+  下一监督05:49:50Z，同0789/仅6a7a8a/review。原树锁备份失败计数费用
+  unknown未决消息与旧暂停保持，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 05:11Z 选择最终PASS，显示运行PASS，40分钟监督与首批观察绑定
+
+- Ampere受影响最终review PASS SHA
+  `0a50c066328540c503adf52606dad8e588c0f3ab5d897c8536d85017a766c857`，
+  22源/40题/178选项，39未变题与源独解复用；原生绑定/留存exit0，
+  审者已关闭。所有FIRST语义失败保持，不认领自审或重审通过。
+- parent-ready FIRST exit1只因错误假设原生现代收口不规范换行；
+  修绑定入口调用现有edition.normalize_lesson_layout/
+  normalize_exercise_layout，批准模板原生规范化后与最终逐字段一致，
+  RECOVERY1 exit0，parent-ready SHA
+  `714332b3f1912acf2f0d101968e3057a1bac7a7a10c3f70a0cb318378ae6613b`。
+  内容/既有批准不改、不重看/重finalize；首失败/原脚本实际保留。
+  一次只读rg误寻不存在adapt.py exit2留本聊天原输出，仅文字登记，
+  非内容失败或原字节恢复。技术恢复实际字节留存SHA
+  `5cbb4fe63eb3ddd5e55144ba21b04ac30610e4935b977d4ed2416d1526d15aed`。
+- display-runtime FIRST exit0，report SHA
+  `8c0bda3f3e4bf81b13b32b8e9f4f3eda02ce2a1bdc47632c47a860a5e9beec68`，
+  101新原生截图/6桌面手机视图；renderer/context/browser/server全关闭，
+  视觉未全PASS。13批选择，batch1实际8views PASS后已关闭并绑定；
+  Wegener `01a1fc83-ceec-7a10-b252-75c86f77a9e3`仅batch2新8图观察在途，
+  父图0，不重开batch1或旧课PASS。runtime/选择实际字节留存SHA
+  `188521c389ab8b0064f0dfebbbb59bff19fe12cfb2767666d8a5a57b6261f1eb`。
+- 锚定05:09:50Z监督实际05:10:20.269Z，record SHA
+  `28a2631ddd03a7bf5206ed1dd5153e7cc71bebcffb84096c4db3ea92a9fc2268`，
+  1813回执引用/119已知非零或错误/3未知是历史引用而非唯一调用数；
+  监督/batch1实际留存SHA
+  `25a35db3a1fd3029a59760030337fa5747c7bcac3b28fca5807819f0a81ce3c0`。
+  下一锚定05:49:50Z，有限exec在途0。整课最终显示/commit-push/N16未做，
+  同0789/仅6a7a8a/review，原树锁备份旧失败计数费用unknown未决消息与旧暂停
+  保持，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 04:56Z 选择FIRST完整REVISE保留，q248新候选受影响无键复审
+
+- 同Ampere首轮内部比较完成：40完整correct集/178真值和错误推导吻合，
+  无新增数学缺陷；q248保真/泄漏及覆盖/能力损失披露不足REVISE保持。
+  原生review-FIRST SHA
+  `a0ca6cc45eb0d05b98edba482a7dde2401447884a25425e7a2832ab777caaddd`，
+  checker首次exit3为语义REVISE，非工具失败；首完整失败实际留存SHA
+  `f2686609776e4e77f52923f2f661ecf69281d56ae695046b91031c2a1cc8e8ac`。
+- Pasteur受影响作者completed/关闭，draft SHA
+  `65f80e0602abc99f2eae6cdabe56568dfc174c361b6cbdb5216c68d487d8d19a`，
+  仅q248及248 coverage.reason；39题/21覆盖deepEqual，FIRST字节全不变。
+  新4选项包含相同正确差式/相反等差判断，结构一次exit0、0图，
+  仍未语义批准；候选实际留存SHA
+  `185fd1cd9ac51eeb907f0b15e1a8cd00898d132968213f6a3b27fba3627037f5`。
+- 同Ampere PHASE4仅受影响无key/intent题面，1题4选项在途，
+  新投影SHA `47df9d323468ba712b68562a946e8ec183cf43ef9262e14e853d1668eff03d1a`。
+  后续才比新内部、复用其它PASS，不做替换独审或原课重跑。
+  父图0/有限exec在途0，下一监督05:09:50Z，显示/commit-push/N16未做；
+  同0789/仅6a7a8a/review，原树锁备份失败计数费用unknown未决消息与旧暂停
+  保持，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 04:47Z 选择无键题面首轮REVISE，q248受影响修复在途
+
+- 同Ampere PHASE2实际完成22源/40题/178选项，均独立可判定、无blocked；
+  q248-mixed-difference所有选项共同披露等差结论和完整相邻差证明，
+  保真/泄漏/248覆盖REVISE，不把数学可算当语义PASS。
+  views-phase2 SHA
+  `953d67dee611f0f9d49fe1025d314b8d2a1745c29e381dc7670ecb40a19cc16a`，
+  首轮实际字节留存SHA
+  `3873cd69ada25f5a727bdf9876e81bb8b187aef81b2631fc3c40349c9082fb3c`。
+- 同审者PHASE3只比较已独立求得结果和作者key/derivation/
+  misconception、覆盖和能力损失，首轮失败保持，尚无原生最终review。
+- 恢复本轮已完成后关闭的Pasteur作者（非旧人类暂停对象），只写新
+  choices-AFFECTED248/、修q248及必要248覆盖，原FIRST不覆盖、
+  其它39题不重做，仍不读答案。受影响无键投影/绑定脚本新建并语法通过，
+  尚未运行；作者和审者写域分离、唯一独立审仍为Ampere。
+- 显示/整课commit-push/N16生产仍未执行，父图0、有限exec在途0，
+  下一监督05:09:50Z；同0789/仅6a7a8a/review，原树锁备份失败计数费用
+  unknown未决消息与旧暂停全保留，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 04:37Z 选择源独解完成，同审者无键题面阶段在途
+
+- Ampere源PHASE1完成，22源及概念块5独立求解，无blocked，
+  source-phase1 SHA
+  `cbaba636e51031896298e7847d6b2ceaf6ddc01dd7888a90a398dec5bd7fb6c3`，
+  0图且未读作者解法/keys/答案；实际字节留存SHA
+  `c2f535788a1219d1df0c4bdaaa46e6e3924c5d6b53a72ad86bc3e0234f94a3a0`。
+- 同审者PHASE2已获无key/intent题面投影SHA
+  `758cc2bb8bad9cc3e98b7564d0ab8b6292cca4ef10043947e97accb25232f854`，
+  40题178选项保真/冗余/泄漏及独立每选项真值在途，尚无语义批准；
+  不重解源，不提前披露内部、不替换审者、不跑显示/半课提交。
+  父图0、有限exec在途0，下一监督05:09:50Z，同0789/仅6a7a8a/review，
+  原树/锁/备份/旧失败/费用计数unknown/未决消息与旧暂停全保留，
+  无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 04:30Z 40分钟监督，答案最终绑定闭审，选择源独审在途
+
+- 锚定04:29:50Z实际04:30:16.170Z监督exit0，record SHA
+  `d56a5f388e85e4c7f1bacfbeaa5e4ef90b0a6f1c2941015ed3630c5f4a2d73e4`，
+  1795回执引用/117已知非零或错误/3未知是历史引用，非唯一调用数。
+  监督和原分支同步实际字节留存SHA
+  `fd7c59c61c853e63a2f83161bcfeff48aa37c81bf66c27ead5d1a09e1dcfe032`。
+  下一锚定05:09:50Z，同监督入口，不新建自动化/聊天。
+- 同Linnaeus最终绑定PASS SHA
+  `183df04c6af956327b8d83165ef304af158b4068c8b3d2364e9b874692daae33`；
+  生产仅status=ready/count=22，答案语义deepEqual批准候选，审者已关闭，
+  0新图/0重解，实际留存SHA
+  `60bb9ec202fa84128e634909d082306f897ed9a14fe2a86a11c0465a87f43925`。
+- Ampere `01a1fc5d-2912-77a3-bd6c-1a0e03f2215e`新隔离唯一独审
+  PHASE1仅源22题/概念独立解，未给views或作者keys/intent，
+  无源图；后续同审者按无键题面再内部比较，尚无选择语义PASS。
+  原分支fetch exit0，未提交半课，N14交付保持。
+  父图0、有限exec在途0，仅同0789/6a7a8a/review，原树锁备份失败/
+  计数费用unknown/未决消息与旧暂停全保留，无DB/合并部署/handoff。
+
+### 182-6 2026-11-21 04:27Z 239(b)受影响PASS和原生收口，选择作者收取
+
+- FIRST答案错误回执/候选实际字节保留SHA
+  `a0c96aee0a959ac3f6203794682a13931bbd00b9c009199b9dd63ae5c3028e75`，
+  新候选仅239(b)两字段121改120；反向还原deepEqual其它未变。
+  同Linnaeus受影响PASS SHA
+  `2a99353c91a959a5aa85b151fab5ee99e75c9f53f8066cba0aa2cfa12eb5982c`；
+  批准字节提升/原生finalize均exit0，14auto/8ungraded/62parts/0exact，
+  finalize receipt SHA
+  `bf40a6518eab18645147a3dc53349f021e385bad5609c7d26582f54e59a5a355`。
+  同审者只做最终元数据绑定确认在途，0新图/0重解；修复/live只读/
+  PASS及原生实际字节留存，未知费用不清零。
+- Pasteur作者completed/关闭，author SHA
+  `817ea96719cc4f80cfc4797c5e4839e3e2530df43f71df22819415f264b125be`：
+  全22源/40选择/178选项/36单选4多选/0图，source-solutions先于draft，
+  原生结构首次exit0，语义未批准。两次错误路径选择保留，
+  作者字节留存SHA
+  `326bf4c5fd1762f47989cd4a2774de2d46624d64ae1cb4d650e24794d7ac93ac`。
+  无键题面投影准备完成，独立选择审尚未启动，不继承答案审查事实。
+- live工单只读HTTP200；普通内容修复按授权直接完成。
+  显示/整课commit-push/N16生产未执行；父图0、有限exec在途0，
+  下一监督04:29:50Z，仅同0789/6a7a8a/review，旧PASS/旧暂停/
+  原树锁备份失败计数费用未决消息保持，无DB/合并部署/handoff。
+
+### 182-6 2026-11-21 04:24Z 同0789接续，239(b)首轮答案REVISE保留
+
+- 实际工作树和ticket均确认同0789/182-6/仅6a7a8a/review；
+  官方树已完成，当前N15已有后续实际动作，不重复create/attach/init/
+  迁移或建立替代聊天。N13/N14/N22旧PASS和6a的266有效题不重跑。
+- 同Linnaeus答案首轮REVISE SHA
+  `8edea81a899f75ae9f03252577a348c22a9a8ef6647f3e3ecd27d9e93f482583`：
+  239(b)由d=-1得c_1=120，原候选误为121；其余21题和61/62自动键通过。
+  先保留首轮实际字节，仅建立新候选改该题displayAnswer及parts[2].expected[0]，
+  不改题面、评分类型或其它答案；受影响批准/原生finalize尚未完成。
+- Pasteur仍为已有选择作者，尚无已收取completed结果，不替换；
+  旧聊天和旧暂停审者不动。父图0、有限exec在途0，
+  下一监督04:29:50Z。原树/锁/备份/失败/计数费用unknown/未决消息全保留，
+  不认领未知字节恢复；无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 04:13Z n15图/现代PASS，答案独审和选择作者在途
+
+- 原墨迹局部使图30上部交会可分类，作者和同一独审均未见独立附加
+  实心点；保留先前未知、五个实际可辨点、不按公式补点。
+  guide裁到格网边界仅为明确现代制图处理，不认领源精确墨迹端点。
+  Meitner作者completed/关闭，result SHA
+  `c9395dc02e6e925ffc69d36046bfa8b2f0815785aa25ecc6b68f9fc145b1844f`，
+  累计6views/1原生render；可移植source路径字节同源重绑0新图/0重渲染。
+  作者/原墨迹/portable实际字节留存SHA
+  `d5f3b6f742c90c09598976a9426c4acfbab2c383158e875ace359a8c84624630`。
+- 同Schrodinger图独审PASS SHA
+  `c7a14333f9558dc018fd83d19f695b894a02e38929cd1c4761eb10410b4a82a0`，
+  28绑定/累计5views，图/文本均复用已有源事实。
+  图提升FIRST exit1假设report.output.png存在，但原生只有SVG；
+  三个已写批准字节保留，修字段假设、精确复用后RECOVERY1 exit0，
+  promotion SHA `53eb46c3f684006b6db1cf2cb1cffc723869d0d2dbe43445e470a1883eab54db`。
+  原生review绑定exit0，无重绘重看。
+- 现代FIRST exit2仅prose[0,1,8,17]未改写却带layout标签；
+  首失败及候选保留，仅清4标签。恢复同一本轮审者零新图受影响
+  TEXT_PASS SHA
+  `c9e42e3e080025cc78c1f390510eaf1e201fa567702562f0dcca45964b6d8e06`，
+  关闭后现代受影响finalize exit0，receipt SHA
+  `ba893bd2661fa208f11dea69cbe50748c18b6d41243b0ae05ae966544179a5c9`。
+  源/正文/习题/公式/边界/图不改、不重审。
+- 22题答案prepare/作者FIRST exit0，candidate result SHA
+  `74303dedc672d9a0f003ce9a72aa2c30a6aff77d2a9d4847d62d9a1edc29f13d`。
+  Linnaeus `01a1fc4d-2c26-7c12-b090-6c5ba4ad175b`新隔离唯一
+  答案独审0图在途；Pasteur `01a1fc4d-7d60-7701-a96a-3f5958046be9`
+  是新选择作者，仅白名单原题/概念、不读答案，尚未批准选择。
+  图/现代首失败实际留存SHA
+  `97c59d79f6d7dfcc22072b95bc7ee257e5d925a1dffb4d7334b222676441c45f`，
+  标签恢复/答案候选实际留存SHA
+  `53bda9f55c576e0a8db6a022918e95d2aaf20b7caf1c2ef6afe36ca8704513ed`。
+- N15答案最终/选择独审/显示/整课commit-push尚未执行；
+  N16只有带交付前置硬门的接续入口通过语法，不已执行源生产。
+  父图0、有限exec在途0，下一监督04:29:50Z，同0789/仅6a7a8a/review。
+  原树/锁/备份/失败/原计数费用unknown/未决消息及旧暂停全保留，
+  无DB/合并部署/正式handoff/重复create或attach。
+
+### 182-6 2026-11-21 03:50Z 40分钟监督完成，图30原墨迹澄清仍在途
+
+- 锚定03:49:50Z监督实际03:50:00.120Z，
+  record SHA `12c30ad37e17192aa5e16d533d7a2ec78136b90758cfd945c6a82e45bd42a071`；
+  1770已完回执引用/115已知非零或错误/3未知均是历史引用，
+  不是唯一调用计数，不清零计数或unknown。监督实际字节留存SHA
+  `e74402cb46bddcb3196fba20d434d79069beb3fc59bdd7cead1210ac5184debc`。
+- 本轮已直接解决95/96及错误裁图执行原因；SOURCE_PASS/TEXT_PASS
+  保持。图30上部真内容未决暂未批准，当前同Meitner原墨迹RECOVERY2
+  是唯一作者动作，Schrodinger保留独立库存等待图候选；
+  不重审已过文本、源或任何旧课。父图0、有限exec在途0。
+- 下一锚定04:29:50Z仍沿用原监督入口；仅同0789/6a7a8a/review。
+  原分支HEAD保持N14已确认交付，本N15没有半课提交或推送；
+  原树/锁/备份/失败/费用计数/unknown/未决消息及旧暂停均保留，
+  无DB/合并部署/正式handoff/替代聊天/create/attach。
+
+### 182-6 2026-11-21 03:48Z n15文本PASS复用，图30正确裁片仍未决，原墨迹澄清在途
+
+- Schrodinger TEXT_PASS SHA
+  `11d9474190f49400c1a08e199d32ae42421dceab418b90304c1d9f8253b97e8c`，
+  20正文/22题/四边界一次实质复核，阶段一图0，不重审已过文本。
+  同审者独立图库存SHA
+  `767caa34d7e06db4035c153542c50f80a3a770a3c4554e7f5cfc4ff706fc8b16`，
+  2实际views，12×18格/两轴/8数值标签/5可辨点；
+  上部附加点及端点仍不确定，未认证点总数、未图PASS。
+- 图作者sips FIRST误裁中部，不是正确上部证据；
+  FIRST result SHA
+  `665be45c049b6a7a6474f0b34b8bc1e9354ef2f032aa80da4233da7ac88ab17c`。
+  同作者Pillow RECOVERY1裁片像素验证正确，累计3views，
+  result SHA `12a0baa1a061ffaeed09fc5bef0a0da402a6a350ce77411fd48896eced339b83`，
+  真实库存未决仍在，未spec/render/提升。
+  FIRST失败及文本PASS实际留存SHA
+  `cb6a9e70cb6db4348726cde35b40c7f464e89de88da5c6926ae78949e030e1bc`，
+  正确裁片/独立库存/元数据实际留存SHA
+  `c9ed5c0a784a11fb4ea4a0e9e5612f848ac1dd10782cf623a3fd5ef4fb2c2f0a`。
+- pdfimages只读93页元数据FIRST exit0，原嵌入图1504×2176、
+  186ppi、1-bit，而原生现裁来自300dpi渲染。同Meitner
+  RECOVERY2仅提取93页嵌入原墨迹并看一次上部局部，不看整页，
+  不增加原始信息或声称恢复未知bytes；尚未收取实际结果。
+- 本轮另一次只读ls时目录尚未生成exit1，非审查失败；工具原输出留在
+  本聊天，本项文字登记是实际观察，不冒充恢复工具原回执。
+  现代最终/答案/选择/显示/N15提交推送均未执行；
+  父图0、有限exec在途0，03:49:50Z监督即将到点。
+  原树/锁/备份/原失败/计数费用unknown/未决消息及旧暂停保持，
+  仅同0789/6a7a8a/review，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 03:40Z n15源PASS闭审提升，现代候选/图库存进入下一阶段
+
+- Rawls阶段二completed后关闭，SOURCE_PASS SHA
+  `dd9fb41df6eae97d49ede6dda9924b5a8e5179575fc404d94b6562ed134a89ce`，
+  51绑定/20正文/22题/1图；零新图，源两修正闭合，无源blocker。
+  原生窄提升/索引追加FIRST exit0，旧课程未重装订或重审。
+- adapt-prepare及现代作者FIRST exit0，候选SHA
+  `18a6982ddf0a6eaa9d06b1da1ddef3917419336ad1a0f178691acf570d0cc6cc`，
+  数学原式/混合248下标保持，仅自然枚举/行段及四真实概念边界。
+  Schrodinger `01a1fc30-3d84-7ec0-85bf-135ad010adf1`新隔离唯一
+  独审先零图文本，后续同审者独立图库存/候选检查；尚无TEXT_PASS。
+- Meitner图作者PHASE1实际1完整PNG观察，inventory SHA
+  `ebf80b25f82e530310a7158f183a874f9daa4b1c4e3d5cb656f4bfac29a07e21`，
+  12×18格/五清楚点支持，上部额外点和端点仍不确定；
+  授权同作者PHASE2仅一次上部窄裁片澄清，不重开整页/完整图，
+  不按公式补点。旧库存不覆盖，不把不确定或文件存在当图PASS。
+- 源PASS/提升/候选/库存实际字节留存SHA
+  `b9f31399184e1f8eaa8f9d673248422bdd1afde044735439cea31a82b77c66c1`。
+  现代最终/答案/选择/显示/N15提交推送未做；父图0、有限exec在途0，
+  下一监督03:49:50Z。原树/锁/备份/失败/unknown费用计数/
+  未决消息及旧暂停均保留，仅6a7a8a/review，无DB/合并部署/handoff。
+
+### 182-6 2026-11-21 03:36Z n15窄装订完成，源绑定和图30像素库存进行中
+
+- 单图30原生vectorize FIRST exit0，610×913，mismatch0.00016，
+  receipt SHA `dc4df3ed8a323903abdae4fa41b8f4562628f1417a4f4b2c7c8977017ead5b3d`；
+  没有全书矢量化、重裁旧图或用公式补不可见点。
+- 窄装订FIRST exit0，20正文块/22题232–253/1图，
+  assembly SHA `fdbb98438b59ab4d3209800270a13fdc93f2d145d18c7c4422708549b24df924`。
+  精确91#6起、97#1止，Raw N16完整页保留、未提升半课。
+  原生TOC提示只涉及复用的章/节祖先，不是要求重做N11/N14。
+- 同Rawls零新图阶段二在途，只绑定95/96受影响及装订；尚未SOURCE_PASS。
+  Meitner `01a1fc2c-5f14-7512-98c2-7f77cd4c33d9`是新隔离图作者，
+  先只打开实际fig30 PNG一次记录独立库存，待现代题面后制作，
+  不是新审者也不是图批准。父图0，有限exec在途0。
+- N15原生支持入口按22题/1图准备，尚未生产现代/答案/选择/显示；
+  源装订/支持/只读工单回执实际留存SHA
+  `d9a05b859a77e18f7e81fba635132329dfeb9210ac36e8e2f02aaf7f0f63ab2d`。
+  下一监督03:49:50Z；同树/仅6a7a8a/review，原树/锁/备份/
+  旧失败/计数费用/unknown/未决消息与旧暂停保持，无DB/合并部署/handoff。
+
+### 182-6 2026-11-21 03:30Z 同树接续，n15计行/字形受影响修复已收口
+
+- 当前官方0789树存在，沿用同树和原分支；本次无create/attach/init/
+  替代聊天/迁移重放/skill update。live Plane只读HTTP200，
+  直接人类6a/7a/8a恢复授权保持，旧暂停聊天和审者不动。
+- Rawls阶段一SOURCE_REVISE已收取：95两条中间小问标号行是像素事实，
+  96题248в末下标为n。95正文/方程/两labelrow及WRAP不改；
+  只修原生计行对既有中间标号行的漏计，受影响finalize exit0 28/28，
+  receipt SHA `8dad8545589774c972b8156037f4bc1195128261ae7bd2c6d78dd83121ca82be`。
+  96仅末下标k改n，保留混合下标原式，受影响finalize exit0 21/21，
+  receipt SHA `0fa6e384644a1f30ab335b7bbdc3e786be1add2e21f1d863c33d752d445a496c`。
+- 聚焦11测试10过1败；厚分数负例在精确修改前代码同样失败，
+  被调函数AST未变，不弱化断言、不修无关函数、不声称全绿。
+  受影响snapshot/诊断/失败/原码证明/恢复回执实际字节留存SHA
+  `1503a4fdf0ce402889c983a10bc36da5402b47d6f62d70826cadf3803a22c070`。
+- 接下来仅图30原生矢量化及窄装订，再同Rawls零新图阶段二绑定；
+  尚无SOURCE_PASS/现代/答案/选择/显示/N15提交推送。
+  父图0、有限exec在途0，下一监督03:49:50Z；
+  原树/锁/备份/首次失败/费用计数/unknown/未决消息均保留，
+  无DB/合并部署/正式handoff，finish=review。
+
+### 182-6 2026-11-21 03:14Z n15作者收取，95首计行失败保留，独立源审在途
+
+- Feynman完成并关闭，6新页各一次目视，作者result SHA
+  `64ac75e8de8db3df7fecb9503a949b89a45116bf39b2b508b32f3f90e7f1e3ae`，
+  未批准原稿snapshot SHA
+  `601c8788f7d0057392b61c794508bb1091a35c44f42d7decaf9167e9defe6f78`。
+  疑点保留：图30完整库存、232б下标、95两偏移labelrow、
+  245及247а不等号、248в下标；作者库存/疑点不是批准事实。
+- 新页92/93/94/96/97各FIRST finalize exit0，26/26/24/21/24行；
+  93原生fig-30精确框[1399,1151,586,889]，暂未vectorize/现代制作。
+  95FIRST exit1：块体28/印刷26，receipt SHA
+  `47c088115cdea304dc3cd121f432daae0cb7fde85f2bed10d248bb7731da5f32`。
+  不以删除公式或取消标记凑数；首轮md/json/audit三文件实际字节
+  snapshot SHA
+  `7119d40a35c0b6ee7d8711de7391d164dc6bf5f1a1cbf126a461edf4a703b239`。
+  原稿/首次失败/已过页回执实际字节留存SHA
+  `d238f2250b38a0e5746fb849d1ccd631f369078901cadb0fbf1ad453cee4a2f2`。
+- Rawls `01a1fc19-3a0a-7420-8b37-82f5e35a3d34`新隔离源独审
+  唯一在途，先6新页像素/字形/计行证据；95修复和装订待这些事实，
+  后续同审者零新图绑定，不重看91/88或已过页。N16确切边界97#1，
+  97完整raw保留但不提升半课；n15无SOURCE_PASS/装订/现代/答案/
+  选择/显示/commit-push。父图0、有限exec在途0。
+- 下一监督03:49:50Z，仅同0789/6a7a8a/review，原树/锁/备份/
+  失败/计数费用/未决消息和旧暂停全保留，unknown不清零，
+  无DB/合并部署/正式handoff/替代聊天/重复attach。
+
+### 182-6 2026-11-21 03:10Z 40分钟监督完成，n15源产物出现但未批准
+
+- 锚定03:09:50Z监督实际03:10:05.395Z，record SHA
+  `e219465bd6db04d3816901a3facf3e0e31bb37d0559e30675e9576469a51f1c5`；
+  1738回执引用/113已知非零或错误/3未知均是历史引用，不是唯一调用，
+  保留全部原回执、未知字节和费用，未清零。实际监督留存SHA
+  `aef4188129d6711917ab12ce67ddc9f87b50ad87fb99b367b841fb0dea84d178`。
+  下一锚定03:49:50Z，仍用原监督入口，不新建自动化或聊天。
+- n14当前HEAD/原分支确认的完整交付保持；
+  n15六个新页目录已见实际产物，尚未收取Feynman completed结果，
+  不把文件存在、等待或running标记当源批准。唯一源作者仍为
+  `01a1fc10-db3f-7be3-9376-c28c839cca0a`，父图0、有限exec在途0。
+  只待当前源作者实际结果再snapshot/finalize/窄装订/独立源审；
+  不重开旧页和旧PASS。仅当前0789/6a7a8a/review，
+  原树/锁/备份/失败/计数费用/未决消息及旧暂停保持，无DB/合并部署/handoff。
+
+### 182-6 2026-11-21 03:05Z n14整课推送确认，n15有源接续与范围修复
+
+- n14窄暂存/范围秘密检查/commit/push/远端确认均FIRST exit0；
+  510文件27341636字节，仅完整n14/源89至91/两索引追加/
+  实际证据/progress，旧索引条目未变、无半课或秘密。
+  当前HEAD及原分支远端确认均为
+  `0244e85536507e974d21133120e6398f215c2f82`；
+  push receipt SHA
+  `2ebf33dab184e203afd12feb3e14b32d0f8d3d88c63e0cad784e1f9a522e71d5`，
+  remote confirmation SHA
+  `73f28d567a6f81ece69275db5edc2cf8a88a288bd974d0c56bedbb83545093be`。
+  19源正文/9题9答案/18选择78选项/0图/52新截图完整离线PASS交付。
+- 未停在交付检查点：同树n15入口FIRST exit0，bootstrap SHA
+  `2d2cc8d5268f03fd6b0506b2f5f9de479dfc0e5ce2eabe9f69ac8d73befd1546`，
+  复用91三文件及88章节祖先实际批准，不重看/识别/finalize；
+  新页92至97按TOC推导。首次6页范围prepare exit1，原生限每次4页，
+  receipt SHA `57cc00dc61737b18e5668d945069752f061364139c0b69f896cc76461ed4c866`；
+  调用在页面生成前被拒绝，未修改工具。只拆92–95/96–97两段恢复，
+  均exit0，6新页准备完成；首失败及原计数保持。
+- Feynman `01a1fc10-db3f-7be3-9376-c28c839cca0a`新隔离源作者在途，
+  只转写6新页各一次、从91文字尾部续，不读91旧图；源作者不是批准。
+  保留97页N16原页边界碎片，只提升完整N15。源独审/装订/现代/
+  答案/选择/显示及N15交付未执行；父图0、有限exec在途0。
+- N14交付/N15入口/范围失败实际留存SHA
+  `bea9154aafa84b8b0a0b9aae5dd19691948f4154c4fbda9014290174f93ea938`，
+  6页准备实际字节41唯一48引用留存SHA
+  `7810eabe9de17956902b59690b1b73c2adc871f73ec5f6a9400c62a391bbbeb2`。
+  下一监督03:09:50Z，同0789/仅6a7a8a/review，原树/锁/备份/
+  失败/计数费用/未决消息和旧暂停保持，unknown不清零，
+  无create/attach/init/skill update/DB/合并部署/正式handoff。
+
 ### 182-6 2026-11-21 03:02Z n14完整离线PASS，窄提交待执行
 
 - Kepler末批实际4新图DISPLAY_PASS，completed/关闭后绑定；

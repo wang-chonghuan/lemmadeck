@@ -1,0 +1,84 @@
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+from PIL import Image
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+BASE = ROOT / ".tmp/resume182-6-8a-n15-0789"
+OUT = BASE / "figure-author-FIRST/phase2-intrinsic-recovery2"
+PDF = ROOT / "ssot-resources/soviet10year-textbooks/sources/soviet10years/8a 苏联十年制学校数学教材 代数 八年级.pdf"
+PREFIX = OUT / "embedded-page93"
+CROP = OUT / "upper-localization-roi.png"
+BOX = (800, 650, 1250, 1000)
+
+
+def sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+assert sha256(PDF) == "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071"
+assert sha256(BASE / "figure-author-FIRST/phase2-crop-recovery1/result.record") == "12a0baa1a061ffaeed09fc5bef0a0da402a6a350ce77411fd48896eced339b83"
+assert not list(OUT.glob("embedded-page93*")), "Preserve any existing extraction."
+assert not CROP.exists(), "Preserve any existing ROI."
+
+metadata_command = ["pdfimages", "-f", "93", "-l", "93", "-list", str(PDF)]
+metadata = subprocess.run(metadata_command, capture_output=True, text=True, check=True)
+command = ["pdfimages", "-f", "93", "-l", "93", "-png", str(PDF), str(PREFIX)]
+extraction = subprocess.run(command, capture_output=True, text=True, check=True)
+embedded_files = sorted(OUT.glob("embedded-page93-*.png"))
+assert len(embedded_files) == 1, embedded_files
+embedded = embedded_files[0]
+
+with Image.open(embedded) as source:
+    source.load()
+    assert source.size == (1504, 2176)
+    crop = source.crop(BOX)
+    crop.save(CROP, format="PNG")
+    source_rgb = source.convert("RGB")
+    source_bytes = source_rgb.tobytes()
+    stride = source.width * 3
+    expected = b"".join(
+        source_bytes[y * stride + BOX[0] * 3:y * stride + BOX[2] * 3]
+        for y in range(BOX[1], BOX[3])
+    )
+    with Image.open(CROP) as saved:
+        saved.load()
+        assert saved.size == (450, 350)
+        assert saved.convert("RGB").tobytes() == expected
+        record = {
+            "status": "INTRINSIC_ROI_PIXEL_IDENTITY_VERIFIED",
+            "pdf": {"path": str(PDF), "sha256": sha256(PDF)},
+            "metadataCommand": metadata_command,
+            "metadataStdout": metadata.stdout,
+            "extractionCommand": command,
+            "extractionReturncode": extraction.returncode,
+            "extractionStdout": extraction.stdout,
+            "extractionStderr": extraction.stderr,
+            "embeddedPageImage": {
+                "path": str(embedded),
+                "sha256": sha256(embedded),
+                "sizePx": list(source.size),
+                "mode": source.mode,
+                "contextImageViews": 0,
+            },
+            "roi": {
+                "path": str(CROP),
+                "sha256": sha256(CROP),
+                "boxXYXY": list(BOX),
+                "sizePx": list(saved.size),
+                "savedRgbPixelsEqualOriginalRowSlices": True,
+                "resizedOrInterpolated": False,
+                "semanticFigureCropBoxClaim": False,
+            },
+            "visualViewsDuringVerification": 0,
+            "existingRecovery1ResultUnchanged": True,
+            "unknownBytesRecoveredOrNewOriginalInformationClaimed": False,
+        }
+
+(OUT / "extraction-roi-verification.record").write_text(
+    json.dumps(record, indent=2, ensure_ascii=True) + "\n", encoding="ascii"
+)
+print(json.dumps(record, indent=2, ensure_ascii=True))

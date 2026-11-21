@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n15-0789';
+const receipt = `${base}/stages/source-finalize95-FIRST/receipt.record`;
+assert.equal(JSON.parse(fs.readFileSync(receipt)).returncode, 1);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const target = `${base}/finalize95-failure-FIRST`;
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+const entries = ['page.md', 'page.json', 'audit.json'].map(name => {
+  const source = `ssot-resources/soviet10year-textbooks/artifacts/8a/pages/0095/${name}`;
+  const bytes = fs.readFileSync(source);
+  const output = `${target}/${name}.record`;
+  fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o444 });
+  assert.equal(sha(fs.readFileSync(output)), sha(bytes));
+  return { source: path.resolve(source), path: path.resolve(output),
+    sha256: sha(bytes), bytes: bytes.length };
+});
+const record = {
+  status: 'ACTUAL_FIRST_FAILED_OUTPUT_BYTES_PRESERVED_NOT_CONTENT_APPROVAL',
+  book: '8a', lesson: 'alg8-c3-s2-n15', entries,
+  firstReceipt: { path: path.resolve(receipt), sha256: sha(fs.readFileSync(receipt)) },
+  unknownHistoricalBytesRecovered: false, imagesViewed: 0, oldPassReruns: 0,
+  databaseWrites: 0, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+};
+const output = `${target}/snapshot.record`;
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.resolve(output), sha256: sha(fs.readFileSync(output)) }));

@@ -1,0 +1,117 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck'
+const out = path.dirname(fileURLToPath(import.meta.url))
+const require = createRequire(path.join(root, '.agents/skills/package.json'))
+const { chromium } = require('playwright-core')
+const svgPath = path.join(out, 'render-FIRST/fig-30.svg')
+const specPath = path.join(out, 'fig-30.spec.json')
+const pngPath = path.join(out, 'fig-30.preview640.png')
+const reportPath = path.join(out, 'preview640.record')
+const sha256 = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+assert(!fs.existsSync(pngPath) && !fs.existsSync(reportPath), 'Preserve existing previews.')
+const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+const render = JSON.parse(fs.readFileSync(path.join(out, 'render-FIRST/fig-30.render.json'), 'utf8'))
+assert.equal(render.spec.sha256, sha256(specPath))
+assert.equal(render.output.svg.sha256, sha256(svgPath))
+assert.equal(render.status, 'pass')
+const executablePath = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  process.env.CHROME_PATH,
+  chromium.executablePath(),
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].filter(Boolean).find(file => fs.existsSync(file))
+assert(executablePath, 'Use an existing browser only.')
+const browser = await chromium.launch({ executablePath, headless: true })
+let measurements
+try {
+  const page = await browser.newPage({
+    viewport: { width: 640, height: 960 },
+    deviceScaleFactor: 1,
+  })
+  await page.setContent(`
+    <!doctype html><meta charset="utf-8">
+    <style>
+      :root {
+        --ld-figure-ink: #15201f;
+        --ld-figure-muted: #4c5a58;
+        --ld-figure-accent: #15201f;
+        --ld-figure-accent-soft: #8a9795;
+        --ld-figure-grid: #e3eae9;
+        --ld-figure-paper: #ffffff;
+      }
+      html,body { margin:0; background:white; width:640px; }
+      svg { display:block; width:640px; height:auto; }
+    </style>
+    ${fs.readFileSync(svgPath, 'utf8')}
+  `)
+  await page.evaluate(() => document.fonts.ready)
+  measurements = await page.evaluate(() => {
+    const svg = document.querySelector('svg')
+    const rect = svg.getBoundingClientRect()
+    const texts = [...svg.querySelectorAll('text')].map(node => {
+      const matrix = node.getScreenCTM()
+      const box = node.getBoundingClientRect()
+      return {
+        id: node.getAttribute('data-label-id'),
+        text: node.textContent,
+        px: Number(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        inside: box.left >= 0 && box.top >= 0 && box.right <= 640 && box.bottom <= 960,
+      }
+    })
+    const idNodes = [...svg.querySelectorAll('[id]')]
+    const countGrid = direction => idNodes.filter(node =>
+      new RegExp(`_ld-fig30-grid-${direction}-\\d+$`).test(node.id)
+    ).length
+    const visiblePointIds = idNodes.filter(node =>
+      /_ld-fig30-point-\d+$/.test(node.id) &&
+      node.getAttribute('display') !== 'none'
+    ).map(node => node.id)
+    return {
+      svgWidthPx: rect.width,
+      svgHeightPx: rect.height,
+      texts,
+      measuredMinTextPx: Math.min(...texts.map(item => item.px)),
+      gridVerticalLines: countGrid('v'),
+      gridHorizontalLines: countGrid('h'),
+      visiblePointIds,
+      dashedGuideRendered: [...svg.querySelectorAll('[id]')].some(node =>
+        node.id.endsWith('_ld-fig30-guide') && node.hasAttribute('stroke-dasharray')
+      ),
+      externalImages: svg.querySelectorAll('image').length,
+    }
+  })
+  assert.equal(measurements.svgWidthPx, 640)
+  assert.equal(measurements.svgHeightPx, 960)
+  assert(measurements.measuredMinTextPx >= spec.display.minTextPx)
+  assert(measurements.texts.every(item => item.inside))
+  assert.equal(measurements.gridVerticalLines, 13)
+  assert.equal(measurements.gridHorizontalLines, 19)
+  assert.equal(measurements.visiblePointIds.length, 5)
+  assert(measurements.dashedGuideRendered)
+  assert.equal(measurements.externalImages, 0)
+  await page.screenshot({ path: pngPath, animations: 'disabled' })
+} finally {
+  await browser.close()
+}
+
+const record = {
+  recordType: 'author-preview640-measurements',
+  status: 'MEASURED_NOT_APPROVED',
+  spec: { path: specPath, sha256: sha256(specPath) },
+  svg: { path: svgPath, sha256: sha256(svgPath) },
+  png: { path: pngPath, sha256: sha256(pngPath) },
+  measurements,
+  mode: 'local static SVG at actual 640px CSS width',
+  svgManuallyModified: false,
+  originalInformationRecovered: false,
+  authorOrIndependentApprovalIssued: false,
+  imagePayloadsEmittedDuringMeasurement: 0,
+}
+fs.writeFileSync(reportPath, `${JSON.stringify(record, null, 2)}\n`)
+console.log(JSON.stringify(record, null, 2))

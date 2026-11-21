@@ -1,0 +1,168 @@
+import copy
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+OUT = Path(__file__).resolve().parent
+PORTABLE = OUT / "portable"
+FIRST_SPEC = OUT / "fig-30.spec.json"
+FIRST_RENDER = OUT / "render-FIRST/fig-30.render.json"
+FIRST_SVG = OUT / "render-FIRST/fig-30.svg"
+FIRST_PNG = OUT / "render-FIRST/fig-30.png"
+PREVIEW = OUT / "fig-30.preview640.png"
+NEW_SOURCE_PATH = "ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-30.png"
+
+
+def sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def binding(path):
+    return {"path": str(path), "sha256": sha256(path)}
+
+
+def write_json(path, data):
+    assert not path.exists(), f"Preserve existing output: {path}"
+    path.write_text(
+        json.dumps(data, indent=2, ensure_ascii=True) + "\n", encoding="ascii"
+    )
+
+
+pins = {
+    FIRST_SPEC: "ac73aa29130bb44c87b2370c3f10fc13c9bc134b89afaf620c60fbd41d193bbf",
+    FIRST_RENDER: "818b73391b06319b2b99b223d18a932fd31678d41bbfa27b1e0c9816a26b2d05",
+    FIRST_SVG: "f17c49a494bbfe84cb7f8fcdf6d8988d5684586b060d551887c8b71d14b796d9",
+    FIRST_PNG: "ac45b619723a7de4f2ff901776e9f10e07ece0b4794f4f6aa8606ef0e7d360d1",
+    PREVIEW: "61981715bad241adb1f4262775083bcdb87efb38fd9a4e2ef14dd366e0c4d2ef",
+    OUT.parent / "inventory.record": "ebf80b25f82e530310a7158f183a874f9daa4b1c4e3d5cb656f4bfac29a07e21",
+    OUT.parent / "result.record": "665be45c049b6a7a6474f0b34b8bc1e9354ef2f032aa80da4233da7ac88ab17c",
+    OUT.parent / "phase2-crop-recovery1/result.record": "12a0baa1a061ffaeed09fc5bef0a0da402a6a350ce77411fd48896eced339b83",
+}
+for file, expected in pins.items():
+    assert sha256(file) == expected, file
+preserved_files = sorted(
+    file for directory in (OUT / "render-FIRST", OUT / "validate-FIRST")
+    for file in directory.iterdir() if file.is_file()
+)
+preserved_files += list(pins)
+preserved_files += [
+    OUT / "preview640.record",
+    OUT / "intrinsic-upper-inventory.record",
+    OUT / "extraction-roi-verification.record",
+]
+before = {str(file): sha256(file) for file in set(preserved_files)}
+assert not PORTABLE.exists(), "Never overwrite a portable binding attempt."
+PORTABLE.mkdir()
+first = json.loads(FIRST_SPEC.read_text(encoding="utf-8"))
+portable = copy.deepcopy(first)
+old_source = Path(first["source"]["image"]["path"])
+new_source = ROOT / NEW_SOURCE_PATH
+expected_source_sha = first["source"]["image"]["sha256"]
+assert old_source.read_bytes() == new_source.read_bytes()
+assert sha256(old_source) == sha256(new_source) == expected_source_sha
+portable["source"]["image"]["path"] = NEW_SOURCE_PATH
+first_without_path = copy.deepcopy(first)
+portable_without_path = copy.deepcopy(portable)
+del first_without_path["source"]["image"]["path"]
+del portable_without_path["source"]["image"]["path"]
+assert first_without_path == portable_without_path
+assert ".tmp" not in json.dumps(portable, ensure_ascii=True)
+portable_spec = PORTABLE / "fig-30.spec.json"
+write_json(portable_spec, portable)
+assert json.loads(portable_spec.read_text(encoding="utf-8")) == portable
+
+command = [
+    "python3",
+    str(ROOT / ".agents/skills/ld-s10y-image/scripts/validate_spec.py"),
+    str(portable_spec),
+    "--stage", "draft", "--json",
+]
+validation = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+(PORTABLE / "validate.stdout.txt").write_text(validation.stdout, encoding="utf-8")
+(PORTABLE / "validate.stderr.txt").write_text(validation.stderr, encoding="utf-8")
+validation_receipt = {
+    "command": command,
+    "returncode": validation.returncode,
+    "spec": binding(portable_spec),
+    "nativeRendererExecuted": False,
+    "newImageViews": 0,
+}
+write_json(PORTABLE / "validate.receipt.record", validation_receipt)
+assert validation.returncode == 0, validation.stdout + validation.stderr
+
+original_report = json.loads(FIRST_RENDER.read_text(encoding="utf-8"))
+assert original_report["spec"]["sha256"] == sha256(FIRST_SPEC)
+assert original_report["output"]["svg"]["sha256"] == sha256(FIRST_SVG)
+bound_report = copy.deepcopy(original_report)
+bound_report["spec"] = binding(portable_spec)
+bound_report["output"]["svg"]["path"] = str(FIRST_SVG)
+original_without_bindings = copy.deepcopy(original_report)
+bound_without_bindings = copy.deepcopy(bound_report)
+for report in (original_without_bindings, bound_without_bindings):
+    del report["spec"]["path"]
+    del report["spec"]["sha256"]
+    del report["output"]["svg"]["path"]
+assert original_without_bindings == bound_without_bindings
+assert bound_report["output"]["svg"]["sha256"] == sha256(FIRST_SVG)
+portable_render = PORTABLE / "fig-30.render.json"
+write_json(portable_render, bound_report)
+assert all(sha256(Path(file)) == digest for file, digest in before.items())
+record = {
+    "status": "PROVENANCE_PATH_ONLY_BINDING_NOT_NEW_RENDER",
+    "portableSpec": binding(portable_spec),
+    "portableRender": binding(portable_render),
+    "firstSpec": binding(FIRST_SPEC),
+    "firstActualNativeReport": binding(FIRST_RENDER),
+    "firstActualNativeReceipt": binding(OUT / "render-FIRST/receipt.record"),
+    "firstSvg": binding(FIRST_SVG),
+    "firstPng": binding(FIRST_PNG),
+    "preview640": binding(PREVIEW),
+    "oldSource": binding(old_source),
+    "newDurableSource": binding(new_source),
+    "strictChecks": {
+        "specsExactlyEqualAfterDeletingOnlySourceImagePath": True,
+        "onlySpecSemanticDifference": "source.image.path",
+        "oldAndNewSourceBytesExactlyEqual": True,
+        "oldAndNewSourceHashesEqualExpected": True,
+        "portableSpecContainsNoTmpReference": True,
+        "renderMetadataDiffOnlySpecPathSpecShaAndSvgPath": True,
+        "renderSpecShaMatchesPortableSpec": True,
+        "firstSvgPngPreviewBytesUnchanged": True,
+        "allPreservedFirstAndHistoricalHashesUnchanged": True,
+    },
+    "metadataProvenance": "FIRST native render evidence reused by strict structural and same-source byte equality, with only locator/hash bindings updated. Inherited machine status is not a new run or an independent visual approval.",
+    "validation": {
+        "receipt": binding(PORTABLE / "validate.receipt.record"),
+        "stdout": binding(PORTABLE / "validate.stdout.txt"),
+        "stderr": binding(PORTABLE / "validate.stderr.txt"),
+        "returncode": validation.returncode,
+    },
+    "preservedBindings": [{"path": file, "sha256": digest} for file, digest in sorted(before.items())],
+    "nativeRerendersThisBinding": 0,
+    "newImageViewsThisBinding": 0,
+    "actualCumulativeImageViews": 6,
+    "newVisualPassOrReviewIssued": False,
+    "recordReviewExecuted": False,
+    "promotionPerformed": False,
+    "paidCalls": 0,
+    "hostTokens": "unknown",
+    "historicalTokens": "unknown",
+    "totalCost": "unknown",
+    "historicalCost": "unknown",
+    "unknownMetricsNotReset": True,
+}
+write_json(OUT / "portable-binding.record", record)
+print(json.dumps({
+    "status": record["status"],
+    "strictChecks": record["strictChecks"],
+    "portableSpec": record["portableSpec"],
+    "portableRender": record["portableRender"],
+    "bindingRecord": binding(OUT / "portable-binding.record"),
+    "validationReturncode": validation.returncode,
+    "rerenders": 0,
+    "newViews": 0,
+    "cumulativeViews": 6,
+}, indent=2))

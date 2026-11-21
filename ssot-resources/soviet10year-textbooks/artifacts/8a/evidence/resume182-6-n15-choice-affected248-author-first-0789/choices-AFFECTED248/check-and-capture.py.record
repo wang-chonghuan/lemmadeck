@@ -1,0 +1,203 @@
+"""Audit the affected-only copy and capture one native validation execution."""
+
+from collections import Counter
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+FIRST = ROOT / ".tmp/resume182-6-8a-n15-0789/choices-FIRST"
+OUT = ROOT / ".tmp/resume182-6-8a-n15-0789/choices-AFFECTED248"
+EXPECTED = "46ea72805d9faf80477dd297860d5e2c721f04446103d5c65a675423c44d0784"
+
+
+def file_hash(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def canonical_hash(value):
+    data = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def save(name, value):
+    with (OUT / name).open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, indent=2, ensure_ascii=True)
+        stream.write("\n")
+
+
+def first_byte_inventory():
+    # Byte hashes only; no interpretation of other FIRST evidence or content.
+    return {
+        path.relative_to(FIRST).as_posix(): file_hash(path)
+        for path in sorted(FIRST.rglob("*"))
+        if path.is_file()
+    }
+
+
+def differences(old, new, path="$"):
+    if type(old) is not type(new):
+        return [{"path": path, "old": old, "new": new}]
+    if isinstance(old, dict):
+        result = []
+        for key in sorted(old.keys() | new.keys()):
+            if key not in old or key not in new:
+                result.append({"path": f"{path}.{key}", "old": old.get(key), "new": new.get(key)})
+            else:
+                result.extend(differences(old[key], new[key], f"{path}.{key}"))
+        return result
+    if isinstance(old, list):
+        if len(old) != len(new):
+            return [{"path": path, "old": old, "new": new}]
+        result = []
+        for index, (left, right) in enumerate(zip(old, new)):
+            result.extend(differences(left, right, f"{path}[{index}]"))
+        return result
+    return [] if old == new else [{"path": path, "old": old, "new": new}]
+
+
+if Path.cwd().resolve() != ROOT:
+    raise SystemExit("Wrong cwd; no work executed.")
+if len(sys.argv) != 2 or sys.argv[1] not in ("baseline", "validate"):
+    raise SystemExit("Use baseline or validate.")
+if file_hash(FIRST / "draft.json") != EXPECTED:
+    raise SystemExit("FIRST draft no longer matches the authorized original hash.")
+
+if sys.argv[1] == "baseline":
+    save("FIRST-byte-baseline.record", {
+        "record_type": "FIRST-byte-only-baseline",
+        "created_utc": datetime.now(timezone.utc).isoformat(),
+        "files": first_byte_inventory(),
+        "content_interpretation": "Only authorized seed/draft/source-solutions are read as input; all other FIRST files are byte-hashed only.",
+    })
+    print("Saved FIRST byte-only baseline; no FIRST file was written.")
+    raise SystemExit(0)
+
+baseline = load(OUT / "FIRST-byte-baseline.record")
+before = first_byte_inventory()
+original = load(FIRST / "draft.json")
+candidate = load(OUT / "draft.json")
+seed = load(OUT / "seed.json")
+changed = differences(original, candidate)
+old_questions = {question["id"]: question for question in original["questions"]}
+new_questions = {question["id"]: question for question in candidate["questions"]}
+old_coverage = {row["source_number"]: row for row in original["coverage"]}
+new_coverage = {row["source_number"]: row for row in candidate["coverage"]}
+affected_index = next(index for index, question in enumerate(original["questions"])
+                      if question["id"] == "q248-mixed-difference")
+coverage_index = next(index for index, row in enumerate(original["coverage"])
+                      if row["source_number"] == "248")
+allowed_prefix = f"$.questions[{affected_index}]."
+allowed_coverage = f"$.coverage[{coverage_index}].reason"
+question_checks = [
+    {"question_id": identity, "deepEqual": old_questions[identity] == new_questions.get(identity)}
+    for identity in old_questions if identity != "q248-mixed-difference"
+]
+coverage_checks = [
+    {"source_number": identity, "deepEqual": old_coverage[identity] == new_coverage.get(identity)}
+    for identity in old_coverage if identity != "248"
+]
+checks = {
+    "seed_byte_identical": (OUT / "seed.json").read_bytes() == (FIRST / "seed.json").read_bytes(),
+    "FIRST_all_files_byte_unchanged_before_validation": before == baseline["files"],
+    "question_identity_order_equal": list(old_questions) == list(new_questions),
+    "coverage_identity_order_equal": list(old_coverage) == list(new_coverage),
+    "all_39_unaffected_questions_deepEqual": len(question_checks) == 39 and all(row["deepEqual"] for row in question_checks),
+    "all_21_unaffected_coverage_deepEqual": len(coverage_checks) == 21 and all(row["deepEqual"] for row in coverage_checks),
+    "other_top_level_fields_deepEqual": all(original[key] == candidate.get(key) for key in original if key not in ("questions", "coverage")) and original.keys() == candidate.keys(),
+    "only_authorized_difference_paths": bool(changed) and all(row["path"].startswith(allowed_prefix) or row["path"] == allowed_coverage for row in changed),
+    "affected_stem_unchanged": old_questions["q248-mixed-difference"]["view"]["stem"] == new_questions["q248-mixed-difference"]["view"]["stem"],
+    "affected_source_solution_unchanged": old_questions["q248-mixed-difference"]["intent"]["source_solution"] == new_questions["q248-mixed-difference"]["intent"]["source_solution"],
+    "affected_coverage_relationship_unchanged": old_coverage["248"]["question_ids"] == new_coverage["248"]["question_ids"],
+    "affected_coverage_omissions_unchanged": old_coverage["248"]["omitted_tasks"] == new_coverage["248"]["omitted_tasks"],
+}
+save("unaffected-deepEqual.record", {
+    "record_type": "affected-only-structural-difference-evidence",
+    "original_draft_file_sha256": file_hash(FIRST / "draft.json"),
+    "candidate_draft_file_sha256": file_hash(OUT / "draft.json"),
+    "original_draft_canonical_sha256": canonical_hash(original),
+    "candidate_draft_canonical_sha256": canonical_hash(candidate),
+    "checks": checks,
+    "unaffected_question_checks": question_checks,
+    "unaffected_coverage_checks": coverage_checks,
+    "differences": changed,
+    "semantic_outcome": "Not asserted; deep equality is scope evidence, not semantic approval.",
+})
+if not all(checks.values()):
+    raise SystemExit("Affected-only scope check failed; native validation not executed.")
+
+targets = [OUT / f"validate.first.{suffix}" for suffix in ("stdout", "stderr", "executionreceipt")]
+if any(target.exists() for target in targets):
+    raise SystemExit("Validation evidence exists; refusing to repeat or overwrite.")
+command = [
+    "python3", ".agents/skills/ld-s10y-choice/scripts/validate.py", "--repo", ".",
+    "--seed", ".tmp/resume182-6-8a-n15-0789/choices-AFFECTED248/seed.json",
+    "--draft", ".tmp/resume182-6-8a-n15-0789/choices-AFFECTED248/draft.json",
+]
+started = datetime.now(timezone.utc).isoformat()
+clock = time.monotonic()
+result = subprocess.run(command, cwd=ROOT, capture_output=True, check=False)
+elapsed = time.monotonic() - clock
+ended = datetime.now(timezone.utc).isoformat()
+for target, content in zip(targets[:2], (result.stdout, result.stderr)):
+    with target.open("xb") as stream:
+        stream.write(content)
+after = first_byte_inventory()
+save("FIRST-byte-final.record", {
+    "record_type": "FIRST-byte-preservation-after-validation",
+    "created_utc": ended,
+    "files": after,
+    "all_FIRST_bytes_unchanged": after == baseline["files"],
+    "differences": differences(baseline["files"], after),
+})
+save("validate.first.executionreceipt", {
+    "record_type": "Pasteur-affected248-native-validation",
+    "cwd": str(ROOT),
+    "argv": command,
+    "started_utc": started,
+    "ended_utc": ended,
+    "elapsed_seconds": elapsed,
+    "exit_code": result.returncode,
+    "stdout_path": targets[0].relative_to(ROOT).as_posix(),
+    "stderr_path": targets[1].relative_to(ROOT).as_posix(),
+    "stdout_sha256": hashlib.sha256(result.stdout).hexdigest(),
+    "stderr_sha256": hashlib.sha256(result.stderr).hexdigest(),
+    "artifacts": {
+        name: {"path": (OUT / name).relative_to(ROOT).as_posix(),
+               "file_sha256": file_hash(OUT / name),
+               "canonical_sha256": canonical_hash(load(OUT / name))}
+        for name in ("seed.json", "draft.json", "affected-source-and-design.record")
+    },
+    "counts": {
+        "selected_sources": len(seed["exercises"]),
+        "questions": len(candidate["questions"]),
+        "options": sum(len(question["view"]["options"]) for question in candidate["questions"]),
+        "modes": dict(Counter(question["view"]["mode"] for question in candidate["questions"])),
+        "seed_figures": len(seed["figures"]),
+        "new_figures": len(candidate["new_figures"]),
+        "actual_image_views": 0,
+    },
+    "FIRST_all_files_byte_unchanged": after == baseline["files"],
+    "scope_checks_all_true": all(checks.values()),
+    "semantic_review": "Pending same independent reviewer's affected reassessment. No review supplied to validator.",
+    "failures_this_affected_run": [] if result.returncode == 0 else [{"stage": "native_validation", "exit_code": result.returncode}],
+    "cost": {"value": None, "status": "unknown"},
+    "tokens": {"input": None, "output": None, "status": "unknown"},
+    "paid_calls": 0,
+    "model_service_calls": 0,
+})
+sys.stdout.buffer.write(result.stdout)
+sys.stderr.buffer.write(result.stderr)
+print(f"native_exit_code={result.returncode}", flush=True)
+print(f"difference_paths={len(changed)}; unaffected_questions=39; unaffected_coverage=21", flush=True)
+print(f"FIRST_all_bytes_unchanged={after == baseline['files']}", flush=True)
+raise SystemExit(result.returncode if after == baseline["files"] else 2)

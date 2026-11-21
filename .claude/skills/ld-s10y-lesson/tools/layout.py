@@ -712,13 +712,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             strong_rows = [
                 (x, y) for x, y in strong_rows if y - x + 1 >= 0.3 * typical_h
             ]
-            if count == 3 and len(strong_rows) == 2:
+            middle_label = (
+                len(strong_rows) == 2
+                and strong_rows[0][1] + 1 <= strong_rows[1][0] - 1
+                and _offset_system_label_band(
+                    ink, strong_rows[0][1] + 1, strong_rows[1][0] - 1,
+                    glyph_h, bounds_list,
+                )
+            )
+            if middle_label:
+                count = 3
+            elif count == 3 and len(strong_rows) == 2:
                 count = 2
             system_rows = _fraction_system_row_count(ink, a, b, glyph_h, strong_rows)
             if system_rows is not None:
-                count = system_rows
+                count = system_rows + int(middle_label)
             if (
                 system_rows is None
+                and not middle_label
                 and (
                     count == 2 and _single_fraction_row(ink, a, b, typical_h)
                     or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
@@ -743,8 +754,6 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     out = []
     page_h = ink.shape[0]
     for a, b in merged:
-        if _offset_system_label_band(ink, a, b, glyph_h, bounds_list):
-            continue
         xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
         band_h = b - a + 1
         band_w = int(xs[-1] - xs[0] + 1)

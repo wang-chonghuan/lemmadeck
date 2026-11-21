@@ -1,0 +1,84 @@
+"""Capture exactly one native structural check, without semantic review."""
+
+from collections import Counter
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+OUT = ROOT / ".tmp/resume182-6-8a-n15-0789/choices-FIRST"
+if Path.cwd().resolve() != ROOT:
+    raise SystemExit("Wrong working directory; no validation executed.")
+
+for name in ("seed.json", "draft.json", "source-solutions.record", "author-result.record"):
+    if not (OUT / name).is_file():
+        raise SystemExit(f"Missing completed author artifact: {name}")
+
+targets = [OUT / f"validate.first.{suffix}" for suffix in ("stdout", "stderr", "executionreceipt")]
+if any(path.exists() for path in targets):
+    raise SystemExit("First-run evidence exists; refusing to repeat or overwrite it.")
+
+command = [
+    "python3", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+    "--repo", ".",
+    "--seed", ".tmp/resume182-6-8a-n15-0789/choices-FIRST/seed.json",
+    "--draft", ".tmp/resume182-6-8a-n15-0789/choices-FIRST/draft.json",
+]
+started = datetime.now(timezone.utc).isoformat()
+clock = time.monotonic()
+result = subprocess.run(command, cwd=ROOT, capture_output=True, check=False)
+elapsed = time.monotonic() - clock
+ended = datetime.now(timezone.utc).isoformat()
+for target, content in zip(targets[:2], (result.stdout, result.stderr)):
+    with target.open("xb") as stream:
+        stream.write(content)
+
+draft = json.loads((OUT / "draft.json").read_text(encoding="utf-8"))
+seed = json.loads((OUT / "seed.json").read_text(encoding="utf-8"))
+receipt = {
+    "record_type": "native-first-structural-validation-execution",
+    "cwd": str(ROOT),
+    "argv": command,
+    "started_utc": started,
+    "ended_utc": ended,
+    "elapsed_seconds": elapsed,
+    "exit_code": result.returncode,
+    "stdout_path": targets[0].relative_to(ROOT).as_posix(),
+    "stderr_path": targets[1].relative_to(ROOT).as_posix(),
+    "stdout_sha256": hashlib.sha256(result.stdout).hexdigest(),
+    "stderr_sha256": hashlib.sha256(result.stderr).hexdigest(),
+    "artifacts": {
+        name: {
+            "path": (OUT / name).relative_to(ROOT).as_posix(),
+            "file_sha256": hashlib.sha256((OUT / name).read_bytes()).hexdigest(),
+        }
+        for name in ("seed.json", "draft.json", "source-solutions.record")
+    },
+    "counts": {
+        "selected_sources": len(seed["exercises"]),
+        "questions": len(draft["questions"]),
+        "options": sum(len(question["view"]["options"]) for question in draft["questions"]),
+        "modes": dict(Counter(question["view"]["mode"] for question in draft["questions"])),
+        "seed_figures": len(seed["figures"]),
+        "new_figures": len(draft["new_figures"]),
+        "actual_image_views": 0,
+    },
+    "semantic_review": "Pending independent review; no review passed to native validator.",
+    "cost": {"value": None, "status": "unknown"},
+    "tokens": {"input": None, "output": None, "status": "unknown"},
+    "paid_calls": 0,
+    "model_service_calls": 0,
+}
+with targets[2].open("x", encoding="utf-8") as stream:
+    json.dump(receipt, stream, indent=2, ensure_ascii=True)
+    stream.write("\n")
+sys.stdout.buffer.write(result.stdout)
+sys.stderr.buffer.write(result.stderr)
+print(f"native_exit_code={result.returncode}", flush=True)
+print(f"receipt={targets[2]}", flush=True)
+raise SystemExit(result.returncode)

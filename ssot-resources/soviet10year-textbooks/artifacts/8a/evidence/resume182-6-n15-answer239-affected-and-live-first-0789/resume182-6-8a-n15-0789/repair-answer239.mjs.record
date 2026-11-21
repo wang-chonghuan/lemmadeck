@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n15-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const rejected = `${base}/answer-author-FIRST/answer-keys.json`;
+const firstReview = `${base}/answer-review-FIRST/result.record`;
+const prior = JSON.parse(fs.readFileSync(`${base}/answer-author-FIRST/result.record`));
+const review = JSON.parse(fs.readFileSync(firstReview));
+assert.equal(sha(fs.readFileSync(firstReview)), '8edea81a899f75ae9f03252577a348c22a9a8ef6647f3e3ecd27d9e93f482583');
+assert.equal(review.status, 'revise');
+assert.deepEqual(bind(rejected), review.answerKey);
+assert.deepEqual(bind(rejected), prior.answerKey);
+const original = JSON.parse(fs.readFileSync(rejected));
+const changed = structuredClone(original);
+const answer = changed.answers.find(item => String(item.exercise) === '239');
+assert.equal(answer.parts[2].expected[0], '121');
+assert.equal(answer.parts[2].label, 'b) c_1');
+assert.ok(answer.displayAnswer.includes('b) $c_1=121,d=-1$'));
+answer.displayAnswer = answer.displayAnswer.replace('b) $c_1=121,d=-1$', 'b) $c_1=120,d=-1$');
+answer.parts[2].expected[0] = '120';
+const unchanged = structuredClone(changed);
+const check = unchanged.answers.find(item => String(item.exercise) === '239');
+check.displayAnswer = check.displayAnswer.replace('b) $c_1=120,d=-1$', 'b) $c_1=121,d=-1$');
+check.parts[2].expected[0] = '121';
+assert.deepEqual(unchanged, original);
+const target = `${base}/answer-author-AFFECTED239`;
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+const candidate = `${target}/answer-keys.json`;
+fs.writeFileSync(candidate, `${JSON.stringify(changed, null, 2)}\n`, { flag: 'wx' });
+const record = {
+  ...prior,
+  status: 'AFFECTED_239_REPAIRED_NOT_APPROVED',
+  answerKey: bind(candidate),
+  priorAuthor: bind(`${base}/answer-author-FIRST/result.record`),
+  rejectedCandidate: bind(rejected),
+  firstReview: bind(firstReview),
+  changedFields: ['/answers/7/displayAnswer', '/answers/7/parts/2/expected/0'],
+  reasoning: 'd=(47-74)/(74-47)=-1; c_1=74-46*(-1)=120. c_47=74 and c_74=47.',
+  unchangedContentCompared: true,
+  contentRepairs: 1,
+  parentImageViews: 0,
+};
+const output = `${target}/result.record`;
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ result: bind(output), candidate: bind(candidate) }));

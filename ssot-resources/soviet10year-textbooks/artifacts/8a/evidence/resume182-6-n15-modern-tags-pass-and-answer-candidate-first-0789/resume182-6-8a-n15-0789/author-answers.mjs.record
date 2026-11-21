@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n15-0789';
+const id = 'alg8-c3-s2-n15';
+const modern = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}`;
+const template = `${base}/answers-FIRST/8a/modern-us-neutral/lessons/${id}/answer-keys.template.json`;
+const bind = file => ({ path: path.resolve(file),
+  sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') });
+const exercises = JSON.parse(fs.readFileSync(`${modern}/exercises.json`));
+assert.equal(exercises.status, 'ready');
+assert.deepEqual(exercises.exercises.map(item => String(item.number)), Array.from({ length: 22 }, (_, i) => String(232 + i)));
+assert.ok(exercises.exercises.every(item => item.figure_refs.length === 0));
+assert.ok(exercises.exercises.find(item => String(item.number) === '248').text.includes('$b_{k+1}-b_n$'));
+const data = JSON.parse(fs.readFileSync(template));
+assert.equal(data.answers.length, 22);
+const history = `${base}/answer-author-FIRST`;
+assert.ok(!fs.existsSync(history));
+fs.mkdirSync(history);
+fs.writeFileSync(`${history}/before.record`, fs.readFileSync(template), { flag: 'wx' });
+const part = (label, expected, judge = 'numeric') => ({ label, judge, expected: [expected] });
+const list = (values, judge = 'numeric') => values.map((value, index) => part(`${'abcdef'[index]})`, value, judge));
+const pairs = values => values.flatMap((pair, index) =>
+  [part(`${'abcd'[index]}) a_1`, pair[0]), part(`${'abcd'[index]}) d`, pair[1])]);
+const result = (displayAnswer, parts = []) => ({ displayAnswer, parts, grading: parts.length ? 'auto' : 'ungraded' });
+const values = {
+  '232': result('由 $a_j=a_1+(j-1)d$，得到 a) $a_1+2d$；b) $a_1+25d$；c) $a_1+259d$；d) $a_1+(m-1)d$；e) $a_1+md$；f) $a_1+(2m-1)d$。',
+    list(['a_1+2d', 'a_1+25d', 'a_1+259d', 'a_1+(m-1)d', 'a_1+md', 'a_1+(2m-1)d'], 'expression')),
+  '233': result('a) $c_5=32$；b) $c_{101}=320$；c) $c_n=20+3(n-1)=3n+17$。',
+    [part('a) c_5', '32'), part('b) c_{101}', '320'), part('c) c_n', '3n+17', 'expression')]),
+  '234': result('由 $a_n=a_1+(n-1)d$：a) $4$；b) $-24.2$；c) $-14$；d) $\\frac{109}{6}$。',
+    list(['4', '-24.2', '-14', '\\frac{109}{6}'])),
+  '235': result('a) $d=4$，$a_{15}=59,a_{37}=147,a_n=4n-1$；b) $d=4$，$a_{15}=51,a_{37}=139,a_n=4n-9$。',
+    [part('a) a_{15}', '59'), part('a) a_{37}', '147'), part('a) a_n', '4n-1', 'expression'),
+      part('b) a_{15}', '51'), part('b) a_{37}', '139'), part('b) a_n', '4n-9', 'expression')]),
+  '236': result('a) $a_1+a_{30}=2.8+11.5=14.3$；b) $a_2+a_{29}=3.1+11.2=14.3$；c) $a_5+a_{26}=4+10.3=14.3$。等距离的首尾两项和相同。',
+    list(['14.3', '14.3', '14.3'])),
+  '237': result('由 $a_1=a_n-(n-1)d$：a) $23$；b) $25$；c) $297$；d) $-0.3$。',
+    list(['23', '25', '297', '-0.3'])),
+  '238': result('a) $d=(92-2)/9=10$；b) $d=(2+7)/15=0.6$。', list(['10', '0.6'])),
+  '239': result('用 $d=(c_j-c_i)/(j-i)$ 和 $c_1=c_i-(i-1)d$：a) $c_1=21,d=1.5$；b) $c_1=121,d=-1$；c) $c_1=38,d=-2$；d) $c_1=-2.5,d=0.5$。',
+    pairs([['21', '1.5'], ['121', '-1'], ['38', '-2'], ['-2.5', '0.5']]).map(item => ({ ...item, label: item.label.replace('a_1', 'c_1') }))),
+  '240': result('a) 加上两个端点共有8项、7个间隔，$d=(35-7)/7=4$，插入 $11,15,19,23,27,31$。b) 共10项、9个间隔，$d=(16-1)/9=\\frac53$，插入 $\\frac83,\\frac{13}3,6,\\frac{23}3,\\frac{28}3,11,\\frac{38}3,\\frac{43}3$。',
+    [['11', '15', '19', '23', '27', '31'], ['\\frac{8}{3}', '\\frac{13}{3}', '6', '\\frac{23}{3}', '\\frac{28}{3}', '11', '\\frac{38}{3}', '\\frac{43}{3}']]
+      .flatMap((items, i) => items.map((value, j) => part(`${'ab'[i]}) 第${j + 1}个插入数`, value)))),
+  '241': result('a) $a_{41}=17+10\\times2.5=42$，$a_{47}=17+16\\times2.5=57$。b) $d=30$，$a_5=-100-2\\times30=-160$，$a_{15}=-100+8\\times30=140$。',
+    [part('a) a_{41}', '42'), part('a) a_{47}', '57'), part('b) a_5', '-160'), part('b) a_{15}', '140')]),
+  '242': result('a) $2a_1+6d=42,7d=21$，所以 $a_1=12,d=3$。b) $2a_1+14d=-0.2,2a_1+12d=2.6$，所以 $d=-1.4,a_1=9.7$。c) $a_1+2d=12$，故 $a_3=12,a_2=12-d$；由 $12(12-d)=60$ 得 $d=7,a_1=-2$。d) $a_3=a_1+2d=1$，$a_2=1-d,a_4=1+d$；$(1-d)(1+d)=-8$ 得 $d=3$ 或 $d=-3$。两组解为 $(a_1,d)=(-5,3)$ 或 $(7,-3)$。'),
+  '243': result('$x_n=1.7+0.3(n-1)=0.3n+1.4$。a) $n=(32-1.4)/0.3=102$；b) $n=(46.7-1.4)/0.3=151$。若 $x_n=62.7$，则 $n=\\frac{613}{3}$，不是正整数，因此62.7不是这个数列的项。'),
+  '244': result('$a_n=3+7(n-1)=7n-4$。a) $143=7\\times21-4$，是第21项。b) 解 $7n-4=551$ 得 $n=\\frac{555}{7}$，不是正整数，所以551不是这个数列的项。'),
+  '245': result('$y_n=-19.5+1.5(n-1)=1.5n-21$。$y_n\\geqslant0$ 当且仅当 $n\\geqslant14$；负项的序号是 $1,2,\\ldots,13$。'),
+  '246': result('a) $a_n=5.48-0.18n$，负项须 $n>\\frac{274}{9}$；第31项为第1个负项，值为 $-0.1$，第30项为 $0.08$。b) $b_n=0.75n-11.15$，正项须 $n>\\frac{223}{15}$；第15项为第1个正项，值为 $0.1$，第14项为 $-0.65$。',
+    [part('a) 第1个负项', '-0.1'), part('b) 第1个正项', '0.1')]),
+  '247': result('$u_n=-53+4(n-1)=4n-57$。a) $4n-57\\geqslant103$，所以 $n\\geqslant40$。b) $4n-57<200$，所以 $n<\\frac{257}{4}$；正整数序号为 $1,2,\\ldots,64$。'),
+  '248': result('a) $b_2-b_1=7-5=2$；b) $b_{10}-b_9=23-21=2$；c) 按印刷题面中的两个下标，$b_{k+1}-b_n=(2k+5)-(2n+3)=2(k+1-n)$。任意相邻两项之差 $b_{j+1}-b_j=2$，因此数列是等差数列，首项为5，公差为2。没有把 c) 的 $n$ 静默改为 $k$。'),
+  '249': result('a) $y_1=-3,d=2$；b) $y_1=-1,d=-3$；c) $y_1=6,d=5$；d) $y_1=3,d=-7$。每一种通项都形如 $y_n=pn+q$，相邻两项之差恒为 $p$，因此都是等差数列。'),
+  '250': result('原式有定义时 $a,b,c\\ne0$。$\\frac{9a^5b^{-1}}{c^2}\\div\\frac{6a^4c^{-2}}{b^2}=\\frac96a^{5-4}b^{-1+2}c^{-2+2}=\\frac32ab$。',
+    [part('化简结果', '\\frac{3}{2}ab', 'expression')]),
+  '251': result('a) $0.04^{-2}=5^4,125^4=5^{12},0.2^{-1}=5$，原式 $=5^{17}/(4\\times5^{16})=\\frac54$。b) $(1/9)^{-2}=3^4,(1/21)^8=3^{-8}7^{-8},49=7^2$，原式 $=3^{-10+4+8}7^{-5+8-2}=3^2\\times7=63$。',
+    list(['\\frac{5}{4}', '63'])),
+  '252': result('$n=5$ 时为 $96/16=6$；$n=7$ 时为 $96/64=1.5$；$n=-1$ 时为 $96\\times4=384$。',
+    [part('n=5', '6'), part('n=7', '1.5'), part('n=-1', '384')]),
+  '253': result('a) $2^{n+4}$；b) $2^{n+2}$；c) $2^{2n+15}$；d) $2^{2n-4}$；e) $2^n$；f) $2^1$。依次把 $4,8,16,32$ 写成 $2$ 的幂，再用同底数幂的乘除法则。'),
+};
+for (const answer of data.answers) {
+  const value = values[String(answer.exercise)];
+  assert.ok(value);
+  Object.assign(answer, value, { source: answer.bookRaw ? 'book' : 'derived' });
+}
+const candidate = `${history}/answer-keys.json`;
+fs.writeFileSync(candidate, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+const file = `${history}/result.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'ANSWERS_AUTHORED_NOT_APPROVED', book: '8a', lesson: id, edition: 'modern-us-neutral',
+  inputs: [template, `${modern}/lesson.json`, `${modern}/exercises.json`, `${modern}/figures.json`].map(bind),
+  answerKey: bind(candidate), independentReviewerRequired: true, parentImageViews: 0,
+  figuresInWrittenTasks: 0, exactKeys: 0, oldPassReruns: 0, databaseWrites: 0,
+  finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

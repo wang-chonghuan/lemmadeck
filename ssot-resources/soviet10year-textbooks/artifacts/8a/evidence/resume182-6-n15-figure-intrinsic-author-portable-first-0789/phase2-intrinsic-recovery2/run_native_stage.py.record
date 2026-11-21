@@ -1,0 +1,56 @@
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+OUT = Path(__file__).resolve().parent
+SPEC = OUT / "fig-30.spec.json"
+TOOLS = ROOT / ".agents/skills/ld-s10y-image/scripts"
+stage = sys.argv[1]
+assert stage in {"validate-FIRST", "render-FIRST", "validate-REPAIR1", "render-REPAIR1"}
+destination = OUT / stage
+assert not destination.exists(), "Never overwrite a recorded native attempt."
+destination.mkdir()
+spec_bytes = SPEC.read_bytes()
+(destination / "spec.snapshot.json").write_bytes(spec_bytes)
+
+if stage.startswith("validate-"):
+    command = [
+        "python3", str(TOOLS / "validate_spec.py"),
+        str(SPEC), "--stage", "draft", "--json",
+    ]
+else:
+    validation = OUT / stage.replace("render-", "validate-") / "receipt.record"
+    receipt = json.loads(validation.read_text(encoding="utf-8"))
+    assert receipt["returncode"] == 0, "Draft validation must precede rendering."
+    assert receipt["specSha256"] == hashlib.sha256(spec_bytes).hexdigest()
+    command = [
+        "node", str(TOOLS / "render_spec.mjs"),
+        "--spec", str(SPEC),
+        "--svg", str(destination / "fig-30.svg"),
+        "--png", str(destination / "fig-30.png"),
+        "--report", str(destination / "fig-30.render.json"),
+    ]
+
+result = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+(destination / "stdout.txt").write_text(result.stdout, encoding="utf-8")
+(destination / "stderr.txt").write_text(result.stderr, encoding="utf-8")
+receipt = {
+    "stage": stage,
+    "command": command,
+    "workdir": str(ROOT),
+    "returncode": result.returncode,
+    "specSha256": hashlib.sha256(spec_bytes).hexdigest(),
+    "authorApprovalIssued": False,
+    "firstAttemptOrFailureNeverOverwritten": True,
+}
+(destination / "receipt.record").write_text(
+    json.dumps(receipt, indent=2) + "\n", encoding="ascii"
+)
+print(result.stdout, end="")
+print(result.stderr, end="", file=sys.stderr)
+print(json.dumps(receipt, indent=2))
+sys.exit(result.returncode)

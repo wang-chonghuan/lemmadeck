@@ -1,0 +1,52 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+BASE = ROOT / ".tmp/resume182-6-8a-n15-0789"
+OUT = BASE / "figure-author-FIRST/phase2-crop-recovery1"
+SOURCE = BASE / "source/8a/pages/0093/figures/fig-30.png"
+CROP = OUT / "fig-30-upper-exact.png"
+
+
+def sha256(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+assert sha256(SOURCE) == "984d895d101e4d13dfbe365c7d2c305dd4e8d686a3f308ca439e5ab3c0dbe6bd"
+assert sha256(BASE / "figure-author-FIRST/inventory.record") == "ebf80b25f82e530310a7158f183a874f9daa4b1c4e3d5cb656f4bfac29a07e21"
+assert sha256(BASE / "figure-author-FIRST/result.record") == "665be45c049b6a7a6474f0b34b8bc1e9354ef2f032aa80da4233da7ac88ab17c"
+assert not CROP.exists(), "Preserve any existing recovery output."
+
+with Image.open(SOURCE) as source:
+    source.load()
+    assert source.size == (610, 913)
+    crop = source.crop((0, 0, 610, 300))
+    crop.save(CROP, format="PNG")
+    with Image.open(CROP) as saved:
+        saved.load()
+        assert saved.size == (610, 300)
+        assert saved.mode == source.mode
+        expected = source.tobytes()[:len(saved.tobytes())]
+        assert saved.tobytes() == expected
+        if source.mode == "P":
+            assert saved.getpalette() == source.getpalette()
+        record = {
+            "status": "EXACT_TOP_CROP_PIXEL_IDENTITY_VERIFIED",
+            "source": {"path": str(SOURCE), "sha256": sha256(SOURCE)},
+            "crop": {"path": str(CROP), "sha256": sha256(CROP)},
+            "cropBoxXYXY": [0, 0, 610, 300],
+            "sizePx": [610, 300],
+            "mode": source.mode,
+            "savedCropBytesEqualSourceTop300Rows": True,
+            "visualViewsDuringMachineVerification": 0,
+            "historicalInventoryAndFirstResultHashesMatched": True,
+        }
+
+(OUT / "crop-verification.record").write_text(
+    json.dumps(record, indent=2) + "\n", encoding="ascii"
+)
+print(json.dumps(record, indent=2))

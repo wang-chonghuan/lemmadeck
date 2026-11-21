@@ -1,0 +1,127 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [delivered, sourceReviewPath, sourceReviewHash, textReviewPath, textReviewHash] = process.argv.slice(2);
+const prior = '.tmp/resume182-6-8a-n15-0789';
+const next = '.tmp/resume182-6-8a-n16-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c3-s2-n16';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => ({ path: path.resolve(file),
+  sha256: sha(fs.readFileSync(file)), bytes: fs.statSync(file).size });
+const read = file => JSON.parse(fs.readFileSync(file));
+assert.match(delivered, /^[a-f0-9]{40}$/u);
+assert.equal(entry(sourceReviewPath).sha256, sourceReviewHash);
+assert.equal(entry(textReviewPath).sha256, textReviewHash);
+const sourceReview = read(sourceReviewPath);
+assert.equal(sourceReview.status, 'SOURCE_PASS');
+assert.equal(read(textReviewPath).status, 'TEXT_PASS');
+const receiptNames = ['delivery-check-FIRST', 'delivery-commit-FIRST', 'delivery-push-FIRST', 'delivery-remote-confirm-FIRST'];
+for (const name of receiptNames) assert.equal(read(`${prior}/stages/${name}/receipt.record`).returncode, 0);
+assert.equal(fs.readFileSync(`${prior}/stages/delivery-remote-confirm-FIRST/stdout.txt`, 'utf8').trim(),
+  `${delivered}\trefs/heads/codex/STEMROBIN-182-textbooks`);
+const head = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' });
+assert.equal(head.status, 0);
+assert.equal(head.stdout.trim(), delivered);
+const offlineFile = `${root}/editions/modern-us-neutral/lessons/alg8-c3-s2-n15/offline-display.json`;
+const offline = read(offlineFile), selection = read(`${prior}/observations/selection.record`);
+assert.equal(offline.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(offline.coverage.pending, 0);
+assert.equal(offline.coverage.newlyObserved, selection.selected.length);
+const observers = selection.batches.map(batch => {
+  const file = `${prior}/observations/bindings/${batch.id}.record`;
+  assert.equal(read(file).agentCompletedAndClosed, true);
+  assert.equal(read(file).status, 'DISPLAY_PASS');
+  return entry(file);
+});
+const parent = read(`${prior}/parent-ready.record`);
+assert.equal(entry(parent.upstreamUsage.path).sha256, parent.upstreamUsage.sha256);
+const usageFile = `${prior}/display-FIRST/runtime-FIRST/usage-FIRST.json`;
+const usage = read(usageFile);
+const upstream = {
+  schema: 'stemrobin-182/upstream-usage-preservation@1',
+  cumulative: usage.cumulative, previous: parent.upstreamUsage,
+  currentEvidence: [usageFile, `${prior}/source-author/result.record`, sourceReviewPath, textReviewPath,
+    ...Object.values(parent.approvals).flatMap(group => group.receipts.map(item => item.path)),
+    offlineFile].map(entry).concat(observers),
+  knownLocalDisplay: { ...usage.displayCumulative, imagesObserved: selection.selected.length },
+  sourceAndOtherReviewUsage: 'Actual receipt bindings, not inferred from display counters.',
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+  databaseWrites: 0, finish: 'review',
+};
+for (const [key, value] of Object.entries(read(parent.upstreamUsage.path).cumulative)) {
+  if (value === null || value === 'unknown')
+    assert.ok(upstream.cumulative[key] === null || upstream.cumulative[key] === 'unknown');
+}
+const files = ['page.md', 'page.json', 'audit.json'].map(name => {
+  const bound = entry(`${root}/pages/0097/${name}`);
+  assert.equal(sourceReview.bindings.find(item => item.path === bound.path)?.sha256, bound.sha256);
+  return bound;
+});
+const oldBootstrap = read(`${prior}/bootstrap.record`);
+const sectionAncestor = entry(`${root}/pages/0088/page.json`);
+assert.equal(sectionAncestor.sha256, oldBootstrap.reusedSectionAncestor.sha256);
+const page = read(`${root}/pages/0097/page.json`);
+assert.equal(page.blocks[0].kind, 'h3');
+assert.match(page.blocks[0].lines.join('\n'), /^16\.\s/u);
+const objects = [];
+const visit = value => {
+  if (!value || typeof value !== 'object') return;
+  if (!Array.isArray(value)) objects.push(value);
+  for (const child of Object.values(value)) visit(child);
+};
+const toc = 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json';
+visit(read(toc));
+const target = objects.find(item => item.id === id);
+const right = objects.find(item => item.id === 'alg8-c3-s3-n17');
+assert.equal(page.meta.printed_page, target.page);
+const offset = page.meta.page - page.meta.printed_page;
+const newPages = Array.from({ length: right.page + offset - page.meta.page }, (_, i) => page.meta.page + i + 1);
+assert.deepEqual(newPages, [98, 99, 100, 101, 102]);
+assert.ok(!fs.existsSync(next));
+assert.ok(!fs.existsSync(`${root}/lessons/${id}`));
+for (const number of newPages) assert.ok(!fs.existsSync(`${root}/pages/${String(number).padStart(4, '0')}/page.json`));
+fs.mkdirSync(next);
+const copied = [];
+const adapt = code => code.replaceAll('resume182-6-8a-n15-0789', 'resume182-6-8a-n16-0789')
+  .replaceAll('resume182-6-n15-', 'resume182-6-n16-')
+  .replaceAll('alg8-c3-s2-n15', id)
+  .replaceAll('[92, 93, 94, 95, 96, 97]', '[98, 99, 100, 101, 102]');
+for (const name of ['run-stage.mjs', 'retain.mjs', 'snapshot-source-author.mjs', 'promote-source.mjs']) {
+  const source = `${prior}/${name}`, output = `${next}/${name}`;
+  fs.writeFileSync(output, adapt(fs.readFileSync(source, 'utf8')), { flag: 'wx' });
+  copied.push({ source: entry(source), output: entry(output) });
+}
+const assembler = adapt(fs.readFileSync(`${prior}/assemble.py`, 'utf8'))
+  .replaceAll('reusedPage91', 'reusedPage97')
+  .replace('[91, *bootstrap["scope"]["newPhysicalPages"]]', '[97, *bootstrap["scope"]["newPhysicalPages"]]')
+  .replaceAll('== "15"', '== "16"').replaceAll('!= "15"', '!= "16"');
+fs.writeFileSync(`${next}/assemble.py`, assembler, { flag: 'wx' });
+copied.push({ source: entry(`${prior}/assemble.py`), output: entry(`${next}/assemble.py`) });
+fs.writeFileSync(`${next}/upstream-usage.record`, `${JSON.stringify(upstream, null, 2)}\n`, { flag: 'wx' });
+const file = `${next}/bootstrap.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'NEXT_SOURCE_READY_FOR_NEW_PAGE_PREPARATION_NOT_CONTENT_APPROVAL',
+  time: new Date().toISOString(), ticket: 'STEMROBIN-182', book: '8a', lesson: id, workdir: repo, copied,
+  deliveredPriorLesson: { commit: delivered,
+    receipts: receiptNames.map(name => entry(`${prior}/stages/${name}/receipt.record`)) },
+  upstreamUsage: entry(`${next}/upstream-usage.record`),
+  reusedPage97: { approval: entry(sourceReviewPath), files,
+    sourceWork: path.resolve(`${prior}/source/8a/pages/0097`),
+    sourcePixelsAndRecognitionRerun: false, nativeFinalizationRerun: false },
+  reusedSectionAncestor: sectionAncestor,
+  inheritedSectionApproval: oldBootstrap.reusedPage91.approval,
+  toc: { file: entry(toc), target, next: right, offset },
+  scope: { start: 'p0097#1', sectionAncestor: 'p0088#1', newPhysicalPages: newPages,
+    rightBoundary: 'Locate the exact following section/N17 heading on physical102; preserve raw, exclude incomplete lesson.',
+    preserveNextLessonFragments: true, promoteOnlyCompleteN16: true },
+  previousFailuresLocksBackupsPendingMessagesAndUnknownUsagePreserved: true,
+  unknownHistoricalBytesRecovered: false, parentImageViews: 0, createOrAttachCalls: 0,
+  databaseWrites: 0, merges: 0, deployments: 0, finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ output: entry(file), newPages }));
