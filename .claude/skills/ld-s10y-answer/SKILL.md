@@ -231,7 +231,9 @@ node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
 
 1. `grading=ungraded` → `free`
 2. 任一小问 `judge=expression` → `math`
-3. 全部小问 `judge=numeric` 且 expected 均为普通数字 → 先试 `grid-point`，不成则 `number`
+3. 全部小问 `judge=numeric` 且 expected 均为普通数字 → 先试 `grid-point`，不成则 `number`；
+   expected 含 cap2 已校验的分式、根式等非普通数字 → `math`，沿用数值等价判据，
+   不标记为混合判据或 `needsAuthoring`
 4. 全部小问 `judge=exact` → `math`；其 expected 已由 cap2 的 MathLive 实际编辑序列化
    gate 验证，不得再用 `needsAuthoring` 代替判分可靠性
 5. 其余 → `math` + `needsAuthoring`

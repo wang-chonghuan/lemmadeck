@@ -226,6 +226,12 @@ def derive(exercise: dict, answer: dict, figures: dict, spec_dir: Path) -> dict:
             ],
         )
 
+    if judges == {"numeric"}:
+        return spec(
+            "math",
+            "全部小问 judge=numeric，expected 含非普通数字：使用数学输入框，沿用 cap2 的数值等价判据",
+        )
+
     if judges == {"exact"}:
         return spec(
             "math",

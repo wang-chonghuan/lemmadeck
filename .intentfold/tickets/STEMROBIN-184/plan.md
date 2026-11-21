@@ -1,5 +1,33 @@
 # 开发路线
 
+## 184-6 numeric interaction classification repaired (2026-11-21)
+
+Continued within the existing delegated repair scope; no setup or passed-stage
+replay. Actual code and ready cap2 keys confirmed the classification gap.
+Before77/78 drafts retained once under10c/evidence/
+nov21-1846-numeric-interaction-fix/before; old three flags remain historical.
+First focused reproduction1905de exited1 with four expected failures:
+three actual keys and one mixed-serialization numeric alternative case.
+All eight other cases passed; the original receipt/stdout/stderr are preserved.
+
+Added one6-line all-numeric/nonplain math branch after the unchanged
+plain-number/grid path; synced cap3 rule3 only. No answer, judge, expected,
+normalization, source, figure or choice changes. Same12tests2af79c nowexit0;
+existing product input projection70a937 three tests exit0.
+Official affected-only prepare3bfffe and finalize0211ab onceeach exit0:
+77=10 and78=4 ready interactions, zero needsAuthoring.
+
+Proof787e39 SHAe5006ee77dc1d8bf7a002eaa3463f8954be2748317d5593647c8aa6adabbc2e5:
+only35/43/45 derivation/flag changed; all consumed view fields unchanged.
+Six existing offline display reports reused, no screenshot or image reopen.
+Sixteen relevant source/answer/figure/choice input files byte-equal HEAD.
+Five actual stage receipts and streams retained once; no whole old package copy.
+This closes the local metadata gap, not three new mathematical answers.
+Supplement total19files/165interactions; completedLessonDelta0.
+All unrelated holds/UNKNOWN/charges74 and parent24/24 preserved.
+No DB, paid call, new chat/worktree, merge, deployment or formal handoff.
+Narrow repair commit/push pending, then continue other missing sourced stages.
+
 ## 184-6 existing 9c interaction supplement ready (2026-11-21)
 
 Second 10c batch committedf1d85654f31c97be9d4588c277666e5f59ef0bcc;
