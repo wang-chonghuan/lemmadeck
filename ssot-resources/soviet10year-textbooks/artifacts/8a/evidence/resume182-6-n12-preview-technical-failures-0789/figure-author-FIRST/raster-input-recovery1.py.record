@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+"""Prepare the font-only recovery raster input without changing native SVG."""
+
+from pathlib import Path
+import json
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == ROOT
+OWN = ROOT / ".tmp/resume182-6-8a-n12-0789/figure-author-FIRST"
+audit = json.loads((OWN / "font-audit.record").read_text())
+assert audit["status"] == "pass"
+font = audit["selectedHeaderFont"]
+assert font["path"] == "/System/Library/Fonts/SFNS.ttf"
+assert font["bothGlyphsPresent"]
+svg = ET.parse(OWN / "tbl-p0081-01.svg").getroot()
+fallback = re.compile(r"var\(--ld-figure-(?:ink|muted|accent|accentSoft|grid|paper),\s*(#[0-9a-fA-F]{3,8})\)")
+header_count = 0
+for node in svg.iter():
+    for key, value in list(node.attrib.items()):
+        node.set(key, fallback.sub(lambda match: match.group(1), value))
+    if node.attrib.get("data-label-id") == "r2-c1-label":
+        assert "".join(node.itertext()) == "a\u2099"
+        node.set("font-family", '".SF NS"')
+        node.set("id", "preview-recovery-r2-c1")
+        header_count += 1
+assert header_count == 1
+sys.stdout.write(ET.tostring(svg, encoding="unicode"))

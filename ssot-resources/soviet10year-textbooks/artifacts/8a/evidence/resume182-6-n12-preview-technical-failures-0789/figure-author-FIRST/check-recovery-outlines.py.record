@@ -1,0 +1,19 @@
+#!/usr/bin/env python3
+"""Check nonempty recovered header outlines as text evidence, not image viewing."""
+
+import json
+import sys
+import xml.etree.ElementTree as ET
+
+svg = ET.fromstring(sys.stdin.read())
+headers = [node for node in svg.iter() if node.attrib.get("id") == "preview-recovery-r2-c1"]
+assert len(headers) == 1, "Recovered header must survive Resvg text-to-path conversion."
+paths = [node for node in headers[0].iter() if node.tag.endswith("}path")]
+assert paths and all(node.attrib.get("d", "").strip() for node in paths)
+assert not any(node.tag.endswith("}text") for node in headers[0].iter())
+print(json.dumps({
+    "status": "pass", "recoveredHeaderOutlinePaths": len(paths),
+    "nonempty": True, "missingGlyphsExcludedByExplicitFontCmapAudit": True,
+    "method": "Structured XML inspection of Resvg's text-to-outline representation; no additional raster or image view.",
+    "imageViewsAdded": 0,
+}))

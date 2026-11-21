@@ -1,0 +1,162 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const assert = require('node:assert/strict');
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const input = path.join(root, '.tmp/resume182-6-8a-n12-0789/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s1-n12');
+const output = __dirname;
+const pins = {
+  'lesson.template.json': '5412235c97d6fd534099a63ccab344f887fd6c4a3aac0b6e432f992ac2faa5a3',
+  'exercises.template.json': '2f2c3458446f3f48b10ed18e8559463171a3cb1bdadea0be5ff68b278a4984e6',
+};
+for (const [name, pin] of Object.entries(pins)) {
+  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(input, name))).digest('hex'), pin);
+}
+const ex = JSON.parse(fs.readFileSync(path.join(input, 'exercises.template.json'), 'utf8'));
+const candidate = path.join(output, 'answer-keys.json');
+const bytes = fs.readFileSync(candidate);
+const doc = JSON.parse(bytes);
+assert.equal(doc.schema, 'ld-s10y-answer/lesson-answers@1');
+assert.equal(doc.book, '8a');
+assert.equal(doc.lesson, 'alg8-c3-s1-n12');
+assert.equal(doc.edition, 'modern-us-neutral');
+assert.equal(doc.status, 'draft');
+assert.equal(ex.count, 14);
+assert.deepEqual(doc.answers.map(a => a.exercise), ex.exercises.map(e => e.number));
+assert.equal(new Set(doc.answers.map(a => a.exercise)).size, 14);
+assert(ex.exercises.every(e => e.figure_refs.length === 0 && e.figures.length === 0));
+assert(!fs.existsSync(path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/8a/answers.json')));
+
+const expectedAuto = {
+  '207': [['numeric', '17'], ['numeric', '32'], ['expression', '3k+2'], ['expression', '3k+5']],
+  '208': [['numeric', '405'], ['numeric', '10005'], ['expression', 'k^2+5'], ['expression', 'k^2+14k+54'], ['expression', '4k^2+5']],
+  '210': [['numeric', '23'], ['numeric', '100']],
+  '215': [['numeric', '11'], ['numeric', '32']],
+  '216': [['numeric', '4'], ['numeric', '9']],
+};
+for (const answer of doc.answers) {
+  assert.equal(answer.source, 'derived');
+  assert(!Object.hasOwn(answer, 'bookRaw'));
+  assert(!Object.hasOwn(answer, 'prompt'));
+  assert(!Object.hasOwn(answer, 'figureEvidence'));
+  assert.equal(typeof answer.displayAnswer, 'string');
+  assert(answer.displayAnswer.trim().length > 0);
+  assert(!/[\u0400-\u04ff]/u.test(answer.displayAnswer));
+  if (Object.hasOwn(expectedAuto, answer.exercise)) {
+    assert.equal(answer.grading, 'auto');
+    assert.deepEqual(answer.parts.map(p => [p.judge, p.expected[0]]), expectedAuto[answer.exercise]);
+    assert.deepEqual(answer.parts.map(p => p.label), answer.parts.map((p, i) => String.fromCharCode(97 + i) + ')'));
+    assert(answer.parts.every(p => p.expected.length === 1 && p.judge !== 'exact'));
+    for (const p of answer.parts) {
+      if (p.judge === 'numeric') assert(Number.isFinite(Number(p.expected[0])));
+    }
+  } else {
+    assert.equal(answer.grading, 'ungraded');
+    assert.deepEqual(answer.parts, []);
+  }
+}
+
+const by = Object.fromEntries(doc.answers.map(a => [a.exercise, a]));
+assert(by['205'].displayAnswer.includes('\u82e5\u81ea\u7136\u6570\u4e0d\u542b0'));
+assert(by['205'].displayAnswer.includes('\u82e5\u81ea\u7136\u6570\u542b0'));
+assert(by['209'].displayAnswer.includes('1\\leq n\\leq5'));
+assert(by['209'].displayAnswer.includes('\u5176\u4ed6\u516c\u5f0f\u4e5f\u6709\u6548'));
+assert(by['210'].displayAnswer.includes('c_n=4n-1'));
+assert(!by['210'].displayAnswer.includes('4_n'));
+assert(by['213'].displayAnswer.includes('\u7b2c2\u9879\u548c\u7b2c15\u9879'));
+assert(by['213'].displayAnswer.includes('\u7b2c8\u9879\u548c\u7b2c9\u9879'));
+assert(by['217'].displayAnswer.includes('\\mathrm{dm}^2'));
+
+const ns = [1, 2, 3, 4, 5];
+assert.deepEqual(Array.from({ length: 100 }, (_, i) => i + 10).filter(n => /^[12]{2}$/.test(String(n))), [11, 12, 21, 22]);
+assert.deepEqual(Array.from({ length: 10 }, (_, i) => 10 - i), [10, 9, 8, 7, 6, 5, 4, 3, 2, 1]);
+assert.deepEqual(ns.map(n => 4 * n), [4, 8, 12, 16, 20]);
+assert.deepEqual(ns.map(n => 4 * (n - 1)), [0, 4, 8, 12, 16]);
+assert.deepEqual(ns.map(n => 4 * n - 3), [1, 5, 9, 13, 17]);
+assert.deepEqual(ns.map(n => 4 * n - 2), [2, 6, 10, 14, 18]);
+
+const sequences = [
+  n => 3 * n - 7, n => Math.abs(4 - 2 * n), n => 1 / n, n => (n + 1) / n,
+  n => 2 ** (n - 1), n => 0.5 * 3 ** n, n => 7 * (-1) ** n, n => (1 + (-1) ** n) / 2,
+];
+const wanted = [
+  [-4, -1, 2, 5, 8], [2, 0, 2, 4, 6], [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5],
+  [2, 3 / 2, 4 / 3, 5 / 4, 6 / 5], [1, 2, 4, 8, 16],
+  [1.5, 4.5, 13.5, 40.5, 121.5], [-7, 7, -7, 7, -7], [0, 1, 0, 1, 0],
+];
+sequences.forEach((f, i) => assert.deepEqual(ns.map(f), wanted[i]));
+
+assert.equal(3 * 5 + 2, 17);
+assert.equal(3 * 10 + 2, 32);
+assert.equal(20 ** 2 + 5, 405);
+assert.equal(100 ** 2 + 5, 10005);
+for (let k = 1; k <= 50; k++) {
+  assert.equal(3 * (k + 1) + 2, 3 * k + 5);
+  assert.equal((k + 7) ** 2 + 5, k * k + 14 * k + 54);
+  assert.equal((2 * k) ** 2 + 5, 4 * k * k + 5);
+}
+const finiteFormula = [n => 2 * n, n => 2 * n - 1, n => 3 * n, n => n * n, n => 1 / n, n => n / (n + 1)];
+const finiteWanted = [
+  [2, 4, 6, 8, 10], [1, 3, 5, 7, 9], [3, 6, 9, 12, 15], [1, 4, 9, 16, 25],
+  [1, 1 / 2, 1 / 3, 1 / 4, 1 / 5], [1 / 2, 2 / 3, 3 / 4, 4 / 5, 5 / 6],
+];
+finiteFormula.forEach((f, i) => assert.deepEqual(ns.map(f), finiteWanted[i]));
+for (const n of ns) assert((n - 1) * (n - 2) * (n - 3) * (n - 4) * (n - 5) === 0);
+
+assert.equal(4 * 23 - 1, 91);
+assert.equal(4 * 100 - 1, 399);
+assert.deepEqual([-102, -132, 100].map(v => (6 - v) / 4), [27, 34.5, -23.5]);
+assert.equal((16 + 1) ** 2, 289);
+assert(31 ** 2 < 1000 && 32 ** 2 > 1000);
+for (const [value, roots] of [[-30, [2, 15]], [-72, [8, 9]], [-100, []]]) {
+  const all = Array.from({ length: 1000 }, (_, i) => i + 1).filter(n => n * n - 17 * n === value);
+  assert.deepEqual(all, roots);
+}
+assert.equal(17 ** 2 - 4 * 100, -111);
+for (let n = 1; n <= 1000; n++) {
+  const x = 3 * n + 2;
+  assert.equal(x >= 29, n >= 9);
+  assert.equal(x <= 47, n <= 15);
+  assert.equal(x > 100, n >= 33);
+  assert.equal(80 <= x && x <= 180, 26 <= n && n <= 59);
+  assert.equal(n * n > 100, n >= 11);
+  assert.equal(n * n > 1000, n >= 32);
+  assert.equal(n * n - n - 6 > 0, n >= 4);
+  assert.equal(-n * n + 8 * n < 0, n >= 9);
+}
+assert.equal(10 ** 2, 100);
+assert.equal(11 ** 2, 121);
+assert.equal(31 ** 2, 961);
+assert.equal(32 ** 2, 1024);
+assert.equal(3 ** 2 - 3 - 6, 0);
+assert.equal(4 ** 2 - 4 - 6, 6);
+assert.equal(-(8 ** 2) + 8 * 8, 0);
+assert.equal(-(9 ** 2) + 8 * 9, -9);
+assert.equal(60 ** 2 - 8 * 500, -400);
+assert.equal(60 ** 2 / 8, 450);
+assert.equal(60 ** 2 - 8 * 400, 400);
+assert.equal((60 + Math.sqrt(400)) / 2, 40);
+assert.equal((60 - Math.sqrt(400)) / 2, 20);
+assert.equal(40 + 20, 60);
+assert.equal(40 * 20 / 2, 400);
+
+console.log(JSON.stringify({
+  status: 'AUTHOR_ARITHMETIC_AND_STRUCTURE_CHECKS_COMPLETE_NOT_APPROVAL',
+  answerCount: doc.answers.length,
+  derived: 14,
+  auto: 5,
+  ungraded: 9,
+  autoParts: 15,
+  exactParts: 0,
+  imageViews: 0,
+  nativePrepareRuns: 0,
+  nativeFinalizeRuns: 0,
+  inputPinsStillMatch: true,
+  candidate: {
+    path: candidate,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length,
+  },
+}, null, 2));

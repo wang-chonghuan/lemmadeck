@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n12-0789/figure-author-FIRST';
+const recovery = process.argv[2] ?? 'recovery2';
+assert.ok(['recovery2', 'recovery3'].includes(recovery));
+const require = createRequire(path.resolve('.claude/skills/ld-s10y-lesson/package.json'));
+const { Resvg } = require('@resvg/resvg-js');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file),
+  sha256: sha(fs.readFileSync(file)), bytes: fs.statSync(file).size });
+const pins = ['firstcandidate/tbl-p0081-01.spec.json', 'tbl-p0081-01.svg',
+  'tbl-p0081-01.render.json', 'tbl-p0081-01.preview640.png'].map(name => bind(`${own}/${name}`));
+const audit = JSON.parse(fs.readFileSync(`${own}/font-audit.record`));
+assert.equal(audit.status, 'pass');
+assert.equal(audit.selectedHeaderFont.bothGlyphsPresent, true);
+assert.equal(bind(audit.selectedHeaderFont.path).sha256, audit.selectedHeaderFont.sha256);
+const fontFiles = ['/System/Library/Fonts/Supplemental/Arial.ttf',
+  '/System/Library/Fonts/Supplemental/Arial Bold.ttf', audit.selectedHeaderFont.path];
+assert.ok(fontFiles.every(file => fs.existsSync(file)));
+const font = { loadSystemFonts: false, fontFiles, defaultFontFamily: 'Arial',
+  sansSerifFamily: 'Arial' };
+const python = (filename, input) => {
+  const result = spawnSync('python3', [`${own}/${filename}`],
+    { encoding: 'utf8', input, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
+};
+const input = python(`raster-input-${recovery}.py`);
+const renderer = new Resvg(input.full, { background: '#ffffff', font });
+const header = new Resvg(input.header, { font });
+const outlineEvidence = python('check-recovery-outlines2.py',
+  JSON.stringify({ full: renderer.toString(), header: header.toString() }));
+assert.equal(outlineEvidence.status, 'pass');
+const target = `${own}/tbl-p0081-01.preview640.font-${recovery}.png`;
+assert.ok(!fs.existsSync(target));
+const raster = renderer.render();
+assert.equal(raster.width, 640);
+assert.equal(raster.height, 320);
+let darkPixels = 0, headerInkPixels = 0;
+for (let offset = 0; offset < raster.pixels.length; offset += 4) {
+  if (raster.pixels[offset] >= 180 || raster.pixels[offset + 1] >= 180
+    || raster.pixels[offset + 2] >= 180) continue;
+  darkPixels++;
+  const pixel = offset / 4, x = pixel % 640, y = Math.floor(pixel / 640);
+  if (x > 16 && x < 64 && y > 170 && y < 213) headerInkPixels++;
+}
+assert.ok(darkPixels > 1000 && darkPixels < 640 * 320 / 4);
+assert.ok(headerInkPixels > 40 && headerInkPixels < 600);
+fs.writeFileSync(target, raster.asPng(), { flag: 'wx' });
+assert.deepEqual(pins.map(item => bind(item.path)), pins);
+const record = {
+  schema: 'stemrobin182/preview-font-recovery@1',
+  status: 'TECHNICAL_PREVIEW_RECOVERY_COMPLETE_VISUAL_GATE_PENDING',
+  figure: 'tbl-p0081-01', book: '8a', lesson: 'alg8-c3-s1-n12',
+  edition: 'modern-us-neutral', preserved: pins, recoveredPreview: bind(target),
+  width: 640, height: 320, fontFiles: fontFiles.map(bind),
+  recovery, selectedWindowsFamily: 'System Font',
+  fontAudit: bind(`${own}/font-audit.record`), outlineEvidence, darkPixels, headerInkPixels,
+  priorFailure: bind('.tmp/resume182-6-8a-n12-0789/stages/figure-preview-font-parent-RECOVERY1/receipt.record'),
+  nativeSpecChanged: false, nativeSvgChanged: false, nativeRenderChanged: false,
+  originalFailedPreviewChanged: false, nativeRendererReruns: 0,
+  cumulativeResvgRasterCalls: 2, failedRecovery1RasterCalls: 0,
+  cumulativeAuthorImageViews: 2, parentImageViews: 0, recoveredPreviewImageViews: 0,
+  independentVisualGate: 'pending', reopens: 0, crops: 0, resizes: 0,
+  fontCopies: 0, dependencyInstalls: 0, paidGenerationCalls: 0,
+  databaseWrites: 0, finish: 'review', totalCost: 'unknown',
+};
+fs.writeFileSync(`${own}/preview-${recovery}.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ record: bind(`${own}/preview-${recovery}.record`),
+  preview: bind(target), darkPixels, headerInkPixels }));

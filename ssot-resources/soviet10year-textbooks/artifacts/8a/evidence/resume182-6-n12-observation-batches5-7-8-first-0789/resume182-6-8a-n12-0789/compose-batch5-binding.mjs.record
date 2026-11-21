@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n12-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = (file, expected) => {
+  const bytes = fs.readFileSync(file);
+  assert.equal(sha(bytes), expected, file);
+  return JSON.parse(bytes);
+};
+const originalPath = `${base}/observations/results/batch5.record`;
+const supplementalPath = `${base}/observations/results/batch5-affected-endpoint1.record`;
+const originalHash = 'bfd56edf116a7b2986f6fc7770466675e8980971bb3014333dfb4012c99d0d33';
+const supplementalHash = 'dead85c8630079b10911e99505a738c2afd6c8545e4cf8dd39a94b5276624642';
+const original = read(originalPath, originalHash);
+const supplemental = read(supplementalPath, supplementalHash);
+assert.equal(original.status, 'DISPLAY_REVISE');
+assert.equal(original.images.length, 8);
+assert.equal(original.blockers.length, 1);
+assert.equal(supplemental.status, 'DISPLAY_PASS');
+assert.equal(supplemental.blockers.length, 0);
+assert.equal(supplemental.affectedReviewNewImageViews, 0);
+assert.equal(supplemental.originalReview.sha256, originalHash);
+assert.equal(supplemental.resolution.dependencyStatus, 'RESOLVED');
+assert.deepEqual(supplemental.imageAccounting, original.imageAccounting);
+const complement = read(supplemental.complementaryReview.path,
+  supplemental.complementaryReview.sha256);
+assert.equal(complement.status, 'DISPLAY_PASS');
+assert.equal(complement.blockers.length, 0);
+const affected = supplemental.affectedTarget.originalImage;
+assert.equal(original.images.filter(image => image.blockers.length).length, 1);
+const images = original.images.map(image => {
+  if (!image.blockers.length) return image;
+  assert.equal(image.path, affected.path);
+  assert.equal(image.sha256, affected.sha256);
+  assert.deepEqual(image.blockers, affected.initialBlockers);
+  return {
+    ...image,
+    observations: [...image.observations,
+      'Original initial-state endpoint limitation remains explicit. The approved affected-only supplemental record binds the complete endpoint to batch6 observations of native scroll states0046-0048; no new pixels were observed for this composition.'],
+    initialBlockers: image.blockers,
+    blockers: [],
+    resolution: supplemental.resolution,
+  };
+});
+const result = {
+  ...supplemental,
+  images,
+  schemaComposition: {
+    originalReview: { path: path.resolve(originalPath), sha256: originalHash },
+    supplementalApproval: { path: path.resolve(supplementalPath), sha256: supplementalHash },
+    reason: 'Native binding requires a complete images array; compose existing original observations with the approved sole-dependency resolution.',
+    failedBindingReceipt: `${base}/stages/observation-bind-batch5-AFFECTED-endpoint1/receipt.record`,
+    imageOrContentReviewReruns: 0, newImageViews: 0,
+    originalBytesUnchanged: true, supplementBytesUnchanged: true,
+  },
+};
+const file = `${base}/observations/results/batch5-binding-composite.record`;
+fs.writeFileSync(file, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'APPROVED_OBSERVATION_SCHEMA_COMPOSED',
+  path: path.resolve(file), sha256: sha(fs.readFileSync(file)), newImageViews: 0 }));

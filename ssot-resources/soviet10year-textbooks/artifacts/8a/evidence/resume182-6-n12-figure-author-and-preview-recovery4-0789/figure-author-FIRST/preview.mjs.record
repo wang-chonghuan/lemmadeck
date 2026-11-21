@@ -1,0 +1,47 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n12-0789/figure-author-FIRST';
+const require = createRequire(path.resolve('.claude/skills/ld-s10y-lesson/package.json'));
+const { Resvg } = require('@resvg/resvg-js');
+const report = JSON.parse(fs.readFileSync(`${own}/tbl-p0081-01.render.json`, 'utf8'));
+assert.equal(report.status, 'pass');
+assert.equal(JSON.parse(fs.readFileSync(`${own}/render-cell-check.record`, 'utf8')).status, 'pass');
+assert.ok(!fs.existsSync(`${own}/tbl-p0081-01.preview640.png`));
+const input = spawnSync('python3', [`${own}/raster-input.py`], {
+  cwd: root, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+});
+assert.equal(input.status, 0, input.stderr);
+const raster = new Resvg(input.stdout, {
+  background: '#ffffff',
+  font: { loadSystemFonts: true, defaultFontFamily: 'Arial' },
+}).render();
+assert.equal(raster.width, 640);
+assert.equal(raster.height, 320);
+let darkPixels = 0;
+const pixels = raster.pixels;
+for (let index = 0; index < pixels.length; index += 4) {
+  if (pixels[index] < 180 && pixels[index + 1] < 180 && pixels[index + 2] < 180) darkPixels++;
+}
+assert.ok(darkPixels > 1000 && darkPixels < 640 * 320 / 4);
+const png = raster.asPng();
+fs.writeFileSync(`${own}/tbl-p0081-01.preview640.png`, png, { flag: 'wx' });
+const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+fs.writeFileSync(`${own}/preview.record`, `${JSON.stringify({
+  schema: 'stemrobin182/native-svg-preview@1', status: 'PREVIEW_READY_NOT_VISUALLY_REVIEWED',
+  width: raster.width, height: raster.height, actualMediaWidthPx: 640,
+  sourceSvg: path.resolve(`${own}/tbl-p0081-01.svg`),
+  sourceSvgSha256: hash(fs.readFileSync(`${own}/tbl-p0081-01.svg`)),
+  preview: path.resolve(`${own}/tbl-p0081-01.preview640.png`),
+  previewSha256: hash(png), darkPixels,
+  resvgCalls: 1, svgRerenders: 0, screenshots: 0, imageViewsAdded: 0,
+  rasterization: 'Existing Resvg from the native lesson toolchain; native 640 by 320 SVG, no fitTo, scaling, cropping, or resizing. Resolve CSS variable fallbacks in memory only; native SVG unchanged.',
+  library: require.resolve('@resvg/resvg-js'), installs: 0,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'PREVIEW_READY', width: 640, height: 320, darkPixels, sha256: hash(png) }));

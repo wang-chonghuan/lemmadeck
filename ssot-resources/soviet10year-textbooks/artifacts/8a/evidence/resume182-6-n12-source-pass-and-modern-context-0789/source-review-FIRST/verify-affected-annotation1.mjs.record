@@ -1,0 +1,254 @@
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+import { spawnSync } from "node:child_process";
+
+const repo = "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck";
+assert.equal(process.cwd(), repo);
+const base = path.join(repo, ".tmp/resume182-6-8a-n12-0789");
+const own = path.join(base, "source-review-FIRST");
+const raw = path.join(repo, "ssot-resources/soviet10year-textbooks/artifacts/8a");
+const beforeRoot = path.join(base, "assembly-RECOVERY1");
+const afterRoot = path.join(base, "assembly-AFFECTED-annotation1");
+const before = path.join(beforeRoot, "artifacts/8a");
+const after = path.join(afterRoot, "artifacts/8a");
+const id = "alg8-c3-s1-n12";
+const read = (p) => fs.readFileSync(path.resolve(repo, p));
+const json = (p) => JSON.parse(read(p).toString("utf8"));
+const bind = (p) => {
+  const bytes = read(p);
+  return { path: path.resolve(repo, p), sha256: crypto.createHash("sha256").update(bytes).digest("hex"), bytes: bytes.length };
+};
+const check = (p, expected) => {
+  const actual = bind(p);
+  assert.equal(actual.sha256, expected.sha256, p);
+  if (expected.bytes !== undefined) assert.equal(actual.bytes, expected.bytes, p);
+  return actual;
+};
+const original = check(path.join(own, "result.record"), {
+  sha256: "60c80184eb70e3cf63b75e5bc87cdcfefc5cf81243ce10b400525371e931b561",
+  bytes: 39032,
+});
+const first = json(original.path);
+assert.equal(first.status, "SOURCE_REVISE");
+assert.equal(first.blockers.length, 1);
+assert.equal(first.newImageViews, 4);
+const initialBindings = new Map(first.bindings.map((b) => [b.path, b]));
+const assemblyBinding = check(path.join(afterRoot, "assembly.record"), {
+  sha256: "e353692cb6849c38ad24bfd0b42bab8170c698c7f4fa9080c218e67ad7844ef6",
+});
+const assembly = json(assemblyBinding.path);
+const oldAssembly = json(path.join(beforeRoot, "assembly.record"));
+check(path.join(beforeRoot, "assembly.record"), initialBindings.get(path.join(beforeRoot, "assembly.record")));
+for (const key of ["selected_refs", "boundary_refs", "exercise_count", "figures", "figure_sources", "reused_ancestor", "reused_page81_approval"]) {
+  assert.deepEqual(assembly[key], oldAssembly[key], key);
+}
+assert.equal(assembly.affected_source_revision.original_review_sha256, original.sha256);
+assert.deepEqual(assembly.affected_source_revision.only_affected_pages_finalized, [82, 84]);
+for (const entry of assembly.entries) {
+  check(entry.source, entry);
+  check(entry.path, entry);
+  assert.deepEqual(read(entry.source), read(entry.path));
+}
+
+const oldLine = "$d_1=2,d_2=22,d_3=222,\\cdots,d_n=\\underbrace{22\\cdots2}_n$\u4e2a\uff0c$\\cdots$.";
+const newLine = "$d_1=2,d_2=22,d_3=222,\\cdots,\\underbrace{d_n=22\\cdots2}_{n\\text{\u4e2a}}$\uff0c$\\cdots$.";
+const bindings = [];
+const retainedOriginalPageBindings = [];
+const pageChanges = [];
+for (let page = 81; page <= 85; page++) {
+  const tag = String(page).padStart(4, "0");
+  for (const name of ["page.md", "page.json", "audit.json"]) {
+    const current = path.join(raw, `pages/${tag}`, name);
+    const snapshot = path.join(before, `pages/${tag}`, name);
+    retainedOriginalPageBindings.push(check(snapshot, initialBindings.get(current)));
+    bindings.push(bind(current));
+    if (![82, 84].includes(page)) check(current, initialBindings.get(current));
+  }
+  if (![82, 84].includes(page)) continue;
+  const oldDoc = json(path.join(before, `pages/${tag}/page.json`));
+  const newDoc = json(path.join(raw, `pages/${tag}/page.json`));
+  const expected = structuredClone(oldDoc);
+  assert.equal(newDoc.meta.notes.length, oldDoc.meta.notes.length + 1);
+  assert.deepEqual(newDoc.meta.notes.slice(0, -1), oldDoc.meta.notes);
+  expected.meta.notes = newDoc.meta.notes;
+  if (page === 82) {
+    assert.equal(oldDoc.blocks[2].lines[1], oldLine);
+    assert.equal(newDoc.blocks[2].lines[1], newLine);
+    expected.blocks[2].lines[1] = newLine;
+    assert.deepEqual(newDoc.meta.errata, oldDoc.meta.errata);
+  } else {
+    assert.equal(newDoc.meta.errata.length, 1);
+    const erratum = newDoc.meta.errata[0];
+    assert.deepEqual(Object.keys(erratum).sort(), ["block", "id", "original", "reason"]);
+    assert.equal(erratum.id, "p0084-ex210-lowered-n");
+    assert.equal(erratum.block, "p0084#2");
+    assert.equal(erratum.original, "$c_n=4_n-1$");
+    for (const term of [original.sha256, "4_n", "91", "399", "23", "100"]) {
+      assert.ok(erratum.reason.includes(term), term);
+    }
+    assert.ok(newDoc.blocks[1].lines[0].includes(erratum.original));
+    expected.meta.errata = newDoc.meta.errata;
+  }
+  assert.deepEqual(newDoc, expected, `page${page} unexpected JSON mutation`);
+  const oldMd = read(path.join(before, `pages/${tag}/page.md`)).toString("utf8");
+  const newMd = read(path.join(raw, `pages/${tag}/page.md`)).toString("utf8");
+  const splitMd = (md) => {
+    const match = md.match(/^---\n([\s\S]*?)\n---\n/);
+    assert.ok(match);
+    return { meta: JSON.parse(match[1]), body: md.slice(match[0].length) };
+  };
+  const oldParts = splitMd(oldMd);
+  const newParts = splitMd(newMd);
+  assert.deepEqual(newParts.meta, newDoc.meta);
+  assert.deepEqual(oldParts.meta, oldDoc.meta);
+  assert.equal(newParts.body, page === 82 ? oldParts.body.replace(oldLine, newLine) : oldParts.body);
+  const oldAudit = json(path.join(before, `pages/${tag}/audit.json`));
+  const newAudit = json(path.join(raw, `pages/${tag}/audit.json`));
+  const expectedAudit = structuredClone(oldAudit);
+  if (page === 82) expectedAudit.normalizations = [];
+  else expectedAudit.errata = 1;
+  assert.deepEqual(newAudit, expectedAudit);
+  assert.equal(newAudit.lines_md, 25);
+  assert.equal(newAudit.lines_printed, 25);
+  assert.deepEqual(newAudit.errors, []);
+  pageChanges.push({
+    physical: page,
+    changedTextRefs: page === 82 ? ["p0082#3"] : [],
+    changedMetadata: page === 82 ? ["notes appended"] : ["notes appended", "errata 0->1"],
+    changedAudit: page === 82 ? ["normalizations: prior collapse_single_brace receipt -> []"] : ["errata 0->1"],
+    allOtherBytesOrJsonValuesUnchanged: true,
+    rows: 25,
+  });
+}
+const oldLesson = json(path.join(before, "lessons", id, "lesson.json"));
+const newLesson = json(path.join(after, "lessons", id, "lesson.json"));
+const expectedLesson = structuredClone(oldLesson);
+assert.equal(oldLesson.prose[8].text.split(oldLine).length - 1, 1);
+expectedLesson.prose[8].text = oldLesson.prose[8].text.replace(oldLine, newLine);
+assert.deepEqual(newLesson, expectedLesson);
+assert.equal(newLesson.prose.length, 15);
+assert.deepEqual(newLesson.prose[8].source_refs, ["p0082#3"]);
+assert.equal(newLesson.prose[8].text, json(path.join(raw, "pages/0082/page.json")).blocks[2].lines.join(""));
+const oldMd = read(path.join(before, "lessons", id, "lesson.md")).toString("utf8");
+const newMd = read(path.join(after, "lessons", id, "lesson.md")).toString("utf8");
+assert.equal(oldMd.split(oldLine).length - 1, 1);
+assert.equal(newMd, oldMd.replace(oldLine, newLine));
+assert.deepEqual(read(path.join(before, "lessons", id, "exercises.json")), read(path.join(after, "lessons", id, "exercises.json")));
+for (const name of ["lesson.json", "lesson.md", "exercises.json"]) {
+  const p = path.join(before, "lessons", id, name);
+  check(p, initialBindings.get(p));
+  bindings.push(bind(path.join(after, "lessons", id, name)));
+}
+for (const extension of ["png", "svg"]) {
+  const oldFigure = path.join(before, `figures/tbl-p0081-01.${extension}`);
+  const newFigure = path.join(after, `figures/tbl-p0081-01.${extension}`);
+  check(oldFigure, initialBindings.get(oldFigure));
+  check(newFigure, initialBindings.get(oldFigure));
+  bindings.push(bind(newFigure));
+}
+bindings.push(assemblyBinding, original);
+const unchangedOriginalBindings = first.bindings.filter((b) =>
+  !(b.path.startsWith(`${raw}/pages/`) && /^008[1-5]$/.test(path.basename(path.dirname(b.path)))) &&
+  !b.path.startsWith(`${before}/figures/`) &&
+  !b.path.startsWith(`${before}/lessons/`) &&
+  b.path !== path.join(beforeRoot, "assembly.record"),
+);
+for (const b of unchangedOriginalBindings) {
+  check(b.path, b);
+  bindings.push(b);
+}
+const receipts = [];
+for (const stageName of ["source-finalize82-AFFECTED-annotation1", "source-finalize84-AFFECTED-errata1", "source-assembly-AFFECTED-annotation1"]) {
+  const stage = path.join(base, "stages", stageName);
+  const receipt = json(path.join(stage, "receipt.record"));
+  assert.equal(receipt.returncode, 0);
+  assert.equal(receipt.cwd, repo);
+  assert.equal(read(path.join(stage, "stderr.txt")).length, 0);
+  receipts.push({
+    stage: stageName,
+    returncode: 0,
+    receipt: bind(path.join(stage, "receipt.record")),
+    stdout: bind(path.join(stage, "stdout.txt")),
+    stderr: bind(path.join(stage, "stderr.txt")),
+  });
+}
+const tools = path.join(repo, ".claude/skills/ld-s10y-lesson/tools");
+const nativeChecker = path.join(tools, "katex_check.js");
+const tex = newLine.slice(1, newLine.indexOf("$", 1));
+const native = spawnSync(process.execPath, [nativeChecker], {
+  cwd: repo,
+  input: JSON.stringify([{ id: "p0082#3", field: "lines[1]", tex, display: false }]),
+  encoding: "utf8",
+});
+assert.equal(native.status, 0, native.stderr);
+const nativeResult = JSON.parse(native.stdout);
+assert.equal(nativeResult.length, 1);
+assert.equal(nativeResult[0].ok, true);
+assert.deepEqual(nativeResult[0].warnings, []);
+const require = createRequire(nativeChecker);
+const katex = require("katex");
+const warnings = [];
+const html = katex.renderToString(tex, {
+  displayMode: false,
+  throwOnError: true,
+  strict: (code, message) => { warnings.push(`${code}: ${message}`); return "ignore"; },
+  trust: false,
+});
+assert.deepEqual(warnings, []);
+const mathml = html.match(/<math[\s\S]*?<\/math>/)?.[0];
+assert.ok(mathml);
+assert.ok(mathml.includes("<mtext>\u4e2a</mtext>"));
+assert.ok(mathml.includes("<munder>"));
+const profilePath = path.join(repo, ".claude/skills/ld-s10y-lesson/profiles/soviet-cn.json");
+assert.ok(json(profilePath).allowed_scripts.includes("Han"));
+for (const b of first.sourceImageByteBindings) check(b.path, b);
+check(first.verification.script.path, first.verification.script);
+check(first.technicalRecovery.receipt.path, first.technicalRecovery.receipt);
+check(first.technicalRecovery.stderr.path, first.technicalRecovery.stderr);
+check(first.technicalRecovery.originalImplementation.path, first.technicalRecovery.originalImplementation);
+const stages = fs.readdirSync(path.join(base, "stages")).filter((s) => s.startsWith("source-finalize"));
+assert.deepEqual(stages.filter((s) => s.includes("AFFECTED")).sort(), [
+  "source-finalize82-AFFECTED-annotation1", "source-finalize84-AFFECTED-errata1",
+]);
+
+console.log(JSON.stringify({
+  status: "AFFECTED_ONLY_VERIFICATION_PASS",
+  original,
+  assembly: assemblyBinding,
+  pageChanges,
+  changedProseIndex: 8,
+  changedProseRefs: ["p0082#3"],
+  allOtherLessonValuesUnchanged: true,
+  lessonMdOnlyExactAnnotationReplacement: true,
+  exercisesByteIdentical: true,
+  figuresByteIdentical: true,
+  scopeRefsAndBoundariesUnchanged: true,
+  unchangedPages: [81, 83, 85],
+  newLine,
+  erratum: json(path.join(raw, "pages/0084/page.json")).meta.errata[0],
+  katex: {
+    nativeResult,
+    nativeReturncode: native.status,
+    mathml,
+    outputHtmlSha256: crypto.createHash("sha256").update(html).digest("hex"),
+    outputHtmlBytes: Buffer.byteLength(html),
+    evidenceType: "Text-only native KaTeX parsing and generated markup; no image, browser or screenshot",
+    checker: bind(nativeChecker),
+    profile: bind(profilePath),
+  },
+  receipts,
+  retainedOriginalPageBindings,
+  bindings,
+  verifier: bind(path.join(own, "verify-affected-annotation1.mjs")),
+  newImageViews: 0,
+  cumulativeImageViews: first.newImageViews,
+  reopens: 0,
+  sourceWrites: 0,
+  producerReruns: 0,
+  currentTurnCommandFailures: [],
+  historicalFailuresPreservedByOriginalRecord: true,
+  totalCost: "unknown",
+}, null, 2));

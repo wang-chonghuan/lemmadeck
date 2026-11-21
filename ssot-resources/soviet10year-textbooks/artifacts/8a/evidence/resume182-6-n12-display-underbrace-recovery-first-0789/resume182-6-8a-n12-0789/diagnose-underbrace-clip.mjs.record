@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n12-0789';
+const file = `${base}/display-FIRST/runtime-FIRST/render/alg8-c3-s1-n12/text.html`;
+const bytes = fs.readFileSync(file);
+const require = createRequire(path.resolve('app/package.json'));
+const { chromium } = require('@playwright/test');
+const browser = await chromium.launch({ headless: true });
+let clips;
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 });
+  await page.route('**/*', route => route.abort());
+  await page.setContent(bytes.toString('utf8'));
+  await page.evaluate(() => document.fonts.ready);
+  clips = await page.evaluate(() => [...document.querySelectorAll('p.para *')].flatMap(node => {
+    const style = getComputedStyle(node);
+    if (!['hidden', 'clip'].includes(style.overflowY) || node.scrollHeight <= node.clientHeight + 1) return [];
+    const box = node.getBoundingClientRect();
+    return [{ tag: node.tagName, classes: node.className, parentClass: node.parentElement.className,
+      text: node.textContent.slice(0, 160), client: node.clientHeight, scroll: node.scrollHeight,
+      height: box.height, fontSize: style.fontSize, paddingTop: style.paddingTop,
+      paddingBottom: style.paddingBottom, lineHeight: style.lineHeight,
+      children: [...node.children].map(child => ({
+        classes: child.className, height: child.getBoundingClientRect().height,
+        bottom: child.getBoundingClientRect().bottom - box.top,
+      })) }];
+  }));
+} finally {
+  await browser.close();
+}
+const record = {
+  status: 'READ_ONLY_CLIP_DIAGNOSIS', clips,
+  input: { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex') },
+  nativeRendererCalls: 0, screenshots: 0, imagesViewed: 0, browserClosed: true,
+  inputChanged: !fs.readFileSync(file).equals(bytes), databaseWrites: 0, finish: 'review',
+};
+assert.equal(record.inputChanged, false);
+fs.writeFileSync(`${base}/underbrace-clip-diagnosis.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record));

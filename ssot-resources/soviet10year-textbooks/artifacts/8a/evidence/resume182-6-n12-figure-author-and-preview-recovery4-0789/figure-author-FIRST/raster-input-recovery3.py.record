@@ -1,0 +1,20 @@
+"""Use the font's actual Windows family name for the unchanged header."""
+
+import json
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+result = subprocess.run(
+    ["python3", ".tmp/resume182-6-8a-n12-0789/figure-author-FIRST/raster-input-recovery2.py"],
+    capture_output=True, text=True, check=True,
+)
+inputs = json.loads(result.stdout)
+for key in ["full", "header"]:
+    svg = ET.fromstring(inputs[key])
+    headers = [node for node in svg.iter() if node.attrib.get("id") == "preview-recovery-r2-c1"]
+    assert len(headers) == 1
+    assert "".join(headers[0].itertext()) == "a\u2099"
+    headers[0].set("font-family", "System Font")
+    inputs[key] = ET.tostring(svg, encoding="unicode")
+json.dump(inputs, sys.stdout)

@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n12-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const file = `${base}/source-author/result.record`;
+const bytes = fs.readFileSync(file);
+assert.equal(sha(bytes), 'abf5d4d49ba90e577c0ce5ec92d881a1bdc6508919222c667e6fd87835c58ea0');
+const author = JSON.parse(bytes);
+assert.equal(author.status, 'SOURCE_AUTHORED_NOT_APPROVED');
+const outputs = [];
+for (const page of author.pages) {
+  const bytes = fs.readFileSync(page.path);
+  assert.equal(sha(bytes), page.sha256);
+  const output = `${base}/source-author-snapshot/pages/${String(page.physicalPage).padStart(4, '0')}/page.md.record`;
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o444 });
+  outputs.push({ source: page.path, path: output, sha256: sha(bytes), bytes: bytes.length });
+}
+const record = {
+  status: 'ACTUAL_SOURCE_AUTHOR_BYTES_SNAPSHOTTED_NOT_APPROVED',
+  author: { path: file, sha256: sha(bytes) }, outputs,
+  parentImageViews: 0, unknownHistoricalBytesRecovered: false, databaseWrites: 0, finish: 'review',
+};
+const output = `${base}/source-author-snapshot/manifest.record`;
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ path: output, sha256: sha(fs.readFileSync(output)), pages: outputs.length }));

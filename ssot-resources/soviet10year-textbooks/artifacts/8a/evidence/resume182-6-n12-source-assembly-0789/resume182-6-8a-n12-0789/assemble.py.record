@@ -1,0 +1,126 @@
+import copy
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sys
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import assemble as A
+
+SOURCE = REPO / "ssot-resources/soviet10year-textbooks/artifacts/8a"
+BASE = REPO / ".tmp/resume182-6-8a-n12-0789"
+STAGE = BASE / "assembly-RECOVERY1"
+BOOK = STAGE / "artifacts/8a"
+ID = "alg8-c3-s1-n12"
+assert not BOOK.exists(), "Keep earlier assembly attempts intact"
+entries = []
+
+
+def digest(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+def copy_bytes(source, destination):
+    assert not destination.exists()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+    assert digest(source) == digest(destination)
+    entries.append({
+        "source": str(source.relative_to(REPO)),
+        "path": str(destination.relative_to(REPO)),
+        "sha256": digest(source),
+        "bytes": source.stat().st_size,
+    })
+
+
+bootstrap = json.loads((BASE / "bootstrap.record").read_bytes())
+for item in bootstrap["reusedPage81"]["files"]:
+    assert digest(Path(item["path"])) == item["sha256"]
+for page in range(81, 86):
+    directory = SOURCE / f"pages/{page:04d}"
+    audit = json.loads((directory / "audit.json").read_bytes())
+    assert audit["errors"] == []
+    assert audit["lines_md"] == audit["lines_printed"]
+    for name in ("page.md", "page.json", "audit.json"):
+        copy_bytes(directory / name, BOOK / f"pages/{page:04d}" / name)
+
+full_stream = A.load_stream(BOOK)
+start = next(i for i, b in enumerate(full_stream)
+             if b["kind"] == "h3" and A.SEC_NUM.match(A.B.text_of(b))
+             and A.SEC_NUM.match(A.B.text_of(b)).group(1) == "12")
+end = next(i for i, b in enumerate(full_stream[start + 1:], start + 1)
+           if b["kind"] == "h3" and A.SEC_NUM.match(A.B.text_of(b))
+           and A.SEC_NUM.match(A.B.text_of(b)).group(1) == "13")
+assert full_stream[start]["ref"] == "p0081#4"
+assert full_stream[end]["ref"].startswith("p0085#")
+ancestor_file = SOURCE / "pages/0074/page.json"
+ancestor_doc = json.loads(ancestor_file.read_bytes())
+ancestors = [
+    {**b, "page": ancestor_doc["meta"]["page"],
+     "printed_page": ancestor_doc["meta"]["printed_page"],
+     "ref": f"p{ancestor_doc['meta']['page']:04d}#{i + 1}"}
+    for i, b in enumerate(ancestor_doc["blocks"]) if b["kind"] in ("h1", "h2")
+]
+assert [b["kind"] for b in ancestors] == ["h1", "h2"]
+selected = [*ancestors, *full_stream[start:end]]
+merged, warnings = A.merge_across_pages(copy.deepcopy(selected))
+assert not warnings, warnings
+assert not any(b.get("open") for b in merged), "Incomplete target object"
+
+figures = sorted({b["id"] for b in selected if b["kind"] == "fig"})
+figure_sources = {}
+for figure in figures:
+    work = REPO / (
+        ".tmp/resume182-6-8a-n11-0789/source/8a/pages"
+        if figure.startswith("tbl-p0081-") else
+        ".tmp/resume182-6-8a-n12-0789/source/8a/pages"
+    )
+    matches = list(work.glob(f"*/figures/{figure}.png"))
+    assert len(matches) == 1, figure
+    figure_sources[figure] = str(matches[0].relative_to(REPO))
+    for extension in ("png", "svg"):
+        source = matches[0].with_suffix(f".{extension}")
+        assert source.exists(), f"Vectorize new figure before assembling: {figure}"
+        copy_bytes(source, BOOK / f"figures/{figure}.{extension}")
+
+original_loader = A.load_stream
+A.load_stream = lambda book: copy.deepcopy(selected) if book == BOOK else original_loader(book)
+try:
+    result = A.run(BOOK, REPO / "ssot-resources/soviet10year-textbooks/toc/8a/zh.json",
+                   TOOLS.parent / "profiles/soviet-cn.json", strict=True,
+                   work=None, exercise_numbering="book")
+finally:
+    A.load_stream = original_loader
+assert result == 0
+index = json.loads((BOOK / "book.json").read_bytes())
+assert index["audit"]["errors"] == []
+assert [lesson["id"] for lesson in index["lessons"]] == [ID]
+record = {
+    "schema": "stemrobin-182/scoped-source-assembly@1",
+    "status": "SCOPED_ASSEMBLY_PASS_NOT_SOURCE_APPROVAL",
+    "ticket": "STEMROBIN-182", "book": "8a", "lesson": ID,
+    "entries": entries, "selected_refs": [b["ref"] for b in selected],
+    "boundary_refs": {"start": full_stream[start]["ref"], "excluded_right": full_stream[end]["ref"]},
+    "exercise_count": index["lessons"][0]["exercises"], "figures": figures,
+    "figure_sources": figure_sources,
+    "reused_ancestor": {"path": str(ancestor_file.relative_to(REPO)),
+                        "sha256": digest(ancestor_file), "refs": [b["ref"] for b in ancestors]},
+    "reused_page81_approval": bootstrap["reusedPage81"]["approval"],
+    "technical_recovery": {
+        "failure_receipt": str((BASE / "stages/source-assembly-FIRST/receipt.record").relative_to(REPO)),
+        "original_implementation": str((BASE / "assemble.FIRST.py.record").relative_to(REPO)),
+        "fix": "Attach native load_stream page/printed_page/ref metadata to reused ancestors only.",
+        "source_or_finalize_reruns": 0,
+    },
+    "source_block_indexes_preserved": True, "existing_assembler_used": True,
+    "durable_promotions": 0, "old_lesson_assembly_reruns": 0, "image_views": 0,
+    "unknown_historical_bytes_recovered": False, "database_writes": 0, "finish": "review",
+}
+out = STAGE / "assembly.record"
+with out.open("x", encoding="utf-8") as handle:
+    handle.write(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+print(json.dumps({"path": str(out), "sha256": digest(out), "status": record["status"]}))

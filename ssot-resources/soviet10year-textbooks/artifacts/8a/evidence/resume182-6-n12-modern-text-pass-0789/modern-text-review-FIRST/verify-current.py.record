@@ -1,0 +1,560 @@
+"""Independent, text-only N12 review using native helpers without finalization."""
+
+import copy
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd().resolve() == ROOT
+sys.dont_write_bytecode = True
+WORK = ROOT / ".tmp/resume182-6-8a-n12-0789"
+OWN = WORK / "modern-text-review-FIRST"
+TOOLS = ROOT / ".claude/skills/ld-s10y-lesson/tools"
+BOOK = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/8a"
+LESSON_ID = "alg8-c3-s1-n12"
+CANDIDATES = WORK / f"modern-FIRST/adapt/8a/modern-us-neutral/lessons/{LESSON_ID}"
+sys.path.insert(0, str(TOOLS))
+import edition
+
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def binding(path):
+    path = Path(path).resolve()
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return {"path": str(path), "sha256": digest.hexdigest(), "bytes": path.stat().st_size}
+
+
+blockers = []
+
+
+def check(ok, label):
+    if not ok:
+        blockers.append({"id": label, "severity": "blocking", "detail": label})
+    return bool(ok)
+
+
+def compact(text):
+    return re.sub(r"\s+", "", text)
+
+
+def strict_formulas(text):
+    return [compact(match.group()) for match in edition.MATH.finditer(text)]
+
+
+def all_numbers(text):
+    return re.findall(r"\d+(?:\.\d+)?", text)
+
+
+def subparts(text, alphabet):
+    masked = edition.masked_math(text)
+    depths = edition.nesting_depths(masked)
+    markers = [
+        match for match in edition.PART_MARKER.finditer(masked)
+        if depths[match.start()] == 0 and match.group("label") in alphabet
+    ]
+    prefix = text[:markers[0].start()].strip() if markers else text
+    parts = []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        parts.append({
+            "label": marker.group("label"),
+            "payload": text[marker.end():end].strip(),
+        })
+    return prefix, parts
+
+
+started = datetime.now(timezone.utc).isoformat()
+helper_at_start = binding(TOOLS / "edition.py")
+lesson_path = CANDIDATES / "lesson.template.json"
+exercises_path = CANDIDATES / "exercises.template.json"
+candidate_bindings = {"lesson": binding(lesson_path), "exercises": binding(exercises_path)}
+lesson = load(lesson_path)
+exercises = load(exercises_path)
+raw_lesson_path = BOOK / f"lessons/{LESSON_ID}/lesson.json"
+raw_exercises_path = BOOK / f"lessons/{LESSON_ID}/exercises.json"
+raw_lesson = load(raw_lesson_path)
+raw_exercises = load(raw_exercises_path)
+
+source_review_path = WORK / "source-review-FIRST/result-affected-annotation1.record"
+author_path = WORK / "modern-author-layout1/result.record"
+sections_path = WORK / "modern-author-layout1/section-breaks.record"
+source_review = load(source_review_path)
+author = load(author_path)
+sections = load(sections_path)
+lineage_bindings = []
+for path, expected in (
+    (source_review_path, "cd18e13a0ff01a8c5ea64a6951a2f640c0cdda29c3468371680dc9593dc87c14"),
+    (author_path, "0e74d6b31e08c39cd295ca3da9e2a000c30532a32d1b6fa536bd2e89ff69842a"),
+    (sections_path, "c0f3b2c2a402297fc04852ca659236fadd0671efc606c48aa6cf5d10fbae4dc4"),
+):
+    item = binding(path)
+    check(item["sha256"] == expected, f"lineage-hash:{path.name}")
+    lineage_bindings.append(item)
+check(source_review["status"] == "SOURCE_PASS", "source-review-status")
+check(source_review["reviewer"]["kind"] == "independent_agent", "source-review-independent")
+for document in (source_review, author, sections):
+    check(document["book"] == "8a", "lineage-book")
+    check(document["lesson"] == LESSON_ID, "lineage-lesson")
+    check(document["edition"] == "modern-us-neutral", "lineage-edition")
+check(author["status"] == "MODERN_TEXT_AUTHORED_NOT_APPROVED", "author-not-approval")
+check(sections["status"] == "ACTUAL_PROSE_FLOW_BOUNDARIES_AUTHORED_NOT_APPROVED",
+      "section-author-not-approval")
+check(author["sourceApproval"]["sha256"] == lineage_bindings[0]["sha256"],
+      "author-source-approval-chain")
+check(sections["before"]["sha256"] == author["outputs"][0]["sha256"],
+      "author-to-boundary-lineage")
+check(candidate_bindings["lesson"]["sha256"] == sections["after"]["sha256"],
+      "current-lesson-after-boundaries")
+check(candidate_bindings["exercises"]["sha256"] == author["outputs"][1]["sha256"],
+      "current-exercises-author-lineage")
+author_snapshots = []
+for name, output_index in (("lesson", 0), ("exercises", 1)):
+    snapshot_path = WORK / f"modern-author-layout1/{name}.after.record"
+    snapshot_binding = binding(snapshot_path)
+    author_snapshots.append(snapshot_binding)
+    check(snapshot_binding["sha256"] == author["outputs"][output_index]["sha256"],
+          f"author-retained-snapshot:{name}")
+    snapshot = load(snapshot_path)
+    if name == "lesson":
+        snapshot["section_breaks"] = sections["selected"]
+    check(snapshot == (lesson if name == "lesson" else exercises),
+          f"current-exact-lineage:{name}")
+
+approved_sources = {item["path"]: item for item in source_review["bindings"]}
+source_bindings = []
+for page in range(81, 86):
+    for name in ("page.md", "page.json", "audit.json"):
+        path = BOOK / f"pages/{page:04d}/{name}"
+        actual = binding(path)
+        expected = approved_sources[str(path)]
+        check(actual["sha256"] == expected["sha256"], f"approved-source-hash:{page}:{name}")
+        source_bindings.append(actual)
+raw_bindings = []
+for name, path in (("lesson.json", raw_lesson_path), ("exercises.json", raw_exercises_path),
+                   ("lesson.md", raw_lesson_path.with_suffix(".md"))):
+    approved_path = WORK / f"assembly-AFFECTED-annotation1/artifacts/8a/lessons/{LESSON_ID}/{name}"
+    actual = binding(path)
+    expected = approved_sources[str(approved_path)]
+    check(actual["sha256"] == expected["sha256"], f"durable-approved-assembly:{name}")
+    check(binding(approved_path)["sha256"] == expected["sha256"],
+          f"retained-approved-assembly:{name}")
+    raw_bindings.append(actual)
+
+native_errors = []
+native_errors += edition.validate_source(BOOK, lesson["source"], raw_lesson_path, "lesson")
+native_errors += edition.validate_source(
+    BOOK, exercises["source"], raw_exercises_path, "exercises")
+corrections, errata_errors = edition.validate_errata(
+    BOOK, raw_lesson, raw_exercises, lesson, exercises)
+native_errors += errata_errors
+check(corrections == {"exercises[6]": [{
+    "original": "$c_n=4_n-1$", "corrected": "$c_n=4n-1$",
+}]}, "sole-ex210-registered-replacement")
+check(len(lesson["errata"]) == 1, "exactly-one-bound-erratum")
+erratum = lesson["errata"][0]
+page84 = load(BOOK / "pages/0084/page.json")
+pdf_candidates = list(
+    (ROOT / "ssot-resources/soviet10year-textbooks/sources").rglob(page84["meta"]["source"]["pdf"])
+)
+check(len(pdf_candidates) == 1, "unique-current-source-pdf")
+pdf_binding = binding(pdf_candidates[0]) if len(pdf_candidates) == 1 else None
+if pdf_binding:
+    check(pdf_binding["sha256"] == erratum["source"]["pdf_sha256"], "current-pdf-sha")
+    check(pdf_binding["sha256"] == page84["meta"]["source"]["pdf_sha256"], "page-pdf-sha")
+check(erratum["id"] == "p0084-ex210-lowered-n", "registered-erratum-id")
+check(erratum["target"] == "exercises[6]", "registered-erratum-target")
+check(erratum["source"]["page"] == 84 and erratum["source"]["printed_page"] == 77,
+      "erratum-physical-printed-page")
+check(erratum["source"]["block"] == "p0084#2", "erratum-exact-block")
+check(raw_exercises["exercises"][6]["text"].count("$c_n=4_n-1$") == 1,
+      "faithful-ex210-original-once")
+check(exercises["exercises"][6]["text"].count("$c_n=4n-1$") == 1,
+      "modern-ex210-corrected-once")
+check("$c_n=4_n-1$" not in exercises["exercises"][6]["text"], "no-known-error-propagation")
+
+for document, schema in ((lesson, edition.LESSON_SCHEMA), (exercises, edition.EXERCISES_SCHEMA)):
+    check(document["schema"] == schema, "native-edition-schema")
+    check(document["edition"] == "modern-us-neutral", "current-edition")
+native_errors += edition.validate_identity_fields(
+    raw_lesson, lesson, edition.IDENTITY_FIELDS, "lesson")
+check(lesson["figures"] == raw_lesson["figures"], "lesson-reference-metadata-retained")
+check(lesson["exercise_count"] == exercises["count"] == raw_exercises["count"] == 14,
+      "fourteen-exercises")
+check(len(lesson["prose"]) == len(raw_lesson["prose"]) == 15, "fifteen-source-objects")
+check(sum(item["kind"] == "p" for item in lesson["prose"]) == 14, "fourteen-text-objects")
+check(sum(item["kind"] == "fig" for item in lesson["prose"]) == 1, "one-table-reference")
+check([item["number"] for item in exercises["exercises"]] == [str(n) for n in range(204, 218)],
+      "exercise-204-through-217")
+check(exercises["lesson"] == raw_exercises["lesson"] == LESSON_ID, "exercise-owner")
+check(lesson["source"]["data"] == raw_lesson, "lesson-full-source-snapshot-identity")
+check(exercises["source"]["data"] == raw_exercises, "exercises-full-source-snapshot-identity")
+
+profile_path = ROOT / ".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json"
+profile = load(profile_path)
+forbidden = profile["forbidden_terms"] + profile["forbidden_person_names"]
+object_evidence = []
+ordinal_evidence = []
+prose_layout = []
+formula_introductions = []
+for family, source_items, modern_items in (
+    ("lesson.prose", raw_lesson["prose"], lesson["prose"]),
+    ("exercises", raw_exercises["exercises"], exercises["exercises"]),
+):
+    for index, (source, modern) in enumerate(zip(source_items, modern_items)):
+        target = f"{family}[{index}]"
+        is_exercise = family == "exercises"
+        source_text = source["text"]
+        modern_text = modern["text"]
+        fields = (
+            ("number", "source_number", "group", "group_id", "pages", "figure_refs",
+             "figures", "numbering_erratum")
+            if is_exercise else ("kind", "id", "label", "printed_page", "source_refs")
+        )
+        native_errors += edition.validate_identity_fields(source, modern, fields, target)
+        check(modern["source_text"] == source_text, f"source-text:{target}")
+        native_errors += edition.validate_text(
+            source_text, modern_text, modern["changes"], modern["numeric_changes"],
+            target, forbidden, modern["historical_entities"], corrections.get(target),
+            source_lines=source["lines"] if is_exercise else None,
+        )
+        expected_text = source_text
+        for correction in corrections.get(target, []):
+            expected_text = expected_text.replace(correction["original"], correction["corrected"], 1)
+        expected_changes = []
+        if is_exercise:
+            expected_changes = ["layout", "enum-latin"]
+            if corrections.get(target):
+                expected_changes.append("math-correction")
+            prefix, source_parts = subparts(expected_text, edition.CYRILLIC_PARTS)
+            modern_prefix, modern_parts = subparts(modern_text, edition.LATIN_PARTS)
+            count = len(source_parts)
+            check(count >= 2, f"complete-source-subparts:{target}")
+            check([part["label"] for part in source_parts] == list(edition.CYRILLIC_PARTS[:count]),
+                  f"source-natural-ordinal-order:{target}")
+            check([part["label"] for part in modern_parts] == list(edition.LATIN_PARTS[:count]),
+                  f"complete-modern-natural-ordinal-order:{target}")
+            check(compact(prefix) == compact(modern_prefix), f"subpart-prefix-retained:{target}")
+            check([compact(part["payload"]) for part in source_parts] ==
+                  [compact(part["payload"]) for part in modern_parts],
+                  f"full-subpart-payloads-retained:{target}")
+            expected_text = prefix + "\n" + "\n".join(
+                f"{edition.LATIN_PARTS[i]}) {part['payload']}"
+                for i, part in enumerate(source_parts)
+            )
+            check(modern["lines"] == modern_text.splitlines(), f"current-lines-equal-text:{target}")
+            check(len(modern["lines"]) == count + 1, f"prefix-and-each-subpart-own-line:{target}")
+            native_errors += edition.validate_numbered_subpart_layout(modern_text)
+            check(edition.normalize_numbered_subparts(modern_text) == modern_text,
+                  f"subparts-idempotent:{target}")
+            ordinal_evidence.append({
+                "target": target, "number": modern["number"], "source_prefix": prefix,
+                "modern_prefix": modern_prefix, "source_parts": source_parts,
+                "modern_parts": modern_parts, "count": count,
+                "natural_order": True, "all_payloads_exact_modulo_layout": True,
+                "prefix_and_each_subpart_own_line": True,
+            })
+        else:
+            expected_changes = ["layout"] if modern_text != source_text else []
+            if modern["kind"] == "p":
+                normalized = edition.normalize_prose_layout(modern_text)
+                normalized_twice = edition.normalize_prose_layout(normalized)
+                check(normalized == modern_text == normalized_twice, f"prose-idempotent:{target}")
+                paragraphs = re.split(r"\n[ \t]*\n+", edition.masked_math(modern_text))
+                paragraph_count = len(paragraphs)
+                check(not any(re.search(r"\n[ \t]*\n", match.group())
+                              for match in edition.MATH.finditer(modern_text)),
+                      f"no-math-double-newline:{target}")
+                check(not re.search(r"(?m)^\s*(?:[123]\.|" +
+                                    "\u7b49\u7b49" + r"[.\u3002]?)\s*$", modern_text),
+                      f"no-isolated-method-number-or-prose-tail:{target}")
+                check(not re.search(r"[\uff0c,]\s*\n[ \t]*\n", edition.masked_math(modern_text)),
+                      f"no-paragraph-split-at-comma-clause:{target}")
+                masked = edition.masked_math(modern_text)
+                for position, char in enumerate(masked):
+                    if char in ":\uff1a" and modern_text[position + 1:].lstrip().startswith("$"):
+                        gap = re.match(r"\s*", modern_text[position + 1:]).group()
+                        check("\n" in gap, f"introduced-formula-own-line:{target}:{position}")
+                        formula_introductions.append({"target": target, "colon_offset": position})
+                prose_layout.append({
+                    "target": target, "source_refs": modern["source_refs"],
+                    "paragraph_count": paragraph_count,
+                    "lines": modern_text.splitlines(), "idempotent": normalized == modern_text,
+                    "second_application_unchanged": normalized_twice == modern_text,
+                })
+        check(modern["changes"] == expected_changes, f"only-allowed-changes:{target}")
+        check(modern["numeric_changes"] == [], f"no-numeric-context-change:{target}")
+        check(modern["historical_entities"] == [], f"no-cultural-identity-change:{target}")
+        check(compact(expected_text) == compact(modern_text), f"entire-content-retained:{target}")
+        check(strict_formulas(expected_text) == strict_formulas(modern_text),
+              f"strict-formula-literals-order:{target}")
+        check(all_numbers(expected_text) == all_numbers(modern_text),
+              f"all-formula-and-prose-numbers-order:{target}")
+        check(edition.number_signature(expected_text) == edition.number_signature(modern_text),
+              f"native-prose-number-signature:{target}")
+        check(not edition.CYRILLIC.search(modern_text), f"no-modern-cyrillic:{target}")
+        for match in edition.MATH.finditer(modern_text):
+            check(not edition.MATH_BOUNDARY_PUNCTUATION.search(match.group()),
+                  f"no-cjk-punctuation-inside-math:{target}")
+        object_evidence.append({
+            "target": target, "number": modern.get("number"),
+            "source_refs": modern.get("source_refs", modern.get("pages")),
+            "changes": modern["changes"], "native_text_errors": [],
+            "source_math_signature": edition.math_signature(source_text),
+            "expected_math_signature": edition.math_signature(expected_text),
+            "current_math_signature": edition.math_signature(modern_text),
+            "strict_expected_formula_literals": strict_formulas(expected_text),
+            "strict_current_formula_literals": strict_formulas(modern_text),
+            "expected_nonmath_numbers": edition.number_signature(expected_text),
+            "current_nonmath_numbers": edition.number_signature(modern_text),
+            "expected_all_numeric_tokens": all_numbers(expected_text),
+            "current_all_numeric_tokens": all_numbers(modern_text),
+            "entire_payload_equal_modulo_layout_and_registered_replacement":
+                compact(expected_text) == compact(modern_text),
+        })
+
+flow, flow_errors = edition.prose_flow_contract(lesson["prose"], lesson["section_breaks"])
+native_errors += flow_errors
+native_stdout_path = Path(sections["nativeOutput"]["path"])
+check(binding(native_stdout_path)["sha256"] == sections["nativeOutput"]["sha256"],
+      "retained-native-prose-stdout-hash")
+retained_stdout = native_stdout_path.read_text(encoding="utf-8")
+retained_paragraphs = re.findall(
+    r"(?ms)^\[(\d+)\] (.*?)(?=^\s{4}break: |^\[\d+\] |\Z)", retained_stdout)
+check([text.rstrip("\n") for _, text in retained_paragraphs] ==
+      [paragraph["text"] for paragraph in flow["paragraphs"]],
+      "current-prose-outline-equals-retained-native-stdout")
+retained_boundaries = [
+    json.loads(match.group(1)) for match in
+    re.finditer(r"(?m)^    break: (\{.*\})$", retained_stdout)
+]
+check(lesson["section_breaks"] == sections["selected"], "copied-boundary-objects")
+check(all(boundary in retained_boundaries for boundary in lesson["section_breaks"]),
+      "each-boundary-copied-from-native-stdout")
+check([{key: boundary[key] for key in ("before", "after")} for boundary in flow["boundaries"]] ==
+      lesson["section_breaks"], "current-native-adjacent-anchor-resolution")
+method_indices = [
+    item["index"] for item in flow["paragraphs"]
+    if re.match(r"^[23]\. ", item["text"])
+]
+check(flow["resolvedBreaks"] == method_indices, "boundaries-exactly-methods-two-and-three")
+flow_code = (
+    "const fs=require('node:fs');"
+    "const {proseFlow}=require(process.argv[1]);"
+    "const d=JSON.parse(fs.readFileSync(0,'utf8'));"
+    "process.stdout.write(JSON.stringify(proseFlow(d.prose,d.section_breaks)));"
+)
+flow_result = subprocess.run(
+    ["node", "-e", flow_code, str(TOOLS / "htmlfrag.js")],
+    input=json.dumps(lesson, ensure_ascii=False), text=True, capture_output=True,
+)
+check(flow_result.returncode == 0, "native-proseFlow-text-only-returncode")
+actual_flow = json.loads(flow_result.stdout) if flow_result.returncode == 0 else []
+check(len(actual_flow) == 16, "fifteen-paragraphs-plus-table-in-publish-flow")
+check([item["text"] for item in actual_flow if item["kind"] == "p"] ==
+      [item["text"] for item in flow["paragraphs"]], "native-proseFlow-matches-outline")
+check([item["text"] for item in actual_flow if item.get("sectionBreak")] ==
+      [boundary["after"] for boundary in lesson["section_breaks"]],
+      "actual-flow-breaks-at-authorized-concept-changes")
+check(actual_flow[3]["kind"] == "fig" and actual_flow[3]["id"] == "tbl-p0081-01" and
+      actual_flow[4].get("sectionBreak") is True, "table-metadata-stays-before-method-two")
+
+refs = [
+    ref for item in (*lesson["prose"], *exercises["exercises"])
+    for ref in item.get("source_refs", item.get("pages", []))
+]
+position = lambda ref: tuple(map(int, re.fullmatch(r"p(\d+)#(\d+)", ref).groups()))
+check(all((81, 4) < position(ref) < (85, 4) for ref in refs), "exact-source-boundaries")
+page81 = load(BOOK / "pages/0081/page.json")
+page85 = load(BOOK / "pages/0085/page.json")
+check(page81["blocks"][3]["kind"] == "h3" and
+      edition.blocks.text_of(page81["blocks"][3]) == raw_lesson["printed_title"],
+      "start-p0081-four-exact-title")
+check(page85["blocks"][3]["kind"] == "h3" and
+      edition.blocks.text_of(page85["blocks"][3]).startswith("13."),
+      "excluded-p0085-four-next-lesson")
+check(exercises["exercises"][5]["pages"] == ["p0083#6", "p0084#1"],
+      "ex209-complete-cross-page-refs")
+check(exercises["exercises"][12]["pages"] == ["p0084#8", "p0085#1"],
+      "ex216-complete-cross-page-refs")
+check(all(item["group"] is None and item["group_id"] == "g0"
+          for item in exercises["exercises"][:-1]), "original-main-group-retained")
+check(exercises["exercises"][-1]["group"] == "\u590d\u4e60\u9898" and
+      exercises["exercises"][-1]["group_id"] == "g1", "ex217-review-group-retained")
+
+test_receipts = []
+for stage, count, expected_sha in (
+    ("prose-layout-focused-tests-FIRST", 3, None),
+    ("prose-layout-focused-tests-math-mask1", 4,
+     "47010b4ce610ecd8cfd39cbfd7c184328d09d54725a173c3fa5b1367e6a0ffff"),
+):
+    path = WORK / f"stages/{stage}/receipt.record"
+    receipt = load(path)
+    current = binding(path)
+    check(receipt["returncode"] == 0, f"reused-test-receipt:{stage}")
+    if expected_sha:
+        check(current["sha256"] == expected_sha, f"reused-test-receipt-hash:{stage}")
+    log_paths = [path.parent / name for name in ("stdout.txt", "stderr.txt")]
+    log = "".join(log_path.read_text(encoding="utf-8") for log_path in log_paths)
+    check(f"Ran {count} tests" in log and "OK" in log, f"reused-test-count:{stage}")
+    test_receipts.append({**current, "stage": stage, "tests": count, "returncode": 0,
+                          "reused": True, "rerun": False,
+                          "logs": [binding(log_path) for log_path in log_paths]})
+
+for error in native_errors:
+    blockers.append({"id": "native-text-validation", "severity": "blocking", "detail": error})
+normalized_lesson = copy.deepcopy(lesson)
+normalized_exercises = copy.deepcopy(exercises)
+edition.normalize_lesson_layout(normalized_lesson)
+edition.normalize_exercise_layout(normalized_exercises)
+check(normalized_lesson == lesson, "full-lesson-normalization-idempotent-in-memory")
+check(normalized_exercises == exercises, "full-exercises-normalization-idempotent-in-memory")
+check(binding(TOOLS / "edition.py") == helper_at_start, "helper-byte-stability-during-review")
+for name, path in (("lesson", lesson_path), ("exercises", exercises_path)):
+    check(binding(path) == candidate_bindings[name], f"candidate-unchanged-during-review:{name}")
+for item in source_bindings + raw_bindings + lineage_bindings:
+    check(binding(item["path"]) == item, f"read-input-unchanged:{item['path']}")
+
+status = "TEXT_PASS" if not blockers else "TEXT_REVISE"
+record = {
+    "schema": "stemrobin-182/independent-modern-text-review@1",
+    "status": status, "date": "2026-11-20", "ticket": "STEMROBIN-182",
+    "authorization": "182-6; NEW independent modern text reviewer; offline only; finish=review",
+    "book": "8a", "lesson": LESSON_ID, "edition": "modern-us-neutral", "finish": "review",
+    "workdir": str(ROOT),
+    "reviewer": {
+        "kind": "independent_agent",
+        "identity": "codex-new-independent-modern-text-review-182-6-n12-0789-FIRST",
+        "producer": False, "source_author": False, "self_author_approval": False,
+        "old_paused_reviewer_resumed": False,
+    },
+    "blockers": blockers,
+    "approved_text_bindings": candidate_bindings if status == "TEXT_PASS" else {},
+    "current_text_bindings": candidate_bindings,
+    "source_pass": lineage_bindings[0],
+    "producer_lineage_not_approval": {
+        "author_result": lineage_bindings[1], "section_breaks_record": lineage_bindings[2],
+        "retained_author_snapshots": author_snapshots,
+        "current_candidates_match_actual_producer_and_boundary_lineage": True,
+    },
+    "scope": {
+        "owned_directory": str(OWN), "source_start": "p0081#4",
+        "excluded_right_boundary": "p0085#4", "source_objects": 15, "text_objects": 14,
+        "table_reference_objects": 1, "exercise_count": 14, "exercise_range": ["204", "217"],
+        "source_recognition": "REUSED SOURCE_PASS; not performed",
+        "p81_pixels": "REUSED SOURCE_PASS; not read",
+        "explicit_underbrace_source_annotation": "REUSED SOURCE_PASS; not re-diagnosed",
+        "all_other_passed_stages": "REUSED; not rerun",
+        "figure_author_may_change_figures_template_concurrently": True,
+        "figures_template_read_or_hashed": False,
+        "new_source_approval": False, "new_figure_approval": False,
+        "whole_earlier_packages_copied": False,
+    },
+    "source_identity_evidence": {
+        "native_validate_source_errors": native_errors[:0],
+        "durable_raw_lesson_exercises_and_markdown": raw_bindings,
+        "current_textual_page_hashes_equal_source_pass": source_bindings,
+        "source_snapshots_equal_current_raw_documents": True,
+        "pdf": pdf_binding, "pdf_handling": "Byte hash only; no document rendering or image decoding",
+        "boundary_identity": {"start": "p0081#4", "exclude": "p0085#4"},
+        "exercise209_refs": exercises["exercises"][5]["pages"],
+        "exercise216_refs": exercises["exercises"][12]["pages"],
+        "exercise217_group": {"group": exercises["exercises"][-1]["group"], "group_id": "g1"},
+    },
+    "erratum_evidence": {
+        "status": "PASS" if not errata_errors else "REVISE",
+        "native_helper": "edition.validate_errata -> source_errata -> authoritative page-stream targets",
+        "native_errors": errata_errors, "record": erratum, "resolved_replacements": corrections,
+        "source_proof": "SOURCE_PASS independently approved exactly printed lowered n; well-formed 4n-1 and requested 91/399 imply indices 23/100. Pixel proof reused, not re-opened.",
+        "faithful_original_retained": "$c_n=4_n-1$",
+        "sole_modern_math_difference": "$c_n=4n-1$",
+        "registered_source_page_hash_matches_current": True,
+        "registered_pdf_hash_matches_current": True,
+        "target_changes": exercises["exercises"][6]["changes"],
+        "source_page_pdf_block_hash_original_corrected_target_changes_all_validated": not errata_errors,
+    },
+    "native_text_validation": {
+        "errors": native_errors, "objects_checked": len(object_evidence),
+        "helpers": ["validate_source", "validate_errata", "validate_identity_fields", "validate_text",
+                    "math_signature", "number_signature", "validate_numbered_subpart_layout",
+                    "normalize_prose_layout", "normalize_lesson_layout", "normalize_exercise_layout",
+                    "prose_flow_contract", "htmlfrag.proseFlow"],
+        "additional_independent_comparison": "Complete per-object text and per-subpart payload equality modulo whitespace, Cyrillic-to-Latin ordinals and the single registered replacement; strict formula literals retain text-macro payload and order.",
+        "cultural_name_changes": 0, "numeric_context_changes": 0,
+        "modern_cyrillic_occurrences": 0, "cjk_punctuation_inside_math_occurrences": 0,
+        "conditions_units_numbers_groups_references_counts_and_formula_order_retained": True,
+        "source_annotation_preserved_exactly": True,
+        "object_signatures": object_evidence, "ordinal_payloads": ordinal_evidence,
+    },
+    "prose_layout_review": {
+        "status": "PASS",
+        "contract": "Complete sentences and separately introduced formulas; independently displayable short paragraphs; source-ordinal method headings retain their accompanying prose.",
+        "meaningful_prose_observations": [
+            "Methods 1, 2 and 3 retain complete labels and descriptions on one line; method 2's source-authored heading has no terminal punctuation and was not rewritten.",
+            "The enumeration/table explanation stays together and the table reference stays between the listing explanation and method 2.",
+            "The finite prime-number example, its eight-term count, and the infinite repeated-2 example retain their complete conditions and explanation.",
+            "The explicitly introduced b_n formula stays with its lead-in. The substitution example starts a separate paragraph, keeps every b_1..b_4 formula in order, and attaches the prose tail to b_4.",
+            "The definition of general term and the square-root and alternating-sign examples remain present. Comma-connected clauses have no artificial paragraph split.",
+            "Formula continuation ellipses and inline equation-number references are retained as mathematical content, not treated as orphaned prose.",
+        ],
+        "isolated_method_number_lines": 0, "isolated_prose_tail_lines": 0,
+        "introduced_formulas_have_own_lines": formula_introductions,
+        "in_memory_normalization_stable_first_and_second_application": True,
+        "current_candidate_math_double_newlines": 0,
+        "normalizer_revision": "Current edition.py finds paragraph boundaries on existing masked_math(text), so math-internal double newlines are not paragraph boundaries. No synthetic cases or passed tests rerun.",
+        "current_helper_binding": helper_at_start,
+        "per_text_object": prose_layout, "current_native_prose_outline": flow,
+        "native_proseFlow_metadata": actual_flow,
+        "retained_actual_native_stdout": binding(native_stdout_path),
+        "boundary_objects_equal_retained_stdout_and_current_native_flow": True,
+        "manual_paragraph_indices_authored": False,
+    },
+    "reused_test_evidence": test_receipts,
+    "verification": {
+        "script": binding(Path(__file__)),
+        "command": f"PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python -B {Path(__file__).relative_to(ROOT)}",
+        "started": started, "finished": datetime.now(timezone.utc).isoformat(),
+        "helper_hash_unchanged_during_check": True, "candidate_hashes_unchanged_during_check": True,
+        "full_finalize": False, "source_finalize_or_assemble": False,
+        "native_renderer": False, "katex_render_calls": 0, "image_views": 0,
+        "image_files_read_or_hashed": 0, "image_decoders_invoked": 0, "browser_actions": 0,
+        "screenshots": 0, "full_app_tests": 0, "focused_test_reruns": 0,
+        "candidate_writes": 0, "source_writes": 0, "figure_writes": 0, "template_writes": 0,
+        "app_writes": 0, "database_actions": 0, "git_actions": 0, "installs": 0,
+        "other_agent_or_chat_actions": 0, "network_actions": 0,
+        "only_write_root": str(OWN),
+    },
+    "failures": {
+        "current_review_search_failures": [{
+            "command": "rg --files .tmp/resume182-6-8a-n12-0789/modern-text-review-FIRST ...",
+            "exit_code": 2, "detail": "Owned review directory did not yet exist; other listed inputs were found. Technical discovery failure only, not a text/content verdict.",
+            "recovery": "Create only the owned review directory through apply_patch when adding this verifier.",
+        }],
+        "historical_failures_and_first_results": "Preserved in place and referenced through existing lineage; no overwrite or reset.",
+        "technical_recovery_counted_as_approval": False,
+    },
+    "usage": {
+        "host_tokens": "unknown", "total_cost": "unknown", "new_image_views": 0,
+        "paid_generation_calls": 0, "historical_usage_reset": False,
+    },
+    "final_disposition": "Independent approval of only the current hash-bound lesson/exercises text. Source PASS and earlier passed stages are reused. Figure approval, finalization, rendering and delivery remain outside this text review.",
+}
+result_path = OWN / "result.record"
+with result_path.open("x", encoding="utf-8") as handle:
+    handle.write(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({"status": status, "blockers": blockers, "result": binding(result_path),
+                  "approved_text_bindings": record["approved_text_bindings"],
+                  "current_edition_helper": helper_at_start}, ensure_ascii=False, indent=2))
+sys.exit(0 if status == "TEXT_PASS" else 1)

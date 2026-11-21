@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = `${repo}/.tmp/resume182-6-8a-n12-0789/display-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const readyPath = `${own}/ready-FIRST.record`;
+const readyBytes = fs.readFileSync(readyPath);
+const ready = JSON.parse(readyBytes);
+const first = JSON.parse(fs.readFileSync(`${own}/runtime-FIRST/report-FIRST.json`));
+assert.equal(first.status, 'FAIL');
+assert.equal(first.renderer.ok, true);
+assert.equal(first.screenshots.length, 0);
+assert.ok(Object.values(first.cleanup).every(Boolean));
+const names = ['prepare.mjs', 'run.mjs', 'display-helper.mjs', 'display-helper-base.mjs'];
+const [mode] = process.argv.slice(2);
+if (mode === '--preserve') {
+  fs.writeFileSync(`${own}/ready-before-underbrace1.record`, readyBytes, { flag: 'wx' });
+  for (const name of names) {
+    const file = `${own}/${name}`;
+    const bytes = fs.readFileSync(file);
+    assert.equal(sha(bytes), first.inputs.find(item => item.path === file).sha256);
+    fs.writeFileSync(`${file}-before-underbrace1.record`, bytes, { flag: 'wx' });
+  }
+  console.log(JSON.stringify({ status: 'FIRST_IMPLEMENTATION_PRESERVED', rendererCalls: 0 }));
+} else {
+  assert.equal(mode, '--bind');
+  assert.ok(fs.readFileSync(`${own}/ready-before-underbrace1.record`).equals(readyBytes));
+  ready.historicalImplementation = names.map(name => {
+    const originalPath = `${own}/${name}`;
+    const path = `${originalPath}-before-underbrace1.record`;
+    const hash = sha(fs.readFileSync(path));
+    assert.equal(hash, first.inputs.find(item => item.path === originalPath).sha256);
+    return { originalPath, path, sha256: hash };
+  });
+  for (const file of ready.files) {
+    const bytes = fs.readFileSync(file.path);
+    if (!file.path.endsWith('/run.mjs')) assert.equal(sha(bytes), file.sha256);
+    const result = spawnSync(process.execPath, ['--check', file.path], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    file.sha256 = sha(bytes);
+  }
+  ready.pins = ready.pins.filter(pin => !ready.files.some(file => file.path === pin.path));
+  ready.pins.push(...ready.files.map(file => ({ ...file, realpath: fs.realpathSync(file.path) })));
+  ready.recovery = {
+    preservedReady: { path: readyPath, sha256: sha(readyBytes) },
+    reason: 'Only displayed underbrace outer-box padding repaired; FIRST render, approvals and clipping assertions unchanged.',
+    rendererCalls: 0, browserLaunches: 0, contentApprovalReruns: 0, databaseWrites: 0,
+  };
+  const file = `${own}/ready-underbrace1.record`;
+  fs.writeFileSync(file, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({ status: 'RECOVERY_IMPLEMENTATION_BOUND', path: file,
+    sha256: sha(fs.readFileSync(file)) }));
+}

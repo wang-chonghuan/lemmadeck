@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""Check every inventoried table cell against the spec and native SVG."""
+
+import hashlib
+import json
+from pathlib import Path
+import re
+import xml.etree.ElementTree as ET
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == ROOT
+OWN = ROOT / ".tmp/resume182-6-8a-n12-0789/figure-author-FIRST"
+SPEC = OWN / "firstcandidate/tbl-p0081-01.spec.json"
+SVG = OWN / "tbl-p0081-01.svg"
+REPORT = OWN / "tbl-p0081-01.render.json"
+INVENTORY = OWN / "source-inventory.json"
+TEXT = OWN / "text-assertions.json"
+read = lambda path: json.loads(path.read_text())
+spec, report, inventory, text = map(read, [SPEC, REPORT, INVENTORY, TEXT])
+assert report["status"] == "pass"
+assert report["collisions"] == []
+assert report["labels"] == 22
+assert spec["canvas"] == {
+    "width": 640, "height": 320, "boundingBox": [0, 320, 640, 0],
+    "background": "paper", "keepAspectRatio": True,
+}
+assert spec["display"] == {
+    "purpose": "instructional", "layout": "scroll",
+    "minTextPx": 16, "widths": [640],
+}
+assert report["displayChecks"][0]["width"] == 640
+assert report["displayChecks"][0]["measuredMinPx"] >= 16
+assert report["displayChecks"][0]["failures"] == []
+assert hashlib.sha256(SPEC.read_bytes()).hexdigest() == report["spec"]["sha256"]
+assert hashlib.sha256(SVG.read_bytes()).hexdigest() == report["output"]["svg"]["sha256"]
+objects = {item["id"]: item for item in spec["objects"]}
+assert len(objects) == len(spec["objects"]) == 24
+svg = ET.parse(SVG).getroot()
+assert [float(value) for value in svg.attrib["viewBox"].replace(",", " ").split()] == [0, 0, 640, 320]
+ns = {"s": "http://www.w3.org/2000/svg"}
+labels = svg.findall(".//s:text", ns)
+assert len(labels) == 22
+by_label = {node.attrib["data-label-id"]: node for node in labels}
+assert len(by_label) == 22
+assert [item["renderText"] for item in inventory["cells"][:11]] == [
+    "n", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+]
+assert [item["renderText"] for item in inventory["cells"][11:]] == [
+    "a\u2099", "1", "4", "9", "16", "25", "36", "49", "64", "81", "100",
+]
+assert len(text["assertions"]) == len(inventory["cells"]) == 22
+cell_results = []
+for cell, assertion in zip(inventory["cells"], text["assertions"]):
+    assert cell["textAssertion"] == assertion["id"]
+    assert cell["id"] == assertion["sourceInventoryId"]
+    obj = objects[assertion["object"]]
+    node = by_label[assertion["svgLabelId"]]
+    actual = "".join(node.itertext())
+    assert obj["text"] == assertion["expected"] == cell["renderText"] == actual
+    assert obj["at"] == assertion["placement"]["expectedAnchor"]
+    x_min, y_max, x_max, y_min = assertion["placement"]["bounds"]
+    x, y = obj["at"]
+    assert x_min < x < x_max and y_min < y < y_max
+    assert float(node.attrib["x"]) == x
+    assert float(node.attrib["y"]) == 320 - y
+    assert node.attrib["text-anchor"] == "middle"
+    assert float(node.attrib["font-size"]) >= 16
+    assert node.attrib.get("transform") is None
+    assert 20 * 0.65 * len(actual) / 2 + 2 < (x_max - x_min) / 2
+    assert 20 + 4 < y_max - y_min
+    cell_results.append({
+        "source": cell["id"], "textAssertion": assertion["id"],
+        "placementAssertion": assertion["placement"]["id"],
+        "object": obj["id"], "svgLabel": assertion["svgLabelId"],
+        "expected": assertion["expected"], "actual": actual, "status": "pass",
+    })
+grid = objects["table-lattice"]
+assert grid["bounds"] == [12, 224, 628, 96]
+assert grid["xStep"] == 56 and grid["yStep"] == 64
+assert grid["xOffset"] == 12 and grid["yOffset"] == 96
+grid_dimension = next(item for item in spec["assertions"] if item["id"] == "full-table-2-by-11")
+assert grid_dimension == {
+    "id": "full-table-2-by-11", "type": "gridDimensions",
+    "grid": "table-lattice", "rows": 2, "columns": 11,
+}
+element_ids = {node.attrib.get("id", "") for node in svg.iter()}
+for index in range(12):
+    assert any(re.search(rf"table-lattice-v-{index}(?:_|$)", identity) for identity in element_ids)
+for index in range(3):
+    assert any(re.search(rf"table-lattice-h-{index}(?:_|$)", identity) for identity in element_ids)
+assert not svg.findall(".//s:image", ns)
+assert not svg.findall(".//s:foreignObject", ns)
+assert not svg.findall(".//s:script", ns)
+payload = {
+    "schema": "stemrobin182/render-cell-check@1", "status": "pass",
+    "notIndependentReview": True, "book": "8a", "lesson": "alg8-c3-s1-n12",
+    "edition": "modern-us-neutral", "figure": "tbl-p0081-01",
+    "specSha256": hashlib.sha256(SPEC.read_bytes()).hexdigest(),
+    "svgSha256": hashlib.sha256(SVG.read_bytes()).hexdigest(),
+    "renderSha256": hashlib.sha256(REPORT.read_bytes()).hexdigest(),
+    "sourceInventorySha256": hashlib.sha256(INVENTORY.read_bytes()).hexdigest(),
+    "textAssertionsSha256": hashlib.sha256(TEXT.read_bytes()).hexdigest(),
+    "nativeGridDimensions": {"rows": 2, "columns": 11, "fullHeaderColumnIncluded": True},
+    "renderedLattice": {"horizontalRules": 3, "verticalRulesIncludingModernOuterSides": 12},
+    "labelPlacementEvidence": "Exact centered spec and SVG anchors plus native zero-collision report. Conservative 20 px glyph-width envelope fits each 56 by 64 px cell.",
+    "measuredMinTextPxAt640": report["displayChecks"][0]["measuredMinPx"],
+    "cellChecks": cell_results, "imageViewsAdded": 0,
+}
+with (OWN / "render-cell-check.record").open("x") as handle:
+    json.dump(payload, handle, indent=2, ensure_ascii=True)
+    handle.write("\n")
+print(json.dumps({"status": "pass", "cells": len(cell_results), "minTextPxAt640": payload["measuredMinTextPxAt640"]}))

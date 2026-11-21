@@ -1,0 +1,18 @@
+"""Select the unchanged table and its font-recovered header structurally."""
+
+import json
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+result = subprocess.run(
+    ["python3", ".tmp/resume182-6-8a-n12-0789/figure-author-FIRST/raster-input-recovery1.py"],
+    capture_output=True, text=True, check=True,
+)
+full = ET.fromstring(result.stdout)
+headers = [node for node in full.iter() if node.attrib.get("id") == "preview-recovery-r2-c1"]
+assert len(headers) == 1
+assert "".join(headers[0].itertext()) == "a\u2099"
+header = ET.Element(full.tag, full.attrib)
+header.append(headers[0])
+json.dump({"full": result.stdout, "header": ET.tostring(header, encoding="unicode")}, sys.stdout)

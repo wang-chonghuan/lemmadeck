@@ -500,6 +500,15 @@ def normalize_prose_layout(text: str) -> str:
     """Create short paragraphs while keeping complete sentences and formulas legible."""
     if not isinstance(text, str):
         return text
+    text = text.replace("\r\n", "\n")
+    paragraph_boundaries = list(re.finditer(r"\n[ \t]*\n+", masked_math(text)))
+    if paragraph_boundaries:
+        starts = [0, *(boundary.end() for boundary in paragraph_boundaries)]
+        ends = [*(boundary.start() for boundary in paragraph_boundaries), len(text)]
+        return "\n\n".join(
+            normalize_prose_layout(text[start:end])
+            for start, end in zip(starts, ends) if text[start:end].strip()
+        )
     text = re.sub(r"[\t \u3000]+", " ", text.replace("\r\n", "\n")).strip()
     if not text:
         return text
@@ -552,6 +561,19 @@ def normalize_prose_layout(text: str) -> str:
     if tail:
         lines.append(tail)
 
+    connected = []
+    for line in lines:
+        if (
+            connected
+            and connected[-1].endswith(("，", ",", "；", ";"))
+            and MATH.fullmatch(connected[-1].rstrip("，,；;"))
+            and not MATH.search(line)
+        ):
+            connected[-1] += line
+        else:
+            connected.append(line)
+    lines = connected
+
     paragraphs = []
     current = []
     current_chars = 0
@@ -561,7 +583,7 @@ def normalize_prose_layout(text: str) -> str:
         attaches_to_previous = bool(
             current
             and (
-                current[-1].endswith(("：", ":"))
+                current[-1].endswith(("：", ":", "，", ","))
                 or standalone_formula
             )
         )

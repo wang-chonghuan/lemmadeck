@@ -1,0 +1,144 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const batch = path.join(root, '.tmp/resume182-6-8a-n12-0789');
+const modern = path.join(batch, 'modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s1-n12');
+const candidatePath = path.join(batch, 'answer-author-FIRST/answer-keys.json');
+const bindingPath = path.join(batch, 'answer-context-binding.record');
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const verifyPin = (file, expected) => assert.equal(sha(file), expected, file);
+const numbers = Array.from({ length: 14 }, (_, index) => String(204 + index));
+
+verifyPin(path.join(modern, 'lesson.template.json'), '5412235c97d6fd534099a63ccab344f887fd6c4a3aac0b6e432f992ac2faa5a3');
+verifyPin(path.join(modern, 'exercises.template.json'), '2f2c3458446f3f48b10ed18e8559463171a3cb1bdadea0be5ff68b278a4984e6');
+verifyPin(candidatePath, 'ddf8847a733cee24fa5866f396e611bb544d9aefc143719e36c04f7b308035a3');
+verifyPin(bindingPath, '050d573b2dc9d7e193d915fc59fc262cbf0970af69bf432a6564f59fa30c2705');
+verifyPin(path.join(batch, 'answer-review-FIRST/independent-solutions.json'), 'e8c3e84cd4f9520e05716a7ee37a3b1d6abeb005c5b6cefd2ee874df1052b695');
+
+const candidate = read(candidatePath);
+const exercises = read(path.join(modern, 'exercises.template.json'));
+const lesson = read(path.join(modern, 'lesson.template.json'));
+assert.equal(candidate.schema, 'ld-s10y-answer/lesson-answers@1');
+assert.equal(candidate.book, '8a');
+assert.equal(candidate.lesson, 'alg8-c3-s1-n12');
+assert.equal(candidate.edition, 'modern-us-neutral');
+assert.equal(candidate.status, 'draft');
+assert.equal(exercises.count, 14);
+assert.deepEqual(exercises.exercises.map((item) => item.number), numbers);
+assert.deepEqual(candidate.answers.map((answer) => answer.exercise), numbers);
+assert.equal(fs.existsSync(path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/8a/answers.json')), false);
+
+const partCounts = [2, 3, 8, 4, 5, 6, 2, 3, 2, 3, 4, 2, 2, 2];
+const autoExpected = {
+  '207': [['numeric', '17'], ['numeric', '32'], ['expression', '3k+2'], ['expression', '3k+5']],
+  '208': [['numeric', '405'], ['numeric', '10005'], ['expression', 'k^2+5'], ['expression', 'k^2+14k+54'], ['expression', '4k^2+5']],
+  '210': [['numeric', '23'], ['numeric', '100']],
+  '215': [['numeric', '11'], ['numeric', '32']],
+  '216': [['numeric', '4'], ['numeric', '9']]
+};
+let auto = 0;
+let ungraded = 0;
+let numericParts = 0;
+let expressionParts = 0;
+let displaySubparts = 0;
+for (const [index, answer] of candidate.answers.entries()) {
+  assert.equal(answer.source, 'derived');
+  assert.equal(Object.hasOwn(answer, 'bookRaw'), false);
+  assert.equal(Object.hasOwn(answer, 'prompt'), false);
+  assert.equal(Object.hasOwn(answer, 'figureEvidence'), false);
+  assert.deepEqual(exercises.exercises[index].figure_refs, []);
+  assert.deepEqual(exercises.exercises[index].figures, []);
+  assert.ok(answer.displayAnswer.trim());
+  assert.equal(/[\u0400-\u04ff]/.test(answer.displayAnswer), false);
+  const labels = Array.from({ length: partCounts[index] }, (_, i) => `${String.fromCharCode(97 + i)})`);
+  const displayLabels = Array.from(answer.displayAnswer.matchAll(/(?:^|\n)([a-z]\))/g), (match) => match[1]);
+  assert.deepEqual(displayLabels, labels, answer.exercise);
+  displaySubparts += labels.length;
+  if (Object.hasOwn(autoExpected, answer.exercise)) {
+    auto++;
+    assert.equal(answer.grading, 'auto');
+    assert.deepEqual(answer.parts.map((part) => part.label), labels);
+    assert.deepEqual(answer.parts.map((part) => [part.judge, part.expected[0]]), autoExpected[answer.exercise]);
+    for (const part of answer.parts) {
+      assert.equal(part.expected.length, 1);
+      assert.equal(/(?:abs|sqrt|sin|cos|tan|log|ln|exp)\s*\(/.test(part.expected[0]), false);
+      assert.equal(Object.hasOwn(part, 'unit'), false);
+      if (part.judge === 'numeric') {
+        assert.ok(Number.isFinite(Number(part.expected[0])));
+        numericParts++;
+      } else {
+        assert.equal(part.judge, 'expression');
+        expressionParts++;
+      }
+    }
+  } else {
+    ungraded++;
+    assert.equal(answer.grading, 'ungraded');
+    assert.deepEqual(answer.parts, []);
+  }
+}
+assert.equal(auto, 5);
+assert.equal(ungraded, 9);
+assert.equal(numericParts, 10);
+assert.equal(expressionParts, 5);
+assert.equal(displaySubparts, 48);
+
+// Reuse the finished math review; compare later native files without solving again.
+const binding = read(bindingPath);
+assert.equal(binding.schema, 'stemrobin-182/native-answer-context-binding@1');
+assert.equal(binding.status, 'NATIVE_CONTEXT_MATCHED_INDEPENDENT_ANSWER_REVIEW_PENDING');
+assert.equal(binding.book, '8a');
+assert.equal(binding.lesson, candidate.lesson);
+assert.equal(binding.edition, candidate.edition);
+assert.deepEqual(binding.questions, numbers);
+assert.equal(binding.promptEquality, true);
+assert.equal(binding.sourceAndBookRawEquality, true);
+assert.equal(binding.candidateChanged, false);
+assert.equal(binding.candidate.path, candidatePath);
+assert.equal(binding.candidate.sha256, sha(candidatePath));
+assert.equal(binding.approvedExercises.path, path.join(modern, 'exercises.template.json'));
+assert.equal(binding.approvedExercises.sha256, sha(binding.approvedExercises.path));
+for (const field of ['finalExercises', 'nativeTemplate']) {
+  verifyPin(binding[field].path, binding[field].sha256);
+}
+const finalExercises = read(binding.finalExercises.path);
+assert.deepEqual(finalExercises, { ...exercises, status: 'ready' });
+const finalLessonPath = path.join(path.dirname(binding.finalExercises.path), 'lesson.json');
+assert.deepEqual(read(finalLessonPath), { ...lesson, status: 'ready' });
+const native = read(binding.nativeTemplate.path);
+assert.equal(native.book, candidate.book);
+assert.equal(native.lesson, candidate.lesson);
+assert.equal(native.edition, candidate.edition);
+assert.deepEqual(native.answers.map((answer) => String(answer.exercise)), numbers);
+for (const [index, answer] of native.answers.entries()) {
+  assert.equal(answer.prompt, finalExercises.exercises[index].text);
+  assert.equal(answer.source, candidate.answers[index].source);
+  assert.equal(Object.hasOwn(answer, 'bookRaw'), Object.hasOwn(candidate.answers[index], 'bookRaw'));
+  assert.equal(answer.bookRaw, candidate.answers[index].bookRaw);
+  assert.deepEqual(answer.figureEvidence, []);
+}
+
+console.log(JSON.stringify({
+  schema: 'stemrobin-182/independent-answer-review-check@1',
+  status: 'pass',
+  scope: 'Independent answer structure and native context pin binding; no runtime replay or finalization.',
+  answerCount: 14,
+  derived: 14,
+  auto,
+  ungraded,
+  displaySubparts,
+  numericParts,
+  expressionParts,
+  exactParts: 0,
+  imageViews: 0,
+  sourceNativeBindingPending: false,
+  finalLesson: { path: finalLessonPath, sha256: sha(finalLessonPath) },
+  finalExercises: binding.finalExercises,
+  nativeTemplate: binding.nativeTemplate,
+  candidateSha256: sha(candidatePath),
+  failures: []
+}, null, 2));

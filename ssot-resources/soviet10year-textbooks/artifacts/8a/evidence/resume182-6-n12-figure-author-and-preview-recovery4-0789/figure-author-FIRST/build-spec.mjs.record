@@ -1,0 +1,102 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n12-0789/figure-author-FIRST';
+const read = (name) => JSON.parse(fs.readFileSync(`${own}/${name}`, 'utf8'));
+const inventory = read('source-inventory.json');
+const context = read('context.json');
+const bindings = read('context-bindings.record');
+const original = bindings.candidateByteCopies[2].original;
+assert.equal(context.sourceImage.sha256, original.sha256);
+assert.deepEqual(context.lessons.map((lesson) => lesson.lesson), ['alg8-c3-s1-n12']);
+assert.equal(inventory.cells.length, 22);
+const left = 12, bottom = 96, columnWidth = 56, rowHeight = 64;
+const top = bottom + rowHeight * 2, right = left + columnWidth * 11;
+const groups = [{
+  id: inventory.lattice.id,
+  description: `${inventory.lattice.observedGeometry} Modern additions: regularized 56 px columns and two closed outer side borders; these are not source-visible facts.`,
+  objects: inventory.lattice.objects,
+  assertions: inventory.lattice.assertions,
+  requires: inventory.lattice.requires,
+}];
+const objects = [
+  { id: 'table-lattice', type: 'grid', bounds: [left, top, right, bottom],
+    xStep: columnWidth, yStep: rowHeight, xOffset: left, yOffset: bottom,
+    stroke: 'muted', strokeWidth: 1.25 },
+  { id: 'table-frame', type: 'polygon',
+    points: [[left, bottom], [right, bottom], [right, top], [left, top]],
+    stroke: 'ink', strokeWidth: 1.5, fill: 'paper', fillOpacity: 0 },
+];
+const assertions = [
+  { id: 'full-table-2-by-11', type: 'gridDimensions', grid: 'table-lattice', rows: 2, columns: 11 },
+  { id: 'all-22-cell-labels', type: 'objectCount', objectType: 'text', count: 22 },
+];
+const textAssertions = inventory.cells.map((cell) => {
+  const xMin = left + (cell.column - 1) * columnWidth;
+  const yMax = top - (cell.row - 1) * rowHeight;
+  const at = [xMin + columnWidth / 2, yMax - rowHeight / 2];
+  objects.push({
+    id: cell.object, type: 'text', at, text: cell.renderText,
+    fontSize: 20, fontWeight: cell.column === 1 ? 600 : 400,
+    labelColor: 'ink', labelPlacement: { position: 'CENTER', offset: [0, 0] },
+  });
+  assertions.push({
+    id: cell.nativeAssertion, type: 'inside', point: cell.object,
+    container: 'table-frame', margin: 8,
+  });
+  groups.push({
+    id: cell.id,
+    description: `Original row ${cell.row}, column ${cell.column}: ${cell.sourceLabel}; role ${cell.role}. Render exactly ${cell.renderText}, in the same indexed cell. Exact text and per-cell placement are additionally bound by ${cell.textAssertion} and ${cell.placementAssertion} in text-assertions.json.`,
+    objects: [cell.object], assertions: [cell.nativeAssertion],
+  });
+  return {
+    id: cell.textAssertion, type: 'textEquals', sourceInventoryId: cell.id,
+    object: cell.object, svgLabelId: `${cell.object}-label`,
+    expected: cell.renderText, sourceLabel: cell.sourceLabel,
+    placement: {
+      id: cell.placementAssertion, type: 'cellPlacement',
+      row: cell.row, column: cell.column, expectedAnchor: at,
+      bounds: [xMin, yMax, xMin + columnWidth, yMax - rowHeight],
+      labelMustFitInsideCell: true,
+    },
+  };
+});
+const authoritativeText = context.lessons.flatMap((lesson) => [
+  ...lesson.prose.flatMap((group) => group.nearbyText.map((text) => ({ lesson: lesson.lesson, text }))),
+  ...lesson.exercises.map((exercise) => ({ lesson: lesson.lesson, exercise: exercise.exercise, text: exercise.text })),
+]);
+const spec = {
+  schema: 'ld-s10y-image/figure-spec@2', id: 'tbl-p0081-01', mode: 'deterministic',
+  description: 'Read the finite sequence by pairing each increasing index n from 1 through 10 with its original given term a_n. Retain both rows, eleven columns including the row labels, and all twenty numeric entries.',
+  source: { image: { path: original.path, sha256: original.sha256 }, authoritativeText, inventory: groups },
+  canvas: { width: 640, height: 320, boundingBox: [0, 320, 640, 0], background: 'paper', keepAspectRatio: true },
+  display: { purpose: 'instructional', layout: 'scroll', minTextPx: 16, widths: [640] },
+  objects, assertions, layout: { minLabelGap: 2 },
+};
+const write = (file, value) => fs.writeFileSync(`${own}/${file}`, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+fs.mkdirSync(`${own}/firstcandidate`, { recursive: true });
+write('firstcandidate/tbl-p0081-01.spec.json', spec);
+write('text-assertions.json', {
+  schema: 'stemrobin182/figure-text-assertions@1',
+  nativeValidatorSupportsTextEquals: false,
+  nativeAssertionsRemainFigureSpecV2Compatible: true,
+  checker: path.resolve(`${own}/check-render.py`),
+  sourceInventory: path.resolve(`${own}/source-inventory.json`),
+  sourceInventorySha256: createHash('sha256').update(fs.readFileSync(`${own}/source-inventory.json`)).digest('hex'),
+  assertions: textAssertions,
+});
+write('firstcandidate/creation.record', {
+  status: 'FIRST_DRAFT_CANDIDATE_NOT_APPROVED', spec: path.resolve(`${own}/firstcandidate/tbl-p0081-01.spec.json`),
+  specSha256: createHash('sha256').update(fs.readFileSync(`${own}/firstcandidate/tbl-p0081-01.spec.json`)).digest('hex'),
+  context: path.resolve(`${own}/context.json`),
+  contextSha256: createHash('sha256').update(fs.readFileSync(`${own}/context.json`)).digest('hex'),
+  inventory: path.resolve(`${own}/source-inventory.json`),
+  candidateContextBindings: path.resolve(`${own}/context-bindings.record`),
+  nativeAssertionCount: assertions.length, exactCellTextAssertionCount: textAssertions.length,
+  firstCandidateBytesRetained: true, substantiveRepairs: 0, independentlyApproved: false,
+});
+console.log(JSON.stringify({ status: 'FIRST_DRAFT_SPEC_CREATED', objects: objects.length, labels: 22, nativeAssertions: assertions.length, textAssertions: textAssertions.length }));
