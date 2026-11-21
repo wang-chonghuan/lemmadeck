@@ -1,5 +1,33 @@
 # 开发路线
 
+## 184-6 n44 offline tail delivered; Git authorization corrected (2026-11-21)
+
+n44 is offline-complete:9prose/4written363-366/4answers(3auto,1ungraded),
+3math/1free interactions,5choices/20options,0figures. Passed native,
+independent written mathematics, adaptation, answer/interaction finalize,
+renders and desktop/mobile offline evidence are reused without replay.
+Independent semantic choice review PASS retained as review.independent.json.
+Canonical review.json remains self_review; strictCompliance=false exception
+and the failed first111-file retention are preserved, not re-reviewed.
+Completion SHA d174e11133dfd87c62fefd8ba0d9aefa01c66588735cf63327ec8b7800c47f14;
+111-file seal manifest SHA
+7f7d498adff2990789d991d737b8bf7884c9e464f455c9849b31cf6d5e6f3fd1.
+This is1completed tail lesson, not a fresh corpus count or formal review handoff.
+
+Original direct human startup retrieved from this same184-6 chat
+01a1f614-aa4c-76c1-a059-b63e505f3aa3:
+"保持detached HEAD，交付仍codex/STEMROBIN-184-textbooks，不force、不推恢复快照祖先、不改原锁。"
+"约4完整课一批commit/push后立即下一批，题图量可3-5课或单大课，尾批直接交付。"
+Latest delegated continuation explicitly requests narrow commit/push. No later
+direct human Git prohibition has been identified; the earlier blanket
+"unresolved original Git restriction" claim is unsupported and stays only as
+historical text. Detached HEAD is required, not a global production HOLD.
+Remote37fa28c847b397fcdb6e325f9a8bd7c79cdadd5b equalsHEAD; normal push only.
+Narrow delivery excludes uncommitted104/122/135 and unrelated working records.
+Parent permanent24/24, priorFAIL/HOLD/UNKNOWN and known1621637/page remain.
+No paid calls/DB/publication/merge/deploy/ticket closure or peer messages.
+Continue n45 missing stages in this same invocation,finish=review.
+
 ## 184-6 n14 尾批窄交付（2026-11-20）
 
 按当前继续授权交付这一实际尾批，不以一课长期未推送收尾。

@@ -59,6 +59,19 @@ class CompoundFractionRows(unittest.TestCase):
             text_row(ink, 35, left=left - 130, count=3)
         self.assertTrue(layout._single_fraction_row(ink, 20, 197, 40))
 
+    def test_outer_rule_owns_balanced_numerator_and_denominator_fractions(self):
+        ink = np.zeros((220, 1000), dtype=bool)
+        balanced_fraction(ink, 20, 320)
+        self.assertTrue(layout._single_fraction_row(ink, 20, 197, 40))
+
+    def test_independent_fraction_rows_without_an_outer_rule_stay_separate(self):
+        ink = np.zeros((160, 320), dtype=bool)
+        for top in (20, 88):
+            ink[top:top + 18, 100:116] = True
+            ink[top + 24:top + 27, 80:140] = True
+            ink[top + 34:top + 54, 100:116] = True
+        self.assertFalse(layout._single_fraction_row(ink, 0, 159, 20))
+
     def test_compound_fraction_does_not_hide_two_independent_text_rows(self):
         ink = np.zeros((220, 1000), dtype=bool)
         balanced_fraction(ink, 20, 320)

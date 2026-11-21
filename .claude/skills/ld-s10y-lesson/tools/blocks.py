@@ -29,6 +29,8 @@ HEAD = re.compile(r"^<!--\s+(?P<kind>h1|h2|h3|p|exhead|ex|fig|cap|foot)\b"
 BOX = re.compile(r"\bbox\s+(\d+,\d+,\d+,\d+)")
 FLAG = re.compile(r"\b(cont|open|samerow)\b")
 OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:-]+)\b")
+OWNERS = re.compile(r"\bowners-ex\b")
+OWNER_ID = re.compile(r"[A-Za-z0-9._:-]+")
 WRAP = "↵"
 KINDS_TEXT = ("h1", "h2", "h3", "p", "exhead", "ex", "cap", "foot")
 
@@ -60,8 +62,28 @@ def parse(md: str) -> tuple[dict, list[dict]]:
             mb = BOX.search(rest)
             box = [int(v) for v in mb.group(1).split(",")] if mb else None
             rest = BOX.sub("", rest)
+            owners = None
+            declarations = list(OWNERS.finditer(rest))
+            if len(declarations) > 1:
+                raise ValueError("同一块不能重复声明 owners-ex")
+            mos = declarations[0] if declarations else None
+            if mos:
+                tail = rest[mos.end():].lstrip()
+                try:
+                    owners, end = json.JSONDecoder().raw_decode(tail)
+                except json.JSONDecodeError as error:
+                    raise ValueError("owners-ex 必须是非空题目标识 JSON 数组") from error
+                if (m.group("kind") != "p" or not isinstance(owners, list)
+                        or not owners or any(not isinstance(owner, str)
+                                            or not OWNER_ID.fullmatch(owner)
+                                            for owner in owners)
+                        or len(set(owners)) != len(owners)):
+                    raise ValueError("owners-ex 只允许正文块的非重复题目标识数组")
+                rest = rest[:mos.start()] + tail[end:]
             mo = OWNER.search(rest)
             owner_exercise = mo.group(1) if mo else None
+            if owners is not None and owner_exercise is not None:
+                raise ValueError("同一块不能同时声明 owner-ex 和 owners-ex")
             rest = OWNER.sub("", rest)
             flags = set(FLAG.findall(rest))
             label = FLAG.sub("", rest).strip() or None
@@ -69,6 +91,8 @@ def parse(md: str) -> tuple[dict, list[dict]]:
                    "owner_exercise": owner_exercise,
                    "cont": "cont" in flags, "open": "open" in flags,
                    "samerow": "samerow" in flags, "lines": []}
+            if owners is not None:
+                cur["owner_exercises"] = owners
             blocks.append(cur)
         elif cur is not None and raw.strip():
             if raw.strip().startswith("!["):      # 图片引用由 fig 块的 box 决定，忽略
@@ -90,6 +114,8 @@ def dump(meta: dict, blocks: list[dict], page: int) -> str:
             head.append("box " + ",".join(map(str, b["box"])))
         if b.get("owner_exercise"):
             head.append("owner-ex " + str(b["owner_exercise"]))
+        if b.get("owner_exercises") is not None:
+            head.append("owners-ex " + json.dumps(b["owner_exercises"], separators=(",", ":")))
         if b.get("cont"):
             head.append("cont")
         if b.get("open"):

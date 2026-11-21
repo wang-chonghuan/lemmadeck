@@ -160,6 +160,25 @@ def _straight_fraction_rule(mask: np.ndarray, line_h: float) -> bool:
     return np.percentile(np.abs(residual), 90) <= max(1.0, 0.03 * line_h)
 
 
+def _thin_fraction_rule(
+    mask: np.ndarray, line_h: float, thickness_factor: float = 0.2
+) -> bool:
+    """Measure rule thickness across columns independently of small scan skew."""
+    if not _straight_fraction_rule(mask, line_h):
+        return False
+    x = np.flatnonzero(mask.any(axis=0))
+    spans = [
+        ys[-1] - ys[0] + 1 for column in x
+        for ys in [np.flatnonzero(mask[:, column])]
+    ]
+    counts = mask.sum(axis=0)[x]
+    centers = (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[x] / counts
+    return (
+        np.percentile(spans, 90) <= thickness_factor * line_h
+        and abs(np.polyfit(x, centers, 1)[0]) <= 0.1
+    )
+
+
 def _bar_local_fraction_support(
     components: np.ndarray, original_bounds, original_ids, rows, columns,
     line_h: float,
@@ -512,7 +531,7 @@ def _single_fraction_row(
     band = ink[a:b + 1].copy()
     height = band.shape[0]
     rules = []
-    accepted_carriers = set()
+    rule_supports = []
     components, _ = ndimage.label(band)
     original_components = components
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
@@ -521,19 +540,18 @@ def _single_fraction_row(
         rows, columns = bounds
         if (
             columns.stop - columns.start >= 0.7 * line_h
-            and rows.stop - rows.start <= 0.2 * line_h
             and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
-            and _straight_fraction_rule(components[bounds] == component_id, line_h)
+            and _thin_fraction_rule(components[bounds] == component_id, line_h)
             and _fraction_rule_has_sides(band, rows, columns, line_h)
         ):
             rules.append((columns.start, columns.stop - 1))
-            accepted_carriers.add(component_id)
+            rule_supports.append((rules[-1], (rows.start + rows.stop) / 2, {component_id}))
     horizontal = ndimage.binary_opening(
         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
     )
     rule_components, _ = ndimage.label(horizontal)
     original_bounds = ndimage.find_objects(components)
-    for bounds in ndimage.find_objects(rule_components):
+    for rule_component_id, bounds in enumerate(ndimage.find_objects(rule_components), 1):
         if bounds is None:
             continue
         rows, columns = bounds
@@ -574,7 +592,7 @@ def _single_fraction_row(
                 for component_id in original_ids if component_id
             )
             and
-            rows.stop - rows.start <= 0.25 * line_h
+            _thin_fraction_rule(rule_components[bounds] == rule_component_id, line_h, 0.25)
             and _fraction_rule_has_sides(band, rows, columns, line_h)
             and (
                 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
@@ -585,27 +603,56 @@ def _single_fraction_row(
             )
         ):
             rules.append((columns.start, columns.stop - 1))
-            accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+            rule_supports.append((
+                rules[-1], (rows.start + rows.stop) / 2,
+                {int(component_id) for component_id in original_ids if component_id},
+            ))
     if not rules:
         return False
     limit_context = original_components if source_components is None else source_components[a:b + 1]
     bounded_limits = _bounded_carrier_limit_ownership(limit_context, line_h)
     if bounded_limits.any():
         rules = _bounded_fraction_rules(original_components, rules, line_h)
+        rule_supports = [
+            support for support in rule_supports
+            if any(left <= support[0][0] <= support[0][1] <= right for left, right in rules)
+        ]
+        # Completed short/broken bars need their own vertical support as well.
+        for component_id, box in enumerate(original_bounds, 1):
+            if box is None:
+                continue
+            rows, columns = box
+            if (
+                rows.stop - rows.start <= 0.2 * line_h
+                and columns.stop - columns.start >= 0.35 * line_h
+                and any(left <= columns.start <= columns.stop - 1 <= right for left, right in rules)
+                and _straight_fraction_rule(original_components[box] == component_id, line_h)
+            ):
+                rule_supports.append((
+                    (columns.start, columns.stop - 1),
+                    (rows.start + rows.stop) / 2, {component_id},
+                ))
+    rule_centers = [center for _, center, _ in rule_supports]
+    accepted_carriers = {
+        component_id for _, _, component_ids in rule_supports for component_id in component_ids
+    }
+    if not rules or not rule_centers:
+        return False
     full_fraction_levels = []
     full_glyph_bounds = [
         box for box in original_bounds if box is not None
         and 0.6 * line_h <= box[0].stop - box[0].start <= 1.8 * line_h
         and box[1].stop - box[1].start >= 0.2 * line_h
     ]
-    for box in original_bounds:
+    for component_id, box in enumerate(original_bounds, 1):
         if box is None:
             continue
         rows, columns = box
         width = columns.stop - columns.start
         if not (
-            rows.stop - rows.start <= 0.2 * line_h and width >= 0.7 * line_h
+            width >= 0.7 * line_h
             and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
+            and _thin_fraction_rule(original_components[box] == component_id, line_h)
         ):
             continue
         aligned = [
@@ -618,13 +665,24 @@ def _single_fraction_row(
             and max(first.start, second.start) < min(first.stop, second.stop)
             for upper, first in aligned for lower, second in aligned
         ):
-            full_fraction_levels.append(((rows.start + rows.stop) / 2, width))
+            full_fraction_levels.append((
+                (rows.start + rows.stop) / 2, width,
+                columns.start, columns.stop - 1,
+            ))
     # Whole-column ownership must not swallow two complete, body-scale fractions.
+    # An enclosing intermediate bar instead makes them one nested fraction.
     if any(
         abs(first_y - second_y) > 1.5 * line_h
         and min(first_w, second_w) >= 0.7 * max(first_w, second_w)
-        for index, (first_y, first_w) in enumerate(full_fraction_levels)
-        for second_y, second_w in full_fraction_levels[index + 1:]
+        and not any(
+            min(first_y, second_y) < center < max(first_y, second_y)
+            and left <= min(first_left, second_left)
+            and max(first_right, second_right) <= right
+            and right - left + 1 > max(first_w, second_w)
+            for (left, right), center, _ in rule_supports
+        )
+        for index, (first_y, first_w, first_left, first_right) in enumerate(full_fraction_levels)
+        for second_y, second_w, second_left, second_right in full_fraction_levels[index + 1:]
     ):
         return False
     # Limits belong to their delimiter, not to another full body row. Use the
@@ -729,13 +787,6 @@ def _single_fraction_row(
     # Skew widens a row's envelope. Neighboring full glyphs must still overlap
     # through their central half, unlike independently supported text rows.
     # A complete adjacent row may be slightly shorter than the page median.
-    full_glyphs = sorted(glyph_bounds, key=lambda bounds: bounds[1].start)
-    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
-        # Compact side captions may be staggered but still share glyph rows.
-        return all(
-            max(first.start, second.start) < min(first.stop, second.stop)
-            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
-        )
     # Fraction bars connect the formula's horizontal support. A distant singleton
     # cannot establish another body row, but repeated glyph groups still can.
     support_groups = _merge_close(
@@ -753,6 +804,21 @@ def _single_fraction_row(
         if len(group) >= 2 or any(left <= x <= y <= right for x, y in rules):
             supported_glyphs.extend(group)
     full_glyphs = sorted(supported_glyphs, key=lambda bounds: bounds[1].start)
+    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
+        # Compact side captions may be staggered but still share glyph rows.
+        affiliated = all(
+            any(
+                rows.start + 0.25 * (rows.stop - rows.start) - 0.5 * line_h
+                <= center
+                <= rows.stop - 0.25 * (rows.stop - rows.start) + 0.5 * line_h
+                for center in rule_centers
+            )
+            for rows, _ in full_glyphs
+        )
+        return affiliated and all(
+            max(first.start, second.start) < min(first.stop, second.stop)
+            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
+        )
     cores = [
         (rows.start + 0.25 * (rows.stop - rows.start),
          rows.stop - 0.25 * (rows.stop - rows.start))
@@ -761,7 +827,13 @@ def _single_fraction_row(
     overlapping = all(
         max(a, c) <= min(b, d) for (a, b), (c, d) in zip(cores, cores[1:])
     )
-    return len(cores) >= 3 and overlapping
+    # Co-row prose remote from every fraction bar is not an inline side caption.
+    affiliated = all(
+        any(start - 0.5 * line_h <= center <= stop + 0.5 * line_h
+            for center in rule_centers)
+        for start, stop in cores
+    )
+    return len(cores) >= 3 and overlapping and affiliated
 
 
 def _subscript_continues(
@@ -817,32 +889,31 @@ def _subscript_continues(
     return supported
 
 
+def _fraction_prefix_rows(ink: np.ndarray, content_w: int, glyph_h: float):
+    """Find supported prose rows before a proposed fraction boundary."""
+    fragments = _row_fragments(ink, content_w)
+    supported = _supported_glyph_rows(ink, fragments, glyph_h)
+    return supported or (fragments if _small_text_rows(ink, fragments, glyph_h) else [])
+
+
 def _fraction_tail_split(
     ink: np.ndarray, a: int, b: int, content_w: int, glyph_h: float,
     source_components: np.ndarray | None = None,
 ) -> int | None:
-    """Separate an ordinary preceding row from a tall, independently valid fraction."""
-    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h, source_components):
+    """Separate supported prose from an independently valid fraction of any height."""
+    whole_fraction = _single_fraction_row(ink, a, b, glyph_h, source_components)
+    if whole_fraction:
         return None
     fragments = _row_fragments(ink[a:b + 1], content_w)
     for (_, prev_b), (next_a, _) in zip(fragments, fragments[1:]):
         cut = a + (prev_b + next_a + 1) // 2
-        if not 0.6 * glyph_h <= cut - a <= 1.5 * glyph_h:
+        if cut - a < 0.6 * glyph_h:
             continue
-        if b - cut + 1 < 2 * glyph_h:
+        prefix_rows = _fraction_prefix_rows(ink[a:cut], content_w, glyph_h)
+        if not prefix_rows:
             continue
-        horizontal = ndimage.binary_opening(
-            ink[cut:b + 1],
-            structure=np.ones((1, max(2, int(2 * glyph_h))), dtype=bool),
-        )
-        rules = ndimage.find_objects(ndimage.label(horizontal)[0])
-        if (
-            any(
-                rows.stop - rows.start <= 0.25 * glyph_h
-                for bounds in rules if bounds is not None for rows, _ in [bounds]
-            )
-            and _single_fraction_row(ink, cut, b, glyph_h)
-        ):
+        tail_fraction = _single_fraction_row(ink, cut, b, glyph_h, source_components)
+        if tail_fraction:
             return cut
     return None
 
@@ -856,7 +927,8 @@ def _supported_glyph_rows(
     return [
         (a, b) for a, b in fragments
         if any(
-            a <= rows.start and rows.stop - 1 <= b
+            a - 0.15 * glyph_h <= rows.start
+            and rows.stop - 1 <= b + 0.15 * glyph_h
             and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
             and columns.stop - columns.start >= 0.2 * glyph_h
             and not _arrow_headed_rule(components[item] == component_id, glyph_h)
@@ -1342,7 +1414,15 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                     b = next_b
                     index += 1
         if cut is not None:
-            merged.extend(((a, cut - 1), (cut, b)))
+            prefix_rows = _fraction_prefix_rows(ink[a:cut], content_w, glyph_h)
+            prefix_edges = [a] + [
+                a + (prev_b + next_a + 1) // 2
+                for (_, prev_b), (next_a, _) in zip(prefix_rows, prefix_rows[1:])
+            ] + [cut]
+            merged.extend(
+                (start, stop - 1) for start, stop in zip(prefix_edges, prefix_edges[1:])
+            )
+            merged.append((cut, b))
         else:
             merged.append((a, b))
         index += 1

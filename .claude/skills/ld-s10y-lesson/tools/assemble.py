@@ -71,6 +71,15 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
                 warn.append(f"{b['ref']}: cont 接不上——上块是 {prev['kind']}"
                             f"{prev.get('label') or ''}，本块是 {b['kind']}{b.get('label') or ''}")
             else:
+                if b["kind"] == "p":
+                    current_owners = b.get("owner_exercises")
+                    if current_owners is None and b.get("owner_exercise") is not None:
+                        current_owners = [b["owner_exercise"]]
+                    previous_owners = prev.get("owner_exercises")
+                    if previous_owners is None and prev.get("owner_exercise") is not None:
+                        previous_owners = [prev["owner_exercise"]]
+                    if current_owners is not None and current_owners != previous_owners:
+                        raise ValueError("跨页正文 cont 的题目归属与 open 块不一致")
                 prev["lines"] += b["lines"]
                 prev["open"] = b.get("open", False)
                 prev.setdefault("spans", [prev["ref"]]).append(b["ref"])
@@ -141,10 +150,13 @@ def split_lesson(
 ) -> tuple[list[dict], list[dict]]:
     """先分题和课文候选；图的最终归属要等所有引用都看见后再决定。"""
     prose, exercises, group = [], [], None
+    scopes, exercise_positions = [], []
     group_index = 0
     unnumbered = 0
     first_group_by_source: dict[str, str] = {}
-    for b in lesson["blocks"]:
+    for position, b in enumerate(lesson["blocks"]):
+        if b.get("owner_exercises") is not None and b["kind"] != "p":
+            raise ValueError("owners-ex 只允许正文块")
         if b["kind"] == "exhead":
             group = B.text_of(b)
             group_index += 1
@@ -168,8 +180,56 @@ def split_lesson(
                               "text": B.text_of(b, join=""),
                               "lines": b["lines"], "pages": b.get("spans") or [b["ref"]],
                               "figure_refs": [], "figures": []})
+            exercise_positions.append(position)
+        elif b["kind"] == "p" and (
+                b.get("owner_exercise") is not None or b.get("owner_exercises") is not None):
+            owners = b.get("owner_exercises")
+            if owners is not None and b.get("owner_exercise") is not None:
+                raise ValueError("同一块不能同时声明 owner-ex 和 owners-ex")
+            if owners is None:
+                owners = [b["owner_exercise"]]
+            if (not isinstance(owners, list) or not owners
+                    or any(not isinstance(owner, str) or not B.OWNER_ID.fullmatch(owner)
+                           for owner in owners)
+                    or len(set(owners)) != len(owners)):
+                raise ValueError("正文题目归属必须是非重复题目标识数组")
+            scopes.append((position, b, owners))
         else:
             prose.append(b)
+    owned = {}
+    for position, block, owners in scopes:
+        for owner in owners:
+            scoped_matches = [
+                index for index, exercise in enumerate(exercises)
+                if exercise["source_number"] is not None
+                and owner == f"{exercise['group_id']}-{_slug(str(exercise['source_number']))}"
+            ]
+            matches = scoped_matches or [
+                index for index, exercise in enumerate(exercises)
+                if owner == str(exercise["number"]) or (
+                    exercise["source_number"] is not None
+                    and owner == str(exercise["source_number"]))
+            ]
+            if len(matches) != 1:
+                raise ValueError(f"正文 owner-ex {owner} 无法唯一绑定本课原题")
+            owned.setdefault(matches[0], []).append((position, block))
+    # Declared shared instructions and hints follow source order, not proximity.
+    for index, scope_blocks in owned.items():
+        exercise = exercises[index]
+        segments = [(exercise_positions[index],
+                     {"lines": exercise["lines"], "spans": exercise["pages"]}),
+                    *scope_blocks]
+        lines, refs = [], []
+        for _, block in sorted(segments, key=lambda item: item[0]):
+            if lines:
+                lines.append("\n\n")
+            lines.extend(block["lines"])
+            for ref in block.get("spans") or [block["ref"]]:
+                if ref not in refs:
+                    refs.append(ref)
+        exercise["lines"] = lines
+        exercise["text"] = B.text_of({"lines": lines}, join="")
+        exercise["pages"] = refs
     return prose, exercises
 
 

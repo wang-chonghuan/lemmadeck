@@ -64,8 +64,15 @@ class FractionLineSpacing(unittest.TestCase):
         ink = np.zeros((180, 1000), dtype=bool)
         glyphs(ink, 60, count=4)
         fraction_row(ink, 40)
-        glyphs(ink, 98, x=760, count=3)
+        glyphs(ink, 60, x=760, count=3)
         self.assertTrue(_single_fraction_row(ink, 40, 137, 40))
+
+    def test_lower_side_caption_is_not_on_the_fraction_body_row(self):
+        ink = np.zeros((180, 1000), dtype=bool)
+        glyphs(ink, 60, count=4)
+        fraction_row(ink, 40)
+        glyphs(ink, 98, x=760, count=3)
+        self.assertFalse(_single_fraction_row(ink, 40, 137, 40))
 
     def test_fraction_above_independent_full_text_row_stays_two_rows(self):
         ink = np.zeros((220, 1000), dtype=bool)
