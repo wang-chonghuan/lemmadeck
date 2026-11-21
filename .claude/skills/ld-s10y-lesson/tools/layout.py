@@ -778,12 +778,6 @@ def _single_fraction_row(
         ):
             continue
         counts[rows] -= (glyph_components[bounds] == component_id).sum(axis=1)
-    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
-    glyph_rows = [
-        row for rows, _ in glyph_bounds for row in (rows.start, rows.stop - 1)
-    ]
-    if glyph_rows:
-        remaining = np.union1d(remaining, glyph_rows)
     # Skew widens a row's envelope. Neighboring full glyphs must still overlap
     # through their central half, unlike independently supported text rows.
     # A complete adjacent row may be slightly shorter than the page median.
@@ -803,6 +797,18 @@ def _single_fraction_row(
         ]
         if len(group) >= 2 or any(left <= x <= y <= right for x, y in rules):
             supported_glyphs.extend(group)
+    # Rejected singleton glyphs must not widen either residual-row evidence.
+    # This changes the counting projection, never the source or ownership mask.
+    for component_id, bounds in enumerate(residual_bounds, 1):
+        if bounds in glyph_bounds and bounds not in supported_glyphs:
+            rows, _ = bounds
+            counts[rows] -= (glyph_components[bounds] == component_id).sum(axis=1)
+    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+    glyph_rows = [
+        row for rows, _ in supported_glyphs for row in (rows.start, rows.stop - 1)
+    ]
+    if glyph_rows:
+        remaining = np.union1d(remaining, glyph_rows)
     full_glyphs = sorted(supported_glyphs, key=lambda bounds: bounds[1].start)
     if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
         # Compact side captions may be staggered but still share glyph rows.

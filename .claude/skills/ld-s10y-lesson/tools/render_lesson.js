@@ -172,6 +172,7 @@ p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.3
 .figure-layered>.figure-artwork,.figure-layered>.figure-vector{grid-area:1/1}
 .figure-vector{display:block;width:100%;max-width:100%;height:auto}
 .nb{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;white-space:nowrap}
+p.para .nb{overflow-y:hidden;padding-block:.3em}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
 .exgroup{margin:2.2em 0 .8em;font-weight:700;font-size:1.05em;
   border-left:3px solid var(--accent);padding-left:.6em}

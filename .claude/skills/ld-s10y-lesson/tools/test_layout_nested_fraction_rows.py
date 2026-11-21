@@ -198,9 +198,15 @@ class ResidualFractionProjectionTests(unittest.TestCase):
             glyph(mask, x, 140, "H", 3)
         self.assertFalse(residual_fraction_decision(mask))
 
-    def test_remote_body_height_single_glyph_is_an_independent_row(self):
+    def test_remote_body_height_single_glyph_cannot_establish_an_independent_row(self):
         mask = sparse_evaluation_geometry()
         glyph(mask, 25, 140, "H", 5)
+        self.assertTrue(residual_fraction_decision(mask))
+
+    def test_repeated_remote_body_height_glyphs_are_an_independent_row(self):
+        mask = sparse_evaluation_geometry()
+        for x in (25, 65):
+            glyph(mask, x, 140, "H", 5)
         self.assertFalse(residual_fraction_decision(mask))
 
     def test_remote_short_glyph_aligned_with_a_lower_fraction_is_supported(self):
