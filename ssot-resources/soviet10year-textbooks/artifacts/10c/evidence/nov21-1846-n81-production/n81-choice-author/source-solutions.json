@@ -1,0 +1,185 @@
+{
+  "schema": "n81-choice-source-solutions-v1",
+  "status": "FROZEN_BEFORE_ANY_OPTIONS",
+  "ticket": "STEMROBIN-184/184-6",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "seed_path": ".tmp/stemrobin-184-six/n81-choice-source/seed.json",
+  "seed_sha256": "c7440ae0b35ac66788bc7b7ed294ea30c24309852a8148b24d8a981bc842ea9b",
+  "source_group_binding": {
+    "path": ".tmp/stemrobin-184-six/n81-choice-author/source-group-binding.json",
+    "file_sha256": "d12cae57e6dce3b6b6be909d8e5fa4f7e504b4051fa81c2e7f87b21694ed06b9",
+    "exact_text": "习题通过怎样的变换可以由函数 $y=\\cos x$ 的图象得出下列函数的图象？",
+    "source_file_sha256": "99f1f83e996f3369dfc9d908541ef82bac068b2eba3d4c3cb30396a1c446a726",
+    "source_numbers": ["60", "61", "62", "63", "64", "65", "66", "67", "68"]
+  },
+  "authority": {
+    "concept_blocks": [5, 12],
+    "coordinates": "只取所选定义的明确坐标倍率：H_k:(x,y)->(kx,y)，V_A:(x,y)->(x,Ay)，k,A>0。平移 T_(d,c):(x,y)->(x+d,y+c) 按向量定义使用。",
+    "not_used": "例题不是定义或解答依据；不借助任何答案、交互、旧选项、审核、父作者解答。另段字面 k=1/A 不作坐标倍率，不作勘误。",
+    "figures": "正式 seed 与所选 exercise.figure_refs 均无图；未查看或生成任何图。"
+  },
+  "independent_general_derivation": {
+    "point_method": "原点 (u,cos u) 经合成映射 (u,v)->(ku+d,Av+c) 后变为 (x,y)=(ku+d,Acos u+c)。由 u=(x-d)/k 得最终函数 y=Acos((x-d)/k)+c，适用于所有实数 x。",
+    "order_dependence": "先 H_k 再 T_(d,0) 的横坐标为 ku+d；先 T_(a,0) 再 H_k 的横坐标为 ku+ka。因此两种顺序等效必须 a=d/k。不能在换序时保持同一个平移量。",
+    "vertical_commutation": "V_A 与仅涉及横坐标的 H_k、T_(d,0) 可交换；V_A 与 T_(0,c) 一般不可交换，后者换序把 c 乘以 A。",
+    "nonuniqueness": "余弦周期为 2pi；在 k>0、A>0 的同类总映射中，d 可加 2pi*k*m，m 为任意整数。还可插入互相抵消的映射。以下提供完整有效链而不声称所有解唯一。"
+  },
+  "solutions": [
+    {
+      "source_number": "60",
+      "task": "从 y=cos x 的图象构造 y=sin(2x) 的图象。",
+      "target": "y=sin(2x)",
+      "identity": "sin(2x)=cos(2x-pi/2)。",
+      "chain": [
+        {"map": "(x,y)->(x/2,y)", "function": "y=cos(2x)"},
+        {"map": "(x,y)->(x+pi/4,y)", "function": "y=cos(2x-pi/2)=sin(2x)"}
+      ],
+      "composite_point_map": "(u,v)->(u/2+pi/4,v)",
+      "alternative_chain": "先平移 (pi/2,0)，得到 cos(x-pi/2)=sin x；再 H_(1/2)，得到 sin(2x)。",
+      "nonunique_family": "k=1/2，A=1，c=0，d=pi/4+m*pi，m in Z。",
+      "conditions": "全实数域；先缩放后的右移量是 pi/4，先右移再缩放时是 pi/2。",
+      "essential_distinction": "频率的倒数坐标倍率、从余弦到正弦的相位，以及换序所需的位移调整。"
+    },
+    {
+      "source_number": "61",
+      "task": "从 y=cos x 的图象构造 y=cos(x/3) 的图象。",
+      "target": "y=cos(x/3)",
+      "chain": [
+        {"map": "(x,y)->(3x,y)", "function": "y=cos(x/3)"}
+      ],
+      "composite_point_map": "(u,v)->(3u,v)",
+      "derivation": "x=3u，所以 u=x/3，y=cos u=cos(x/3)。这是横坐标乘 3，并非横坐标乘 1/3 或纵坐标乘 3。",
+      "nonunique_family": "k=3，A=1，c=0，d=6*pi*m，m in Z；例如 H_3 后平移 (6pi,0) 也得到同一图象。",
+      "conditions": "全实数域；所选定义12允许任意 k>0，也包括 k>1。",
+      "essential_distinction": "横坐标倍率与函数自变量系数互为倒数。"
+    },
+    {
+      "source_number": "62",
+      "task": "从 y=cos x 的图象构造 y=4sin x 的图象。",
+      "target": "y=4sin x",
+      "identity": "4sin x=4cos(x-pi/2)。",
+      "chain": [
+        {"map": "(x,y)->(x+pi/2,y)", "function": "y=sin x"},
+        {"map": "(x,y)->(x,4y)", "function": "y=4sin x"}
+      ],
+      "composite_point_map": "(u,v)->(u+pi/2,4v)",
+      "alternative_chain": "先 V_4 得到 4cos x，再平移 (pi/2,0)；两个映射分别作用于不同坐标，结果不变。",
+      "nonunique_family": "k=1，A=4，c=0，d=pi/2+2*pi*m，m in Z。",
+      "conditions": "全实数域；定义5的坐标乘数为 4，不取倒数 1/4。",
+      "essential_distinction": "既要正弦相位又要纵向倍率，横向伸缩不能替代纵向倍率。"
+    },
+    {
+      "source_number": "63",
+      "task": "从 y=cos x 的图象构造 y=(2/3)cos x 的图象。",
+      "target": "y=(2/3)cos x",
+      "chain": [
+        {"map": "(x,y)->(x,2y/3)", "function": "y=(2/3)cos x"}
+      ],
+      "composite_point_map": "(u,v)->(u,2v/3)",
+      "derivation": "横坐标保持 u，纵坐标为 (2/3)cos u，故振幅变为 2/3 而周期不变。",
+      "nonunique_family": "k=1，A=2/3，c=0，d=2*pi*m，m in Z。",
+      "conditions": "全实数域；倍率来自定义5，不使用例1的现成结论。",
+      "essential_distinction": "振幅乘数、横向倍率和竖直平移是不同操作。"
+    },
+    {
+      "source_number": "64",
+      "task": "从 y=cos x 的图象构造 y=sin(x+pi/2) 的图象。",
+      "target": "y=sin(x+pi/2)",
+      "identity": "sin(x+pi/2)=sin x*cos(pi/2)+cos x*sin(pi/2)=cos x。",
+      "chain": [
+        {"map": "(x,y)->(x,y)", "function": "y=cos x=sin(x+pi/2)"}
+      ],
+      "composite_point_map": "(u,v)->(u,v)",
+      "alternative_chain": "可以不作变换；若要求实际执行非恒等点映射，平移 (2pi,0) 仍得到同一函数图象。也可先把余弦右移 pi/2 成正弦，再左移 pi/2，复合为恒等映射。",
+      "nonunique_family": "k=1，A=1，c=0，d=2*pi*m，m in Z。",
+      "conditions": "全实数域；不能仅看到公式内 +pi/2 就把原余弦直接左移 pi/2。原图象与目标已经相同。",
+      "essential_distinction": "先确认正弦与余弦恒等关系；一个目标可以无需非平凡变换，且有效变换并不唯一。"
+    },
+    {
+      "source_number": "65",
+      "task": "从 y=cos x 的图象构造 y=cos(x-3) 的图象。",
+      "target": "y=cos(x-3)",
+      "chain": [
+        {"map": "(x,y)->(x+3,y)", "function": "y=cos(x-3)"}
+      ],
+      "composite_point_map": "(u,v)->(u+3,v)",
+      "derivation": "x=u+3，所以 u=x-3，y=cos(x-3)；图象向右平移 3，纵坐标不变。",
+      "nonunique_family": "k=1，A=1，c=0，d=3+2*pi*m，m in Z。",
+      "conditions": "全实数域，角度为弧度；例如左移 2pi-3 也有效，并非只允许最短或唯一平移。",
+      "essential_distinction": "函数自变量中的减号对应点横坐标的增加，而非竖直位移或伸缩。"
+    },
+    {
+      "source_number": "66",
+      "task": "从 y=cos x 的图象构造 y=2cos(3x-2) 的图象。",
+      "target": "y=2cos(3x-2)",
+      "chain": [
+        {"map": "(x,y)->(x/3,y)", "function": "y=cos(3x)"},
+        {"map": "(x,y)->(x+2/3,y)", "function": "y=cos(3x-2)"},
+        {"map": "(x,y)->(x,2y)", "function": "y=2cos(3x-2)"}
+      ],
+      "composite_point_map": "(u,v)->(u/3+2/3,2v)",
+      "derivation": "x=(u+2)/3，所以 u=3x-2，y=2cos u。相位 -2 对应缩放后右移 2/3。",
+      "alternative_chain": "先 T_(2,0)，再 H_(1/3)，最后 V_2；前移 2 经横向倍率 1/3 后成为最终位移 2/3。V_2 可与任何水平操作交换。",
+      "nonunique_family": "k=1/3，A=2，c=0，d=2/3+(2*pi/3)*m，m in Z。",
+      "conditions": "全实数域；换序时原右移 2/3 必须改成右移 2，不能原量照搬。",
+      "essential_distinction": "完整频率、相位、振幅链，以及横向缩放与平移的非交换性。"
+    },
+    {
+      "source_number": "67",
+      "task": "从 y=cos x 的图象构造 y=(1/2)sin(2x+5) 的图象。",
+      "target": "y=(1/2)sin(2x+5)",
+      "identity": "(1/2)sin(2x+5)=(1/2)cos(2x+5-pi/2)。",
+      "chain": [
+        {"map": "(x,y)->(x/2,y)", "function": "y=cos(2x)"},
+        {"map": "(x,y)->(x+pi/4-5/2,y)", "function": "y=cos(2x+5-pi/2)=sin(2x+5)"},
+        {"map": "(x,y)->(x,y/2)", "function": "y=(1/2)sin(2x+5)"}
+      ],
+      "composite_point_map": "(u,v)->(u/2+pi/4-5/2,v/2)",
+      "derivation": "x=u/2+pi/4-5/2，所以 u=2x+5-pi/2；纵坐标为 (1/2)cos u。最终水平位移 d=pi/4-5/2<0，即向左 5/2-pi/4。",
+      "alternative_chain": "先 T_(pi/2-5,0)，再 H_(1/2)，最后 V_(1/2)。也可先右移 pi/2 成 sin x，再横坐标乘 1/2 成 sin(2x)，再左移 5/2，最后纵坐标乘 1/2。",
+      "nonunique_family": "k=1/2，A=1/2，c=0，d=pi/4-5/2+pi*m，m in Z。",
+      "conditions": "全实数域；平移前后分别使用 pi/2-5 与 pi/4-5/2；不能省略余弦转正弦的 pi/2 相位。",
+      "essential_distinction": "把正弦目标转为余弦、相位除以频率、缩放换序及振幅倍率。"
+    },
+    {
+      "source_number": "68",
+      "task": "依原文顺序执行四个指定变换并写出最终函数；不把题意替换成另行构造任意链。",
+      "source_ordered_maps": [
+        {"order": 1, "source_wording": "向 Oy 轴以 1:1/4 的比例压缩", "map": "(x,y)->(x/4,y)"},
+        {"order": 2, "source_wording": "平移 r(1/2,0)", "map": "(x,y)->(x+1/2,y)"},
+        {"order": 3, "source_wording": "向 Ox 轴以 1:5 的比例压缩", "map": "(x,y)->(x,5y)"},
+        {"order": 4, "source_wording": "平移 r(0,-3)", "map": "(x,y)->(x,y-3)"}
+      ],
+      "point_stages": [
+        "(u,cos u)",
+        "(u/4,cos u)",
+        "(u/4+1/2,cos u)",
+        "(u/4+1/2,5cos u)",
+        "(u/4+1/2,5cos u-3)"
+      ],
+      "function_stages": [
+        "y=cos x",
+        "y=cos(4x)",
+        "y=cos(4x-2)",
+        "y=5cos(4x-2)",
+        "y=5cos(4x-2)-3"
+      ],
+      "composite_point_map": "(u,v)->(u/4+1/2,5v-3)",
+      "target": "y=5cos(4x-2)-3",
+      "derivation": "最终 x=u/4+1/2，因此 u=4x-2；最终 y=5cos u-3。定义5明确指定纵坐标乘 5，名称中的压缩不改成乘 1/5。",
+      "nonuniqueness_and_order": "最终函数的恒等写法不唯一，但题目已规定实际四步顺序。先右移 1/2 再横坐标乘 1/4 会变成 cos(4x-1/2)；先下移 3 再纵坐标乘 5 会把常数变成 -15，均不等价。这里不以任意等效链替换原题。",
+      "conditions": "全实数域；四个原条件全部保留。所得周期 pi/2，值域 [-8,2]，均由精确公式推导，不作为额外新题设。",
+      "essential_distinction": "从点映射逆求自变量，同时保留横向和纵向两组有序合成。"
+    }
+  ],
+  "ambiguities_and_losses_before_authoring": [
+    "60-67 原任务要求自行发现并写出变换；选择题只能证明对完整候选链的辨认，不能证明独立生产或书面推导。",
+    "各目标的有效链不唯一；不加最短链或唯一链条件，不把所给链宣称为穷尽所有解。",
+    "68 原任务要求写函数；选择完整表达式不能证明无提示书写或逐步推出函数。",
+    "prepare.py 不含共享 group 的投影缺口已独立绑定，不视为源任务含糊已被猜测解决。",
+    "未建立任何额外比例约定；未授权解决历史 k=1/A 字面段的比例写法。",
+    "尚未构造选项，未进行语义自我审核或自我批准。"
+  ],
+  "semantic_review": "NOT_PERFORMED; separate blind reviewer required",
+  "closure": "OPEN"
+}

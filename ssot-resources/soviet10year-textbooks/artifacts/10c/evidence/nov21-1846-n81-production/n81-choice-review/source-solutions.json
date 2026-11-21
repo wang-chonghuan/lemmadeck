@@ -1,0 +1,159 @@
+{
+  "schema": "n81-choice-stage1-source-solutions-v1",
+  "stage": 1,
+  "status": "FROZEN_OPEN",
+  "reviewer": {"kind": "independent_agent", "identity": "authorized cold n81 choice reviewer"},
+  "seed_canonical_sha256": "c7440ae0b35ac66788bc7b7ed294ea30c24309852a8148b24d8a981bc842ea9b",
+  "shared_group_binding": ".tmp/stemrobin-184-six/n81-choice-review/source-group.json",
+  "modern_exercises_byte_sha256": "99f1f83e996f3369dfc9d908541ef82bac068b2eba3d4c3cb30396a1c446a726",
+  "source_resolution": "All nine originals independently solved from the common starting graph y=cos x and the complete local prose.",
+  "conventions": {
+    "domain": "All real x; angular arguments and horizontal displacements are in radians.",
+    "starting_graph": "y=cos x for every source, including 60, 62, 64 and 67",
+    "H_k": "(u,v)->(k*u,v), k>0; graph f(x) becomes f(x/k)",
+    "T_h": "(u,v)->(u+h,v); graph f(x) becomes f(x-h); h>0 means right",
+    "V_a": "(u,v)->(u,a*v), a>0; graph f(x) becomes a*f(x)",
+    "D_b": "(u,v)->(u,v+b); graph f(x) becomes f(x)+b",
+    "chain_reading": "Arrays list operations first to last.",
+    "direct_model": "H_k then T_h then V_a sends (u,cos u) to (k*u+h,a*cos u), hence gives a*cos((x-h)/k).",
+    "order_adjustment": "T_b then H_k produces total horizontal displacement k*b. Therefore T_h after H_k is equivalent to T_(h/k) before H_k, not generally to T_h before H_k.",
+    "vertical_commutation": "V_a commutes with H_k and T_h. V_a and D_b do not generally commute.",
+    "nonuniqueness": "The periodic h families below use integer n and characterize the direct positive-scaling, one-horizontal-translation model. They are not claimed to enumerate all longer chains with cancelling transformations. No minimal chain or unique order is imposed by 60-67.",
+    "qualified_hold": "The literal k=1/A paragraph at modern prose block 22 is HOLD and unused. No new ratio convention or erratum is supplied."
+  },
+  "solutions": [
+    {
+      "source_number": "60",
+      "task": "Obtain the graph of sin(2x) from y=cos x, including the cosine-to-sine phase change.",
+      "independent_solution": "sin(2x)=cos(2x-pi/2). H_(1/2) gives cos(2x); T_(pi/4) then gives cos(2(x-pi/4))=cos(2x-pi/2)=sin(2x).",
+      "chain": [
+        {"operation": "H_(1/2)", "point_map": "(u,v)->(u/2,v)", "result": "y=cos(2x)"},
+        {"operation": "T_(pi/4)", "point_map": "(u,v)->(u+pi/4,v)", "result": "y=sin(2x)"}
+      ],
+      "equivalent_chains": [
+        {"operations": ["T_(pi/2)", "H_(1/2)"], "derivation": "cos(x-pi/2)=sin x, then replace x by 2x."},
+        {"operations": ["H_(1/2)", "T_(-3*pi/4)"], "derivation": "cos(2x+3*pi/2)=sin(2x); this displacement differs from pi/4 by one period pi."}
+      ],
+      "direct_parameters": {"k": "1/2", "a": "1", "h": "pi/4+n*pi, n integer"},
+      "distinctions": "Horizontal compression alone gives cos(2x), not sin(2x). A right shift pi/2 after compression gives -cos(2x), not the target."
+    },
+    {
+      "source_number": "61",
+      "task": "Obtain cos(x/3) from y=cos x.",
+      "independent_solution": "H_3 maps an original point (u,cos u) to (3u,cos u). With x=3u, y=cos(x/3). The x coordinate is multiplied by 3, despite the textbook's umbrella word compression.",
+      "chain": [{"operation": "H_3", "point_map": "(u,v)->(3u,v)", "result": "y=cos(x/3)"}],
+      "equivalent_chains": [
+        {"operations": ["H_3", "T_(6*pi*n)"], "derivation": "The target has period 6*pi, so these extra integer-period translations leave it unchanged."}
+      ],
+      "direct_parameters": {"k": "3", "a": "1", "h": "6*pi*n, n integer"},
+      "distinctions": "H_(1/3) instead gives cos(3x). V_(1/3) instead changes amplitude rather than horizontal scale."
+    },
+    {
+      "source_number": "62",
+      "task": "Obtain 4*sin x from y=cos x; both phase conversion and vertical scaling are required.",
+      "independent_solution": "T_(pi/2) gives cos(x-pi/2)=sin x. V_4 then gives 4*sin x.",
+      "chain": [
+        {"operation": "T_(pi/2)", "point_map": "(u,v)->(u+pi/2,v)", "result": "y=sin x"},
+        {"operation": "V_4", "point_map": "(u,v)->(u,4v)", "result": "y=4*sin x"}
+      ],
+      "equivalent_chains": [
+        {"operations": ["V_4", "T_(pi/2)"], "derivation": "4*cos(x-pi/2)=4*sin x; vertical scaling commutes with a horizontal translation."},
+        {"operations": ["T_(-3*pi/2)", "V_4"], "derivation": "cos(x+3*pi/2)=sin x, giving the same target after multiplying y by 4."}
+      ],
+      "direct_parameters": {"k": "1", "a": "4", "h": "pi/2+2*pi*n, n integer"},
+      "distinctions": "V_4 alone gives 4*cos x. T_(-pi/2) gives -sin x, not sin x."
+    },
+    {
+      "source_number": "63",
+      "task": "Obtain (2/3)*cos x from y=cos x.",
+      "independent_solution": "V_(2/3) sends (u,cos u) to (u,(2/3)*cos u), so the graph is y=(2/3)*cos x. No horizontal change is needed.",
+      "chain": [{"operation": "V_(2/3)", "point_map": "(u,v)->(u,(2/3)*v)", "result": "y=(2/3)*cos x"}],
+      "equivalent_chains": [
+        {"operations": ["V_(2/3)", "T_(2*pi*n)"], "derivation": "Integer-period translations do not change the resulting graph."}
+      ],
+      "direct_parameters": {"k": "1", "a": "2/3", "h": "2*pi*n, n integer"},
+      "distinctions": "The factor 2/3 multiplies y, not x. Its reciprocal 3/2 would produce the wrong amplitude."
+    },
+    {
+      "source_number": "64",
+      "task": "Determine transformations from y=cos x to sin(x+pi/2), not from an assumed sine starting graph.",
+      "independent_solution": "sin(x+pi/2)=sin x*cos(pi/2)+cos x*sin(pi/2)=cos x. The target is already the starting graph, so the identity transformation, with no change, suffices.",
+      "chain": [],
+      "equivalent_chains": [
+        {"operations": ["T_(2*pi*n)"], "derivation": "Every integer-period translation of cosine preserves this graph, including n=0."},
+        {"operations": ["T_(pi/2)", "T_(-pi/2)"], "derivation": "First obtain sin x; shifting that graph left pi/2 gives sin(x+pi/2)=cos x. The net map is the identity."}
+      ],
+      "direct_parameters": {"k": "1", "a": "1", "h": "2*pi*n, n integer"},
+      "distinctions": "A single left shift pi/2 of the actual starting graph gives cos(x+pi/2)=-sin x, not the target. A nontrivial transformation is not mandatory."
+    },
+    {
+      "source_number": "65",
+      "task": "Obtain cos(x-3) from y=cos x.",
+      "independent_solution": "T_3 sends (u,cos u) to (u+3,cos u). Substituting u=x-3 yields y=cos(x-3), a shift right by 3.",
+      "chain": [{"operation": "T_3", "point_map": "(u,v)->(u+3,v)", "result": "y=cos(x-3)"}],
+      "equivalent_chains": [
+        {"operations": ["T_(3+2*pi*n)"], "derivation": "cos(x-3-2*pi*n)=cos(x-3) for integer n; these include alternative leftward descriptions."}
+      ],
+      "direct_parameters": {"k": "1", "a": "1", "h": "3+2*pi*n, n integer"},
+      "distinctions": "The minus sign inside x-3 corresponds to a rightward graph translation. A left shift by 3 is not generally the same graph."
+    },
+    {
+      "source_number": "66",
+      "task": "Obtain 2*cos(3x-2) from y=cos x by combining horizontal scale, phase shift and vertical scale.",
+      "independent_solution": "3x-2=3(x-2/3). H_(1/3) gives cos(3x); T_(2/3) gives cos(3(x-2/3))=cos(3x-2); V_2 gives 2*cos(3x-2).",
+      "chain": [
+        {"operation": "H_(1/3)", "point_map": "(u,v)->(u/3,v)", "result": "y=cos(3x)"},
+        {"operation": "T_(2/3)", "point_map": "(u,v)->(u+2/3,v)", "result": "y=cos(3x-2)"},
+        {"operation": "V_2", "point_map": "(u,v)->(u,2v)", "result": "y=2*cos(3x-2)"}
+      ],
+      "equivalent_chains": [
+        {"operations": ["T_2", "H_(1/3)", "V_2"], "derivation": "cos(x-2) becomes cos(3x-2) under H_(1/3). The pre-scale translation is 2, whose image displacement is 2/3."},
+        {"operations": ["V_2", "T_2", "H_(1/3)"], "derivation": "Vertical scaling may occur before either horizontal operation; the pre-scale shift remains 2."}
+      ],
+      "direct_parameters": {"k": "1/3", "a": "2", "h": "2/3+(2*pi/3)*n, n integer"},
+      "distinctions": "Right 2 after H_(1/3) gives phase -6, not -2. Right 2/3 before H_(1/3) gives phase -2/3, not -2. Swapping the horizontal order requires changing the displacement."
+    },
+    {
+      "source_number": "67",
+      "task": "Obtain (1/2)*sin(2x+5) from y=cos x, retaining the sine/cosine phase difference and order-adjusted horizontal shift.",
+      "independent_solution": "sin(2x+5)=cos(2x+5-pi/2). Let h=pi/4-5/2. H_(1/2) followed by T_h gives cos(2(x-h))=cos(2x+5-pi/2)=sin(2x+5). V_(1/2) produces the required amplitude.",
+      "chain": [
+        {"operation": "H_(1/2)", "point_map": "(u,v)->(u/2,v)", "result": "y=cos(2x)"},
+        {"operation": "T_(pi/4-5/2)", "point_map": "(u,v)->(u+pi/4-5/2,v)", "result": "y=sin(2x+5)", "direction": "left by 5/2-pi/4"},
+        {"operation": "V_(1/2)", "point_map": "(u,v)->(u,v/2)", "result": "y=(1/2)*sin(2x+5)"}
+      ],
+      "equivalent_chains": [
+        {"operations": ["T_(pi/2-5)", "H_(1/2)", "V_(1/2)"], "derivation": "cos(x+5-pi/2) becomes cos(2x+5-pi/2) when x is replaced by 2x. Pre-scale h is twice the post-scale h."},
+        {"operations": ["T_(pi/2)", "H_(1/2)", "T_(-5/2)", "V_(1/2)"], "derivation": "cos x -> sin x -> sin(2x) -> sin(2x+5) -> (1/2)*sin(2x+5)."},
+        {"operations": ["H_(1/2)", "T_(pi/4)", "T_(-5/2)", "V_(1/2)"], "derivation": "The two post-scale translations sum to pi/4-5/2, yielding the same graph."}
+      ],
+      "direct_parameters": {"k": "1/2", "a": "1/2", "h": "pi/4-5/2+pi*n, n integer"},
+      "distinctions": "H_(1/2), left 5/2 and V_(1/2) alone yield (1/2)*cos(2x+5), not the sine target. A left 5 translation after scaling gives phase +10, not +5."
+    },
+    {
+      "source_number": "68",
+      "task": "Apply the four stated maps in the stated order to y=cos x and write the resulting function.",
+      "independent_solution": "For an original point (u,cos u), the four maps produce (u/4,cos u), then (u/4+1/2,cos u), then (u/4+1/2,5*cos u), then (u/4+1/2,5*cos u-3). Thus x=u/4+1/2, u=4x-2, and y=5*cos(4x-2)-3.",
+      "chain": [
+        {"source_step": 1, "operation": "H_(1/4)", "point_map": "(u,v)->(u/4,v)", "ratio": "1:1/4 toward Oy", "result": "y=cos(4x)"},
+        {"source_step": 2, "operation": "T_(1/2)", "point_map": "(u,v)->(u+1/2,v)", "vector": "(1/2,0)", "result": "y=cos(4(x-1/2))=cos(4x-2)"},
+        {"source_step": 3, "operation": "V_5", "point_map": "(u,v)->(u,5v)", "ratio": "1:5 toward Ox", "result": "y=5*cos(4x-2)"},
+        {"source_step": 4, "operation": "D_(-3)", "point_map": "(u,v)->(u,v-3)", "vector": "(0,-3)", "result": "y=5*cos(4x-2)-3"}
+      ],
+      "composite_point_map": "(u,v)->(u/4+1/2,5v-3)",
+      "resulting_function": "y=5*cos(4x-2)-3",
+      "equivalent_expressions": ["y=5*cos(4(x-1/2))-3", "y=5*cos(2-4x)-3"],
+      "order_constraint": "The source explicitly fixes the order. Equivalent expressions are allowed, but no unadjusted reordering is used to solve it.",
+      "distinctions": "The coordinate multiplier in step 3 is 5, not 1/5. Translating horizontally before H_(1/4) with the same 1/2 gives phase -1/2, not -2. Applying D_(-3) before V_5 gives vertical offset -15, not -3."
+    }
+  ],
+  "independence": {
+    "candidate_access": false,
+    "author_source_solution_access": false,
+    "previous_key_answer_interaction_review_access": false,
+    "parent_mathematical_proof_access": false,
+    "mathematical_helper_execution": false,
+    "binding_helper_only": ".tmp/stemrobin-184-six/n81-choice-review/bind-source-inputs.py",
+    "images_opened_or_decoded": 0
+  }
+}

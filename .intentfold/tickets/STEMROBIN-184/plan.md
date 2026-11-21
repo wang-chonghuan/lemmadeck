@@ -1,6 +1,321 @@
 # 开发路线
 
-## 184-6 repair189 loaded; n48 offline complete, narrow delivery pending (2026-11-21)
+## 184-6 n81 offline complete +1; narrow delivery pending (2026-11-21)
+
+Euler finalvisual manifest1701c06c intaken300e4c4a, then actualCLOSED.
+Six existingcaptures viewed onceeach, no visualdefect in capturedareas;
+Chinese/TeX, complete answer68 orderedchain and visiblecontrols readable.
+Capture-area limits explicit; unseenregions not visuallycertified.
+Native134clicks/24observations and nine unchanged figure/math/source PASS
+retain separate scopes. Parentzero newviews/decodes; hiddenchargesUNKNOWN.
+
+First completion ac760b45 retains only needed newsource/choice/native/
+visual records and previews once under durable10c evidence. Existing
+production evidence reused, no oldpackage copy or producer/review replay.
+Newcompletedlessondelta1:31prose/9written60-68/9figures/9answers
+(1auto,8ungraded)/9readyinteractions/9choices38options. Whole9c/10c
+completion notclaimed; historical strictCompliance=false preserved.
+
+Source literalk=1/A HOLD and originalO/0UNKNOWN remain; choice recognition/
+elimination/supplied-factor losses explicit. n82figure21 and SOURCE172HOLD/
+knowncharges74 unchanged; no source173+. Remote branch fetched and equals
+detachedHEADf61a173c; ancestorcheck exit0, ordinary fastforward delivery
+possible. Only n81resources/evidence/recordkeys selected, pendingn48delivery
+record staysunstaged. No DB/publication/merge/deploy/ticketclosure or peers.
+
+## 184-6 n81 choices retained; native final PASS; six-view visual review active (2026-11-21)
+
+Hume Stage3manifestf05bb07f intaken2156d3a7, then actualCLOSED.
+Nine exactsets/38optiontruths/25wrongderivations PASS, no disagreements;
+firstofficialvalidator exit0. Source/view proofs reused; literalk=1/A
+HOLD and recognition/supplied-factor losses remain. Approved bytes
+prepared3699922c; official retain_choices firstexit0 receipt68fb6357.
+No reauthoring, semantic rereview or passed producer replay.
+
+Finaloffline build firstexit0 receipt02195100; headed nativecheck firstexit0
+cb253105:134native clicks,6captures,24observations. Complete rendered
+prose/exercise/answer text signatures match; all9 fixed640 figure media
+have readable16px+ text and mobile nativewheel reaches end. All standard
+answer disclosures and all38radio/checkbox alternatives operate; local
+three-page navigation works, no pageoverflow/TeX/error/leakedchoicekey.
+Actual browser closed. Not liveapp/keyboard/DB/serverjudging certification.
+
+Euler01a1febc-b770-7522-ad32-253f7c81b5e8 actualforkfalse soleimage
+reviewer dispatched finalvisualscope max6existing screenshots onceeach.
+Nine approved figure source/math/native evidence reused, no originals
+or source/option solving. Parent0views/decodes,26newunviewedcaptures total;
+hiddenchargesUNKNOWN. Finalvisual result/intake/closure and completion/Git
+delivery pending. n82/SOURCE172/knowncharges74 unchanged; no source173+,
+paid/install/DB/publication/merge/deploy/ticketclosure or peer messages.
+
+## 184-6 n81 all38 visible alternatives frozen PASS; key comparison active (2026-11-21)
+
+Hume Stage2manifest f357993e intakenb211d727. Nine questions,38options,
+13true/25false/0blocked; all sourcecoverage/fidelity/redundancy/leakage
+PASS before keydisclosure. Frozen sets60ac/61d/62b/63a/64bd/65c/66bc/
+67ad/68e.67b matches atx=0 but fails as a function; nonunique correct
+chains retained. Recognition/elimination losses and suppliedfactors66/67,
+explicitcoordinate definitions68 remain qualifications, not hidden omissions.
+No author draft/key access in Stage2; no source-solving or proof replay.
+
+Actual Stage3 release01a1feb5 follows keyreleasef0d43442 and accepted
+source/view freezes. Hume now compares exact author snapshot243dcf7a/
+canonicalc0ec2b5a and misconception derivations against existing proofs.
+Formal review and first validator pending, reviewer OPEN/zeroimages.
+Prepared finalcompletion/staging helpers remain UNEXECUTED. No choice
+retention, nativefinal gate, newcapture, completiondelta or Git delivery yet.
+Nine answers unchanged, audit pass9/1auto/8ungraded; no audit sourcehash
+drift or answerfinalizer replay. n82/SOURCE172 and parentbudget unchanged.
+
+## 184-6 n81 cold author intaken; visible blind review active (2026-11-21)
+
+Chandrasekhar author manifest a1f4fdb6 intaken9b05d583, then actual CLOSED.
+Nine independently solved originals, nine questions/5single/4multiple;
+firststructuralexit0, no semantic selfapproval. Complete shared g1 request
+bound before solving. Production/elimination losses, supplied scale factors
+66/67 and coordinate meanings68 explicitly recorded; no written-equivalence
+claim or resolution of literal k=1/A.
+
+Hume Stage1manifest2928ea51 intaken9cda0e87: allnine independent solutions
+frozen before candidates,0images. Source64 identity and orderadjusted
+translations66/67 established;68 fourmaps final5cos(4x-2)-3.
+Parent visible projection36819ec7 contains only IDs/source numbers/view/
+coverage, no intent/key. Actual Stage2 release01a1feaa after source intake.
+Reviewer OPEN; all option truth/coverage/fidelity/leakage frozen before
+later key comparison. No retained choices or completedlessondelta yet.
+
+Readonly Git-record comparison hit default ENOBUFS d29a04; largerbuffer
+recovery d4fce5 completed, no producer/Git-state write. Prepared staging
+script will select n81 recordkeys only; pending n48 postdelivery status
+remains working-only, never replayed. Finaloffline builder/checker and
+siximage finalvisualscope remain UNEXECUTED; no newcaptures/views/decodes.
+
+## 184-6 n81 nine reviewed figures; modern ready; cold choices active (2026-11-21)
+
+Maxwell final13 three-view PASS intaken c13f1118, then actual CLOSED.
+Final -1 label clear of solid trough/axis/tick and tied to y=-1; prior
+source/math and O/pi3 PASS reused unchanged. Original O/0 UNKNOWN and all
+render/visual/reviewer-script failures remain. Promotion2be23290 preserves
+approved spec/SVG bytes; only render metadata paths relocated. Official
+durable13 review@1 firstexit0. Allnine12-20 now durably reviewed.
+
+Approved text snapshots retained before first modernfinalizer afeaf2f7 exit0:
+31prose objects/9written60-68/9figures; source k=1/A qualified HOLD retained.
+n82 excluded andfigure21 arc/sweep/vector endpoints HOLD unchanged.
+First offline render CLI argumentfault exit2 retained48ce8721, no renderer
+output from that call; owner render_lesson.js argumentrecovery bffea32d
+exit0 creates37flow objects/9tasks. No passed stage replay or final acceptance.
+
+Official choice inspect/prepare firstexit0, seedcanonical c7440ae0.
+Definitions5/12 selected, no worked examples or ambiguousparagraph22.
+prepare projection omission of shared exercise.group explicitly preserved;
+both cold author and source solver must independently bind required group
+prose from allowed modernexercises before solving. No answers/interactions
+or oldkeys disclosed. Chandrasekhar01a1fea2-55f6-70c1-bb9e-e5b61122fac8
+author and Hume01a1fea2-ff64-7433-963a-30d891eb8a47 Stage1reviewer both
+actualforkfalse/zeroimage, OPEN. Source/view/key staged disclosure required.
+
+Nine finalized answers/interactions unchanged; completedlessondelta still0.
+Parentpermanent24/24, zero newviews/decodes;20 prior captures unchanged.
+SOURCE172HOLD/knowncharges74 unchanged; no source173+, paid/install/DB/
+publication/batchcommit/push/merge/deploy/ticketclosure or peer messages.
+
+## 184-6 n81 eight reviewed figures; final13 minus-one placement under review (2026-11-21)
+
+Carver six-view review intaken879217fa and actualCLOSED after intake.
+17 originclearancePASS;13 O/pi3 corrected labelsPASS, but newly noticed
+unchanged -1 glyph contacts solidtrough, so currentwhole13 stays visualFAIL.
+Both source/mathPASS reused after exact unaffectedspec/SVGtree equality.
+Reviewer helper first id/data-label-id failure exit1 preserved; corrected
+comparison exit0, no oldproducer/checker or sourceproof replay.
+
+17 promoted372719fa exactspec/SVG bytes with only render-metadata relocation;
+official durable review@1 firstexit0. Eight source/math/visual-approved figures
+now durable12/14/15/16/17/18/19/20;13 unpromoted. Previous17 pi-label render
+FAIL and subsequent O visualFAIL retained with actual receipts/candidates.
+
+Only13 -1 placement changed in candidate6611eb8f: anchor its existing ytick
+(0,-1), E[8,0], fontstill18px; value/sign/curve/scale/source/assertions
+unchanged. Accepted O/pi3 reused unaltered. First affectedrenderab8be86e
+exit0/PASS. OwnerDRAFT rendered37flowobjects/9tasks; headedcapturebad969bb
+fixed640/min18/no pageoverflow, mobile nativewheel0to297. Three additional
+unviewed captures, parenttotal20,0parentviews/decodes, hiddenchargesUNKNOWN.
+
+Fresh Maxwell01a1fe9c-21af-74c1-bbdc-3d155726d5cd actualforkfalse soleimage
+reviewer dispatched n81-fig13-minus-one-review-scope.md, maxthree existing
+captures onceeach, no originals/newmathproofs. Review pending; no13 promotion.
+Modernfinalizer, coldchoices and finalofflinegate have not executed.
+Nine ready answers/interactions remain unchanged; full lesson delta still0.
+n82figure21HOLD and SOURCE172HOLD/knowncharges74 remain; no source173+,
+paid/install/DB/publication/batchcommit/push/merge/deploy/ticketclosure.
+
+## 184-6 n81 seven durable reviewed figures; answers ready; two origins under review (2026-11-21)
+
+Planck17-20 manifest7f424cf3 intaken7785b603, actualCLOSED. Eightviews once:
+fouroriginals then fournative640.18/19/20 science/source/displayPASS;
+17 science/topology/formulasPASS but solidcurve intersects O, visualFAIL.
+Reviewer-only empty-zero-list scriptfailure exit1 retained, corrected analysis
+exit0; no producer/sourceproof replay or erased visual failure.
+
+Seven approved figure spec/SVG bytes promoted unchanged12/14/15/16/18/19/20;
+only render-metadata paths relocated. Promotions08f0ffab/1db746f3 and seven
+official durable review@1 records now exist; source limits/old failures retained.
+No13/17 promotion or completed lesson. New17 origin-only candidate6c4b23c8:
+font26 ->17.333px at640, SW[10,6], anchorstill(0,0). All other objects,
+source/math/canvas/assertions unchanged. Affectedrender14743314 exit0/PASS.
+Headed17 capturefbee95e8: fixed640, minimum16.667, no pageoverflow,
+native mobilewheel0to297. Three newcaptures; parenttotal17unviewedcaptures,
+zero newparentviews/decodes, hiddenchargesUNKNOWN.
+
+Carver01a1fe93-b8dd-7c42-9c41-a70682c6b204 actualforkfalse soleimage
+reviewer dispatched n81-two-origin-affected-review-scope.md:13/17 eachthree
+existing captures, max6, no originals/newmathproofs. Both originalFAILs and
+source/mathPASS reused after unchanged-component comparison. Results pending.
+
+Nine approved answer bytes finalized in isolated scratch: first official
+answerfinalizer9a40cba4 exit0,1expressionauto/8ungraded. Official interactions
+prepare/finalize exit0,8free/1math, zero needsAuthoring. Promotion2b9e8685
+retains those exact answer meanings and ready interactions; no finalizer replay.
+This is independent of prose figures because allnine exercisefigure_refs empty.
+Source k=1/A HOLD unchanged; no erratum/runtime-equivalence/DB approval claimed.
+
+Whole n81 modernfinalization/choices/finalofflineacceptance still pending.
+n82figure21 remainsHOLD/no spec, SOURCE172HOLD/knowncharges74 unchanged.
+No completiondelta, batchcommit/push, paid/install/publication/merge/deploy/
+ticketclosure or whole-ticketdefence. Earlier read-only probes for absent
+figures.json/ticket tmp/oldpreview failed without executing a producer; no
+freshness/bootstrap, source173+ or source-stage replay followed.
+
+## 184-6 n81 reviews intaken; two-label repair; second bounded review active (2026-11-21)
+
+Carson origin-review manifest1360ec88 intaken429b9613; actualCLOSED after
+intake. Exactly8views, zero reopens/crops/decodes.12/14/15/16 affectedPASS;
+13 mathematics/source-topology/quantities/formula-provenancePASS, visualFAIL:
+painted dashed stroke crowds O and solid stroke crosses pi/3. OriginalFAIL
+and old source O/0UNKNOWN preserved; renderer pass is not visual approval.
+
+Boole exact-draft Stage2 manifest56338604 intaken1ea47a04; actualCLOSED.
+All9answer meanings/responseunitsPASS; one affectedchecker exit0, sourceproof
+not replayed,0images.67 actualfourstep pointmap exactly equals frozen map;
+68 allfoursteps and final5cos(4x-2)-3. Eightungraded chains plus finalexpression
+auto68 appropriate; runtime certification and literal k=1/A source resolution
+remain unclaimed/HOLD. No answerfinalizer or lessoncompletion yet.
+
+Fresh Planck01a1fe87-5f2b-78c0-94bd-51a3da92e4ff actualforkfalse soleimage
+reviewer17-20 dispatched existing n81-second-figure-review-scope.md: four
+originals source-first freeze then four existing native640 captures, max8,
+TEXTonly parent. While active, parent13 two-label candidate1d1293e3 changes
+O toNW[-8,-10] and pi/3 to exacttick anchor withSE[8,10], retaining18px.
+Curves/windows/source/math/assertions unchanged. Affectedrender exit0/PASS;
+newcandidate preview rendered, affectedcapture/review pending.
+Parentpermanent24/24,0newviews/decodes; no paid/install/DB/publication/Git/
+merge/deploy/ticketclosure. SOURCE172HOLD/knowncharges74 unchanged.
+
+## 184-6 n81 nine rendered candidates; origin review/science comparison active (2026-11-21)
+
+Godel manifest/sourceinventoryaaae90e7 intaken5776238f; actualauthorCLOSED.
+Five originalviews onceeach;17-20 FIRSTdraftvalidators exit0, no sourceglyph
+resolution.21localHOLD: arc/sweep and vector-connection endpoints unresolved,
+no spec/render/approval. Separate n81 work continues; n82 not completed.
+
+Four originalauthor specs copied byte-identically into n81-second-render.
+FIRST18/19renderPASS; FIRST17/20renderFAIL for label collisions. First
+specs/SVGs/reports/receipts remain. Label-only recovery63297129 changed two
+pi-label fonts/placement17 and y/3/formula typography/placement20; all paths,
+windows/source/geometry/assertions unchanged. Both recovery rendersPASS.
+All9 currentfigure renders nowPASS, not semantic/visual approval.
+
+Headed all9DRAFT owner-renderer preview/current37proseflow objects/9tasks
+has no missingfigure error. Display07f5b0fa for17-20: fixed640, labels
+16.667/22.667/22.667/18.667 on desktop/mobile; no pageoverflow; actualnative
+horizontalwheel0to297 eachmobile. Four additional unviewednativecaptures,
+eleventotalnewcaptures; parent0views/decodes, hiddenchargesUNKNOWN.
+Wholelessonfinalization/offlineacceptance remainspending; browsersCLOSED.
+
+Carson01a1fe7c-b360-7570-b1cb-d5102169c8c7 actualforkfalse soleOPEN image
+reviewer12-16: source13first, fivecurrentnative+twosurfaceviews/max8 total.
+No replacement observer until intake/actualclosure. Second17-20 independent
+reviewscope drafted only, not dispatched or source/visual approval.
+
+Boole01a1fe78-0c25-7001-9527-9c8ef6f77860 actualforkfalse ZEROIMAGE source
+science returned frozen70c63a7e, complete nine invertiblepointmap proofs,
+FIRSThelperexit0/72numericalsanitychecks. Intakecf268da4 preserves literal
+p0032k=1/A notation limitation, order/phase alternatives and no sourceglyph
+adjudication. Parent answerdraftac985aed prepared independently:8ungraded
+fulltransformation chains/1expressionauto68 with allfourintermediatefunctions.
+Exactrelease4612314d afterfrozenintake; actualsameBoole Stage2 submission
+01a1fe7f-bb66-7372-b4c8-2e6a396c0e4b. No answerfinalizer/choicekeys/DB.
+No newcompletion/Git/paid/install/publication/merge/deploy/ticketclosure.
+SOURCE172localHOLD/knowncharges74 and parentpermanent24/24 unchanged.
+
+## 184-6 n81 five affected candidates rendered; fig17-21 author active (2026-11-21)
+
+Dewey returned manifest665088b5/inventoryacbb61fb; bounded intakea0ed603b
+accepted author-only findings, actualfigure14 draft-validator exit0 and five
+originalviews. Four unlabelled-endpoint localHOLDs remain12/13/15/16. No
+source endpoint or original origin-codepoint adjudication. ActualDeweyCLOSED
+after intake; source-origin numeric0 claim conflicts with older O/0UNKNOWN,
+so original codepoint remainsUNKNOWN. Newfig14 draft preserved, not rendered.
+
+Four retained approvedtext streams match08f28c1f/7a2b3994/ff53e091/1d5f63b1;
+byte-identical importc4736b5e replaces scratch raw-derived drafts, preserving
+the pre-import files and original author bindings. No text review replay.
+
+Earlier independent report accepted curve/quantity/topology components for
+12/14/15/16 while holding unexplained question-mark origin naming. Parent
+newcandidate manifestddfc9142 repairs only origin naming/placement and stale
+inventory provenance in five retained specs12-16. Known Cartesian origin
+named O as separately declared modern editorial choice from approvedOx/Oy
+text; original O/0glyph UNKNOWN. All curves/windows/formulas/values/axis/tick
+geometry/assertions/authoritativeText unchanged.13 still needs independent
+wholecandidate assessment. Original first failures/HOLDs remain untouched.
+
+Five FIRSTaffected renders exit0/PASS, minlabel18at fixed640. No separate
+validator replay beyond renderer's intrinsic validation. Partial approved-
+DRAFT preview uses the owner offline renderer; expected missing17-20 are
+explicit, not lesson-render acceptance. Headed desktop1440x960/mobile390x844
+display75bc7427: fixedmedia640, no pageoverflow, mobilecontainer343.
+Actual native horizontalwheel1e6f6f180to297 reaches297. Seven unviewed
+captures for future independent observation; parent0views/decodes, hidden
+chargesUNKNOWN. Browser actuallyCLOSED. Newlessoncompletiondelta0.
+
+Godel01a1fe72-468e-7d30-9839-5624dde20b5d actualforkfalse soleOPEN AUTHOR
+forfig17-21, scope n81-n82-fig17-21-scope.md, maxfive originalPNG views
+onceeach/source inventory before drafts/no renders/self-approval. Parent
+receives TEXT only; intake/closure pending before next observer dispatch.
+No paid/install/DB/publication/merge/deploy/ticketclosure/peer message.
+SOURCE172localHOLD/knowncharges74 unchanged. Formalwholedefence not run.
+
+## 184-6 n48 pushed; n81/n82 prepared, first bounded figure author active (2026-11-21)
+
+n48 narrow delivery completed: commit
+f61a173c6fb9efc578424209616b2c717ad84169, ordinary push exit0 to
+codex/STEMROBIN-184-textbooks. Detached HEAD is intentional; no new branch.
+The 109-file delivery excludes unrelated pages104/122/135 and repair189 tool
+changes. Only the five durable n48 evidence directories required explicit
+force-add of their ignored files/.tmp payloads; root scratch was not staged.
+Current usage records GIT_DELIVERED. Completion manifest555a54d3 and newdelta1
+remain unchanged; no completion, intake, closure or delivery stage replay.
+
+One official adapt-prepare invocation completed for 10c n81/n82. Current
+templates live under .tmp/stemrobin-184-six/n81-n82-work/adapt/10c/
+modern-us-neutral/lessons/. n81 has31prose/9exercises60-68/9figures12-20;
+n82 has5prose/2exercises69-70/sharedfigure21. No modern figures12-21 exist.
+Only n82 visible exercise references and lines changed from21а/б to21a/b;
+source_text, mathematics, source numbers and bindings remain untouched.
+Change-vocabulary validation and modern finalization remain pending.
+
+Dewey01a1fe6b-335b-76b2-ae27-d8b518d3699d is the sole OPEN child, actual
+fork_context=false AUTHOR, not an approval reviewer. Owns n81-fig12-16-author
+scratch only; exact scope n81-fig12-16-scope.md. Five originalPNG views once
+each, frozen source inventory before draft specs, existing draft validator
+once per applicable spec; no render/self-approval. Result/intake/closure
+pending. Parent permanent24/24 with zero new views/decodes; one image context
+at a time, TEXT-only returns. Source172localHOLD/knowncharges74 unchanged.
+Historical n81/n82 figure HOLDs remain historical, not newly passed reviews.
+No bootstrap/install/paid/DB/publication/merge/deploy/ticketclosure/peer message.
+
+## 184-6 repair189 loaded; n48 offline complete, narrow delivery subsequently completed (2026-11-21)
 
 Latest human resume is effective. Original worktree/branch restored at HEAD
 a7bcea6baebcb68445437e0056ebbeb4abecef36; recovered changes remain uncommitted.
