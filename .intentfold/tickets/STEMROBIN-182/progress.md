@@ -1,5 +1,272 @@
 # 当前开发状态
 
+### 182-6 2026-11-21 03:02Z n14完整离线PASS，窄提交待执行
+
+- Kepler末批实际4新图DISPLAY_PASS，completed/关闭后绑定；
+  batch7绑定SHA
+  `de5c36dc58f8088c5246b09ece25e3b2e1ac1ce75fdec94af190447231730192`。
+  全部52新图各一次目视、7隔离批次均已绑定，父图0，
+  当前新审者及父有限exec在途0；没有重开旧PASS截图。
+- 最终显示绑定FIRST exit0，offline-display SHA
+  `de0f2dc2ebfc9f8dc8b44c134d8eabca4aa7873251bb0cc1d95efb83e31a0105`；
+  OFFLINE_DISPLAY_PASS，captured/selected/newlyObserved52，
+  missing/pending0；三个实际自包含HTML已提升，不是APP/DB验收。
+  545断言六视图和既有源/现代/答案/选择PASS全部复用，
+  19源正文/9题223至231/9答案/18选择78选项/0图完整。
+- 末批实际字节留存SHA
+  `7e76f2ca6cb3d5e1cea9fd2c3decbea62dea9e8d4e84ceb17ac730fe784570b0`，
+  最终绑定回执实际留存SHA
+  `f81663bf7b952eb840a594d3e68421fb098b5be7d06b50ff9e2b584519e9d44d`。
+  仅完整n14、必要源89至91、两索引追加、n14实际证据及progress
+  进入既有窄delivery步骤；此刻尚未commit/push。
+- 推送远端确认后直接接续有源n15，复用91/88已批准字节，
+  不发布半课。监督下一03:09:50Z，同0789/仅6a7a8a/review；
+  原树/锁/备份/失败/计数费用/未决消息及旧暂停保持，
+  unknown不清零，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 03:00Z n14新截图6/7批绑定，末批4图唯一在途
+
+- batch4/5/6各8张新图DISPLAY_PASS，均completed/关闭后绑定；
+  累计48/52张、父图0。后三绑定SHA分别为
+  `1970f26d323c6dfd278dab8aa8bbee3fe8e89acc9032614b7af50229568662ee`、
+  `d6beefe219d4e7bde9da9d7e16d8890878d76770592c771b6505d31c9e77f17a`、
+  `2b1900141517633740cb6e7e137076f35c220cb712a7aaca64296f04ff05bfad`。
+  逐批实际字节留存最新SHA
+  `900fbcd03b3cfef369bda39d6876f861a4f2920cc4a9e9e9e37c7903a3e6f21b`。
+- Kepler `01a1fc0c-ad84-7d12-af78-4fd2c57a7f44`新隔离末批4图
+  唯一在途，结果目标既有observations/results/batch7.record；
+  未最终绑定或commit-push。只待新图，旧PASS不重跑。
+  有限exec在途0，监督下一锚定03:09:50Z，仍同树/review/仅6a7a8a，
+  保留原树/锁/备份/失败/计数费用/未决消息及旧暂停，unknown不清零。
+
+### 182-6 2026-11-21 02:54Z n14新截图3/7批绑定，第四批唯一在途
+
+- batch1/2/3分别8图各一次目视DISPLAY_PASS，三观察者均completed/
+  关闭后绑定；累计24/52新图、父图0，未重开任何旧PASS截图。
+  三绑定SHA分别为
+  `d209a453e8f202e685c1978db96d1a324d06638243439d5a4d9df5b61e0a809a`、
+  `8f333b223168f392969ec43bf38f55fbad05b19479cb4f8b7589eaaee996b46c`、
+  `29fe38fda6f80df5db55fb4420f8f444a8fc1b848addc7f5ea0a680a0485538f`。
+  第三批手机长公式的各native滚动位置可读，实际观察记录明确
+  边缘续行而非内容裁切，无需HTML/renderer/截图重跑。
+- 三批观察实际字节及回执逐步去重留存，最新包SHA
+  `08b377ece80163d2280c8288e4c6714896cbf3ea593fca4de86664c0d13e151e`。
+  Gibbs batch4新隔离8图唯一审者在途，余批未派发，
+  尚未最终显示绑定或整课commit-push；n15仍仅入口代码准备。
+- 父有限exec在途0，监督下一锚定03:09:50Z；
+  同0789/仅6a7a8a/review，全部原树/锁/备份/失败/计数费用/
+  未决消息及旧暂停保持，unknown不清零，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 02:47Z n14选择PASS闭审绑定，FIRST显示通过，7批新截图待观察
+
+- 同一Nash三阶段独审完成并关闭，native review实际SHA
+  `2840cc2f16e7f35122d1124a0a1c1bd2abf499ef493ad27acda164d7347db353`，
+  result SHA `da96b9db91d95134c1c887368513788fc967e140b3ae1d1e0e6e5b012203a62b`。
+  9源/18题/78选项逐项及作者干扰项推导PASS，未改draft，
+  无新图；两盲审证据先存后披露内部，phase2实际SHA
+  `a0448bcdc4e1cf45711505f5587e9e47605b1be507e52ac1c9bfd66946f33e64`。
+  阶段二临时字符长度断言失败及只修checker条件的恢复原样留存。
+- 关闭后绑定FIRST exit0；原生retain_choices内部带review的检查
+  及留存FIRST exit0，receipt SHA
+  `883c9c763cf58a4b60d9adbab26d3f91ff90b9036c357b4cdb240be6eaccb4a9`。
+  不另跑等价standalone checker；现代/受影响答案/选择实际批准
+  parentREADY绑定exit0，SHA
+  `ee32d92ebf760213c177d79f1fa480c85976e159584a41c39024655eab11e4b0`。
+  选择批准及parent实际字节留存SHA
+  `11021d6b8c85a74f70c8096d2d10b8864ca4c98a5c72cecb623161399334cce2`。
+- n14显示FIRST exit0，545断言/桌面手机六视图PASS、0 faults；
+  runtime SHA `ac4aec852359c2dbdc513f466c7a859ac16169057ddd37c876b717dab681fc27`。
+  实际52新截图，renderer/browser/contexts/server已全部关闭；
+  RUNTIME_PASS_VISUAL_PENDING，不冒称目视或最终PASS。
+  全部52截图按实际native视口导出7批，selection SHA
+  `0d2354d838ad09e627c72cbe86acf63d430d9be2e103e994d0cca00b7fbffc13`。
+  runtime实际字节留存92唯一96引用SHA
+  `bef869d383a919cf458e420daa4a94e09e33d6df89b1843110443b6c57b1594d`。
+- Hypatia batch1新隔离8图观察唯一在途，父图0；其余批未派发，
+  旧源/文本/答案/选择/图/截图PASS不重跑。有限exec在途0；
+  下一监督03:09:50Z，同0789/仅6a7a8a/review，
+  原树/锁/备份/失败/计数费用/未决消息及旧暂停保持，
+  unknown不清零，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 02:37Z n14盲源解收取，同审者无key视图核验在途
+
+- 记录时刻实测`2026-11-21T02:37:03Z`；本次两个接续段首次误标
+  02:44Z/02:35Z，不是实测完成时刻，现更正标题而不冒称原动作时刻。
+  一次更正patch因不匹配上下文失败、未改文件；只修记录标签，
+  不改任何生产、批准或监督回执。
+
+- Nash第一阶段实际`SOURCE_SOLVED_REVIEW_PENDING`，phase1 SHA
+  `fa8a528b4ad6eb8d8c659c20c20bb3b42272b11d0afd1235bc798039a2bf88d6`；
+  9原题独立解及所需能力/子任务已保存，0图，无draft/options/key/作者解。
+  实际字节留存SHA
+  `97202eaaaf8661fdd542cc3f50b39f3610ad34185e4386139585928fb7d9572b`。
+  同一审者接续无key视图：先保存fidelity/redundancy/leakage证据，
+  再独立枚举18题78选项；作者内部比较尚未授权，选择PASS仍未取得。
+- 当前课原分支刷新FIRST exit0，receipt SHA
+  `7941b426396b1c33c133724932baba38d5ade5e80e8c14edce74d83bfb995e39`；
+  没有切分支、覆盖远端、暂存或提交半课。live Plane实际读取
+  sequence182/`8603d84a-66dc-4a54-8ea4-c95c254940de`，仅核对工单，
+  无后端写入；本次直接人类恢复及6a/7a/8a范围优先于旧暂停正文。
+- 本次只读路径误猜和无匹配结果如实单独登记；登记是实际观察的文字，
+  不是恢复遗失的工具回执。该登记及刷新实际字节留存SHA
+  `af9ee050054298de2b905acf900e84c5a1340804bc75499e372cfa14bd464a3e`。
+  所有此前PASS/失败/未知计数费用保持；父图0、有限exec在途0，
+  下一监督03:09:50Z；同树/review，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 同树即时接续，n14答案PASS复用，选择盲审待收
+
+- 核对当前官方0789工作树和detached HEAD，n13既有交付不重跑；
+  本次接续没有create/attach/init/替代聊天/重复迁移/skill update。
+  n14源/现代文本既有PASS保持，原树、锁、备份、旧暂停和未决消息不动。
+- Cicero答案FIRST独审PASS及首次原生exit2全部保留；仅三个expected
+  分数TeX序列化修复，同一审者受影响PASS SHA
+  `0c3af5f999f0b3e6c4bc148bc6d17a5ac3b627e391456b5be53bdfdc518e7c35`。
+  其余42字段/所有display/9题解不重审；关闭后原生受影响finalize
+  exit0，auto7/ungraded2，receipt SHA
+  `f3d29e29912cd54746c3cebf8966f8e8bb83a2cde33ec76a7a104d499e24acc8`。
+  修复后候选SHA `d055f71e7f9fd980582c588ec8e95f24969b9bd491bba7286ea27c8ed7f0e77f`，
+  实际字节已留存，不声称缺失历史字节恢复。
+- 既有新Nash `01a1fbf0-04ad-7b11-9c93-467e86cd3615`
+  仍为唯一选择独审；第一阶段只解9原题/0图，未披露作者key/intent。
+  一次10秒收取未返回completed，不作为失败或替换依据；
+  下一阶段复用同一审者先读18题无key视图并独立检查78选项。
+  当前尚无选择PASS/显示运行/整课commit-push。
+- 02:29:50Z监督实际02:30:00.331Z，record SHA
+  `b2225428bbb762ba2c845221caf3d51c1973061da1ded01b894e05e18e993f35`；
+  1697回执引用/112已知非零或错误/3未知均是历史引用，不是唯一调用；
+  实际监督留存SHA
+  `72901c65b9f7709aa52ba588c6b7487dbba031cc399cc6e3949698aa7a01bd9c`。
+  下一锚定监督03:09:50Z，沿用现有入口。
+- 本次一次只读误指全局ld-s10y-choice路径exit1，后读取仓库现有
+  `.agents/skills/ld-s10y-choice/SKILL.md`成功；如实保留工具失败，
+  不重跑生产门禁、不把摘要视作原始工具字节。父图0、有限exec在途0，
+  仅6a/7a/8a/review；unknown费用计数不清零，无DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 02:22Z n14现代独审PASS，选择草稿收取，答案独审在途
+
+- Singer零图独立TEXT_PASS，实际result SHA
+  `8ab195d8e48125fbc90062a9e452c6568ad8d2b7d4a89ab0ccf7636406409849`；
+  当前规范化lesson/exercises模板分别绑定
+  `e2524c5c4159a611a0f3fde7be1b49ceecaa195204feb05876dfdd291d416db2`、
+  `27a60ed005bcf057138ed571c0494ff3caa2aa38510f527597d70da215f51143`。
+  原式/现代修正及19源对象/9题/0图/三语义边界均核验；
+  completed/关闭，不重跑源图或原生门禁。
+  现代独审实际字节留存SHA
+  `73cea5703823dff2c18c8c6df840a52842de5ae29aab8e6497db56441d27aed0`。
+- Helmholtz作者completed/关闭，未批准草稿18题78选项，
+  16single/2multiple，9原题全部子任务声明覆盖，零图；
+  draft SHA `a119ff26370cd1592ba64403338b75aed51510c42a20fe707b5f29f23dd9d5ca`，
+  作者result SHA
+  `80feb36240f0c969c657ef7a9f6fcbe0ecd5d7eb4d1b191ae46caa93a3bac4d9`。
+  作者原生check_draft与三个白名单绑定exit0，未冒称整本绑定完成；
+  父补齐原生完整CLI/book membership检查FIRST exit0，receipt SHA
+  `d5fcdc585b71dbd2787b24ffca950af32f6ab147f2d65f7fa84887723f27cf31`。
+  keys隔离的18题view投影已准备，仅用于后续独审；
+  证明229自由生成能力损失已内部登记，不等于语义批准。
+  作者/绑定/投影实际留存SHA
+  `5138df9aa7b39fbed74198bb34f77bcb199026125f2c07c36b3c35185140f4a1`。
+- Cicero新零图答案独审唯一审者在途，须先存全部9题独立解再读作者候选；
+  当前没有答案PASS。选择独审尚未派发，显示/最终绑定/
+  n14整课commit-push尚未执行；已通过源/现代阶段保持复用。
+- 父有限exec在途0，父图0；下一监督02:29:50Z，仍同一0789/
+  182-6/仅6a7a8a/review，n15仅代码准备。全部原树/锁/备份/
+  失败/计数费用/未决消息/旧暂停保持，unknown不清零，
+  无create/attach/DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 02:10Z n14源PASS，现代门禁修复，文本独审与选择作者在途
+
+- 源首轮REVISE SHA
+  `31c2a95ff1847981bf0a43e615bdf7d2f87b72e797812ed474f9f3946191f714`：
+  原书p0089#8为a_{1-1}、p0090#7所求为c_5，忠实层按像素修改；
+  p0089-converse-subscript-1另登记印刷勘误，原作者疑点注释保留。
+  89/90受影响finalize和新受影响装订exit0，91/88 PASS复用。
+  同一Boyle零新图定向SOURCE_PASS SHA
+  `973f9f75b47a086cc17a57d3f8794e4048fccf0c3dfe66c1e998ca887b1f311b`，
+  completed/关闭后源提升FIRST exit0，promotion SHA
+  `25b9308ef313470e6175273575618deb01f24dcde650df30eb01e64abaa9827e`；
+  原生reindex FIRST exit0，旧课未重写。源作者3+独审3新图，父图0。
+- 现代prepare/作者/原生规范化/实际proseFlow三概念边界均exit0；
+  原式绑定现代修正a_{n-1}，19正文/9题223至231/0图保持。
+  首次finalize exit2仅因changes使用errata而工具要求math-correction，
+  原候选/失败实际留存；只修该标记后受影响门禁exit0，receipt SHA
+  `b33490869c1b8b5079b9fb9353083e4c6bd512f5ec531a3c3afd193d639b0267`。
+  Singer新隔离零图现代文本数学独审唯一审者在途，未获得TEXT_PASS。
+- 答案prepare/作者FIRST exit0，9候选未审、无exact、无图；
+  作者result SHA `b8b0e0cbba5ad9075827bf016e63e46e47214289fa2c7ff14c8930d9c77b4ac7`。
+  选择白名单/9原题及6定义seed FIRST exit0，Helmholtz新选择作者在途，
+  独立求解，不读答案，不造语义批准；选择独审/显示/整课commit-push未执行。
+- 留存误猜可选check.mjs首次exit1，partial实际字节和失败保留；
+  仅改实际路径并登记无manifest部分包字节去重，恢复exit0。恢复包SHA
+  `8e1399bf4a2d3769c56733002f4c63b49ab616db319f5e853b3e68d324c5ee5c`。
+  源PASS/现代首失败留存SHA
+  `70ab01c8350d9b07d5d5dfd67e336acf9c191168acf1071dae956b5058f8d342`，
+  现代原生/答案作者留存SHA
+  `77d0ad3c885a9202ee5f8be4437afde4b4f56b43b57fedfe76712ba930ff30e7`。
+- n15接续仅代码准备，必须n14整课推送远端确认后执行。
+  仅0789/6a7a8a/review，下一监督02:29:50Z；旧PASS不重跑，
+  原树/锁/备份/失败/真实计数费用/未决消息/旧暂停全保留，
+  unknown不清零，无create/attach/DB/合并部署/正式handoff。
+
+### 182-6 2026-11-21 01:57Z n14作者收取，计行修复，源独审在途
+
+- 原01:49:50Z监督实际01:50:16.135Z，record SHA
+  `85704b2015b67c1f8de82a4bddf18e751fcf0d128aa1a11aef130af59ddffa98`；
+  1648回执引用/108已知非零或错误/3未知是历史引用而非唯一调用。
+  下一监督02:29:50Z，沿用同一监督入口，不新建自动化或聊天。
+- Gauss已completed/关闭，源作者实际3图各一次，result SHA
+  `edf3787f1447a3cbaeedd01b739560641e53dee5e546834e10e15fbb438f040a`；
+  原稿快照SHA `c5b8cbdb860124f3ef48131088f70e62e5e1aa482db0a814bbac51589339ff09`。
+  两未决字形p0089#8与p0090#7保留，作者不是批准。
+- 89首次finalize exit1，SHA
+  `2c62b7f61474c67e866ddcadf3d9b96436f90fa4fe1f01fd598d520c6ead2ee6`；
+  两断点同时使用WRAP和物理换行，原生多计2行。首次生成三文件
+  独立保留，只移除两WRAP后的换行，不改数学字符/旧注释/原稿。
+  受影响89、FIRST90/91分别exit0，26/24/24行，0图；page88不重跑。
+  两误猜只读路径exit2/1如实记入source-linewrap-recovery.record，
+  不声称缺失原始工具字节恢复。
+- FIRST窄装订exit0，assembly SHA
+  `f575641c5fc35872bb2cfbe0a2f94ca86c51086fc8056a10f3c868e37e101d08`；
+  19正文/9题223至231/0图，范围p0088#2至p0091#5，
+  p0091#6为排除的n15边界，完整原页碎片保留但不提升半课。
+  Boyle新隔离源独审唯一在途，限3新原页各一次、复用88旧批准。
+- 作者/失败实际字节留存SHA
+  `49d87280b53496d45ff67404178a3765ec853bf805f17afc0d920f2ff770a0b4`，
+  源原生/修复实际字节留存SHA
+  `fddba46eff4c9904f2ce19fed7f5d62c6c9e59026b172e621b84b3b95700dad9`。
+  仅0789/6a7a8a/review，父图0，n13/旧PASS不重跑；
+  原树/锁/备份/失败/计数费用/未决消息/旧暂停全保留，
+  unknown不清零，无create/attach/DB/合并部署/handoff。
+
+### 182-6 2026-11-21 01:45Z n13整课推送确认，n14有源生产接续
+
+- n13窄暂存/范围秘密检查/commit/push/远端确认均FIRST exit0；
+  598文件28088703字节，仅完整n13/源86至88/两索引追加/
+  n13实际证据/progress，旧索引条目完全未变、无半课或秘密。
+  完整提交及原分支远端HEAD均为
+  `06b629c1d1d15f6fef045bd99cdf449c4d4cee31`，
+  push receipt SHA
+  `78e0c95529fe09ef129b6c7031a57d551ee3914437cfbfa82e8ebd0acb24a9de`，
+  remote confirmation SHA
+  `26d65e5ea1e1826cbfb4dac5ec198495870d2fa18735a035f9be8008486833b8`。
+  15源对象/5题218至222/5答案/8选择40选项/0图及78新截图完整离线
+  PASS交付；父图0，所有新观察者关闭，全部旧PASS/失败保留。
+- 未在已交付检查点停工：同树n14入口FIRST exit0，bootstrap SHA
+  `6da05c3b08f4c989626b53a6062bdbe5184dfe96d79b93d1ff336bcda4df894c`。
+  复用page88原批准实际三文件，起点p0088#2、section p0088#1；
+  新页89至91准备FIRST exit0，receipt SHA
+  `5f0e75e6b2fa4425cf503330cf7b72c199e441f3ce3e2b92677ad21a2edcf2fb`。
+  Gauss新隔离源作者在途，只转写3新页各一次；page88不重看、
+  识别或收口。n14尚无源批准/装订/提升，n15原页碎片须保留但不提升半课。
+- n14入口及n13交付实际字节留存25唯一33引用SHA
+  `bd753e8b9a314c3d64a786b27572f6ebc3e87a01478926f7f5654578e6b60521`，
+  三新页准备字节留存22唯一26引用SHA
+  `4f814a9c5700accb99c4ae9267ed9d24486e1112a1236290ef077567ce89eb67`。
+  历史累计null/unknown保留，本课已知显示计数独列并引用实际回执；
+  未恢复未知历史字节或猜费用。
+- 仅0789/6a7a8a/review，下一监督01:49:50Z；无create/attach/
+  init/重复迁移/skill update/DB/合并部署/正式handoff。
+  原树/锁/备份/失败/真实计数/费用/未决消息及旧聊天旧审者暂停保持。
+
 ### 182-6 2026-11-21 01:42Z n13完整离线PASS，窄提交待执行
 
 - batch9实际8新图、batch10实际6新图DISPLAY_PASS，两审者均completed/

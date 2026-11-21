@@ -1,0 +1,418 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const work = '.tmp/resume182-6-8a-n14-0789';
+const bookRoot = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const lessonId = 'alg8-c3-s2-n14';
+const rawDir = `${bookRoot}/lessons/${lessonId}`;
+const templateDir = `${work}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/${lessonId}`;
+const finalDir = `${bookRoot}/editions/modern-us-neutral/lessons/${lessonId}`;
+const retainedDir = `${bookRoot}/evidence/resume182-6-n14-source-pass-and-modern-failure-first-0789`;
+const bindings = new Map();
+const checks = [];
+const blockers = [];
+
+assert.equal(process.cwd(), root);
+function read(path) {
+  const absolute = resolve(root, path);
+  assert(absolute.startsWith(`${root}/`));
+  assert(!/\.(?:png|jpg|jpeg|svg|webp|pdf)$/i.test(absolute));
+  const bytes = readFileSync(absolute);
+  bindings.set(absolute, {
+    path: absolute,
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length,
+  });
+  return bytes;
+}
+const json = (path) => JSON.parse(read(path).toString('utf8'));
+function check(name, fn) {
+  try {
+    fn();
+    checks.push({ name, status: 'PASS' });
+  } catch (error) {
+    const finding = { name, status: 'FAIL', message: error.message };
+    checks.push(finding);
+    blockers.push(finding);
+  }
+}
+function bound(path) {
+  const absolute = resolve(root, path);
+  if (!bindings.has(absolute)) read(path);
+  return bindings.get(absolute);
+}
+function expectBinding(path, expected) {
+  const actual = bound(path);
+  assert.equal(actual.sha256, expected.sha256);
+  assert.equal(actual.bytes, expected.bytes);
+}
+const sourcePath = `${work}/source-review-FIRST/result-affected-glyph1.record`;
+const source = json(sourcePath);
+const rawLesson = json(`${rawDir}/lesson.json`);
+const rawExercises = json(`${rawDir}/exercises.json`);
+const rawMD = read(`${rawDir}/lesson.md`);
+const templates = Object.fromEntries(['lesson', 'exercises', 'figures'].map(
+  (name) => [name, json(`${templateDir}/${name}.template.json`)],
+));
+const finals = Object.fromEntries(['lesson', 'exercises', 'figures'].map(
+  (name) => [name, json(`${finalDir}/${name}.json`)],
+));
+const audit = json(`${finalDir}/adaptation.audit.json`);
+const pageNumbers = [88, 89, 90, 91];
+const pages = new Map(pageNumbers.map((n) => [
+  n, json(`${bookRoot}/pages/${String(n).padStart(4, '0')}/page.json`),
+]));
+const sourceBindingMap = new Map(source.bindings.map((entry) => [entry.path, entry]));
+check('closed SOURCE_PASS identity and supplied SHA', () => {
+  assert.equal(bound(sourcePath).sha256, '973f9f75b47a086cc17a57d3f8794e4048fccf0c3dfe66c1e998ca887b1f311b');
+  assert.equal(source.status, 'SOURCE_PASS');
+  assert.equal(source.book, '8a');
+  assert.equal(source.lesson, lessonId);
+  assert.deepEqual(source.blockers, []);
+});
+check('current page text/JSON/audit bytes match approved source bindings', () => {
+  for (const n of pageNumbers) {
+    for (const file of ['page.md', 'page.json', 'audit.json']) {
+      const path = `${bookRoot}/pages/${String(n).padStart(4, '0')}/${file}`;
+      const expected = sourceBindingMap.get(resolve(root, path));
+      assert(expected, path);
+      expectBinding(path, expected);
+    }
+  }
+});
+check('current raw lesson objects match approved affected assembly bytes', () => {
+  for (const file of ['lesson.json', 'lesson.md', 'exercises.json']) {
+    const approved = `${work}/assembly-AFFECTED-glyph1/artifacts/8a/lessons/${lessonId}/${file}`;
+    const expected = sourceBindingMap.get(resolve(root, approved));
+    assert(expected, approved);
+    expectBinding(approved, expected);
+    assert(read(`${rawDir}/${file}`).equals(read(approved)));
+  }
+  assert(rawMD.length > 0);
+});
+check('raw snapshots and source SHAs match current raw files exactly', () => {
+  for (const [name, raw] of [['lesson', rawLesson], ['exercises', rawExercises]]) {
+    const template = templates[name];
+    assert.equal(template.source.path, `lessons/${lessonId}/${name}.json`);
+    assert.equal(template.source.sha256, bound(`${rawDir}/${name}.json`).sha256);
+    assert.deepEqual(template.source.data, raw);
+  }
+  assert.equal(rawLesson.prose.length, 19);
+  assert.equal(rawExercises.exercises.length, 9);
+  assert.equal(rawLesson.card_id, lessonId);
+  assert.equal(rawLesson.number, '14');
+});
+
+// Derive this lesson's interval and coverage directly from the approved page stream.
+const selected = [];
+let active = false;
+let closed = false;
+for (const n of pageNumbers) {
+  const page = pages.get(n);
+  for (let i = 0; i < page.blocks.length; i++) {
+    const block = page.blocks[i];
+    const ref = `p${String(n).padStart(4, '0')}#${i + 1}`;
+    if (block.kind === 'h3') {
+      if (active) {
+        closed = true;
+        active = false;
+        break;
+      }
+      if (block.lines.join('') === rawLesson.printed_title) active = true;
+    }
+    if (active && block.kind !== 'foot') selected.push({ ref, block, page: n });
+  }
+  if (closed) break;
+}
+const allBlocks = new Map(pageNumbers.flatMap((n) => pages.get(n).blocks.map(
+  (block, i) => [`p${String(n).padStart(4, '0')}#${i + 1}`, block],
+)));
+const joined = (refs) => refs.map(
+  (ref) => allBlocks.get(ref).lines.join(''),
+).join('').replaceAll('\u21b5', '');
+const coverage = {
+  start: selected[0]?.ref,
+  last: selected.at(-1)?.ref,
+  excludedRight: 'p0091#6',
+  proseRefs: rawLesson.prose.flatMap((block) => block.source_refs),
+  exerciseRefs: rawExercises.exercises.flatMap((exercise) => exercise.pages),
+  groupRefs: selected.filter(({ block }) => block.kind === 'exhead').map(({ ref }) => ref),
+};
+check('complete authoritative interval, all prose and exercises covered once', () => {
+  assert(closed);
+  assert.equal(coverage.start, 'p0088#2');
+  assert.equal(coverage.last, 'p0091#5');
+  assert.equal(allBlocks.get('p0091#6').kind, 'h3');
+  assert.deepEqual(
+    coverage.proseRefs,
+    selected.filter(({ block }) => block.kind === 'p').map(({ ref }) => ref),
+  );
+  assert.deepEqual(
+    coverage.exerciseRefs,
+    selected.filter(({ block }) => block.kind === 'ex').map(({ ref }) => ref),
+  );
+  assert.deepEqual(coverage.groupRefs, ['p0091#4']);
+  const refs = [...coverage.proseRefs, ...coverage.exerciseRefs];
+  assert.equal(new Set(refs).size, refs.length);
+  for (const block of rawLesson.prose) {
+    assert.equal(block.text, joined(block.source_refs));
+  }
+  for (const exercise of rawExercises.exercises) {
+    assert.equal(exercise.text, joined(exercise.pages));
+    assert.equal(exercise.number, allBlocks.get(exercise.pages[0]).label);
+  }
+  assert.deepEqual(rawLesson.prose[18].source_refs, ['p0089#9', 'p0090#1']);
+  assert(allBlocks.get('p0089#9').open && allBlocks.get('p0090#1').cont);
+  assert.deepEqual(rawExercises.exercises[5].pages, ['p0090#7', 'p0091#1']);
+  assert(allBlocks.get('p0090#7').open && allBlocks.get('p0091#1').cont);
+  assert.equal(rawExercises.exercises[8].group, allBlocks.get('p0091#4').lines.join(''));
+  assert.equal(rawExercises.exercises[8].group_id, 'g1');
+});
+const erratum = templates.lesson.errata[0];
+check('one registered correction: all page/block/hash/original/corrected bindings', () => {
+  assert.equal(templates.lesson.errata.length, 1);
+  const page = pages.get(89);
+  const declaration = page.meta.errata[0];
+  assert.equal(page.meta.errata.length, 1);
+  assert.equal(erratum.id, 'p0089-converse-subscript-1');
+  assert.equal(erratum.target, 'lesson.prose[17]');
+  assert.equal(erratum.source.page, 89);
+  assert.equal(erratum.source.printed_page, page.meta.printed_page);
+  assert.equal(erratum.source.block, 'p0089#8');
+  assert.equal(erratum.source.sha256, bound(`${bookRoot}/pages/0089/page.json`).sha256);
+  assert.equal(erratum.source.pdf_sha256, page.meta.source.pdf_sha256);
+  assert.equal(erratum.source.pdf_sha256, '5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071');
+  assert.equal(erratum.id, declaration.id);
+  assert.equal(erratum.source.block, declaration.block);
+  assert.equal(erratum.original, declaration.original);
+  assert.equal(erratum.reason, declaration.reason);
+  assert.equal(erratum.original, '$2a_n=a_{1-1}+a_{n+1}$');
+  assert.equal(erratum.corrected, '$2a_n=a_{n-1}+a_{n+1}$');
+  assert.equal(joined(['p0089#8']).split(erratum.original).length - 1, 1);
+  assert.equal(rawLesson.prose[17].text.split(erratum.original).length - 1, 1);
+  assert.deepEqual(templates.lesson.prose[17].source_refs, ['p0089#8']);
+  assert.deepEqual(templates.lesson.prose[17].changes, ['layout', 'math-correction']);
+  assert(!templates.lesson.prose[17].text.includes(erratum.original));
+  assert(templates.lesson.prose[17].text.includes(erratum.corrected));
+});
+
+const cyrillic = ['\u0430', '\u0431', '\u0432', '\u0433', '\u0434', '\u0435'];
+function latinEnums(text) {
+  return text.replace(/([\u0430\u0431\u0432\u0433\u0434\u0435])\)/g,
+    (_, label) => `${String.fromCharCode(97 + cyrillic.indexOf(label))})`);
+}
+const compact = (text) => text.replace(/\s+/g, '');
+const formulas = (text) => [...text.matchAll(/\$([^$]*)\$/g)].map((match) => match[1]);
+function sameFields(modern, raw, ignored) {
+  for (const [key, value] of Object.entries(raw)) {
+    if (!ignored.includes(key)) assert.deepEqual(modern[key], value, key);
+  }
+}
+check('every prose sentence/formula preserved except the registered replacement', () => {
+  for (let i = 0; i < rawLesson.prose.length; i++) {
+    const raw = rawLesson.prose[i];
+    const modern = templates.lesson.prose[i];
+    const expected = i === 17 ? raw.text.replace(erratum.original, erratum.corrected) : raw.text;
+    assert.equal(modern.source_text, raw.text);
+    assert.equal(compact(modern.text), compact(expected), `prose[${i}]`);
+    assert.deepEqual(formulas(modern.text), formulas(expected), `prose[${i}] formulas`);
+    sameFields(modern, raw, ['text']);
+    assert.deepEqual(modern.numeric_changes, []);
+    assert.deepEqual(modern.historical_entities, []);
+    const changed = modern.text !== raw.text;
+    assert.deepEqual(
+      modern.changes,
+      i === 17 ? ['layout', 'math-correction'] : changed ? ['layout'] : [],
+    );
+  }
+  sameFields(templates.lesson, rawLesson, ['prose']);
+  const conditions = templates.lesson.prose[7].text.split('\n');
+  assert.equal(conditions.length, 2);
+  assert(conditions[0].startsWith('1) ') && conditions[1].startsWith('2) '));
+});
+const exerciseReview = [];
+check('nine stable exercise IDs; every subpart ordered, independent and complete', () => {
+  const ids = Array.from({ length: 9 }, (_, i) => String(223 + i));
+  assert.deepEqual(templates.exercises.exercises.map((exercise) => exercise.number), ids);
+  assert.equal(new Set(ids).size, 9);
+  assert.equal(templates.exercises.count, 9);
+  for (let i = 0; i < ids.length; i++) {
+    const raw = rawExercises.exercises[i];
+    const modern = templates.exercises.exercises[i];
+    assert.equal(modern.source_text, raw.text);
+    assert.equal(compact(modern.text), compact(latinEnums(raw.text)), ids[i]);
+    assert.deepEqual(formulas(modern.text), formulas(raw.text), `${ids[i]} formulas`);
+    assert.deepEqual(modern.lines, modern.text.split('\n'));
+    sameFields(modern, raw, ['text', 'lines']);
+    assert.equal(modern.source_number, ids[i]);
+    const labels = [...modern.text.matchAll(/^([a-z])\) /gm)].map((match) => match[1]);
+    const rawLabels = [...raw.text.matchAll(/([\u0430\u0431\u0432\u0433\u0434\u0435])\)/g)];
+    assert.equal(labels.length, rawLabels.length);
+    assert.deepEqual(labels, Array.from({ length: labels.length }, (_, j) => String.fromCharCode(97 + j)));
+    assert.equal(modern.lines.length, labels.length ? labels.length + 1 : 1);
+    assert(modern.lines[0].startsWith(`${ids[i]}. `));
+    assert.deepEqual(modern.changes, labels.length ? ['layout', 'enum-latin'] : []);
+    assert.deepEqual(modern.numeric_changes, []);
+    assert.deepEqual(modern.historical_entities, []);
+    exerciseReview.push({ number: ids[i], source_refs: modern.pages, subparts: labels, formulas: formulas(modern.text).length });
+  }
+  assert(templates.exercises.exercises[5].text.includes('$c_7,c_5,c_{10}$'));
+});
+check('no invented cultural text/numbers, answer payload, incomplete formula or source line marker', () => {
+  for (const block of [...templates.lesson.prose, ...templates.exercises.exercises]) {
+    assert(!/[\u0400-\u04ff\u21b5\u3000]|<\/?[a-z][^>]*>/i.test(block.text));
+    assert.equal((block.text.match(/\$/g) || []).length % 2, 0);
+    for (const formula of formulas(block.text)) {
+      assert(!/[\u3001\uff0c\uff1b\u3002\uff1f\uff01\uff1a]/.test(formula));
+      let depth = 0;
+      for (const char of formula) {
+        if (char === '{') depth++;
+        if (char === '}') depth--;
+        assert(depth >= 0);
+      }
+      assert.equal(depth, 0);
+    }
+    for (const key of ['answer', 'answers', 'answerKey', 'solution', 'correct_index', 'accept', 'interaction']) {
+      assert(!Object.hasOwn(block, key));
+    }
+  }
+});
+check('current ready JSON is exactly current normalized templates modulo native status only', () => {
+  for (const name of ['lesson', 'exercises', 'figures']) {
+    assert.equal(templates[name].status, 'draft');
+    assert.equal(finals[name].status, 'ready');
+    assert.deepEqual(finals[name], { ...templates[name], status: 'ready' });
+  }
+});
+
+const formatRecord = json(`${work}/modern-format-FIRST/result.record`);
+const flowText = read(`${work}/modern-format-FIRST/flow.stdout.record`).toString('utf8');
+const nativeParagraphs = [];
+const nativeBoundaries = [];
+for (const line of flowText.trimEnd().split('\n')) {
+  const header = line.match(/^\[(\d+)\] (.*)$/);
+  if (header) {
+    assert.equal(Number(header[1]), nativeParagraphs.length);
+    nativeParagraphs.push(header[2]);
+  } else if (line.startsWith('    break: ')) {
+    nativeBoundaries.push(JSON.parse(line.slice('    break: '.length)));
+  } else {
+    assert(nativeParagraphs.length);
+    nativeParagraphs[nativeParagraphs.length - 1] += `\n${line}`;
+  }
+}
+check('three semantic anchors selected from actual retained native proseFlow', () => {
+  expectBinding(`${work}/modern-format-FIRST/flow.stdout.record`, formatRecord.flow.stdout);
+  assert.equal(formatRecord.flow.returncode, 0);
+  assert.equal(formatRecord.normalization.returncode, 0);
+  assert.equal(nativeParagraphs.length, 20);
+  assert.equal(nativeParagraphs.join('\n\n'), templates.lesson.prose.map((block) => block.text).join('\n\n'));
+  assert.deepEqual(templates.lesson.section_breaks, formatRecord.selected);
+  assert.equal(templates.lesson.section_breaks.length, 3);
+  for (const boundary of templates.lesson.section_breaks) {
+    assert(nativeBoundaries.some((candidate) => JSON.stringify(candidate) === JSON.stringify(boundary)));
+  }
+  assert.deepEqual(audit.resolvedSectionBreaks.map(({ before, after }) => ({ before, after })), templates.lesson.section_breaks);
+  for (const { index, before, after } of audit.resolvedSectionBreaks) {
+    assert.equal(nativeParagraphs[index - 1], before);
+    assert.equal(nativeParagraphs[index], after);
+  }
+});
+const firstReceipt = json(`${work}/stages/modern-finalize-FIRST/receipt.record`);
+const passReceiptPath = `${work}/stages/modern-finalize-AFFECTED-tag1/receipt.record`;
+const passReceipt = json(passReceiptPath);
+const firstStdout = read(`${work}/stages/modern-finalize-FIRST/stdout.txt`).toString('utf8');
+const passStdout = read(`${work}/stages/modern-finalize-AFFECTED-tag1/stdout.txt`).toString('utf8');
+read(`${work}/stages/modern-finalize-FIRST/stderr.txt`);
+read(`${work}/stages/modern-finalize-AFFECTED-tag1/stderr.txt`);
+const recovery = json(`${work}/modern-tag-recovery.record`);
+const retention = json(`${retainedDir}/retention.record`);
+const firstLessonPath = `${retainedDir}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/${lessonId}/lesson.template.json.record`;
+const firstLesson = json(firstLessonPath);
+check('retained native FIRST failure and affected-tag1 success are genuine named receipts', () => {
+  assert.equal(bound(passReceiptPath).sha256, 'b33490869c1b8b5079b9fb9353083e4c6bd512f5ec531a3c3afd193d639b0267');
+  assert.equal(passReceipt.returncode, 0);
+  assert.equal(firstReceipt.returncode, 2);
+  assert.equal(bound(`${work}/stages/modern-finalize-FIRST/receipt.record`).sha256, recovery.receiptSHA256);
+  assert.equal(firstReceipt.cwd, root);
+  assert.equal(passReceipt.cwd, root);
+  assert.deepEqual(firstReceipt.command, passReceipt.command);
+  assert(firstReceipt.command.includes('adapt-finalize') && firstReceipt.command.includes(lessonId));
+  assert(firstStdout.includes('lesson.prose[17]') && firstStdout.includes('math-correction'));
+  assert(passStdout.includes('PASS') && passStdout.includes('8/19') && passStdout.includes('7/9'));
+  const entry = retention.entries.find((candidate) => candidate.path === firstLessonPath);
+  assert(entry);
+  expectBinding(firstLessonPath, entry);
+  const expected = structuredClone(firstLesson);
+  assert.deepEqual(expected.prose[17].changes, ['layout', 'errata']);
+  expected.prose[17].changes = ['layout', 'math-correction'];
+  assert.deepEqual(expected, templates.lesson);
+});
+check('native audit/source hashes/counts and zero-figure receipts are consistent', () => {
+  assert.equal(audit.status, 'pass');
+  assert.equal(audit.lesson, lessonId);
+  assert.equal(audit.edition, 'modern-us-neutral');
+  assert.equal(audit.sourceLessonSha256, bound(`${rawDir}/lesson.json`).sha256);
+  assert.equal(audit.sourceExercisesSha256, bound(`${rawDir}/exercises.json`).sha256);
+  assert.equal(audit.proseBlocks, 19);
+  assert.equal(audit.exercises, 9);
+  assert.equal(audit.changedProseBlocks, 8);
+  assert.equal(audit.changedExercises, 7);
+  assert.equal(audit.sectionBreaks, 3);
+  assert.equal(audit.errata, 1);
+  assert.equal(audit.figures, 0);
+  assert.deepEqual(audit.errors, []);
+  assert.deepEqual(templates.figures.figures, []);
+  assert.deepEqual(finals.figures.figures, []);
+  assert.deepEqual(rawLesson.figures, []);
+  assert([...templates.exercises.exercises].every((exercise) => !exercise.figure_refs.length && !exercise.figures.length));
+  assert(pageNumbers.every((n) => !pages.get(n).meta.figures.length));
+});
+check('independent symbolic verification of registered mean-to-converse correction', () => {
+  const halfMean = [0.5, 0, 0.5];
+  assert.deepEqual(halfMean.map((coefficient) => coefficient * 2), [1, 0, 1]);
+  const doubledMeanResidual = [-1, 2, -1];
+  const adjacentDifferenceResidual = [-1, 1, 0].map(
+    (coefficient, i) => coefficient - [0, -1, 1][i],
+  );
+  assert.deepEqual(doubledMeanResidual, adjacentDifferenceResidual);
+  assert(templates.lesson.prose[17].text.includes('$(n\\geqslant2)$'));
+  assert(templates.lesson.prose[17].text.includes('$a_n=\\frac{a_{n-1}+a_{n+1}}{2}$'));
+  assert(templates.lesson.prose[17].text.includes('$a_n-a_{n-1}=a_{n+1}-a_n$'));
+});
+
+// Detect concurrent changes without invoking any producer or prior validator.
+check('all inspected text and record bytes remain stable at checker completion', () => {
+  for (const binding of [...bindings.values()]) {
+    const bytes = readFileSync(binding.path);
+    assert.equal(bytes.length, binding.bytes);
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), binding.sha256);
+  }
+});
+console.log(JSON.stringify({
+  status: blockers.length ? 'TEXT_REVISE' : 'TEXT_PASS',
+  checks,
+  blockers,
+  coverage,
+  exercises: exerciseReview,
+  nativeFlowParagraphs: nativeParagraphs.length,
+  approved_text_bindings: {
+    lesson: bound(`${templateDir}/lesson.template.json`),
+    exercises: bound(`${templateDir}/exercises.template.json`),
+  },
+  bindings: [...bindings.values()],
+  execution: {
+    readOnlyChecker: true,
+    nativeReruns: 0,
+    imageReads: 0,
+    imageViews: 0,
+    networkCalls: 0,
+    databaseActions: 0,
+    gitActions: 0,
+    contentWrites: 0,
+  },
+}, null, 2));
+process.exitCode = blockers.length ? 1 : 0;

@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n14-0789';
+const target = `${base}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s2-n14`;
+const history = `${base}/modern-format-FIRST`;
+fs.mkdirSync(history);
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const inputs = {};
+for (const name of ['lesson', 'exercises']) {
+  const file = `${target}/${name}.template.json`;
+  fs.writeFileSync(`${history}/${name}.before.record`, fs.readFileSync(file), { flag: 'wx' });
+  inputs[name] = JSON.parse(fs.readFileSync(file));
+}
+const code = `import json,sys
+sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")
+import edition
+d=json.load(sys.stdin)
+for b in d["lesson"]["prose"]:
+    t=edition.normalize_numbered_subparts(b["text"])
+    if t!=b["text"]:
+        b["text"]=t
+        if "layout" not in b["changes"]: b["changes"].append("layout")
+edition.normalize_lesson_layout(d["lesson"])
+edition.normalize_exercise_layout(d["exercises"])
+print(json.dumps(d,ensure_ascii=True))
+`;
+const normalized = spawnSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c', code],
+  { input: JSON.stringify(inputs), encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+assert.equal(normalized.status, 0, normalized.stderr);
+const documents = JSON.parse(normalized.stdout);
+for (const [name, document] of Object.entries(documents)) {
+  fs.writeFileSync(`${target}/${name}.template.json`, `${JSON.stringify(document, null, 2)}\n`);
+}
+const flow = spawnSync(process.execPath, ['.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs', `${target}/lesson.template.json`],
+  { encoding: 'utf8' });
+fs.writeFileSync(`${history}/flow.stdout.record`, flow.stdout, { flag: 'wx' });
+fs.writeFileSync(`${history}/flow.stderr.record`, flow.stderr, { flag: 'wx' });
+assert.equal(flow.status, 0);
+const boundaries = flow.stdout.split('\n').map(line => line.trim())
+  .filter(line => line.startsWith('break: ')).map(line => JSON.parse(line.slice(7)));
+const prefixes = ['定义 如果', '等差数列具有下述性质', '反过来也成立'];
+const selected = boundaries.filter(item => prefixes.some(prefix => item.after.startsWith(prefix)));
+assert.equal(selected.length, 3);
+documents.lesson.section_breaks = selected;
+fs.writeFileSync(`${target}/lesson.template.json`, `${JSON.stringify(documents.lesson, null, 2)}\n`);
+const outputs = ['lesson', 'exercises'].map(name => bind(`${target}/${name}.template.json`));
+const file = `${history}/result.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'NATIVE_NORMALIZED_BOUNDARIES_AUTHORED_NOT_APPROVED',
+  lesson: 'alg8-c3-s2-n14', book: '8a', edition: 'modern-us-neutral',
+  normalization: { implementation: bind('.claude/skills/ld-s10y-lesson/tools/edition.py'), returncode: normalized.status,
+    code, stderr: normalized.stderr },
+  flow: { returncode: flow.status, stdout: bind(`${history}/flow.stdout.record`), stderr: bind(`${history}/flow.stderr.record`) },
+  selected, outputs, mathematicalCharactersChangedByFormatting: 0, rawChanges: 0,
+  imageViews: 0, databaseWrites: 0, oldPassReruns: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

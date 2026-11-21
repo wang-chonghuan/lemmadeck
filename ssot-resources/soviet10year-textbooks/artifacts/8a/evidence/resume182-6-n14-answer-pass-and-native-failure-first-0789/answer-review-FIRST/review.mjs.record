@@ -1,0 +1,460 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const work = path.join(root, '.tmp/resume182-6-8a-n14-0789');
+const modern = path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s2-n14');
+const checks = [];
+const errors = [];
+const bindings = {};
+function check(name, pass, details = {}) {
+  checks.push({name, status: pass ? 'pass' : 'fail', ...details});
+  if (!pass) errors.push({name, ...details});
+}
+function read(name, file, pinnedSha) {
+  const bytes = fs.readFileSync(file);
+  const binding = {
+    path: file,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length,
+  };
+  bindings[name] = binding;
+  if (pinnedSha) check(`${name} hash pin`, binding.sha256 === pinnedSha);
+  return JSON.parse(bytes.toString('utf8'));
+}
+function same(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+function gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+function rational(n, d = 1n) {
+  n = BigInt(n);
+  d = BigInt(d);
+  if (!d) throw Error('Zero denominator');
+  if (d < 0n) [n, d] = [-n, -d];
+  const g = gcd(n, d);
+  return {n: n / g, d: d / g};
+}
+function str(q) {
+  return q.d === 1n ? `${q.n}` : `${q.n}/${q.d}`;
+}
+function decimal(s) {
+  if (!/^-?\d+(?:\.\d+)?$/.test(s)) throw Error(`Not an exact decimal: ${s}`);
+  const sign = s.startsWith('-') ? -1n : 1n;
+  const [whole, frac = ''] = s.replace(/^-/, '').split('.');
+  return rational(sign * BigInt(whole + frac), 10n ** BigInt(frac.length));
+}
+function fromSaved(s) {
+  if (s.includes('/')) {
+    const [n, d] = s.split('/');
+    return rational(n, d);
+  }
+  return decimal(s);
+}
+function add(a, b) { return rational(a.n * b.d + b.n * a.d, a.d * b.d); }
+function neg(a) { return rational(-a.n, a.d); }
+function sub(a, b) { return add(a, neg(b)); }
+function mul(a, b) { return rational(a.n * b.n, a.d * b.d); }
+function div(a, b) { return rational(a.n * b.d, a.d * b.n); }
+function eq(a, b) { return a.n === b.n && a.d === b.d; }
+function pow(q, exponent) {
+  if (!Number.isInteger(exponent)) throw Error('Noninteger exponent');
+  return exponent < 0
+    ? rational(q.d ** BigInt(-exponent), q.n ** BigInt(-exponent))
+    : rational(q.n ** BigInt(exponent), q.d ** BigInt(exponent));
+}
+
+// A bounded exact reader for the current keys: decimals, LaTeX fractions and
+// affine expressions in indexed x symbols. Unsupported input fails closed.
+function affineLatex(input) {
+  const text = input.replace(/\s+/g, '');
+  let pos = 0;
+  const zero = rational(0);
+  const one = rational(1);
+  const scalar = q => new Map([['constant', q]]);
+  const isScalar = m => [...m.keys()].every(k => k === 'constant');
+  function combine(a, b, sign = one) {
+    const m = new Map(a);
+    for (const [key, value] of b) m.set(key, add(m.get(key) || zero, mul(sign, value)));
+    return m;
+  }
+  function scale(a, q) {
+    return new Map([...a].map(([key, value]) => [key, mul(value, q)]));
+  }
+  function argument() {
+    if (text[pos] === '{') {
+      pos++;
+      const value = sum();
+      if (text[pos++] !== '}') throw Error(`Unclosed group: ${input}`);
+      return value;
+    }
+    return atom(true);
+  }
+  function atom(oneDigit = false) {
+    if (text.startsWith('\\frac', pos)) {
+      pos += 5;
+      const numerator = argument();
+      const denominator = argument();
+      if (!isScalar(denominator)) throw Error(`Nonscalar denominator: ${input}`);
+      return scale(numerator, div(one, denominator.get('constant') || zero));
+    }
+    if (text[pos] === '{' || text[pos] === '(') {
+      const end = text[pos++] === '{' ? '}' : ')';
+      const value = sum();
+      if (text[pos++] !== end) throw Error(`Unclosed expression: ${input}`);
+      return value;
+    }
+    const indexed = /^x_(?:\{(\d+)\}|(\d))/.exec(text.slice(pos));
+    if (indexed) {
+      pos += indexed[0].length;
+      return new Map([[`x_${indexed[1] || indexed[2]}`, one]]);
+    }
+    const number = (oneDigit ? /^\d/ : /^\d+(?:\.\d+)?/).exec(text.slice(pos));
+    if (!number) throw Error(`Unsupported key at ${pos}: ${input}`);
+    pos += number[0].length;
+    return scalar(decimal(number[0]));
+  }
+  function signedAtom() {
+    let sign = one;
+    while (text[pos] === '+' || text[pos] === '-') {
+      if (text[pos++] === '-') sign = neg(sign);
+    }
+    return scale(atom(), sign);
+  }
+  function product() {
+    let value = signedAtom();
+    while (text[pos] === '*' || text[pos] === '/' || text.startsWith('\\cdot', pos)) {
+      const divide = text[pos] === '/';
+      pos += text.startsWith('\\cdot', pos) ? 5 : 1;
+      const next = signedAtom();
+      if (divide) {
+        if (!isScalar(next)) throw Error(`Nonscalar division: ${input}`);
+        value = scale(value, div(one, next.get('constant') || zero));
+      } else if (isScalar(value)) {
+        value = scale(next, value.get('constant') || zero);
+      } else if (isScalar(next)) {
+        value = scale(value, next.get('constant') || zero);
+      } else {
+        throw Error(`Nonlinear product: ${input}`);
+      }
+    }
+    return value;
+  }
+  function sum() {
+    let value = product();
+    while (text[pos] === '+' || text[pos] === '-') {
+      const sign = text[pos++] === '-' ? neg(one) : one;
+      value = combine(value, product(), sign);
+    }
+    return value;
+  }
+  const result = sum();
+  if (pos !== text.length) throw Error(`Unparsed key at ${pos}: ${input}`);
+  return Object.fromEntries([...result]
+    .filter(([, q]) => q.n !== 0n)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, q]) => [key, str(q)]));
+}
+function numericLatex(text) {
+  const value = affineLatex(text);
+  if (Object.keys(value).some(key => key !== 'constant')) throw Error(`Not numeric: ${text}`);
+  return fromSaved(value.constant || '0');
+}
+
+function review() {
+  check('exact cwd', process.cwd() === root, {actual: process.cwd()});
+  const solutions = read('independentSolutions', path.join(work, 'answer-review-FIRST/independent-solutions.record'),
+    '81400b860c0d55286ec4d768a62ec6b2aec681ee9c8ac10a109c0e29a7836b27');
+  const approval = read('modernApproval', path.join(work, 'modern-text-review-FIRST/result.record'),
+    '8ab195d8e48125fbc90062a9e452c6568ad8d2b7d4a89ab0ccf7636406409849');
+  const lesson = read('modernLesson', path.join(modern, 'lesson.json'));
+  const exercises = read('modernExercises', path.join(modern, 'exercises.json'));
+  const figures = read('modernFigures', path.join(modern, 'figures.json'));
+  check('current approved modern identities', approval.status === 'TEXT_PASS' &&
+    approval.book === '8a' && approval.lesson === lesson.id && approval.edition === lesson.edition &&
+    lesson.id === 'alg8-c3-s2-n14' && exercises.lesson === lesson.id &&
+    figures.lesson === lesson.id && [lesson, exercises, figures].every(x => x.edition === 'modern-us-neutral' && x.status === 'ready'));
+  for (const [name, field] of [['modernLesson', 'lesson'], ['modernExercises', 'exercises'], ['modernFigures', 'figures']]) {
+    check(`${field} approval byte binding`, same(bindings[name], approval.final_bindings[field]));
+    check(`${field} independent solution input binding`, same(bindings[name], solutions.approvedModernInputs[field]));
+  }
+  check('saved solution approval binding', same(bindings.modernApproval, solutions.approvedModernInputs.approval));
+  check('blind first-phase declarations', solutions.answerCandidatesReadBeforeSave === 0 &&
+    solutions.nativeAnswerTemplatesReadBeforeSave === 0 && solutions.answerAuthorResultsReadBeforeSave === 0 &&
+    solutions.choicesRead === 0);
+  const author = read('authorResult', path.join(work, 'answer-author-FIRST/result.record'),
+    'b8b0e0cbba5ad9075827bf016e63e46e47214289fa2c7ff14c8930d9c77b4ac7');
+  const candidate = read('answerKey', path.join(work, 'answer-author-FIRST/answer-keys.json'),
+    'a80a428ba4f282d61a4a00c7a2f539ff23d06754742b84901e1882009ad56759');
+  const template = read('nativeTemplate', path.join(work, 'answers-FIRST/8a/modern-us-neutral/lessons/alg8-c3-s2-n14/answer-keys.template.json'),
+    'fc6dd480298022c3ae59be444168cf6ab52c0e3246625193218e0ab46a14d10c');
+  check('author current candidate binding', same(author.answerKey, bindings.answerKey));
+  check('author identity and nonapproval status', author.status === 'ANSWERS_AUTHORED_NOT_APPROVED' &&
+    author.book === candidate.book && author.lesson === candidate.lesson && author.edition === candidate.edition);
+  for (const name of ['nativeTemplate', 'modernLesson', 'modernExercises', 'modernFigures']) {
+    check(`author ${name} input binding`, author.inputs.some(x => same(x, bindings[name])));
+  }
+  check('candidate/template root metadata unchanged', ['schema', 'book', 'lesson', 'edition', 'status'].every(k => candidate[k] === template[k]) &&
+    candidate.schema === 'ld-s10y-answer/lesson-answers@1' &&
+    candidate.book === '8a' && candidate.lesson === 'alg8-c3-s2-n14' &&
+    candidate.edition === 'modern-us-neutral' && candidate.status === 'draft' &&
+    same(Object.keys(candidate).sort(), ['schema', 'book', 'lesson', 'edition', 'status', 'answers'].sort()));
+  const ids = solutions.exercises.map(x => x.exercise);
+  check('ordered complete nine-exercise coverage', ids.length === 9 &&
+    new Set(ids).size === 9 && lesson.exercise_count === 9 && exercises.count === 9 &&
+    same(ids, exercises.exercises.map(x => x.number)) &&
+    same(ids, template.answers.map(x => x.exercise)) &&
+    same(ids, candidate.answers.map(x => x.exercise)));
+  check('empty figure accounting', lesson.figures.length === 0 && figures.figures.length === 0 &&
+    exercises.exercises.every(e => e.figure_refs.length === 0 && e.figures.length === 0) &&
+    template.answers.every(a => a.figureEvidence.length === 0) &&
+    candidate.answers.every(a => a.figureEvidence.length === 0));
+  const first = solutions.exercises[0];
+  check('223 independent successive differences', first.parts.every(p => {
+    const qs = p.terms.map(fromSaved);
+    const ds = qs.slice(1).map((q, i) => sub(q, qs[i]));
+    const arithmetic = ds.every(q => eq(q, ds[0]));
+    return same(ds.map(str), p.successiveDifferences) &&
+      arithmetic === p.isArithmetic &&
+      (!arithmetic || eq(ds[0], fromSaved(p.commonDifference)));
+  }));
+  for (const [id, index] of [['224', 1], ['225', 2], ['226', 3], ['228', 5]]) {
+    const s = solutions.exercises[index];
+    check(`${id} exact independent arithmetic`, s.parts.every(p => {
+      const qs = p.values.map(fromSaved);
+      if (id === '224') {
+        return qs.every((q, i) => eq(q, add(fromSaved(p.a1), mul(rational(i), fromSaved(p.d)))));
+      }
+      if (id === '225') {
+        const d = sub(fromSaved(p.a2), fromSaved(p.a1));
+        return eq(qs[0], d) && eq(qs[1], add(fromSaved(p.a1), mul(rational(5), d)));
+      }
+      if (id === '226') {
+        const d = sub(fromSaved(p.b4), fromSaved(p.b3));
+        return eq(d, sub(fromSaved(p.b5), fromSaved(p.b4))) &&
+          eq(qs[0], sub(fromSaved(p.b3), mul(rational(2), d))) &&
+          eq(qs[1], sub(fromSaved(p.b3), d));
+      }
+      const entries = Object.entries(p.given);
+      const indexOf = key => Number(key.replace(/\D/g, ''));
+      const i = indexOf(entries[0][0]);
+      const j = indexOf(entries[1][0]);
+      const d = div(sub(fromSaved(entries[1][1]), fromSaved(entries[0][1])), rational(j - i));
+      return eq(d, fromSaved(p.d)) && qs.every((q, k) =>
+        eq(q, add(fromSaved(entries[0][1]), mul(rational(indexOf(p.requestedOrder[k]) - i), d))));
+    }));
+  }
+  check('229 middle-angle sum arithmetic', eq(div(rational(180), rational(3)), rational(60)));
+  check('230 middle-side perimeter arithmetic', eq(div(rational(24), rational(3)), rational(8)));
+  const exponentEvidence = [
+    {label: 'a)', coefficient: '8', aExponent: 3 - 4, bExponent: -5 + 4, substitution: ['6400', '1/40']},
+    {label: 'b)', coefficient: str(mul(pow(rational(3), -2), rational(9))), aExponent: -2 + 3, bExponent: 4 - 5, substitution: ['370', '17/100']},
+  ];
+  const exponentValues = exponentEvidence.map(e =>
+    mul(fromSaved(e.coefficient), mul(pow(fromSaved(e.substitution[0]), e.aExponent), pow(fromSaved(e.substitution[1]), e.bExponent))));
+  check('231 independent exponent laws and exact substitutions', same(exponentValues.map(str), solutions.exercises[8].parts.map(p => p.value)) &&
+    eq(decimal('0.05'), exponentValues[0]) && eq(decimal('0.17'), rational(17, 100)));
+  check('bounded reader independent positive/negative controls',
+    eq(numericLatex('-\\frac72'), rational(-7, 2)) &&
+    eq(numericLatex('\\frac{37000}{17}'), rational(37000, 17)) &&
+    same(affineLatex('(x_{11}-x_{10})/2'), affineLatex('\\frac{x_{11}-x_{10}}{2}')) &&
+    !same(affineLatex('(x_{11}-x_{10})/2'), affineLatex('(x_{10}-x_{11})/2')) &&
+    !same(affineLatex('\\frac{x_8-x_6}{2}'), affineLatex('\\frac{x_8-x_6}{3}')));
+
+  const displays = {
+    '223': {
+      verdict: 'All six classifications and reasons are complete.',
+      reason: 'a,c,e are arithmetic with differences 10,10,1/2. b has differences 10,14,10,10; d has 20,200. For f the unequal first two differences -8/15,-8/35 already prove nonarithmetic; listing the third is not required.',
+      required: ['10,10,\\frac12', '10,14,10,10', '20,200', '-\\frac8{15},-\\frac8{35}'],
+    },
+    '224': {
+      verdict: 'All four five-term lists are exact and ordered.',
+      reason: 'The decimal list is exact in tenths. The mixed negative initial value is -7/2; fractions -7/2,-8/3,-11/6,-1,-1/6 advance by 5/6.',
+      required: ['10,14,18,22,26', '29,24,19,14,9', '1.7,1.5,1.3,1.1,0.9', '-\\frac72,-\\frac83,-\\frac{11}6,-1,-\\frac16'],
+    },
+    '225': {
+      verdict: 'Both quantities appear for all four subparts.',
+      reason: 'd is later-minus-earlier; a_6=a_1+5d gives 220,-10,55,11/3. Display orders each d before a_6.',
+      required: ['d=30,a_6=220', 'd=-50,a_6=-10', 'd=15,a_6=55', 'd=\\frac23,a_6=\\frac{11}3'],
+    },
+    '226': {
+      verdict: 'Both missing terms in both lists are correct and the backtracking explanation is sound.',
+      reason: 'Display works backward from b_3 through b_2 to b_1, explicitly identifying each result. That explanatory order is valid; graded fields remain requested b_1,b_2 order. Differences are 6 and 7.5.',
+      required: ['d=6', 'b_3=17', 'b_2=11,b_1=5', 'd=7.5', 'b_3=-19', 'b_2=-26.5,b_1=-34'],
+    },
+    '227': {
+      verdict: 'Four indexed expressions have correct later-minus-earlier signs and index-gap divisors.',
+      reason: 'The four gaps are 1,2,3,4, from a_j-a_i=(j-i)d. Standard-answer formulas use only the given x indices.',
+      required: ['d=x_{11}-x_{10}', 'd=\\frac{x_8-x_6}{2}', 'd=\\frac{x_{23}-x_{20}}{3}', 'd=\\frac{x_{16}-x_{12}}{4}'],
+    },
+    '228': {
+      verdict: 'All six indices and values are preserved in the requested order.',
+      reason: 'a: d=3, c_7=19,c_5=13,c_10=28. b: d=-5, c_12=13,c_9=28,c_14=3. The first list does not substitute c_9 for the approved c_5.',
+      required: ['2d=22-16=6', 'd=3', 'c_7=19,c_5=13,c_{10}=28', '2d=8-18=-10', 'd=-5', 'c_{12}=13,c_9=28,c_{14}=3'],
+    },
+    '229': {
+      verdict: 'Complete existence proof with angle units; no artificial numeric grading.',
+      reason: 'Angles alpha,beta,gamma are explicitly in arithmetic order. alpha+gamma=2beta and their sum=180 degrees imply 3beta=180 degrees and beta=60 degrees. Works when d=0 as well.',
+      required: ['\\alpha+\\gamma=2\\beta', '\\alpha+\\beta+\\gamma=180^\\circ', '3\\beta=180^\\circ', '\\beta=60^\\circ'],
+    },
+    '230': {
+      verdict: 'Correct middle side and cm unit with perimeter argument.',
+      reason: 'x+z=2y and x+y+z=24 cm imply 3y=24 cm and y=8 cm. No unrequested side length is used as a graded field.',
+      required: ['x+z=2y', 'x+y+z=24\\mathrm{cm}', '3y=24\\mathrm{cm}', '8\\mathrm{cm}'],
+    },
+    '231': {
+      verdict: 'Exponent simplifications and scientific-notation substitutions are exact.',
+      reason: 'a gives 8/(ab), ab=160, 1/20=0.05. b squares 3^-1,a^-1,b^2 and cancels 9, giving a/b=370/0.17=37000/17 without rounding.',
+      required: ['8a^{-1}b^{-1}=\\frac8{ab}', '(6.4\\times10^3)(2.5\\times10^{-2})=160', '\\frac1{20}=0.05',
+        '\\frac19a^{-2}b^4\\cdot9a^3b^{-5}=ab^{-1}=\\fracab', '\\frac{370}{0.17}=\\frac{37000}{17}'],
+    },
+  };
+  const orderedExerciseEvidence = [];
+  for (let i = 0; i < ids.length; i++) {
+    const s = solutions.exercises[i];
+    const a = candidate.answers[i];
+    const t = template.answers[i];
+    const e = exercises.exercises[i];
+    const expected = [];
+    if (s.exercise === '224') {
+      for (const p of s.parts) p.values.forEach((value, j) =>
+        expected.push({label: `${p.label} a_${j + 1}`, judge: 'numeric', value}));
+    } else if (['225', '226', '228'].includes(s.exercise)) {
+      for (const p of s.parts) p.values.forEach((value, j) =>
+        expected.push({label: `${p.label} ${p.requestedOrder[j]}`, judge: 'numeric', value}));
+    } else if (s.exercise === '227') {
+      for (const p of s.parts) expected.push({label: `${p.label} d`, judge: 'expression', value: p.expectedLatex});
+    } else if (s.exercise === '230') {
+      expected.push({label: '\u4e2d\u95f4\u8fb9\u957f', judge: 'numeric', value: '8', unit: 'cm'});
+    } else if (s.exercise === '231') {
+      for (const p of s.parts) expected.push({label: p.label, judge: 'numeric', value: p.value});
+    }
+    check(`${s.exercise} prompt/source/group/order binding`,
+      a.prompt === t.prompt && t.prompt === e.text &&
+      s.sourceNumber === e.source_number && s.groupId === e.group_id && same(s.sourceRefs, e.pages));
+    check(`${s.exercise} derived/template metadata`,
+      a.source === 'derived' && a.source === t.source &&
+      !Object.hasOwn(a, 'bookRaw') && !Object.hasOwn(t, 'bookRaw') &&
+      same(a.historical_entities, t.historical_entities) && a.historical_entities.length === 0 &&
+      same(a.figureEvidence, t.figureEvidence));
+    check(`${s.exercise} grading and requested part count`,
+      a.grading === s.gradingRequired && a.parts.length === expected.length &&
+      a.parts.length === (s.requestedAutoQuantityCount || 0));
+    check(`${s.exercise} answer fields scoped to template and authoring`,
+      Object.keys(a).every(k => [...Object.keys(t), 'notes'].includes(k)) &&
+      Object.keys(t).every(k => Object.hasOwn(a, k)) &&
+      (!Object.hasOwn(a, 'notes') || (typeof a.notes === 'string' && a.notes.length > 0)));
+    const partEvidence = [];
+    for (let j = 0; j < a.parts.length; j++) {
+      const p = a.parts[j];
+      const wanted = expected[j];
+      const reliable = wanted && p.label === wanted.label && p.judge === wanted.judge &&
+        p.unit === wanted.unit && Object.keys(p).every(k => ['label', 'judge', 'expected', 'unit'].includes(k)) &&
+        Array.isArray(p.expected) && p.expected.length > 0 && p.expected.every(x => typeof x === 'string' && x.length > 0);
+      check(`${s.exercise} part ${j + 1} ordered field contract`, Boolean(reliable));
+      const actualCanonical = [];
+      for (const text of p.expected) {
+        let pass = false;
+        let canonical = null;
+        try {
+          if (p.judge === 'numeric') {
+            canonical = str(numericLatex(text));
+            pass = wanted && canonical === str(fromSaved(wanted.value));
+          } else if (p.judge === 'expression') {
+            canonical = affineLatex(text);
+            pass = wanted && same(canonical, affineLatex(wanted.value));
+          }
+        } catch (error) {
+          errors.push({name: `${s.exercise} ${p.label} key reader`, error: String(error)});
+        }
+        check(`${s.exercise} ${p.label} every expected exact equivalence`, Boolean(pass), {expected: text, canonical});
+        actualCanonical.push(canonical);
+      }
+      partEvidence.push({
+        ordinal: j + 1, label: p.label, judge: p.judge, expected: p.expected,
+        unit: p.unit ?? null, independentValue: wanted?.value ?? null,
+        canonicalValues: actualCanonical, status: reliable ? 'pass' : 'fail',
+      });
+    }
+    const display = displays[s.exercise];
+    const normalized = a.displayAnswer.replace(/\s+/g, '');
+    check(`${s.exercise} display completeness and reviewed formulas`,
+      a.displayAnswer.length > 0 && display.required.every(text => normalized.includes(text)));
+    orderedExerciseEvidence.push({
+      exercise: s.exercise, sourceNumber: e.source_number, groupId: e.group_id,
+      group: e.group, sourceRefs: e.pages, promptSha256: crypto.createHash('sha256').update(a.prompt).digest('hex'),
+      promptMatchesApprovedModernAndTemplate: a.prompt === t.prompt && t.prompt === e.text,
+      grading: a.grading, source: a.source, bookRawPresent: Object.hasOwn(a, 'bookRaw'),
+      sourceBasis: 'Current native template explicitly selects derived; no claim about whole-book answer capture absence.',
+      historicalEntities: a.historical_entities, figureEvidence: a.figureEvidence,
+      displayReview: {status: 'pass', verdict: display.verdict, reason: display.reason},
+      notes: a.notes ?? null, parts: partEvidence,
+    });
+  }
+  const parts = candidate.answers.flatMap(a => a.parts);
+  const totals = {
+    exercises: candidate.answers.length,
+    requestedSourceSubparts: solutions.totals.requestedSourceSubparts,
+    autoExercises: candidate.answers.filter(a => a.grading === 'auto').length,
+    ungradedExercises: candidate.answers.filter(a => a.grading === 'ungraded').length,
+    autoParts: parts.length,
+    numericParts: parts.filter(p => p.judge === 'numeric').length,
+    expressionParts: parts.filter(p => p.judge === 'expression').length,
+    exactParts: parts.filter(p => p.judge === 'exact').length,
+    expectedCandidates: parts.reduce((n, p) => n + p.expected.length, 0),
+  };
+  check('reliable numeric/expression only and zero exact keys', totals.autoParts === 45 &&
+    totals.numericParts === 41 && totals.expressionParts === 4 && totals.exactParts === 0 &&
+    totals.autoExercises === 7 && totals.ungradedExercises === 2 &&
+    parts.every(p => ['numeric', 'expression'].includes(p.judge)));
+  check('classification/proof no fake numeric yes/no', ['223', '229'].every(id => {
+    const a = candidate.answers.find(x => x.exercise === id);
+    return a.grading === 'ungraded' && a.parts.length === 0 && a.displayAnswer.length > 0;
+  }));
+  const sourceMetadataBasis = {
+    bookRaw: 'Absent in each current native template entry and correctly absent in each candidate entry.',
+    source: 'All nine are derived, as supplied by the native template. Independent mathematics supports that selection.',
+    captureAbsenceClaimed: false,
+    bookCaptureOpened: false,
+    sourceSnapshot: {
+      lessonPath: lesson.source.path,
+      lessonSha256: lesson.source.sha256,
+      exercisesPath: exercises.source.path,
+      exercisesSha256: exercises.source.sha256,
+    },
+    sourceApprovalBasis: 'Approved modern input and embedded source identity; no source pixel re-review or other source-review record access.',
+  };
+  const scriptBytes = fs.readFileSync(import.meta.filename);
+  bindings.checker = {path: import.meta.filename,
+    sha256: crypto.createHash('sha256').update(scriptBytes).digest('hex'), bytes: scriptBytes.length};
+  return {schema: 'stemrobin-182/independent-answer-review-evidence@1', book: '8a',
+    lesson: 'alg8-c3-s2-n14', edition: 'modern-us-neutral', cwd: root, status: errors.length ? 'revise' : 'pass',
+    reviewer: {kind: 'independent_agent', role: 'ANSWER only'},
+    bindings, totals, orderedExerciseEvidence, sourceMetadataBasis, exponentEvidence,
+    checks, errors,
+    nativeChecks: {validateLessonRuns: 0, finalizeRuns: 0, prepareRuns: 0, renderRuns: 0,
+      promotionRuns: 0, publishRuns: 0, computeEngineRuns: 0,
+      basis: 'This is independent offline answer review only. Parent owns native finalization and ComputeEngine checks.'},
+    imageAccounting0: {figureCount: 0, imageViews: 0, imageBytesReadOrRehashed: 0,
+      imagePayloads: 0, sourcePixelRereviews: 0},
+    preservation: {readOnlyChecker: true, contentWrites: 0, choiceAccesses: 0,
+      priorPassReruns: 0, gitCommands: 0, networkCalls: 0, databaseCalls: 0,
+      setupUpdateCreateAttachActions: 0, applicationChanges: 0,
+      historicalRecordsModified: 0, historicalUsageReset: false},
+    hostTokens: 'unknown', totalCost: 'unknown'};
+}
+try {
+  const result = review();
+  console.log(JSON.stringify(result, null, 2));
+  if (result.errors.length) process.exitCode = 1;
+} catch (error) {
+  console.log(JSON.stringify({status: 'revise', errors: [{name: 'checker execution', error: String(error)}],
+    checks, bindings}, null, 2));
+  process.exitCode = 1;
+}

@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const base = '.tmp/resume182-6-8a-n14-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+assert.equal(bind(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'pass');
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.equal(review.lesson, 'alg8-c3-s2-n14');
+assert.equal(bind(review.answerKey.path).sha256, review.answerKey.sha256);
+const repair = JSON.parse(fs.readFileSync(`${base}/answer-tex1/repair.record`));
+assert.equal(review.answerKey.sha256, repair.output.sha256);
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s2-n14/answer-keys.json';
+const before = bind(target);
+assert.equal(before.sha256, repair.source.sha256);
+fs.writeFileSync(target, fs.readFileSync(review.answerKey.path));
+const file = `${base}/answer-tex1/promotion.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'AFFECTED_APPROVED_SERIALIZATION_PROMOTED_NATIVE_RECOVERY_PENDING',
+  review: bind(reviewPath), before, target: bind(target), repair: bind(`${base}/answer-tex1/repair.record`),
+  valuesChanged: false, oldIndependentPassReused: true, firstFailurePreserved: true,
+  imageViews: 0, databaseWrites: 0, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

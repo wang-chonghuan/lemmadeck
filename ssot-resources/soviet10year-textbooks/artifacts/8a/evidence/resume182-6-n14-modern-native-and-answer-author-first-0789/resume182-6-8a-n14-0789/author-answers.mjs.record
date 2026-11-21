@@ -1,0 +1,86 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n14-0789';
+const id = 'alg8-c3-s2-n14';
+const modern = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}`;
+const template = `${base}/answers-FIRST/8a/modern-us-neutral/lessons/${id}/answer-keys.template.json`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const exercises = JSON.parse(fs.readFileSync(`${modern}/exercises.json`));
+assert.deepEqual(exercises.exercises.map(item => String(item.number)), ['223', '224', '225', '226', '227', '228', '229', '230', '231']);
+assert.ok(exercises.exercises.find(item => item.number === '228').text.includes('c_7,c_5,c_{10}'));
+assert.ok(exercises.exercises.every(item => item.figures.length === 0));
+const data = JSON.parse(fs.readFileSync(template));
+assert.equal(data.lesson, id);
+assert.equal(data.answers.length, 9);
+const history = `${base}/answer-author-FIRST`;
+fs.mkdirSync(history);
+const inputs = [bind(template), bind(`${modern}/lesson.json`), bind(`${modern}/exercises.json`), bind(`${modern}/figures.json`)];
+fs.writeFileSync(`${history}/before.record`, fs.readFileSync(template), { flag: 'wx' });
+const part = (label, expected, judge = 'numeric') => ({ label, judge, expected: [expected] });
+const values = {
+  '223': {
+    displayAnswer: 'a)、c)、e) 是等差数列，公差分别为 $10,10,\\frac12$。b) 的相邻差为 $10,14,10,10$；d) 的相邻差为 $20,200$；f) 的前两个相邻差为 $-\\frac8{15},-\\frac8{35}$，所以 b)、d)、f) 不是等差数列。',
+    parts: [], grading: 'ungraded',
+    notes: '分类答案保留具体判断和公差核验；本次不使用 exact 键，也不将是/否伪装成数字判题。'
+  },
+  '224': {
+    displayAnswer: 'a) $10,14,18,22,26$；b) $29,24,19,14,9$；c) $1.7,1.5,1.3,1.1,0.9$；d) $-\\frac72,-\\frac83,-\\frac{11}6,-1,-\\frac16$。',
+    parts: [['10', '14', '18', '22', '26'], ['29', '24', '19', '14', '9'], ['1.7', '1.5', '1.3', '1.1', '0.9'], ['-\\frac72', '-\\frac83', '-\\frac{11}6', '-1', '-\\frac16']]
+      .flatMap((items, i) => items.map((value, j) => part(`${'abcd'[i]}) a_${j + 1}`, value)))
+  },
+  '225': {
+    displayAnswer: 'a) $d=30,a_6=220$；b) $d=-50,a_6=-10$；c) $d=15,a_6=55$；d) $d=\\frac23,a_6=\\frac{11}3$。',
+    parts: [['30', '220'], ['-50', '-10'], ['15', '55'], ['\\frac23', '\\frac{11}3']]
+      .flatMap((items, i) => [part(`${'abcd'[i]}) d`, items[0]), part(`${'abcd'[i]}) a_6`, items[1])])
+  },
+  '226': {
+    displayAnswer: 'a) $d=6$，由 $b_3=17$ 逐次减去 $6$，得 $b_2=11,b_1=5$。b) $d=7.5$，由 $b_3=-19$ 逐次减去 $7.5$，得 $b_2=-26.5,b_1=-34$。',
+    parts: [part('a) b_1', '5'), part('a) b_2', '11'), part('b) b_1', '-34'), part('b) b_2', '-26.5')]
+  },
+  '227': {
+    displayAnswer: 'a) $d=x_{11}-x_{10}$；b) $d=\\frac{x_8-x_6}{2}$；c) $d=\\frac{x_{23}-x_{20}}{3}$；d) $d=\\frac{x_{16}-x_{12}}{4}$。两项之间有几次递推，就有几个相同的公差。',
+    parts: ['x_{11}-x_{10}', '\\frac{x_8-x_6}{2}', '\\frac{x_{23}-x_{20}}{3}', '\\frac{x_{16}-x_{12}}{4}']
+      .map((value, i) => part(`${'abcd'[i]}) d`, value, 'expression'))
+  },
+  '228': {
+    displayAnswer: 'a) $2d=22-16=6$，所以 $d=3$；$c_7=19,c_5=13,c_{10}=28$。b) $2d=8-18=-10$，所以 $d=-5$；$c_{12}=13,c_9=28,c_{14}=3$。',
+    parts: [part('a) c_7', '19'), part('a) c_5', '13'), part('a) c_{10}', '28'), part('b) c_{12}', '13'), part('b) c_9', '28'), part('b) c_{14}', '3')]
+  },
+  '229': {
+    displayAnswer: '按等差顺序将三角形的三个角记作 $\\alpha,\\beta,\\gamma$，有 $\\alpha+\\gamma=2\\beta$。又由三角形内角和得 $\\alpha+\\beta+\\gamma=180^\\circ$，所以 $3\\beta=180^\\circ$，即 $\\beta=60^\\circ$。因此三角形的一个角等于 $60^\\circ$。',
+    parts: [], grading: 'ungraded', notes: '证明题不自动判定；标准答案包含等差关系和内角和两个必要依据。'
+  },
+  '230': {
+    displayAnswer: '按等差顺序记三边为 $x,y,z$，则 $x+z=2y$。由周长 $x+y+z=24\\mathrm{cm}$ 得 $3y=24\\mathrm{cm}$，因此中间边长为 $8\\mathrm{cm}$。',
+    parts: [{ ...part('中间边长', '8'), unit: 'cm' }]
+  },
+  '231': {
+    displayAnswer: 'a) $4a^3b^{-5}\\cdot2a^{-4}b^4=8a^{-1}b^{-1}=\\frac8{ab}$。$ab=(6.4\\times10^3)(2.5\\times10^{-2})=160$，所以值为 $\\frac1{20}=0.05$。b) $(3^{-1}a^{-1}b^2)^2\\cdot9a^3b^{-5}=\\frac19a^{-2}b^4\\cdot9a^3b^{-5}=ab^{-1}=\\frac ab$，代入得 $\\frac{370}{0.17}=\\frac{37000}{17}$。',
+    parts: [part('a)', '\\frac1{20}'), part('b)', '\\frac{37000}{17}')]
+  },
+};
+for (const answer of data.answers) {
+  const result = values[String(answer.exercise)];
+  assert.ok(result);
+  Object.assign(answer, result, { grading: result.grading ?? 'auto', source: answer.bookRaw ? 'book' : 'derived' });
+}
+const candidate = `${history}/answer-keys.json`;
+fs.writeFileSync(candidate, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+const result = `${history}/result.record`;
+fs.writeFileSync(result, `${JSON.stringify({
+  status: 'ANSWERS_AUTHORED_NOT_APPROVED', book: '8a', lesson: id, edition: 'modern-us-neutral',
+  inputs, answerKey: bind(candidate), independentReviewerRequired: true,
+  derivation: 'Arithmetic differences and repeated additions/subtractions for 223-228; three-term mean plus triangle sum for229-230; exponent laws and exact fraction substitution for231.',
+  parentImageViews: 0, exactKeys: 0, databaseWrites: 0, oldPassReruns: 0,
+  hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(result)));

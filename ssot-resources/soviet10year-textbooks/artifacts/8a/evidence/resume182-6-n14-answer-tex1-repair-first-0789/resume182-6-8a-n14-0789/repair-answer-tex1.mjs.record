@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n14-0789';
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const source = `${base}/answer-author-FIRST/answer-keys.json`;
+assert.equal(bind(source).sha256, 'a80a428ba4f282d61a4a00c7a2f539ff23d06754742b84901e1882009ad56759');
+const original = JSON.parse(fs.readFileSync(source));
+const data = structuredClone(original);
+const changes = [
+  ['224', 'd) a_3', '-\\frac{11}6', '-\\frac{11}{6}'],
+  ['225', 'd) a_6', '\\frac{11}3', '\\frac{11}{3}'],
+  ['231', 'a)', '\\frac1{20}', '\\frac{1}{20}'],
+];
+for (const [number, label, from, to] of changes) {
+  const part = data.answers.find(item => item.exercise === number).parts.find(item => item.label === label);
+  assert.deepEqual(part.expected, [from]);
+  part.expected = [to];
+}
+const history = `${base}/answer-tex1`;
+fs.mkdirSync(history);
+const output = `${history}/answer-keys.json`;
+fs.writeFileSync(output, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+const file = `${history}/repair.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'THREE_EXPECTED_LATEX_ARGUMENTS_REPAIRED_REVIEW_PENDING',
+  source: bind(source), output: bind(output), changes,
+  firstNativeFailure: bind(`${base}/stages/answers-finalize-FIRST/receipt.record`),
+  cause: 'Three mixed short/braced fraction serializations rejected by the existing expression parser.',
+  valuesChanged: false, displayAnswersChanged: false, sourceChanged: false,
+  unrelatedFortyTwoExpectedFieldsChanged: false, firstIndependentPassPreserved: true,
+  originalCandidateOverwritten: false, durableAnswerTargetChanged: false,
+  imageViews: 0, oldPassReruns: 0, databaseWrites: 0, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

@@ -1,0 +1,69 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n14-0789';
+const target = `${base}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s2-n14`;
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+assert.equal(bind(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'SOURCE_PASS');
+assert.equal(review.lesson, 'alg8-c3-s2-n14');
+const history = `${base}/modern-author-FIRST`;
+fs.mkdirSync(history);
+const inputs = [], outputs = [];
+const labels = new Map([...'\u0430\u0431\u0432\u0433\u0434\u0435'].map((label, i) => [label, 'abcdef'[i]]));
+for (const name of ['lesson', 'exercises']) {
+  const file = `${target}/${name}.template.json`;
+  const bytes = fs.readFileSync(file);
+  inputs.push(bind(file));
+  fs.writeFileSync(`${history}/${name}.before.record`, bytes, { flag: 'wx' });
+  const document = JSON.parse(bytes);
+  if (name === 'lesson') {
+    assert.equal(document.errata.length, 1);
+    const erratum = document.errata[0];
+    assert.equal(erratum.id, 'p0089-converse-subscript-1');
+    assert.equal(erratum.original, '$2a_n=a_{1-1}+a_{n+1}$');
+    erratum.corrected = '$2a_n=a_{n-1}+a_{n+1}$';
+    for (const block of document.prose) {
+      const original = block.source_text;
+      block.text = original.replaceAll('. ', '.\n');
+      block.changes = block.text === original ? [] : ['layout'];
+      if (block.source_refs.includes('p0089#8')) {
+        assert.equal(block.text.split(erratum.original).length, 2);
+        block.text = block.text.replace(erratum.original, erratum.corrected);
+        block.changes.push('errata');
+      }
+    }
+  } else {
+    for (const exercise of document.exercises) {
+      const original = exercise.text;
+      exercise.text = original.replace(/([\u0430-\u0435])\)/gu, (_, label) => `${labels.get(label)})`);
+      exercise.lines = exercise.text.split('\n');
+      if (exercise.text !== original) exercise.changes = [...new Set([...exercise.changes, 'enum-latin'])];
+    }
+  }
+  fs.writeFileSync(file, `${JSON.stringify(document, null, 2)}\n`);
+  fs.writeFileSync(`${history}/${name}.after.record`, fs.readFileSync(file), { flag: 'wx' });
+  outputs.push(bind(file));
+}
+const record = `${history}/result.record`;
+fs.writeFileSync(record, `${JSON.stringify({
+  status: 'MODERN_TEXT_AUTHORED_NOT_APPROVED', book: '8a', lesson: 'alg8-c3-s2-n14',
+  edition: 'modern-us-neutral', sourceApproval: bind(reviewPath), inputs, outputs,
+  changes: ['Complete-sentence line boundaries only; native adapt-finalize normalizes final paragraph grouping.',
+    'Printed Cyrillic subquestion labels mapped in natural sequence to Latin a through f.'],
+  mathCorrections: ['p0089-converse-subscript-1: registered printed 1-1 -> n-1 only'],
+  cultureOrNumberChanges: 0, rawChanges: 0, imageViews: 0,
+  figures: [], oldPassReruns: 0, databaseWrites: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(record)));

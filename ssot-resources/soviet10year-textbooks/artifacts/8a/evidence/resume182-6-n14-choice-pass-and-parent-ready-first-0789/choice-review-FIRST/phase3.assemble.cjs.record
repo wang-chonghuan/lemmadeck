@@ -1,0 +1,245 @@
+const fs = require("node:fs");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+const path = require("node:path");
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck";
+const owned = path.join(root, ".tmp/resume182-6-8a-n14-0789/choice-review-FIRST");
+const author = path.join(root, ".tmp/resume182-6-8a-n14-0789/choices-FIRST");
+assert.equal(process.cwd(), root);
+
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const bytes = (file) => fs.readFileSync(file);
+const fileHash = (file) => sha256(bytes(file));
+const read = (file) => JSON.parse(bytes(file));
+const sorted = (value) => {
+  if (Array.isArray(value)) return value.map(sorted);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])]));
+  }
+  return value;
+};
+const asciiJson = (value) => JSON.stringify(value).replace(
+  /[\u007f-\uffff]/g,
+  (character) => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0")
+);
+const canonicalHash = (value) => sha256(Buffer.from(asciiJson(sorted(value)), "utf8"));
+const binding = (file) => ({ path: file, sha256: fileHash(file) });
+const requireHash = (file, expected) => assert.equal(fileHash(file), expected, file);
+
+const phase1Path = path.join(owned, "phase1.record");
+const phase2Path = path.join(owned, "phase2.record");
+const fidelityPath = path.join(owned, "phase2.fidelity.record");
+const integrityPath = path.join(owned, "phase2.integrity.record");
+const viewsPath = path.join(owned, "views.record");
+const comparisonPath = path.join(owned, "phase3.comparison.record");
+const draftPath = path.join(author, "draft.json");
+const seedPath = path.join(author, "seed.json");
+const reviewPath = path.join(owned, "review.json");
+const resultPath = path.join(owned, "result.record");
+const comparison = read(comparisonPath);
+
+requireHash(phase1Path, comparison.bindings.phase1_file_sha256);
+requireHash(phase2Path, comparison.bindings.phase2_file_sha256);
+requireHash(fidelityPath, comparison.bindings.fidelity_file_sha256);
+requireHash(integrityPath, "b3b2984c193e41d4316f465651d5e35b365663f1acf0eba9a99e197e499f809b");
+requireHash(viewsPath, comparison.bindings.views_file_sha256);
+requireHash(draftPath, comparison.bindings.draft_file_sha256);
+requireHash(seedPath, comparison.bindings.seed_file_sha256);
+
+const phase1 = read(phase1Path);
+const phase2 = read(phase2Path);
+const fidelity = read(fidelityPath);
+const draft = read(draftPath);
+const seed = read(seedPath);
+const views = read(viewsPath);
+assert.equal(canonicalHash(seed), comparison.bindings.seed_canonical_sha256);
+assert.equal(canonicalHash(draft), comparison.bindings.draft_canonical_sha256);
+assert.equal(draft.seed_sha256, canonicalHash(seed));
+assert.equal(comparison.outcome, "pass");
+assert.equal(comparison.comparisons.length, 18);
+assert.equal(comparison.source_coverage_comparisons.length, 9);
+assert.deepEqual(draft.questions.map((q) => ({
+  id: q.id, source_numbers: q.source_numbers, view: q.view
+})), views.questions.map((q) => ({
+  id: q.id, source_numbers: q.source_numbers, view: q.view
+})));
+assert.deepEqual(draft.new_figures, []);
+assert.deepEqual(seed.figures, []);
+
+// This only assembles saved judgments; it does not solve mathematics or run the native validator.
+const questionReviews = draft.questions.map((question) => {
+  const visible = phase2.question_reviews.find((item) => item.question_id === question.id);
+  const priorFidelity = fidelity.question_reviews.find((item) => item.question_id === question.id);
+  const internal = comparison.comparisons.find((item) => item.question_id === question.id);
+  assert.equal(internal.verdict, "pass");
+  assert.deepEqual(visible.mathematics.correct, question.key.correct);
+  assert.deepEqual(internal.option_checks.map((item) => item.option_id),
+    visible.mathematics.option_checks.map((item) => item.option_id));
+  const optionChecks = visible.mathematics.option_checks.map((option) => {
+    const authorRationale = question.key.rationales.find((item) => item.option_id === option.option_id);
+    const decision = internal.option_checks.find((item) => item.option_id === option.option_id);
+    assert.equal(option.truth, authorRationale.truth);
+    assert.equal(decision.verdict, "pass");
+    return {
+      option_id: option.option_id,
+      truth: option.truth,
+      evidence: option.evidence + " PHASE3 author comparison: " + decision.evidence
+    };
+  });
+  const capacity = priorFidelity.capacity_loss
+    ? " Recorded capacity loss: " + priorFidelity.capacity_loss
+    : "";
+  return {
+    question_id: question.id,
+    task_fidelity: {
+      verdict: priorFidelity.task_fidelity.verdict,
+      evidence: priorFidelity.task_fidelity.evidence + capacity +
+        " PHASE3 author intent/solution comparison: " + internal.source_and_unit_evidence
+    },
+    redundancy: structuredClone(priorFidelity.redundancy),
+    answer_leakage: structuredClone(priorFidelity.answer_leakage),
+    mathematics: {
+      verdict: visible.mathematics.verdict,
+      independent_solution: visible.mathematics.independent_solution,
+      correct: structuredClone(visible.mathematics.correct),
+      option_checks: optionChecks
+    }
+  };
+});
+
+const sourceReviews = phase1.source_reviews.map((source) => {
+  const visibleCoverage = fidelity.source_coverage.find((item) => item.source_number === source.source_number);
+  const internalCoverage = comparison.source_coverage_comparisons.find(
+    (item) => item.source_number === source.source_number
+  );
+  assert.equal(internalCoverage.verdict, "pass");
+  const authorCoverage = draft.coverage.find((item) => item.source_number === source.source_number);
+  assert.deepEqual(authorCoverage.question_ids, visibleCoverage.question_ids);
+  return {
+    source_number: source.source_number,
+    independent_solution: source.independent_solution,
+    coverage: {
+      verdict: visibleCoverage.verdict,
+      evidence: visibleCoverage.evidence + " Recorded capacity losses: " +
+        visibleCoverage.capacity_losses.join(" ") +
+        " PHASE3 author coverage comparison: " + internalCoverage.evidence
+    }
+  };
+});
+
+const review = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: canonicalHash(seed),
+  draft_sha256: canonicalHash(draft),
+  reviewer: structuredClone(comparison.reviewer),
+  source_reviews: sourceReviews,
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: questionReviews,
+  outcome: comparison.outcome
+};
+assert.equal(sourceReviews.length, 9);
+assert.equal(questionReviews.length, 18);
+assert.equal(questionReviews.reduce((count, item) => count + item.mathematics.option_checks.length, 0), 78);
+assert.equal(fs.existsSync(reviewPath), false, "Exclusive review.json already exists");
+assert.equal(fs.existsSync(resultPath), false, "Exclusive result.record already exists");
+
+const reviewBytes = Buffer.from(asciiJson(review) + "\n", "utf8");
+fs.writeFileSync(reviewPath, reviewBytes, { flag: "wx" });
+assert.equal(fileHash(reviewPath), sha256(reviewBytes));
+
+const result = {
+  schema: "s10y-choice-independent-review-result-v1",
+  assignment: "Same182-6/STEMROBIN-182",
+  book: "8a",
+  lesson: "alg8-c3-s2-n14",
+  edition: "modern-us-neutral",
+  reviewer: structuredClone(comparison.reviewer),
+  reviewer_kind: "independent_agent",
+  status: "pass",
+  outcome: review.outcome,
+  finish: "review",
+  cwd: root,
+  nativeReview: {
+    ...binding(reviewPath),
+    schema: review.schema,
+    outcome: review.outcome,
+    canonical_sha256: canonicalHash(review),
+    seed_sha256: review.seed_sha256,
+    draft_sha256: review.draft_sha256,
+    location: "actual scratch review bytes; no retained-path binding is claimed"
+  },
+  draft: { ...binding(draftPath), canonical_sha256: review.draft_sha256 },
+  seed: { ...binding(seedPath), canonical_sha256: review.seed_sha256 },
+  evidence: {
+    phase1: binding(phase1Path),
+    phase2: binding(phase2Path),
+    phase2_fidelity: binding(fidelityPath),
+    phase2_integrity: binding(integrityPath),
+    views: binding(viewsPath),
+    phase3_comparison: binding(comparisonPath),
+    phase3_assembly: binding(__filename)
+  },
+  comparison_summary: {
+    source_reviews: 9,
+    question_reviews: 18,
+    single: 16,
+    multiple: 2,
+    option_checks: 78,
+    correct_options: 23,
+    incorrect_options: 55,
+    all_independent_correct_sets_and_truths_match_author: true,
+    all_incorrect_misconception_derivations_checked: true,
+    all_source_coverage_and_capacity_losses_checked: true,
+    cross_question_dependence_checked: true,
+    proof229_free_generation_loss: "Explicitly recorded in author intent and coverage, and in the native review; proof-validity recognition retains the essential deductive judgment."
+  },
+  stage_separation: {
+    source_and_visible_judgments_saved_before_author_keys: true,
+    author_keys_disclosed_only_under_phase3_authorization: true,
+    independent_source_solution_strings_preserved: true,
+    independent_visible_solution_strings_correct_sets_and_truths_preserved: true,
+    draft_and_prior_records_unchanged: true
+  },
+  figures: {
+    source: 0,
+    authored: 0,
+    opened_across_reviewer_phases: 0,
+    created_across_reviewer_phases: 0,
+    figure_checks: [],
+    new_figure_reviews: []
+  },
+  cost: null,
+  cost_status: "unknown",
+  prior_usage_metrics: "unknown and not reset",
+  first_failure: {
+    receipt: binding(integrityPath),
+    retained: true,
+    type: "Ad hoc read-only evidence-length assertion; original bytes retained, affected checker condition corrected."
+  },
+  findings: [],
+  native_validation: {
+    run_by_reviewer: false,
+    status: "pending_parent",
+    note: "Parent owns the native validator and retention; semantic pass is not a claim that those operations ran."
+  },
+  retention: {
+    run_by_reviewer: false,
+    status: "pending_parent",
+    retained_nativeReview: null,
+    display_approval_authority: "This actual scratch nativeReview is the semantic approval. After parent-authorized retention, bind the actual retained choice-set/review.json as the native review authority; do not predict a retained hash or path substitution here."
+  },
+  writes: {
+    directory: owned,
+    exclusive_new_files_only: true,
+    draft_modified: false,
+    prior_records_overwritten: false,
+    network_database_git_app_dependencies_other_chats: false
+  },
+  next_action: "Return actual paths/hashes. Parent closes this reviewer before parent-owned binding, native validation and retention."
+};
+fs.writeFileSync(resultPath, asciiJson(result) + "\n", { flag: "wx" });
+for (const file of [reviewPath, resultPath, comparisonPath, __filename]) {
+  console.log(fileHash(file) + "  " + file);
+}
