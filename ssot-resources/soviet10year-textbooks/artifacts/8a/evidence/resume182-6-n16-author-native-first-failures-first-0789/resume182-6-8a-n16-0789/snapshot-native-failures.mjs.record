@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n16-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const outputs = [];
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+for (const page of ['0100', '0102']) {
+  const audit = JSON.parse(fs.readFileSync(`${root}/pages/${page}/audit.json`));
+  assert.equal(audit.errors.length, 1);
+  assert.ok(audit.errors[0].startsWith('\u884c\u6570\u5bf9\u4e0d\u4e0a'));
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    const source = `${root}/pages/${page}/${name}`;
+    const target = `${base}/native-failures-FIRST/pages/${page}/${name}.record`;
+    const bytes = fs.readFileSync(source);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, bytes, { flag: 'wx' });
+    outputs.push({ source, path: target, sha256: sha(bytes), bytes: bytes.length });
+  }
+}
+const file = `${base}/native-failures-FIRST/snapshot.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'ACTUAL_NATIVE_FIRST_FAILURE_BYTES_PRESERVED_NOT_APPROVAL',
+  book: '8a', lesson: 'alg8-c3-s2-n16', outputs,
+  imageViews: 0, databaseWrites: 0, finish: 'review',
+  unknownHistoricalBytesRecovered: false,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)) }));

@@ -1,0 +1,48 @@
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+BASE = REPO / ".tmp/resume182-6-8a-n16-0789"
+OUT = BASE / "glyph-witness-AFFECTED1"
+assert not OUT.exists()
+OUT.mkdir()
+review = BASE / "source-review-FIRST/phase1.record"
+assert hashlib.sha256(review.read_bytes()).hexdigest() == "13333253b6e42f360135c290535a9baecc6c8f786943e59936ac69be17314c66"
+inputs = [
+    (100, "number262", [320, 1500, 550, 130],
+     "1e18b849eca05fdfbbb4ed04c3d3617f62568c1fe927785189399f0dec7e08cf"),
+    (101, "ex267g", [1240, 2360, 360, 180],
+     "9159bd697c91c3d73f1895ffcbeb8f0ced74bce66f9b04f2a5737defcfecfe3f"),
+]
+outputs = []
+for page, label, box, digest in inputs:
+    source = BASE / f"source/8a/pages/{page:04d}/page.png"
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == digest
+    target = OUT / f"p{page:04d}-{label}-native.png"
+    layout.crop(source, box, target)
+    outputs.append({
+        "id": label, "page": page, "source": str(source), "source_sha256": digest,
+        "path": str(target), "box_xywh": box,
+        "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+        "ungridded_existing_native_pixels": True,
+        "resize_or_enhance_or_rerender": False,
+    })
+record = {
+    "status": "NEW_AFFECTED_NATIVE_CROPS_PREPARED_NOT_GLYPH_RESOLUTION",
+    "book": "8a", "lesson": "alg8-c3-s2-n16", "sourceReview": {
+        "path": str(review), "sha256": hashlib.sha256(review.read_bytes()).hexdigest(),
+    }, "images": outputs, "parent_image_views": 0, "new_crops": 2,
+    "source_png_mutations": 0, "old_PASS_reruns": 0,
+    "unknown_historical_bytes_recovered": False, "database_writes": 0, "finish": "review",
+}
+target = OUT / "assignment.record"
+with target.open("x") as handle:
+    handle.write(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+print(json.dumps({"path": str(target), "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+                  "images": outputs}))

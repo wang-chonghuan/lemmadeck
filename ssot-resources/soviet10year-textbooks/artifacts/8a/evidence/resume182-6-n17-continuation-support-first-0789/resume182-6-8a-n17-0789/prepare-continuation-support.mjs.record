@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const source = '.tmp/resume182-6-8a-n16-0789';
+const target = '.tmp/resume182-6-8a-n17-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const bootstrap = JSON.parse(fs.readFileSync(`${target}/bootstrap.record`));
+assert.equal(bootstrap.lesson, 'alg8-c3-s3-n17');
+assert.equal(bootstrap.reusedPage102.approval.sha256,
+  '606716aec6e44c3a973cc77f3d85423fd3e67c998b54d52f05d1b82d03d36231');
+const outputs = [];
+for (const name of ['prepare-support.mjs', 'delivery.mjs']) {
+  const from = `${source}/${name}`, to = `${target}/${name}`;
+  assert.ok(!fs.existsSync(to));
+  let text = fs.readFileSync(from, 'utf8')
+    .replaceAll('alg8-c3-s2-n16', 'alg8-c3-s3-n17')
+    .replaceAll('resume182-6-8a-n16-0789', 'resume182-6-8a-n17-0789')
+    .replaceAll('N16_NARROW_STAGED', 'N17_NARROW_STAGED');
+  if (name === 'prepare-support.mjs') {
+    text = text.replace("replaceAll('n15', 'n16')", "replaceAll('n15', 'n17')");
+  } else {
+    text = text.replace('for (const page of bootstrap.scope.newPhysicalPages)',
+      'for (const page of [102, ...bootstrap.scope.newPhysicalPages])')
+      .replace("name.startsWith('resume182-6-n16-')",
+        "name.startsWith('resume182-6-n16-') || name.startsWith('resume182-6-n17-')");
+  }
+  fs.writeFileSync(to, text, { flag: 'wx' });
+  outputs.push({ source: binding(from), output: binding(to) });
+}
+const file = `${target}/continuation-support.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'TECHNICAL_ENTRIES_PREPARED_NOT_SOURCE_OR_DELIVERY_APPROVAL',
+  book: '8a', lesson: 'alg8-c3-s3-n17', outputs,
+  derivedFutureInventoryRequired: true,
+  excludedProductionLesson: 'alg8-c3-s2-n16',
+  priorN16EvidenceRetainedForPage102AndToolRepair: true,
+  parentImageViews: 0, oldPassReruns: 0,
+  databaseWrites: 0, finish: 'review', unknownHistoricalBytesRecovered: false,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(binding(file)));

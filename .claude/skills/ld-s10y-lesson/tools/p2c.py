@@ -323,6 +323,14 @@ def cmd_finalize(a) -> int:
     for f in figs:
         x, y, w, h = f["box"]
         masked[max(0, y):y + h, max(0, x):x + w] = False
+    scan_noise = []
+    try:
+        masked, scan_noise = layout.mask_scan_noise(
+            masked, meta.get("scan_noise", []), render_sha256,
+            [f["box"] for f in figs],
+        )
+    except ValueError as error:
+        errors.append(str(error))
     cols = ink.any(axis=0).nonzero()[0]
     content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
     want = len(layout.line_bands(masked, content_w))
@@ -395,6 +403,7 @@ def cmd_finalize(a) -> int:
                                 "figures": figs, "normalizations": applied,
                                 "unknown_chars": unknown, "katex_warnings": m_warn,
                                 "errata": len(meta.get("errata", [])),
+                                **({"scan_noise": scan_noise} if "scan_noise" in meta else {}),
                                 "errors": errors})
 
     print(f"[finalize] {a.book} p{a.page:04d}: {len(blks)} 块 / {got} 行"

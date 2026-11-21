@@ -57,6 +57,37 @@ def ink_mask(img: Image.Image) -> np.ndarray:
     return np.asarray(img.convert("L")) < INK_THRESHOLD
 
 
+def mask_scan_noise(ink, entries, render_sha256, figure_boxes=()):
+    """Mask explicitly identified scan blemishes only in the counting copy."""
+    if not isinstance(entries, list):
+        raise ValueError("scan_noise must be a list")
+    masked, retained = ink.copy(), []
+    for entry in entries:
+        if not isinstance(entry, dict) or set(entry) != {"box", "render_sha256", "reason"}:
+            raise ValueError("scan_noise requires box, render_sha256 and reason")
+        if entry["render_sha256"] != render_sha256:
+            raise ValueError("scan_noise is not bound to the current page pixels")
+        box = entry["box"]
+        if not isinstance(box, list) or len(box) != 4 or any(type(v) is not int for v in box):
+            raise ValueError("scan_noise box must contain four integers")
+        x, y, w, h = box
+        if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > ink.shape[1] or y + h > ink.shape[0]:
+            raise ValueError("scan_noise box leaves the page")
+        if w * h > ink.size * 0.001:
+            raise ValueError("scan_noise box is too large for a local blemish")
+        if not isinstance(entry["reason"], str) or not entry["reason"].strip():
+            raise ValueError("scan_noise requires a source observation")
+        for fx, fy, fw, fh in [*figure_boxes, *(item["box"] for item in retained)]:
+            if x < fx + fw and fx < x + w and y < fy + fh and fy < y + h:
+                raise ValueError("scan_noise overlaps a figure or another exclusion")
+        region = ink[y:y + h, x:x + w]
+        if not region.any():
+            raise ValueError("scan_noise box has no ink")
+        retained.append({**entry, "ink_pixels": int(region.sum())})
+        masked[y:y + h, x:x + w] = False
+    return masked, retained
+
+
 def _runs(live: np.ndarray) -> list[tuple[int, int]]:
     out, start = [], None
     for i, on in enumerate(live):

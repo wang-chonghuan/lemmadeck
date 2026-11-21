@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n17-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c3-s3-n17';
+const first = `${base}/assembly-FIRST/artifacts/8a`;
+const affected = `${base}/assembly-AFFECTED1/artifacts/8a`;
+const [firstReviewPath, firstReviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bindings = [];
+const read = file => {
+  const bytes = fs.readFileSync(file);
+  bindings.push({ path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length });
+  return bytes;
+};
+const json = file => JSON.parse(read(file));
+const beforeWord = '\u5bf9\u524d\u9762\u4e00\u9879';
+const afterWord = '\u5bf9\u5176\u524d\u9762\u4e00\u9879';
+const replace = text => {
+  assert.equal(text.split(beforeWord).length, 2);
+  return text.replace(beforeWord, afterWord);
+};
+const beforePage = json(`${first}/pages/0103/page.json`);
+const currentPage = json(`${root}/pages/0103/page.json`);
+const expectedPage = structuredClone(beforePage);
+assert.equal(expectedPage.blocks[9].kind, 'p');
+expectedPage.blocks[9].lines[0] = replace(expectedPage.blocks[9].lines[0]);
+assert.deepEqual(currentPage, expectedPage);
+assert.equal(read(`${root}/pages/0103/page.md`).toString(),
+  replace(read(`${first}/pages/0103/page.md`).toString()));
+assert.deepEqual(json(`${root}/pages/0103/audit.json`), json(`${first}/pages/0103/audit.json`));
+for (const page of ['0102', '0104', '0105']) {
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    assert.deepEqual(read(`${root}/pages/${page}/${name}`), read(`${first}/pages/${page}/${name}`));
+  }
+}
+const beforeLesson = json(`${first}/lessons/${id}/lesson.json`);
+const afterLesson = json(`${affected}/lessons/${id}/lesson.json`);
+const expectedLesson = structuredClone(beforeLesson);
+const block = expectedLesson.prose.find(item => item.source_refs.includes('p0103#10'));
+assert.ok(block);
+block.text = replace(block.text);
+assert.deepEqual(afterLesson, expectedLesson);
+assert.equal(read(`${affected}/lessons/${id}/lesson.md`).toString(),
+  replace(read(`${first}/lessons/${id}/lesson.md`).toString()));
+assert.deepEqual(read(`${affected}/lessons/${id}/exercises.json`),
+  read(`${first}/lessons/${id}/exercises.json`));
+const originalAssembly = json(`${base}/assembly-FIRST/assembly.record`);
+const currentAssembly = json(`${base}/assembly-AFFECTED1/assembly.record`);
+for (const key of ['selected_refs', 'boundary_refs', 'exercise_count', 'figures']) {
+  assert.deepEqual(currentAssembly[key], originalAssembly[key]);
+}
+const receipt = json(`${base}/stages/source-finalize103-AFFECTED-word1/receipt.record`);
+assert.equal(receipt.returncode, 0);
+read(`${base}/source-review-FIRST/first-failed-verdict.record`);
+read(`${base}/source-review-FIRST/phase1.record`);
+assert.equal(sha(read(firstReviewPath)), firstReviewHash);
+const file = `${base}/source-repair-binding.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'AFFECTED_SOURCE_WORD_BYTES_BOUND_REVIEW_PENDING', book: '8a', lesson: id,
+  affectedRef: 'p0103#10', beforeWord, afterWord, bindings,
+  onlyOnePrintedCharacterAdded: true, otherPagesUnchanged: [102, 104, 105],
+  exerciseBytesUnchanged: true, countsAndBoundaryUnchanged: true,
+  firstFailuresPreserved: true, newImageViews: 0, oldPassReruns: 0,
+  databaseWrites: 0, finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)) }));

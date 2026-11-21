@@ -1,0 +1,562 @@
+{
+  "schema": "ld-s10y-lesson/modern-text-review@1",
+  "status": "TEXT_BLOCKED",
+  "date": "2026-11-21",
+  "ticket": "STEMROBIN-182",
+  "session": "same182-6",
+  "book": "8a",
+  "lesson": "alg8-c3-s3-n17",
+  "edition": "modern-us-neutral",
+  "workdir": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "01a1fcdc-865e-7e10-ab06-827ee793c066",
+    "identity_basis": "Actual CODEX_THREAD_ID read in this fresh review context.",
+    "name": "Codex",
+    "independent_of_source_reviewer": true,
+    "independent_of_parent_modern_author": true,
+    "method": "Complete direct reading of current approved source JSON, current prepared templates and durable edition JSON; read-only standard-library JSON comparisons, code inspection and SHA256 binding. No pipeline modules imported or executed."
+  },
+  "blockers": [
+    {
+      "id": "B1-modern-exercise-lines-cyrillic",
+      "severity": "blocking",
+      "affected_numbers": ["269", "270", "271", "272", "273", "274", "275", "276", "277"],
+      "affected_objects": "All nine exercises in both the current exercises.template.json and durable exercises.json.",
+      "affected_fields": ["exercises[*].lines"],
+      "finding": "Every modern text field has a natural Latin a-f sequence, but every corresponding lines array retains the source Cyrillic sequence. All 39 subpart labels disagree between modern text and modern lines. This is modern metadata, not source.data or source_text provenance.",
+      "concrete_example": {
+        "object": "exercises[0] (269)",
+        "text_second_line": "a) $1000,100,10,1,0.1$；",
+        "lines_second_entry": "а) $1000,100,10,1,0.1$；",
+        "expected_label_codepoint": "U+0061",
+        "actual_label_codepoint": "U+0430",
+        "source_to_modern_label_mapping": [
+          {"source": "U+0430", "modern": "U+0061"},
+          {"source": "U+0431", "modern": "U+0062"},
+          {"source": "U+0432", "modern": "U+0063"},
+          {"source": "U+0433", "modern": "U+0064"},
+          {"source": "U+0434", "modern": "U+0065"},
+          {"source": "U+0435", "modern": "U+0066"}
+        ]
+      },
+      "independent_comparison": "For each of nine exercises, lines differs from text.splitlines(); replacing only each leading Cyrillic subpart marker with its corresponding Latin marker makes every line exact. No value, formula, punctuation or line-ownership mismatch beyond those labels was found.",
+      "why_native_PASS_does_not_close_it": "Inspection of edition.py normalize_exercise_layout at lines 734-744 shows that it continues without refreshing lines when text is already normalized. The current author normalized Latin text while retaining the prepared Cyrillic lines; native finalization preserved the mismatch. modern_exercises at lines 342-358 establishes that modern lines is the split modern text, not an immutable source transcript.",
+      "requested_parent_action": "Synchronize only modern exercise lines with the existing approved-faithful Latin text, preserving statements, formulas, values, targets, source_text and source.data. This reviewer made no repair and ran no finalization or validator.",
+      "requires_affected_review": true
+    }
+  ],
+  "approval_decision": {
+    "whole_modern_lesson_edition_approved": false,
+    "source_to_modern_lesson_text": "pass",
+    "source_to_modern_exercise_statement_and_math_fidelity": "pass",
+    "modern_exercise_metadata": "fail",
+    "section_breaks": "pass",
+    "exercise_template_binding_withheld": true
+  },
+  "approved_text_bindings": {
+    "lesson": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s3-n17/lesson.template.json",
+      "sha256": "f9a04ca65c94cce41139e300a7d2c9e2f20218429fc53029e2818b5712c96667"
+    },
+    "exercises": null
+  },
+  "candidate_text_bindings": {
+    "lesson": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s3-n17/lesson.template.json",
+      "sha256": "f9a04ca65c94cce41139e300a7d2c9e2f20218429fc53029e2818b5712c96667",
+      "bytes": 19076
+    },
+    "exercises": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s3-n17/exercises.template.json",
+      "sha256": "28793f9aeeab9b7bc616982eac41ca3d2b0575f6315dbbcf9c9588266c76fea2",
+      "bytes": 17691,
+      "approved": false
+    }
+  },
+  "actualfinalbindings": {
+    "lesson": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s3-n17/lesson.json",
+      "sha256": "e4fbdfdc9103d4ae6ef4ddd87dfc1e3a639c774ffea352503f292bd5918c3060",
+      "bytes": 19076
+    },
+    "exercises": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s3-n17/exercises.json",
+      "sha256": "1d8aca8002c546c1f96f2ac231727e10bc6e1db12e75899168ac5088275ccac7",
+      "bytes": 17691,
+      "approved": false
+    },
+    "figures": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s3-n17/figures.json",
+      "sha256": "e9326126a557ec3551cde5f44186fc6e35472c276173ff15aaada32e7b1c2c79",
+      "bytes": 153
+    },
+    "adaptation_audit": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s3-n17/adaptation.audit.json",
+      "sha256": "1a45525f75935bd398e1759aacb41018eccc31980a447b15f15d754c2db40034",
+      "bytes": 2345
+    }
+  },
+  "sourceApproval": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/source-review-FIRST/result-AFFECTED1.record",
+    "sha256": "7a4fc1d0336ca97d627192aa0dfb3b8b1c275593d971b2c7c037b7d1fb4dc889",
+    "status": "SOURCE_PASS",
+    "reviewer_identity": "01a1fccc-a42f-7001-a021-8e7ccade2853",
+    "actual_record_hash_matches_supplied": true,
+    "reuse_scope": "Approved complete N17 source and no-figure scope only. No source pixels reopened or source re-recognition performed.",
+    "source_total_actual_views_in_existing_approval": 12,
+    "current_source_lesson": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c3-s3-n17/lesson.json",
+      "sha256": "345712fc735229003469594eeb966a77bf92580b1442a7fa0313213b15159a28",
+      "bytes": 5832,
+      "byte_equal_to_approved_AFFECTED1_snapshot": true
+    },
+    "current_source_exercises": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c3-s3-n17/exercises.json",
+      "sha256": "8b248277af6d7e26678d735c308ed66e5e8deb14701bf423e60c196c6355e06f",
+      "bytes": 6652,
+      "byte_equal_to_approved_AFFECTED1_snapshot": true
+    },
+    "approved_snapshot_paths": {
+      "lesson": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/assembly-AFFECTED1/artifacts/8a/lessons/alg8-c3-s3-n17/lesson.json",
+      "exercises": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/assembly-AFFECTED1/artifacts/8a/lessons/alg8-c3-s3-n17/exercises.json"
+    }
+  },
+  "existing_stage_evidence": {
+    "author": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-author-FIRST/result.record",
+      "sha256": "040ff504524d913b183e3b520cb0cf6feba0ca17717cf47d58c6c90d2985cc5a",
+      "actual_hash_matches_supplied": true,
+      "both_current_template_hashes_match_author_outputs": true,
+      "author_status_is_not_independent_approval": true
+    },
+    "native_finalization": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/stages/modern-finalize-FIRST/receipt.record",
+      "sha256": "bdd62149e90c0b3a74e4186e90d307a8dfb7bf358b0fd2a6f1287a4d6f0f4f8f",
+      "actual_hash_matches_supplied": true,
+      "cwd_and_command_book_edition_lesson_match": true,
+      "returncode": 0,
+      "executed_or_rerun_by_reviewer": false,
+      "used_as_text_fidelity_proof": false
+    },
+    "saved_proseFlow": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-author-FIRST/flow.stdout.record",
+      "sha256": "418a7a8d70d2273423d3a24fdef33384d9ef8984d9989dd07734927865060754",
+      "paragraphs": 17,
+      "all17_saved_paragraph_strings_equal_current_template_and_final": true,
+      "prose_flow_command_rerun": false
+    }
+  },
+  "identity_and_scope_checks": {
+    "id_and_card_id": "alg8-c3-s3-n17",
+    "number": "17",
+    "title": "等比数列的定义",
+    "printed_title": "17. 等比数列的定义",
+    "chapter": "第三章　等差数列和等比数列",
+    "section": "§7. 等比数列",
+    "start_page": 102,
+    "start_printed": 95,
+    "all_identity_fields_exact_source_template_final": true,
+    "source_start_ref": "p0102#2",
+    "exclusive_right_boundary_ref": "p0105#6",
+    "boundary_scope_reused_from_SOURCE_PASS": true,
+    "no_N16_or_N18_content_added_to_current_modern_objects": true,
+    "prose_objects": 17,
+    "exercise_objects": 9,
+    "exercise_numbers_in_order": ["269", "270", "271", "272", "273", "274", "275", "276", "277"],
+    "prose_refs_in_order": [
+      "p0102#3", "p0102#4", "p0102#5", "p0102#6", "p0102#7", "p0102#8",
+      "p0103#1", "p0103#2", "p0103#3", "p0103#4", "p0103#5", "p0103#6",
+      "p0103#7", "p0103#8", "p0103#9", "p0103#10", "p0104#1"
+    ],
+    "exercise_refs_in_order": [
+      "p0104#2", "p0104#3", "p0104#4", "p0104#5", "p0104#6",
+      "p0105#1", "p0105#2", "p0105#3", "p0105#5"
+    ],
+    "all_source_refs_pages_and_object_order_exact": true,
+    "groups": "269-276 retain group:null/group_id:g0; 277 alone retains group:复习题/group_id:g1.",
+    "number_and_source_number_exact_for_all9": true,
+    "all_template_and_final_source_data_structures_exact_current_source": true,
+    "all26_source_text_fields_exact_current_source_objects": true
+  },
+  "complete_comparison_checks": {
+    "method": "Compare full text character streams, not lengths: prose differs only by layout whitespace; exercise text differs only by layout whitespace and the six explicitly checked Cyrillic-to-Latin subpart label substitutions. Independently compare ordered complete LaTeX math strings without normalizing formulas.",
+    "all17_prose_full_character_comparisons_pass": true,
+    "all9_exercise_full_character_comparisons_pass": true,
+    "prose_math_strings": 38,
+    "exercise_math_strings": 66,
+    "all104_ordered_formula_strings_exact_source_template_final": true,
+    "premises_quantifiers_constraints_targets_and_punctuation_preserved": true,
+    "all26_numeric_changes_arrays_empty": true,
+    "all26_historical_entities_arrays_empty": true,
+    "no_math_correction_or_erratum_added": true,
+    "four_prose_layout_only_refs": ["p0102#6", "p0102#7", "p0103#1", "p0103#9"],
+    "other13_prose_text_strings_exact_source": true,
+    "all9_exercise_changes_are_layout_and_enum_latin_only": true,
+    "all39_text_subparts_in_natural_Latin_order": true,
+    "all9_text_stem_prefixes_own_first_line": true,
+    "all39_text_subparts_have_exactly_one_label_on_their_own_line": true,
+    "common_tail_instructions": "269 conditional request for the ratio, 275 both conditional requests for difference/ratio, and 276 monotonicity question remain complete. Native normalization attaches each tail to the final subpart line; no tail, condition or target is dropped.",
+    "all104_math_spans_contain_no_Chinese_punctuation": true,
+    "Chinese_punctuation_inside_math": [],
+    "unmatched_math_delimiter_objects": 0,
+    "manual_span_markup_objects": 0,
+    "full_statements_and_formulas_not_split_or_truncated": true,
+    "modern_lines_match_modern_text": false,
+    "modern_lines_mismatch_is_exactly_B1": true
+  },
+  "per_prose_checks": [
+    {
+      "index": 0,
+      "ref": "p0102#3",
+      "finding": "Initial term 3, multiplier 2, from the second term; b2=3*2=6, b3=6*2=12, b4=12*2=24, b5=24*2=48 and ellipsis all retained.",
+      "formula_strings_exact": 5
+    },
+    {
+      "index": 1,
+      "ref": "p0102#4",
+      "finding": "Definition retains both nonzero first term and nonzero constant; recurrence starts from the second term and relates each term to its preceding term.",
+      "formula_strings_exact": 0
+    },
+    {
+      "index": 2,
+      "ref": "p0102#5",
+      "finding": "The introductory sequence is called geometric for every n>=1 with exactly b_{n+1}=b_n*2; quantifier and lower bound unchanged.",
+      "formula_strings_exact": 3
+    },
+    {
+      "index": 3,
+      "ref": "p0102#6",
+      "finding": "From the second term, each ratio to the preceding term is constant. Complete b2/b1=b3/b2=...=bn/b_{n-1}=b_{n+1}/bn=... chain and name/symbol q retained. Newline after the colon is layout only.",
+      "formula_strings_exact": 3
+    },
+    {
+      "index": 4,
+      "ref": "p0102#7",
+      "finding": "Both numbered determining conditions retained: b1=b with b!=0; recursive b_{n+1}=b_n*q with q!=0. Line break before condition 2 changes no condition or formula.",
+      "formula_strings_exact": 3
+    },
+    {
+      "index": 5,
+      "ref": "p0102#8",
+      "finding": "First term and ratio suffice. Example b1=6,q=1/2 and exact sequence 6,3,3/2,3/4,3/8,... retained.",
+      "formula_strings_exact": 6
+    },
+    {
+      "index": 6,
+      "ref": "p0103#1",
+      "finding": "b1=4,q=-3 gives exactly 4,-12,36,-108,...; source negatives preserved. Native newline after the comma retains both givens within the same proseFlow paragraph.",
+      "formula_strings_exact": 3
+    },
+    {
+      "index": 7,
+      "ref": "p0103#2",
+      "finding": "q<0: odd-index terms have the first-term sign, even-index terms have the opposite sign; neither increasing nor decreasing. Both signs and both negated monotonicity claims retained.",
+      "formula_strings_exact": 1
+    },
+    {
+      "index": 8,
+      "ref": "p0103#3",
+      "finding": "q>0 with q!=1: sequence increasing or decreasing. Source decreasing example b1=-2,q=3 and -2,-6,-18,... unchanged; no erroneous positive-first-term restriction introduced.",
+      "formula_strings_exact": 4
+    },
+    {
+      "index": 9,
+      "ref": "p0103#4",
+      "finding": "q=1 makes all terms equal and the sequence constant; both full statements retained.",
+      "formula_strings_exact": 1
+    },
+    {
+      "index": 10,
+      "ref": "p0103#5",
+      "finding": "From the second term, any term is the proportional mean of its preceding and following terms. Both neighbors and start condition retained; no principal-square-root reinterpretation added.",
+      "formula_strings_exact": 0
+    },
+    {
+      "index": 11,
+      "ref": "p0103#6",
+      "finding": "Proof assumes a geometric sequence and any three consecutive terms b_{n-1},b_n,b_{n+1} with n>=2. All three indices, arbitrary selection and lower bound retained.",
+      "formula_strings_exact": 3
+    },
+    {
+      "index": 12,
+      "ref": "p0103#7",
+      "finding": "Constant ratio premise yields exactly b_{n+1}/b_n=b_n/b_{n-1}. Numerators, denominators and equality direction unchanged.",
+      "formula_strings_exact": 1
+    },
+    {
+      "index": 13,
+      "ref": "p0103#8",
+      "finding": "Converse retains the second-term start, any-term quantifier, both neighboring terms and conclusion that the sequence is geometric.",
+      "formula_strings_exact": 0
+    },
+    {
+      "index": 14,
+      "ref": "p0103#9",
+      "finding": "Converse proof assumes any consecutive triple b_{n-1},b_n,b_{n+1}(n>=2) and exactly the same ratio equality. Colon newline only; no new premise or formula correction.",
+      "formula_strings_exact": 3
+    },
+    {
+      "index": 15,
+      "ref": "p0103#10",
+      "finding": "Conclusion retains the approved repaired word 其 in 对其前面一项, the any-term constant-ratio statement and geometric-sequence conclusion.",
+      "formula_strings_exact": 2
+    },
+    {
+      "index": 16,
+      "ref": "p0104#1",
+      "finding": "The theorem retains 当且仅当, from the second term, any term, both adjacent neighbors and geometric-sequence conclusion. Full final theorem retained; no following N18 heading or body included.",
+      "formula_strings_exact": 0
+    }
+  ],
+  "per_exercise_checks": [
+    {
+      "number": "269",
+      "ref": "p0104#2",
+      "target": "Decide whether each finite sequence is geometric; if so, give its common ratio.",
+      "subparts": [
+        "a: 1000,100,10,1,0.1",
+        "b: 0.1,0.01,0.001,0.0001",
+        "c: 1/16,1/8,1/2,2,8,16",
+        "d: -1,10,-100,1000,-10000",
+        "e: 1,1.1,1.11,1.111",
+        "f: 5^{-2},5^{-1},5^0,5^1,5^2"
+      ],
+      "finding": "All six complete lists retained, including the source c list without smoothing its ratios. Finite qualifier and conditional tail request retained; a-f own separate text lines.",
+      "formula_strings_exact": 6,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "270",
+      "ref": "p0104#3",
+      "target": "Find the first five terms of each given geometric sequence (b_n).",
+      "subparts": [
+        "a: b1=6,q=2",
+        "b: b1=-16,q=1/2",
+        "c: b1=3/4,q=-2/3",
+        "d: b1=-24,q=-1.5",
+        "e: b1=0.4,q=sqrt(2)",
+        "f: b1=1.8,q=sqrt(3)/3"
+      ],
+      "finding": "All six first-term/ratio pairs and exact fractional, decimal, radical and negative values retained. Five-term target unchanged.",
+      "formula_strings_exact": 13,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "271",
+      "ref": "p0104#4",
+      "target": "Given the first two terms, find the common ratio and fourth term.",
+      "subparts": [
+        "a: 3,15,...",
+        "b: 15,3,...",
+        "c: 6,-12,...",
+        "d: -20,-10,...",
+        "e: 2sqrt(2),4,...",
+        "f: 1/(3sqrt(3)),1,..."
+      ],
+      "finding": "All six ordered pairs retained without swapping givens; fourth-term target is complete despite the original printed line split. Radical denominator in f unchanged.",
+      "formula_strings_exact": 6,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "272",
+      "ref": "p0104#5",
+      "target": "Find the two unknown leading terms of the given geometric sequence (y_n).",
+      "subparts": [
+        "a: y1,y2,24,36,54,...",
+        "b: y1,y2,225,-135,81,..."
+      ],
+      "finding": "Both unknown symbols, all six supplied numeric terms, signs and order retained. Full stem rejoins the original broken word without truncation.",
+      "formula_strings_exact": 3,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "273",
+      "ref": "p0104#6",
+      "target": "Express the common ratio q using the two listed terms of (x_n).",
+      "subparts": [
+        "a: x1 and x2",
+        "b: x1 and x3",
+        "c: x_k and x_{k+1}"
+      ],
+      "finding": "All term indices and the expression target retained. In b the source does not determine the sign uniquely; no q>0 assumption, chosen sign, solution or task correction was inserted. Source-established k and k+1 retained.",
+      "formula_strings_exact": 8,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "274",
+      "ref": "p0105#1",
+      "target": "Find the common ratio, sixth term and seventh term of (a_n).",
+      "subparts": [
+        "a: a3=6,a5=24",
+        "b: a6=10,a8=-10",
+        "c: a3=-2,a5=-18",
+        "d: a5=24,a8=3"
+      ],
+      "finding": "All four indexed pairs and all three requested targets retained. b keeps exactly a6=10 and a8=-10 despite the lack of a real common ratio; no source erratum, repaired sign, complex-domain extension or answer was introduced.",
+      "formula_strings_exact": 9,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "275",
+      "ref": "p0105#2",
+      "target": "Classify as arithmetic or geometric; give the common difference if arithmetic and the common ratio if geometric.",
+      "subparts": [
+        "a: a1=5,a_{n+1}=4a_n",
+        "b: a1=5,a_{n+1}=4+a_n",
+        "c: a1=-8,a_{n+1}=1/2+a_n",
+        "d: a1=-8,a_{n+1}=(1/2)a_n"
+      ],
+      "finding": "All first terms, recurrence indices and multiplication/addition distinctions retained. Both conditional follow-up requests survive completely after the d formula; source missing intervening punctuation was not silently rewritten.",
+      "formula_strings_exact": 9,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "276",
+      "ref": "p0105#3",
+      "target": "Give geometric-sequence examples satisfying the conditions, then decide increasing or decreasing.",
+      "subparts": [
+        "a: b1>0,q>1",
+        "b: b1>0,0<q<1",
+        "c: b1<0,q>1",
+        "d: b1<0,0<q<1"
+      ],
+      "finding": "All four sign/ratio cases retain strict inequalities, endpoints and order. Both example-generation task and final monotonicity question retained.",
+      "formula_strings_exact": 8,
+      "lines_metadata": "B1"
+    },
+    {
+      "number": "277",
+      "ref": "p0105#5",
+      "group": "复习题",
+      "group_id": "g1",
+      "target": "Find the domain of each expression.",
+      "subparts_math_strings": [
+        "\\sqrt{2x-3}+\\sqrt{3-2x}",
+        "\\sqrt{6x}-\\frac{2}{\\sqrt{5x+1}}",
+        "\\frac{1}{x^2-3x}+\\sqrt{7-4x}",
+        "\\frac{4}{x^2-16}-\\sqrt{10-2x}"
+      ],
+      "finding": "All four full formulas retained exactly, including 6x,5x+1,10-2x radicands; radical denominator, rational denominators, plus/minus operations and domain target unchanged. Review-group ownership not merged with g0.",
+      "formula_strings_exact": 4,
+      "lines_metadata": "B1"
+    }
+  ],
+  "sectionbreak_findings": {
+    "status": "pass",
+    "method": "Read the existing hash-bound proseFlow output. Compare every saved paragraph with current template/final text and inspect the shared htmlfrag.js proseParagraphs/proseFlow contract. Each authored before/after pair matches exactly one adjacent actual paragraph pair, with embedded single newlines preserved. No flow command or validator rerun.",
+    "all17_actual_paragraphs_match_saved_flow": true,
+    "strictly_increasing_unique_resolved_indices": [1, 7, 10, 13, 16],
+    "template_final_author_record_anchors_exact": true,
+    "audit_indices_and_anchor_strings_exact": true,
+    "boundaries": [
+      {
+        "index": 1,
+        "before_ref": "p0102#3",
+        "after_ref": "p0102#4",
+        "before": "设数列$(b_n)$是这样一个数列，它的第1项等于3，从第2项起，每一项都等于它的前面一项乘以2. 于是$b_2=3\\times2=6$，$b_3=6\\times2=12$，$b_4=12\\times2=24$，$b_5=24\\times2=48,\\cdots$.",
+        "after": "定义 如果一个数列，它的第1项不等于零，从第2项起，每一项都等于它前面一项乘上一个不等于零的常数，那么这个数列就叫做等比数列.",
+        "conceptual_switch": "Motivating concrete sequence to the general definition.",
+        "exact_adjacent_pair_matches": 1
+      },
+      {
+        "index": 7,
+        "before_ref": "p0103#1",
+        "after_ref": "p0103#2",
+        "before": "$b_1=4$，\n$q=-3$两个条件给出等比数列$4,-12,36,-108,\\cdots$.",
+        "after": "我们发现，在$q<0$的情况下，数列的奇数项和第1项的符号相同，而数列的偶数项和第1项的符号相反. 在这种情况下，数列既不是增数列，又不是减数列.",
+        "conceptual_switch": "Concrete determining examples to general sign and monotonicity behavior.",
+        "exact_adjacent_pair_matches": 1
+      },
+      {
+        "index": 10,
+        "before_ref": "p0103#4",
+        "after_ref": "p0103#5",
+        "before": "如果$q=1$，那么数列所有的项彼此相等. 在这种情况下，数列就是常数列.",
+        "after": "等比数列具有下述性质：从第2项起，等比数列任何一项都等于它的前面一项与随后一项的比例中项.",
+        "conceptual_switch": "Ratio/sign cases to the proportional-mean property and its proof.",
+        "exact_adjacent_pair_matches": 1
+      },
+      {
+        "index": 13,
+        "before_ref": "p0103#7",
+        "after_ref": "p0103#8",
+        "before": "等比数列的任何一项与前面一项的比都等于一个常数，因此$\\frac{b_{n+1}}{b_n}=\\frac{b_n}{b_{n-1}}$.",
+        "after": "反过来也成立：如果某一个数列，从第2项起，它的任何一项都等于它前面一项与随后一项的比例中项，那么这个数列就是等比数列.",
+        "conceptual_switch": "Completed forward proof to the converse assertion and proof.",
+        "exact_adjacent_pair_matches": 1
+      },
+      {
+        "index": 16,
+        "before_ref": "p0103#10",
+        "after_ref": "p0104#1",
+        "before": "这就是说，数列$(b_n)$的任何一项对其前面一项的比都等于一个常数，数列$(b_n)$是等比数列.",
+        "after": "因此，下述定理成立：当且仅当从第2项起，数列的任何一项都等于它前面一项与随后一项的比例中项时，这个数列才是等比数列.",
+        "conceptual_switch": "Converse proof conclusion to the consolidated necessary-and-sufficient theorem.",
+        "exact_adjacent_pair_matches": 1
+      }
+    ],
+    "other_switches": "Positive-q, negative-q and q=1 cases stay in one coherent behavior section. Each property stays with its proof; no concept boundary falls inside a formula, condition pair or sentence.",
+    "block_or_line_counts_used_to_author_new_indices": false
+  },
+  "native_normalization_findings": {
+    "all17_final_prose_objects_deep_equal_template": true,
+    "all9_final_exercise_objects_deep_equal_template": true,
+    "only_top_level_lesson_and_exercises_changes": {"status": ["draft", "ready"]},
+    "figures_only_change": {"status": ["draft", "ready"]},
+    "source_hashes_match_current_source_and_audit": true,
+    "audit_counts_match_actual_objects": {
+      "proseBlocks": 17,
+      "changedProseBlocks": 4,
+      "sectionBreaks": 5,
+      "errata": 0,
+      "exercises": 9,
+      "changedExercises": 9,
+      "figures": 0
+    },
+    "metadata_semantics_match_is_blocked_only_by_B1": true,
+    "native_PASS_inferred_as_semantic_approval": false,
+    "inspected_code": [
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+        "sha256": "632af19fa758bfc61f223d82d1f53284dcced0b3b86f8399a35c3217ff4287a5",
+        "sections": ["modern_exercises", "normalize_prose_layout", "normalize_numbered_subparts", "normalize_exercise_layout", "cmd_finalize"]
+      },
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+        "sha256": "c2f0301c5ba7811336a5268a404f795ace7873b75eb93c42c10186f3d9c3f9f6",
+        "sections": ["proseParagraphs", "proseOutline", "sectionBreakIndices", "proseFlow"]
+      }
+    ],
+    "code_executed": false
+  },
+  "first_failure_preservation": {
+    "is_first_modern_text_review_output": true,
+    "failed_output_path": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-text-review-FIRST/result.record",
+    "retain_this_TEXT_BLOCKED_record_without_overwriting": true,
+    "repair_or_reinterpretation_as_PASS_performed": false,
+    "old_source_review_and_failure_records_untouched": true
+  },
+  "limits": {
+    "imageViews": 0,
+    "image_payloads_opened": 0,
+    "new_worktrees": 0,
+    "new_chats_or_agents": 0,
+    "git_operations": 0,
+    "network_operations": 0,
+    "database_operations": 0,
+    "app_operations": 0,
+    "dependency_operations": 0,
+    "producer_renderer_validator_or_finalization_runs": 0,
+    "old_PASS_stage_reruns": 0,
+    "content_edits": 0,
+    "skill_or_charter_edits": 0,
+    "answers_choices_display_suite_or_DB_approval": false,
+    "only_written_paths": [
+      "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-text-review-FIRST/result.record",
+      "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck/.tmp/resume182-6-8a-n17-0789/modern-text-review-FIRST/figure-review.record"
+    ]
+  },
+  "imageViews": 0,
+  "finish": "Await parent closure; no dependent stage or repair authorized to this reviewer."
+}

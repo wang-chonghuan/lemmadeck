@@ -1,0 +1,36 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const [name, command, ...args] = process.argv.slice(2);
+assert.match(name, /^[A-Za-z0-9-]+$/);
+assert.ok(command);
+const directory = `.tmp/resume182-6-8a-n17-0789/stages/${name}`;
+assert.ok(!fs.existsSync(directory), 'Do not replay an existing transaction');
+fs.mkdirSync(directory, { recursive: true });
+const started = new Date().toISOString();
+const write = (name, value) => fs.writeFileSync(`${directory}/${name}`,
+  typeof value === 'string' || Buffer.isBuffer(value) ? value : `${JSON.stringify(value, null, 2)}\n`,
+  { flag: 'wx' });
+write('start.record', { cwd: root, command: [command, ...args], started });
+const result = spawnSync(command, args, { cwd: root, maxBuffer: 64 * 1024 * 1024,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+write('stdout.txt', result.stdout ?? Buffer.alloc(0));
+write('stderr.txt', result.stderr ?? Buffer.alloc(0));
+const receipt = {
+  cwd: root, command: [command, ...args], started, finished: new Date().toISOString(),
+  returncode: result.status, signal: result.signal,
+  error: result.error?.message ?? null,
+  hostTokens: 'unknown', totalCost: 'unknown',
+};
+write('receipt.record', receipt);
+process.stdout.write(result.stdout ?? Buffer.alloc(0));
+process.stderr.write(result.stderr ?? Buffer.alloc(0));
+console.log(JSON.stringify({ receipt: path.resolve(`${directory}/receipt.record`),
+  sha256: createHash('sha256').update(fs.readFileSync(`${directory}/receipt.record`)).digest('hex'),
+  returncode: result.status }));
+process.exitCode = result.status ?? 1;

@@ -1,0 +1,116 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const prior = '.tmp/resume182-6-8a-n16-0789';
+const next = '.tmp/resume182-6-8a-n17-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c3-s3-n17';
+const [approvalPath, approvalHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const read = file => JSON.parse(fs.readFileSync(file));
+assert.equal(entry(approvalPath).sha256, approvalHash);
+const approval = read(approvalPath);
+assert.equal(approval.status, 'SOURCE_PARTIAL_PASS_N16_GLYPHS_BLOCKED');
+assert.equal(approval.reviewer.kind, 'independent_agent');
+assert.equal(approval.lesson, 'alg8-c3-s2-n16');
+const pageApproval = approval.perPageApprovals.find(item => item.page === 102);
+assert.equal(pageApproval.status, 'SOURCE_PAGE_PASS');
+assert.equal(pageApproval.whole_current_raw_page_approved, true);
+assert.deepEqual(pageApproval.unresolved_blockers, []);
+const files = ['page.md', 'page.json', 'audit.json'].map(name => entry(`${root}/pages/0102/${name}`));
+for (const file of files) {
+  assert.equal(approval.bindings.find(item => item.path === file.path)?.sha256, file.sha256);
+}
+const page = read(`${root}/pages/0102/page.json`);
+assert.equal(page.blocks[0].kind, 'h2');
+assert.equal(page.blocks[1].kind, 'h3');
+assert.match(page.blocks[1].lines.join('\n'), /^17\.\s/u);
+assert.deepEqual(read(`${root}/pages/0102/audit.json`).errors, []);
+const objects = [];
+function visit(value) {
+  if (!value || typeof value !== 'object') return;
+  if (!Array.isArray(value)) objects.push(value);
+  for (const child of Object.values(value)) visit(child);
+}
+const toc = 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json';
+visit(read(toc));
+const target = objects.find(item => item.id === id);
+const right = objects.find(item => item.id === 'alg8-c3-s3-n18');
+assert.equal(target.page, page.meta.printed_page);
+const offset = page.meta.page - page.meta.printed_page;
+const newPages = Array.from({ length: right.page + offset - page.meta.page },
+  (_, index) => page.meta.page + index + 1);
+assert.deepEqual(newPages, [103, 104, 105]);
+assert.ok(!fs.existsSync(next));
+assert.ok(!fs.existsSync(`${root}/lessons/${id}`));
+for (const number of newPages) {
+  assert.ok(!fs.existsSync(`${root}/pages/${String(number).padStart(4, '0')}/page.json`));
+}
+fs.mkdirSync(next);
+const copied = [];
+const adapt = code => code.replaceAll('alg8-c3-s2-n16', id)
+  .replaceAll('resume182-6-8a-n16-0789', 'resume182-6-8a-n17-0789')
+  .replaceAll('resume182-6-n16-', 'resume182-6-n17-')
+  .replaceAll('[98, 99, 100, 101, 102]', '[103, 104, 105]');
+for (const name of ['run-stage.mjs', 'retain.mjs', 'snapshot-source-author.mjs', 'promote-source.mjs']) {
+  const source = `${prior}/${name}`, output = `${next}/${name}`;
+  fs.writeFileSync(output, adapt(fs.readFileSync(source, 'utf8')), { flag: 'wx' });
+  copied.push({ source: entry(source), output: entry(output) });
+}
+let assembler = adapt(fs.readFileSync(`${prior}/assemble.py`, 'utf8'))
+  .replaceAll('reusedPage97', 'reusedPage102')
+  .replace('[97, *bootstrap["scope"]["newPhysicalPages"]]', '[102, *bootstrap["scope"]["newPhysicalPages"]]')
+  .replaceAll('== "16"', '== "17"').replaceAll('!= "16"', '!= "17"')
+  .replaceAll('pages/0088/page.json', 'pages/0102/page.json')
+  .replace('"page": 88, "printed_page": 81, "ref": "p0088#1"',
+    '"page": 102, "printed_page": 95, "ref": "p0102#1"');
+fs.writeFileSync(`${next}/assemble.py`, assembler, { flag: 'wx' });
+copied.push({ source: entry(`${prior}/assemble.py`), output: entry(`${next}/assemble.py`) });
+const inherited = read(`${prior}/upstream-usage.record`);
+const upstream = {
+  ...inherited,
+  previous: entry(`${prior}/upstream-usage.record`),
+  currentEvidence: [...inherited.currentEvidence, entry(approvalPath),
+    ...['source-author/result.record', 'source-review-FIRST/phase1.record',
+      'glyph-witness-AFFECTED1/result.record', 'glyph-witness-EMBEDDED1/result.record',
+      'noise-recovery-binding.record'].map(file => entry(`${prior}/${file}`))],
+  knownLocalSourceN16: { imageViews: 20, authorViews: 8, sourceReviewerViews: 8,
+    newNativeWitnessViews: 2, newEmbeddedWitnessViews: 2, parentViews: 0 },
+  N16Status: 'SOURCE_GLYPHS_BLOCKED_NO_LESSON_PROMOTION_OR_DELIVERY',
+  unknownHistoricalBytesRecovered: false,
+};
+fs.writeFileSync(`${next}/upstream-usage.record`, `${JSON.stringify(upstream, null, 2)}\n`, { flag: 'wx' });
+const previousBootstrap = read(`${prior}/bootstrap.record`);
+const file = `${next}/bootstrap.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'NEXT_SOURCED_LESSON_READY_AFTER_LOCAL_SOURCE_GAP_NOT_APPROVAL',
+  time: new Date().toISOString(), ticket: 'STEMROBIN-182',
+  book: '8a', lesson: id, workdir: repo, copied,
+  deliveredPriorLesson: previousBootstrap.deliveredPriorLesson,
+  heldPriorLesson: { lesson: 'alg8-c3-s2-n16', approval: entry(approvalPath),
+    blockers: approval.blockers, status: 'SOURCE_GLYPHS_BLOCKED',
+    completeLessonApproved: false, lessonPromoted: false, halfLessonCommitted: false },
+  reusedPage102: { approval: entry(approvalPath), page: 102, files,
+    sourceWork: path.resolve(`${prior}/source/8a/pages/0102`),
+    sourcePixelsAndRecognitionRerun: false, nativeFinalizationRerun: false },
+  reusedSectionAncestor: entry(`${root}/pages/0102/page.json`),
+  inheritedSectionApproval: entry(approvalPath),
+  upstreamUsage: entry(`${next}/upstream-usage.record`),
+  toc: { file: entry(toc), target, next: right, offset },
+  scope: { start: 'p0102#2', sectionAncestor: 'p0102#1', newPhysicalPages: newPages,
+    rightBoundary: 'Locate exact N18 heading on physical105; preserve raw, exclude incomplete lesson.',
+    preserveNextLessonFragments: true, promoteOnlyCompleteN17: true },
+  previousFailuresLocksBackupsPendingMessagesAndUnknownUsagePreserved: true,
+  parentImageViews: 0, unknownHistoricalBytesRecovered: false,
+  createOrAttachCalls: 0, databaseWrites: 0, merges: 0, deployments: 0,
+  finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ output: entry(file), newPages }));

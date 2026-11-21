@@ -1,0 +1,66 @@
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+import numpy as np
+from PIL import Image
+from scipy import ndimage
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+BASE = REPO / ".tmp/resume182-6-8a-n16-0789"
+outputs = []
+for page in (100, 102):
+    image = BASE / f"source/8a/pages/{page:04d}/page.png"
+    audit_path = REPO / f"ssot-resources/soviet10year-textbooks/artifacts/8a/pages/{page:04d}/audit.json"
+    audit = json.loads(audit_path.read_bytes())
+    ink = layout.ink_mask(Image.open(image))
+    columns = np.flatnonzero(ink.any(axis=0))
+    width = int(columns[-1] - columns[0] + 1)
+    for figure in audit["figures"]:
+        x, y, w, h = figure["box"]
+        ink[y:y + h, x:x + w] = False
+    bands = []
+    for a, b in layout.line_bands(ink, width):
+        segment = ink[a:b + 1]
+        xs = np.flatnonzero(segment.any(axis=0))
+        labels, _ = ndimage.label(segment)
+        components = []
+        for index, bounds in enumerate(ndimage.find_objects(labels), 1):
+            if bounds is None:
+                continue
+            rows, cols = bounds
+            area = int(np.count_nonzero(labels[bounds] == index))
+            if area < 10:
+                continue
+            components.append({
+                "box": [cols.start, a + rows.start, cols.stop - cols.start, rows.stop - rows.start],
+                "area": area,
+            })
+        bands.append({
+            "ys": [a, b], "xs": [int(xs[0]), int(xs[-1])],
+            "ink": int(segment.sum()), "components": components,
+        })
+    outputs.append({
+        "page": page, "source_sha256": hashlib.sha256(image.read_bytes()).hexdigest(),
+        "count": len(bands), "audit": audit, "bands": bands,
+    })
+record = {
+    "status": "MECHANICAL_COUNT_DIAGNOSTIC_NOT_SOURCE_VERDICT",
+    "book": "8a", "lesson": "alg8-c3-s2-n16", "pages": outputs,
+    "image_views": 0, "image_mutations": 0, "source_mutations": 0,
+}
+target = BASE / "counting-diagnostic-FIRST.record"
+with target.open("x") as handle:
+    handle.write(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+print(json.dumps({
+    "path": str(target), "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+    "pages": [{
+        "page": item["page"], "count": item["count"],
+        "narrow_bands": [band for band in item["bands"] if band["xs"][1] - band["xs"][0] < 150],
+    } for item in outputs],
+}))

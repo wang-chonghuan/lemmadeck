@@ -1,0 +1,55 @@
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == REPO
+BASE = REPO / ".tmp/resume182-6-8a-n16-0789"
+OUT = BASE / "glyph-witness-EMBEDDED1"
+assert not OUT.exists()
+OUT.mkdir()
+PDF = REPO / "ssot-resources/soviet10year-textbooks/sources/soviet10years/8a 苏联十年制学校数学教材 代数 八年级.pdf"
+assert hashlib.sha256(PDF.read_bytes()).hexdigest() == "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071"
+command = ["pdfimages", "-f", "100", "-l", "101", "-png", str(PDF), str(OUT / "embedded")]
+result = subprocess.run(command, capture_output=True)
+for name, value in (("extract.stdout.record", result.stdout), ("extract.stderr.record", result.stderr)):
+    with (OUT / name).open("xb") as handle:
+        handle.write(value)
+assert result.returncode == 0, result.stderr
+files = sorted(OUT.glob("embedded-*.png"))
+assert len(files) == 2, files
+images = []
+for page, source, box, label in zip(
+    (100, 101), files,
+    ([160, 910, 450, 130], [680, 1410, 420, 200]),
+    ("leftmost-problem-digit", "numerator-exponent-sign"),
+):
+    image = Image.open(source)
+    assert image.size == (1504, 2176)
+    x, y, w, h = box
+    target = OUT / f"p{page:04d}-{label}.png"
+    image.crop((x, y, x + w, y + h)).save(target)
+    images.append({
+        "page": page, "focus": label, "source": str(source),
+        "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "source_dimensions": list(image.size), "path": str(target),
+        "sha256": hashlib.sha256(target.read_bytes()).hexdigest(), "box_xywh": box,
+        "original_embedded_pixels": True, "resized_or_enhanced": False,
+    })
+record = {
+    "status": "NEW_ORIGINAL_EMBEDDED_PIXEL_CROPS_NOT_GLYPH_RESOLUTION",
+    "book": "8a", "lesson": "alg8-c3-s2-n16",
+    "pdf": {"path": str(PDF), "sha256": hashlib.sha256(PDF.read_bytes()).hexdigest()},
+    "command": command, "returncode": result.returncode,
+    "images": images, "parent_image_views": 0, "new_crops": 2,
+    "page_rerenders": 0, "old_PASS_reruns": 0, "source_mutations": 0,
+    "unknown_historical_bytes_recovered": False, "database_writes": 0, "finish": "review",
+}
+target = OUT / "assignment.record"
+with target.open("x") as handle:
+    handle.write(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+print(json.dumps({"path": str(target), "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+                  "images": images}))

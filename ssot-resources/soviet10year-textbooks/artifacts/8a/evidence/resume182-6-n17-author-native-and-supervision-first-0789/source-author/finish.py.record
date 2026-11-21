@@ -1,0 +1,243 @@
+import hashlib
+import json
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+WORK = ROOT / ".tmp/resume182-6-8a-n17-0789"
+OUT = WORK / "source-author"
+PAGES = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/8a/pages"
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(ROOT / ".claude/skills/ld-s10y-lesson/tools"))
+import blocks as B
+
+
+def file_fact(path):
+    data = path.read_bytes()
+    return {
+        "path": str(path),
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "bytes": len(data),
+    }
+
+
+bootstrap = file_fact(WORK / "bootstrap.record")
+assert bootstrap["sha256"] == "befaf661054bb3a35d9d5810eae78122fb947207b478bcc160108eb2d4099c7f"
+reused = file_fact(PAGES / "0102/page.md")
+assert reused["sha256"] == "5f4f7528ce2f5cdde4606baa319f3594a7a3457c7653e091e1cbfe69c1f15d61"
+assert reused["bytes"] == 2888
+
+pages = []
+for page in (103, 104, 105):
+    page_dir = WORK / "source/8a/pages" / f"{page:04d}"
+    path = PAGES / f"{page:04d}/page.md"
+    meta, blocks = B.load(path)
+    template, _ = B.load(page_dir / "page.template.md")
+    inventory_path = OUT / f"inventory-{page:04d}.record"
+    inventory = json.loads(inventory_path.read_text())
+    before_path = OUT / f"inventory-{page:04d}-before-view.record"
+    assert set(meta) == set(template)
+    for key in ("schema", "book", "page", "source", "render", "profile", "errata"):
+        assert meta[key] == template[key], (page, key)
+    assert meta["printed_page"] == page - 7
+    assert meta["render"]["sha256"] == file_fact(page_dir / "page.png")["sha256"]
+    assert file_fact(page_dir / "page.grid.png")["sha256"] == json.loads(
+        before_path.read_text()
+    )["source_sha256"]
+    row_count = B.printed_lines(blocks)
+    assert row_count == inventory["actual_printed_rows"]
+    assert row_count == len(json.loads((page_dir / "layout.json").read_text())["line_bands"])
+    assert not any(b["kind"] in ("fig", "cap") for b in blocks)
+    assert not any(b["cont"] or b["samerow"] or b.get("offset_label_row") for b in blocks)
+    source_objects = inventory.get("prose_objects", []) + inventory.get("exercise_objects", [])
+    expected = {o["block"]: o["rows"] for o in source_objects}
+    if page == 105:
+        expected["p0105#4"] = 1
+        expected["p0105#6"] = 1
+    expected[f"p{page:04d}#{len(blocks)}"] = 1
+    block_facts = []
+    for index, block in enumerate(blocks, 1):
+        ref = f"p{page:04d}#{index}"
+        rows = B.printed_lines([block])
+        assert rows == expected[ref], (ref, rows, expected[ref])
+        text = B.text_of(block)
+        assert len(re.findall(r"(?<!\\)\$", text)) % 2 == 0, ref
+        assert not re.search(r"\b[a-z]\)", text), ref
+        if block["kind"] == "ex":
+            assert text.startswith(block["label"] + "."), ref
+        block_facts.append({
+            "ref": ref,
+            "kind": block["kind"],
+            "label": block["label"],
+            "rows": rows,
+            "open": block["open"],
+            "cont": block["cont"],
+            "samerow": block["samerow"],
+            "labelrow": bool(block.get("offset_label_row")),
+            "formula_breaks": sum(line.count(B.WRAP) for line in block["lines"]),
+        })
+    pages.append({
+        **file_fact(path),
+        "physical_page": page,
+        "printed_page": page - 7,
+        "actual_printed_rows": row_count,
+        "native_parser_row_count": row_count,
+        "native_prepared_line_band_count": row_count,
+        "blocks": block_facts,
+        "inventory_file": file_fact(inventory_path),
+        "before_first_view_inventory_protocol": file_fact(before_path),
+        "full_inventory": inventory,
+        "uncertainties": inventory["unreadable_glyphs"],
+        "notes": meta["notes"],
+        "prepared_inputs": [
+            file_fact(page_dir / name)
+            for name in ("page.png", "page.grid.png", "layout.json", "page.template.md")
+        ],
+    })
+
+assert [b["label"] for p in pages for b in p["blocks"] if b["kind"] == "ex"] == [
+    str(n) for n in range(269, 278)
+]
+assert sum(b["formula_breaks"] for p in pages for b in p["blocks"]) == 1
+assert [b["ref"] for p in pages for b in p["blocks"] if b["open"]] == ["p0105#7"]
+_, last_blocks = B.load(PAGES / "0105/page.md")
+assert B.text_of(last_blocks[5]) == "18. 等比数列的通项公式"
+assert B.text_of(last_blocks[6]).endswith("但")
+
+view_specs = [
+    (103, "full_grid", WORK / "source/8a/pages/0103/page.grid.png", None, None),
+    (104, "full_grid", WORK / "source/8a/pages/0104/page.grid.png", None, None),
+    (104, "necessary_narrow_crop", OUT / "0104-ex273-last-subscripts.png",
+     [1320, 3020, 510, 120], "Distinguish the last pair of subscripts in exercise273; visible k,k+1."),
+    (105, "full_grid", WORK / "source/8a/pages/0105/page.grid.png", None, None),
+    (105, "necessary_narrow_crop", OUT / "0105-ex277-b-radicals.png",
+     [1330, 2280, 520, 180], "Determine printed radical scopes in exercise277 б: 6x and5x+1."),
+    (105, "necessary_narrow_crop", OUT / "0105-ex277-g-radical.png",
+     [1510, 2480, 370, 170], "Determine final radical scope in exercise277 г: 10-2x."),
+]
+views = []
+for ordinal, (page, kind, path, box, reason) in enumerate(view_specs, 1):
+    view = {**file_fact(path), "ordinal": ordinal, "physical_page": page, "kind": kind}
+    if box:
+        view.update({
+            "crop_box_xywh": box,
+            "source": file_fact(WORK / f"source/8a/pages/{page:04d}/page.png"),
+            "resize": False,
+            "necessary_reason_and_observation": reason,
+        })
+    views.append(view)
+
+changed = [
+    str(PAGES / f"{page:04d}/page.md") for page in (103, 104, 105)
+] + [
+    str(OUT / name) for name in (
+        "inventory-0103-before-view.record", "inventory-0103.record",
+        "inventory-0104-before-view.record", "inventory-0104.record",
+        "inventory-0105-before-view.record", "inventory-0105.record",
+        "0104-ex273-last-subscripts.png", "0105-ex277-b-radicals.png",
+        "0105-ex277-g-radical.png", "finish.py", "result.record",
+    )
+]
+result = {
+    "status": "SOURCE_AUTHORED_NOT_APPROVED",
+    "time": datetime.now(timezone.utc).isoformat(),
+    "ticket": "STEMROBIN-182",
+    "session": "current182-6",
+    "book": "8a",
+    "lesson": "alg8-c3-s3-n17",
+    "workdir": str(ROOT),
+    "finish": "review",
+    "bootstrap": bootstrap,
+    "bootstrap_actual_hash": bootstrap["sha256"],
+    "reused_page102_text_only": {
+        **reused,
+        "approval_supplied_by_bootstrap": "SOURCE_PAGE_PASS",
+        "pixels_viewed": False,
+        "native_finalization_rerun": False,
+        "changed": False,
+        "context_tail": "Complete paragraph/example ending 6,3,3/2,3/4,3/8,...",
+        "source_author_new_review_claim": False,
+    },
+    "all_pageMD_files": [reused] + [
+        {k: page[k] for k in ("path", "sha256", "bytes")} for page in pages
+    ],
+    "new_pages": pages,
+    "actual_printed_row_count_new_pages": 70,
+    "source_author_text_checks": {
+        "native_blocks_parser": file_fact(ROOT / ".claude/skills/ld-s10y-lesson/tools/blocks.py"),
+        "frontmatter_template_fields_preserved": True,
+        "per_block_and_page_row_counts_checked": True,
+        "dollar_delimiters_balanced": True,
+        "Cyrillic_subpart_labels_checked": True,
+        "independent_source_review_performed": False,
+        "native_finalize_performed": False,
+        "execution_note": "One read-only rg search named nonexistent tools/mdpage.py and returned2; inspected existing tools/blocks.py instead. No producer was rerun.",
+    },
+    "uncertainties": [],
+    "resolved_narrow_source_questions": [
+        {"ref": "p0104#6", "finding": "в) subscripts k and k+1", "view_ordinal": 3},
+        {"ref": "p0105#5", "finding": "б) radical scopes6x and5x+1", "view_ordinal": 5},
+        {"ref": "p0105#5", "finding": "г) final radical scope10-2x", "view_ordinal": 6},
+    ],
+    "unreadable_glyph_policy": "No unreadable source glyph remains after the six recorded views. None was resolved using arithmetic, continuity, answer keys or inferred meaning. Missing final punctuation in275 г was not supplied.",
+    "image_accounting": {
+        "budget": 8,
+        "actual_context_image_views": 6,
+        "full_grid_views": 3,
+        "full_grid_views_per_new_page": {"103": 1, "104": 1, "105": 1},
+        "necessary_narrow_crop_views": 3,
+        "reopens": 0,
+        "resizes": 0,
+        "rerenders": 0,
+        "page102_pixel_views": 0,
+        "N16_page98_to101_pixel_views": 0,
+        "parent_image_views": 0,
+        "crop_extraction_original_PNG_decodes": 2,
+        "crop_extraction_note": "Page104 original decoded once for one crop; page105 original decoded once for two crops. Original PNGs were not displayed full-page. Crops retain native pixels.",
+        "view_paths_and_hashes_in_actual_order": views,
+    },
+    "boundaries_and_continuations": {
+        "start": "p0102#2",
+        "section_ancestor": "p0102#1",
+        "page103_left": "new complete paragraph; no cont",
+        "page103_right": "complete paragraph; no open",
+        "page104_left": "new theorem paragraph; no cont",
+        "page104_right": "complete exercise273; no open",
+        "page105_left": "new exercise274; no cont",
+        "N17_last_source_object": "p0105#5 exercise277, complete",
+        "right_boundary": "p0105#6",
+        "right_boundary_printed_heading": "18. 等比数列的通项公式",
+        "right_boundary_physical_page": 105,
+        "right_boundary_printed_page": 98,
+        "raw_N18_fragment": "p0105#7",
+        "raw_N18_last_printed_text": "但",
+        "raw_N18_open": True,
+        "raw_N18_preserved": True,
+        "N18_completion_or_promotion": False,
+        "other_open_cont_samerow_labelrow_flags": [],
+    },
+    "ownership_respected": {
+        "parent_owns": ["snapshot", "native_finalize", "vectorize", "assembly", "independent_source_review", "index"],
+        "N16_source_glyphs_untouched": True,
+        "N16_complete_claim": False,
+        "page_json_audit_index_lesson_answer_choice_writes": 0,
+        "skill_app_dependency_database_other_root_writes": 0,
+        "agents_chats_create_attach_skillupdate_commit_calls": 0,
+        "old_paused_chats_reviewers_untouched": True,
+        "promotions": 0,
+    },
+    "changed_paths": changed,
+    "record_writer": file_fact(OUT / "finish.py"),
+}
+assert len(views) <= 8
+with (OUT / "result.record").open("x", encoding="utf-8") as handle:
+    json.dump(result, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+print(json.dumps(file_fact(OUT / "result.record"), ensure_ascii=False))
+for page in pages:
+    print(json.dumps({
+        k: page[k] for k in ("path", "sha256", "bytes", "actual_printed_rows")
+    }, ensure_ascii=False))

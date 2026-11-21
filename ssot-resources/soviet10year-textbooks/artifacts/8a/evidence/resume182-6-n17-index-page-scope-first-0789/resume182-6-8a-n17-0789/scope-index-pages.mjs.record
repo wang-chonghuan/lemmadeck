@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n17-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const file = `${root}/book.json`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = name => {
+  const bytes = fs.readFileSync(name);
+  return { path: path.resolve(name), sha256: sha(bytes), bytes: bytes.length };
+};
+const [reviewPath, reviewHash] = process.argv.slice(2);
+assert.equal(bind(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'SOURCE_PASS');
+assert.equal(review.lesson, 'alg8-c3-s3-n17');
+const bootstrap = JSON.parse(fs.readFileSync(`${base}/bootstrap.record`));
+const pages = [102, ...bootstrap.scope.newPhysicalPages].map(page =>
+  `${root}/pages/${String(page).padStart(4, '0')}/page.json`);
+for (const page of pages) {
+  const approved = review.bindings.find(item => path.resolve(item.path) === path.resolve(page));
+  assert.ok(approved, page);
+  assert.equal(bind(page).sha256, approved.sha256);
+}
+const tracked = spawnSync('git', ['ls-tree', '-r', '--name-only', 'HEAD', `${root}/pages`],
+  { cwd: repo, encoding: 'utf8' });
+assert.equal(tracked.status, 0, tracked.stderr);
+const previousPages = tracked.stdout.trim().split('\n').filter(name => name.endsWith('/page.json'));
+const deliveryPages = [...new Set([...previousPages, ...pages])];
+const before = fs.readFileSync(file), document = JSON.parse(before);
+assert.equal(document.pages, fs.readdirSync(`${root}/pages`)
+  .filter(name => fs.existsSync(`${root}/pages/${name}/page.json`)).length);
+assert.ok(deliveryPages.length < document.pages);
+const history = `${base}/index-page-scope-FIRST`;
+fs.mkdirSync(history);
+fs.writeFileSync(`${history}/book.native-before.record`, before, { flag: 'wx' });
+const originalPages = document.pages;
+document.pages = deliveryPages.length;
+fs.writeFileSync(file, `${JSON.stringify(document, null, 2)}\n`);
+const output = `${history}/result.record`;
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'DELIVERY_PAGE_COUNT_SCOPED_CONTENT_UNCHANGED', book: '8a',
+  lesson: 'alg8-c3-s3-n17', sourceApproval: bind(reviewPath),
+  nativeIndexReceipt: bind(`${base}/stages/source-reindex-FIRST/receipt.record`),
+  before: bind(`${history}/book.native-before.record`), after: bind(file),
+  nativeLocalPages: originalPages, priorCommittedPages: previousPages.length,
+  deliveryPages, deliveryPageCount: document.pages, excludedUncommittedPages: [98, 99, 100, 101],
+  changedFieldOnly: 'pages', sourceOrLessonBytesChanged: false,
+  sourceReviews: 0, imageViews: 0, databaseWrites: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(output)));

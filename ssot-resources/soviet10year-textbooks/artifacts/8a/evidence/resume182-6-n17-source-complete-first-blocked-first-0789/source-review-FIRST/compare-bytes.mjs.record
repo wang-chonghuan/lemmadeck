@@ -1,0 +1,245 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+if (process.cwd() !== root) throw new Error('Wrong checkout');
+const scratch = path.join(root, '.tmp/resume182-6-8a-n17-0789');
+const rawRoot = path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/8a/pages');
+const assemblyRoot = path.join(scratch, 'assembly-FIRST');
+const outputRoot = path.join(assemblyRoot, 'artifacts/8a/lessons/alg8-c3-s3-n17');
+const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const hash = p => {
+  const data = fs.readFileSync(p);
+  return { path: p, sha256: crypto.createHash('sha256').update(data).digest('hex'), bytes: data.length };
+};
+const files = new Map();
+const bind = (id, p) => {
+  const file = hash(p);
+  files.set(id, { id, ...file });
+  return file;
+};
+const bootstrapPath = path.join(scratch, 'bootstrap.record');
+const bootstrap = read(bootstrapPath);
+bind('bootstrap', bootstrapPath);
+const inheritedPath = bootstrap.reusedPage102.approval.path;
+const inheritedFile = bind('inherited102Approval', inheritedPath);
+const inherited = read(inheritedPath);
+const inheritedPage = inherited.perPageApprovals.find(p => p.page === 102);
+const reused102 = {
+  expectedApprovalHash: '606716aec6e44c3a973cc77f3d85423fd3e67c998b54d52f05d1b82d03d36231',
+  approvalHashMatches: inheritedFile.sha256 === bootstrap.reusedPage102.approval.sha256
+    && inheritedFile.sha256 === '606716aec6e44c3a973cc77f3d85423fd3e67c998b54d52f05d1b82d03d36231',
+  approvalBytesMatch: inheritedFile.bytes === bootstrap.reusedPage102.approval.bytes,
+  perPageStatus: inheritedPage.status,
+  wholeCurrentRawPageApproved: inheritedPage.whole_current_raw_page_approved,
+  files: bootstrap.reusedPage102.files.map(file => {
+    const current = hash(file.path);
+    const original = inherited.bindings.find(x => x.path === file.path);
+    return {
+      path: current.path,
+      bootstrapMatch: current.sha256 === file.sha256 && current.bytes === file.bytes,
+      inheritedMatch: !!original && current.sha256 === original.sha256 && current.bytes === original.bytes
+    };
+  })
+};
+
+const pages = new Map();
+const rawChecks = [];
+for (const page of [102, 103, 104, 105]) {
+  const number = String(page).padStart(4, '0');
+  const directory = path.join(rawRoot, number);
+  const pageJson = read(path.join(directory, 'page.json'));
+  const md = fs.readFileSync(path.join(directory, 'page.md'), 'utf8');
+  const frontmatterEnd = md.indexOf('\n---\n', 4);
+  const meta = JSON.parse(md.slice(4, frontmatterEnd));
+  const body = md.slice(frontmatterEnd + 5);
+  const markers = [...body.matchAll(/<!-- ([^>]+) -->\n([\s\S]*?)(?=\n<!-- |$)/g)];
+  const markdownBlocks = markers.map(match => ({
+    header: match[1],
+    lines: match[2].replace(/\n+$/, '').split('\n')
+  }));
+  const audit = read(path.join(directory, 'audit.json'));
+  pages.set(page, pageJson);
+  const blockRows = pageJson.blocks.map(block => block.lines.reduce(
+    (sum, line) => sum + 1 + (line.match(/↵/g) || []).length, 0
+  ));
+  rawChecks.push({
+    page,
+    metaEquality: JSON.stringify(meta) === JSON.stringify(pageJson.meta),
+    markdownJsonBlockCountMatch: markdownBlocks.length === pageJson.blocks.length,
+    markdownJsonBlocks: pageJson.blocks.map((block, index) => ({
+      ref: `p${number}#${index + 1}`,
+      kind: block.kind,
+      label: block.label,
+      textEqual: JSON.stringify(block.lines) === JSON.stringify(markdownBlocks[index]?.lines),
+      typeEqual: markdownBlocks[index]?.header.split(' ')[0] === block.kind,
+      openEqual: markdownBlocks[index]?.header.split(' ').includes('open') === block.open,
+      contEqual: markdownBlocks[index]?.header.split(' ').includes('cont') === block.cont,
+      sourceRows: blockRows[index]
+    })),
+    rowTotal: blockRows.reduce((a, b) => a + b, 0),
+    auditRows: { printed: audit.lines_printed, md: audit.lines_md },
+    auditErrors: audit.errors,
+    figures: pageJson.meta.figures
+  });
+  for (const file of ['page.md', 'page.json', 'audit.json']) {
+    bind(`raw${page}-${file}`, path.join(directory, file));
+  }
+  if (page !== 102) {
+    const sourceDirectory = path.join(scratch, 'source/8a/pages', number);
+    const sourcePng = bind(`source${page}Png`, path.join(sourceDirectory, 'page.png'));
+    bind(`source${page}Grid`, path.join(sourceDirectory, 'page.grid.png'));
+    rawChecks.at(-1).renderHashMatches = sourcePng.sha256 === pageJson.meta.render.sha256;
+    bind(`pixelInventory${page}`, path.join(scratch, 'source-review-FIRST', `${number}-pixels.record`));
+    for (const file of ['receipt.record', 'stdout.txt', 'stderr.txt']) {
+      bind(`finalize${page}-${file}`, path.join(scratch, `stages/source-finalize${page}-FIRST`, file));
+    }
+  }
+}
+
+for (const file of ['0104-ex273-last-subscripts.png', '0105-ex277-b-radicals.png', '0105-ex277-g-radical.png']) {
+  bind(file, path.join(scratch, 'source-author', file));
+}
+bind('firstFailure', path.join(scratch, 'source-review-FIRST/first-failed-verdict.record'));
+bind('sourceAuthorReceipt', path.join(scratch, 'source-author/result.record'));
+bind('liveTicketReceipt', path.join(scratch, 'stages/live-ticket-read-continuation0628-FIRST/receipt.record'));
+bind('liveTicketText', path.join(scratch, 'stages/live-ticket-read-continuation0628-FIRST/stdout.txt'));
+const tocPath = path.join(root, 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json');
+bind('toc', tocPath);
+const ancestorPath = path.join(rawRoot, '0074/page.json');
+const ancestorFile = bind('chapterAncestor', ancestorPath);
+const chapterBlock = read(ancestorPath).blocks[0];
+const sectionBlock = pages.get(102).blocks[0];
+
+const assemblyPath = path.join(assemblyRoot, 'assembly.record');
+const assembly = read(assemblyPath);
+bind('assembly', assemblyPath);
+const snapshotChecks = assembly.entries.map((entry, index) => {
+  const snapshotPath = path.resolve(root, entry.path);
+  const sourcePath = path.resolve(root, entry.source);
+  const snapshot = bind(`assemblyRawSnapshot${index + 1}`, snapshotPath);
+  const source = hash(sourcePath);
+  return {
+    path: snapshotPath,
+    receiptMatch: snapshot.sha256 === entry.sha256 && snapshot.bytes === entry.bytes,
+    currentRawByteEqual: snapshot.sha256 === source.sha256 && snapshot.bytes === source.bytes
+  };
+});
+const lesson = read(path.join(outputRoot, 'lesson.json'));
+const exercises = read(path.join(outputRoot, 'exercises.json'));
+const lessonMd = fs.readFileSync(path.join(outputRoot, 'lesson.md'), 'utf8');
+for (const file of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  bind(file, path.join(outputRoot, file));
+}
+
+const sourceBlocks = [];
+for (const [page, data] of pages) {
+  for (const [index, block] of data.blocks.entries()) {
+    const ref = `p${String(page).padStart(4, '0')}#${index + 1}`;
+    if (page === 102 && index < 2) continue;
+    if (page === 105 && index >= 5) continue;
+    sourceBlocks.push({ ref, page, block });
+  }
+}
+const joinPrintedLines = block => block.lines.join('').replaceAll('↵', '');
+const proseSources = sourceBlocks.filter(x => x.block.kind === 'p');
+const exerciseSources = sourceBlocks.filter(x => x.block.kind === 'ex');
+const proseChecks = proseSources.map((source, index) => {
+  const item = lesson.prose[index];
+  return {
+    ref: source.ref,
+    kind: source.block.kind,
+    printedPage: pages.get(source.page).meta.printed_page,
+    sourceRefsEqual: JSON.stringify(item?.source_refs) === JSON.stringify([source.ref]),
+    textEqual: item?.text === joinPrintedLines(source.block),
+    typeEqual: item?.kind === source.block.kind,
+    printedPageEqual: item?.printed_page === pages.get(source.page).meta.printed_page,
+    sourceOpen: source.block.open,
+    sourceCont: source.block.cont
+  };
+});
+const exerciseChecks = exerciseSources.map((source, index) => {
+  const item = exercises.exercises[index];
+  const expectedGroup = source.ref === 'p0105#5' ? '复习题' : null;
+  return {
+    ref: source.ref,
+    number: source.block.label,
+    sourceRefsEqual: JSON.stringify(item?.pages) === JSON.stringify([source.ref]),
+    numberEqual: item?.number === source.block.label && item?.source_number === source.block.label,
+    linesEqual: JSON.stringify(item?.lines) === JSON.stringify(source.block.lines),
+    textEqual: item?.text === joinPrintedLines(source.block),
+    groupEqual: item?.group === expectedGroup && item?.group_id === (expectedGroup ? 'g1' : 'g0'),
+    sourceOpen: source.block.open,
+    sourceCont: source.block.cont,
+    figures: item?.figures,
+    figureRefs: item?.figure_refs
+  };
+});
+const expectedLessonMd = `# ${lesson.printed_title}\n\n> ${lesson.chapter} · ${lesson.section}\n\n${lesson.prose.map(p => p.text).join('\n\n')}\n`;
+const actualBodyRefs = [...lesson.prose.flatMap(p => p.source_refs), ...exercises.exercises.flatMap(e => e.pages)];
+const boundary = pages.get(105).blocks[5];
+const nextFragment = pages.get(105).blocks[6];
+const expectedSelectedRefs = ['p0074#1', 'p0102#1', 'p0102#2'];
+for (const [page, data] of pages) {
+  for (let index = page === 102 ? 2 : 0; index < data.blocks.length; index++) {
+    if (page === 105 && index >= 5) break;
+    expectedSelectedRefs.push(`p${String(page).padStart(4, '0')}#${index + 1}`);
+  }
+}
+const narrowAssembly = {
+  snapshotChecks,
+  selectedRefsExact: JSON.stringify(assembly.selected_refs) === JSON.stringify(expectedSelectedRefs),
+  proseCount: lesson.prose.length,
+  expectedProseCount: proseSources.length,
+  exerciseCount: exercises.exercises.length,
+  expectedExerciseCount: exerciseSources.length,
+  exerciseCountFieldsEqual: lesson.exercise_count === 9 && exercises.count === 9 && assembly.exercise_count === 9,
+  proseChecks,
+  exerciseChecks,
+  mdExactProjectionOfLessonJson: lessonMd === expectedLessonMd,
+  ancestry: {
+    chapterHashMatchesAssembly: ancestorFile.sha256 === assembly.reused_ancestor.sha256,
+    chapterType: chapterBlock.kind,
+    chapterTextEqual: lesson.chapter === chapterBlock.lines.join(''),
+    sectionType: sectionBlock.kind,
+    sectionTextEqual: lesson.section === sectionBlock.lines.join(''),
+    tocChapter: read(tocPath).contents.find(c => c.id === 'alg8-c3').title,
+    lesson: lesson.id,
+    cardId: lesson.card_id,
+    title: lesson.title,
+    printedTitle: lesson.printed_title,
+    startPhysical: lesson.start_page,
+    startPrinted: lesson.start_printed
+  },
+  boundary: {
+    ref: 'p0105#6',
+    kind: boundary.kind,
+    text: boundary.lines.join(''),
+    matchesReceipt: boundary.kind === assembly.boundary_refs.excluded_kind
+      && boundary.lines.join('') === assembly.boundary_refs.excluded_heading,
+    noN18BodyRefs: actualBodyRefs.every(ref => !/^p0105#[678]$/.test(ref)),
+    nextFragmentOpen: nextFragment.open,
+    nextFragmentLastCharacter: nextFragment.lines.at(-1).at(-1),
+    incompleteN18Promoted: false
+  },
+  figures: {
+    lesson: lesson.figures,
+    assembly: assembly.figures,
+    rawPageFigures: [...pages.values()].flatMap(p => p.meta.figures),
+    figureFilesToBind: []
+  },
+  defectPropagation: {
+    ref: 'p0103#10',
+    rawOmissionInLessonJson: lesson.prose.some(p => p.source_refs.includes('p0103#10')
+      && p.text.includes('对前面一项') && !p.text.includes('对其前面一项')),
+    rawOmissionInLessonMd: lessonMd.includes('对前面一项') && !lessonMd.includes('对其前面一项')
+  }
+};
+console.log(JSON.stringify({
+  method: 'Read-only standard-library byte/text comparison; no assembler, renderer, validator imports or execution.',
+  reused102,
+  rawChecks,
+  narrowAssembly,
+  bindings: [...files.values()]
+}, null, 2));

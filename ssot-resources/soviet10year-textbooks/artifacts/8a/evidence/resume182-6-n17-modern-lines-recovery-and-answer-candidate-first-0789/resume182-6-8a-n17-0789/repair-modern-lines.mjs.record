@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n17-0789';
+const id = 'alg8-c3-s3-n17';
+const prepared = `${base}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/${id}`;
+const final = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}`;
+const history = `${base}/modern-lines-recovery1`;
+const [mode] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const snapshot = (file, name) => fs.writeFileSync(`${history}/${name}.record`,
+  fs.readFileSync(file), { flag: 'wx' });
+if (mode === '--repair') {
+  assert.ok(!fs.existsSync(history));
+  assert.equal(bind(`${base}/modern-text-review-FIRST/result.record`).sha256,
+    '997a243e800210f6b38ca9855521ecb9fec08a8a2e37c98c43c298e70853d7c4');
+  fs.mkdirSync(history);
+  snapshot(`${prepared}/exercises.template.json`, 'template.before');
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']) {
+    snapshot(`${final}/${name}`, `final-${name}.before`);
+  }
+  const data = JSON.parse(fs.readFileSync(`${prepared}/exercises.template.json`));
+  assert.equal(data.exercises.length, 9);
+  const before = structuredClone(data);
+  for (const exercise of data.exercises) {
+    assert.notDeepEqual(exercise.lines, exercise.text.split('\n'));
+    exercise.lines = exercise.text.split('\n');
+  }
+  const restored = structuredClone(data);
+  restored.exercises.forEach((item, index) => { item.lines = before.exercises[index].lines; });
+  assert.deepEqual(restored, before);
+  fs.writeFileSync(`${prepared}/exercises.template.json`, `${JSON.stringify(data, null, 2)}\n`);
+  console.log(JSON.stringify(bind(`${prepared}/exercises.template.json`)));
+} else if (mode === '--bind') {
+  const before = JSON.parse(fs.readFileSync(`${history}/final-exercises.json.before.record`));
+  const after = JSON.parse(fs.readFileSync(`${final}/exercises.json`));
+  const restored = structuredClone(after);
+  restored.exercises.forEach((item, index) => {
+    assert.deepEqual(item.lines, item.text.split('\n'));
+    item.lines = before.exercises[index].lines;
+  });
+  assert.deepEqual(restored, before);
+  for (const name of ['lesson.json', 'figures.json']) {
+    assert.deepEqual(fs.readFileSync(`${final}/${name}`),
+      fs.readFileSync(`${history}/final-${name}.before.record`));
+  }
+  const receipt = `${base}/stages/modern-finalize-AFFECTED-lines1/receipt.record`;
+  assert.equal(JSON.parse(fs.readFileSync(receipt)).returncode, 0);
+  const file = `${history}/result.record`;
+  fs.writeFileSync(file, `${JSON.stringify({
+    status: 'MODERN_LINES_ONLY_REPAIRED_REVIEW_PENDING', book: '8a', lesson: id,
+    edition: 'modern-us-neutral', firstReview: bind(`${base}/modern-text-review-FIRST/result.record`),
+    changedFieldsOnly: 'exercises[*].lines', currentPrepared: bind(`${prepared}/exercises.template.json`),
+    currentFinal: bind(`${final}/exercises.json`), currentAudit: bind(`${final}/adaptation.audit.json`),
+    firstFinal: bind(`${history}/final-exercises.json.before.record`),
+    unchangedLesson: bind(`${final}/lesson.json`), unchangedFigures: bind(`${final}/figures.json`),
+    nativeReceipt: bind(receipt), seedProseConceptsMathAndAssetsUnchanged: true,
+    imageViews: 0, sourceReruns: 0, databaseWrites: 0, finish: 'review',
+    hostTokens: 'unknown', totalCost: 'unknown',
+  }, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify(bind(file)));
+} else throw new Error('Use --repair or --bind');

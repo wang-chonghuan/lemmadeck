@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n16-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const binding = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const reviewPath = `${base}/source-review-FIRST/phase1.record`;
+assert.equal(binding(reviewPath).sha256,
+  '13333253b6e42f360135c290535a9baecc6c8f786943e59936ac69be17314c66');
+const review = JSON.parse(fs.readFileSync(reviewPath));
+const read = file => JSON.parse(fs.readFileSync(file));
+const outputs = [];
+for (const page of [100, 102]) {
+  const stem = String(page).padStart(4, '0');
+  const before = read(`${base}/native-failures-FIRST/pages/${stem}/page.json.record`);
+  const current = read(`${root}/pages/${stem}/page.json`);
+  const finding = review.findings.find(item => item.id === `F${page}-count-noise`);
+  assert.ok(finding);
+  assert.deepEqual(current.blocks, before.blocks);
+  const meta = structuredClone(current.meta);
+  assert.deepEqual(meta.scan_noise, [finding.narrow_repair.scan_noise_entry]);
+  delete meta.scan_noise;
+  assert.deepEqual(meta, before.meta);
+  const png = `${base}/source/8a/pages/${stem}/page.png`;
+  assert.equal(binding(png).sha256, before.meta.render.sha256);
+  const audit = read(`${root}/pages/${stem}/audit.json`);
+  assert.deepEqual(audit.errors, []);
+  assert.equal(audit.lines_md, finding.narrow_repair.expected_native_text_rows);
+  assert.equal(audit.lines_printed, audit.lines_md);
+  assert.equal(audit.scan_noise.length, 1);
+  const entry = { ...audit.scan_noise[0] };
+  assert.ok(entry.ink_pixels > 0);
+  delete entry.ink_pixels;
+  assert.deepEqual(entry, finding.narrow_repair.scan_noise_entry);
+  const receipt = `${base}/stages/source-finalize${page}-AFFECTED-noise1/receipt.record`;
+  assert.equal(read(receipt).returncode, 0);
+  outputs.push(...['page.md', 'page.json', 'audit.json']
+    .map(name => binding(`${root}/pages/${stem}/${name}`)), binding(receipt));
+}
+for (const id of ['tbl-p0100-01', 'fig-31']) {
+  const png = `${base}/source/8a/pages/0100/figures/${id}.png`;
+  const original = review.bindings.find(item => item.path === path.resolve(png));
+  assert.ok(original);
+  assert.equal(binding(png).sha256, original.sha256);
+  outputs.push(binding(png));
+}
+const output = `${base}/noise-recovery-binding.record`;
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'AFFECTED_NATIVE_COUNT_RECOVERY_PASS_SOURCE_GLYPHS_PENDING',
+  book: '8a', lesson: 'alg8-c3-s2-n16', edition: 'modern-us-neutral',
+  originalReview: binding(reviewPath), outputs,
+  sourceTextAndFigurePixelsUnchanged: true, oldPassReruns: 0,
+  imageViews: 0, unknownHistoricalBytesRecovered: false,
+  databaseWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(binding(output)));

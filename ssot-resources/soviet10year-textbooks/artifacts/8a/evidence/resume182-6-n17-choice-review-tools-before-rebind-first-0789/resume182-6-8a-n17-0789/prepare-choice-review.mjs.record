@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = `${repo}/.tmp/resume182-6-8a-n17-0789`;
+const draftPath = `${base}/choices-FIRST/draft.json`;
+const draftBytes = fs.readFileSync(draftPath);
+const draft = JSON.parse(draftBytes);
+const target = `${base}/choice-review-FIRST`;
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const projection = {
+  schema: 'stemrobin-182/choice-visible-review-projection@1',
+  book: '8a', lesson: 'alg8-c3-s3-n17', edition: 'modern-us-neutral',
+  draft: { path: draftPath, sha256: sha(draftBytes) },
+  questions: draft.questions.map(question => ({
+    id: question.id, source_numbers: question.source_numbers, view: question.view,
+  })),
+  new_figures: draft.new_figures,
+  authorKeysAndIntentDisclosed: false,
+};
+const file = `${target}/views.record`;
+fs.writeFileSync(file, `${JSON.stringify(projection, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)),
+  draft: projection.draft, questions: projection.questions.length, authorKeysAndIntentDisclosed: false }));

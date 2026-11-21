@@ -1,0 +1,81 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n17-0789';
+const id = 'alg8-c3-s3-n17';
+const target = `${base}/modern-FIRST/adapt/8a/modern-us-neutral/lessons/${id}`;
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const bind = file => ({ path: path.resolve(file),
+  sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex') });
+assert.equal(bind(reviewPath).sha256, reviewHash);
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(review.status, 'SOURCE_PASS');
+assert.equal(review.lesson, id);
+const history = `${base}/modern-author-FIRST`;
+assert.ok(!fs.existsSync(history));
+fs.mkdirSync(history);
+const documents = {}, inputs = [];
+for (const name of ['lesson', 'exercises']) {
+  const file = `${target}/${name}.template.json`;
+  inputs.push(bind(file));
+  fs.writeFileSync(`${history}/${name}.before.record`, fs.readFileSync(file), { flag: 'wx' });
+  documents[name] = JSON.parse(fs.readFileSync(file));
+}
+assert.equal(documents.lesson.errata.length, 0);
+const labels = new Map([...'\u0430\u0431\u0432\u0433\u0434\u0435'].map((letter, i) => [letter, 'abcdef'[i]]));
+for (const item of documents.exercises.exercises) {
+  const original = item.text;
+  item.text = original.replace(/([\u0430-\u0435])\)/gu, (_, letter) => `${labels.get(letter)})`);
+  if (item.text !== original) item.changes = [...new Set([...item.changes, 'enum-latin'])];
+}
+const normalized = spawnSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c', `import json,sys
+sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")
+import edition
+d=json.load(sys.stdin)
+edition.normalize_lesson_layout(d["lesson"])
+edition.normalize_exercise_layout(d["exercises"])
+print(json.dumps(d,ensure_ascii=True))
+`], { input: JSON.stringify(documents), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
+fs.writeFileSync(`${history}/normalization.stdout.record`, normalized.stdout, { flag: 'wx' });
+fs.writeFileSync(`${history}/normalization.stderr.record`, normalized.stderr, { flag: 'wx' });
+assert.equal(normalized.status, 0, normalized.stderr);
+const final = JSON.parse(normalized.stdout);
+for (const item of [...final.lesson.prose, ...final.exercises.exercises]) {
+  if (item.text === item.source_text) item.changes = [];
+}
+for (const name of ['lesson', 'exercises']) {
+  fs.writeFileSync(`${target}/${name}.template.json`, `${JSON.stringify(final[name], null, 2)}\n`);
+}
+const flow = spawnSync(process.execPath, ['.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs',
+  `${target}/lesson.template.json`], { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+fs.writeFileSync(`${history}/flow.stdout.record`, flow.stdout, { flag: 'wx' });
+fs.writeFileSync(`${history}/flow.stderr.record`, flow.stderr, { flag: 'wx' });
+assert.equal(flow.status, 0, flow.stderr);
+const boundaries = flow.stdout.split('\n').map(line => line.trim())
+  .filter(line => line.startsWith('break: ')).map(line => JSON.parse(line.slice(7)));
+const starts = [
+  '\u5b9a\u4e49 ',
+  '\u6211\u4eec\u53d1\u73b0',
+  '\u7b49\u6bd4\u6570\u5217\u5177\u6709\u4e0b\u8ff0\u6027\u8d28',
+  '\u53cd\u8fc7\u6765\u4e5f\u6210\u7acb',
+  '\u56e0\u6b64\uff0c\u4e0b\u8ff0\u5b9a\u7406\u6210\u7acb',
+];
+final.lesson.section_breaks = boundaries.filter(item => starts.some(prefix => item.after.startsWith(prefix)));
+assert.ok(final.lesson.section_breaks.length > 0);
+fs.writeFileSync(`${target}/lesson.template.json`, `${JSON.stringify(final.lesson, null, 2)}\n`);
+const file = `${history}/result.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'MODERN_TEXT_AUTHORED_NOT_APPROVED', book: '8a', lesson: id, edition: 'modern-us-neutral',
+  sourceApproval: bind(reviewPath), inputs,
+  outputs: ['lesson', 'exercises'].map(name => bind(`${target}/${name}.template.json`)),
+  nativeNormalizationUsed: true, section_breaks: final.lesson.section_breaks,
+  mathematicalCorrections: [], rawChanges: 0, cultureOrNumberChanges: 0,
+  imageViews: 0, oldPassReruns: 0, databaseWrites: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

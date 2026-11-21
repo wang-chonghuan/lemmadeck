@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n17-0789';
+const own = `${base}/display-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bound = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length,
+    realpath: fs.realpathSync(file) };
+};
+const first = JSON.parse(fs.readFileSync(`${own}/ready-FIRST.record`));
+const retentionFile = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n17-display-first-failure-first-0789/retention.record';
+const retention = JSON.parse(fs.readFileSync(retentionFile));
+const historicalImplementation = first.files.flatMap(item => {
+  if (bound(item.path).sha256 === item.sha256) return [];
+  const retained = retention.entries.find(entry =>
+    path.resolve(entry.historical_path) === item.path && entry.sha256 === item.sha256);
+  assert.ok(retained, item.path);
+  const current = bound(retained.path);
+  assert.equal(current.sha256, item.sha256);
+  return [{ originalPath: item.path, path: current.path, sha256: item.sha256 }];
+});
+assert.equal(historicalImplementation.length, 1);
+assert.ok(historicalImplementation[0].originalPath.endsWith('/run.mjs'));
+const ready = {
+  ...first,
+  files: first.files.map(item => bound(item.path)),
+  pins: first.pins.map(item => first.files.some(file => file.path === item.path)
+    ? bound(item.path) : item),
+  historicalImplementation,
+  originalReady: bound(`${own}/ready-FIRST.record`),
+  firstFailureRetention: bound(retentionFile),
+  repair: 'Standard-answer fraction wrappers receive additional vertical padding; predicates, math, source and candidate remain unchanged.',
+  rendererCallsThisBinding: 0,
+  oldPassReruns: 0,
+};
+for (const pin of ready.pins) assert.equal(bound(pin.path).sha256, pin.sha256);
+const target = `${own}/ready-standard-padding1.record`;
+fs.writeFileSync(target, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bound(target)));
