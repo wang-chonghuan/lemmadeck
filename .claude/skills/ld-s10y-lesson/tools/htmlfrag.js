@@ -24,6 +24,7 @@ const escProseText = (text) => {
 }
 // 原书用黑体排定义句，转写时记成 **…**
 const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+const emphasis = (h) => h.replace(/(?<![\\*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?!\*)/g, "<em>$1</em>")
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
 // 公式后面紧跟的标点要与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
@@ -31,7 +32,7 @@ const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
 function renderInline(text, renderText) {
   let out = "", last = 0
   for (const m of text.matchAll(MATH)) {
-    out += renderText(text.slice(last, m.index))
+    out += emphasis(renderText(text.slice(last, m.index)))
     const tex = m[1] ?? m[2]
     let html
     try {
@@ -44,7 +45,7 @@ function renderInline(text, renderText) {
     last += t.length
     out += `<span class="sr-nb">${html}${esc(t)}</span>`
   }
-  return strong(out + renderText(text.slice(last)))
+  return strong(out + emphasis(renderText(text.slice(last))))
 }
 
 const inline = (text) => renderInline(text, escText)

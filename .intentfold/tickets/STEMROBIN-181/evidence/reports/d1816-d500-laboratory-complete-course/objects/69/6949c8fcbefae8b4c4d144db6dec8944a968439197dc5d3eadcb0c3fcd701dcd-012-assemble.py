@@ -1,0 +1,1023 @@
+"""cap2 装订：页 → 小节 + 独立编号的题。
+
+页是扫描的产物，小节和题才是要交付的对象，两者都不认页边界。cap1 已经把每一块
+标了类型、标了 cont/open，所以这里是**纯拼接**，不需要再猜：
+
+  1. 合流   —— open 的块和下一页 cont 的块接成一个对象（跨页的段、跨页的题）
+  2. 切小节 —— h3、目录认领的独立 h2/exhead 开卡，其余 h1/h2 是祖先标题
+  3. 分流   —— ex/exhead 进习题，其余先进入课文候选
+  4. 认领图 —— 正文图留在课文；练习图从课文移出，并按原书位置只展示一次
+
+对账全部是**对象级**的，比页级像素对账便宜也强得多：题号按书目声明的范围连续、
+图号连续、图与引用双向齐全、TOC 小节覆盖、拼完整之后的公式再过一遍 KaTeX。
+一页漏抽、一题读错号、一张图没裁，都会在这里露出来。
+"""
+from __future__ import annotations
+
+import json
+import re
+import shutil
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import blocks as B
+import mathcheck
+import normalize as nz
+
+FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
+SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
+BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
+FOOTNOTE_MARKERS = "①②"
+OPTIONAL_EXERCISE_IDENTITY_FIELDS = ("source_number", "group_id")
+
+
+def _slug(text: str) -> str:
+    return re.sub(r"[^\w一-鿿]+", "-", text.strip()).strip("-")[:40]
+
+
+def load_stream(book: Path) -> list[dict]:
+    """所有页的块按页序连成一条流，每块记住自己来自哪一页。"""
+    stream = []
+    for pj in sorted(book.glob("pages/*/page.json")):
+        doc = json.loads(pj.read_text(encoding="utf-8"))
+        page = doc["meta"]["page"]
+        for i, b in enumerate(doc["blocks"]):
+            stream.append({**b, "page": page,
+                           "printed_page": doc["meta"].get("printed_page"),
+                           "ref": f"p{page:04d}#{i+1}"})
+    return stream
+
+
+def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
+    """open 的块与下一页 cont 的块接成一个对象。文本一个字不改，只是接上。"""
+    # 页码、插图、图题都可能夹在一个对象的两半之间（文字环绕的插图、页脚），
+    # 配对时要当它们不存在——否则一段被插图打断的正文就永远接不上。
+    TRANSPARENT = ("foot", "fig", "cap")
+    def transparent(block):
+        return block["kind"] in TRANSPARENT or (
+            block["kind"] == "p" and block.get("label") == "footnote"
+        )
+    out, warn = [], []
+    for b in stream:
+        b = dict(b)
+        if b["kind"] in ("p", "h3") and b.get("label") != "footnote":
+            b["footnote_callouts"] = [
+                {"marker": marker, "ref": b["ref"]}
+                for marker in sorted(set(re.findall(f"[{FOOTNOTE_MARKERS}]", B.text_of(b))))
+            ]
+        prev = next((x for x in reversed(out) if not transparent(x)), None)
+        if transparent(b):
+            out.append(dict(b))
+            continue
+        if b.get("cont"):
+            if prev is None or not prev.get("open"):
+                warn.append(f"{b['ref']}: 标了 cont，但上一块没标 open")
+            elif prev["kind"] != b["kind"] or (
+                    b["kind"] == "ex" and prev.get("label") not in (None, b.get("label"))):
+                warn.append(f"{b['ref']}: cont 接不上——上块是 {prev['kind']}"
+                            f"{prev.get('label') or ''}，本块是 {b['kind']}{b.get('label') or ''}")
+            elif not 0 <= b["page"] - int(
+                    BLOCKREF.match((prev.get("spans") or [prev["ref"]])[-1]).group(1)
+            ) <= 1:
+                warn.append(f"{b['ref']}: cont 接不上——与上块末页不相邻")
+            else:
+                prev["lines"] += b["lines"]
+                prev["open"] = b.get("open", False)
+                prev.setdefault("spans", [prev["ref"]]).append(b["ref"])
+                prev.setdefault("footnote_callouts", []).extend(
+                    b.get("footnote_callouts", [])
+                )
+                continue
+        elif prev is not None and prev.get("open") and prev["page"] != b["page"]:
+            warn.append(f"{prev['ref']}: 标了 open，但下一页首块没标 cont")
+        out.append(dict(b))
+    return out, warn
+
+
+def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list[dict]:
+    """h3 或目录认领的独立 h2/exhead 开卡；普通栏目仍留在原课。"""
+    lessons, pending = [], {"h1": None, "h2": None}
+    cur = None
+    heading_sources = []
+    enclosing_exercises = False
+    unnumbered_cards = [
+        card for card in (toc_cards or []) if _card_printed_number(card) is None
+    ]
+    for b in stream:
+        independent_section = None
+        if b["kind"] in ("h1", "h2"):
+            enclosing_exercises = False
+            pending[b["kind"]] = B.text_of(b)
+            if b["kind"] == "h1":
+                pending["h2"] = None
+                heading = B.text_of(b)
+                identity_heading = re.sub(
+                    r"\s+", "",
+                    heading[2:-2] if heading.startswith("**") and heading.endswith("**") else heading,
+                )
+                matches = [
+                    card for card in unnumbered_cards
+                    if card.get("kind") == "exercises"
+                    and card.get("page") == b.get("printed_page")
+                    and re.sub(
+                        r"\s+", "",
+                        card.get("source", {}).get("printedName") or card.get("title", ""),
+                    ) == identity_heading
+                ]
+                if len(matches) > 1:
+                    raise ValueError(f"{b['ref']}: 顶级实验/习题标题对应多个目录卡片")
+                independent_section = matches[0] if matches else None
+                enclosing_exercises = independent_section is not None
+            else:
+                # A TOC section without numbered topics is itself a card.
+                heading = B.text_of(b)
+                identity_heading = re.sub(
+                    r"\s+", "",
+                    heading[2:-2] if heading.startswith("**") and heading.endswith("**") else heading,
+                )
+                matches = [
+                    card for card in unnumbered_cards
+                    if card.get("kind") == "section"
+                    and card.get("page") == b.get("printed_page")
+                    and re.sub(
+                        r"\s+", "",
+                        card.get("source", {}).get("printedName") or card.get("title", ""),
+                    ) == identity_heading
+                ]
+                if len(matches) > 1:
+                    raise ValueError(f"{b['ref']}: 独立节标题对应多个目录卡片")
+                independent_section = matches[0] if matches else None
+            if independent_section is None:
+                continue
+        if b["kind"] == "h3" and enclosing_exercises:
+            cur["blocks"].append(b)
+            continue
+        independent_exhead = False
+        if b["kind"] == "exhead":
+            title = B.text_of(b)
+            identity_title = title[2:-2] if title.startswith("**") and title.endswith("**") else title
+            matches = [
+                card for card in unnumbered_cards
+                if card.get("page") == b.get("printed_page")
+                and re.sub(r"\s+", "", card.get("title", ""))
+                == re.sub(r"\s+", "", identity_title)
+            ]
+            if len(matches) > 1:
+                raise ValueError(f"{b['ref']}: 独立习题标题对应多个目录卡片")
+            independent_exhead = len(matches) == 1
+        if b["kind"] == "h3" or independent_exhead or independent_section is not None:
+            title = B.text_of(b)
+            # Whole-heading emphasis is presentation, not the printed identity.
+            identity_title = title[2:-2] if title.startswith("**") and title.endswith("**") else title
+            identity_title = re.sub(r"^\$(\d+)\$(?=\s*[.．、])", r"\1", identity_title)
+            m = None if independent_exhead or independent_section is not None else SEC_NUM.match(identity_title)
+            cur = {"chapter": pending["h1"], "section": pending["h2"],
+                   "number": m.group(1) if m else None,
+                   "title": (
+                       independent_section["title"] if independent_section is not None
+                       else m.group(2).strip() if m else identity_title
+                   ),
+                   "printed_title": title, "blocks": [],
+                   "start_page": b["page"], "start_printed": b.get("printed_page")}
+            lessons.append(cur)
+            heading_sources.append((cur, b))
+            if not independent_exhead:
+                continue
+        if b["kind"] == "foot":
+            continue
+        if b["kind"] == "p" and b.get("label") == "footnote":
+            marker = re.match(rf"^\s*([{FOOTNOTE_MARKERS}])", B.text_of(b))
+            if not marker:
+                raise ValueError(f"{b['ref']}: footnote 缺少可核对的印刷标记")
+            page_prefix = f"p{b['page']:04d}#"
+            owners = [
+                (lesson, index)
+                for lesson in lessons
+                for index, block in enumerate(lesson["blocks"])
+                if block["kind"] == "p"
+                and block.get("label") != "footnote"
+                and any(
+                    callout["marker"] == marker.group(1)
+                    and callout["ref"].startswith(page_prefix)
+                    for callout in block.get("footnote_callouts", [])
+                )
+            ]
+            owners.extend(
+                (lesson, -1)
+                for lesson, heading in heading_sources
+                if any(
+                    callout["marker"] == marker.group(1)
+                    and callout["ref"].startswith(page_prefix)
+                    for callout in heading.get("footnote_callouts", [])
+                )
+            )
+            if len(owners) != 1:
+                raise ValueError(
+                    f"{b['ref']}: footnote 标记需唯一对应本页正文，找到 {len(owners)} 个"
+                )
+            owner, index = owners[0]
+            owner["blocks"].insert(index + 1, b)
+            continue
+        if cur is None:                     # 小节标题之前的内容（承前页的残段）
+            cur = {"chapter": pending["h1"], "section": pending["h2"], "number": None,
+                   "title": "（承上页）", "printed_title": None, "blocks": [],
+                   "start_page": b["page"], "start_printed": b.get("printed_page")}
+            lessons.append(cur)
+        cur["blocks"].append(b)
+    return lessons
+
+
+def split_lesson(
+    lesson: dict,
+    exercise_numbering: str = "book",
+) -> tuple[list[dict], list[dict]]:
+    """先分题和课文候选；图的最终归属要等所有引用都看见后再决定。"""
+    prose, exercises, group = [], [], None
+    group_index = 0
+    unnumbered = 0
+    first_group_by_source: dict[str, str] = {}
+    for b in lesson["blocks"]:
+        if b["kind"] == "exhead":
+            group = B.text_of(b)
+            group_index += 1
+        elif b["kind"] == "ex":
+            source_number = b.get("label")
+            if source_number is None:
+                unnumbered += 1
+                number = f"q{unnumbered}"
+            else:
+                source_key = str(source_number)
+                group_id = f"g{group_index}"
+                first_group = first_group_by_source.setdefault(source_key, group_id)
+                number = (
+                    f"{group_id}-{_slug(source_key)}"
+                    if exercise_numbering == "lesson-group" and first_group != group_id
+                    else source_key
+                )
+            exercises.append({"number": number,
+                              "source_number": source_number, "group": group,
+                              "group_id": f"g{group_index}",
+                              "text": B.text_of(b, join=""),
+                              "lines": b["lines"], "pages": b.get("spans") or [b["ref"]],
+                              "figure_refs": [], "figures": []})
+        else:
+            prose.append(b)
+    return prose, exercises
+
+
+def can_reuse_exercises(existing: dict, rebuilt: dict) -> bool:
+    """Allow an old source file to omit identity fields added by newer assemblers."""
+    if not isinstance(existing, dict) or not isinstance(rebuilt, dict):
+        return False
+    old_items = existing.get("exercises")
+    new_items = rebuilt.get("exercises")
+    if not isinstance(old_items, list) or not isinstance(new_items, list):
+        return False
+    old_document = {key: value for key, value in existing.items() if key != "exercises"}
+    new_document = {key: value for key, value in rebuilt.items() if key != "exercises"}
+    if old_document != new_document or len(old_items) != len(new_items):
+        return False
+    for old_item, new_item in zip(old_items, new_items):
+        if not isinstance(old_item, dict) or not isinstance(new_item, dict):
+            return False
+        for field in OPTIONAL_EXERCISE_IDENTITY_FIELDS:
+            if field in old_item and old_item[field] != new_item.get(field):
+                return False
+        old_core = {
+            key: value
+            for key, value in old_item.items()
+            if key not in OPTIONAL_EXERCISE_IDENTITY_FIELDS
+        }
+        new_core = {
+            key: value
+            for key, value in new_item.items()
+            if key not in OPTIONAL_EXERCISE_IDENTITY_FIELDS
+        }
+        if old_core != new_core:
+            return False
+    return True
+
+
+def _block_position(ref: str) -> int | None:
+    match = BLOCKREF.match(ref)
+    if not match:
+        return None
+    return int(match.group(1)) * 10_000 + int(match.group(2))
+
+
+def _page_segments(pages: list[int] | set[int]) -> list[tuple[int, int]]:
+    """Collapse extracted pages into contiguous ranges.
+
+    A book may be produced chapter by chapter, so a gap between extracted page
+    ranges is not evidence of missing exercises or figures.
+    """
+    ordered = sorted(set(pages))
+    if not ordered:
+        return []
+    segments = []
+    start = end = ordered[0]
+    for page in ordered[1:]:
+        if page == end + 1:
+            end = page
+            continue
+        segments.append((start, end))
+        start = end = page
+    segments.append((start, end))
+    return segments
+
+
+def _figure_owner(figure: dict, exercises: list[dict]) -> dict:
+    """把共享练习图交给离原书图块最近的一题，只展示一次。"""
+    figure_position = _block_position(figure["ref"])
+
+    def distance(exercise: dict) -> tuple[int, int]:
+        positions = [
+            position
+            for ref in exercise.get("pages", [])
+            if (position := _block_position(ref)) is not None
+        ]
+        if figure_position is None or not positions:
+            return (sys.maxsize, exercises.index(exercise))
+        return (min(abs(figure_position - position) for position in positions),
+                exercises.index(exercise))
+
+    return min(exercises, key=distance)
+
+
+def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
+    """Promote rebuilt page figures without clearing the durable book library."""
+    page_root = work if work is not None else book
+    pngs = sorted(page_root.glob("pages/*/figures/*.png"))
+    seen = {}
+    for png in pngs:
+        if png.stem in seen:
+            raise ValueError(
+                f"图号 {png.stem} 在 {seen[png.stem]} 和 {png.parent.parent.name} "
+                "各出现一次，来源身份不唯一，不能覆盖")
+        seen[png.stem] = png.parent.parent.name
+    library = book / "figures"
+    library.mkdir(parents=True, exist_ok=True)
+    for png in pngs:
+        for source in (png, png.with_suffix(".svg")):
+            if source.exists():
+                shutil.copy2(source, library / source.name)
+
+
+def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
+    """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
+    errors, warn = [], []
+    fig_by_num, all_figs = {}, []
+    split_numbers = {
+        suffix[0]
+        for block in stream if block["kind"] == "fig"
+        if (suffix := B.figure_suffix(block.get("label")))
+    }
+    refs = lambda text: B.figure_refs(text, split_numbers)
+    seen_ids = {}
+    for b in stream:
+        if b["kind"] != "fig":
+            continue
+        all_figs.append(b)
+        if b["id"] in seen_ids:
+            errors.append(
+                f"{b['id']}: 来源身份重复于 {seen_ids[b['id']]} 和 {b['ref']}，"
+                "必须核对印刷标签，不能覆盖")
+        seen_ids[b["id"]] = b["ref"]
+        if B.figure_suffix(b.get("label")) and b["id"] != B.fig_id(b["label"], b["page"], 1):
+            errors.append(f"{b['ref']}: {b['id']} 不匹配明确的印刷标签 {b['label']}")
+        for n in refs(b.get("label") or ""):
+            fig_by_num.setdefault(n, []).append(b)
+
+    def check_refs(text: str, owner: str) -> list[str]:
+        keys = refs(text)
+        for key in dict.fromkeys(keys):
+            if key in split_numbers:
+                errors.append(f"{owner}: 图 {key} 已分为明确后缀，引用未指定后缀，归属不唯一")
+            elif (
+                key not in fig_by_num
+                and (match := re.fullmatch(r"(\d+)[A-Za-z\u0400-\u04ff]", key))
+                and match.group(1) in split_numbers
+            ):
+                errors.append(f"{owner}: 精确引用「图 {key}」没有对应来源图")
+        return keys
+
+    for lesson in lessons:
+        for block in lesson["prose"]:
+            if block["kind"] not in ("fig", "cap"):
+                check_refs(B.text_of(block), block["ref"])
+        for exercise in lesson["exercises"]:
+            check_refs(exercise["text"], f"第 {exercise['number']} 题")
+    if errors:
+        return errors, warn
+
+    prose_users: dict[str, set[int]] = {}
+    for index, lesson in enumerate(lessons):
+        for block in lesson["prose"]:
+            if block["kind"] not in ("fig", "cap"):
+                for number in refs(B.text_of(block)):
+                    prose_users.setdefault(number, set()).add(index)
+
+    # A figure printed before a new heading can belong to that next unit's prose.
+    for source_index, lesson in enumerate(lessons):
+        for figure in list(lesson["blocks"]):
+            if figure["kind"] != "fig" or figure.get("owner_exercise"):
+                continue
+            numbers = set(refs(figure.get("label") or ""))
+            users = set().union(*(prose_users.get(number, set()) for number in numbers))
+            if not users or source_index in users:
+                continue
+            if len(users) != 1:
+                errors.append(f"{figure['id']}: 跨小节正文归属不唯一，不能按位置猜测")
+                continue
+            target = lessons[next(iter(users))]
+            moving = [
+                block for block in lesson["blocks"]
+                if block is figure or (
+                    block["kind"] == "cap"
+                    and (caption_numbers := set(refs(
+                        " ".join(filter(None, (block.get("label"), B.text_of(block))))
+                    )))
+                    and caption_numbers <= numbers
+                )
+            ]
+            for collection in ("blocks", "prose"):
+                lesson[collection] = [
+                    block for block in lesson[collection]
+                    if not any(block is item for item in moving)
+                ]
+                insertion = next(
+                    (index for index, block in enumerate(target[collection])
+                     if block["kind"] not in ("fig", "cap")
+                     and numbers & set(refs(B.text_of(block)))),
+                    0,
+                )
+                target[collection][insertion:insertion] = moving
+
+    # Wrapped captions can fall beyond a heading even when their figure does not.
+    for source_index, lesson in enumerate(lessons):
+        for caption in list(lesson["blocks"]):
+            if caption["kind"] != "cap":
+                continue
+            numbers = set(refs(
+                " ".join(filter(None, (caption.get("label"), B.text_of(caption))))
+            ))
+            users = set().union(*(prose_users.get(number, set()) for number in numbers))
+            if len(users) != 1 or source_index in users:
+                continue
+            target = lessons[next(iter(users))]
+            figures = [
+                block for block in target["blocks"]
+                if block["kind"] == "fig"
+                and not block.get("owner_exercise")
+                and numbers <= set(refs(block.get("label") or ""))
+                and block.get("page") == caption.get("page")
+            ]
+            if len(figures) != 1:
+                continue
+            for collection in ("blocks", "prose"):
+                lesson[collection] = [
+                    block for block in lesson[collection] if block is not caption
+                ]
+                insertion = next(
+                    index for index, block in enumerate(target[collection])
+                    if block is figures[0]
+                ) + 1
+                target[collection].insert(insertion, caption)
+
+    referenced = set()
+    for lesson in lessons:
+        exercises_by_number: dict[str, list[dict]] = {}
+        exercises_by_source: dict[str, list[dict]] = {}
+        exercises_by_group_source: dict[str, list[dict]] = {}
+        for exercise in lesson["exercises"]:
+            exercises_by_number.setdefault(str(exercise["number"]), []).append(exercise)
+            source_number = _source_number(exercise)
+            if source_number is not None:
+                exercises_by_source.setdefault(source_number, []).append(exercise)
+                scoped_key = f"{exercise.get('group_id', 'g0')}-{_slug(source_number)}"
+                exercises_by_group_source.setdefault(scoped_key, []).append(exercise)
+        explicitly_owned = set()
+        for figure in (block for block in lesson["blocks"] if block["kind"] == "fig"):
+            owner_number = figure.get("owner_exercise")
+            if not owner_number:
+                continue
+            owner_key = str(owner_number)
+            source_matches = exercises_by_source.get(owner_key, [])
+            identity_matches = exercises_by_number.get(owner_key, [])
+            scoped_matches = exercises_by_group_source.get(owner_key, [])
+            if len(scoped_matches) == 1:
+                matches = scoped_matches
+            elif len(source_matches) > 1:
+                errors.append(
+                    f"{figure['id']} 的 owner-ex {owner_number} 在本小节跨栏目重复，"
+                    "必须写栏目限定标识（例如 g2-1）")
+                continue
+            else:
+                matches = identity_matches or source_matches
+            if len(matches) != 1:
+                errors.append(
+                    f"{figure['id']} 指定给第 {owner_number} 题，但本小节没有这道题")
+                continue
+            owner = matches[0]
+            explicitly_owned.add(figure["id"])
+            if figure["id"] not in owner["figure_refs"]:
+                owner["figure_refs"].append(figure["id"])
+            if figure["id"] not in {item["id"] for item in owner["figures"]}:
+                owner["figures"].append({
+                    "id": figure["id"],
+                    "label": figure.get("label"),
+                })
+
+        real_prose_refs = {
+            n
+            for block in lesson["prose"]
+            if block["kind"] not in ("fig", "cap")
+            for n in refs(B.text_of(block))
+        }
+        exercise_users: dict[str, list[dict]] = {}
+        for exercise in lesson["exercises"]:
+            for n in dict.fromkeys(refs(exercise["text"])):
+                referenced.add(n)
+                exercise_users.setdefault(n, []).append(exercise)
+                for figure in fig_by_num.get(n, []):
+                    if figure["id"] not in exercise["figure_refs"]:
+                        exercise["figure_refs"].append(figure["id"])
+                if n not in fig_by_num:
+                    warn.append(f"第 {exercise['number']} 题引用「图 {n}」，全书没有这张图")
+
+        for n, users in exercise_users.items():
+            for figure in fig_by_num.get(n, []):
+                owner = _figure_owner(figure, users)
+                if figure["id"] not in {item["id"] for item in owner["figures"]}:
+                    owner["figures"].append({"id": figure["id"], "label": figure.get("label")})
+
+        # cap 的「图 N」只是图题，不是正文引用。若图只被练习使用，图和图题都从
+        # prose 移出；若真正正文也提到它，则正文和练习各展示一次是有意行为。
+        exercise_refs = set(exercise_users)
+        kept_prose = []
+        for block in lesson["prose"]:
+            if block["kind"] == "fig" and block.get("id") in explicitly_owned:
+                continue
+            label_text = " ".join(filter(None, (block.get("label"), B.text_of(block))))
+            nums = set(refs(label_text))
+            exercise_only = (
+                block["kind"] in ("fig", "cap")
+                and nums
+                and nums <= exercise_refs
+                and not (nums & real_prose_refs)
+            )
+            if not exercise_only:
+                kept_prose.append(block)
+        lesson["prose"] = kept_prose
+
+        for b in lesson["prose"]:
+            if b["kind"] not in ("fig", "cap"):
+                referenced.update(refs(B.text_of(b)))
+        lesson["figures"] = [{"id": b["id"], "label": b.get("label"), "page": b["page"]}
+                             for b in lesson["blocks"] if b["kind"] == "fig"]
+
+    for f in all_figs:
+        nums = refs(f.get("label") or "")
+        if nums and not (set(nums) & referenced):
+            warn.append(f"{f['id']}（{f.get('label')}）全书没有任何正文引用它")
+    return errors, warn
+
+
+def _source_number(exercise: dict) -> str | None:
+    value = exercise.get("source_number", exercise.get("number"))
+    return str(value) if value is not None else None
+
+
+def _numeric_source_numbers(exercises: list[dict]) -> list[int]:
+    return [
+        int(number)
+        for exercise in exercises
+        if (number := _source_number(exercise)) is not None and number.isdigit()
+    ]
+
+
+def _audit_number_sequence(numbers: list[int], label: str) -> list[str]:
+    errors = []
+    ordered = sorted(numbers)
+    if len(ordered) != len(set(ordered)):
+        duplicates = sorted({number for number in ordered if ordered.count(number) > 1})
+        errors.append(f"{label}题号重复: {duplicates}")
+    gaps = [
+        number
+        for number in range(ordered[0], ordered[-1])
+        if number not in set(ordered)
+    ] if ordered else []
+    if gaps:
+        errors.append(f"{label}题号缺号: {gaps}（可能漏页或漏题）")
+    return errors
+
+
+def audit(
+    lessons: list[dict],
+    stream: list[dict],
+    profile_path: Path,
+    exercise_numbering: str = "book",
+) -> dict:
+    """对象级对账。页级像素对账管不到的东西，这里全能看见。"""
+    errors, warns = [], []
+    split_numbers = {
+        suffix[0]
+        for block in stream if block["kind"] == "fig"
+        if (suffix := B.figure_suffix(block.get("label")))
+    }
+    refs = lambda text: B.figure_refs(text, split_numbers)
+
+    if exercise_numbering not in {"book", "lesson", "lesson-group"}:
+        errors.append(f"未知 exercise numbering scope: {exercise_numbering!r}")
+    for lesson in lessons:
+        identifiers = [str(exercise["number"]) for exercise in lesson["exercises"]]
+        duplicated = sorted({
+            identifier
+            for identifier in identifiers
+            if identifiers.count(identifier) > 1
+        })
+        if duplicated:
+            errors.append(f"{lesson['title']}: 内部题目标识重复: {duplicated}")
+    if exercise_numbering == "lesson":
+        for lesson in lessons:
+            errors += _audit_number_sequence(
+                _numeric_source_numbers(lesson["exercises"]),
+                f"{lesson['title']}: ",
+            )
+    if exercise_numbering == "lesson-group":
+        for lesson in lessons:
+            groups: dict[str, list[dict]] = {}
+            for exercise in lesson["exercises"]:
+                groups.setdefault(exercise.get("group_id", "g0"), []).append(exercise)
+            for group_id, exercises in groups.items():
+                group = exercises[0].get("group") or "未命名栏目"
+                errors += _audit_number_sequence(
+                    _numeric_source_numbers(exercises),
+                    f"{lesson['title']}/{group}({group_id}): ",
+                )
+    nums = [
+        number
+        for lesson in lessons
+        for number in _numeric_source_numbers(lesson["exercises"])
+    ]
+    seq = sorted(nums)
+    if exercise_numbering == "book":
+        if len(seq) != len(set(seq)):
+            dup = sorted({n for n in seq if seq.count(n) > 1})
+            errors.append(f"题号重复: {dup}")
+        for first_page, last_page in _page_segments({b["page"] for b in stream}):
+            segment_nums = sorted(
+                int(number)
+                for lesson in lessons
+                for exercise in lesson["exercises"]
+                if (number := _source_number(exercise)) is not None
+                and number.isdigit()
+                and any(
+                    (position := _block_position(ref)) is not None
+                    and first_page <= position // 10_000 <= last_page
+                    for ref in exercise.get("pages", [])
+                )
+            )
+            gaps = [
+                n for n in range(segment_nums[0], segment_nums[-1])
+                if n not in set(segment_nums)
+            ] if segment_nums else []
+            if gaps:
+                errors.append(
+                    f"题号缺号（页段 {first_page}-{last_page}）: {gaps}（可能漏页或漏题）")
+
+    fignums = sorted({int(n) for b in stream if b["kind"] == "fig"
+                      for n in FIGREF.findall(b.get("label") or "")})
+    for first_page, last_page in _page_segments({b["page"] for b in stream}):
+        segment_fignums = sorted({
+            int(n)
+            for b in stream
+            if b["kind"] == "fig" and first_page <= b["page"] <= last_page
+            for n in FIGREF.findall(b.get("label") or "")
+        })
+        fgaps = [
+            n for n in range(segment_fignums[0], segment_fignums[-1])
+            if n not in set(segment_fignums)
+        ] if segment_fignums else []
+        if fgaps:
+            errors.append(
+                f"图号缺号（页段 {first_page}-{last_page}）: {fgaps}（可能漏裁）")
+
+    for lesson in lessons:
+        exercise_figure_ids = [
+            figure["id"]
+            for exercise in lesson["exercises"]
+            for figure in exercise.get("figures", [])
+        ]
+        duplicated = sorted({
+            figure_id
+            for figure_id in exercise_figure_ids
+            if exercise_figure_ids.count(figure_id) > 1
+        })
+        if duplicated:
+            errors.append(f"{lesson['title']}: 练习区重复展示插图 {duplicated}")
+
+        real_prose_refs = {
+            n
+            for block in lesson["prose"]
+            if block["kind"] not in ("fig", "cap")
+            for n in refs(B.text_of(block))
+        }
+        exercise_refs = {
+            n
+            for exercise in lesson["exercises"]
+            for n in refs(exercise["text"])
+        }
+        leaked = []
+        for block in lesson["prose"]:
+            if block["kind"] not in ("fig", "cap"):
+                continue
+            label_text = " ".join(filter(None, (block.get("label"), B.text_of(block))))
+            nums = set(refs(label_text))
+            if nums and nums <= exercise_refs and not (nums & real_prose_refs):
+                leaked.append(block.get("id") or block.get("label") or block["ref"])
+        if leaked:
+            errors.append(f"{lesson['title']}: 练习专用插图泄漏进正文 {leaked}")
+
+    # 拼完整之后再校验公式——跨页残片在 cap1 是配不平的，义务推到了这里
+    items = []
+    for li, l in enumerate(lessons):
+        for b in l["prose"]:
+            items.append({"id": f"{l['title']}/{b['ref']}", "text": B.text_of(b)})
+        for e in l["exercises"]:
+            items.append({"id": f"{l['title']}/第{e['number']}题", "text": e["text"]})
+    m_err, m_warn = mathcheck.collect_and_check(items, lambda x: [("text", x["text"])])
+    errors += m_err
+
+    open_tail = [b["ref"] for b in stream if b.get("open")]
+    if open_tail:
+        warns.append(f"仍有 {len(open_tail)} 个块标着 open 没接上（书还没抽完是正常的）: "
+                     + ", ".join(open_tail[:5]))
+    exercise_count = sum(len(lesson["exercises"]) for lesson in lessons)
+    return {"errors": errors, "warnings": warns,
+            "exercise_numbering": exercise_numbering, "exercise_range":
+            [seq[0], seq[-1]] if seq else None, "exercise_count": exercise_count,
+            "figure_numbers": fignums, "katex_warnings": m_warn}
+
+
+def _toc_cards(toc: dict) -> list[dict]:
+    """展开目录中所有可发布卡片，包括无印刷编号的练习卡。"""
+    cards = []
+    for content in toc.get("contents", []):
+        if content.get("kind") != "chapter":
+            cards.append(content)
+        for section in content.get("lessons", []):
+            topics = section.get("topics") or []
+            has_numbered_topics = any(
+                topic.get("printedNumber") is not None
+                for topic in topics
+            )
+            if not topics or not has_numbered_topics:
+                cards.append(section)
+            cards.extend(topics)
+    return cards
+
+
+def _card_printed_number(card: dict) -> object:
+    if card.get("printedNumber") is not None:
+        return card["printedNumber"]
+    source = card.get("source", {})
+    if source.get("printedSection") is not None:
+        return source["printedSection"]
+    named = SEC_NUM.fullmatch(source.get("printedName", "").strip())
+    return named.group(1) if named else None
+
+
+def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
+              extracted_printed_pages: set[int] | None = None) -> list[str]:
+    """TOC 是外部真源，做两件事：核对覆盖，并把小节钉到目录的**卡片 id** 上。
+
+    app 的目录就是这份 TOC，一张「卡片」正是书里的一个小节（`math5-c1-s1-n1` = 子集），
+    可用性按 id 查库。所以这里认领 id 不是锦上添花——不认领，抽出来的课就没有地址。
+    印刷号和起始印刷页都对得上才算认领；printedName 还须标题严格一致，不猜。
+    """
+    toc = json.loads(toc_path.read_text(encoding="utf-8"))
+    cards = _toc_cards(toc)
+    warn = []
+    valid_cards = []
+    for card in cards:
+        source = card.get("source", {})
+        named = SEC_NUM.fullmatch(source.get("printedName", "").strip())
+        if named and (
+            named.group(2).strip() != card.get("title")
+            or any(
+                number is not None and str(number) != named.group(1)
+                for number in (card.get("printedNumber"), source.get("printedSection"))
+            )
+        ):
+            warn.append(f"TOC 卡片 {card['id']} 的 printedName 与编号或标题不一致，未认领")
+            continue
+        valid_cards.append(card)
+    numbered_cards = [
+        card for card in valid_cards if _card_printed_number(card) is not None
+    ]
+    unnumbered_cards = [
+        card for card in valid_cards if _card_printed_number(card) is None
+    ]
+    for l in lessons:
+        if l["number"]:
+            by_num = [
+                card
+                for card in numbered_cards
+                if str(_card_printed_number(card)) == l["number"]
+            ]
+            hit = [
+                t for t in by_num
+                if t["page"] == l["start_printed"]
+                and (
+                    not SEC_NUM.fullmatch(t.get("source", {}).get("printedName", "").strip())
+                    or t["title"] == l["title"]
+                )
+            ]
+        else:
+            by_num = []
+            by_page = [
+                card for card in unnumbered_cards
+                if card["page"] == l["start_printed"]
+            ]
+            by_title = [card for card in by_page if card.get("title") == l["title"]]
+            hit = by_title or by_page
+        if len(hit) == 1:
+            l["card_id"] = hit[0]["id"]
+            l["toc_title"] = hit[0]["title"]
+        elif len(hit) > 1:
+            warn.append(
+                f"小节「{l['number'] or ''} {l['title']}」的印刷页 {l['start_printed']} "
+                f"对应多个目录卡片 {[card['id'] for card in hit]}，未认领卡片 id")
+        elif by_num:
+            warn.append(
+                f"小节「{l['number']}. {l['title']}」与 TOC 页码/印刷名称不一致，"
+                f"目录是 {[(t['page'], t['title']) for t in by_num]}，"
+                f"抽出来的是 {l['start_printed']}，未认领卡片 id")
+        elif l["number"]:
+            warn.append(f"小节「{l['number']}. {l['title']}」在 TOC 里找不到对应条目")
+
+    covered = {l.get("card_id") for l in lessons if l.get("card_id")}
+    pages = extracted_printed_pages or {
+        l["start_printed"] for l in lessons if l["start_printed"]
+    }
+    segments = _page_segments(pages)
+    if segments:
+        missing = [
+            (
+                f"{card['printedNumber']}. {card['title']}（印刷页 {card['page']}）"
+                if card.get("printedNumber") is not None
+                else f"{card['title']}（印刷页 {card['page']}）"
+            )
+            for card in cards
+            if any(lo <= card["page"] <= hi for lo, hi in segments)
+            and card["id"] not in covered
+        ]
+        if missing:
+            warn.append(f"TOC 里这些小节落在已抽范围内却没装订出来: {'; '.join(missing)}")
+    return warn
+
+
+def run(
+    book: Path,
+    toc: Path | None,
+    profile: Path,
+    strict: bool = True,
+    work: Path | None = None,
+    exercise_numbering: str = "book",
+) -> int:
+    stream = load_stream(book)
+    if not stream:
+        print(f"ERROR: {book}/pages 下没有 page.json", file=sys.stderr)
+        return 2
+
+    merged, warn_merge = merge_across_pages(stream)
+    toc_cards = _toc_cards(json.loads(toc.read_text(encoding="utf-8"))) if toc else []
+    lessons = cut_lessons(merged, toc_cards)
+    for l in lessons:
+        l["prose"], l["exercises"] = split_lesson(l, exercise_numbering)
+    figure_errors, warn_fig = claim_figures(lessons, merged)
+    report = audit(lessons, merged, profile, exercise_numbering)
+    report["errors"] = figure_errors + report["errors"]
+    report["warnings"] = warn_merge + warn_fig + report["warnings"]
+    if toc:
+        report["warnings"] += check_toc(
+            lessons,
+            toc,
+            book.name,
+            {b["printed_page"] for b in stream if b.get("printed_page") is not None},
+        )
+    lesson_ids = [
+        lesson.get("card_id") or f"{lesson['number'] or f'x{index}'}-{_slug(lesson['title'])}"
+        for index, lesson in enumerate(lessons, 1)
+    ]
+    if len(lesson_ids) != len(set(lesson_ids)):
+        print("ERROR: 重复课程 id，拒绝覆盖已有装订产物", file=sys.stderr)
+        return 1
+
+    # 全书图库：.tmp 页目录里的裁图按原书图号提升，重号即报。
+    # 只覆盖本次重建的图，不清空已有图库；这样删掉 .tmp 后重新 assemble 也不会丢图。
+    if figure_errors:
+        for error in figure_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+    try:
+        promote_figures(book, work, report["warnings"])
+    except ValueError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+
+    out = book / "lessons"
+    existing_exercises = {}
+    if out.exists():
+        for path in out.glob("*/exercises.json"):
+            data = path.read_bytes()
+            existing_exercises[path.parent.name] = (json.loads(data), data)
+    answer_assets = {
+        path.relative_to(out): path.read_bytes()
+        for path in out.glob("*/answer-keys*.json")
+    } if out.exists() else {}
+    shutil.rmtree(out, ignore_errors=True)
+    index = []
+    for i, l in enumerate(lessons, 1):
+        lid = l.get("card_id") or f"{l['number'] or f'x{i}'}-{_slug(l['title'])}"
+        d = out / lid
+        d.mkdir(parents=True, exist_ok=True)
+        head = " · ".join(x for x in (l["chapter"], l["section"]) if x)
+        md = [f"# {l['printed_title'] or l['title']}", ""]
+        if head:
+            md += [f"> {head}", ""]
+        for b in l["prose"]:
+            if b["kind"] == "fig":
+                md += [f"![{b.get('label') or ''}](../../figures/{b['id']}.svg)", ""]
+            elif b["kind"] == "cap":
+                md += [f"*{B.text_of(b)}*", ""]
+            else:
+                md += [B.text_of(b), ""]
+        (d / "lesson.md").write_text("\n".join(md).rstrip() + "\n", encoding="utf-8")
+        exercises_document = {
+            "lesson": lid,
+            "count": len(l["exercises"]),
+            "exercises": l["exercises"],
+        }
+        previous = existing_exercises.get(lid)
+        if previous and can_reuse_exercises(previous[0], exercises_document):
+            (d / "exercises.json").write_bytes(previous[1])
+        else:
+            (d / "exercises.json").write_text(
+                json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        (d / "lesson.json").write_text(json.dumps(
+            {"id": lid, "card_id": l.get("card_id"),
+             "chapter": l["chapter"], "section": l["section"],
+             "number": l["number"], "title": l["title"],
+             "printed_title": l["printed_title"], "start_page": l["start_page"],
+             "start_printed": l["start_printed"],
+             "figures": l["figures"], "exercise_count": len(l["exercises"]),
+             "prose": [{"kind": b["kind"], "text": B.text_of(b),
+                        "id": b.get("id"), "label": b.get("label"),
+                        "printed_page": b.get("printed_page"),
+                        "source_refs": b.get("spans") or [b["ref"]]}
+                       for b in l["prose"]]},
+            ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        index.append({"id": lid, "card_id": l.get("card_id"),
+                      "title": l["title"], "number": l["number"],
+                      "start_printed": l["start_printed"],
+                      "prose_blocks": len(l["prose"]),
+                      "exercises": len(l["exercises"]), "figures": len(l["figures"])})
+
+    for relative, data in answer_assets.items():
+        target = out / relative
+        if target.parent.exists():
+            target.write_bytes(data)
+
+    (book / "book.json").write_text(json.dumps(
+        {"book": book.name, "pages": len({b["page"] for b in stream}),
+         "exercise_numbering": exercise_numbering,
+         "lessons": index, "audit": report}, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8")
+
+    print(f"[assemble] {book.name}: {len({b['page'] for b in stream})} 页 → "
+          f"{len(lessons)} 个小节, {report['exercise_count']} 道题, "
+          f"{len(report['figure_numbers'])} 张编号插图")
+    for it in index:
+        print(f"    {it['id']:<24} 印刷页 {it['start_printed'] or '?':>3}  "
+              f"正文 {it['prose_blocks']:>2} 块  题 {it['exercises']:>2} 道  "
+              f"图 {it['figures']} 张")
+    for w in report["warnings"]:
+        print(f"  ⚠ {w}")
+    if report["errors"]:
+        print(f"  ✗ 失败 {len(report['errors'])} 项:")
+        for e in report["errors"]:
+            print(f"    - {e}")
+        return 1 if strict else 0
+    numbering_label = {
+        "book": "全书题号",
+        "lesson": "课内题号",
+        "lesson-group": "课内分栏目题号",
+    }.get(exercise_numbering, "题号")
+    print(f"  ✓ 通过 {numbering_label}连续 + 图号连续 + 引用齐全 + 公式")
+    return 0

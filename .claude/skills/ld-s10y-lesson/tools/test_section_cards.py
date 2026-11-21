@@ -1,5 +1,8 @@
 import copy
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 import assemble
 
@@ -113,6 +116,63 @@ class SectionCardTests(unittest.TestCase):
         self.assertEqual(lessons[0]["title"], "Sound")
         self.assertEqual(lessons[1]["title"], "Exercises")
         self.assertEqual([item["kind"] for item in lessons[1]["blocks"]], ["exhead", "ex"])
+
+    def test_top_level_exercises_keep_experiment_headings_inside_one_card(self):
+        card = {"id": "laboratory", "kind": "exercises", "title": "Laboratory", "page": 300}
+        stream = [
+            block("h1", "Laboratory"),
+            block("h3", "I. Pendulum", index=2),
+            block("p", "1. Measure.", index=3),
+            block("h3", "II. Reflection", 311, 301, 1),
+            block("p", "1. Observe.", 311, 301, 2),
+            block("h1", "Next chapter", 312, 302, 1),
+            block("h3", "119. Atoms", 312, 302, 2),
+            block("p", "Scattering.", 312, 302, 3),
+        ]
+        original = copy.deepcopy(stream)
+        lessons = assemble.cut_lessons(stream, [card])
+        self.assertEqual([item["title"] for item in lessons], ["Laboratory", "Atoms"])
+        self.assertEqual(
+            [item["kind"] for item in lessons[0]["blocks"]], ["h3", "p", "h3", "p"],
+        )
+        self.assertEqual(lessons[0]["start_printed"], 300)
+        self.assertEqual(stream, original)
+
+    def test_unclaimed_top_level_heading_keeps_existing_topic_boundaries(self):
+        for card in [
+            {"id": "lab", "kind": "exercises", "title": "Other", "page": 300},
+            {"id": "lab", "kind": "exercises", "title": "Laboratory", "page": 301},
+            section("Laboratory"),
+        ]:
+            with self.subTest(card=card):
+                lessons = assemble.cut_lessons(
+                    [block("h1", "Laboratory"), block("h3", "I. One"),
+                     block("p", "Body."), block("h3", "II. Two")],
+                    [card],
+                )
+                self.assertEqual(len(lessons), 2)
+
+    def test_duplicate_course_ids_fail_before_existing_outputs_are_removed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            page = root / "pages/0310/page.json"
+            page.parent.mkdir(parents=True)
+            page.write_text(json.dumps({
+                "meta": {"page": 310, "printed_page": 300},
+                "blocks": [block("h3", "One"), block("h3", "Two")],
+            }))
+            toc = root / "toc.json"
+            toc.write_text(json.dumps({"contents": [{
+                "kind": "chapter", "lessons": [
+                    {"id": "same", "kind": "exercises", "title": "Set", "page": 300},
+                ],
+            }]}))
+            retained = root / "lessons/existing/lesson.json"
+            retained.parent.mkdir(parents=True)
+            retained.write_text("existing")
+            result = assemble.run(root, toc, root / "unused-profile.json")
+            self.assertEqual(result, 1)
+            self.assertEqual(retained.read_text(), "existing")
 
 
 if __name__ == "__main__":

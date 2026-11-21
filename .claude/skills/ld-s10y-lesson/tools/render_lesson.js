@@ -59,6 +59,7 @@ const escProseText = (text) => {
 };
 // 原书用黑体排定义句，转写时记成 **…**，这里还原成 <strong>
 const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+const emphasis = (h) => h.replace(/(?<![\\*])\*(?=\S)([^*\n]+?)(?<=\S)\*(?!\*)/g, "<em>$1</em>");
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs;
 // 公式后面紧跟的标点必须与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/;
@@ -72,7 +73,7 @@ function renderInline(text, renderText) {
     const unit = !m[1] && /^\^(?:\d|\{\d+\})/.test(tex)
       ? (preceding.match(/(?:千米|分米|厘米|毫米|微米|纳米|米)$/) || [""])[0]
       : "";
-    out += renderText(preceding.slice(0, preceding.length - unit.length));
+    out += emphasis(renderText(preceding.slice(0, preceding.length - unit.length)));
     let html;
     try {
       html = katex.renderToString(tex, { displayMode: !!m[1], throwOnError: false });
@@ -82,7 +83,7 @@ function renderInline(text, renderText) {
     last += t.length;
     out += `<span class="nb">${renderText(unit)}${html}${esc(t)}</span>`;
   }
-  return strong(out + renderText(text.slice(last)));
+  return strong(out + emphasis(renderText(text.slice(last))));
 }
 
 const inline = (text) => renderInline(text, escText);

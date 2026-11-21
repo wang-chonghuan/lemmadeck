@@ -101,15 +101,35 @@ def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
     heading_sources = []
+    enclosing_exercises = False
     unnumbered_cards = [
         card for card in (toc_cards or []) if _card_printed_number(card) is None
     ]
     for b in stream:
         independent_section = None
         if b["kind"] in ("h1", "h2"):
+            enclosing_exercises = False
             pending[b["kind"]] = B.text_of(b)
             if b["kind"] == "h1":
                 pending["h2"] = None
+                heading = B.text_of(b)
+                identity_heading = re.sub(
+                    r"\s+", "",
+                    heading[2:-2] if heading.startswith("**") and heading.endswith("**") else heading,
+                )
+                matches = [
+                    card for card in unnumbered_cards
+                    if card.get("kind") == "exercises"
+                    and card.get("page") == b.get("printed_page")
+                    and re.sub(
+                        r"\s+", "",
+                        card.get("source", {}).get("printedName") or card.get("title", ""),
+                    ) == identity_heading
+                ]
+                if len(matches) > 1:
+                    raise ValueError(f"{b['ref']}: 顶级实验/习题标题对应多个目录卡片")
+                independent_section = matches[0] if matches else None
+                enclosing_exercises = independent_section is not None
             else:
                 # A TOC section without numbered topics is itself a card.
                 heading = B.text_of(b)
@@ -131,6 +151,9 @@ def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list
                 independent_section = matches[0] if matches else None
             if independent_section is None:
                 continue
+        if b["kind"] == "h3" and enclosing_exercises:
+            cur["blocks"].append(b)
+            continue
         independent_exhead = False
         if b["kind"] == "exhead":
             title = B.text_of(b)
@@ -148,6 +171,7 @@ def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list
             title = B.text_of(b)
             # Whole-heading emphasis is presentation, not the printed identity.
             identity_title = title[2:-2] if title.startswith("**") and title.endswith("**") else title
+            identity_title = re.sub(r"^\$(\d+)\$(?=\s*[.．、])", r"\1", identity_title)
             m = None if independent_exhead or independent_section is not None else SEC_NUM.match(identity_title)
             cur = {"chapter": pending["h1"], "section": pending["h2"],
                    "number": m.group(1) if m else None,
@@ -885,6 +909,13 @@ def run(
             book.name,
             {b["printed_page"] for b in stream if b.get("printed_page") is not None},
         )
+    lesson_ids = [
+        lesson.get("card_id") or f"{lesson['number'] or f'x{index}'}-{_slug(lesson['title'])}"
+        for index, lesson in enumerate(lessons, 1)
+    ]
+    if len(lesson_ids) != len(set(lesson_ids)):
+        print("ERROR: 重复课程 id，拒绝覆盖已有装订产物", file=sys.stderr)
+        return 1
 
     # 全书图库：.tmp 页目录里的裁图按原书图号提升，重号即报。
     # 只覆盖本次重建的图，不清空已有图库；这样删掉 .tmp 后重新 assemble 也不会丢图。

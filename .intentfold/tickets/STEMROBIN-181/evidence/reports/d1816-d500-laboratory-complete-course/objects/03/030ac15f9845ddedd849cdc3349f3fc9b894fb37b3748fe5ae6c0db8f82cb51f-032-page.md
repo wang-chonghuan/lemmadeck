@@ -1,0 +1,319 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 404,
+  "printed_page": 394,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 404
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "2edc2c2a96ec187c727c9daec965a879bbd44d9a983e2c9acd406823714178c0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "printed_lines": 23,
+  "figures": [
+    {
+      "id": "fig-278",
+      "label": "图 278",
+      "box": [
+        908,
+        259,
+        262,
+        585
+      ]
+    }
+  ],
+  "notes": [
+    "D381 FIRST SOURCE AUTHOR，离线可写草稿。逐页原图独立清单在本文件创建之前冻结；未finalize、未审查、未装订、未批准来源。",
+    "22行正文/标题加1行页码；图278图题与第三实验第10步末行同排，单独cap samerow，不另加一条印刷行。图框仅为粗框，机器后续处理精确像素。",
+    "页首是第三实验第6步，承接传入0403文字的第5步。不同完整步骤不是句级续文，不加p cont。第9步的居中公式独占一条印刷行，原式后无句点。",
+    "图278及其图题由0403第三实验第5步的唯一引用和本页实见玻璃折射图认领到第三实验；不能按位置归到下方第四实验。图中A/B/C、上角a/α形、下角β形、线段和未标名小圆墨点见冻结清单。",
+    "第三实验第10步在新标题四之前闭合。第四实验第1—6步完整；下一张已观察原页0405以第五实验新标题开始，第四实验对象据此闭合，无跨页未完句。",
+    "箭头虚象的象、后续成像/实像的像、挂、挪及所有器材措辞均按印刷保留，不以预期科学语言改字。页码两侧圆点保留。"
+  ],
+  "printed_paragraphs": [
+    {
+      "block": "p0404#1",
+      "source_rows": [
+        1,
+        1
+      ],
+      "experiment": "三",
+      "step": 6,
+      "incoming_owner_heading": "p0403#9",
+      "sentence_cont": false
+    },
+    {
+      "block": "p0404#2",
+      "source_rows": [
+        2,
+        3
+      ],
+      "experiment": "三",
+      "step": 7
+    },
+    {
+      "block": "p0404#3",
+      "source_rows": [
+        4,
+        5
+      ],
+      "experiment": "三",
+      "step": 8
+    },
+    {
+      "block": "p0404#4",
+      "source_rows": [
+        6,
+        7
+      ],
+      "experiment": "三",
+      "step": 9,
+      "formula_row": 7
+    },
+    {
+      "block": "p0404#5",
+      "source_rows": [
+        8,
+        9
+      ],
+      "experiment": "三",
+      "step": 10,
+      "procedure_closed_before": "p0404#8"
+    },
+    {
+      "block": "p0404#6",
+      "kind": "fig",
+      "experiment": "三",
+      "figure": "fig-278"
+    },
+    {
+      "block": "p0404#7",
+      "source_rows": [
+        9,
+        9
+      ],
+      "kind": "cap",
+      "experiment": "三",
+      "samerow": true,
+      "shares_with": "p0404#5"
+    },
+    {
+      "block": "p0404#8",
+      "source_rows": [
+        10,
+        10
+      ],
+      "kind": "h3",
+      "experiment": "四"
+    },
+    {
+      "block": "p0404#9",
+      "source_rows": [
+        11,
+        11
+      ],
+      "role": "materials-label"
+    },
+    {
+      "block": "p0404#10",
+      "source_rows": [
+        12,
+        12
+      ],
+      "role": "materials"
+    },
+    {
+      "block": "p0404#11",
+      "source_rows": [
+        13,
+        13
+      ],
+      "role": "steps-label"
+    },
+    {
+      "block": "p0404#12",
+      "source_rows": [
+        14,
+        15
+      ],
+      "experiment": "四",
+      "step": 1
+    },
+    {
+      "block": "p0404#13",
+      "source_rows": [
+        16,
+        16
+      ],
+      "experiment": "四",
+      "step": 2
+    },
+    {
+      "block": "p0404#14",
+      "source_rows": [
+        17,
+        18
+      ],
+      "experiment": "四",
+      "step": 3
+    },
+    {
+      "block": "p0404#15",
+      "source_rows": [
+        19,
+        20
+      ],
+      "experiment": "四",
+      "step": 4
+    },
+    {
+      "block": "p0404#16",
+      "source_rows": [
+        21,
+        21
+      ],
+      "experiment": "四",
+      "step": 5
+    },
+    {
+      "block": "p0404#17",
+      "source_rows": [
+        22,
+        22
+      ],
+      "experiment": "四",
+      "step": 6,
+      "procedure_closed_by": "p0405#1"
+    },
+    {
+      "block": "p0404#18",
+      "source_rows": [
+        23,
+        23
+      ],
+      "kind": "footer"
+    }
+  ],
+  "printed_emphasis": [
+    {
+      "block": "p0404#9",
+      "source_rows": [
+        11,
+        11
+      ],
+      "style": "bold",
+      "spans": [
+        "仪器和材料："
+      ]
+    },
+    {
+      "block": "p0404#11",
+      "source_rows": [
+        13,
+        13
+      ],
+      "style": "bold",
+      "spans": [
+        "实验步骤："
+      ]
+    },
+    {
+      "blocks": [
+        "p0404#3",
+        "p0404#4"
+      ],
+      "style": "italic mathematical variables; upright sin",
+      "spans": [
+        "α",
+        "β",
+        "n",
+        "sin"
+      ]
+    }
+  ],
+  "archival_uncertainty": [
+    {
+      "id": "fig278-typeface-script",
+      "reason": "图中A/B/C及上角a/α形的原字体和原码点不能由像素证明；标签形状与原图像素完整登记，不是缺失点名、公式或实验条件。正文可读α/β照式保留。",
+      "instructional_hold": false
+    }
+  ],
+  "holds": [],
+  "errata": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+6. 切断电路，取下玻璃板.
+
+<!-- p -->
+7. 作入射线和折射线，并在
+入射点上作玻璃板的垂直线.
+
+<!-- p -->
+8. 用量角器测量出入射角 $\alpha$
+和折射角 $\beta$.
+
+<!-- p -->
+9. 根据公式计算折射率
+$n=\frac{\sin\alpha}{\sin\beta}$
+
+<!-- p -->
+10. 在由其他角度入射时重复
+实验并比较结果.
+
+<!-- fig 图 278 box 908,259,262,585 -->
+![图 278](figures/fig-278.png)
+
+<!-- cap 图 278 samerow -->
+图 $278$
+
+<!-- h3 -->
+四、利用凹面镜获得图像
+
+<!-- p -->
+**仪器和材料：**
+
+<!-- p -->
+凹面镜，画有箭头的纸条.
+
+<!-- p -->
+**实验步骤：**
+
+<!-- p -->
+1. 把纸条紧靠在镜子上，渐渐地把纸条远离镜面，观察
+箭头虚象大小的变化.
+
+<!-- p -->
+2. 作出上述情况的成像图.
+
+<!-- p -->
+3. 把镜子移到一臂远的距离处，并使眼睛处于镜子的主
+光轴上.
+
+<!-- p -->
+4. 闭上一只眼，把纸条挂在镜子的主光轴上方，可以看
+到倒立的实像.
+
+<!-- p -->
+5. 沿着光轴挪动纸条，观察像的大小的变化.
+
+<!-- p -->
+6. 画出物体缩小的、放大的和相等的实像.
+
+<!-- foot -->
+• $394$ •
