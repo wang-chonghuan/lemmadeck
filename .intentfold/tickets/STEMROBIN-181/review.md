@@ -93,3 +93,7 @@ D566–D568：419 首次候选、失败 audit 和 RAW 已保留在 `pages/0419/a
 [受影响绑定检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d512-review-preparation/affected-bindings-check.json) · [原检查回执与失败输出](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d512-review-preparation/review-package.json)
 
 正式 handoff 未完成，全部 AC 未通过。既有有效分支、内容、独立审查、费用及备份均保留；本轮未开启新工人、未重跑内容或显示审查，未发消息给监督或同伴。
+
+D595：N23 四题中英只读标准答案（每语种 4 份，均不判分）、四题选择题（每语种 16 选项）通过首次独立实质审查，两个官方选择题校验退出 0；答案原生收口每语种 auto=0、ungraded=4。复用 D585/D586 的正文与 fig36 PASS，不重审；16 个双语桌面/手机离线视图及两组各 8 张截图目视通过。完整课程已备齐，尚待本批实际 push；原书字母身份、其它科学／图片 HOLD 保留。无共享 DB、输入交互、付费、合并、部署或正式 handoff。
+
+[本批完整课程与证据](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d595-n23-complete-course/batch-ready.json)
