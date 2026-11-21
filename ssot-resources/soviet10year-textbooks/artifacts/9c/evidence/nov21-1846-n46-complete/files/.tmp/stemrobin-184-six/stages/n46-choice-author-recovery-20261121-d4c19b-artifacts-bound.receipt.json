@@ -1,0 +1,27 @@
+{
+  "stage": "n46-choice-author-recovery-20261121-d4c19b-artifacts-bound",
+  "command": "node",
+  "args": [
+    "--input-type=module",
+    "-e",
+    "import fs from \"node:fs\"; import crypto from \"node:crypto\"; import assert from \"node:assert/strict\"; const root=\"/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck\"; assert.equal(process.cwd(),root); const out=root+\"/.tmp/stemrobin-184-six/n46-choices-recovered\"; const seed=JSON.parse(fs.readFileSync(out+\"/seed.json\",\"utf8\")); const draft=JSON.parse(fs.readFileSync(out+\"/draft.json\",\"utf8\")); const view=JSON.parse(fs.readFileSync(out+\"/view-only.json\",\"utf8\")); assert.deepEqual(view,draft.questions.map(q=>({id:q.id,view:q.view}))); const bind=p=>{const b=fs.readFileSync(p);return {path:p,bytes:b.length,sha256:crypto.createHash(\"sha256\").update(b).digest(\"hex\")};}; const sources=seed.trace.map(t=>bind(root+\"/\"+t.path)); for(let i=0;i<sources.length;i++)assert.equal(sources[i].sha256,seed.trace[i].sha256); console.log(JSON.stringify({observedAt:new Date().toISOString(),viewOnlyExactProjection:true,semanticReviewPerformed:false,files:[\"seed.json\",\"draft.json\",\"source-solutions.md\",\"view-only.json\"].map(n=>bind(out+\"/\"+n)),sourceSnapshots:sources,counts:{seeds:seed.exercises.length,concepts:seed.concepts.length,questions:draft.questions.length,single:draft.questions.filter(q=>q.view.mode===\"single\").length,multiple:draft.questions.filter(q=>q.view.mode===\"multiple\").length,options:draft.questions.reduce((n,q)=>n+q.view.options.length,0),sourceFigures:seed.figures.length,newFigures:draft.new_figures.length}},null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "started": "2026-11-21T04:12:48.190Z",
+  "ended": "2026-11-21T04:12:48.225Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "outputs": {
+    "stdout": {
+      "path": ".tmp/stemrobin-184-six/stages/n46-choice-author-recovery-20261121-d4c19b-artifacts-bound.stdout",
+      "bytes": 2503,
+      "sha256": "e93cbac48a6a2ea3e531ad1275aa7bf98b54dc5f070ea041d4b0eb7c2dca883f"
+    },
+    "stderr": {
+      "path": ".tmp/stemrobin-184-six/stages/n46-choice-author-recovery-20261121-d4c19b-artifacts-bound.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

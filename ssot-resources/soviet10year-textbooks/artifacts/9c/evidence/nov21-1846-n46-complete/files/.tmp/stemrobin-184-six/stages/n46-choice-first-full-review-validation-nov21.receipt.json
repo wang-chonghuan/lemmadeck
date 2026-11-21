@@ -1,0 +1,27 @@
+{
+  "stage": "n46-choice-first-full-review-validation-nov21",
+  "command": "python3",
+  "args": [
+    "-B",
+    "-c",
+    "import hashlib,json,pathlib,sys; r=pathlib.Path.cwd(); assert str(r)==\"/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck\"; sys.path.insert(0,str(r/\".agents/skills/ld-s10y-choice/scripts\")); import validate as v; o=r/\".tmp/stemrobin-184-six/n46-choice-independent\"; dp=r/\".tmp/stemrobin-184-six/n46-choices-recovered/draft.json\"; raw=dp.read_bytes(); assert (len(raw),hashlib.sha256(raw).hexdigest())==(24374,\"5113bf73ae9f52e5b3311dc828302bd9977046b551d2d483db70cf9acd50dcef\"); seed=v.load_json(o/\"stage1-source.json\")[\"seed_snapshot\"]; draft=v.load_json(dp); review=v.load_json(o/\"review.json\"); assert v.digest(seed)==\"edc4b88cfae718748f1383978dae4d60cd646a19fb40e34d4041de793a15cc8b\"; assert v.digest(draft)==\"b49784eb9e0c6535ce759631ba8296014124969fa617bcfb8b1debc42658373f\"; exercises=v.keyed(seed[\"exercises\"],\"number\",\"number text figure_ids\",\"frozen seed exercises\"); source_figures={f[\"id\"]:f for f in seed[\"figures\"]}; blocks={c[\"block\"] for c in seed[\"concepts\"]}; assert source_figures=={} and draft[\"new_figures\"]==[]; questions,figures=v.check_draft(seed,draft,r,exercises,source_figures,blocks); outcome=v.check_review(seed,draft,review,exercises,figures,questions); print(json.dumps({\"scope\":\"FULL_CURRENT_CHECK_DRAFT_AND_CHECK_REVIEW_ON_FROZEN_AUTHORIZED_SEED\",\"mechanical_draft_review_checks\":\"passed\",\"seed_snapshot_sha256\":v.digest(seed),\"draft_snapshot_sha256\":v.digest(draft),\"review_snapshot_sha256\":v.digest(review),\"semantic_outcome\":outcome,\"source_freshness_refreshed\":False,\"check_seed_or_prepare_seed_called\":False,\"other_source_files_read\":False,\"image_assets\":0},indent=2)); print(\"mechanical draft+review checks passed on frozen source snapshot; semantic review outcome: \"+outcome,file=sys.stderr); sys.exit(3 if outcome!=\"pass\" else 0)"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "started": "2026-11-21T04:39:44.445Z",
+  "ended": "2026-11-21T04:39:44.482Z",
+  "exitCode": 3,
+  "signal": null,
+  "error": null,
+  "outputs": {
+    "stdout": {
+      "path": ".tmp/stemrobin-184-six/stages/n46-choice-first-full-review-validation-nov21.stdout",
+      "bytes": 590,
+      "sha256": "bc472a5fcba258381b4fe41c6a8edf02c03dd13b39cf4252d61e4d072735e005"
+    },
+    "stderr": {
+      "path": ".tmp/stemrobin-184-six/stages/n46-choice-first-full-review-validation-nov21.stderr",
+      "bytes": 97,
+      "sha256": "a152bd0367c365c37008365697b99cdd82c4e925dc5d2c8340660ee63c5f9ac2"
+    }
+  }
+}

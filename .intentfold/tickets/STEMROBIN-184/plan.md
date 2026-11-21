@@ -1,5 +1,37 @@
 # 开发路线
 
+## 184-6 n46 offline-complete narrow delivery (2026-11-21)
+
+n46:7proseblocks/8paragraphs,3written375-377/7subparts,2auto/1ungraded,
+5expressionparts,2math/1free,5choices(3single/2multiple)/26options,0figures.
+SOURCE167 corrected376b has BOTH ninth powers;4x^3-45x^8 retained.
+One affected choice repair changed4options, reused22, source-first then
+changed-view then internal review PASS; originalREVISE/semanticexit3,
+strictCompliance object and old-key exposure remain disclosed.
+FIRST official retention and read-only current publication gate PASS.
+One independent fresh offline batch:6new full-page screenshots,6actual
+views,80native clicks,remoteDependencies0. First exit1 retained six CDP
+file-origin console failures; diagnosis plus console-only recovery exit0,
+without content/control/geometry/visual replay. Local formula scrolling
+explicitly qualified. Parent permanent24/24,zero new views/decodes.
+Completion retained254files/3557525bytes; increment1, after-n17 total4;
+not whole-group/ticket completion or live acceptance. Source167known8,
+164165166167known32; all originalFAIL/HOLD/UNKNOWN and n44strictCompliance
+false preserved. Parent outer-shell127 follows successfulintake0;
+exact unquoted-annotation error preserved and successfulstage not replayed.
+The previous no-Git continuation and extra-approval statement remain
+historical, not a new human pause. Existing human2026-11-19T23:25:08.393Z
+supervision delegation plus original production scope authorize this narrow
+ordinary commit/push and immediate source continuation. Coordination
+clarification is not represented as a new direct human message.
+Only this complete n46 tail, source167, dependent evidence and new usage
+keys staged. Oldn17 working record,104/122/135 dirt and allHEAD keys
+preserved. HEAD stays detached; historical local branchbd853c8f does not
+move. Normal fast-forward push tocodex/STEMROBIN-184-textbooks;no force,
+rebase,newbranch,DB,paidcall,publication,merge,deploy,ticketclosure or
+supervisor/peer messages. Then actual serialSOURCE168 for OPEN47 ending
+this-time on167; source determines closure, no future-page prefetch.
+
 ## 184-6 n45 offline-complete tail delivery (2026-11-21)
 
 n45 complete offline:17proseblocks/21displayedparagraphs,8written367-374,
