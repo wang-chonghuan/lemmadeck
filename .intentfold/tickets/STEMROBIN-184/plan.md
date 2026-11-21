@@ -1,5 +1,31 @@
 # 开发路线
 
+## 184-6 repaired cap3 delivered; remaining empty manifests ready (2026-11-21)
+
+Repair commit4bb249b317a3e61cf415037c3039782a942c8cda actually ordinary-pushed
+c73961; remote confirmation49e5ea returned exact head. Twenty-five selected
+files only, unrelated dirty tools/sources preserved. First whitespace check
+1f144f exit2 solely on immutable native stdout's final blank line; scoped
+checke35a37 excluded that exact raw log and passed. Raw bytes/hashes unchanged.
+The12focused+3input-projection tests and affected77/78 official stages remain
+passed; no repeated checks, source solves or display captures.
+
+Continued actual missing cap3 stage for114/125 after delivery. Existing
+nov17_ready114125_delivery_and262265 proves both previously complete and
+pushedf34010fe; the earlier conservative omission is superseded by that
+specific historical delivery, not a newly granted source approval.
+Official prepare81a175 and finalize18a4fe each firstexit0: both empty
+interactions ready, zero fabricated tasks. Prior source/text/empty-answer/
+offline approvals reused; no125 content/render/answer rerun.
+Supplement now21manifests/165interactions, completedLessonDelta0.
+Only two new empty manifests and scoped record updates selected next.
+
+Current active-index residuals:9c n14 readability HOLD;10c n80 has8tasks
+with E55 coefficient HOLD; n83 has48tasks with E101 reading unforced.
+Their existing templates, partial outputs and source qualifications stay
+pending; no old author is awakened or candidate promoted into a complete card.
+No new images/decodes, paid calls, DB writes, merge, deploy or formal closure.
+
 ## 184-6 numeric interaction classification repaired (2026-11-21)
 
 Continued within the existing delegated repair scope; no setup or passed-stage
