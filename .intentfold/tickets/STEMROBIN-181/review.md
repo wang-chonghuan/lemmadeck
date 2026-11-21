@@ -44,11 +44,19 @@ D518：另修复 47 份 9p／10p 审查记录中的 249 条路径，均指向已
 
 [本批精确路径修复](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d517-retained-provenance/repair.json) · [受影响检查与剩余引用](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d517-retained-provenance/affected-check.json)
 
-D521：归档索引与实际文件再确定 17 条原 SHA 引用，已修正路径，包含 source264 的前页候选上下文和 N77 的原 seed。前页候选仍未批准；未重生成或批准课程。受影响图 metadata 校验通过，20 条未修改的临时引用仍保留。索引声称保留但实际缺失的 69 个路径已单列，不能据索引猜造资源。
+D521：归档索引与实际文件再确定 17 条原 SHA 引用，已修正路径，包含 source264 的前页候选上下文和 N77 的原 seed。前页候选仍未批准；未重生成或批准课程。本批无顶层 spec 绑定，metadataChecked=0，不能称为完整 metadata 认证；精确路径检查完成，20 条未修改的临时引用仍保留。索引声称保留但实际缺失的 69 个路径已单列，不能据索引猜造资源。
 
 [本批索引路径修复及剩余项](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d520-indexed-provenance/repair.json) · [候选存在性与缺失记录](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d520-indexed-provenance/plan.json)
 
 已有“终止”或 repair1/1 记录不是永久审批限制：有确定性源和现有审查支持时，可继续普通局部修复。真实来源／字形不明及缺付费输出仍不得猜造、重购；本轮路径修复不替代这些缺失阶段。
+
+D523：仅核实 D521 剩余 20 条记录的有限候选：18 条原 SHA 文件缺失，2 条是应保留的历史 originalPath 字符串，未改写或伪造。10p fig17 的遮挡已在 D050 修复；两语言现存 spec／SVG／render／review 与既有批准 SHA 一致，复用独立及 DISPLAY PASS，不重复修图。
+
+[20 条引用的局部分类](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d523-finite-references/remaining-references.json) · [fig17 既有批准复用](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d523-finite-references/fig17-reused-approval.json)
+
+D524／D525：10p fig182 仅移动 d 子图标签，并把源图路径绑定到原 SHA 的保留文件。213 个对象、21 个标签、全部光路几何不变；原唯一碰撞消除。既有渲染器通过，SVG 仅该标签 x/y 改变，331／342／640 px 局部 DOM／像素检查通过。本人查看源图、旧失败预览、新原尺寸及两手机宽度共 5 张图；这是作者局部检查，不是独立审批。原 FAIL、repair1、光圈前后位置语义 HOLD、fig181 缺付费输出均保留，未促进整图或课程；计量仍为 146／577。
+
+[fig182 局部修改和保留失败](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d524-fig182-label-repair/repair.json) · [受影响显示检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d524-fig182-label-repair/width-check.json)
 
 ## 机械检查
 
