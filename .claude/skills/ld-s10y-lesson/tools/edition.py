@@ -17,6 +17,7 @@ from pathlib import Path
 from PIL import Image
 
 import assemble
+from artifact_io import write_if_changed
 
 
 LESSON_SCHEMA = "ld-s10y-lesson/edition-lesson@1"
@@ -62,18 +63,7 @@ def load(path: Path) -> dict:
 
 
 def dump(path: Path, value: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # Replace a working output; never unlock or mutate a retained 0444 snapshot.
-    with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=path.parent, delete=False,
-    ) as handle:
-        handle.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
-        temporary = Path(handle.name)
-    try:
-        temporary.chmod(0o644)
-        temporary.replace(path)
-    finally:
-        temporary.unlink(missing_ok=True)
+    write_if_changed(path, (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
 
 
 def sha256(path: Path) -> str:
@@ -121,28 +111,53 @@ def _refs_by_target(
     return result
 
 
+class SourceBook:
+    """One invocation's authoritative pages and assembled source identities."""
+
+    def __init__(self, book: Path):
+        self.book = book
+        self._pages = None
+        self._candidates = None
+
+    def pages(self) -> list[tuple[Path, dict]]:
+        if self._pages is None:
+            self._pages = [
+                (path, load(path))
+                for path in sorted(self.book.glob("pages/*/page.json"))
+            ]
+        return self._pages
+
+    def candidates(self) -> list[dict]:
+        if self._candidates is None:
+            merged, _ = assemble.merge_across_pages(
+                assemble.load_stream(self.book, self.pages())
+            )
+            candidates = assemble.cut_lessons(merged)
+            book_path = self.book / "book.json"
+            numbering = load(book_path).get("exercise_numbering", "book") if book_path.exists() else "book"
+            for candidate in candidates:
+                candidate["prose"], candidate["exercises"] = assemble.split_lesson(
+                    candidate, numbering,
+                )
+            figure_errors, _ = assemble.claim_figures(candidates, merged)
+            if figure_errors:
+                raise SystemExit(
+                    "ERROR: 无法从权威页重建来源引用: " + "; ".join(figure_errors)
+                )
+            self._candidates = candidates
+        return self._candidates
+
+
 def _authoritative_source_targets(
     book: Path,
     lesson: dict,
     exercises: dict,
+    source_book: SourceBook | None = None,
 ) -> dict[str, dict[str, str]]:
-    stream = assemble.load_stream(book)
-    merged, _ = assemble.merge_across_pages(stream)
-    candidates = assemble.cut_lessons(merged)
-    numbering = "book"
-    book_path = book / "book.json"
-    if book_path.exists():
-        numbering = load(book_path).get("exercise_numbering", "book")
-    for candidate in candidates:
-        candidate["prose"], candidate["exercises"] = assemble.split_lesson(
-            candidate,
-            numbering,
-        )
-    figure_errors, _ = assemble.claim_figures(candidates, merged)
-    if figure_errors:
-        raise SystemExit(
-            "ERROR: 无法从权威页重建来源引用: " + "; ".join(figure_errors)
-        )
+    source_book = source_book or SourceBook(book)
+    if source_book.book != book:
+        raise ValueError("source context belongs to a different book")
+    candidates = source_book.candidates()
 
     identity_fields = (
         "number",
@@ -208,11 +223,13 @@ def _authoritative_source_targets(
     return targets
 
 
-def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
-    pages = [
-        (page_path, load(page_path))
-        for page_path in sorted(book.glob("pages/*/page.json"))
-    ]
+def source_errata(
+    book: Path, lesson: dict, exercises: dict, source_book: SourceBook | None = None,
+) -> list[dict]:
+    source_book = source_book or SourceBook(book)
+    if source_book.book != book:
+        raise ValueError("source context belongs to a different book")
+    pages = source_book.pages()
     if not any(
         isinstance(erratum, dict)
         for _, page in pages
@@ -221,7 +238,7 @@ def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
         return []
 
     declared_targets = _source_target_map(lesson, exercises)
-    targets = _authoritative_source_targets(book, lesson, exercises)
+    targets = _authoritative_source_targets(book, lesson, exercises, source_book)
     declared_refs = _refs_by_target(declared_targets)
     authoritative_refs = _refs_by_target(targets)
     for target, expected in authoritative_refs.items():
@@ -352,6 +369,7 @@ def figure_sources(book: Path, figures: list[dict]) -> list[dict]:
 
 def cmd_prepare(args: argparse.Namespace) -> int:
     book = source_dir(args)
+    source_book = SourceBook(book)
     edition = edition_dir(args)
     work_edition = work_edition_dir(args)
     profile_path = Path(args.profile)
@@ -388,7 +406,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "source": lesson_source,
             "prose": modern_prose(raw_lesson),
             "section_breaks": [],
-            "errata": source_errata(book, raw_lesson, raw_exercises),
+            "errata": source_errata(book, raw_lesson, raw_exercises, source_book),
         }
         exercises_template = {
             **copy.deepcopy(raw_exercises),
@@ -1328,9 +1346,10 @@ def validate_errata(
     raw_exercises: dict,
     lesson: dict,
     exercises: dict,
+    source_book: SourceBook | None = None,
 ) -> tuple[dict[str, list[dict]], list[str]]:
     try:
-        expected = source_errata(book, raw_lesson, raw_exercises)
+        expected = source_errata(book, raw_lesson, raw_exercises, source_book)
     except SystemExit as error:
         return {}, [str(error)]
     actual = lesson.get("errata", [])
@@ -1458,6 +1477,7 @@ def validate_lesson(
     profile: dict,
     require_current_figures: bool = False,
     candidate_paths: tuple[Path, Path, Path] | None = None,
+    source_book: SourceBook | None = None,
 ) -> tuple[dict, dict, dict, list[str]]:
     target = edition / "lessons" / lesson_id
     if candidate_paths is None:
@@ -1498,6 +1518,7 @@ def validate_lesson(
         raw_exercises,
         lesson,
         exercises,
+        source_book,
     )
     errors += errata_errors
 
@@ -1824,6 +1845,7 @@ def update_book_index(
 
 def cmd_finalize(args: argparse.Namespace) -> int:
     book = source_dir(args)
+    source_book = SourceBook(book)
     edition = edition_dir(args)
     work_edition = work_edition_dir(args)
     profile_path = Path(args.profile)
@@ -1839,6 +1861,7 @@ def cmd_finalize(args: argparse.Namespace) -> int:
                 work_target / "exercises.template.json",
                 work_target / "figures.template.json",
             ),
+            source_book=source_book,
         )
         target = edition / "lessons" / lesson_id
         if errors:

@@ -20,9 +20,12 @@ Do not redo a passed content review to repair execution; offline authoring stays
 
 - Work offline. Do not read `.env`, connect to a database, install dependencies,
   call a model service, publish, or change the application.
-- Do not consult previous choice questions, interaction specifications, keyboard
+- When authoring new questions, do not consult previous choice questions, interaction specifications, keyboard
   exercises, answer-box configurations, judging subparts, earlier skill versions,
-  their tests or ticket outputs. No history lookup or compatibility commands.
+  their tests or ticket outputs to infer mathematical tasks or options.
+  On continuation, receive existing valid source-solving, candidate and review
+  evidence once without reauthoring or rereviewing unchanged questions. Do not
+  expose existing keys to a new blind source solver.
 - Input authority is the original written prose in the allowed modern lesson
   files, the actual referenced images, and the lesson's concept definitions.
   Do not inspect answers during authoring. This workflow needs no old answers.

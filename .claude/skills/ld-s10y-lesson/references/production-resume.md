@@ -41,6 +41,8 @@ $P .claude/skills/ld-s10y-lesson/tools/production.py prepare-range \
   --work .tmp/ld-s10y-lesson
 $P .claude/skills/ld-s10y-lesson/tools/production.py read-json \
   --input <saved-stdout>
+$P .claude/skills/ld-s10y-lesson/tools/production.py read-receipt \
+  --input <saved-execution.json> --expected <handoff-execution.json>
 $P .claude/skills/ld-s10y-lesson/tools/retain_choices.py \
   --repo . --book <book> --lesson <card-id> --source <approved-choice-directory>
 ```
@@ -50,6 +52,31 @@ when a command fails. It is preparation only, never source/content approval.
 Use the returned machine result for control; human logs are not one JSON document.
 For historical mixed stdout, read all complete top-level documents without
 rerunning the successful producer. Do not turn candidate presence into approval.
+
+Receive a handoff once using its status, scope, referenced files/hashes, actual
+execution receipts and required substantive review. Do not add a parent gate
+that reads every JSON scalar, the entire checker source, or every package file
+before releasing the next stage. Only expand a specific missing or conflicting
+fact. The parent does not redo the child's content or image review.
+
+`read-receipt` compares execution facts across the known `cwd`/`workdir`,
+`exitCode`/`exit_code`/`returncode`, `argv`/`child_argv` and flat/nested `streams`
+wrappers. A string `command` is one executable, with `argv` supplying its
+arguments; shell strings are not parsed. Optional timestamps, counters and extra
+package metadata are not equality gates. Conflicting aliases, nonzero or missing
+exit status, interrupted calls, missing streams and recorded hash drift fail.
+Resolve relative stream paths against each receipt's directory. This read-only
+helper does not execute commands or establish content approval; retain the
+original receipt and its source/review bindings. Do not invent missing evidence
+or compare a whole child record against a handoff's partial metadata object.
+
+For local repairs, run only the affected downstream lesson stages. `assemble`
+still reconciles the authoritative book structure, but replaces only changed
+outputs; it does not delete other lesson directories or attached evidence.
+The current book index, not leftover directories, defines the active set.
+Multi-lesson edition commands share one invocation-local source page stream and
+source reconstruction. A later invocation rereads source; there is no persistent
+cache that can conceal changed pages or errata.
 
 Choice retention verifies the existing choice checker against the current lesson,
 its projection and assets. It refuses a wrong owner or a different existing

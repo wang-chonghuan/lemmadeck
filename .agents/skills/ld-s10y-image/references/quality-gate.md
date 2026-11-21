@@ -11,9 +11,11 @@ still be misled about the mathematical relationship?
   The spec hash binds this provenance; intentional alternative geometry is not
   a claim of original-source fidelity. All other applicable checks still run.
 - all object ids and references resolve
-- the independent source inventory resolves to visible objects; for new and
-  reused figures alike, compare its completeness against the original source
-  pixels, never against the already-generated object list or SVG
+- the independent source inventory resolves to visible objects; for new or
+  unreviewed figures compare its completeness against the original source
+  pixels, never against the already-generated object list or SVG. For unchanged
+  figures with valid source-fidelity review, reuse that comparison and bindings
+  without reopening pixels
 - every source inventory assertion ID resolves
 - every finite source grid has a `gridDimensions` assertion, and every
   source-bound point relation has an executable relationship assertion such as
@@ -49,6 +51,11 @@ still be misled about the mathematical relationship?
 
 ## Visual checks
 
+Perform these once for new content. A real defect or changed input requires only
+the affected checks; unchanged reviewed figures and already valid display
+surfaces are not a new batch. Required mathematical and cultural review remains
+substantive, not a status-only or hash-only substitute.
+
 - compare the full edition text, original PNG, and rendered output together
 - verify counts, signs, units, relative positions, equal intervals, and labels
 - verify half-unit scales, every subfigure, every chord endpoint, every table
@@ -70,11 +77,15 @@ output change invalidates the review.
 
 ## Repair loop
 
-Allow one targeted repair:
+Preserve the first failure and repair the identified cause at the smallest scope:
 
 - wrong mathematics: repair FigureSpec coordinates or assertions
 - overlap: repair label constraints or canvas composition
 - wrong artwork: regenerate only the artwork
 
-If the second result still defeats the instructional purpose, mark
-the review evidence as `fail` and stop. Never hand-edit renderer output.
+Continue only the affected failed stage and obtain substantive review of the
+changed candidate. Keep unresolved results `fail`/`hold`; do not replay unchanged
+PASS stages or repeat the same failed command indefinitely. An internal attempt
+count is not a new human-approval boundary for an authorized local repair.
+Unknown source facts and new paid generation still require their actual
+authority. Never hand-edit renderer output.

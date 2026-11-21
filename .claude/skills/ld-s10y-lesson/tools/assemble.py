@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import blocks as B
 import mathcheck
 import normalize as nz
+from artifact_io import write_if_changed
 
 FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
 SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
@@ -36,14 +37,18 @@ def _slug(text: str) -> str:
     return re.sub(r"[^\w一-鿿]+", "-", text.strip()).strip("-")[:40]
 
 
-def load_stream(book: Path) -> list[dict]:
+def load_stream(book: Path, pages: list[tuple[Path, dict]] | None = None) -> list[dict]:
     """所有页的块按页序连成一条流，每块记住自己来自哪一页。"""
     stream = []
-    for pj in sorted(book.glob("pages/*/page.json")):
-        doc = json.loads(pj.read_text(encoding="utf-8"))
+    if pages is None:
+        pages = [
+            (pj, json.loads(pj.read_text(encoding="utf-8")))
+            for pj in sorted(book.glob("pages/*/page.json"))
+        ]
+    for _, doc in pages:
         page = doc["meta"]["page"]
         for i, b in enumerate(doc["blocks"]):
-            stream.append({**b, "page": page,
+            stream.append({**b, "lines": list(b["lines"]), "page": page,
                            "printed_page": doc["meta"].get("printed_page"),
                            "ref": f"p{page:04d}#{i+1}"})
     return stream
@@ -229,6 +234,8 @@ def _figure_owner(figure: dict, exercises: list[dict]) -> dict:
 def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
     """Promote rebuilt page figures without clearing the durable book library."""
     library = book / "figures"
+    if not library.resolve().is_relative_to(book.resolve()):
+        raise ValueError(f"figure library redirects its owner: {library}")
     library.mkdir(parents=True, exist_ok=True)
     page_root = work if work is not None else book
     seen = {}
@@ -239,7 +246,9 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
         seen[png.stem] = png.parent.parent.name
         for source in (png, png.with_suffix(".svg")):
             if source.exists():
-                shutil.copy2(source, library / source.name)
+                target = library / source.name
+                if write_if_changed(target, source.read_bytes(), root=book):
+                    shutil.copystat(source, target)
 
 
 def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
@@ -675,20 +684,12 @@ def run(
     promote_figures(book, work, report["warnings"])
 
     out = book / "lessons"
-    existing_exercises = {}
-    if out.exists():
-        for path in out.glob("*/exercises.json"):
-            data = path.read_bytes()
-            existing_exercises[path.parent.name] = (json.loads(data), data)
-    answer_assets = {
-        path.relative_to(out): path.read_bytes()
-        for path in out.glob("*/answer-keys*.json")
-    } if out.exists() else {}
-    shutil.rmtree(out, ignore_errors=True)
     index = []
     for i, l in enumerate(lessons, 1):
         lid = l.get("card_id") or f"{l['number'] or f'x{i}'}-{_slug(l['title'])}"
         d = out / lid
+        if not d.resolve().is_relative_to(book.resolve()):
+            raise ValueError(f"lesson output redirects its owner: {d}")
         d.mkdir(parents=True, exist_ok=True)
         head = " · ".join(x for x in (l["chapter"], l["section"]) if x)
         md = [f"# {l['printed_title'] or l['title']}", ""]
@@ -701,21 +702,21 @@ def run(
                 md += [f"*{B.text_of(b)}*", ""]
             else:
                 md += [B.text_of(b), ""]
-        (d / "lesson.md").write_text("\n".join(md).rstrip() + "\n", encoding="utf-8")
+        write_if_changed(d / "lesson.md", ("\n".join(md).rstrip() + "\n").encode("utf-8"), root=book)
         exercises_document = {
             "lesson": lid,
             "count": len(l["exercises"]),
             "exercises": l["exercises"],
         }
-        previous = existing_exercises.get(lid)
-        if previous and can_reuse_exercises(previous[0], exercises_document):
-            (d / "exercises.json").write_bytes(previous[1])
-        else:
-            (d / "exercises.json").write_text(
-                json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
+        previous_path = d / "exercises.json"
+        previous = json.loads(previous_path.read_bytes()) if previous_path.is_file() else None
+        if previous is None or not can_reuse_exercises(previous, exercises_document):
+            write_if_changed(
+                d / "exercises.json",
+                (json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+                root=book,
             )
-        (d / "lesson.json").write_text(json.dumps(
+        write_if_changed(d / "lesson.json", (json.dumps(
             {"id": lid, "card_id": l.get("card_id"),
              "chapter": l["chapter"], "section": l["section"],
              "number": l["number"], "title": l["title"],
@@ -727,23 +728,17 @@ def run(
                         "printed_page": b.get("printed_page"),
                         "source_refs": b.get("spans") or [b["ref"]]}
                        for b in l["prose"]]},
-            ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            ensure_ascii=False, indent=2) + "\n").encode("utf-8"), root=book)
         index.append({"id": lid, "card_id": l.get("card_id"),
                       "title": l["title"], "number": l["number"],
                       "start_printed": l["start_printed"],
                       "prose_blocks": len(l["prose"]),
                       "exercises": len(l["exercises"]), "figures": len(l["figures"])})
 
-    for relative, data in answer_assets.items():
-        target = out / relative
-        if target.parent.exists():
-            target.write_bytes(data)
-
-    (book / "book.json").write_text(json.dumps(
+    write_if_changed(book / "book.json", (json.dumps(
         {"book": book.name, "pages": len({b["page"] for b in stream}),
          "exercise_numbering": exercise_numbering,
-         "lessons": index, "audit": report}, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8")
+         "lessons": index, "audit": report}, ensure_ascii=False, indent=2) + "\n").encode("utf-8"), root=book)
 
     print(f"[assemble] {book.name}: {len({b['page'] for b in stream})} 页 → "
           f"{len(lessons)} 个小节, {report['exercise_count']} 道题, "
