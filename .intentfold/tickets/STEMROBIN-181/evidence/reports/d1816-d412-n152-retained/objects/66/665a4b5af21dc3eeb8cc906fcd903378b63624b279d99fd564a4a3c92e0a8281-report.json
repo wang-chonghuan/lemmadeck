@@ -1,0 +1,89 @@
+{
+  "schema": "STEMROBIN-181/bounded-affected-review@1",
+  "stage": "D394",
+  "ticket": "STEMROBIN-181",
+  "role": "BOUNDED_INDEPENDENT_REVIEWER",
+  "status": "PASS_AFFECTED_ONLY",
+  "scope": "Only source396 counting bottom_margin_px=120 and compactFragment=0.75*min(line_h,glyph_h); immutable text/code/evidence inspection, no execution of tests or native/source pixel replay.",
+  "confirmedNewDefects": [],
+  "findings": [
+    {
+      "id": "D394-COUNTING-MARGIN",
+      "status": "PASS_AFFECTED_ONLY",
+      "basis": "Structured JSON front-matter comparison and exact suffix comparison confirm that only counting metadata was added. All non-counting metadata and all source blocks are unchanged. Producer metadata exactly matches changed page.md; seven blocks contain 23 rows, agreeing with D368's saved 19 body + 3 footnote + 1 footer.",
+      "bodySuffixSha256": "5fdb7d6dbd102a5a82df0f1c1e9a35e902d544c020eb4d8c86fc3cb9e3ae1b72",
+      "geometryQualification": "Using saved render height2337 and recorded coordinates only, the counting mask covers zero-based y2217..2336, including the isolated y2223..2226 speck but not the footer ending y2048. 120 satisfies the existing 10%-height bound. line_bands masks a copy, not source extraction pixels.",
+      "pixelVerificationThisReview": false
+    },
+    {
+      "id": "D394-COMPACT-FRAGMENT",
+      "status": "PASS_AFFECTED_ONLY",
+      "location": ".claude/skills/ld-s10y-lesson/tools/layout.py:653",
+      "basis": "The strict fragment-height threshold is 0.75*min(line_h,glyph_h), so an inflated projection line_h cannot alone qualify a full-height glyph row as compact. It equals the previous threshold when glyph_h>=line_h and otherwise tightens it. Existing alignment, width, gap, fraction-spill and small-prose guards remain visible; no global-counter or fixture-completeness approval is made.",
+      "savedFocusedReceipt": "exitCode0; three named noisy-body tests in frozen test source. Reused evidence, not rerun."
+    },
+    {
+      "id": "D394-RETAIN-BROADER-TESTFAIL",
+      "status": "FAIL_RETAINED",
+      "basis": "Saved broader stderr reports 34 tests, one failure, five skips; receipt exitCode1. test_fraction_prose_and_side_caption_share_one_printed_row fails _single_fraction_row(ink,40,137,40). Saved prior-rule stderr also contains this same failure plus noisy-body fixture count25!=26; its exitCode0 confirms the wrapper's expected-two-failures assertion, not a passing suite.",
+      "regressionAttribution": "The saved baseline shows this failure predates the compact-fragment tightening. Neither failure is repaired or relabeled by this review."
+    }
+  ],
+  "retainedEvidence": {
+    "D368": "Original HOLD report retained; source396 row observation reused, not replayed.",
+    "D378": "PASS only for the two adjudicated source words; original D368 first readings and unrelated archival qualifications remain.",
+    "D391": "Existing native-pass/counting-review-pending observations retained as historical producer evidence, not newly executed or whole-source acceptance.",
+    "source396Archival": "HOLD for punctuation and exact emphasis; no whole archival glyph approval.",
+    "D393_D403": "Separate existing source HOLD work; not adjudicated here.",
+    "LaboratoryIII_FIG278": "Separate HOLD; not adjudicated here."
+  },
+  "gates": {
+    "affectedCountingMetadata": "PASS_AFFECTED_ONLY",
+    "affectedCompactFragmentRule": "PASS_AFFECTED_ONLY",
+    "broaderFocusedSuite": "FAIL_RETAINED",
+    "wholeArchivalSource": "NOT_APPROVED",
+    "wholeReadiness": "NOT_REVIEWED",
+    "publishOrProductAC": "NOT_REVIEWED"
+  },
+  "bindings": {
+    "inputFreeze": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d394-source396-counting-affected-review/input-freeze.json",
+      "sha256": "4203e86f4ccf1f36b0056ed0ac49b7cbd83fabc72dba7534e472e04c86acad37"
+    },
+    "allNamedInputBindings": {
+      "count": 13,
+      "sha256Matches": 13,
+      "mismatches": [],
+      "authority": "Exact paths and expected hashes are retained in the bound input-freeze; all13 text/code/JSON files were independently hashed, with no image bytes read."
+    },
+    "additionalTextEvidence": [
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d389-source-fixture-and-fraction-focused-tests/stderr.txt",
+        "sha256": "8a5dd409787015d2d9a1ce776a7e7d1a069cd0de256288a216f9366779e8ed5e"
+      },
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d389-prior-rule-in-memory-baseline/stderr.txt",
+        "sha256": "e98a4aa5ae8bb949b4951e94a326915a8dfff2a6d86c5aafd67475a9d692bbef"
+      },
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d389-prior-rule-in-memory-baseline/stdout.txt",
+        "sha256": "6c6b1862e180fdbe83a16a0674e4dd3b8aeaefede9b7232cd2bc6f3a40e234dd"
+      }
+    ]
+  },
+  "usage": {
+    "paidCalls": 0,
+    "imagesOpened": 0,
+    "contextImagesOpened": 0,
+    "providerTokens": null,
+    "providerCost": null,
+    "sourcePagesAdded": 0,
+    "completeCoursesAdded": 0,
+    "testsRun": 0,
+    "nativeRuns": 0,
+    "browserRuns": 0,
+    "databaseWrites": 0,
+    "commandError": "One read-only comparator assumed a fenced JSON block and failed; corrected to actual JSON front matter. diff exitCode1 merely reports the permitted metadata addition."
+  },
+  "restrictions": "Only this folder's report.json/review-freeze.json written. No candidate, skill, old report, meter, Git, backend/peer, DB, render, finalize, publish, deploy or agent operations."
+}
