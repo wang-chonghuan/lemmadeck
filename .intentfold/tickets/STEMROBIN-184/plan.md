@@ -1,5 +1,34 @@
 # 开发路线
 
+## 184-6 next missing stage: existing 10c interaction specifications (2026-11-21)
+
+Supervisor continuation after actual n81 delivery6a0ce7fcc is active.
+No n81/source/figure/answer/choice/display replay. Official cap3 prepare
+f2560f firstexit0 for75-78; finalize0ffa9c firstexit0 for75/76.
+Official prepare37e7cd firstexit0 for79/91/92/94; finalize3feee7
+firstexit0 for79/91; finalize4c7a45 firstexit0 for92/94.
+Six missing interaction files now READY:
+75=14,76=17,79=6,91=5,92=28,94=15, total85, zero pending flags.
+Existing completed lessons/semantic/
+offline approvals reused; new completedlessondelta0, not duplicate credit.
+
+Local rule gap retained for supervision, no tool patch:77/E35 has one
+numeric part with expected sqrt2/2;78/E43 andE45 each one numeric part,
+expected5/4 and6/5. Official derivation marks these as "mixed numeric"
+needsAuthoring/逐小问拆分 although each is one numeric unit. Source/answer
+HOLD not inferred; three metadata pending flags preserved in draft77/78.
+No manual fallback, removed flag, answer edit or new scientific convention.
+Both draft77/78 remain local pending and are excluded from delivery.
+
+Only needed new interaction manifests will be delivered. No custom handoff
+package or new acceptance gate; actual owner prepare/finalize commands
+ran at the exact original absoluteworkdir. All earlier sources and evidence
+unchanged. n82/source172 HOLD and knowncharges74 remain, parent24/24 with
+zero newviews/decodes, no paid/DB/merge/deploy/ticketclosure or peer messages.
+Existing FETCH_HEAD and detached HEAD both6a0ce7fcc; ordinary delivery to
+the same branch only. Only this section and its usage key are selected;
+pending n81/n48 postdelivery records and all other dirt remain untouched.
+
 ## 184-6 n81 offline complete +1; narrow delivery pending (2026-11-21)
 
 Euler finalvisual manifest1701c06c intaken300e4c4a, then actualCLOSED.
