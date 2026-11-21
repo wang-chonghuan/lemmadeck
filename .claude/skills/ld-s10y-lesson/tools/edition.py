@@ -1243,16 +1243,22 @@ def validate_png(
             width, height = image.size
             if width < 768 or height < 768:
                 errors.append(f"{path}: 分辨率过低 {width}x{height}")
-            sample = image.convert("RGB")
+            color_encoded = image.mode in {"RGB", "RGBA"} or (
+                image.palette is not None and image.palette.mode in {"RGB", "RGBA"}
+            )
+            if not color_encoded:
+                errors.append(f"{path}: 必须使用 RGB、RGBA 或彩色调色板编码")
+            # Achromatic materials can be valid RGB artwork; test visible contrast, not saturation.
+            rgba = image.convert("RGBA")
+            sample = Image.alpha_composite(
+                Image.new("RGBA", rgba.size, "white"), rgba,
+            ).convert("RGB")
             sample.thumbnail((128, 128))
             pixels = list(sample.get_flattened_data())
             nonwhite = [pixel for pixel in pixels if min(pixel) < 245]
-            colorful = [
-                pixel for pixel in nonwhite
-                if max(pixel) - min(pixel) >= 18
-            ]
-            if not nonwhite or len(colorful) / len(nonwhite) < 0.01:
-                errors.append(f"{path}: 图像近似黑白，必须是完整彩色图")
+            contrast = max(max(channel) - min(channel) for channel in zip(*pixels))
+            if not nonwhite or contrast < 18:
+                errors.append(f"{path}: 图像空白或缺少可见对比度")
     except (OSError, ValueError) as error:
         errors.append(f"{path}: PNG 无效: {error}")
 

@@ -1,5 +1,60 @@
 # 生产检查点
 
+## 180-6 r2117 N27_COMPLETE_LESSON_SEALED_NARROW_PUSH_PENDING
+
+N27 full lesson sealed b1d4d9c2897f7ebb5adc43dd8f960dfb7efa431715750cee23d80f003d0274fb; complete26->27/new8.
+Saved SOURCE/TEXT/five finalized answers and valid FIG78/80 reused. New FIG79 approved once and finalized r2015; no image/source/text/answer replay.
+Only rolling optionA positional words repaired to match approved vertical FIG80; affected independent PASS, current six-question29-option retain and six native DISPLAY surfaces PASS. Original binding REVISE/failures/capacity loss retained. Initial seal r2114 wrong figure-manifest status alias failed before writes; actualStatus/officialReviewStatus used for record-only recovery, no review replay.
+Narrow original-branch commit/push pending. Own PNG checker hunk/test only; existing installed/source/formula tool changes remain outside staging.
+Parent images0/newpaid0; browser1 closed. Old trees/locks/backups/stash/failed calls/pending/unrelated changes and historical paid69/retry0/UNKNOWN cost-tokens-quota retained.
+Only absolute8306W; sharedmain read-only; finish=review; noDB/merge/deploy/close/E/newtree/attach/SkillHost/install/old-chat wake.
+
+## 180-6 r2106 N27_DISPLAY_PENDING_C2S8_SINGLE_STEM_AFFECTED_REVIEW_AND_FIGURES_ACTIVE
+
+N27 current six-question29-option CHOICE retained; first six native DISPLAY images await Ohm independent only. Complete26/new7 unchanged; browser1 closed, parent images0.
+Popper first C2S8 independent collected/closed REVISE 028825abb3418b1baa345520b07647c66cabd74dd638bd41aa27958bddf0467e: q3 stem directly confirms q2 optionc. Source-first eight tasks and all20 independent option truths PASS are preserved, not sufficient for package approval.
+Only q3 stem changed to ask molecular-motion/distribution causal relation without supplying whole-space conclusion; all options/keys/coverage/other questions identical. Candidate ed415c240123cbe2ae2efc320166b968e97fcb39cf1e461fba1ca75190e5e3c7, repair1. Fresh Sartre reviews affected q2/q3 fidelity/leakage and source2 coverage only, no six-question/source/TEXT/ANSWER replay.
+Boyle remains first two-figure author/gold route; no replacement or partial-output approval. C2S8 approved answers/SOURCE/TEXT and physical4 shadow preserved; canonical C2S3 untouched.
+Next sourced selection C5S7 has six figures, three existing spec/review records and three missing; no new production launched before N27 push, no existing figure approval inferred from filenames. r2100 no-match locator and r2106 wrong-status-field failures retained; r2106 failed before writes, actual outcome field used for record-only recovery.
+Own agents3/parentexec0; only absolute8306W. Historical paid69/retry0/UNKNOWN cost-tokens-quota and old trees/locks/backups/stash/failures/pending/unrelated edits retained. finish=review; noDB/merge/deploy/close/E/newtree/attach/SkillHost/install/old-chat wake.
+
+## 180-6 r2093 N27_CHOICE_RETAINED_FIRST_DISPLAY_C2S8_CHOICE_INDEPENDENT_AND_FIGURES_ACTIVE
+
+N27 single positional-option independent PASS 30d951ca64478b43a5fcfa0d4dc2aadeed5e9cbbe4ed1eebef4f398c1961ffcc collected/closed; five unaffected questions and four other rolling options reused. First binding REVISE/failed validator retained. Official current retain r2087 PASS.
+N27 first offline render r2090 PASS22prose/5written/6choices; first six native captures r2091 PASS, capture af228558b66d896d67748839e323d21dd82d242f1b39750fda5a4548ab805ec6, headless browser1 closed, parent images0. Fresh Ohm independently reviews existing six images only, no source/figure/answer/choice replay or repeat browser.
+Harvey first C2S8 CHOICE author collected/closed: candidate6questions20options single4/multiple2, structural once PASS, semantic not yet approved. Fresh Popper FIRST independent source-first/pure-view review; no previous answer exposure. Boyle existing first two-figure/gold-route task remains active, not duplicated.
+C2S8 approved SOURCE/TEXT/modern answers reused. Gold physical4 approved shadow retained unpromoted; no full-book assemble or delivered C2S3 changes. No new paid request or fabricated microscopy.
+Complete26/new7 unchanged pending complete N27 DISPLAY. r2056 missing sourcebook.py locator failure retained, no producer rerun or content verdict. Own agents3/parentexec0.
+Old trees/locks/backups/stash/failed calls/pending/unrelated changes and historical paid69/retry0/UNKNOWN cost-tokens-quota retained. Actual absolute8306W only; sharedmain read-only; finish=review; noDB/merge/deploy/close/E/newtree/attach/SkillHost/install/old-chat wake.
+
+## 180-6 r2054 N27_POSITIONAL_OPTION_REVIEW_C2S8_FIRST_CHOICE_AND_FIGURES_ACTIVE
+
+Official8306 attachment and actual r2034 checkpoint confirmed; no create_worktree/attach/installation/old-stage replay. Complete26/new7, C2S4 pushed57e84f2b3 and n129/C2S3/S18 unchanged.
+Galileo collected/closed with genuine CHOICE binding REVISE d20955b51ff4d4d8aeb0c09f058f327c003cfde6dc54b47fe97e65b1d10435ea. Correction to r2034: two actual question views reference FIG79/80, not zero. FIG79 binding PASS reused; FIG80 approved vertical reflow conflicts only with rolling optionA left/right.
+Only optionA positional words changed to upper/lower; original five questions, other options, source/key provenance, coverage and capacity loss retained. Candidate abc98312f0e329845a38057e61ad71bcb7841e23ee3dc8375801fce94521b119, parent binding 34cc56c3cf4d603531c57e4e7209efd7dabcd05a25df8d3ad9b61ab84efff14f; not current PASS. Fresh Pasteur independently reviews that affected proposition only; no image/browser/rerender/source/whole-question replay.
+Harvey remains first C2S8 CHOICE author; Boyle remains first two-figure author/gold route. Their existing tasks are not duplicated. C2S8 answers/source PASS retained; missing gold-source promotion must preserve delivered C2S3 bytes.
+One parent apply_patch formatting failure occurred before bytes changed, retained. Every production exec actual absolute8306W; parent images0/paid0; own agents3/parentexec0.
+Old trees/locks/backups/stash/failed calls/pending, historical paid69/retry0 and UNKNOWN fees/tokens/quota retained. finish=review; noDB/merge/deploy/close/E/newtree/attach/SkillHost/install/old-chat wake.
+
+## 180-6 r2034 N27_FINALIZED_ANSWERS_REUSED_CHOICE_BINDING_PENDING_C2S8_ANSWERS_AND_GOLD_SOURCE_PASS
+
+C2S4 complete26/new7 sealed and narrow pushed 57e84f2b3; remote confirmation r2001 retained. No n129/C2S3/S18 or successful stage replay.
+N27 new FIG79 current independent PASS collected/closed and durable geometry bound; FIG78/80 valid original reviews reused, no rerender. Initial promotion expected the wrong projection/template hash; r1984/r1985 failures retained, actual draft-template binding corrected without file restoration.
+N27 initial finalize r2002 rejected approved charcoal-rubber RGB image by chroma ratio. Targeted PNG checker now validates color-capable encoding and visible contrast on white, including color palettes and transparency. Seven focused tests PASS r2029; blank/all-black/transparent-hidden/grayscale-encoded inputs still rejected. Only own PNG hunk plus its test staged, all existing installed/owner/formula changes unstaged.
+N27 affected finalize r2015 PASS; five approved answers/audit retained unchanged r2017. First current CHOICE retain r2021 rejected actual source/asset snapshot change, preserved. Official new seed r2023 only prepares source binding, no questions generated. Five written seeds/eight concept blocks exactly equal; concept assets79/80 now approved SVGs rather than raw PNGs. Six existing question views have no figures; Galileo reviews this asset-binding impact only, no whole CHOICE reauthor/review.
+C2S8 six new answers independently PASS6/questions8tasks; Kant collected/closed. First official shadow finalize r2033 PASS, frozen final 848e29c0ce2d093e1d640887dde4e7f2d535cb964231a23c0d43842c329b15e0; no SOURCE re-solving, canonical answer write or imaginary measurement.
+C2S8 physical4 missing source author and independent Chandrasekhar collected/closed; single-page SOURCE PASS5blocks/3lines2crops with actual source1/crops2 reads. Approved shadow page remains unpromoted; modern asset binding is next, not a new SOURCE or whole-lesson PASS. Page6 wrong identity, real right scan truncation, separate C2S3 lower photo ownership, original failures and budgets preserved.
+Additional technical failures r1982 wrong status alias, r1989 writable evidence (byte-identical mode freeze recovered), r1997 wrong hand-count (derived staged set21), r2003 non-JSON error reader retained; none is a content verdict or reset.
+Own agents1/parentexec0; absolute8306W only; parent image opens0/newpaid0. Complete26/new7 unchanged until further full lesson seal.
+Historical paid69/retry0 and UNKNOWN cost/tokens/quota, old trees/locks/backups/stash/failed calls/pending/unrelated edits retained. finish=review; noDB/merge/deploy/close/E/newtree/attach/install/SkillHost/old-chat wake.
+
+## 180-6 r2001 C2S4_NARROW_PUSHED_N27_AND_C2S8_MISSING_STAGES_CONTINUE
+
+C2S4 narrowly committed/pushed 57e84f2b3a54bfaff31b0ceac27e590a56a28f24; exact remote head confirmed.
+Complete26/new7; immediately continue N27 and C2S8 actual missing stages, no old PASS replay.
+Historical paid69/retry0 and UNKNOWN costs/tokens/quota retained; old trees/locks/backups/stash/failed calls/pending preserved.
+Only absolute8306W; sharedmain read-only; finish=review; noDB/merge/deploy/close/E/newtree/attach/bootstrap/old-chat wake.
+
 ## 180-6 r1992 C2S4_COMPLETE_LESSON_SEALED_NARROW_PUSH_PENDING
 
 C2S4 full lesson sealed 06eb0feb5abd0de1f47567a2f64a14ca139ea4991474e39e6b62f9e379a97e9d; complete25->26/new7.
