@@ -4,11 +4,11 @@
 
 ## 可查看成果
 
-2026-11-21 检查点沿用现有计量：146 门已推送完整课程、577 页已消费源页。D500 新增 1 门双语实验作业课程和 2 页本地新源页；D482 的 6 页未重复计数。这不是全库完整性统计。
+2026-11-21 检查点沿用现有计量：147 门已推送完整课程、577 页已消费源页。D541 新增 1 门双语 N97，未新增源页；D500 的实验课及 D482 源页均未重复计数。这不是全库完整性统计。
 
 | 材料 | 中文 | English | 交付边界 |
 | --- | --- | --- | --- |
-| 10p N97 距离的相对性 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d541-n97-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d541-n97-complete-course/offline/en/text.html) | 完整离线保留，推送确认待记；原文 22 块、3 幅图、0 道题 |
+| 10p N97 距离的相对性 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d541-n97-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d541-n97-complete-course/offline/en/text.html) | 内容 0a62a6a8b 已推送；原文 22 块、3 幅图、0 道题 |
 | 10p 实验作业，10 个实验 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d500-laboratory-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d500-laboratory-complete-course/offline/en/text.html) | 已提交 c2a90ab、检查点 d66fa86e；既有必要门禁及 DISPLAY PASS 复用 |
 | N153 已批准子集 | [书写题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/zh-mobile-written.html) · [只读答案](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/zh-mobile-answers.html) · [选择题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/zh-mobile-choices.html) | [书写题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/en-mobile-written.html) · [只读答案](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/en-mobile-answers.html) · [选择题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d482-current-approved-progress/display/en-mobile-choices.html) | 每语言 59 条只读答案、55 题／220 选项；整课未交付 |
 
