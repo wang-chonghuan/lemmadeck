@@ -1,0 +1,89 @@
+{
+  "stage": "1-source-blind",
+  "inputs_seen": ["full zh and en seed prose", "selected definitions: empty in both seeds", "one full fig-43 PNG located through render-source.json preview field only"],
+  "inputs_not_seen": ["candidate views", "draft internals", "author report", "author source solutions", "existing answer keys or reviews"],
+  "seed_sha256": {
+    "zh": "7630ec539fc30ce6a0518694a25c105d21d388d23867193d9833dfc84c9a8fb1",
+    "en": "90dbbfd177d1181757fdcbf05cf824f00c5174a80d26c46b25c74944b45d66bb"
+  },
+  "image": {
+    "figure_id": "fig-43",
+    "asset_path": "ssot-resources/soviet10year-textbooks/artifacts/10p/editions/modern-us-neutral/figures/fig-43.svg",
+    "asset_sha256": "f3587ad2f8cf0559de0dab0d13427de8ed8cbf177d5927e48d0e4e2a4e3f0b09",
+    "opened_path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d673-t15-choice-author/fig-43-actual-complete.png",
+    "opened_sha256": "b4f2f8084ba8754cb322b45c7f4a0f49eb232816735ba3f63047d41b988577bb",
+    "actual_opens": 1,
+    "observation": "Complete white-background circuit: horizontal capacitor plates at the top marked C; left vertical rectangular resistor marked R; bottom horizontal four-lobed coil marked L; continuous conductor connects C, R and L in series. The rightmost upper and lower open circular terminals and both right vertical conductor segments are visible, with u = U_m cos omega t between them. The bottommost coil arc and bottom wiring are fully present; no parallel branches, switches or unlabelled extra elements. R, C, L and the source relation are legible. Both locale SVG assets hash to exactly the same bytes."
+  },
+  "solutions": [
+    {
+      "source_number": "1",
+      "verdict": "pass",
+      "derivation": "C=0.01 microfarad=10^-8 F. Initial inductor current is zero, so initial energy is solely q^2/(2C)=(10^-5)^2/(2*10^-8)=0.005 J. Complete damping with no input and all energy dissipated as heat yields Q=5 mJ.",
+      "result": "0.005 J"
+    },
+    {
+      "source_number": "2",
+      "verdict": "pass",
+      "derivation": "Convert r=0.012 m, d=0.0003 m. Circular plate area A=pi*r^2=4.52389*10^-4 m^2. Vacuum C0=epsilon0*A/d=1.33518*10^-11 F. T0=2*pi*sqrt(L*C0)=1.257507*10^-6 s. Full dielectric of relative permittivity 4 gives C=4C0, hence T=2T0=2.515014*10^-6 s.",
+      "result": "1.26 microseconds initially; 2.52 microseconds with dielectric"
+    },
+    {
+      "source_number": "3",
+      "verdict": "pass",
+      "derivation": "From f=1/(2*pi*sqrt(LC)), L=1/(4*pi^2*f^2*C), with C=10^-5 F. At 400 Hz L=0.0158314349 H; at 500 Hz L=0.0101321184 H. The inclusive range is [0.0101321,0.0158314] H, traversed downward as frequency increases from 400 to 500 Hz.",
+      "result": "15.83 mH at 400 Hz decreasing to 10.13 mH at 500 Hz"
+    },
+    {
+      "source_number": "4",
+      "verdict": "pass",
+      "derivation": "The axis is explicitly perpendicular to the field and the loop has one turn. S=100 cm^2=0.01 m^2; rotation frequency 50 revolutions/s means omega=2*pi*50=100*pi rad/s. Flux amplitude BS=0.002 Wb; emf amplitude BS*omega=0.2*0.01*100*pi=0.6283185 V.",
+      "result": "0.628 V"
+    },
+    {
+      "source_number": "5",
+      "verdict": "blocked",
+      "derivation": "The initial plane perpendicular to B fixes the initial normal parallel to B, but does not fix the rotation axis. Let alpha be the fixed angle between the axis and B. Rigid rotation from this initial normal gives flux nBS*(cos(alpha)^2+sin(alpha)^2*cos(omega*t)) and emf in a chosen circulation sense nBS*omega*sin(alpha)^2*sin(omega*t). Thus the stated amplitude fixes omega*sin(alpha)^2=1.4/(200*0.15*0.01)=4.6666667 s^-1, not omega alone. A perpendicular axis (alpha=90 degrees) yields omega=4.6666667 and |E(0.1)|=0.6298766 V. An axis at 45 degrees yields omega=9.3333333 with the same amplitude and initial plane, but |E(0.1)|=1.1250516 V. Both meet the actual conditions. Terminal direction reversal also reverses the signed emf. No unconditional numeric answer is justified. Conditional on a perpendicular axis and circulation chosen to make the initial positive-time emf positive, E=1.4*sin(4.6666667*t) V and magnitude at 0.1 s is 0.630 V.",
+      "result": null,
+      "blocker": "Missing rotation-axis direction; terminal convention only resolves sign, not angular-speed ambiguity."
+    },
+    {
+      "source_number": "6",
+      "verdict": "pass",
+      "derivation": "Ideal inductive reactance X_L=omega*L=2*pi*100*0.08=50.26548 ohms. RMS current=U_rms/X_L=1.9894368 A. The requested amplitude is sqrt(2) times this RMS value, I_m=2.8134885 A.",
+      "result": "2.81 A amplitude"
+    },
+    {
+      "source_number": "7",
+      "verdict": "pass",
+      "derivation": "omega=2*pi*1000 rad/s. X_L=omega*0.05=314.159265 ohms; X_C=1/(omega*10^-6)=159.154943 ohms. Series impedances add algebraically as j(X_L-X_C), not as scalar magnitudes. With R negligible, |Z|=155.004322 ohms; net reactance is inductive.",
+      "result": "155 ohms"
+    },
+    {
+      "source_number": "8",
+      "verdict": "pass",
+      "derivation": "For sinusoidal steady state P=U_rms*I_rms*cos(phi)=U_m*I_m*cos(phi)/2. Hence cos(phi)=2*8000/(200*100)=0.8. The magnitude of the principal phase difference is arccos(0.8)=0.6435011 rad=36.8698976 degrees. Given average power alone cannot distinguish which quantity leads; the source asks magnitude.",
+      "result": "36.87 degrees"
+    },
+    {
+      "source_number": "9",
+      "verdict": "pass",
+      "derivation": "In DC steady state dI/dt=0 and the inductor drop vanishes, so I_DC=20/100=0.2 A. In AC steady state X_L=2*pi*400*2=5026.54825 ohms and |Z|=sqrt(100^2+X_L^2)=5027.542866 ohms. I_AC,rms=20/|Z|=0.0039780864 A; optional amplitude sqrt(2)*I_rms=0.0056258638 A.",
+      "result": "DC 0.200 A; AC RMS 3.978 mA; optional AC amplitude 5.626 mA"
+    },
+    {
+      "source_number": "10",
+      "verdict": "pass",
+      "derivation": "The actual diagram is a series RLC path across the two source terminals, not a parallel LC network. At current resonance omega*L=1/(omega*C), so UL and UC are equal magnitude, opposite phasors and sum to zero. Choose common series current I as the positive real horizontal reference: I points right; resistor voltage UR=RI points right; inductor voltage UL=j*omega*L*I points up; capacitor voltage UC=-j*I/(omega*C) points down with equal length to UL. Source voltage U=UR+UL+UC=UR points right, parallel and in phase with I. Voltage phasor origins can share a common reference or be laid head-to-tail for KVL. No numerical scale for lengths beyond UL=UC and U=UR can be inferred without R,L,C. Source and every component direction must be labelled.",
+      "result": "I, UR, U co-directed; UL +90 degrees, UC -90 degrees, |UL|=|UC|; U=UR"
+    },
+    {
+      "source_number": "11",
+      "verdict": "pass",
+      "derivation": "Constant L implies f^2*C_total constant. The frequency falls by factor 4, so C_total rises by 4^2=16: C1+C2=C1*(400/100)^2=16*10^-6 F. Capacitors are parallel, so capacitances add and C2=15*10^-6 F, not the total 16 microfarads.",
+      "result": "15 microfarads"
+    }
+  ],
+  "bilingual_source_equivalence": "All eleven zh/en source tasks agree on quantities, units, requested response and assumptions. Both omit the rotation axis in source 5. Concepts are explicitly empty, so no selected definition resolves that ambiguity.",
+  "freeze_policy": "This file is immutable after its first SHA freeze; later candidate and key comparisons are stored separately."
+}

@@ -1,0 +1,388 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "7630ec539fc30ce6a0518694a25c105d21d388d23867193d9833dfc84c9a8fb1",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "t15-energy",
+      "source_numbers": ["1"],
+      "view": {
+        "mode": "single",
+        "stem": "将电荷 $q=10^{-5}\\,\\mathrm{C}$ 传给振荡回路中电容为 $C=0.01\\,\\mu\\mathrm{F}$ 的电容器。初始电感电流为零，没有外部能量输入，振荡最终完全衰减，全部储能转化为回路中的热量。放出的热量是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$1.00\\times10^{-2}\\,\\mathrm{J}$", "figure_ids": []},
+          {"id": "b", "text": "$5.00\\times10^{-6}\\,\\mathrm{J}$", "figure_ids": []},
+          {"id": "c", "text": "$5.00\\times10^{-3}\\,\\mathrm{J}$", "figure_ids": []},
+          {"id": "d", "text": "$2.50\\times10^{-3}\\,\\mathrm{J}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "利用初始电容储能与最终完全耗散求总热量。",
+        "source_solution": "C=10^-8 F，初始电感电流为零，因此初始总能量为 q^2/(2C)。最终电磁储能为零且无外部输入，Q=10^-10/(2*10^-8)=0.005 J。",
+        "unit_reason": "完整能量守恒计算是一个响应单位，不拆成电压或能量的中间数值槽。",
+        "concept_blocks": [],
+        "limitations": ["选择完整结果不能证明独立写出能量守恒推导。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "漏掉 1/2，计算 q^2/C=10^-10/10^-8=0.010 J。", "misconception": "用电荷乘最终充电电压代替充电过程中电压积分得到的储能。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把 0.01 微法拉换算为 0.01*10^-3 F=10^-5 F，得到 q^2/(2C)=5*10^-6 J。", "misconception": "将微的换算因子 10^-6 错当成毫的 10^-3。"},
+          {"option_id": "c", "truth": "correct", "derivation": "换算 C=10^-8 F，全部初始储能 q^2/(2C)=5*10^-3 J 转化为热量。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "先得到总能量 0.005 J，再除以二，得到 0.0025 J。", "misconception": "将振荡中电场能的时间平均份额误当成最终耗散的总能量。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-dielectric-periods",
+      "source_numbers": ["2"],
+      "view": {
+        "mode": "single",
+        "stem": "振荡回路的电感为 $L=0.003\\,\\mathrm{H}$。平行板电容器的圆形极板半径为 $r=1.2\\,\\mathrm{cm}$，板间距为 $d=0.3\\,\\mathrm{mm}$。初始介质近似为真空，忽略边缘效应和回路损耗；随后用相对介电常数 $\\varepsilon=4$ 的电介质完全填满空隙。哪一对数值分别是填充前后的自由振荡周期 $(T_{\\mathrm{vac}},T_{\\mathrm{filled}})$？取 $\\varepsilon_0=8.8542\\times10^{-12}\\,\\mathrm{F/m}$，结果保留三位有效数字。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(1.26\\,\\mu\\mathrm{s},\\ 5.03\\,\\mu\\mathrm{s})$", "figure_ids": []},
+          {"id": "b", "text": "$(1.26\\,\\mu\\mathrm{s},\\ 2.52\\,\\mu\\mathrm{s})$", "figure_ids": []},
+          {"id": "c", "text": "$(0.629\\,\\mu\\mathrm{s},\\ 1.26\\,\\mu\\mathrm{s})$", "figure_ids": []},
+          {"id": "d", "text": "$(1.26\\,\\mu\\mathrm{s},\\ 0.629\\,\\mu\\mathrm{s})$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从圆形极板几何计算电容，并比较完全填充前后的振荡周期。",
+        "source_solution": "r=0.012 m，d=0.0003 m。按题面常数 C0=epsilon0*pi*r^2/d 约为 1.33518*10^-11 F。T0=2*pi*sqrt(0.003*C0) 约为 1.257508 微秒。填充后 C=4C0，周期变为 2T0 约 2.515016 微秒，三位有效数字数值对为 (1.26,2.52) 微秒。",
+        "unit_reason": "同一回路的前后周期作为有序数值对，保留电容几何与介电常数平方根缩放的关系。",
+        "concept_blocks": [],
+        "limitations": ["选择完整数值对不能证明独立推导极板电容公式及写出两次周期计算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "正确算出 T0 约 1.257508 微秒，却直接乘介电常数 4，得到填充周期约 5.030032 微秒。", "misconception": "认为周期与电容成正比，而不是与电容平方根成正比。"},
+          {"option_id": "b", "truth": "correct", "derivation": "极板面积为 pi*(0.012)^2，周期为 2*pi*sqrt(LC)。电容增大四倍使周期增大两倍，得到 (1.26,2.52) 微秒。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把 1.2 cm 半径误当成直径，取 r=0.006 m，面积和电容都缩小四倍，两次周期都减半，得到 (0.629,1.26) 微秒。", "misconception": "将给定半径再次除以二。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "填充前周期正确，却认为填充使电容减小四倍，得到填充周期 T0/2 约 0.629 微秒。", "misconception": "颠倒相对介电常数对电容的作用方向。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-inductance-range",
+      "source_numbers": ["3"],
+      "view": {
+        "mode": "single",
+        "stem": "振荡回路的电容固定为 $10\\,\\mu\\mathrm{F}$，忽略回路损耗。要使振荡频率从 $400\\,\\mathrm{Hz}$ 增加到 $500\\,\\mathrm{Hz}$，电感应怎样变化？各选项依次给出频率为 $400\\,\\mathrm{Hz}$ 和 $500\\,\\mathrm{Hz}$ 时的电感，这两个端点确定所需调节范围。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$15.8\\,\\mathrm{mH}\\ \\longrightarrow\\ 19.8\\,\\mathrm{mH}$", "figure_ids": []},
+          {"id": "b", "text": "$10.1\\,\\mathrm{mH}\\ \\longrightarrow\\ 15.8\\,\\mathrm{mH}$", "figure_ids": []},
+          {"id": "c", "text": "$15.8\\,\\mathrm{mH}\\ \\longrightarrow\\ 12.7\\,\\mathrm{mH}$", "figure_ids": []},
+          {"id": "d", "text": "$15.8\\,\\mathrm{mH}\\ \\longrightarrow\\ 10.1\\,\\mathrm{mH}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "求完整电感区间，并保持频率与区间端点的正确对应。",
+        "source_solution": "L=1/(4*pi^2*nu^2*C)。L400=0.0158314 H，L500=0.0101321 H。频率增加时电感减小，调节区间约为 [10.1,15.8] mH。",
+        "unit_reason": "带方向的端点数值对同时表达区间和变化方向，不把两个相关端点拆成孤立计算。",
+        "concept_blocks": [],
+        "limitations": ["选择数值对不能证明独立变形得到频率与电感的关系式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "从正确的 L400=15.8314 mH 出发，误乘 500/400，得到 L500=19.7893 mH。", "misconception": "把电感当成与频率成正比。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "算出了 10.1321 和 15.8314 mH 两个值，却把它们分别配给 400 和 500 Hz。", "misconception": "将反向关系中的两个频率端点对应颠倒。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "从 15.8314 mH 出发，仅乘 400/500，得到 12.6651 mH。", "misconception": "只使用频率的一次反比，漏掉平方。"},
+          {"option_id": "d", "truth": "correct", "derivation": "将两个频率分别代入 L=1/(4*pi^2*nu^2*10^-5)，得到有序数值对 (15.8,10.1) mH。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "t15-rotating-loop-amplitude",
+      "source_numbers": ["4"],
+      "view": {
+        "mode": "single",
+        "stem": "单匝导线框的面积为 $100\\,\\mathrm{cm}^2$，在磁感应强度为 $0.2\\,\\mathrm{T}$ 的匀强磁场中以每秒 $50$ 转匀速旋转，转轴垂直于磁场。感生电动势的振幅是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$0.628\\,\\mathrm{V}$", "figure_ids": []},
+          {"id": "b", "text": "$0.100\\,\\mathrm{V}$", "figure_ids": []},
+          {"id": "c", "text": "$62.8\\,\\mathrm{V}$", "figure_ids": []},
+          {"id": "d", "text": "$0.444\\,\\mathrm{V}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从面积、磁感应强度和角速度计算感生电动势振幅。",
+        "source_solution": "S=0.0100 m^2，omega=2*pi*50=100*pi rad/s，匝数为一。Em=nBS*omega=0.2*pi V 约为 0.628 V。",
+        "unit_reason": "一个完整振幅结果同时要求面积与转速换算以及法拉第定律。",
+        "concept_blocks": [],
+        "limitations": ["选择结果不能证明独立对磁通量求时间导数。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Em=0.2*(100*10^-4)*(2*pi*50)=0.6283185 V。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把每秒 50 转误当成 50 rad/s，得到 Em=0.2*0.0100*50=0.100 V。", "misconception": "换算转速到角速度时漏掉 2*pi。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "面积换算只乘 10^-2，将 100 cm^2 当成 1 m^2，得到 Em=0.2*1*100*pi 约 62.8 V。", "misconception": "对面积只使用一次长度换算因子。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "将正确振幅 0.6283185 V 除以 sqrt(2)，得到 0.4442883 V。", "misconception": "把所求的振幅换成正弦电动势有效值。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-instantaneous-emf",
+      "source_numbers": ["5"],
+      "view": {
+        "mode": "multiple",
+        "stem": "面积为 $S=100\\,\\mathrm{cm}^2$、匝数为 $n=200$ 的线框在磁感应强度 $B=0.15\\,\\mathrm{T}$ 的匀强磁场中以恒定角速度旋转。感生电动势振幅为 $\\mathcal{E}_{\\mathrm m}=1.4\\,\\mathrm{V}$，初始时线框平面垂直于 $\\vec B$。考虑 $t=0.1\\,\\mathrm{s}$ 时的电动势。转轴方向和导线端点的正方向均未指定。下列哪些说法成立？对于明确假设转轴垂直于磁场的说法，取初始正法向沿 $\\vec B$，按右手定则确定相应的正环绕方向，并用 $\\mathcal{E}=-d\\lambda/dt$ 表示磁通链 $\\lambda$ 对应的电动势。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "若转轴垂直于 $\\vec B$，则 $\\omega=4.67\\,\\mathrm{rad/s}$，且 $|\\mathcal{E}(0.1\\,\\mathrm{s})|=0.630\\,\\mathrm{V}$。", "figure_ids": []},
+          {"id": "b", "text": "若转轴垂直于 $\\vec B$，则初始电动势的大小为 $1.4\\,\\mathrm{V}$。", "figure_ids": []},
+          {"id": "c", "text": "若转轴垂直于 $\\vec B$，按题面指定的正环绕方向，$\\mathcal{E}(0.1\\,\\mathrm{s})=+0.630\\,\\mathrm{V}$。", "figure_ids": []},
+          {"id": "d", "text": "若转轴垂直于 $\\vec B$，反转题面指定的正环绕方向后，$t=0.1\\,\\mathrm{s}$ 时带符号的电动势仍为 $+0.630\\,\\mathrm{V}$。", "figure_ids": []},
+          {"id": "e", "text": "没有转轴方向的补充条件，仅凭给定振幅和初始平面方向，不能唯一确定 $t=0.1\\,\\mathrm{s}$ 时电动势的大小。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "联合判断瞬时电动势、初始磁通相位和明确选择的极性参考，区分通常垂直转轴模型的条件性计算与原始数据可确定的结论。",
+        "source_solution": "在转轴垂直于 B 的条件下，nBS=0.300，omega=1.4/0.300=14/3 rad/s，lambda=0.300*cos(omega*t)，E=1.4*sin(omega*t)。于是 |E(0.1)|=0.6298766 V；指定环绕方向给出正值，反向参考给出负值。若转轴与 B 夹角为 alpha，则 Em=nBS*omega*sin(alpha)^2。alpha=45 度、omega=28/3 同样满足给定振幅和初始方向，却给出 |E(0.1)|=1.12505 V，因此原始条件不确定唯一无条件数值。",
+        "unit_reason": "使用一个原生多选题共同判断大小与极性参考的关系及条件是否充分，不拆成数值槽或逐句是非按钮。",
+        "concept_blocks": [],
+        "limitations": [
+          "原始题缺少转轴方向，无法给出唯一无条件瞬时电动势数值；垂直转轴的结果均显式作为条件性结论，不冒充源事实。",
+          "没有端点约定或带标签的几何图，不能识别实际哪一导线端点为正。",
+          "选择结论不能证明独立推导磁通量的时间函数。"
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "在显式转轴条件下，Em=nBS*omega 给出 omega=14/3；1.4*abs(sin((14/3)*0.1))=0.6298766 V，两个数值均成立。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "初始磁通最大，E=1.4*sin(0)=0 V，而不是 1.4 V。", "misconception": "因初始平面垂直于磁场而错误采用零初相的余弦电动势，混淆磁通最大与磁通导数最大。"},
+          {"option_id": "c", "truth": "correct", "derivation": "正法向初始沿 B，故 lambda=+nBS*cos(omega*t)；E=-d(lambda)/dt=+Em*sin(omega*t)，且 sin(7/15) 为正。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "环绕方向及其正法向反转，lambda 和 E 都变号，0.1 s 时应为 -0.6298766 V。", "misconception": "把带符号电压误认为在参考方向反转时不变。"},
+          {"option_id": "e", "truth": "correct", "derivation": "固定斜转轴模型的 lambda=nBS*(cos(alpha)^2+sin(alpha)^2*cos(omega*t))，给定振幅只固定 omega*sin(alpha)^2=14/3。垂直转轴和 45 度转轴保留相同数据却产生不同瞬时电动势大小。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "t15-inductor-current-amplitude",
+      "source_numbers": ["6"],
+      "view": {
+        "mode": "single",
+        "stem": "自感系数为 $L=0.08\\,\\mathrm{H}$ 的线圈接在频率 $\\nu=100\\,\\mathrm{Hz}$、电压有效值 $U=100\\,\\mathrm{V}$ 的交流电源上。把线圈按电阻可忽略的理想电感处理。电流振幅 $I_{\\mathrm m}$ 是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$1.99\\,\\mathrm{A}$", "figure_ids": []},
+          {"id": "b", "text": "$2.81\\,\\mathrm{A}$", "figure_ids": []},
+          {"id": "c", "text": "$17.7\\,\\mathrm{A}$", "figure_ids": []},
+          {"id": "d", "text": "$1.41\\,\\mathrm{A}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "使用感抗求电流，并区分有效值和振幅。",
+        "source_solution": "XL=2*pi*100*0.08=16*pi 欧姆。Irms=100/(16*pi)=1.98944 A，Im=sqrt(2)*Irms=2.81349 A。",
+        "unit_reason": "所求电流振幅是一个完整结果，必须联合完成感抗计算与有效值到振幅的换算。",
+        "concept_blocks": [],
+        "limitations": ["选择结果不能证明独立写出正弦电流表达式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "100/(2*pi*100*0.08)=1.98944 A 是电流有效值。", "misconception": "将有效值电压除以感抗得到的量直接当作振幅，漏掉 sqrt(2)。"},
+          {"option_id": "b", "truth": "correct", "derivation": "Im=sqrt(2)*100/(2*pi*100*0.08)=2.81349 A。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "使用 XL=nu*L=8 欧姆，计算 Im=sqrt(2)*100/8=17.6777 A。", "misconception": "把以赫兹计的频率直接用作角频率。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "算出 Irms=1.98944 A 后再除以 sqrt(2)，得到 1.40674 A。", "misconception": "颠倒正弦量有效值和振幅的大小关系。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-series-lc-impedance",
+      "source_numbers": ["7"],
+      "view": {
+        "mode": "single",
+        "stem": "交流频率为 $1000\\,\\mathrm{Hz}$，电容为 $1\\,\\mu\\mathrm{F}$ 的电容器与自感系数为 $0.05\\,\\mathrm{H}$ 的线圈串联，电阻可忽略。总阻抗的大小是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$473\\,\\Omega$", "figure_ids": []},
+          {"id": "b", "text": "$352\\,\\Omega$", "figure_ids": []},
+          {"id": "c", "text": "$155\\,\\Omega$", "figure_ids": []},
+          {"id": "d", "text": "$314\\,\\Omega$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由方向相反的感抗与容抗求串联电路总阻抗。",
+        "source_solution": "XL=314.159 欧姆，XC=159.155 欧姆；Z=j(XL-XC)，所以 |Z|=155.004 欧姆。",
+        "unit_reason": "保留完整总阻抗任务，必须判断两个串联电抗相减，不分开询问各元件数值。",
+        "concept_blocks": [],
+        "limitations": ["选择数值不能证明独立绘制阻抗相量或写出推导。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把两个电抗大小相加，XL+XC=314.159+159.155=473.314 欧姆。", "misconception": "把相反方向的电抗电压相量当成同方向。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "使用 sqrt(XL^2+XC^2) 得到约 352 欧姆，而非电抗之差。", "misconception": "把感抗与容抗当作相互垂直，而不是在虚轴上方向相反。"},
+          {"option_id": "c", "truth": "correct", "derivation": "电阻为零时 |Z|=abs(2*pi*1000*0.05-1/(2*pi*1000*10^-6))=155.004 欧姆。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "只计算 XL=2*pi*1000*0.05=314.159 欧姆。", "misconception": "忽略串联电容器的非零容抗。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-power-phase",
+      "source_numbers": ["8"],
+      "view": {
+        "mode": "single",
+        "stem": "在正弦交流稳态下，发电机提供的平均功率为 $P=8\\,\\mathrm{kW}$，电流振幅为 $I_{\\mathrm m}=100\\,\\mathrm{A}$，接线柱电压振幅为 $U_{\\mathrm m}=200\\,\\mathrm{V}$。电压与电流的主值相位差的大小是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$66.4^\\circ$", "figure_ids": []},
+          {"id": "b", "text": "$53.1^\\circ$", "figure_ids": []},
+          {"id": "c", "text": "$0^\\circ$", "figure_ids": []},
+          {"id": "d", "text": "$36.9^\\circ$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从正弦交流振幅和平均功率确定相位差大小，不推断超前或滞后。",
+        "source_solution": "P=(Um*Im/2)*cos(phi)，cos(phi)=8000/10000=0.8，|phi|=acos(0.8)=36.8699 度。正负相位差具有相同功率因数。",
+        "unit_reason": "一个相位差大小完整检验平均功率推理；数据不确定其符号，故不设超前或滞后的判断任务。",
+        "concept_blocks": [],
+        "limitations": ["源数据不确定相位差符号，不作超前或滞后结论。", "选择结果不能证明独立推导平均功率恒等式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "误用 cos(phi)=P/(Um*Im)=8000/20000=0.4，得到 acos(0.4)=66.4218 度。", "misconception": "把两个振幅作为有效值，漏掉平均乘积中的 1/2。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "正确算出比值 0.8，却解 sin(phi)=0.8，得到 asin(0.8)=53.1301 度。", "misconception": "把功率因数中的余弦误换成正弦。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "假定功率因数为一和 phi=0，会预测 P=Um*Im/2=10000 W，与 8000 W 不符。", "misconception": "无视给定非单位功率比，擅自假定负载纯电阻。"},
+          {"option_id": "d", "truth": "correct", "derivation": "有效值电压与电流乘积为 (Um/sqrt(2))*(Im/sqrt(2))=10000 VA；cos(phi)=0.8，相位差大小为 36.8699 度。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "t15-dc-ac-winding",
+      "source_numbers": ["9"],
+      "view": {
+        "mode": "single",
+        "stem": "铁芯螺线管的自感系数为 $L=2\\,\\mathrm{H}$，绕组纯电阻为 $R=100\\,\\Omega$，两者都视为给定常量。先接到电压为 $20\\,\\mathrm{V}$ 的直流电源，再接到频率为 $400\\,\\mathrm{Hz}$、电压有效值为 $20\\,\\mathrm{V}$ 的交流电源。哪一对数值分别是直流稳态电流和交流稳态电流有效值 $(I_{\\mathrm{DC}},I_{\\mathrm{AC,rms}})$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(0.200\\,\\mathrm{A},\\ 3.98\\,\\mathrm{mA})$", "figure_ids": []},
+          {"id": "b", "text": "$(0.200\\,\\mathrm{A},\\ 5.63\\,\\mathrm{mA})$", "figure_ids": []},
+          {"id": "c", "text": "$(0.200\\,\\mathrm{A},\\ 0.200\\,\\mathrm{A})$", "figure_ids": []},
+          {"id": "d", "text": "$(3.98\\,\\mathrm{mA},\\ 3.98\\,\\mathrm{mA})$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "比较同一电阻电感绕组在直流稳态与交流稳态的电流。",
+        "source_solution": "直流稳态的电感电压为零，I=20/100=0.200 A。400 Hz 时 XL=1600*pi 欧姆，|Z|=sqrt(100^2+(1600*pi)^2)=5027.543 欧姆，Iac,rms=20/|Z|=3.97809 mA。可选交流振幅为 5.62586 mA。",
+        "unit_reason": "保留直流与交流电流的完整比较：电源电压数值相同，电流却因电感的频率响应而明显不同。",
+        "concept_blocks": [],
+        "limitations": ["内部推导了可选交流电流振幅，但不单独检验其报出；选择结果不证明独立推导 RL 阻抗。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "直流电流为 0.200 A；交流有效值为 20/sqrt(100^2+(2*pi*400*2)^2)=3.97809 mA。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "保留正确直流值，将交流有效值 3.97809 mA 乘 sqrt(2)，得到振幅 5.62586 mA。", "misconception": "在明确要求有效值的位置填入交流电流振幅。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "对直流和交流都使用 I=20/R=0.200 A。", "misconception": "将直流稳态电感电压消失的结论推广到非零频率交流。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "对两个电源都使用 400 Hz 的阻抗 sqrt(R^2+(2*pi*400*L)^2)，两次都得 3.97809 mA。", "misconception": "把交流电源频率带入直流稳态计算。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-resonance-phasors",
+      "source_numbers": ["10"],
+      "view": {
+        "mode": "multiple",
+        "stem": "图示交流电路处于电流共振。电源电压 $u=U_{\\mathrm m}\\cos\\omega t$ 取上端子相对于下端子的电压，电流正方向取从上端子经 $C$、$R$、$L$ 到下端子。各元件电压采用被动符号约定，相量的时间因子取 $e^{j\\omega t}$，逆时针转动表示正相位。把电流参考相量 $\\underline I$ 想象为向右的箭头。下列哪些说法共同构成完整的电流与电压相量关系？",
+        "figure_ids": ["fig-43"],
+        "options": [
+          {"id": "a", "text": "通过 $C$、$R$、$L$ 的电流相量都等于 $\\underline I$。", "figure_ids": []},
+          {"id": "b", "text": "共振时，电感和电容的电压相量分别都为零。", "figure_ids": []},
+          {"id": "c", "text": "$\\underline U_R$ 向右，电源电压相量等于 $\\underline U_R$，也向右。", "figure_ids": []},
+          {"id": "d", "text": "$\\underline U_L$ 向下，$\\underline U_C$ 向上，两者大小相等。", "figure_ids": []},
+          {"id": "e", "text": "$\\underline U_L$ 向上，$\\underline U_C$ 向下，两者大小相等。", "figure_ids": []},
+          {"id": "f", "text": "电源电压相量等于 $\\underline U_L+\\underline U_C$，不包含电阻电压相量。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "按明确的极性与相位约定，识别实际串联共振电路中公共电流、电源以及所有元件电压的完整关系。",
+        "source_solution": "实际 SVG 是单一串联 C-R-L 通路，电源标注余弦电压。共振时 XL=XC，各元件电流均为 I。按 exp(j*omega*t)，I 向右，UR=RI 向右，UL=jXL*I 向上，UC=-jXC*I 向下，两个电抗电压大小相等。U_source=UR+UL+UC=UR。图中电阻仍在，故相消的是电抗电压之和，而非各元件电压分别为零。",
+        "unit_reason": "一个原生多选题同时判断整个相位关系网络，覆盖电源与每个元件，不拆成逐箭头是非题或组合编码选项。",
+        "concept_blocks": [],
+        "limitations": [
+          "识别完整相位关系不能证明独立绘制、按比例安排及空间标注电流和电压相量图。",
+          "源图没有极性箭头，所以电源端子与元件被动电压参考方向在题面明确约定，不能称为源图观察所得。",
+          "原始材料只提供电路图，不提供相量图；没有虚构源相量图或新候选插图。"
+        ],
+        "figure_observations": [
+          {"figure_id": "fig-43", "observation": "通过 440x380 离线栅格预览查看完整的 420x360 实际 SVG。上方电容 C、左侧矩形电阻 R、下方完整电感 L、最右侧两个开口电源端子及 u=U_m cos omega t 均清晰可见。单一串联通路，没有相位箭头、极性箭头或元件数值。最右和最下方对象均未裁切。"}
+        ]
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "实际电路只有一条串联通路，电荷连续性使 C、R、L 具有相同电流相量。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "共振时 XL=XC 但两者均非零。非零驱动电流下 UL=jXL*I 与 UC=-jXC*I 均非零，只有二者之和为零。", "misconception": "把总电抗为零误当成各电抗或各电压分别为零。"},
+          {"option_id": "c", "truth": "correct", "derivation": "UR=RI 与 I 同相；由电压定律及 UL+UC=0 得 U_source=UR，两者均向右。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "exp(j*omega*t) 下乘 j 表示逆时针转动，UL 应向上、UC 应向下。大小相等不能补救方向颠倒。", "misconception": "在保留题面时间与正相位约定时颠倒电感和电容的相位符号。"},
+          {"option_id": "e", "truth": "correct", "derivation": "UL=j*omega*L*I，UC=-j*I/(omega*C)；共振使二者长度相等，按明确约定分别向上和向下。", "misconception": null},
+          {"option_id": "f", "truth": "incorrect", "derivation": "共振时 UL+UC=0，而图中的 R 非零，电源电压为 UR=RI；电压和必须包括电阻电压。", "misconception": "从实际串联电压和中删去电阻，把图示电路误当成无损 LC 回路。"}
+        ]
+      }
+    },
+    {
+      "id": "t15-added-capacitance",
+      "source_numbers": ["11"],
+      "view": {
+        "mode": "single",
+        "stem": "电容为 $C_1=10^{-6}\\,\\mathrm{F}$ 的振荡回路在频率 $\\nu_1=400\\,\\mathrm{Hz}$ 时共振。给 $C_1$ 并联电容为 $C_2$ 的另一个电容器后，共振频率变为 $\\nu_2=100\\,\\mathrm{Hz}$。线圈自感不变，回路纯电阻可忽略。新增电容 $C_2$ 是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$16\\,\\mu\\mathrm{F}$", "figure_ids": []},
+          {"id": "b", "text": "$3\\,\\mu\\mathrm{F}$", "figure_ids": []},
+          {"id": "c", "text": "$15\\,\\mu\\mathrm{F}$", "figure_ids": []},
+          {"id": "d", "text": "$4\\,\\mu\\mathrm{F}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "根据共振频率变化求并联新增电容，而非总电容。",
+        "source_solution": "L 固定，(C1+C2)/C1=(nu1/nu2)^2=16。故 C2=15*C1=15*10^-6 F=15 微法拉。",
+        "unit_reason": "一个新增电容结果同时要求频率平方缩放和总电容与新增电容的区分。",
+        "concept_blocks": [],
+        "limitations": ["选择结果不能证明独立推导频率与电容的比例关系。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "计算总电容 Ctotal=C1*(400/100)^2=16 微法拉，却直接作为 C2 报出。", "misconception": "忘记原电容器仍在并联，应从总电容中扣除其电容。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "使用未平方的比值，Ctotal=4*C1=4 微法拉，再减 C1 得 3 微法拉。", "misconception": "使用频率与电容的一次反比而不是平方反比。"},
+          {"option_id": "c", "truth": "correct", "derivation": "C2=C1*((nu1/nu2)^2-1)=1 微法拉*(16-1)=15 微法拉。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "直接使用 C2=C1*(400/100)=4 微法拉。", "misconception": "使用未平方的频率比，并把总电容的缩放直接用于新增电容。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1", "question_ids": ["t15-energy"], "omitted_tasks": ["独立写出能量守恒推导。"], "reason": "一个完整热量选择保留初始电流、无外部输入、完全衰减和全部能量变热的条件。"},
+    {"source_number": "2", "question_ids": ["t15-dielectric-periods"], "omitted_tasks": ["独立写出电容和前后周期的计算。"], "reason": "同一几何条件下真空及填充周期保持为有序数值对；显式给出标准常数 epsilon0，不猜测源数据。"},
+    {"source_number": "3", "question_ids": ["t15-inductance-range"], "omitted_tasks": ["独立推导频率与电感的公式。"], "reason": "联合检验区间两端和频率增加时电感变化的方向。"},
+    {"source_number": "4", "question_ids": ["t15-rotating-loop-amplitude"], "omitted_tasks": ["独立对磁通量函数求导。"], "reason": "保留所有数值、单匝及转轴垂直磁场模型，检验完整振幅结果。"},
+    {"source_number": "5", "question_ids": ["t15-instantaneous-emf"], "omitted_tasks": ["仅从原始数据求唯一无条件瞬时电动势数值：缺少转轴条件，无法确定。", "独立写出磁通和电动势函数并标记实际端点极性。"], "reason": "原始转轴条件缺失仍是实质未解决项。一个原生多选题保留全部源给定数据，联合检验显式垂直转轴下的条件性大小与极性，以及数据充分性；不虚构源约定。"},
+    {"source_number": "6", "question_ids": ["t15-inductor-current-amplitude"], "omitted_tasks": ["独立写出理想电感电流推导。"], "reason": "所求仍是振幅，与已知电压有效值及中间电流有效值明确区分。"},
+    {"source_number": "7", "question_ids": ["t15-series-lc-impedance"], "omitted_tasks": ["独立写出阻抗推导或画出阻抗相量。"], "reason": "检验完整串联 LC 总阻抗大小，不拆成孤立电抗数值。"},
+    {"source_number": "8", "question_ids": ["t15-power-phase"], "omitted_tasks": ["独立写出平均功率推导。"], "reason": "保留所求相位差大小，超前或滞后符号既不是源要求也不能由数据推断。"},
+    {"source_number": "9", "question_ids": ["t15-dc-ac-winding"], "omitted_tasks": ["可选的单独报出交流电流振幅。", "独立写出 RL 阻抗计算。"], "reason": "必要的直流电流与交流有效值比较保持完整；内部推导可选振幅，仅用于可复现的有效值混淆干扰项。"},
+    {"source_number": "10", "question_ids": ["t15-resonance-phasors"], "omitted_tasks": ["独立绘制、按比例安排并空间标注电流、电源及各元件电压相量。"], "reason": "使用实际源电路图，以原生多选识别完整相位关系。明确记录画图产出能力损失，不虚构源相量图，不声称整图批准。"},
+    {"source_number": "11", "question_ids": ["t15-added-capacitance"], "omitted_tasks": ["独立写出频率与电容比例推导。"], "reason": "检验新增电容而非仅检验总电容，保留电感不变、并联及电阻可忽略的条件。"}
+  ]
+}

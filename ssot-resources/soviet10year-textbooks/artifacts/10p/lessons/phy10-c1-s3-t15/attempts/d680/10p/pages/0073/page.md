@@ -1,0 +1,77 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 73,
+  "printed_page": 63,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 73
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "b350e3dca05920519324d011f59121aa33d89b2cbe1ec99e97e5bd408841c0c3"
+  },
+  "notes": [
+    "FIRST visual author candidate only; no independent source approval.",
+    "Opening 或 and the unnumbered equation continue page72's final Pythagorean-theorem paragraph.",
+    "Amplitude subscripts are transcribed as Cyrillic м from the italic source glyph; independent typography review is pending.",
+    "N26's visible text ends before the printed title 27. 交流电路中的功率. No prior-source or course approval is inferred.",
+    "N27 begins on this page and remains terminal right-open. Equation (2.43) has no terminal punctuation in the source. No later page is inferred or transcribed.",
+    "No exercise group, question, figure, caption, square marker or erratum is present on this page."
+  ],
+  "errata": [],
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+或 $U_{м}^2=I_{м}^2\left[R^2+\left(\omega L-\frac{1}{\omega C}\right)^2\right]$
+
+<!-- p -->
+从等式（2.34）中可以很容易地求出电路中电流强度的
+振幅：
+$I_{м}=\frac{U_{м}}{\sqrt{R^2+\left(\omega L-\frac{1}{\omega C}\right)^2}}$ （2.39）
+
+<!-- p -->
+这样，由于电路各段上的电压间的相位差，得出图43中表示
+的电路的总阻抗$Z$：
+$Z=\sqrt{R^2+\left(\omega L-\frac{1}{\omega C}\right)^2}$ （2.40）
+
+<!-- p -->
+从电流强度和电压的振幅可以导出这些量的有效值，它
+们相互之间的关系和公式（2.39）中的振幅关系是完全一
+样的：
+$I=\frac{U}{\sqrt{R^2+\left(\omega L-\frac{1}{\omega C}\right)^2}}$ （2.41）
+
+<!-- p -->
+这就是图43所示的交流电路的欧姆定律. 电流强度的瞬
+时值随时间简谐变化：
+$i=I_{м}\cos(\omega t+\varphi)$ （2.42）
+
+<!-- p -->
+这里$\varphi$是线路中电流强度和电压之间的相位差，它和角
+频率$\omega$及电路的参数$R$、$L$、$C$有关.
+
+<!-- h3 -->
+27. 交流电路中的功率
+
+<!-- p open -->
+在所有情况下，稳恒电流电路上的功率由电流强度和电
+压的乘积来确定：
+$P=UI$ （2.43）
+
+<!-- foot -->
+• 63 •

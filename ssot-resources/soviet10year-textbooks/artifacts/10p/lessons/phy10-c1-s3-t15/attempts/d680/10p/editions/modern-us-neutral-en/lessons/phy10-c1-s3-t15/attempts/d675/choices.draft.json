@@ -1,0 +1,388 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "90dbbfd177d1181757fdcbf05cf824f00c5174a80d26c46b25c74944b45d66bb",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "t15-energy",
+      "source_numbers": ["1"],
+      "view": {
+        "mode": "single",
+        "stem": "A charge $q=10^{-5}\\,\\mathrm{C}$ is placed on a capacitor of capacitance $C=0.01\\,\\mu\\mathrm{F}$ in an oscillating circuit. The initial inductor current is zero, there is no external energy input, and the oscillations decay completely. All stored energy becomes heat in the circuit. How much heat is released?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$1.00\\times10^{-2}\\,\\mathrm{J}$", "figure_ids": []},
+          {"id": "b", "text": "$5.00\\times10^{-6}\\,\\mathrm{J}$", "figure_ids": []},
+          {"id": "c", "text": "$5.00\\times10^{-3}\\,\\mathrm{J}$", "figure_ids": []},
+          {"id": "d", "text": "$2.50\\times10^{-3}\\,\\mathrm{J}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compute heat by conservation of the initial capacitor energy.",
+        "source_solution": "C=10^-8 F and initial magnetic energy is zero. Q=q^2/(2C)=10^-10/(2*10^-8)=0.005 J when the final stored energy is zero.",
+        "unit_reason": "The whole energy balance is one response unit; no intermediate voltage or energy slot is split out.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not demonstrate writing an independent energy-balance derivation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "q^2/C=10^-10/10^-8=0.010 J, omitting the factor 1/2.", "misconception": "Use q times the final charging voltage as stored energy without integrating the voltage during charging."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Convert 0.01 microfarad as 0.01*10^-3 F=10^-5 F; q^2/(2C)=5*10^-6 J.", "misconception": "Use the milli prefix 10^-3 in place of the micro prefix 10^-6."},
+          {"option_id": "c", "truth": "correct", "derivation": "Convert capacitance to 10^-8 F; all initial energy q^2/(2C)=5*10^-3 J becomes heat.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "First obtain initial stored energy 0.005 J, then divide by two again to obtain 0.0025 J.", "misconception": "Use the time-averaged electric share of oscillation energy instead of the conserved total energy ultimately dissipated."}
+        ]
+      }
+    },
+    {
+      "id": "t15-dielectric-periods",
+      "source_numbers": ["2"],
+      "view": {
+        "mode": "single",
+        "stem": "An oscillating circuit has $L=0.003\\,\\mathrm{H}$ and a parallel-plate capacitor with circular plates of radius $r=1.2\\,\\mathrm{cm}$, separated by $d=0.3\\,\\mathrm{mm}$. Initially the gap is treated as vacuum; neglect edge effects and circuit losses. The gap is then completely filled with a dielectric of relative permittivity $\\varepsilon=4$. Which pair gives the free-oscillation periods $(T_{\\mathrm{vac}},T_{\\mathrm{filled}})$? Use $\\varepsilon_0=8.8542\\times10^{-12}\\,\\mathrm{F/m}$ and round to three significant figures.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(1.26\\,\\mu\\mathrm{s},\\ 5.03\\,\\mu\\mathrm{s})$", "figure_ids": []},
+          {"id": "b", "text": "$(1.26\\,\\mu\\mathrm{s},\\ 2.52\\,\\mu\\mathrm{s})$", "figure_ids": []},
+          {"id": "c", "text": "$(0.629\\,\\mu\\mathrm{s},\\ 1.26\\,\\mu\\mathrm{s})$", "figure_ids": []},
+          {"id": "d", "text": "$(1.26\\,\\mu\\mathrm{s},\\ 0.629\\,\\mu\\mathrm{s})$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compute capacitance from circular-plate geometry and compare the periods before and after full dielectric filling.",
+        "source_solution": "r=0.012 m, d=0.0003 m. With the displayed epsilon0, C0=epsilon0*pi*r^2/d about 1.33518*10^-11 F. T0=2*pi*sqrt(0.003*C0) about 1.257508*10^-6 s. Filling makes C=4C0 and T=2T0 about 2.515016*10^-6 s; rounded pair is (1.26,2.52) microseconds.",
+        "unit_reason": "One ordered pair preserves the same circuit's before/after relationship and tests both geometric capacitance and square-root scaling.",
+        "concept_blocks": [],
+        "limitations": ["A complete-result choice does not assess independently deriving the capacitor formula or writing both period calculations."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Compute T0 about 1.257508 microseconds correctly but multiply the period by epsilon=4, yielding about 5.030032 microseconds.", "misconception": "Assume period is proportional to capacitance instead of its square root."},
+          {"option_id": "b", "truth": "correct", "derivation": "Use plate area pi*(0.012)^2 and T=2*pi*sqrt(LC). C increases fourfold, so the paired periods are (1.26,2.52) microseconds.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Treat the given 1.2 cm radius as a diameter, use r=0.006 m, and reduce area and C by four; both periods halve to (0.629,1.26) microseconds.", "misconception": "Replace the stated radius with half that value."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Keep T0 correct but assume the dielectric reduces capacitance by four, making Tfilled=T0/2 about 0.629 microseconds.", "misconception": "Invert the effect of relative permittivity on capacitance."}
+        ]
+      }
+    },
+    {
+      "id": "t15-inductance-range",
+      "source_numbers": ["3"],
+      "view": {
+        "mode": "single",
+        "stem": "The capacitance of an oscillating circuit is fixed at $10\\,\\mu\\mathrm{F}$, and losses are negligible. To increase the frequency from $400\\,\\mathrm{Hz}$ to $500\\,\\mathrm{Hz}$, what change in inductance is required? Each option lists the inductance at $400\\,\\mathrm{Hz}$ followed by that at $500\\,\\mathrm{Hz}$; these endpoints define the required adjustment range.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$15.8\\,\\mathrm{mH}\\ \\longrightarrow\\ 19.8\\,\\mathrm{mH}$", "figure_ids": []},
+          {"id": "b", "text": "$10.1\\,\\mathrm{mH}\\ \\longrightarrow\\ 15.8\\,\\mathrm{mH}$", "figure_ids": []},
+          {"id": "c", "text": "$15.8\\,\\mathrm{mH}\\ \\longrightarrow\\ 12.7\\,\\mathrm{mH}$", "figure_ids": []},
+          {"id": "d", "text": "$15.8\\,\\mathrm{mH}\\ \\longrightarrow\\ 10.1\\,\\mathrm{mH}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine the full inductance interval with its correct frequency-to-endpoint association.",
+        "source_solution": "L=1/(4*pi^2*nu^2*C); L400=0.0158314 H and L500=0.0101321 H. Increasing frequency requires decreasing L; the interval is approximately [10.1,15.8] mH.",
+        "unit_reason": "A directed endpoint pair expresses the interval and the adjustment direction together; isolated endpoint clicks would lose the inverse-square relationship.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not demonstrate writing the rearranged resonance formula."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Start with L400=15.8314 mH and wrongly multiply by 500/400, obtaining L500=19.7893 mH.", "misconception": "Make inductance directly proportional to frequency."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The two computed endpoint values 10.1321 and 15.8314 mH are assigned to 400 and 500 Hz in the opposite order.", "misconception": "Reverse the inverse relationship when associating the endpoints with their frequencies."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Start with 15.8314 mH and multiply only by 400/500, giving 12.6651 mH.", "misconception": "Use an inverse first power of frequency rather than its inverse square."},
+          {"option_id": "d", "truth": "correct", "derivation": "Substitute both endpoint frequencies into L=1/(4*pi^2*nu^2*10^-5); the ordered pair is (15.8,10.1) mH.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "t15-rotating-loop-amplitude",
+      "source_numbers": ["4"],
+      "view": {
+        "mode": "single",
+        "stem": "A single-turn wire loop of area $100\\,\\mathrm{cm}^2$ rotates at $50$ revolutions per second in a uniform magnetic field of flux density $0.2\\,\\mathrm{T}$. Its rotation axis is perpendicular to the field. What is the induced-emf amplitude?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$0.628\\,\\mathrm{V}$", "figure_ids": []},
+          {"id": "b", "text": "$0.100\\,\\mathrm{V}$", "figure_ids": []},
+          {"id": "c", "text": "$62.8\\,\\mathrm{V}$", "figure_ids": []},
+          {"id": "d", "text": "$0.444\\,\\mathrm{V}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Calculate emf amplitude from area, field strength and angular speed.",
+        "source_solution": "S=0.0100 m^2, omega=2*pi*50=100*pi rad/s and n=1. Em=nBS*omega=0.2*pi V about 0.628 V.",
+        "unit_reason": "One complete amplitude calculation includes both unit conversions and Faraday's law.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not demonstrate differentiating magnetic flux independently."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Em=0.2*(100*10^-4)*(2*pi*50)=0.6283185 V.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Use 50 rad/s instead of 50 revolutions/s: Em=0.2*0.0100*50=0.100 V.", "misconception": "Omit the factor 2*pi in converting rotation rate to angular speed."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Convert 100 cm^2 using 10^-2 instead of 10^-4, obtaining S=1 m^2; Em=0.2*1*100*pi about 62.8 V.", "misconception": "Apply a length conversion factor once to an area."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Compute the amplitude 0.6283185 V and divide by sqrt(2), giving 0.4442883 V.", "misconception": "Report sinusoidal RMS emf when the amplitude was requested."}
+        ]
+      }
+    },
+    {
+      "id": "t15-instantaneous-emf",
+      "source_numbers": ["5"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A frame of area $S=100\\,\\mathrm{cm}^2$ and $n=200$ turns rotates at constant angular speed in a uniform field $B=0.15\\,\\mathrm{T}$. Its induced-emf amplitude is $\\mathcal{E}_{\\mathrm m}=1.4\\,\\mathrm{V}$, and its plane is initially perpendicular to $\\vec B$. Consider its emf at $t=0.1\\,\\mathrm{s}$. Neither the rotation-axis direction nor the positive terminal direction is specified. Which statements are justified? For statements explicitly assuming a perpendicular rotation axis, take the positive surface normal along $\\vec B$ initially and the associated positive circulation by the right-hand rule; use $\\mathcal{E}=-d\\lambda/dt$ for flux linkage $\\lambda$.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "If the rotation axis is perpendicular to $\\vec B$, then $\\omega=4.67\\,\\mathrm{rad/s}$ and $|\\mathcal{E}(0.1\\,\\mathrm{s})|=0.630\\,\\mathrm{V}$.", "figure_ids": []},
+          {"id": "b", "text": "If the rotation axis is perpendicular to $\\vec B$, then the initial emf magnitude is $1.4\\,\\mathrm{V}$.", "figure_ids": []},
+          {"id": "c", "text": "For a perpendicular rotation axis and the stated circulation reference, $\\mathcal{E}(0.1\\,\\mathrm{s})=+0.630\\,\\mathrm{V}$.", "figure_ids": []},
+          {"id": "d", "text": "For a perpendicular rotation axis, reversing the stated circulation reference leaves the signed emf at $t=0.1\\,\\mathrm{s}$ equal to $+0.630\\,\\mathrm{V}$.", "figure_ids": []},
+          {"id": "e", "text": "Without an assumption about the rotation axis, the given amplitude and initial plane orientation do not uniquely determine the emf magnitude at $t=0.1\\,\\mathrm{s}$.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Reason about instantaneous emf, the initial flux phase and a declared polarity reference, separating the conventional perpendicular-axis calculation from what the original data alone determine.",
+        "source_solution": "Under a perpendicular-axis model, nBS=0.300, omega=1.4/0.300=14/3 rad/s and lambda=0.300*cos(omega*t). E=1.4*sin(omega*t), so |E(0.1)|=0.6298766 V; the stated circulation gives positive emf, while the reversed reference gives negative emf. But an axis at angle alpha to B gives Em=nBS*omega*sin(alpha)^2. Alpha=45 degrees and omega=28/3 preserve the amplitude and initial orientation yet give |E(0.1)|=1.12505 V. The source does not uniquely fix an unconditional numerical value.",
+        "unit_reason": "One native multiple task retains the numerical magnitude and its polarity-reference relationship, while evaluating whether those results are conditional. It is not split into isolated arithmetic or yes/no slots.",
+        "concept_blocks": [],
+        "limitations": [
+          "The original unconditional numerical emf is underdetermined because the rotation-axis orientation is missing. Perpendicular-axis results are visibly conditional, not inferred source facts.",
+          "No physical positive terminal can be identified without a terminal convention or labeled geometry.",
+          "Selection does not demonstrate independently deriving the time-dependent flux."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Conditional on the stated axis, Em=nBS*omega gives omega=14/3; 1.4*abs(sin((14/3)*0.1))=0.6298766 V. Both listed values follow.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "At t=0 the perpendicular-axis flux is maximal and E=1.4*sin(0)=0 V, not 1.4 V.", "misconception": "Use a cosine emf with zero phase because the frame's initial plane is perpendicular to B, confusing maximum flux with maximum flux derivative."},
+          {"option_id": "c", "truth": "correct", "derivation": "The declared initial normal gives lambda=+nBS*cos(omega*t); -d(lambda)/dt=+Em*sin(omega*t), and sin(7/15) is positive.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Reverse circulation and its surface normal: lambda becomes -lambda and E becomes -E. At 0.1 s the reversed-reference value is -0.6298766 V.", "misconception": "Treat a signed voltage as invariant when its reference orientation is reversed."},
+          {"option_id": "e", "truth": "correct", "derivation": "For oblique fixed-axis rotation with initial normal along B, lambda=nBS*(cos(alpha)^2+sin(alpha)^2*cos(omega*t)). The amplitude fixes omega*sin(alpha)^2=14/3. Perpendicular and 45-degree axes give different instantaneous magnitudes with the same supplied data.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "t15-inductor-current-amplitude",
+      "source_numbers": ["6"],
+      "view": {
+        "mode": "single",
+        "stem": "A coil with inductance $L=0.08\\,\\mathrm{H}$ is connected to an AC source of frequency $\\nu=100\\,\\mathrm{Hz}$ and RMS voltage $U=100\\,\\mathrm{V}$. Treat the coil as an ideal inductor with negligible resistance. What is the current amplitude $I_{\\mathrm m}$?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$1.99\\,\\mathrm{A}$", "figure_ids": []},
+          {"id": "b", "text": "$2.81\\,\\mathrm{A}$", "figure_ids": []},
+          {"id": "c", "text": "$17.7\\,\\mathrm{A}$", "figure_ids": []},
+          {"id": "d", "text": "$1.41\\,\\mathrm{A}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Use inductive reactance and distinguish RMS from amplitude.",
+        "source_solution": "XL=2*pi*100*0.08=16*pi ohms. Irms=100/(16*pi)=1.98944 A; Im=sqrt(2)*Irms=2.81349 A.",
+        "unit_reason": "The requested amplitude is one coherent numerical result requiring the reactance and RMS conversion together.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not assess independently writing the sinusoidal current equation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "100/(2*pi*100*0.08)=1.98944 A is the RMS current.", "misconception": "Use an RMS input ratio as an amplitude without multiplying by sqrt(2)."},
+          {"option_id": "b", "truth": "correct", "derivation": "Im=sqrt(2)*100/(2*pi*100*0.08)=2.81349 A.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Set XL=nu*L=8 ohms instead of omega*L; Im=sqrt(2)*100/8=17.6777 A.", "misconception": "Use frequency in hertz as angular frequency."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Compute Irms=1.98944 A, then divide by sqrt(2), yielding 1.40674 A.", "misconception": "Reverse the relation between a sinusoid's RMS value and amplitude."}
+        ]
+      }
+    },
+    {
+      "id": "t15-series-lc-impedance",
+      "source_numbers": ["7"],
+      "view": {
+        "mode": "single",
+        "stem": "At an AC frequency of $1000\\,\\mathrm{Hz}$, a $1\\,\\mu\\mathrm{F}$ capacitor and a $0.05\\,\\mathrm{H}$ coil are connected in series. Resistance is negligible. What is the impedance magnitude?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$473\\,\\Omega$", "figure_ids": []},
+          {"id": "b", "text": "$352\\,\\Omega$", "figure_ids": []},
+          {"id": "c", "text": "$155\\,\\Omega$", "figure_ids": []},
+          {"id": "d", "text": "$314\\,\\Omega$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find the series impedance from opposing inductive and capacitive reactances.",
+        "source_solution": "XL=314.159 ohms; XC=159.155 ohms. Z=j(XL-XC), so |Z|=155.004 ohms.",
+        "unit_reason": "One total-impedance result preserves the subtraction of the two series reactances instead of independently asking each component value.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not assess independently constructing an impedance phasor."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Add the magnitudes: XL+XC=314.159+159.155=473.314 ohms.", "misconception": "Treat the opposing reactive voltage phasors as if they pointed in the same direction."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Use sqrt(XL^2+XC^2), approximately 352 ohms, instead of their difference.", "misconception": "Treat inductive and capacitive reactances as perpendicular to one another rather than opposite on the imaginary axis."},
+          {"option_id": "c", "truth": "correct", "derivation": "For zero resistance, |Z|=abs(2*pi*1000*0.05-1/(2*pi*1000*10^-6))=155.004 ohms.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Use only XL=2*pi*1000*0.05=314.159 ohms.", "misconception": "Ignore the capacitor's nonzero reactance in the series circuit."}
+        ]
+      }
+    },
+    {
+      "id": "t15-power-phase",
+      "source_numbers": ["8"],
+      "view": {
+        "mode": "single",
+        "stem": "In sinusoidal steady state, a generator supplies average power $P=8\\,\\mathrm{kW}$. The current amplitude is $I_{\\mathrm m}=100\\,\\mathrm{A}$ and the terminal-voltage amplitude is $U_{\\mathrm m}=200\\,\\mathrm{V}$. What is the magnitude of the principal phase difference between voltage and current?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$66.4^\\circ$", "figure_ids": []},
+          {"id": "b", "text": "$53.1^\\circ$", "figure_ids": []},
+          {"id": "c", "text": "$0^\\circ$", "figure_ids": []},
+          {"id": "d", "text": "$36.9^\\circ$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Infer phase-difference magnitude from average power and sinusoidal amplitudes without inferring leading or lagging.",
+        "source_solution": "P=(Um*Im/2)*cos(phi), hence cos(phi)=8000/10000=0.8 and |phi|=acos(0.8)=36.8699 degrees. Both leading and lagging phase signs have the same power factor.",
+        "unit_reason": "One phase magnitude tests the complete average-power inference. Its sign is deliberately not asked because the data do not determine it.",
+        "concept_blocks": [],
+        "limitations": ["The sign of phase difference is unavailable from the source data; no leading/lagging claim is made.", "Selection does not demonstrate independently deriving the average-power identity."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Use cos(phi)=P/(Um*Im)=8000/20000=0.4, yielding acos(0.4)=66.4218 degrees.", "misconception": "Use the two amplitudes as RMS values and omit the factor 1/2 in their average product."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Compute the correct ratio 0.8, but solve sin(phi)=0.8, obtaining asin(0.8)=53.1301 degrees.", "misconception": "Replace the cosine power factor by a sine."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Assume unity power factor and phi=0. That would predict P=Um*Im/2=10000 W, not 8000 W.", "misconception": "Assume a purely resistive load despite the supplied nonunity power ratio."},
+          {"option_id": "d", "truth": "correct", "derivation": "Um/sqrt(2) times Im/sqrt(2) is 10000 VA; cos(phi)=0.8 gives magnitude 36.8699 degrees.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "t15-dc-ac-winding",
+      "source_numbers": ["9"],
+      "view": {
+        "mode": "single",
+        "stem": "An iron-core solenoid has inductance $L=2\\,\\mathrm{H}$ and winding resistance $R=100\\,\\Omega$, both treated as constants. It is first connected to a $20\\,\\mathrm{V}$ DC source, then to a $400\\,\\mathrm{Hz}$ AC source with RMS voltage $20\\,\\mathrm{V}$. Which ordered pair gives the steady DC current and the RMS steady AC current, $(I_{\\mathrm{DC}},I_{\\mathrm{AC,rms}})$?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(0.200\\,\\mathrm{A},\\ 3.98\\,\\mathrm{mA})$", "figure_ids": []},
+          {"id": "b", "text": "$(0.200\\,\\mathrm{A},\\ 5.63\\,\\mathrm{mA})$", "figure_ids": []},
+          {"id": "c", "text": "$(0.200\\,\\mathrm{A},\\ 0.200\\,\\mathrm{A})$", "figure_ids": []},
+          {"id": "d", "text": "$(3.98\\,\\mathrm{mA},\\ 3.98\\,\\mathrm{mA})$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compare the DC steady-state and AC RMS responses of the same resistive-inductive winding.",
+        "source_solution": "At steady DC, inductive voltage vanishes and I=20/100=0.200 A. At 400 Hz, XL=1600*pi ohms and |Z|=sqrt(100^2+(1600*pi)^2)=5027.543 ohms. Iac,rms=20/|Z|=3.97809 mA; optional amplitude is 5.62586 mA.",
+        "unit_reason": "The paired response preserves the original comparison, including the same voltage magnitude but very different steady-state currents.",
+        "concept_blocks": [],
+        "limitations": ["The optional AC amplitude is derived internally but is not separately assessed; selection does not prove writing the RL impedance derivation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "DC current is 0.200 A; AC RMS current is 20/sqrt(100^2+(2*pi*400*2)^2)=3.97809 mA.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Use the correct DC value but multiply AC RMS current 3.97809 mA by sqrt(2), giving amplitude 5.62586 mA.", "misconception": "Insert AC amplitude into the position explicitly labeled RMS current."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Use I=20/R=0.200 A for both DC and AC.", "misconception": "Extend the DC steady-state disappearance of inductive voltage to a nonzero-frequency AC current."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Use the 400-Hz impedance sqrt(R^2+(2*pi*400*L)^2) for both sources, obtaining 3.97809 mA twice.", "misconception": "Assign the AC source's frequency to the DC steady-state calculation."}
+        ]
+      }
+    },
+    {
+      "id": "t15-resonance-phasors",
+      "source_numbers": ["10"],
+      "view": {
+        "mode": "multiple",
+        "stem": "The shown AC circuit is at current resonance. Take the source voltage $u=U_{\\mathrm m}\\cos\\omega t$ from the upper source terminal to the lower terminal, and take positive current from the upper terminal through $C$, $R$ and $L$ to the lower terminal. Use passive component-voltage references, phasors with time factor $e^{j\\omega t}$, and counterclockwise positive phase. Draw the current reference phasor $\\underline I$ conceptually to the right. Which statements belong to the complete current-and-voltage phasor description?",
+        "figure_ids": ["fig-43"],
+        "options": [
+          {"id": "a", "text": "The current phasors through $C$, $R$ and $L$ are all equal to $\\underline I$.", "figure_ids": []},
+          {"id": "b", "text": "The inductor and capacitor voltage phasors both vanish individually at resonance.", "figure_ids": []},
+          {"id": "c", "text": "$\\underline U_R$ points right, and the source phasor equals $\\underline U_R$ and also points right.", "figure_ids": []},
+          {"id": "d", "text": "$\\underline U_L$ points down and $\\underline U_C$ points up, with equal magnitudes.", "figure_ids": []},
+          {"id": "e", "text": "$\\underline U_L$ points up and $\\underline U_C$ points down, with equal magnitudes.", "figure_ids": []},
+          {"id": "f", "text": "The source voltage phasor equals $\\underline U_L+\\underline U_C$, without the resistor voltage phasor.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recognize all current and source/component voltage relations of the actual series-resonant circuit under an explicit phasor and polarity convention.",
+        "source_solution": "The actual SVG contains one series C-R-L path and a cosine-labeled source. At resonance XL=XC. The same I passes through every component. With exp(j*omega*t) and I rightward, UR=RI is rightward, UL=jXL*I is upward, and UC=-jXC*I is downward, with equal reactive magnitudes. U_source=UR+UL+UC=UR. The resistor remains present, so reactive voltages cancel rather than individually vanish.",
+        "unit_reason": "Native multiple selection evaluates the full network of phase relations together, including source and every component; it avoids per-arrow yes/no questions or combination-code alternatives.",
+        "concept_blocks": [],
+        "limitations": [
+          "Recognizing full phase relations does not demonstrate independently drawing, scaling or spatially labeling the current and voltage phasor diagram.",
+          "Source-terminal and passive voltage references are declared in the stem because the actual circuit image contains no polarity arrows.",
+          "No original phasor drawing is supplied; no invented source phasor diagram or new candidate artwork is used."
+        ],
+        "figure_observations": [
+          {"figure_id": "fig-43", "observation": "Viewed the complete 420 by 360 actual SVG in a 440 by 380 offline raster preview. Top capacitor C, left rectangular resistor R, complete bottom inductor L, both rightmost open source terminals and u=U_m cos omega t are visible. One series path; no phase arrows, polarity arrows or component numerical values. Rightmost and bottommost objects are not clipped."}
+        ]
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "The actual circuit has one series path, so charge continuity gives a common current phasor in C, R and L.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "At resonance, XL=XC but both remain nonzero. UL=jXL*I and UC=-jXC*I are nonzero for driven nonzero current; their sum, not each voltage, is zero.", "misconception": "Turn zero total reactance into zero reactance or zero voltage for each individual reactive component."},
+          {"option_id": "c", "truth": "correct", "derivation": "UR=RI has zero phase relative to I. KVL and UL+UC=0 yield U_source=UR, so both point rightward.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Under exp(j*omega*t), multiplication by j rotates counterclockwise: UL must point up and UC down. Equal magnitudes do not repair the swapped directions.", "misconception": "Reverse the inductive and capacitive phase signs while retaining the stated time and positive-phase convention."},
+          {"option_id": "e", "truth": "correct", "derivation": "UL=j*omega*L*I and UC=-j*I/(omega*C); resonance makes their lengths equal, with up/down directions under the explicit convention.", "misconception": null},
+          {"option_id": "f", "truth": "incorrect", "derivation": "UL+UC=0 at resonance, whereas the source is UR=RI and R is present. KVL requires the resistor voltage too.", "misconception": "Drop the actual resistor from the series voltage sum as if the shown circuit were a lossless LC loop."}
+        ]
+      }
+    },
+    {
+      "id": "t15-added-capacitance",
+      "source_numbers": ["11"],
+      "view": {
+        "mode": "single",
+        "stem": "An oscillating circuit with $C_1=10^{-6}\\,\\mathrm{F}$ resonates at $\\nu_1=400\\,\\mathrm{Hz}$. A capacitor of capacitance $C_2$ is connected in parallel with $C_1$, and the resonance frequency becomes $\\nu_2=100\\,\\mathrm{Hz}$. The inductance is unchanged and resistance is negligible. What is the added capacitance $C_2$?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$16\\,\\mu\\mathrm{F}$", "figure_ids": []},
+          {"id": "b", "text": "$3\\,\\mu\\mathrm{F}$", "figure_ids": []},
+          {"id": "c", "text": "$15\\,\\mu\\mathrm{F}$", "figure_ids": []},
+          {"id": "d", "text": "$4\\,\\mu\\mathrm{F}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine added parallel capacitance from the change in resonance frequency.",
+        "source_solution": "With L fixed, (C1+C2)/C1=(nu1/nu2)^2=16. Hence C2=15*C1=15*10^-6 F=15 microfarads.",
+        "unit_reason": "One added-capacitance result retains both the frequency-square scaling and the distinction between total and newly added capacitance.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not demonstrate independently deriving the frequency-capacitance ratio."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Compute Ctotal=C1*(400/100)^2=16 microfarads, but report it as C2.", "misconception": "Forget that the original capacitor remains connected in parallel and must be subtracted from total capacitance."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Use the unsquared ratio: Ctotal=4*C1=4 microfarads, then subtract C1 to obtain 3 microfarads.", "misconception": "Use an inverse-linear frequency-capacitance relation instead of the inverse-square relation."},
+          {"option_id": "c", "truth": "correct", "derivation": "C2=C1*((nu1/nu2)^2-1)=1 microfarad*(16-1)=15 microfarads.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Use C2=C1*(400/100)=4 microfarads directly.", "misconception": "Use the unsquared frequency ratio and apply the total-capacitance scaling directly to the added capacitor."}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1", "question_ids": ["t15-energy"], "omitted_tasks": ["Independent production of the energy-balance derivation."], "reason": "The complete dissipated-energy task and all initial/final energy conditions are retained in one numerical choice."},
+    {"source_number": "2", "question_ids": ["t15-dielectric-periods"], "omitted_tasks": ["Independent written production of both capacitance and period calculations."], "reason": "The vacuum and filled-gap periods remain an ordered pair for the same geometry; the standard epsilon0 constant is explicitly provided, not guessed."},
+    {"source_number": "3", "question_ids": ["t15-inductance-range"], "omitted_tasks": ["Independent written derivation of the frequency-to-inductance formula."], "reason": "Both interval endpoints and their direction as frequency rises are assessed together."},
+    {"source_number": "4", "question_ids": ["t15-rotating-loop-amplitude"], "omitted_tasks": ["Independent differentiation of the flux function."], "reason": "The complete single-turn, perpendicular-axis amplitude task and all numeric givens are retained."},
+    {"source_number": "5", "question_ids": ["t15-instantaneous-emf"], "omitted_tasks": ["Unique unconditional numerical emf from the original data: unavailable without a rotation-axis condition.", "Independent production of the flux/emf function and physical terminal labeling."], "reason": "The original axis underdetermination is substantive and remains unresolved. A native multiple task preserves all source givens, evaluates conditional perpendicular-axis magnitude and polarity together, and tests the data-sufficiency distinction without inventing a source convention."},
+    {"source_number": "6", "question_ids": ["t15-inductor-current-amplitude"], "omitted_tasks": ["Independent written production of the inductive-current derivation."], "reason": "Current amplitude remains distinct from the supplied RMS voltage and intermediate RMS current."},
+    {"source_number": "7", "question_ids": ["t15-series-lc-impedance"], "omitted_tasks": ["Independent production of the impedance derivation or its phasor."], "reason": "The complete series-LC impedance magnitude, rather than isolated reactance values, is assessed."},
+    {"source_number": "8", "question_ids": ["t15-power-phase"], "omitted_tasks": ["Independent production of the average-power derivation."], "reason": "The requested phase magnitude is retained. A leading/lagging sign is not a source task and is not inferred."},
+    {"source_number": "9", "question_ids": ["t15-dc-ac-winding"], "omitted_tasks": ["Optional separate reporting of AC current amplitude.", "Independent written production of the RL impedance calculation."], "reason": "The essential DC versus AC RMS pair remains intact; the optional amplitude is derived internally and used only as a plausible RMS-confusion alternative."},
+    {"source_number": "10", "question_ids": ["t15-resonance-phasors"], "omitted_tasks": ["Independently drawing, scaling and spatially labeling the current and source/component voltage phasors."], "reason": "The actual source circuit is retained and the complete phase relationships are assessed by native multiple recognition. Drawing-production loss is explicit; no invented source phasor diagram or figure approval is claimed."},
+    {"source_number": "11", "question_ids": ["t15-added-capacitance"], "omitted_tasks": ["Independent written derivation of the frequency-capacitance relation."], "reason": "The added capacitor, not just the total capacitance, is assessed with unchanged inductance and the specified parallel connection."}
+  ]
+}

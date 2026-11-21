@@ -1,0 +1,93 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 69,
+  "printed_page": 59,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 69
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "9ef8ed240bc1bf65893e572bd9c89bdaec59231562e2f13f1f7168bb08c7f4e4"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "notes": [
+    "D203 FIRST source author only; independent source review pending.",
+    "N25 final prose 电流的振幅就越小. closes before N26 title; no printed task group or numbered exercise intervenes.",
+    "N26 final paragraph is right-open with tail 线圈及电, continued on p0070.",
+    "原定义行首确实印有实心黑方块 ■ (U+25A0)；即使原生白名单拒绝也不得删除或替换。",
+    "原文是 电压变化越快，忠实保留，不据物理知识改成电流，也不添加修正式。",
+    "振幅下标暂记俄文 м，м/M 同形 HOLD 待独立源复核。",
+    "图 42 原点标记暂记 O；O/0 同形 HOLD，裁图保留像素，不重画或改标签。",
+    "图 42 粗线标 i_L(t)，细线标 u_L(t)，保留两轴、两箭头引线及原始无刻度曲线。",
+    "SOURCE67 approval remains PENDING_D196_NOT_ASSUMED."
+  ],
+  "errata": [],
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-42",
+      "label": "图 42",
+      "box": [
+        477,
+        143,
+        700,
+        331
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- fig 图 42 box 477,143,700,331 -->
+![图 42](../../figures/fig-42.png)
+
+<!-- cap 图 42 -->
+图 42
+
+<!-- p -->
+当电压变为零时，电流强度的绝对值达到最大值.
+
+<!-- p -->
+在线圈里电流强度的振幅等于
+$I_м=\frac{U_м}{\omega L}$ （2.31）
+
+<!-- p -->
+如果引入符号
+$\omega L=X_L$ （2.32）
+用有效值代替电流强度和电压的振幅，则可得
+$I=\frac{U}{X_L}$ （2.33）
+
+<!-- p -->
+**■ $X_L$ 即角频率和自感系数的乘积叫做感抗.**
+
+<!-- p -->
+根据公式（2.33），电流强度的有效值与电压的有效值和
+感抗间的关系与直流电路中的欧姆定律类似.
+
+<!-- p -->
+**感抗与频率有关**. 稳恒电流一般“不能察觉”线圈的电感.
+在 $\omega=0$ 时，**感抗 $X_L=0$**. 电压变化越快，自感电动势就越大，
+**电流的振幅就越小**.
+
+<!-- h3 -->
+26. 交流电路的欧姆定律
+
+<!-- p open -->
+我们现在来研究电路的更普遍的情况，即纯电阻为 $R$
+而电感很小的导体、电感 $L$ 很大而有效电阻很小的线圈及电
+
+<!-- foot -->
+· 59 ·
