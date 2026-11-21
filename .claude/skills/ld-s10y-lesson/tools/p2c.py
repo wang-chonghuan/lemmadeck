@@ -163,6 +163,33 @@ def _reusable_figure_geometry(
     return None
 
 
+def _validate_page_pagination(meta: dict, blks: list[dict]) -> list[str]:
+    pagination = meta.get("pagination")
+    if pagination is None:
+        return ["printed_page 未填（页码承载溯源，不能空）"] if meta.get("printed_page") is None else []
+    if not isinstance(pagination, dict) or set(pagination) != {"kind", "label", "reason"}:
+        return ["pagination must declare exactly kind, label and source inspection reason"]
+    if pagination["kind"] != "unnumbered-plate":
+        return ["pagination.kind must be unnumbered-plate"]
+    label, reason = pagination["label"], pagination["reason"]
+    if not isinstance(label, str) or not re.fullmatch(r"图\s+[IVXLCDM]+", label):
+        return ["unnumbered plate requires its original Roman figure label"]
+    if not isinstance(reason, str) or not reason.strip():
+        return ["unnumbered plate requires a source inspection reason"]
+    if meta.get("printed_page") is not None:
+        return ["unnumbered plate must retain printed_page=null, not a substituted folio"]
+    figures = [block for block in blks if block["kind"] == "fig"]
+    captions = [block for block in blks if block["kind"] == "cap"]
+    if (
+        len(figures) != 1 or len(captions) != 1
+        or any(block["kind"] not in {"fig", "cap"} for block in blks)
+        or figures[0].get("label") != label or captions[0].get("label") != label
+        or not B.text_of(captions[0]).startswith(label)
+    ):
+        return ["unnumbered plate requires one matching original figure and caption, without a folio block"]
+    return []
+
+
 def _counting_line_bands(meta: dict, ink, content_w: int) -> list[tuple[int, int]]:
     counting = meta.get("counting", {})
     if not isinstance(counting, dict):
@@ -568,8 +595,7 @@ def cmd_finalize(a) -> int:
     errors += _validate_page_enums(blks, profile)
     errors += _validate_page_errata(meta, blks, a.page)
 
-    if meta.get("printed_page") is None:
-        errors.append("printed_page 未填（页码承载溯源，不能空）")
+    errors += _validate_page_pagination(meta, blks)
 
     pdf = _find_pdf(a)
     meta |= {
