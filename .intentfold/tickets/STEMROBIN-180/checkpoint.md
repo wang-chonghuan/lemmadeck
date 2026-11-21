@@ -1,5 +1,2181 @@
 # 生产检查点
 
+## 180-6 r868 COMPLETE_LESSON_SEALED_PUSH_PENDING
+
+6p/phy6-c5-s13 complete: TEXT/ANSWER/FIGURE/CHOICE independent PASS reused; DISPLAY six images PASS.
+Official adapt-finalize, answer retention, canonical choice trace-only rebind/retain and one offline render succeeded.
+6 written questions, 4 choices (3single/1multiple), FIG201/202. Complete19->20/new1.
+Seal 39686f4944ccf18c41d2840fd3c2c4de2b7dfc4e59daa3970ac6f4ce06b90ef3; DISPLAY 61648f3d241b75a42cc88dc0ca1153613c5beaf280671f44e94553da9559b83b.
+Original failed calls, TEXT correction1, old FIG201/202 repair1/1 and S19 byte HOLD preserved.
+Native first script incorrectly clicked disabled offline input: first failure retained; old2 screenshots reused, missing4 only captured.
+Display browser2/closed2; figure-author browser4; parent image loads0. Historic paid69/retry0/browser22 retained; cost/tokens/quota UNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap or old reviewer/chat wake.
+Same8306 absoluteW; sharedmain/oldtrees/locks/backups/stash/pending preserved. Narrow commit/push pending.
+
+## 180-6 r861 NEW_NATIVE_DISPLAY_REVIEW_ACTIVE
+
+6p/phy6-c5-s13: manifest293f3318 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Popper the 2nd:NEW_NATIVE_DISPLAY_REVIEW_ACTIVE.
+Returned counts: {"browser":2,"browserClosed":2,"screenshots":6,"reusedScreenshots":2,"newScreenshots":4,"imagesLoaded":0,"rendererCalls":1,"paid":0,"databaseCalls":0,"semanticReviewReruns":0,"technicalScriptCorrections":1}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r849 NEW_NATIVE_CHOICE_INDEPENDENT_PASS
+
+6p/phy6-c5-s13: manifest3c6350b8 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents0/parentexec0: none.
+Returned counts: {"images":0,"browser":0,"paid":0,"semanticReview":1,"reviewedValidator":1,"questions":4,"single":3,"multiple":1,"optionChecks":17,"sourceReviews":6,"fullyDeferredSources":2,"partiallyDeferredExternalReferences":1,"database":0,"envReads":0,"install":0,"externalModelCalls":0,"otherChatMessages":0,"createAttachBootstrapSkillHost":0,"authorDraftWrites":0,"projectionWrites":0,"canonicalWrites":0,"rollback":0,"execCalls":20,"wrappedCommandCalls":19,"unwrappedEntryExecCalls":1,"commandFailures":0,"applyPatchCalls":4,"honorTests":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r827 NEW_FIGURE_PASS
+
+6p/phy6-c5-s13: manifest8b1e8d1d bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Plato the 2nd:NEW_NATIVE_CHOICE_INDEPENDENT_ACTIVE.
+Returned counts: {"images":14,"batches":[7,7],"sourceImageLoads":2,"nativeImageLoads":12,"sourceReopens":0,"sampleReopens":0,"imageToolCalls":15,"failedImageLoads":1,"canonicalPngLoads":0,"sourcePages":0,"crops":0,"newImages":0,"browser":0,"paid":0,"mechanicalReruns":0,"readOnlyBindingAudits":1,"contentReviewPasses":1,"figureContentRevisions":0,"reviewerTechnicalFailures":2,"databaseCalls":0,"envAccess":0,"installs":0,"recordReviewCalls":0,"promotionCalls":0,"gitWrites":0,"newChats":0,"messagesToOtherChats":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r823 NEW_NATIVE_CHOICE_REVIEW_ACTIVE
+
+6p/phy6-c5-s13: manifest497be783 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents2/parentexec0: Archimedes the 2nd:NEW_FIGURE_INDEPENDENT_ACTIVE; Plato the 2nd:NEW_NATIVE_CHOICE_INDEPENDENT_ACTIVE.
+Returned counts: {"questions":4,"single":3,"multiple":1,"sourceExercises":6,"fullyDeferredSources":2,"partiallyDeferredExternalReferences":1,"images":0,"browser":0,"paid":0,"externalModelCalls":0,"installCalls":0,"databaseCalls":0,"canonicalWrites":0,"projectionWrites":0,"parentCheckpointWrites":0,"parentUsageWrites":0,"otherChatMessages":0,"independentSemanticReviewCalls":0,"selfReviewCalls":0,"inspectCalls":1,"prepareCalls":1,"structureCheckerCalls":1,"snapshotDigestCommands":1,"execCalls":18,"wrappedCommandCalls":12,"preliminaryUnwrappedExecCalls":6,"commandFailures":0,"spawnFailures":0,"checkerFailures":0,"applyPatchCalls":5,"parallelWrapperCalls":5}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r820 NEW_NATIVE_CHOICE_AUTHOR_READY
+
+6p/phy6-c5-s13: manifest497be783 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Archimedes the 2nd:NEW_FIGURE_INDEPENDENT_ACTIVE.
+Returned counts: {"questions":4,"single":3,"multiple":1,"sourceExercises":6,"fullyDeferredSources":2,"partiallyDeferredExternalReferences":1,"images":0,"browser":0,"paid":0,"externalModelCalls":0,"installCalls":0,"databaseCalls":0,"canonicalWrites":0,"projectionWrites":0,"parentCheckpointWrites":0,"parentUsageWrites":0,"otherChatMessages":0,"independentSemanticReviewCalls":0,"selfReviewCalls":0,"inspectCalls":1,"prepareCalls":1,"structureCheckerCalls":1,"snapshotDigestCommands":1,"execCalls":18,"wrappedCommandCalls":12,"preliminaryUnwrappedExecCalls":6,"commandFailures":0,"spawnFailures":0,"checkerFailures":0,"applyPatchCalls":5,"parallelWrapperCalls":5}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r808 NEW_MODERN_ANSWER_FINALIZE_PASS
+
+6p/phy6-c5-s13: manifest346a1b6d bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents2/parentexec0: Hooke the 2nd:NEW_NATIVE_CHOICE_AUTHOR_ACTIVE; Archimedes the 2nd:NEW_FIGURE_INDEPENDENT_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r803 NEW_MODERN_ANSWER_GATE2_PASS
+
+6p/phy6-c5-s13: manifest7263e861 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Hooke the 2nd:NEW_NATIVE_CHOICE_AUTHOR_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0,"gate2SemanticReview":1,"sourceReruns":0,"textReruns":0,"wholeMechanicalSuiteReruns":0,"modernAnswersReviewed":6,"necessaryDefects":0,"newFailures":0,"canonicalWrites":0,"candidateWrites":0,"parentCheckpointOrUsageWrites":0,"finalize":0,"publish":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r802 NEW_FIGURE_AUTHOR_READY
+
+6p/phy6-c5-s13: manifest0e4965c7 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Hooke the 2nd:NEW_NATIVE_CHOICE_AUTHOR_ACTIVE.
+Returned counts: {"imagesLoaded":16,"imageBatches":[2,8,6],"contextImageLimit":24,"batchImageLimit":8,"sourceImageLoads":2,"sourceReopens":0,"sourcePages":0,"crops":0,"canonicalRenderPngLoads":2,"nativePngLoads":12,"canonicalRendererCalls":2,"canonicalInternalDraftValidatorCalls":2,"affectedTextOnlyDraftValidatorCalls":2,"nativePreviewCalls":2,"screenshotsCreated":14,"browserLaunches":4,"browserCloses":4,"paidCalls":0,"paidRetries":0,"paidCostUsd":0,"newFigureContentRevisions":0,"newFigureFailures":0,"textOnlyMetadataRebindingRounds":1,"actualTechnicalDiscoveryFailures":5,"sourcePreparationCalls":0,"databaseCalls":0,"installs":0,"publicBrowserCalls":0,"userBrowserAttachments":0,"recordReviewCalls":0,"promotionCalls":0,"adaptFinalizeCalls":0,"gitWrites":0,"newChats":0,"messagesToOtherChats":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r798 NEW_MODERN_ANSWER_AUTHOR_READY
+
+6p/phy6-c5-s13: manifest9172a1f5 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents3/parentexec0: Ohm the 2nd:NEW_FIGURE_AUTHOR_ACTIVE; Hooke the 2nd:NEW_NATIVE_CHOICE_AUTHOR_ACTIVE; Aristotle the 2nd:MODERN_ANSWER_GATE2_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0,"canonicalWrites":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r792 NEW_MODERN_TEXT_PASS
+
+6p/phy6-c5-s13: manifest63b80366 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Ohm the 2nd:NEW_FIGURE_AUTHOR_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0,"affectedReview":1,"fullReviewReruns":0,"structureReruns":0,"oldFailures":1,"correction":1,"newFailures":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r790 NEW_MODERN_TEXT_AFFECTED_AUTHOR_READY
+
+6p/phy6-c5-s13: manifestf73c4d7b bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents2/parentexec0: Ohm the 2nd:NEW_FIGURE_AUTHOR_ACTIVE; Dalton the 2nd:TEXT_G2_1_AFFECTED_REVIEW_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0,"affectedRepair":1,"fullStructuralReruns":0}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r786 NEW_MODERN_TEXT_REVISE
+
+6p/phy6-c5-s13: manifestf3f0884e bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents1/parentexec0: Ohm the 2nd:NEW_FIGURE_AUTHOR_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0,"semanticReview":1,"structureReruns":0,"sourcePageOpens":0,"sourceExtractionReviews":0,"sourceSolving":0,"databaseOperations":0,"merge":0,"deploy":0,"commandFailures":1}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r779 NEW_MODERN_TEXT_AUTHOR_READY
+
+6p/phy6-c5-s13: manifestfc3a58a2 bound to actual saved bytes.
+New candidate/stage is not oldbyte recovery and does not inherit old approval.
+Same raw/source observations reused; oldFIG201/202 empty-text/EEXIST,
+repair1/1 and all previous failures kept. Missing stage only.
+S19 newTEXT a9977759 and local exact-modern-FIG172-byte HOLD retained.
+No complete-course seal/commit/push; complete19/new0.
+Active agents2/parentexec0: Ohm the 2nd:NEW_FIGURE_AUTHOR_ACTIVE; Dalton the 2nd:NEW_TEXT_INDEPENDENT_ACTIVE.
+Returned counts: {"images":0,"browser":0,"paid":0,"prepare":1,"structure":1,"flow":1}; historicpaid69/retry0/
+knownbrowser22 retained, unknowncost/tokens/cap stillUNKNOWN.
+NoDB/merge/deploy/formalhandoff/globalchecks/paid/newtree/attach/bootstrap.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/oldpending preserved.
+
+## 180-6 r760 S19_LOCAL_BYTE_HOLD_S13_RESUME
+
+Same official8306W/chat; no create/attach/bootstrap/SkillHost replay.
+S19 new TEXT a9977759 remains parent-bound r711. Exact old FIG172 modern
+spec/SVG absent from the finite known tmp roots:1873 paths,959 JSON/SVG
+candidates,0 matching old digests. No source SVG substitution, image/browser,
+clip repair or new approval. Old water-containment FAIL andrepair1/1 retained.
+Local byte HOLD is not a whole-group stop.
+
+Immediately continue6p/phy6-c5-s13: identical raw11blocks/6tasks/FIG201+202
+match named old TEXT/source context. Only15 source files and6 history reports
+frozen; old modern templates UNLOCATED. New text is not oldbyte recovery.
+Old FIG201/202 empty-text/EEXIST receipts andrepair1/1 stay retained;
+their deterministic apparatus route needs no paid artwork. Missing stages only.
+S4 requires actual missing color plate; reference regex alone is not approval.
+New discovery failures r719/r725/r744 and valid outputs retained.
+
+Complete19/new0/HEADfd29ec1f/n129 unchanged; agents0/parentexec0.
+Historicpaid69/retry0/browser22; newimages/browser/paid0; cost/tokens/capUNKNOWN.
+Sharedmain/oldtrees/locks/backups/stash/failedattach/pending preserved.
+Finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r711 NEW_MODERN_TEXT_PASS
+
+6p/phy6-c4-s19 missing modern stage actually resumed; manifesta9977759
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+NamedrawSOURCE/TEXT reports reused only for identicalraw context.
+No originalsolution replay or inherited newTEXT approval.
+S19 identicalraw6prose/7written/FIG172 preserved, exact named source
+and oldTEXT rawbindings reused. Oldmoderntemplates remain UNLOCATED.
+New candidate is not a byte recovery or replayed oldapproval.
+FIG172 oldwater-fill/clip FAIL andrepair1/1 retained, no figureproduction.
+New TEXT approval a9977759.
+S12 affected CHOICE be4f540d remains parent-bound r694; only question3
+reviewed, unchanged questions/source/PNG observations reused, validator1 exit0.
+S19 r702 first supplemental-numbering FAIL retained; canonical q1 PASS
+96928bdb used unchanged candidate bytes and no full structural replay.
+Parent r710 verdict/status contract FAIL retained; r711 accepts the exact
+frozen TEXT_ONLY verdict, not a new review or changed report.
+S19 ANSWER/CHOICE/FIGURE/finalize were not generated or replayed here.
+No sourceprepare/transcript/pagefinalize/assembly/recrop/native/browser/paid.
+Whole-lesson delivery stays blocked by actual figurehold, not textbyte absence.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Boundmanifest records images0/browser0/paid0; these are returned counts,
+not new parent observations. N27nativeauthor seedPNG observations are
+CHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r709 NEW_MODERN_TEXT_AUTHOR_READY
+
+6p/phy6-c4-s19 missing modern stage actually resumed; manifest9c932d20
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+NamedrawSOURCE/TEXT reports reused only for identicalraw context.
+No originalsolution replay or inherited newTEXT approval.
+S19 identicalraw6prose/7written/FIG172 preserved, exact named source
+and oldTEXT rawbindings reused. Oldmoderntemplates remain UNLOCATED.
+New candidate is not a byte recovery or replayed oldapproval.
+FIG172 oldwater-fill/clip FAIL andrepair1/1 retained, no figureproduction.
+New TEXT approval PENDING.
+No sourceprepare/transcript/pagefinalize/assembly/recrop/native/browser/paid.
+Whole-lesson delivery stays blocked by actual figurehold, not textbyte absence.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Ptolemy the 2nd: NEW_MODERN_TEXT_REVIEW_ACTIVE 6p/phy6-c4-s19
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Boundmanifest records images0/browser0/paid0; these are returned counts,
+not new parent observations. N27nativeauthor seedPNG observations are
+CHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r706 NEW_MODERN_TEXT_REVIEW_ACTIVE
+
+6p/phy6-c4-s19 missing modern stage actually resumed; manifest9c932d20
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+NamedrawSOURCE/TEXT reports reused only for identicalraw context.
+No originalsolution replay or inherited newTEXT approval.
+S19 identicalraw6prose/7written/FIG172 preserved, exact named source
+and oldTEXT rawbindings reused. Oldmoderntemplates remain UNLOCATED.
+New candidate is not a byte recovery or replayed oldapproval.
+FIG172 oldwater-fill/clip FAIL andrepair1/1 retained, no figureproduction.
+New TEXT approval PENDING.
+No sourceprepare/transcript/pagefinalize/assembly/recrop/native/browser/paid.
+Whole-lesson delivery stays blocked by actual figurehold, not textbyte absence.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Ptolemy the 2nd: NEW_MODERN_TEXT_REVIEW_ACTIVE 6p/phy6-c4-s19
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Boundmanifest records images0/browser0/paid0; these are returned counts,
+not new parent observations. N27nativeauthor seedPNG observations are
+CHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r695 S19_IDENTICAL_RAW_READY_MISSING_MODERN_BYTES
+
+S12 affected CHOICE PASS be4f540d parent-bound r694; Russell collected/closed.
+Only question3 reviewed; other3/source/PNG observations reused. Truthsets
+{b}/{a,c}/{c}/{a,b}; validator1 exit0, images/browser/paid0. FirstBLOCKED,
+exit3, correction1/remaining0 and all oldfailures retained. S12 figureholds
+still prevent complete-course seal/commit/push; TEXT/ANSWER not replayed.
+Next6p/phy6-c4-s19: raw6prose/7written/FIG172 hashes match old named context.
+Bound only14rawfiles and5history reports. Known old template paths unlocated;
+not recovered, not proof of unexecuted history, not an oldPASS for newbytes.
+FIG172 old water-fill/clip FAIL and repair1/1 retained; no figureproduction.
+No sourceprepare/transcript/pagefinalize/assembly/recrop/native/image/browser/
+paidcall or unknownbyte/fullpackage restore. New TEXT stage only next.
+Complete19/new0/HEADfd29ec1f/n129unchanged; agents0/parentexec0.
+Historicpaid69/retry0/browser22 and costs/tokens/capUNKNOWN unchanged.
+Sameofficial8306W/chat; main/oldtrees/locks/backups/stash/failedattach/pending
+preserved. Finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r694 NEW_NATIVE_CHOICE_AFFECTED_PASS
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestbe4f540d
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+New TEXT approval 2cbacce5;
+modern ANSWER ready 001c66d4;
+native CHOICE ready be4f540d.
+TEXT correction1/literal-repair1/author-revisions2 and two REVISE results retained.
+Native correction rounds consumed 1;
+first native BLOCKED/exit3, image-path failure1, author seal failure1 retained.
+FIG150 hybrid/local paid dependency; FIG151 deterministic/source ambiguities.
+Neither figure is approved; no complete-course seal/commit/push.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Boundmanifest records images0/browser0/paid0; these are returned counts,
+not new parent observations. N27nativeauthor seedPNG observations are
+CHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r683 NEW_NATIVE_CHOICE_AFFECTED_REVIEW_ACTIVE
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest54edff6a
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+New TEXT approval 2cbacce5;
+modern ANSWER ready 001c66d4;
+native CHOICE ready PENDING.
+TEXT correction1/literal-repair1/author-revisions2 and two REVISE results retained.
+Native correction rounds consumed 1;
+first native BLOCKED/exit3, image-path failure1, author seal failure1 retained.
+FIG150 hybrid/local paid dependency; FIG151 deterministic/source ambiguities.
+Neither figure is approved; no complete-course seal/commit/push.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Russell the 2nd: NEW_NATIVE_CHOICE_AFFECTED_REVIEW_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Boundmanifest records images0/browser0/paid0; these are returned counts,
+not new parent observations. N27nativeauthor seedPNG observations are
+CHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r681 NEW_NATIVE_CHOICE_AFFECTED_AUTHOR_READY
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest54edff6a
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+New TEXT approval 2cbacce5;
+modern ANSWER ready 001c66d4;
+native CHOICE ready PENDING.
+TEXT correction1/literal-repair1/author-revisions2 and two REVISE results retained.
+Native correction rounds consumed 1;
+first native BLOCKED/exit3, image-path failure1, author seal failure1 retained.
+FIG150 hybrid/local paid dependency; FIG151 deterministic/source ambiguities.
+Neither figure is approved; no complete-course seal/commit/push.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Boundmanifest records images0/browser0/paid0; these are returned counts,
+not new parent observations. N27nativeauthor seedPNG observations are
+CHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r680 NEW_NATIVE_CHOICE_AFFECTED_AUTHOR_ACTIVE
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestb75250e2
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Curie the 2nd: NEW_NATIVE_CHOICE_AFFECTED_AUTHOR_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r678 NEW_NATIVE_CHOICE_BLOCKED
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestb75250e2
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r677 NEW_NATIVE_CHOICE_AUTHOR_READY
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestcf3ce204
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Sartre the 2nd: NEW_NATIVE_CHOICE_REVIEW_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r668 NEW_MODERN_ANSWER_FINALIZE_PASS
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest001c66d4
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Kuhn the 2nd: NEW_NATIVE_CHOICE_AUTHOR_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r664 NEW_MODERN_ANSWER_GATE2_PASS
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest0e2cc025
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Kuhn the 2nd: NEW_NATIVE_CHOICE_AUTHOR_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r660 NEW_MODERN_ANSWER_REVIEW_ACTIVE
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestc0bbacdc
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+Halley the 2nd: NEW_MODERN_ANSWER_GATE2_REVIEW_ACTIVE 6p/phy6-c4-s12
+Kuhn the 2nd: NEW_NATIVE_CHOICE_AUTHOR_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r654 NEW_MODERN_TEXT_PASS
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest2cbacce5
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r652 NEW_MODERN_TEXT_AFFECTED_AUTHOR_READY
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifesta38fdde1
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Pasteur the 2nd: NEW_MODERN_TEXT_N1_ONLY_AFFECTED_REVIEW_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r649 NEW_MODERN_TEXT_AFFECTED_REVISE
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifeste7faf2db
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r646 NEW_FIGURE_PLAN_ONLY
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest8a8d7989
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+FIG150 hybrid/local paid dependency; FIG151 deterministic/local source
+ambiguities remain. PLAN_ONLY: no spec/output/figure/whole-lesson PASS.
+Planning binds r625 draft, not later corrected TEXT; unaffected inventory
+retained, future affected context must use actual approved text bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+Arendt the 2nd: NEW_MODERN_TEXT_AFFECTED_REVIEW_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r644 NEW_MODERN_TEXT_AFFECTED_AUTHOR_READY
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifest19190521
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r640 NEW_MODERN_TEXT_REVISE
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestbb673b93
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r631 NEW_MODERN_TEXT_REVIEW_ACTIVE
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestec943e78
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+Schrodinger the 2nd: NEW_MODERN_TEXT_REVIEW_ACTIVE 6p/phy6-c4-s12
+Ampere the 2nd: NEW_FIGURE_PLAN_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r630 NEW_MODERN_TEXT_AUTHOR_READY
+
+6p/phy6-c4-s12 missing modern stage actually resumed; manifestec943e78
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+S12 retained raw8prose/4written/FIG150+151 and exact native154..156.
+No transcript/pagefinalize/assembly/recrop replay or assumed historical PASS.
+New modern candidate/stage is separate from old source snapshots.
+Figure route must follow actual PNG inventory, not title or prose guessing.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+Schrodinger the 2nd: NEW_MODERN_TEXT_AUTHOR_READY 6p/phy6-c4-s12
+Ampere the 2nd: NEW_FIGURE_PLAN_ACTIVE 6p/phy6-c4-s12
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r622 NEXT_RETAINED_SOURCE_OBSERVATION_READY
+
+Actual active agents0/parentexec0; Huygens completed, collected and closed.
+N27 new CHOICE dd85e082 parent-bound r616, no author/validator replay.
+Brownian new TEXT d49e633f parent-bound r618; historical SOURCE still UNKNOWN.
+FIG17 plan6ffa724f bound r617: generated/local paid dependency only, not PASS.
+Next6p/phy6-c4-s12: saved8prose/4written/FIG150+151. Three native154..156
+match recordedcd63e64c/3a6a35f4/5f8e8a9c; copied only14 required files.
+No transcript/pagefinalize/assembly/recrop or inherited approval claim.
+SOURCE fidelity will be included in one new TEXT independent review.
+Original exercise g1-1..3/g2-q1 remains scoped; no invented experimental data.
+Parent images0/browser0/paid0. Newly collected child observations2/2/1/2
+(N27 author/reviewer, FIG17 planner, Brownian TEXT reviewer), not figure PASS.
+r602 binding failure and r606 mixed-JSON parser failure preserved; technical
+recovery reads saved bytes, never repeats producer/reviewer/validator.
+Complete19/new0/no half-course commit/push/n129unchanged.
+Historic paid69/retry0/browser22, all old failures/holds/budgets, unknown
+tokens/cost/cap, oldtrees/mainreadonly/locks/backups/stash/pending retained.
+Same official8306 workdir/chat; finishreview/noDB/merge/deploy/closure/
+formalhandoff/globalchecks/worktree/bootstrap/attach replay.
+
+## 180-6 r618 NEW_MODERN_TEXT_PASS
+
+6p/phy6-c2-s4-t1 missing modern stage actually resumed; manifestd49e633f
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+Brownian raw61d45980/10prose/0exercise/FIG17 retained unchanged.
+Native32/33 recovered exactly at recorded5c8255dc/897fa792 hashes;
+no transcript/pagefinalize/assembly/recrop replay. Officialtemplate before
+ca841128 retained; newauthor90a4f431 has newTEXT PASS d49e633f
+including sourcefidelity, no separate SOURCE replay or assumed oldapproval.
+FIG17 sourceinventory/route planning is author work, not a figure PASS.
+
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r617 NEW_FIGURE_PLAN_LOCAL_PAID_DEPENDENCY
+
+6p/phy6-c2-s4-t1 missing modern stage actually resumed; manifest6ffa724f
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+Brownian raw61d45980/10prose/0exercise/FIG17 retained unchanged.
+Native32/33 recovered exactly at recorded5c8255dc/897fa792 hashes;
+no transcript/pagefinalize/assembly/recrop replay. Officialtemplate before
+ca841128 retained; newauthor90a4f431 is bound separately from FIG17 planning
+including sourcefidelity, no separate SOURCE replay or assumed oldapproval.
+FIG17 sourceinventory/route planning is author work, not a figure PASS.
+FIG17 generated route; PAID_ARTWORK_DEPENDENCY_CAP_UNKNOWN is local only.
+No paid call or substitute artwork; other source-ready lessons continue.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images1/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r616 NEW_NATIVE_CHOICE_PASS
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifestdd85e082
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+OriginalSOURCE and ten originalsolution approvals/Q5solecorrection reused,
+no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r600 NEW_MODERN_TEXT_AUTHOR_READY
+
+6p/phy6-c2-s4-t1 missing modern stage actually resumed; manifest90a4f431
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes.
+RetainedrawSOURCE reused; historicalapproval is UNLOCATED, not assumed.
+Sourcefidelity belongs to the one newTEXT independentreview, not a replay.
+Brownian raw61d45980/10prose/0exercise/FIG17 retained unchanged.
+Native32/33 recovered exactly at recorded5c8255dc/897fa792 hashes;
+no transcript/pagefinalize/assembly/recrop replay. Officialtemplate before
+ca841128 retained; newauthor90a4f431 awaits one newTEXT independentreview
+including sourcefidelity, no separate SOURCE replay or assumed oldapproval.
+FIG17 sourceinventory/route planning is author work, not a figure PASS.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+Hegel the 2nd: NEW_NATIVE_CHOICE_REVIEW_ACTIVE 6p/phy6-c3-s27
+Euclid the 2nd: NEW_FIGURE_PLAN_ACTIVE 6p/phy6-c2-s4-t1
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r596 NEW_NATIVE_CHOICE_REVIEW_ACTIVE
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifest8846c0dd
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r595 NEW_NATIVE_CHOICE_AFFECTED_PASS
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifestdf5608d5
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+Modernanswer Gate2 e1f21c3e/finalize ddd37237 only when explicitly recorded;
+no oldinputinteraction production. Newchoice uses cleanwhitelist text seed.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r589 NEXT_RETAINED_SOURCE_OBSERVATION_READY
+
+Actual active: n161 three-question affected CHOICE independent review,
+Kierkegaard 01a1fc0d-5248-71e3-b051-22c6bbd4fb9d; agents1/parentexec0.
+N27 modern ANSWER Gate2 b75b7703 and official finalize r545 PASS;
+final d350587a bound r583, all5 ungraded, no solve or browser replay.
+N27 native author 8846c0dd/6questions29options is queued for one new
+independent review; author seed image observations2 retained, no image approval.
+Next retained course 6p/phy6-c2-s4-t1: original10prose/0exercise/1figure.
+Only10 necessary files copied exactly; native32/33 match recorded PNG hashes.
+SOURCE approval history UNLOCATED, not approved or a global FIRST claim.
+No transcript/pagefinalize/assembly/recrop/figure/text/answer/choice replay.
+N38 existing b87 full delivery reused; n90 actual SOURCE239 dependency retained.
+Parent images0/browser0/paid0; native preparation2 is not a semantic review.
+Historic paid69/retry0/browser22 and all earlier failures/local figure holds,
+locks/backups/stash/oldtrees/pending/failedattach preserved. Complete19/new0;
+no half-course commit/push, n129 unchanged. Same official8306W and chat;
+main read-only, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r584 NEW_NATIVE_CHOICE_AFFECTED_REVIEW_ACTIVE
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest7dd0499f
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+Modernanswer Gate2 e1f21c3e/finalize ddd37237 only when explicitly recorded;
+no oldinputinteraction production. Newchoice uses cleanwhitelist text seed.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r583 NEW_MODERN_ANSWER_FINALIZE_PASS
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifestd350587a
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r581 NEW_MODERN_ANSWER_GATE2_PASS
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifestb75b7703
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r573 NEW_NATIVE_CHOICE_AUTHOR_READY
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifest8846c0dd
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r561 NEW_NATIVE_CHOICE_AFFECTED_AUTHOR_READY
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest7dd0499f
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+Modernanswer Gate2 e1f21c3e/finalize ddd37237 only when explicitly recorded;
+no oldinputinteraction production. Newchoice uses cleanwhitelist text seed.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r558 NEW_NATIVE_CHOICE_REVISE
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest68a61a0f
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+Modernanswer Gate2 e1f21c3e/finalize ddd37237 only when explicitly recorded;
+no oldinputinteraction production. Newchoice uses cleanwhitelist text seed.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage images0/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r534 NEW_NATIVE_CHOICE_AUTHOR_ACTIVE
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifest6148bbd5
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+Thisboundstage imagesPENDING_MAX2/browser0/paid0; N27nativeauthor seedPNG observations
+are newCHOICE basis only, max2/8 and24/context, never oldFIG79approval.
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r526 NEW_MODERN_ANSWER_AUTHOR_READY
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifestd0a763b3
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+These resumedtext/answer/nativechoice stages images0/browser0/paid0;
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r522 NEW_NATIVE_CHOICE_REVIEW_ACTIVE
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest94654f7a
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+Modernanswer Gate2 e1f21c3e/finalize ddd37237 only when explicitly recorded;
+no oldinputinteraction production. Newchoice uses cleanwhitelist text seed.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+These resumedtext/answer/nativechoice stages images0/browser0/paid0;
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r518 NEW_NATIVE_CHOICE_AUTHOR_READY
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest94654f7a
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+Modernanswer Gate2 e1f21c3e/finalize ddd37237 only when explicitly recorded;
+no oldinputinteraction production. Newchoice uses cleanwhitelist text seed.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+These resumedtext/answer/nativechoice stages images0/browser0/paid0;
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r517 NEW_MODERN_TEXT_PASS
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifestf571bd39
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+These resumedtext/answer/nativechoice stages images0/browser0/paid0;
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r503 NEW_MODERN_TEXT_REVIEW_ACTIVE
+
+6p/phy6-c3-s27 missing modern stage actually resumed; manifest000c9486
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N27 newlesson e10c68f4/newexercise5e94bf78 generated via officialadapt-prepare;
+initialargument failure62d12fd5 andwrongreceipt read2e5d15e2 retained;
+failedentry recovered4230ea2f, SOURCE a7b5bb90/dcc9482c unchanged.
+Q1..4originalapproval andQ5solecorrection e1185ba5/affected1cdc2391
+reused, not oldmodernTEXT PASS or recovered historicalcandidate bytes.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents2/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+These resumedtext/answer/nativechoice stages images0/browser0/paid0;
+documentread failure r482 andactualmanifest failures retained; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r493 NEW_NATIVE_CHOICE_AUTHOR_ACTIVE
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifestffc17fbc
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+ThisTEXTstage images0/browser0/paid0; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r492 NEW_MODERN_ANSWER_FINALIZE_PASS
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifestddd37237
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+ThisTEXTstage images0/browser0/paid0; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r486 NEW_MODERN_ANSWER_GATE2_PASS
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifeste1f21c3e
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+ThisTEXTstage images0/browser0/paid0; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r475 NEW_MODERN_ANSWER_GATE2_ACTIVE
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest3e30be61
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+ThisTEXTstage images0/browser0/paid0; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r470 NEW_MODERN_TEXT_PASS
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest3b08e308
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents0/parentexec0; dependent stages use actual approval only.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+ThisTEXTstage images0/browser0/paid0; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r464 NEW_MODERN_TEXT_REVIEW_ACTIVE
+
+7p/phy7-c2-s4-n161 missing modern stage actually resumed; manifest90018f18
+parent bound. Newcandidate generation is NOT oldtemplatebyte recovery;
+oldTEXT PASS does not approve different lesson bytes. OriginalSOURCE and
+ten originalsolution approvals/Q5solecorrection reused, no SOURCE re-review.
+N161 newlesson fa5b50d9 authored via officialadapt-prepare; missingbook FIRST
+failuree081837b retained, officialreindex+failed-entry recoveryPASS. Modern
+exercise d2a4cabd exactly matches historicalapproved bytes; no questionre-solve.
+OldN161 FIG350/351/portrait andN27 FIG79unknownspec/postrepairHOLD,
+r366FIRSTcorrection/surplusn4/failures/usedbudgets retained. Missingfile is
+not permanentapprovalHOLD; only truly needed newbytes get one independentreview.
+Activeagents1/parentexec0; next dependent stage waits this actualreview.
+No wholecourseapproval/halfseal/commit/push; complete19/new0/n129unchanged.
+ThisTEXTstage images0/browser0/paid0; historic69/retry0/browser22,
+tokens/cost/capUNKNOWN. Sameofficial8306W/chat/main+oldtreesreadonly;
+locks/backups/stash/failedattach/pending kept. Finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks/no worktree orbootstrap replay.
+
+## 180-6 r434 N161_N27_TEN_ORIGINAL_SOLUTIONS_PASS_LOCAL_FIGURE_AND_TEMPLATE_GAPS_RETAINED
+
+N27 firstsource-solutions independent e37023b1 REVISE1/p93c405f4:
+Q1..4PASS retained; Q5 missingrawcaptionp0102#3 oilhole. Firstcandidate
+ff86c26b/review/parent92e5b6ef preserved. SoleQ5 solutiontextcorrection
+e1185ba5/manifestbd5c4162 adds oilhole+lubricationpurpose,1/1used;
+allothercandidatebytes/metadata/Q1..4 unchanged byexact proof.
+Q5-only affected1cdc2391 PASS/nofindings and parent bound;
+Maxwellcollectedclosed, no unaffected review replay. N161+n27 total10
+ORIGINALsolutions approved, not modernkeys/officialGate2/CHOICE/fullcourse.
+Procedure deviation1 retained: initial extract also emittedQ4prompt;
+no Q4candidate review/verdict renewal, not strictprocedurecompliance PASS.
+N161 pass6d372cd6/parent5c60eb3f andrawarchive66f1e513 reused.
+N27 oldFIG79postrepair contentHOLD/spec7c714d2a absent in current durable
+or archivecandidate paths; old blocker present only. No speculative rebuild.
+ModernTEXTPASS candidatebyte gaps and N161 threeFIGs remainLOCAL;
+no globalFIRST/exhaustion claim, no paid purchase or unknown-byte restoration.
+N4surplus/r366 provenancecorrection/HOLD/usedbudgets allpreserved.
+Agents0/parentexec0/no parallelprefetch. Complete19/new0/n12923c99d40/
+headfd29ec1f unchanged/no halfcourse seal/commit/push.
+Newimages0/browser0/paid0; historical69/retry0/browser22/tokenscostcapUNKNOWN.
+Sameofficial8306W/chat;main/oldtrees/locks/backups/stash/failedattach/pending
+preserved. Supervision40min/currentchat+checkpoint/finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r431 N27_Q5_SOLE_CORRECTION_INDEPENDENT_AFFECTED_REVIEW_ACTIVE
+
+N27 firstsource-solutions independent e37023b1 REVISE1/p93c405f4:
+Q1..4PASS retained; Q5 missingrawcaptionp0102#3 oilhole. Firstcandidate
+ff86c26b/review/parent92e5b6ef preserved. SoleQ5 solutiontextcorrection
+e1185ba5/manifestbd5c4162 adds oilhole+lubricationpurpose,1/1used;
+allothercandidatebytes/metadata/Q1..4 unchanged byexact proof.
+FreshMaxwell01a1fbcf affectedONLYQ5/maximages0 active; not yet PASS.
+Confuciusalreadycollectedclosed/notwoken; no fullsource approval yet.
+N161 pass6d372cd6/parent5c60eb3f andrawarchive66f1e513 reused.
+N27 oldFIG79postrepair contentHOLD/spec7c714d2a absent in current durable
+or archivecandidate paths; old blocker present only. No speculative rebuild.
+ModernTEXTPASS candidatebyte gaps and N161 threeFIGs remainLOCAL;
+no globalFIRST/exhaustion claim, no paid purchase or unknown-byte restoration.
+N4surplus/r366 provenancecorrection/HOLD/usedbudgets allpreserved.
+Agents1/parentexec0/no parallelprefetch. Complete19/new0/n12923c99d40/
+headfd29ec1f unchanged/no halfcourse seal/commit/push.
+Newimages0/browser0/paid0; historical69/retry0/browser22/tokenscostcapUNKNOWN.
+Sameofficial8306W/chat;main/oldtrees/locks/backups/stash/failedattach/pending
+preserved. Supervision40min/currentchat+checkpoint/finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r425 N27_Q1_4_PASS_Q5_OIL_HOLE_SINGLE_REVISION_PENDING
+
+6pN27 phy6-c3-s27 existing sourcea7b5bb90/dcc9482c exact0444input copies;
+five originalwhole solutions candidateff86c26b/authorc5210084 frozen.
+Independente37023b1 REVISE1: Q1..4PASS carriedforward,
+Q5 missingoil-hole componentp0102#3. Firstcandidate/fullreview kept;
+Confuciuscollectedclosed, oneQ5localcorrectionpending/no fullSOURCE approval.
+OldFIG79label2 opaque-fill postrepair contentHOLD andoneusedrepair remain;
+no newFIGrepair/renderer/source/TEXT passreplay/budgetreset. Moderncandidate
+bytes unavailable, no wholecoursefinalization or halfcoursecommit.
+N161 independent6d372cd6 parent5c60eb3f retained; exactGitraw66f1e513,
+TEXTbytegap/FIG350/351/Jacobi pending. N4surplus/r366 historical correction
+and otherlocalHOLDs remain. No globalFIRST/exhaustion claim or parallelprefetch.
+Agents0/parentexec0, samechat/official8306W/mainandoldtreesreadonly.
+Complete19/new0/n12923c99d40/headfd29ec1f unchanged/no newcommit/push.
+Images0/browser0/paid0 for bothSOURCEsolution stages; historical69/retry0/
+browser22/tokenscostcapUNKNOWN. Locks/backups/stash/failedattach/pending kept.
+Supervision40min/currentchat+checkpoint/finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r419 N27_FIVE_ORIGINAL_SOURCE_SOLUTIONS_INDEPENDENT_ACTIVE
+
+6pN27 phy6-c3-s27 existing sourcea7b5bb90/dcc9482c exact0444input copies;
+five originalwhole solutions candidateff86c26b/authorc5210084 frozen.
+FreshConfucius01a1fbca zeroimage independent blind5beforeauthor active;
+authorSTRUCTURALPASS only, no independent/modern/fullcourse approval.
+OldFIG79label2 opaque-fill postrepair contentHOLD andoneusedrepair remain;
+no newFIGrepair/renderer/source/TEXT passreplay/budgetreset. Moderncandidate
+bytes unavailable, no wholecoursefinalization or halfcoursecommit.
+N161 independent6d372cd6 parent5c60eb3f retained; exactGitraw66f1e513,
+TEXTbytegap/FIG350/351/Jacobi pending. N4surplus/r366 historical correction
+and otherlocalHOLDs remain. No globalFIRST/exhaustion claim or parallelprefetch.
+Agents1/parentexec0, samechat/official8306W/mainandoldtreesreadonly.
+Complete19/new0/n12923c99d40/headfd29ec1f unchanged/no newcommit/push.
+Images0/browser0/paid0 for bothSOURCEsolution stages; historical69/retry0/
+browser22/tokenscostcapUNKNOWN. Locks/backups/stash/failedattach/pending kept.
+Supervision40min/currentchat+checkpoint/finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r413 N161_FIVE_ORIGINAL_SOLUTIONS_PASS_NEXT_6P_N27_SOURCE_PENDING
+
+N161 original5SOURCE solutions independent6d372cd6/report33b51bee PASS,
+parent binding saved; blind freeze89eb9c12 beforeauthor2115e410 proven by
+three actual receipts. Kepler collectedclosed; one wrapper --help ENOENT
+failure preserved/recovered, no contentfailure/reviewreplay/extraapproval.
+This is SOURCEsolutions only, not modernkeys/officialGate2/CHOICE/fullcourse.
+RawexactGitarchive3files66f1e513 retained; TEXTcandidatec25dfcb3/d2a4cabd
+missing and threeFIGs350/351/Jacobi unapproved. Do not recreate passedTEXT.
+Next existing6pN27 phy6-c3-s27 original5questions; prior rawsource andTEXT
+reuse, oldFIG79label2 postrepair contentHOLD remains, no budgetreset/FIGredo.
+Priorbatch7 solutionfreeze list31/32/33 excludes27; no globalFIRST claimed.
+Currentagents0/parentexec0/no parallelprefetch; nextauthorpending.
+r366 n4history/surpluscandidate/HOLD/failures/usedbudgets preserved.
+Complete19/new0/n12923c99d40/headfd29ec1f unchanged; nohalfseal/commit/push.
+N161 thisstage images0/browser0/paid0; historical69/retry0/browser22,
+tokens/cost/capUNKNOWN. Oldtrees/main/locks/backups/stash/pending preserved.
+Supervision40min/currentchat+checkpoint/finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r404 N161_EXACT_RAW_RECOVERED_FIVE_SOURCE_SOLUTIONS_INDEPENDENT_ACTIVE
+
+461/462 and463/464 prior stages confirmed by numeric-array/qualified history;
+461 missing-crop-directory and463 malformed-workdir are technical, not science
+HOLD or human-approval wait. Required inputs absent at four exact roots;
+no successful prepare replay/unknown-byte reconstruction/whole-tree restore.
+N161 narrow Git archive a34e1cbf exposes exact raw lesson551e7fcd/
+exercises6f4ce6fd/textreviewaba9f5b9; three byte-identical0444files recovered
+manifest66f1e513. No SOURCEprepare/assemble/pixelreview or TEXT replay.
+Modern approved templatesc25dfcb3/d2a4cabd remain saved-byte missing:
+old TEXT PASS does not approve replacement bytes; three semantic FIGs pending.
+Five ORIGINAL whole-source solutions author95325da6/candidate2115e410,
+structuralPASS only/allungraded; not modernkeys/CHOICE/completecourseapproval.
+FreshKepler01a1fbc2 independent blind5beforeauthor/maximages0 active.
+Prioragentsclosed notwoken; currentagents1/parentexec0. No parallel prefetch.
+r366 FIRSTrevocation/surplusn4/oldHOLD/failures/budgets preserved.
+Complete19/new0/n12923c99d40/headfd29ec1f unchanged/no halfcommit/push.
+This stage images0/browser0/paid0; historical69/retry0/browser22,
+tokens/cost/capUNKNOWN. Main/oldtrees/locks/backups/stash/pending unchanged.
+Supervision40min/currentchat+checkpoint/finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r366 HISTORICAL_CURSORS_RECONCILED_NO_FIRST_CLAIM_NO_PROMOTION_NEXT_STAGE_SELECTION
+
+r337 active marker superseded: Socrates/Sagan results already collected/closed.
+Affected PASS ce0e92a9, parent d83e6f30 bind ONLY four corrected source refs.
+Prior8p source8p2324/2526/2728 found; r318/r326/r337 global FIRST revoked.
+New24/25 candidates retained, not historical-byte recovery or old HOLD approval.
+Repeated prepare24..27/finalize4/vectorize1, four local corrections1/1 and
+all failure/cost/image records preserved; no new26/27 page.md, no budget reset.
+Old24 mixed-ledger HOLD/encodingrepair1used,25rowFAIL,26emphasisHOLD,
+27rows/scannblotsHOLD retained. Approved28 reused by reference; no replay.
+r351 recorder FAILED/no manifest/no checkpoint update; do not rerun its guards.
+7p appendix already attempted in batch20;459/460 already attempted in batch12.
+461/462 not yet inspected; next actual stage UNSELECTED, no FIRST assumption.
+N31 approved CHOICE input/native dependency failure and local paid90/91/95,
+FIG92 detail/n32n33 saved-byte HOLDs unchanged; not a whole3book stop.
+Complete19/new0/n12923c99d40/headfd29ec1f unchanged; no partial seal/commit/push.
+Previously known continuation images10=parent4+firstreview4+affected2;
+this correction images0/browser0/paid0; historical69/retry0/browser22,
+tokens/cost/capUNKNOWN. Originaltrees/main/locks/backups/stash/failedattach/
+pendinghistory preserved. Supervision40min/currentchat+checkpoint/finishreview.
+NoDB/merge/deploy/closure/formalhandoff/globalchecks; agents0/parentexec0.
+
+## 180-6 r337 N4_SOURCE24_25_FOUR_SOLE_TRANSCRIPTION_CORRECTIONS_AFFECTED_REVIEW_ACTIVE
+
+FIRST SOURCE24/25 independent2be679dd REVISE4, parentc0133889 bound
+andSocratescollectedclosed. Unchangedsource/crops approvals carriedforward.
+Onlyp0024#2/#3 colons, #9 printed初始位标 preserved+note, p0025#10
+removeaddedstop before因此: eachsolecorrection1/1used, originalcandidate/
+fourfindings retained. Correction4afb3fde mechanicallyPASS25/25+19/19;
+allotherblocks/cropPNG/SVG byteunchanged, vectorize remains1/no replay.
+Parentbind firstFAILd352283f onlymanifest644not444; chmodf8933788
+recovery6a938827 retained, no reviewrerun or contentapproval reset.
+FreshSagan01a1fba9 affectedONLY4refs/max2originalimages, unchanged
+blocks/crops notre-reviewed. Fulln4 SOURCE26/27 pending/no prefetch.
+Parentopens2/reopens0, firstreviewopens4; paid0/browser0/newwholecourse0.
+Complete19/headfd29ec1f/n12923c99d40 unchanged/no partialcommit/push.
+N31 approvedCHOICEinput/nativefailedretention retained; paid90/91/95,
+92detail andn32/n33bytes LOCALholds unchanged, full3book scope continues.
+Originaltrees/main/locks/backups/stash/failedattach/pending preserved.
+Historicalpaid69/retry0/knownbrowser22/tokenscostcapUNKNOWN.
+Supervision40min/currentchat+checkpoint/finishreview; noDB/merge/deploy/
+closure/formalhandoff/globalchecks. Activeproductionagent1.
+
+## 180-6 r326 N4_FIRST_SOURCE24_25_MECHANICAL_PASS_FIRST_INDEPENDENT_REVIEW_ACTIVE
+
+Actual firstnew8pN4 SOURCE24/25 prepare2/finalize2/vectorize1 allPASS:
+25/25+19/19rows,23blocks,fig10/11 exactsnap andSVG fidelity0.015%/0.013%.
+Firstcandidatec8cd9a07 retained; author4911017e frozenbytebound.
+Parent actualopens2/reopens0 (knowncumulative5); freshSocrates01a1fb9e
+FIRST independent source original2+crops2 max4 images, no passed-call replay.
+SOURCE26/27 pending, no parallelpre-fetch. No modernTEXT/ANSWER/CHOICE/
+FIG/DISPLAY/courseapproval claimed; fulln4 notassembled/sealed/committed.
+N31 CHOICEretention failure3c00b622+approvedinput49f132f2+parent5c358e55
+retained; no unapprovedfiguremanifest promotion. N30/N31paid+92detail and
+n32/n33 actualbyte gaps remainLOCAL holds, not whole3book stop.
+Complete19/new0/headfd29ec1f/n12923c99d40 unchanged; no partialcommit/push.
+Newpaid0/browser0; historic69/retry0/knownbrowser22/costcapUNKNOWN.
+Readonlyhelperpathprobe r307exit2 saved; one unwrappedmissingrecord-r304
+lookup exit1 retained in toolhistory, no producer/review failure or rerun.
+Sameabsolute8306W/mainandoldtreesreadonly/locks/backups/stash/failures/
+pending kept. Supervision40min/currentchat+checkpoint/finishreview.
+NoDB/merge/deploy/closure/formalhandoff/globalchecks. Activeproductionagent1.
+
+## 180-6 r318 N31_APPROVED_CHOICE_INPUT_RETAINED_NATIVE_DEPENDENCY_HOLD_NEXT_8P_N4_SOURCE_ACTIVE
+
+Same official8306 worktree and chat reused; no worktree/create/attach replay.
+N31 FIRST native CHOICE retention1 failed: current modern lesson.json absent.
+Exact approved seed/draft/review copied0444 in n31-first-choice-retention-r305/input;
+input49f132f2, failure3c00b622, r318 parent binds approvalb84de8b4/38cded1e.
+No unapproved initial FIG93/94/95 manifest promoted, gate lowering, new semantic
+review, full lesson approval, partial seal or half-course commit.
+N32/n33 necessary exact recorded-byte probe failed; old source gap retained.
+N34..37 and7pN131 have prior SOURCE attempts/HOLDs: not new preparations.
+Next truePDF-backed new8pN4, printed12..15/physical24..27; exact saved-stage
+lookup0hits, FIRST prepare pending, two-page sequential review groups/no prefetch.
+Paid90/91/95 capUNKNOWN and92SOURCE_DETAIL remain LOCAL holds only.
+Complete19/new0/headfd29ec1f/n12923c99d40 unchanged; no commit/push.
+New paid/images/browser0; historical69/retry0/knownbrowser22 unchanged.
+Tokens/cost/capUNKNOWN. Originaltrees/main/locks/backups/stash/failedattach/
+pendingmessages retained. Supervision40min, currentchat+checkpoint only.
+Finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r304 N30_N31_AVAILABLE_PHASES_PASS_EXTERNAL_HOLDS_NO_COMPLETE_DELIVERY
+
+FIRSTN31CHOICE independentb84de8b4 parent38cded1e PASS collectedclosed:
+5source tasks/4units(single3/multiple1)/18truths/0findings, blindsource
+freeze beforedraft and visibleassessmentbeforeauthorinternals retained.
+Officialreviewedvalidation1/exit0/repair0/images0/browser0/paid0;
+noCHOICEretention/promotion orfullN31DISPLAY yet.
+FIG89/93/94 independentPASS and modernANSWER8ec6bba7+interactions29956510
+exact approvals/parentbindings frozen in available-phases-r304.json.
+ANSWER finalize1/auto1/ungraded4/numericparts2, interactions derive1/finalize1/
+free4/number1/twoparts; no expected/displayAnswer in interaction.
+Answer semantic-equality proof is JSONobject equality excludingstatus/count,
+not a claimof unchangedwholefilebytes. ApprovedTEXT/SOURCEsolutions reused.
+
+Only externalHOLDs remain in this boundedset: N30FIG90/91 andN31FIG95
+HYBRIDpaidartworkcapUNKNOWN; N30FIG92 unreadableb/c minorgradcounts and
+nofullc numeral; n32/n33 priorSOURCE actualbytes stillunlocated.
+Ordinarytechnicalrepairs alreadyexecuted, firstcalls/failedcandidates/counts
+preserved. No freshscience guess/unknownrestore/fullreprepare orHOLDapproval.
+Currentproductionagents0/parentexec0/allknownownedbrowsersclosed.
+No duplicateattach/newchat/oldreviewerwake; originalfailure/pendinghistory kept.
+Complete19/newincrement0/n12923c99d40unchanged/headfd29ec1f unchanged;
+no newcompletecourse so no partialseal/commit/push.
+Sameabsolute8306W/mainreadonly/oldtreeslocksbackupsstashfailurespending.
+Historicalservice69/retry0/browser11/newpaid0; completednewbrowser11,
+cumulativeknownbrowser22; parentimages3/browsers2/tokensbillingcapUNKNOWN.
+40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks. This is not whole-ticket completion.
+
+## 180-6 r301 FIG89_93_94_INDEPENDENT_PASS_N31_ANSWER_INTERACTION_PASS_CHOICE_REVIEW_ACTIVE
+
+FIG93 independent878105e1 parent29acd161 PASS collectedclosed/images8/
+browser0/render0/native0/repair0. Existing6native retained; bootstrap12
+readonlydeviations explicit, candidateunchanged. FIG94 independentce044680
+parent49888348 PASS collectedclosed/images8/screens6/browser2/nativecalls2/
+surfaceattempts7/sixPASS1/successfulreplays0; technicalFAIL3 narrowrecovered,
+firstfailures preserved; render0/newcontentrepair0 (authorsupportrepair1of1).
+FIG89 independentPASSc610e33f parent250adfe9 retained, no reopens/replays.
+
+N31modernANSWER gate2ddef73e0 parent8e72e346 PASS/Galileoclosed/no findings;
+localcheckerFAIL1+technicalreexecution1 retained, SOURCEsolutions reused.
+FIRSTofficialfinalizeoncePASS auto1/ungraded4/numericparts2/exact0/browser0;
+finalmanifest8ec6bba7 parentbd44d55a bound, onlystatus/count changed and
+allsemanticanswercontent byte-equivalenttoapprovedauthor.
+FIRSTinteractions derive1/finalize1 PASS29956510 parent8f766150 bound:
+free4/number1/two ordered labelled unitparts/noexpected/displayAnswer.
+
+FIRSTCHOICE authorb21f47b6 parent203d5bc5 PASSstructural1/norepair:
+4units(single3/multiple1)/18options cover5WHOLE, preoptionssourcefreeze
+retained. Erdoscollectedclosed; freshHubble01a1fb68 FIRSTblindseed5solutions
+beforecurrentdraft/truth18/coverage/officialreviewedvalidation active0images.
+This is not independentlyapprovedCHOICE/wholeN31DISPLAY.
+
+PaidFIG90/91/95 capUNKNOWN HOLD/sourceFIG92DETAIL_HOLD unchanged;
+n32/n33 oldsavedbytegap no restoration/reprepare. No partialcourse seal.
+Complete19/newincrement0/n12923c99d40unchanged/fd29ec1f/nohalfcommit.
+Sameabsolute8306W/mainreadonly/oldtreeslocksbackupsstashfailurespending.
+Historicalservice69/retry0/browser11/newpaid0/parentimages3/browsers2;
+completednewbrowser11 (89total5+93total2+94total4), tokensbillingcapUNKNOWN.
+40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r291 FIG89_INDEPENDENT_PASS_N31_FIG93_94_REVIEW_ANSWER_GATE2_CHOICE_AUTHOR_ACTIVE
+
+FIG89 independentc610e33f parent250adfe9 PASS officialreview bound,
+Millcollectedclosed: actualopens8/screens6/render0/correction0/nativecalls2/
+surfaceattempts7/PASSsix1/browser2/technicalFAIL1repaired. Successfulsurface
+replays0, firstfailure/screens unchanged; cumulative89browser5/render2,
+labelrepair1of1/originalsixcollisionFAIL retained; notfullN30DISPLAY.
+FIG93Chandrasekhar and FIG94Dirac FIRSTindependent batches remainactive,
+existing93native6 reused withnobrowser;94firstnative pending.
+Five modernANSWER authorb656667f parent9c055dca bound/Fermatclosed,
+prepare1/authoronly/2readonlyfailuresretained; Galileo01a1fb60-f420 FIRST
+gate2 modernprompt/keycontract, oldapprovedSOURCEsolutions reusednotresolved.
+FirstCHOICEprojectiona04fb16f and officialinspect1/seedprepare1:
+seedbcbc4d3e canonical, selected5WHOLE+definitions0,2,4,5,14/noseedFIG.
+Boatworkedexample15/18/19/20 and figuredependentexperiment7/10 excluded;
+Erdos01a1fb60-ab75 FIRSTsource-solvebeforeoptions/draft/structural only,
+cleanseedONLY/noanswers/history. No independentCHOICE approval yet.
+Readonlycandidatefiguremanifest locatorno-matchexit1 retained; actual
+initial/figures.template.json later located, no contentproducer reexecuted.
+N30paid90/91+source92HOLD; N31paid95HOLD; n32/n33 savedbytegap unchanged.
+Complete19/increment0/n12923c99d40unchanged/deliveryfd29ec1f/nohalfcommit.
+Sameabsolute8306W/sharedmainreadonly/oldtreeslocksbackupsstashfailurespending.
+Service69/retry0/historicalbrowser11/newpaid0/parentimages3/browsers2;
+knowncompletednewbrowser9, active94actualpending; tokensbillingcapUNKNOWN.
+40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r283 FIRST_INDEPENDENT_FIG89_93_94_ACTIVE_N31_MODERN_ANSWER_AUTHOR_ACTIVE
+
+FIG93 firstauthor60c27b18 parent2ba7e951 collectedclosed:render1/native1/
+6surfaces/browser2/correction0; sourcepreviewactualopens2/sixshotscreated/
+shotcontextopens0/imagebudgetslots8. FreshChandrasekhar01a1fb5c FIRST
+independent source1+preview1+sixEXISTINGshots6 max8, no browser/render replay.
+FIG94 firstauthor81ad5a05 parentee150ed7 collectedclosed:render2/browser2/
+images3/native0; firstpreviewwheelFLOATFAIL retained, onewheelsupport
+repair1of1 PASSauthorrender, notindependentapproval. FreshDirac01a1fb5b
+FIRSTnative6+independent source1/preview1/sixnewshots6 max8.
+FIG89 freshMill01a1fb55 FIRSTnative+independent remainsactive, correction1of1
+and originalsixcollisionFAIL retained. FIG90/91/95 paidcapUNKNOWN HOLD;
+92sourceDETAIL_HOLD and n32/n33 oldsavedbytegap unchanged.
+FreshFermat01a1fb5a FIRSTmodernANSWERauthor-only5WHOLE allfigure_refs[],
+approvedcurrentTEXT/frozenSOURCEsolutions reused; independent of proseFIG
+HOLD, no newSOURCEsolve/review/TEXT/CHOICE/wholecourseapproval.
+Dispatchlimit secondFAIL retained; closedcompletedcollectedboundSinger
+execution slot WITHOUTwake/replacement, thenfirstANSWERagent created.
+All bootstrap/processdeviations and oldfailures remain in boundreports.
+Complete19/increment0/n12923c99d40unchanged/deliveryfd29ec1f/nohalfcommit.
+Sameabsolute8306W/mainreadonly/oldtreeslocksbackupsstashpending retained.
+Historicalservice69/retry0/browser11/newpaid0/parentimages3/browsers2;
+author/nativeactualcounts separatelybound; tokensbillingcapUNKNOWN.
+40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r277 FIG89_ONE_CORRECTION_PASS_FIRST_NATIVE_INDEPENDENT_ACTIVE_FIG93_94_ACTIVE
+
+FIG89 one10label fontsize26to25 correction5855859d PASS render0collisions,
+currentpreviewabf5e90e inspectedonce; correctionmanifestd7068416 parent8147864d
+bound. Allapparatus/anchors/numerals/ticks/weights unchanged; originalrender
+FAIL6 and firstcandidate unchanged. Correction1of1 used. Actualparentimages3
+(source/failedpreview/currentpreview), browsers2(renderer1+SVGpreview1);
+firstauthorrender1/browser1 retained => cumulativeFIG89render2/browser3.
+OptionalPNG notrequestedatcorrectionrender; currentSVG screenshotonce0,
+no rerenderorvalidationreplay. FreshMill01a1fb55 FIRSTnative6+independentFIG
+source1/currentpreview1/sixnewshots6 max8; no fullN30DISPLAY yet.
+ExistingAverroes01a1fb4f FIRST93author/native and freshPauli01a1fb53
+FIRST94author/render only active. Paid90/91/95capUNKNOWN HOLD unchanged.
+92sourceDETAIL_HOLD unchanged. Oldn32/n33 priorSOURCE stages confirmed,
+noartifactabsence-basedprepare, no unknownbyte/fullpackage restore.
+ReadonlyzshglobFAIL1 occurredbeforewrapper, explicitlyretained; no content/
+paidstage ran. Exactfilenames inventoryonly read, priorlocator notrerun.
+Complete19/newincrement0/n12923c99d40unchanged/fd29ec1f/nohalfcommit.
+Oldtrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/historicalbrowser11/newpaid0/tokensbillingcapUNKNOWN;
+newauthor/native actualcounts separatelybound.
+40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r273 FIG89_ONE_LABEL_CORRECTION_FIRST_NATIVE_PENDING_FIG93_ACTIVE_FIG92_SOURCE_DETAIL_HOLD
+
+Pascal FIRST89c518e54b parentfdd4fc5c collectedclosed: renderFAIL6numeric
+clearances/render1/browser1/images2/native0/correction0/technicalFAIL1recovered.
+Firstcandidate/failure/budgetHOLD retained. Parent specificsource+failedpreview
+inspection2images; one10label fontsize26to25 correction only, allgeometry/
+anchors/numerals/ticks/weights unchanged; firstrendercorrection/native pending.
+Native sixsurfaces will be FIRST in separate bounded fresh8imagebatch, notretry.
+Newton92 detail66a81dba parent96b66b1e collectedclosed:3images, b/cminor
+tickcount unreadable, nofullc numeral/noinvented0, SOURCE_DETAIL_HOLD.
+N31planbad27714 parentd165ddce collectedclosed/3images/3draftPASS;
+existingAverroes01a1fb4f FIRST93author/native active; freshPauli01a1fb53
+FIRST94author/render only active max4images/nonative,95paidHOLD.
+Stale preparedr271 notexecuted; current savedbytes used, no duplicate stages.
+Complete19/increment0/n12923c99d40unchanged/deliveryfd29ec1f/nohalfcommit.
+Oldtrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Historicalservice69/retry0/browser11; newpaid0/parentimages2;
+authoractualcounts separatelybound, tokensbillingcapUNKNOWN.
+40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r269 N31_TEXT_AND_SOURCE_SOLUTIONS_PASS_FIRST_FIG_PLAN_N30_FIRST89_AUTHOR_ACTIVE
+
+N31 FIRSTaffectedTEXTb3d4cae6/PASS parent0d1c6611 bound;3findings resolved,
+unchanged18prose/3WHOLE inherited, contentcorrection1of1 unchanged, original
+HOLD/structuralFAIL retained. Parfit FIRST5source-solutions29a7698d/PASS
+parent7b1dee83 bound collectedclosed; independentanswers frozen beforeauthor,
+zero findings/images, two startupreadonly wrapperexceptions explicitlyrecorded.
+NotfinalmodernANSWER/CHOICE/DISPLAY. FIRST3FIGcontexts eed9efce ready;
+freshRamanujan01a1fb46 ownsFIRSTcap1 threeoriginalimages, nooldFIG replay.
+N30 FIRST4FIGplans4dd4cc49 parent312c20f9 bound Menciuscollectedclosed:
+4imageopens/reopens0/draft4PASS/validationreruns0.89deterministic ready,
+90+91hybrid PAID_ARTWORK_HOLD/capUNKNOWN;92deterministic minorgradpending.
+FreshPascal01a1fb4a FIRST89author/render/native isolated candidate active;
+plan'snotassignedauthor boundary isNOTa humanapproval stop, ordinaryfirst
+deterministic execution delegated. NofullN30seal orhalf-coursecommit.
+AgentdispatchlimitFAIL1 beforecreation preserved; completedboundCicero slot
+closed thenfirstsource-review dispatched, nooldwake/contentretry/reset.
+Same absolute8306W/currentchat; complete19/newincrement0/fd29ec1f.
+N12923c99d40 complete/pushed/unchanged/notredelivered.
+Originaltrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/browser11 pluscurrentauthoractualrunsPENDING/newpaid0/
+parentimages0/tokensbillingUNKNOWN.40minsupervision, finishreview/noDB/merge/
+deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r266 N31_THREE_OBJECT_CORRECTION_FIRST_AFFECTED_REVIEW_N30_FIRST_FIG_PLAN_ACTIVE
+
+FIRSTN31independentTEXT59932934 HOLD3objects, parent05c21a74 bound;
+Cicero completedcollected/notwoken. F1 isolatedequals result card, F2 collision
+damage causal boundary, F3 pushing-instant ambiguous. Onecontentcorrection955a9867
+onlyprose20/exercises2,4; exactmath/quantities/source/otherobjects unchanged.
+Structureedfc9608 PASS21objects/24paragraphs/5WHOLE/5breaks; eachcomplete
+substitution nowonecard, signexplanation separate. FreshMcClintock01a1fb3f
+FIRSTaffected3objects zeroimages active; contentbudget1of1, oldHOLD preserved.
+N30 FIRST4FIGcap1 Mencius remainsactive; noauthor/render/native/browser yet.
+N31source5solutionauthor927c032b staysunapproved/notmodernANSWER.
+N32TOC selection sawoldB75source145146successfulprepare/finalize/vectorize
+andliteral145HOLD; noartifactabsence-basedredo. Boundedreadonlypath/leafprobes
+didnotlocatesavedreports yet; nofullrestore/reprepare/oldreviewerwake.
+Persistentformula-regression5checks PASS13c213a0, uncommittedwithtoolfix.
+Same absolute8306W/currentchat; complete19/newincrement0/fd29ec1f.
+N12923c99d40 complete/pushed/unchanged/notredelivered.
+Oldtrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/browser11/newpaid0/parentimages0/tokensbillingUNKNOWN.
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r264 N31_FIRST_TEXT_REVIEW_N30_FIRST_FIG_PLAN_ACTIVE_SOURCE_SOLUTIONS_AUTHOR_SAVED
+
+FreshCicero01a1fb38 FIRSTN31TEXT independent21objects/24paragraphs/5WHOLE/
+5breaks zeroimages active, immutable6354977f input and preserved formulaFAIL.
+FreshMencius01a1fb39 FIRSTN30FIG89..92 cap1 fouroriginalPNGs only active;
+officialfirstcontexts25907b64 from approvedTEXT, fournecessaryhashverified
+originalcrops copied without recrop/fullpackage; paidcapUNKNOWN/noauthorize.
+ParentFIRST5source-solutions beforeoptions savedAUTHOR_ONLY, zeroimages,
+notmodernANSWER or independentapproval; noold SOURCEsolve/FIGstage replay.
+Same absolute8306W/currentchat; complete19/newincrement0/fd29ec1f;
+N12923c99d40 complete/pushed/unchanged/notredelivered.
+Originaltrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/browser11/newpaid0/parentimages0/tokensbillingUNKNOWN.
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r263 N30_FIRST_TEXT_PASS_N31_FORMULA_RECOVERY_STRUCTURAL_PASS_FIRST_REVIEW_READY
+
+N30 FIRSTindependentTEXT8588b3be/PASS parent6a949a94 bound completedcollected;
+31objects/39paragraphs/6breaks/0WHOLE/zero findings/images; no review replay.
+N31 FIRSTauthor structuralFAIL preserved frozena2526e75: layout tool swallowed
+two formula-only physical lines in prose20. Minimal protected-paragraph-mask fix,
+5focused tests PASS2e0c3784; affected singleblock recoverycbc831d5 restores4exact
+mathspans, other20prose/5WHOLE/metadata unchanged. Failedstage-only structural
+PASSaff0284b/receipt9bdf5bf5; frozen currentcandidate and manifest recorded.
+N31 now21prose/24paragraphs/5realbreaks; independentTEXT notyetapproved/dispatched.
+No figure author/render/native/browser/ANSWER/CHOICE/DISPLAY/fullseal replay.
+NextFIRSTN30FIG89..92 planning and FIRSTN31independentTEXT.
+Same absolute8306W/currentchat; complete19/newincrement0/deliveryfd29ec1f.
+N12923c99d40 alreadycomplete/pushed/unchanged, notredelivered.
+Oldtrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/browser11/newpaid0/parentimages0/tokensbillingUNKNOWN.
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r261 N31_FIRST_SOURCE_PASS_ASSEMBLY_PASS_N30_FIRST_TEXT_INDEPENDENT_ACTIVE
+
+Meitner FIRSTN31SOURCE PASSfe4d7d89/report096054d6/parent600d4231 bound,
+completedcollected:7imageopens/reopens0/findings0, all5WHOLE and all3FIG
+inventories/3crosspagejoins verified;140sourcefidelityexactinherited/notreopened.
+Originalsource/seal/binding failures unchanged; freshreview own technicalfailed
+receipts retained, notscientificfailures or resets. FirsttargetonlyN31
+assemblya4bee4ca/receipt548c5d48 PASS21prose/5WHOLE/fig93,94,95/noopenobjects;
+exclusivep0140#8 summary excluded, canonicalindices untouched.
+FIRSTadaptprepare28c74997 PASS; firstimmutableTEXTinputs now exist.
+Parentauthors only new N31modernTEXT, source snapshots/math/quantities/5WHOLE/
+FIGrefs must remain; no modernFIG/ANSWER/CHOICE/DISPLAY/fullseal yet.
+
+FreshFranklin01a1fb2e FIRSTN30TEXT semanticcomparison31objects/39paragraphs/
+6boundaries active0images; prior SOURCE+structuralPASS inherited, no rerun.
+Same absolute8306W/currentchat; complete19/newincrement0/deliveryfd29ec1f;
+N12923c99d40 alreadycomplete/pushed/unchanged and notredelivered.
+Originaltrees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/browser11/newpaid0/parentimages0/tokensbillingUNKNOWN.
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r259 N30_CORRECTED_STRUCTURAL_PASS_N31_FIRST_SOURCE_INDEPENDENT_ACTIVE
+
+Singer FIRSTN30TEXT completed/c6cacfea report+b2ec60f9manifest collected,
+parent940dd809 verifies returnedbytes; only9necessary frozenfiles migrated.
+FirstgateFAILcddd5d76 due92a stays; oneallowed spacingcorrection
+68d65c5d now FIRSTfailedstagecontinuation557dbca1 PASS/1b740c3c.
+Officialedition/source/math/quantity/glyph/flow invariants:31objects/39paragraphs/
+6anchoredbreaks/0WHOLE/fourfigurecaptionpairs/0errors. NoSOURCE/TEXTauthor
+replay, no newcontentcorrection. This is structuralPASS NOTindependentTEXTapproval.
+FreshMeitner FIRSTN31SOURCE remainscurrent/one8previewer;140fidelityinherited
+notreopened; N31assembly notrun before independentPASS. NextFIRSTN30TEXTreview
+serialafterSOURCEcollection, nooldreviewerwake/replacement.
+LivePlane180 5d849725 readreadonly/started/finishreview; latesthumanresume
+overrides old pauseddescription, nobackendprogresswrite.
+Same absolute8306W/currentchat; complete19/newincrement0/deliveryfd29ec1f.
+N12923c99d40 remainscomplete/pushed/unchanged, no duplicatecommit/push.
+Originaltrees/main/stash/locks/backups/failures/pendingmessages preserved;
+service69/retry0/browser11/newpaid0/parentimages0/tokensbillingUNKNOWN.
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r258 N30_FIRST_TEXT_AUTHOR_N31_FIRST_SOURCE_INDEPENDENT_ACTIVE
+
+Same official8306 absoluteworkspace/currentchat. Selected43files migration7f4d3373
+PASS; N12924file23c99d40 alreadycomplete/pushed/unchanged and NOTreplayed.
+ExistingSinger01a1fb21 FIRSTN30TEXT staysinflight, no wake/replacement;
+firststructuralFAILcddd5d76 retained, authorhandling only firstcandidate
+paragraphboundary/layout defect, no fullTEXTrewrite/duplicate author.
+FreshMeitner01a1fb25 ownsFIRSTN31SOURCE4originalpages+<=3existingcrops,
+140source-fidelityPASS exactinherited/notreopened, currentcandidate NOTapproved.
+No duplicate SOURCEprepare/finalize/vectorize/native/browser or modernstages.
+N31targetonlyassemblyscript preparedNOTRUNpendingindependentPASS.
+Runtime8c65dfab readonlysymlinks toexistingmain dependencies; noinstall/envcopy/mainwrite.
+N30closedsource copiedknownrawoutputs/pagealiases only, assembly notrerun.
+Complete19/newincrement0/service69/retry0/browser11/newpaid0; parentimages0.
+Originaltrees/locks/backups/stash/failures/pendingmessages and UNKNOWNbilledcost/tokens
+preserved. 40minsupervision/currentchat+checkpoint, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r257 OFFICIAL_8306_SAME_CHAT_RESUME_N129_DELIVERY_REUSED
+
+2026-11-20. Official create_worktree operation7adc9436 completed registrationError=null;
+exact initial7af826870, absolute workspace/Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck.
+Remote deliveryfd29ec1fb50f0cc63b23d3170c6e7c0336fac304 retained detached; sharedmain readonly.
+Actual old checkpoint r244 and later savedbytes supersede stale attach/n129 premise:
+n129 complete24file commit23c99d40a6844badfa4ea35349341eaaf6ee5838 already pushed2026-11-20T00:13Z,
+ancestor of currentremote; all n129 course files byteunchanged. No duplicate commit/push,
+manifest repair, siximage/native/browser/TEXT/ANSWER/CHOICE replay.
+
+N30 first SOURCE reportb821e405/parent66344ee6
+and actual targetonly assembly retained;31prose/0WHOLE/fig89..92.
+First N30 TEXT author Singer01a1fb21-23cf-7fd1-b73f-c7aded8c5f80 is in flight;
+no oldchat/reviewer wake, no replacement or mutablecandidate migration.
+N31 recovered seal67168015/parentr255 retains mechanicalPASS and both original
+seal/binding failures; independent SOURCE NOT approved/not dispatched yet.
+Selected necessary source files/evidence copied hashverified0444; fullpackages,
+unknownbytes, oldtrees/main/locks/backups/stash/pendingmessages untouched.
+Migration7f4d3373; complete19/newincrement0;
+service69/retry0/newpaid0/browser11 retained; currentparent imageopens0.
+Historical costs/tokens/remainingcap UNKNOWN, no fabricated cost-free claim.
+Continue only genuinely missing N30/N31 stages; ordinary reversible fixes delegated;
+40minsupervision/currentchat+checkpoint only, finishreview/noDB/merge/deploy/
+closure/formalhandoff/globalchecks.
+
+## 180-6 r244 N30_FIRST_SOURCE_REVIEW_N31_FIRST_MISSING_SOURCE_AUTHOR_ACTIVE
+
+ActualTOC N31 starts124/exclusiveFourthSummary128=physical136..140, notassumedN32. InitialselectionFAIL1ff65df0 caughtalreadyretained140 beforewrites; missingonly137139 recovery4a777941, FIRST3prepPASS/fd912e25. Existing140SOURCEindependentPASS/exact3files reusedreadonly, no140PNG/reprepare/refinalize; source136changedmechanicalcandidate readonly/N30approvalNOTN31approval. FreshWegener ownsFIRST136N31scope+137139SOURCE, inherited140tail+5WHOLE; LinnaeusFIRSTN30fullSOURCE separatelyactive. Parent preparesN30assemblyscript ONLYnotrunbeforePASS. FIG87isolatedPASS/86+88paidHOLD, complete19/fd29ec1f/browser11/newpaid0 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r237 N30_FIRST_FULL_SOURCE_INDEPENDENT_ACTIVE_N29_FIG87_ISOLATED_PASS
+
+NEW134135136mechanicalcandidate89648211/parent9f3cc820 PASS19/19+22/22+12/12,normalizations0,onlytwocharacterfixes/136exactMD/all4cropsbyteidentical;132133notfinalized. FIRSTfullN30SOURCE Linnaeus5originalpages+<=3existingcrops active, zeroWHOLE fromsource inventory, noassembly/modernapproval yet. BoyleFIRST87PASS/officialrecordonce95679c48 andisolatedsealf6811da3/parent153f2d9b retained; noimage/render/browser replay/promotion/fulln29.86+88paidHOLD/capUNKNOWN,29focusedPASS/newfirsttestFAIL retained. Complete19/fd29ec1f/browser11/newpaid0.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r234 N30_COUNTER_RECOVERY_PASS_SOURCE_AFFECTED_FINALIZE_READY
+
+Mendel FIRST136count6aed5f2e/report9e57b832/parent7a3ad7cc collectedclosed:12rows,one marginblot/1open/reopen0. Counterrecovery fdb29181 real13419/13612,29focusedPASS; firstnewtestFAIL retained, largehollowdigitguard added, source/countinginput bytes unchanged.134edge2119 has4inkpixels vs2120has19, no rowlost/sourcecropchanged. NEWaffected134135136copies only;134弹→单 and135Latin a→Cyrillic а useeach1of1;132133untouched. BoyleFIRST87PASS8b02f890/parent86768fee collectedclosed; officialrecordpending,n29paid86/88HOLD. Parent r230 helper accidentally targeted s33 metadata; only prior deliveredstatus restored, errorreceipt retained.19complete/fd29ec1f/browser11/newpaid0 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r230 N29_FIRST87_REVIEW_N30_FIRST136_COUNT_ACTIVE
+
+Gauss label-only87candidate3316f3d4/parentc7a50dbb collectedclosed:repair1of1/render1/native1/browser2; actualbrowsercumulative11, not9. Nietzsche partial134countPASS/136notopened/actual1open retainedclosed. CurrentFIRSTBoyle87independent and FIRSTremaining136Mendel active, nointerrupt/openassumption/replacement. Diagnosticargs-shadowing failure preserved and failedwindow7-only recovery7b74427e:13419/13612 but134one genuineedge shifted1px, NOTproductionfix/SOURCEapproval; constrain extendedclosing to margin. Original19complete/fd29ec1f unchanged.
+
+Same absolute 9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pending messages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40min supervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r225 N29_FIG87_ALLOWED_LABEL_REPAIR_N30_PIXEL_DIAGNOSIS_ACTIVE
+
+Kant FIRST87HOLD839cb53b/parent038f03fb collectedclosed:source1+preview1/renderer1/browser1/native0; combiningU20D7 vectormarks renderTOFU, mechanicalPASSnotvisualPASS. Originalrepair0of1 retained. Parent successfulbaselineone-render interpretation caused prematurestop; currenthumanordinaryrepair+oneallowedcontentrepair explicitly permitsNEWlabel-onlycandidate/onechangedrender and FIRSTnativeifPASS, notoldgeometry/TEXT/source replay. SolefreshGauss bounded8images ownslabelglyphsonly; Nietzsche2pagecountdiagnosis active. FIG86+88paidHOLD/capUNKNOWN/complete19 retained.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r224 N30_FIRST_SOURCE_134136_COUNT_HOLDS_DIAGNOSIS_ACTIVE
+
+Avicenna FIRSTSOURCE08548bf8/reporta3f825ba/parenta06bca52 bound,collectedclosed:5opens/reopens0/finalize4/fails2,133135PASS/13419vs20+13612vs13 retained. Exactauthorfindings134end弹→单 and135图92Latin a→Cyrillic а uncorrected/budgets0of1; noSOURCEapproval/assembly. Actualn30includesFIG91/92 through136#5, exclusive31heading136#6; parentearliern31FIGscopeassumption correctedwithoutpixels/rewrite. Solefresh2pageNietzsche diagnosescounts; Gauss oneallowed87labelrepair separatelyactive. Old87visualFAIL retained/browser1 makesactualtotal9,newpaid0/complete19.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r223 N30_FIRST_SOURCE_ACTIVE_N29_FIG87_FIRST_AUTHOR_ACTIVE
+
+N30FIRSTselection initialTOCshapeFAILb1c1f958 retained,nooutput; missinglessons-only recoverycb7b1494 PASS. FIRSTmissing133136 preparation4PASS53e41b4a/seal162aa475, originals/sharedmainunchanged;132exactreadonlysource reused NOTreprepared/finalized and priorN29approvaldoesNOTapproveN30. FreshAvicenna SOURCE5boundedimagesmax8/new4pagefinalizesonly. N29FIRSTKant deterministic87 remainsactive;86+88paidHOLD/capUNKNOWN, SOURCE/TEXT/11solutionsPASS unchanged. Complete19/increment3/no partialcommit/newpaid0.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r222 N29_FIG87_FIRST_AUTHOR_N30_FIRST_SOURCE_ACTIVE
+
+Hilbert FIRSTcap1plan d5cc5f54/reporte597265e/parent6eb8af01 bound,collectedclosed:3opens/reopens0/saved6planfiles unchanged; immediatefinalmanifestreturnonly resolved,noimage replay. FIG86+88hybrid genuinepaidHOLD/capUNKNOWN;87deterministic nowFIRSTKant author+isolated6surfaces only,notcourseDISPLAY. Freshn30Avicenna FIRST133136SOURCE active usingnewprepared4PASS+readonly132boundary, no132refinalize/oldn29blockreplay. AllSOURCE/TEXT/11solutionsPASS retained; complete19/no partialcommit.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r221 N29_FIG86_88_PAID_PLAN_HOLD_FIG87_READY_FINAL_RETURN_PENDING
+
+Actualsaved cap1drafts/inventories:86hybrid seatedrider and88hybrid recognizabledlamp eachPAID_ARTWORK_HOLD_PLAN_ONLY/capUNKNOWN;87sourcecircleball+support deterministicreadyafter existingTEXTPASS. Noassets/author/render/browser/paidcall orcourseapproval. SolecurrentHilbert gotimmediatefinalization-only continuation ofsaved6files; noreopen/redraw/replacement. Newindependent8p n30 selection mayprepare FIRSTmissing133136 while reusing unchangedreadonly132, nooldSOURCE/TEXT/answer/image replay. Complete19/oldFIG84HOLD preserved.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r220 N29_TEXT_SOURCE_PASS_FIRST_FIGURE_PLAN_ACTIVE
+
+Zeno FIRSTindependentTEXT PASS9d3ced94/report8410e913/parentedd842c8 bound,collectedclosed:21paragraphs/11WHOLE/factsformulasunitsrefs historicalidentity/4anchors preserved,0images/nofindings. ExistingSOURCE11solutionsPASS retained,notfinalANSWER. Hilbert FIRST3originalFIGcap1routing remainsactive; remainingpaidcapUNKNOWN/noauthor/render/paidcall. R01exactrenderunproven and oldfailures/budgets remain. Nextn30TOC120..123/rightboundary124 selectedread-only, missingpreparationNOTexecuted. Complete19, no partialcommit.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r219 N29_FIRST_TEXT_REVIEW_AND_FIRST_FIGURE_PLAN_ACTIVE
+
+Bacon FIRSTTEXT fa54b964/parent217ce1e0 collectedclosed:structuraloncePASS18objects/21paragraphs/4anchors/11WHOLE/historicalLeonardo retained/images0. Turing FIRSTindependentSOURCE11solutions f55a92fa/parent979034e9 PASS,collectedclosed/images0,notfinalANSWER. FreshZeno FIRSTTEXTcomparison0images and Hilbert FIRST3originalFIGcap1planonly,officialdraftcontextsready/noauthor/render/paidcall. RemainingpaidcapUNKNOWN/oldFIG84HOLD remains; n29finalize/CHOICE/ANSWER/DISPLAY/fullseal pending,complete19/no partialcommit.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r217 N29_FIRST_TEXT_AUTHOR_AND_FIRST_SOURCE_SOLUTIONS_ACTIVE
+
+Banach affectedSOURCE PASSc9e6de90/report40ac72f7/parentecea95b0 collectedclosed:2opens/reopens0,3findingsresolved/unaffectedFIRSTPASS inherited; R01renderunproven retained. FIRSTtargetonlyassembly366c7efd PASS18prose/11WHOLE/3FIG/open0/excludesn30, originalpages/index unchanged. FIRSTadaptprepare+immutableinputs69a18c9f ready. Fresh Bacon TEXT only and Turing independently11originalWHOLE solutions0images; no modernFIG/finalANSWER/CHOICE/DISPLAY/fullseal/partialcommit. Original132allowanceconsumed/newevent separate,complete19/FIG84paidHOLD retained.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r215 N29_AFFECTED_SOURCE_REVIEW_ACTIVE
+
+NEW131132 presentationcandidate947616e0 sealed:24/24+27/27,normalizations0/warnings0/exactallowedMDdiffs/allotherblocksQ8/sourcePNGs unchanged. FirstsealwrongfieldFAILfae801a4 retained,fieldonlyrecoveryPASS/noextra finalize. Solefresh Banach affected3blocks on2originalPNGs, FIRSTfullunaffectedPASS inherited; no fullSOURCE/render/browser replay orassembly. Original132budget1/1 remains consumed,newdelegatedevent132cumulative2/1311. Complete19/FIG84paidHOLD unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r214 N29_FIRST_SOURCE_FAIL_COLLECTED_AFFECTED_PRESENTATION_REPAIR
+
+Lovelace FIRSTfullSOURCE FAILc0370bb6/parent61cf4089 actualbytes bound,collected/closed:8opens/reopens0;129130,boundaries,11WHOLE,joins,rawFIG,Q8PASS retained. OnlyF01leadingitalic/F02fourfootnoteitalics/F03sourcecomma plusR01textmode/raisedcallout get NEWisolated copies under current human reversiblepresentation authority. Original132allowance1/1 remainsconsumed; newdelegatedevent separatelyrecorded,cumulative132=2/131=1. No SOURCEapproval/assembly or fullreview replay; FIG85isolatedPASS/FIG84paidHOLD/complete19 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r213 N29_MECHANICAL_RECOVERY_PASS_FIRST_FULL_SOURCE_REVIEW_ACTIVE
+
+Bernoulli countingpixels PASSb204fd68/reportd26b34fd/parentf5b26f77 bound,collected/closed:13018rows/13227rows, 2opens/reopen0. Numericprobe isolated bothsame marginblots; existingdensity/shape/isolation rules unchanged, only0.1glyph cutofftolerance. 17focusedtestsPASS; failed130/132 finalizeonly innewisolated copiesPASS18/18+27/27; MD/JSON/allsourcePNGs/crops byteidentical,129131 notreplayed. Recoveryseal60e3d984 binds original2fails/Q8correction1 andtechnicalserialization/patchcontextfailures. Fresh Lovelace FIRSTfullSOURCEreview4pages+<=4existingcrops; no assembly/modernstage approval yet. FIG85isolatedPASS/FIG84paidHOLD/complete19 unchanged, no partialcommit.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r212 N29_FIRST_SOURCE_COUNTING_HOLDS_DIAGNOSIS_ACTIVE
+
+Locke FIRSTSOURCE manifest1af2cdc9/report3cf6409c/parentbfa73b31 actualbytes bound,collected/closed:12925/25 and13124/24 mechanicalPASS;13018/19 and13227/26 mechanicalHOLD. Actual5imageopens/reopen0/4generatedcrops, Q8glyphcorrection1/page132budgetconsumed and first4finalizes/2fails preserved. No SOURCEapproval/assembly. Fresh Bernoulli twooriginalpixels only independently diagnoses allegedmarginblot and body/fraction-row merge; parent traces detectornumerics. Parent JSONserializationfailure3b80ce43 preserved; boolonly outputrepair, noSOURCEreplay/codechange. FIG85 isolatedPASS retained/FIG84paidHOLD unchanged, complete19.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r211 S30_FIG85_PASS_ISOLATED_FIG84_PAID_HOLD_N29_SOURCE_ACTIVE
+
+Lagrange FIRSTFIG85 independentPASS a3a77a16/report29ea3547/parent2d06997e actualbytes bound,collected/closed:8imageopens/reopen0, sourceinventory/preview/sixsavednative PASS, browser0/render0/paid0. Existing officialrecord commandPASS binds unchanged spec/render/SVG; isolatedcandidate sealed, NOTdurablepromotion/courseapproval. FIG84hybrid genuinepaidcapHOLD remains; fullcoursefinalize/CHOICE/finalANSWER/DISPLAY notrun. Next8p n29FIRSTSOURCE129132 soleauthor active; n27blockedpages untouched. Complete19/s33remote unchanged, no partialcommit.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r210 S30_FIG85_FIRST_INDEPENDENT_ACTIVE_N29_SOURCE_AUTHOR_ACTIVE
+
+Bohr FIRSTFIG85 manifest04010591/reporteb429297/parent585b05d0 actualbytes bound,collected/closed:render1/native1 sixsurfacesPASS, actual8imageopens/reopen0/browser2, discoveryfailure1/contentrepair0 preserved. Fresh Lagrange owns FIRST independentFIG85 only source1+preview1+sixsavednative=8, no renderer/browser or SOURCE/TEXT/answer replay. Native is isolatedFIG85, NOTfullcourseDISPLAY. FIG84paidHOLD unchanged; fresh8pLocke FIRSTSOURCE129132 remainsactive separately. Complete19/s33remote fd29ec1f unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r209 N29_FIRST_SOURCE_AUTHOR_ACTIVE_S30_FIG85_RETURN_PENDING
+
+N29 independent nextsource selected from actual8p PDF/TOC117..119 with120rightboundary; FIRST129132 preparation4/4PASS ac9da9f6, immutableinputs cedd865d. Fresh Locke owns SOURCE only<=8images; no n27pages/retry or n28/n30 promotion. S30Bohr currentauthor has savedrender/native/report and was asked onlyfinalmanifest/return; no author replacement or FIG replay. FIG84 genuinepaidcapHOLD unchanged. Complete19/s33remote fd29ec1f unchanged; oldSOURCE/TEXT/ANSWER/CHOICE/DISPLAY/failures/costs preserved.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r208 S30_FIRST_DETERMINISTIC_FIG85_AUTHOR_ACTIVE_FIG84_PAID_HOLD
+
+TEXT+SOURCEPASS retained, firstFIG85 approvedcontext prepared from exactcurrentTEXT. Fresh Bohr owns FIRSTdeterministic85 source/spec/renderer and figure-levelheaded6surfaces only (desktopmobile x3themes), imagebatch<=8, closesbrowser/server. NooldPNG/native/course replay, noFigure84open orpaidrequest, no fake84/partialcourseDISPLAY/promotion. Figure84hybrid remains genuinepaidcapPLANHOLD. Parent0images, historicalservice69/retry0/costUNKNOWN unchanged; complete19/nextcourseincrement0.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r207 S30_TEXT_SOURCE_PASS_FIRST_DETERMINISTIC_FIG85_PREPARATION
+
+Beauvoir affectedTEXT17 PASS2e1a173c/parent31070279 actualbytes bound,collected/closed:TEXT01resolved, roleof450N asF beforepressure result, nofindings. Untouched17blocks/9questions inheritedPASS;19paragraphs/3anchors/formulaorder/values preserved. FirstTEXTFAIL and author1+layout1=cumulative2 remain. SOURCE9answers alreadyPASS. Immediately FIRSTdeterministicFIG85 inputs next; no FIG84paid/authrequest or fullcoursepromotion, noTEXT/SOURCE/review replay. Complete19 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r206 S30_TEXT17_AFFECTED_REVIEW_ACTIVE_FIG84_PAID_PLAN_HOLD
+
+Darwin FIG84/85 planfecd2b30/parent729d0548 collected/closed:2originalPNGs once/reopens0, noauthor/render/browser/paidcall. 84hybrid semanticartworkneedsunverifiedpaidcap => genuinePLANONLYHOLD;85deterministic readyAFTERTEXTpass. Prose17-only rolelabelcandidate a6be9d82 machineaffectedPASS6daa1efe/flow19paragraphs/3anchors, formulas/order/numbers/17otherblocks/9questions exact. Oldauthorcorrection1+newdelegatedpresentationrepair1=cumulative2, firstTEXTFAILpreserved. Solefresh Beauvoir affectedTEXT01 review0images; nofullTEXT/source/answer/figure replay or courseapproval.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r204 S30_TEXT17_AFFECTED_ROLE_LABEL_LAYOUT_REPAIR
+
+Boole FIRSTTEXTFAILa2db8372/parent28b2b220 collected/closed, images0. All facts/9questions/27rows/34mathspans/19paragraphs/3anchors retained; soleTEXT01:prose17 needs explicitknown/force/formula/result/recap roles within SAMEformula order. New affectedcopy only; oldauthor correction1/structuralFAIL/independentFAIL and candidates remain immutable. Parent authorized reversiblepresentation repair, no science/formula/value/source change or fullTEXT replay. Darwin original2PNG inventoryplan remainsactive/noauthor/paidcall.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r203 S30_FIRST_TEXT_REVIEW_AND_FIRST_FIGURE_PLAN_ACTIVE
+
+Ohm FIRSTTEXTcandidate d4cce07f/parent4b10f7ea actualbytes bound, collected/closed:18blocks/9WHOLE/19flowparagraphs/3anchors/27rowchecks/34mathspans, source2figrefs retained, images0. FirststructuralFAIL/correction1/lookupFAIL preserved. Sole fresh Boole FIRSTindependentTEXT comparison; noSOURCE solving/review replay. Fresh Darwin cap1-only2originalPNG inventory/routing against officialdraftcontexts; noFIGauthor/render/browser orpaid/authcall, remainingmonetarycapUNKNOWN. SOURCE9solutions approved remain unchanged; no fullcourse/modernfinalization claim.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r201 S30_FIRST_SOURCE_ANSWERS_PASS_TEXT_AUTHOR_ACTIVE
+
+Franklin FIRSTindependentSOURCE9WHOLE answers PASS93b99665/parentc1fd2240 actualbytes bound, collected/closed, images0/paid0. Q2BOTHwhys and tractorpersonalmeasurementcomparison preserved; exactg9.8 vsapproxg10 separated, units/2ski areas explicit. This is SOURCEsolution only, not modernkey/comparison or courseapproval. Sole fresh Ohm FIRSTTEXTauthor remainsactive; noSOURCE replay orFIG/CHOICE/DISPLAY/finalize/promotion. Complete19 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r200 S30_FIRST_TEXT_AUTHOR_AND_FIRST_SOURCE_ANSWERS_ACTIVE
+
+Jason affectedSOURCE108 PASS10095e0e/parent0703ec5c collected/closed; firstFAIL and correction1 retained. Target-only assembly408aba1d PASS18prose/9WHOLE/2FIG/open0, excludes45 boundary;9exercisebytes reusedexactly. Extra-mode binding executionfailure preserved/d9e43d35 and narrowprojection recoveryPASS, no source/content replay. Singlecourse contextac4da598+FIRSTadaptpreparePASS. Fresh Ohm owns FIRSTmodernTEXT; fresh Franklin independently solves all9WHOLE originaltasks, no modernkeys or images. NoFIG/CHOICE/DISPLAY/finalize/complete promotion yet; originalpartialraw and source106107109 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r198 S30_SOURCE108_AFFECTED_INDEPENDENT_REVIEW_ACTIVE
+
+Only F01/F02/F03 source-continuation correction4170ecca frozen in NEW isolated root. First candidate and FAIL217dc725 remain exact. Correction finalize26/26PASS/normalizations0; noimage/reprepare. Sole fresh Jason affected-only source108review onePNG; unaffected earlierPASS reused, nofullpage replay. Correctioncount1/oldcontentFAIL1 retained. Target-only assembly and all modern stages stillNOTRUN; complete19/s33remoteunchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r197 S30_SOURCE108_AFFECTED_CONTINUATION_CORRECTION
+
+Wegener FIRSTSOURCE108 independentFAIL217dc725/parenta0842a07 collected/closed, sourcePNGonce/reopens0. F01 numerical15000Pa chain detached by3column interleaving; F02 即 introduction notbound to equality; F03 printedunknown dash normalized incorrectly. New isolated correction copy onlypageMD; original candidate/JSON/audit, sealed observations, firstFAIL and technicalfailure remain exact. Parent corrects onlythese findings from existing textual observation; noimage/reprepare or modern/downstream run.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r196 S30_FIRST_SOURCE108_INDEPENDENT_REVIEW_ACTIVE
+
+Singer FIRSTSOURCE108 b6bf7fe5/parent42e71bfc actualbytes bound, collected/closed:26/26lines/errors0/warnings0, gridonce/reopens0. Sole fresh Wegener FIRST independent sourcePNG once against candidate; no otherpage/image/source replay. Narrow s30 assembly script preparedNOTRUN, target4pageblockstream only/excludes45rightboundary/reuses pipelineAPIs/no wholebook deletion. No modern/courseapproval yet; s33 remotecomplete19 unchanged.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r195 S30_FIRST_SOURCE108_AUTHOR_ACTIVE
+
+S33 narrow24files commitfd29ec1fb remoteconfirmed/fullsealunchanged; stagingENOBUFSfirstfailure preserved,16MB allowlist recoveryPASS. Complete19/increment3. S30 FIRST missing108 preparationPASS1472x2161/26printedlines, input4ad1309d. Sole fresh Singer transcribes onegrid once into isolated artifacts; no106/107/109 image or TEXT/FIG/ANSWER/CHOICE/DISPLAY replay. Parent prepares narrow target-only assembly without destructive whole-book run.
+
+Same absolute9611W/currentchat; complete19/increment3.
+Original trees/main/stash/locks/backups/failures/pendingmessages preserved.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN; currentchat/checkpoint,
+40minsupervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r194 s33 complete narrowly pushed; next missing SOURCE108
+
+S33 complete commitfd29ec1fb50f0cc63b23d3170c6e7c0336fac304 pushed original codex/STEMROBIN-180-textbooks
+without force; actual remote equalsHEAD. 24 completecourse/progress files,
+no FIG93 or unrelated source/resource changes. Fullseal/parent, affected FIG92,
+FIRST CHOICE/final ANSWER and six native/independent DISPLAY all actualbytes bound.
+Complete19/currentresumeincrement3 only after remote confirmation.
+Old SOURCE/TEXT/answer-author/FIG93 and already delivered courses not replayed.
+
+Immediately s30 missing SOURCE108: original PDF source exists; current raw
+prose stops mid-sentence and source108 is absent, so it is not complete.
+Only FIRST missing source preparation next; existing106/107/109 bytes reused,
+no whole-book assemble/restore or incomplete modern promotion. All old HOLDs/
+trees/main/stash/locks/backups/failures/pendingmessages/costs preserved.
+Absolute9611W/currentchat/checkpoint; service69/retry0/newpaid0/tokensbillingUNKNOWN,
+40min supervision, finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
 ## 180-6 r193 S33_COMPLETE_SEALED_PENDING_NARROW_COMMIT_PUSH
 
 Euclid FIRST six PNG DISPLAY PASS d02d264a/parent9d9e5d0b returned/collected/closed; six opens once/no reopens, parent0. Exact report retained; fullcourse seal7d29e15f/parentd61a99e1 actualbytes bound:12raw/12modernprose/9paragraphs/anchors6,8/2FIG/4wholewritten/4ungraded/4free/4CHOICE16options/6headedpages. Old source/TEXT/answer-author/FIG93 and deliveredcourses not replayed. Original branch fetch equals a452f761 HEAD, no force or rebase. Complete18 remains until actual narrowcommit/push; target19. Oldfailures and historical repair1of1 + new delegated label-layout1 = cumulative2 explicitly preserved.
