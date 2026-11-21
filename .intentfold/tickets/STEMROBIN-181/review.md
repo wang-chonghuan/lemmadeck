@@ -40,6 +40,10 @@ D515：恢复 fig04 的原批准 FigureSpec（115a011…），历史审查仅改
 
 [fig04 原批准字节与受影响检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d515-fig04-approved-history/repair.json)
 
+D518：另修复 47 份 9p／10p 审查记录中的 249 条路径，均指向已经保留且与原 SHA 一致的历史证据。审批、失败状态和语义不变。受影响图 metadata 校验通过；这 47 份记录仍有 100 条未修改的临时引用，因此资源门禁尚未全部通过，不能据此正式 handoff。
+
+[本批精确路径修复](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d517-retained-provenance/repair.json) · [受影响检查与剩余引用](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d517-retained-provenance/affected-check.json)
+
 ## 机械检查
 
 | 检查 | 结果 |
