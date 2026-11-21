@@ -23,7 +23,7 @@
 | 10p N78 | fig181 缺付费输出；fig182 既有终止失败；不重购 |
 | exercise14 及其他旧 HOLD | 保持原记录，不因路径修复或实验课交付而批准 |
 | 两册概率 | 缺合法完整可用源，不编造、不记为完成 |
-| 正式机械门禁 | fig04 批准 SHA 不一致；旧资源／溯源引用和其他脏稿重复图仍未全部解决 |
+| 正式机械门禁 | fig04 的历史批准字节已恢复并修正路径；其余旧资源／溯源引用和其他脏稿重复图尚未全部解决 |
 
 [HOLD 清单及当前未决课程记录](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d512-review-preparation/hold-register.json)。该清单不把未调查材料写成已经完整验收。
 
@@ -33,6 +33,12 @@
 - 绑定 N153 的 8 个源快照别名和 12 个既有页面，使用修正后的英文手机页面。
 - 修复 24 条 FigureSpec 路径及 111 条独立审查资源路径，仅在原 SHA 匹配时改路径；保留原 JSON。
 - 备份并移出实验页下 2 份未跟踪、字节相同的重复图；其他脏稿不动。
+
+## 资源续修
+
+D515：恢复 fig04 的原批准 FigureSpec（115a011…），历史审查仅改路径，批准 SHA 不变；现存上下文版（bccf68e…）、源图、SVG 和审批均未覆盖。现有校验器只检查受影响绑定，通过。D512 的 HOLD 清单是当时记录，其中 fig04 路径项由本次证据更新，不代表其他 HOLD 已解除。
+
+[fig04 原批准字节与受影响检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d515-fig04-approved-history/repair.json)
 
 ## 机械检查
 
