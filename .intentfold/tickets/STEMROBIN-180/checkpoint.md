@@ -1,5 +1,237 @@
 # 生产检查点
 
+## 180-6 r1500 C4S18_COMPLETE_LESSON_SEALED_PUSH_PENDING
+
+S18 full lesson sealed ba50a23fae6dbeff6511d97c37dbbe3b783662e6c406246f604175ef7ffd0bb7; complete23->24/new5.
+Saved TEXT/SOURCE and five FIGURE approvals reused; current missing FIG170 independently approved and portable.
+ANSWER15 and CHOICE15 approved; original CHOICE HOLD/REVISE retained, two visible units and one internal coverage unit repaired, four affected questions independently checked.
+DISPLAY original four-page PASS plus repaired two-page PASS; original table-display REVISE retained.
+Four CHOICE review temporary path prefixes made portable; original approved review and all image hashes/verdicts retained.
+Old FIG170 HOLD/2+1 failures/cumulative3 corrections and four failed bitmap views retained.
+Native-view recovery4 plus DISPLAY original6/new2 screenshots; failed pre-screenshot capture1 retained.
+Reference table display repaired without answer bytes or runtime app changes; default choice HTML78 snippets unchanged.
+Parent this-lesson1/cumulative2 images, this-lesson browser4/closed4.
+q1 legacy source identity preserved; experiments not fabricated. Narrow original-branch commit/push pending.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; old failures/pending/trees/locks/backups/stash preserved.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1470 C4S18_TABLE_TWO_NATIVE_RECOVERY_READY_AFFECTED_INDEPENDENT_ACTIVE
+
+6p/phy6-c4-s18 evidence 2418ebee02b9a3bd81915d85961140a7e3b8d29635866035942a5254373cc55e bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Faraday the 3rd:C4S18_TABLE_AFFECTED_DISPLAY_TWO_IMAGES_CONTEXT2.
+Returned counts {"browser":1,"browserClosed":1,"screenshots":2,"imagesOpened":0,"parentImagesCumulative":2,"unchangedWrittenAnswersPerPage":14,"approvedWrittenAnswersPerPage":15,"defaultChoiceHelperChecks":78,"originalDisplayScreenshots":6,"cumulativeDisplayScreenshots":8,"cumulativeDisplayBrowserLaunches":3,"cumulativeDisplayBrowserCloses":3,"thisLessonParentBrowserLaunches":4,"thisLessonParentBrowserCloses":4,"sourceAnswerChoiceSemanticReviewReruns":0,"paid":0,"databaseCalls":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1461 C4S18_DISPLAY_REFERENCE_TABLE_REVISE_RETAINED_TWO_PAGES_ONLY_RECOVERY
+
+6p/phy6-c4-s18 evidence 451e19d665324bbbf249dfbccc071286f5998a68c1dda7073a48297f99ae2377 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents0/parentexec0: none.
+Returned counts {"images":6,"imageBatches":1,"imageToolGroups":6,"contextImages":6,"reopens":0,"crops":0,"montages":0,"secondaryImageBatches":0,"parentReopensByThisReviewer":0,"browser":0,"paid":0,"renderer":0,"databaseCalls":0,"externalCalls":0,"semanticReviewReruns":0,"ownExecs":11,"ownExecFailures":0,"execToolGroups":7,"toolGroupsActual":14,"toolGroupsDefinition":"Top-level tool invocations: seven execution groups (two use multi_tool_use.parallel for three execs each), six original-image opens, and one apply_patch invocation."}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1449 C2S3_FIG15_PASS_PORTABLE_PROMOTED_OFFICIAL_RECORDED_S18_DISPLAY_INDEPENDENT_ACTIVE
+
+6p/phy6-c2-s3 evidence 8f3e36071bce657fea36d994255360b8f3789b58bbd9a2c996367438a1e81c74 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Darwin the 3rd:C4S18_FIRST_DISPLAY_ONLY_NATIVE6_CONTEXT6.
+Returned counts {"parentImages":0,"browser":0,"paid":0,"rendererReruns":0,"historicalFailedRenders":2,"cumulativeFigureCorrections":2,"oldFailuresPreserved":true}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1443 C4S18_FIRST_SIX_NATIVE_DISPLAY_READY_INDEPENDENT_ACTIVE_FAILED_CAPTURE_RETAINED
+
+6p/phy6-c4-s18 evidence 8a4ba613e2fc394183b53b33c8448751f02e251789042187fcb74daafbf0012a bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Darwin the 3rd:C4S18_FIRST_DISPLAY_ONLY_NATIVE6_CONTEXT6.
+Returned counts {"browser":1,"browserClosed":1,"screenshots":6,"imagesLoaded":0,"parentImages":2,"writtenAnswers":15,"choices":15,"paid":0,"databaseCalls":0,"semanticReviewReruns":0,"headedLaunches":0,"priorFailedDisplayBrowser":1,"cumulativeDisplayBrowserLaunches":2,"cumulativeDisplayBrowserCloses":2}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1441 C2S3_FIG15_SOURCE_AND_FIRST_SIX_NATIVE_INDEPENDENT_PASS_S18_DISPLAY_READY
+
+6p/phy6-c2-s3 evidence 4f2145471373dbc76d16fcde53b169583a5a22930806f0247a84026bec48c3be bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents0/parentexec0: none.
+Returned counts null; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1430 C4S18_CHOICE_CURRENT_PASS_COLLECTED_OLD_HOLD_REVISE_BIND_FAILURE_RETAINED
+
+6p/phy6-c4-s18 evidence d4882ebfed7708480ecf3fcfcbc29b84d682361d568a0c91460e96beeab3b872 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Averroes the 3rd:C2S3_FIG15_FIRST_INDEPENDENT_SOURCE1_NATIVE6_CONTEXT7.
+Returned counts {"original_stage1_source_tasks_solved":15,"original_stage2_public_questions_solved":15,"original_stage2_independent_option_truths":63,"original_stage3_key_sets_compared":15,"original_stage3_option_truths_compared":63,"original_stage3_false_procedures_checked":37,"original_stage3_false_procedures_supported":36,"original_stage3_false_procedures_incomplete":1,"original_stage1_receipted_execs":17,"original_stage2_receipted_execs":6,"original_stage3_receipted_execs":10,"original_stage1_to_3_execs":35,"original_stage1_to_3_receipts":33,"original_stage1_to_3_exit0_receipts":32,"original_stage1_to_3_exit3_receipts":1,"original_disclosed_unreceipted_stage1_preflights":2,"affected_public_receipted_execs":4,"affected_public_questions_independently_rechecked":4,"affected_public_options_independently_rechecked":18,"affected_public_true_options":8,"affected_public_false_options":10,"affected_internal_key_sets_compared":4,"affected_internal_option_truths_compared":18,"affected_internal_false_procedures_checked":10,"affected_internal_false_procedures_supported":10,"affected_internal_false_procedures_incomplete":0,"affected_internal_receipted_execs_including_manifest_freeze_and_final_verification":20,"cumulative_execs_including_original_preflights":59,"cumulative_receipted_execs":57,"cumulative_exit0_receipts":56,"cumulative_old_exit3_receipts":1,"new_unreceipted_execs":0,"official_validator_calls":2,"official_validator_current_exit0":1,"official_validator_old_exit3_preserved":1,"aggregate_source_reviews":15,"aggregate_source_coverage_pass":15,"aggregate_question_reviews":15,"aggregate_option_checks":63,"aggregate_true_options":26,"aggregate_false_options":37,"aggregate_mathematics_pass":15,"aggregate_task_fidelity_pass":15,"aggregate_redundancy_pass":15,"aggregate_answer_leakage_pass":15,"aggregate_complete_true_sets_matching_current_or_reused_author_keys":15,"aggregate_false_procedures_supported_current_or_reused":37,"unchanged_complete_question_reviews_reused":11,"unchanged_option_truths_reused_not_resolved_again":45,"unchanged_false_procedure_judgments_reused":27,"original_independent_source_solution_strings_reused_unchanged":15,"new_source_solutions":0,"cumulative_independent_public_option_evaluations_original_plus_affected":81,"cumulative_internal_option_comparisons_original_plus_affected":81,"distinct_original_native_images":4,"cumulative_image_batches":1,"cumulative_image_reopens":0,"new_image_opens":0,"new_figures":0,"manual_content_files_this_internal_phase":2,"cumulative_manual_content_artifact_files":7,"new_current_candidate_approvals":1,"original_failed_candidate_approvals":0,"paid_calls_by_reviewer":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1422 C2S3_FIG15_NEW_AUTHOR_NATIVE_SEVEN_IMAGES_READY_FIRST_INDEPENDENT_ACTIVE
+
+6p/phy6-c2-s3 evidence 8587150578bc08473394dd6a8878249e4c52d5eaaaca7da8374827dce95fd69c bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Aquinas the 3rd:C4S18_CHOICE_AFFECTED_INTERNAL_FINAL_COMPARISON_CONTEXT4; Averroes the 3rd:C2S3_FIG15_FIRST_INDEPENDENT_SOURCE1_NATIVE6_CONTEXT7.
+Returned counts null; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1417 C4S18_AFFECTED_CHOICE_PUBLIC_PASS_INTERNAL_FINAL_COMPARISON_ACTIVE
+
+6p/phy6-c4-s18 evidence 6b8ca1d9119c0cbc391f572f68421ade10b595bffe9d6f79c4c715ff65a8b33d bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Aquinas the 3rd:C4S18_CHOICE_AFFECTED_INTERNAL_FINAL_COMPARISON_CONTEXT4.
+Returned counts {"affected_questions_reviewed":4,"affected_options_checked":18,"affected_true_options":8,"affected_false_options":10,"affected_mathematics_pass":4,"affected_fidelity_pass":4,"affected_redundancy_pass":4,"affected_leakage_pass":4,"unchanged_substantive_question_reviews_reused":11,"unaffected_option_truths_reused_not_resolved_again":45,"current_internal_key_comparisons":0,"current_internal_C1_D1_checks_completed":0,"new_image_opens":0,"cached_images":4,"cumulative_image_batches":1,"cumulative_image_reopens":0,"receipted_execs_this_phase_including_freeze_and_final_verification":4,"cumulative_receipted_execs":37,"cumulative_execs_including_disclosed_original_preflights":39,"cumulative_expected_old_official_exit3_receipts":1,"disclosed_original_unreceipted_preflights":2,"new_official_validator_calls":0,"new_manual_content_files":1,"cumulative_manual_content_files":5,"full_candidate_approvals":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1408 C4S18_CHOICE_FOUR_AFFECTED_UNITS_REVIEW_AND_C2S3_FIG15_AUTHOR_ACTIVE
+
+6p/phy6-c4-s18 evidence c4d8936ad7547393f3025c5f2e6565e2efc3ae7af3c7b5341f18e8256728ecb0 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Aquinas the 3rd:C4S18_CHOICE_FOUR_AFFECTED_UNITS_CONTEXT4; Boole the 3rd:C2S3_FIG15_NEW_MISSING_STAGE_OLD_FAILURE2_RETAINED.
+Returned counts {"questions":15,"options":63,"changedQuestionUnits":3,"changedVisibleUnits":2,"affectedReviewQuestions":4,"unchangedQuestionUnits":12,"reusableReviewQuestions":11,"authorRepairSnapshots":2,"parentImageOpens":0,"browsers":0,"renders":0,"paid":0,"sourceReviewReruns":0,"answerChanges":0,"canonicalEdits":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1404 C4S18_ORIGINAL_CHOICE_OFFICIAL_REVISE_RETAINED_AFFECTED_REPAIR_NEXT
+
+6p/phy6-c4-s18 evidence 47022f7d12d29174e85c598a7c35f7c05724aa2d61745103268653e0f02032dc bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Boole the 3rd:C2S3_FIG15_NEW_MISSING_STAGE_OLD_FAILURE2_RETAINED.
+Returned counts {"source_tasks":15,"public_questions":15,"options":63,"independent_true_options":26,"independent_false_options":37,"key_sets_matching":15,"option_truths_matching":63,"wrong_procedures_reviewed":37,"wrong_procedures_supported":36,"wrong_procedures_incomplete":1,"question_mathematics_pass":14,"question_mathematics_revise":1,"question_task_fidelity_pass":14,"question_task_fidelity_revise":1,"question_redundancy_pass":15,"question_answer_leakage_pass":13,"question_answer_leakage_revise":2,"source_coverage_pass":12,"source_coverage_revise":3,"source_coverage_revise_numbers":["g2-1","9","q1"],"distinct_native_images_opened_across_all_stages":4,"image_batches_across_all_stages":1,"image_reopens_across_all_stages":0,"image_opens_stage3":0,"images_in_current_context":4,"new_figures":0,"stage1_receipted_execs":17,"stage2_receipted_execs":6,"stage3_receipted_execs_including_final_freezes":10,"stage3_exit0_receipts":9,"stage3_expected_nonpassing_exit3_receipts":1,"cumulative_execs_including_disclosed_stage1_preflight":35,"cumulative_receipted_execs":33,"cumulative_exit0_receipts":32,"cumulative_expected_nonpassing_exit3_receipts":1,"disclosed_unreceipted_stage1_preflights":2,"unreceipted_execs_stage2_or_stage3":0,"official_validator_calls":1,"manual_content_files_written_stage3":2,"manual_content_files_written_across_all_stages":4,"experiments_run":0,"browser_calls":0,"render_calls":0,"canonical_or_author_edits":0,"database_or_publication_calls":0,"git_commands":0,"paid_calls_by_this_reviewer":0,"full_review_passes":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1403 C4S18_ORIGINAL_CHOICE_KEY_COMPARISON_AND_NEXT_C2S3_MISSING_FIG15_ACTIVE
+
+6p/phy6-c4-s18 evidence e5052b4fddeb29735d379eacf3fdc6f968277632210929d9c70e2771dfb45449 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Aquinas the 3rd:C4S18_CHOICE_FIRST_KEY_COMPARISON_CONTEXT4; Boole the 3rd:C2S3_FIG15_NEW_MISSING_STAGE_OLD_FAILURE2_RETAINED.
+Returned counts {"questions":15,"options":63,"changedQuestions":2,"affectedReviewQuestions":3,"parentImageOpens":0,"imageReopens":0,"browsers":0,"renders":0,"sourceReviewReruns":0,"answerChanges":0,"canonicalEdits":0,"paid":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1397 C4S18_CHOICE_TWO_UNIT_REPAIR_READY_ORIGINAL_KEY_REVIEW_ACTIVE
+
+6p/phy6-c4-s18 evidence e5052b4fddeb29735d379eacf3fdc6f968277632210929d9c70e2771dfb45449 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Aquinas the 3rd:C4S18_CHOICE_FIRST_KEY_COMPARISON_CONTEXT4.
+Returned counts {"questions":15,"options":63,"changedQuestions":2,"affectedReviewQuestions":3,"parentImageOpens":0,"imageReopens":0,"browsers":0,"renders":0,"sourceReviewReruns":0,"answerChanges":0,"canonicalEdits":0,"paid":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1378 C4S18_CHOICE_VIEW_REVISE_RETAINED_FIRST_KEY_COMPARISON_ACTIVE
+
+6p/phy6-c4-s18 evidence 7c96483261f2f8bdee86c584a91f9f7e35032f4288102c5ba7d189604a6819bc bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Aquinas the 3rd:C4S18_CHOICE_FIRST_KEY_COMPARISON_CONTEXT4.
+Returned counts {"source_tasks_considered":15,"public_questions":15,"questions_independently_solved":15,"options":63,"options_independently_checked":63,"independent_true_options":26,"independent_false_options":37,"question_mathematics_pass":15,"question_task_fidelity_pass":14,"question_task_fidelity_revise":1,"question_redundancy_pass":15,"question_redundancy_revise":0,"question_answer_leakage_pass":13,"question_answer_leakage_revise":2,"author_key_comparisons":0,"new_image_opens_this_stage":0,"cached_native_images":4,"images_in_current_context":4,"total_image_batches_across_stages":1,"stage2_receipted_execs_including_freeze_and_final_verification":6,"stage2_unreceipted_execs":0,"cumulative_execs_including_stage1_preflight":25,"cumulative_receipted_execs":23,"cumulative_disclosed_stage1_unreceipted_preflights":2,"manual_content_files_written_this_stage":1,"experiments_run":0,"full_review_passes":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1351 C4S18_CHOICE_SOURCE_BLIND_HOLD_RETAINED_VIEW_ONLY_INDEPENDENT_ACTIVE
+
+6p/phy6-c4-s18 evidence eec33c195f425186ef62144516c0ca2fdcd0a7533942e71056a85b9a2a23dc11 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Aquinas the 3rd:C4S18_CHOICE_VIEW_ONLY_BLIND_OPTION_AND_FIDELITY_REVIEW_CONTEXT4.
+Returned counts {"source_tasks":15,"concrete_independent_solution_records":15,"resolved_records":10,"conditional_records":5,"uncertainties":6,"selected_definition_blocks":6,"distinct_seed_figures":4,"current_native_view_images_opened":4,"image_open_calls":4,"image_batches":1,"images_in_current_context":4,"image_reopens":0,"crops":0,"original_or_other_images_opened":0,"new_figures":0,"draft_or_key_reads":0,"exec_calls_including_preflight":19,"successful_receipted_execs_including_freeze_and_final_verification":17,"unreceipted_runner_preflight_execs":2,"manual_content_files_written":1,"experiments_run":0,"browser_calls":0,"render_calls":0,"paid_calls":0,"database_calls":0,"canonical_edits":0,"full_review_passes":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1346 C4S18_ANSWER_INDEPENDENT_OFFICIAL_FINALIZE_RETAIN_PASS_CHOICE_BLIND_ACTIVE
+
+6p/phy6-c4-s18 evidence 9df0f73e22ac4a448d5a8a9846cefff1e988f0ff0554f93fcc70a481187b742d bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Aquinas the 3rd:C4S18_FIRST_CHOICE_SOURCE_BLIND_SOLUTIONS_CONTEXT4.
+Returned counts {"images":0,"browser":0,"paid":0,"semanticReviewReruns":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1336 C4S18_ANSWER_BYTES_UNCHANGED_NATIVE_VIEW_RECOVERY_FIRST_ANSWER_INDEPENDENT_ACTIVE
+
+6p/phy6-c4-s18 evidence 001dd0cdef7f19257e4e260ae04b1570a669829b35395900f970cae13aa6efcf bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Meitner the 3rd:C4S18_FIRST_MODERN_ANSWER_ONLY_INDEPENDENT_CONTEXT8; Locke the 3rd:C4S18_SAVED_SEED_SOLUTION_CONTINUATION_OLD4_NEW4_CONTEXT8.
+Returned counts {"answersInPreservedCandidate":15,"auto":0,"ungraded":15,"parts":0,"affectedExerciseAnswersChecked":3,"figureComparisons":4,"changedAnswers":0,"newAnswerCandidates":0,"priorAuthorImageLoads":8,"priorOriginalImageLoads":4,"priorBadViewLoads":4,"priorPreLoadPathFailures":1,"newNativeViewLoads":4,"newReadableViews":4,"newImageBatches":1,"newPreLoadPathFailures":0,"cumulativeAuthorImageLoads":12,"imagesInCurrentAuthorContext":12,"priorAuthorImageToolCallGroups":2,"cumulativeAuthorImageToolCallGroups":3,"reopens":0,"originalImageReopens":0,"oldViewReopens":0,"crops":0,"parentSpecificImages":2,"parentBrowsers":1,"parentBrowsersClosed":1,"parentScreenshots":4,"authorBrowsers":0,"authorScreenshots":0,"authorRenders":0,"newSourceSolves":0,"newSourcePasses":0,"stageRestarts":0,"independentGates":0,"newFigureReviews":0,"answerFinalizeRuns":0,"prepareReruns":0,"canonicalWrites":0,"publicationRuns":0,"databaseOperations":0,"gitOperations":0,"paid":0,"physicalExperiments":0,"fabricatedMeasuredValues":0,"newRecoveryFiles":2}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1333 C4S18_NATIVE_SVG_VIEW_TECHNICAL_RECOVERY_SAME_AUTHORS_IMMEDIATE
+
+6p/phy6-c4-s18 evidence e2087f2ea6a3a870d998d8420963e54d4c932bd06a1e22f3ddd8882a6bbc93b0 bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Epicurus the 3rd:C4S18_AFFECTED_NATIVE_VIEW_RECOVERY_OLD8_NEW4_CONTEXT12; Locke the 3rd:C4S18_SAVED_SEED_SOLUTION_CONTINUATION_OLD4_NEW4_CONTEXT8.
+Returned counts {"browser":1,"browserClosed":1,"screenshots":4,"parentImages":2,"imageOpens":0,"sourceCrops":0,"figureSpecRenders":0,"paid":0,"canonicalEdits":0,"oldViewEdits":0,"sixThemeCaptureReruns":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1322 C4S18_FIRST_MISSING_MODERN_ANSWER_AND_CHOICE_AUTHORS_ACTIVE
+
+6p/phy6-c4-s18 evidence 1559e12cdafb494d3a8d40b83147259d4d11c9ef252475f15412bd47e856de3c bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Epicurus the 3rd:C4S18_FIRST_MODERN_ANSWER_SOURCE_APPROVAL_REUSED_CONTEXT8; Locke the 3rd:C4S18_FIRST_NATIVE_CHOICE_AUTHOR_CONTEXT4.
+Returned counts {"pngViews":4,"browser":0,"imageOpens":0,"figureSpecRenders":0,"sourceCrops":0,"paid":0,"canonicalEdits":0,"newFigureReviews":0,"sixThemeCaptureReruns":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1309 C4S18_FIG170_APPROVED_PORTABLE_PROMOTION_FIRST_ADAPT_FINALIZE_PASS
+
+6p/phy6-c4-s18 evidence e4b1d86273bd898de228d2bf1f3235380306b5ee96f6f605e01e165003e8844e bound to actual saved bytes.
+Current production 6p/phy6-c4-s18; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c5-s13-t1 efa48eaad2356930a8f5449a32c95b5a7dc91abb; complete23/new4.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents0/parentexec0: none.
+Returned counts {"parentImages":1,"newImages":0,"browser":0,"paid":0,"rendererReruns":0,"cumulativeFigureCorrections":3,"oldFailuresPreserved":true}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1298 S13T1_NARROW_PUSHED_NEXT_SOURCED_LESSON
+
+S13-t1 complete narrowly committed and pushed efa48eaad2356930a8f5449a32c95b5a7dc91abb; exact remote HEAD confirmed.
+Complete23/new4; immediately continue actual sourced phy6-c4-s18. Historical local HOLDs retained, no approval gate invented.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; all old failures and pending preserved.
+Same8306 absoluteW; sharedmain/oldtrees/locks/backups/stash read-only preserved.
+finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
 ## 180-6 r1293 S13T1_COMPLETE_LESSON_SEALED_PUSH_PENDING
 
 S13-t1 full lesson sealed 47215e23085e1e97b0a769f1a9a44e9c2c46cf3834eff74e0bc95e4489d3131e; complete22->23/new4.

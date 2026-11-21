@@ -61,6 +61,7 @@ const previewClasses = (html) => html
   .replace(/class="sr-tex-err"/g, 'class="err"');
 const inline = (text) => previewClasses(sharedInline(text));
 const proseInline = (text) => previewClasses(sharedProseInline(text));
+const writtenAnswerBody = (text) => previewClasses(choiceHtml(text, sharedProseInline));
 
 function figureContract(contentRoot, id, strictEdition, manifest) {
   const fallback = {
@@ -173,6 +174,9 @@ li.ex .body .fig{margin:.7em 0 0;text-align:left}
 li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}
 .written-answer{margin-top:.8em;padding-top:.6em;border-top:1px solid var(--rule)}
 .answer-label{display:block;color:var(--sub);font-size:1em;margin-bottom:.25em}
+.answer-text table{border-collapse:collapse;width:100%;table-layout:fixed;margin:.5em 0}
+.answer-text th,.answer-text td{border:1px solid var(--rule);padding:.35em .45em;
+  vertical-align:top;overflow-wrap:anywhere}
 .choice{border-top:1px solid var(--rule);padding:1.2em 0;line-height:1.9}
 .choice-stem{margin:0 0 .8em;font-size:1.04em}
 .choice-options{list-style:none;margin:0;padding:0}
@@ -352,7 +356,7 @@ for (const lid of lessonDirs) {
     const answer = readyAnswers.get(String(e.number));
     const answerHtml = answer === undefined ? ""
       : `<div class="written-answer"><span class="answer-label">参考答案</span>`
-        + `<div class="answer-text">${proseInline(answer)}</div></div>`;
+        + `<div class="answer-text">${writtenAnswerBody(answer)}</div></div>`;
     out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
       + `<div class="body">${inline(e.text)}${figs}${answerHtml}</div></li>`;
   }
