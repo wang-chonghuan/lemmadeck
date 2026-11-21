@@ -1,5 +1,167 @@
 # 生产检查点
 
+## 180-6 r966 COMPLETE_LESSON_SEALED_PUSH_PENDING
+
+S10 complete sealed: TEXT/ANSWER/FIG197/FIG198-200/CHOICE/DISPLAY PASS.
+Complete20->21/new2; seal d8b4b657f15107f70092424a7c0ccd0ccb66ef337db5ad4e5c9cc5235dca3051; DISPLAY b4354df9aa4d483e039111794d7f979de904edc76ba6a45029ed4309e1757f70.
+Only Q1 unit leakage corrected once with affected composite review; first REVISE retained.
+Finalize first anchor failure preserved; only two formatting anchors rebound, no prose change.
+Six native pages captured once; parent image loads0, display browser1/closed1.
+Narrow original-branch commit/push pending; no partial course delivery.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; old failures and pending preserved.
+Same8306 absoluteW; sharedmain/oldtrees/locks/backups/stash read-only preserved.
+finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r965 SIX_NATIVE_DISPLAY_PASS
+
+6p/phy6-c5-s10 manifest b4354df9aa4d483e039111794d7f979de904edc76ba6a45029ed4309e1757f70 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents0/parentexec0: none.
+Returned counts {"images":6,"batches":[6],"browser":0,"paid":0,"semanticVisualReview":1,"parentImagesLoaded":0,"crops":0,"reopens":0,"databaseCalls":0,"runtimeChecks":0,"sourceSemanticGateReruns":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r962 SIX_NATIVE_DISPLAY_INDEPENDENT_ACTIVE
+
+6p/phy6-c5-s10 manifest 611c7cc1dbc1d853dea17f61c503716cb8a7c443d56cf1320e7f12ba26107e0f bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents1/parentexec0: Aquinas the 2nd:SIX_NATIVE_DISPLAY_INDEPENDENT_ACTIVE.
+Returned counts {"browser":1,"browserClosed":1,"screenshots":6,"imagesLoaded":0,"officialRetainChoices":1,"finalRepoWithReviewValidation":1,"offlineRender":1,"paid":0,"sourceSolutionReruns":0,"textReruns":0,"approvedFigureRerenders":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r956 CONCEPT_FORMAT_INDEPENDENT_PASS
+
+6p/phy6-c5-s10 manifest 6925fca54a70cae7328b8162a4c0db7f51757cbe72e76b8929741de4b2f00a2a bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents0/parentexec0: none.
+Returned counts {"questions":4,"single":3,"multiple":1,"options":15,"correctOptions":5,"incorrectOptions":10,"sourceTasks":4,"selectedConcepts":4,"changedConcepts":2,"unchangedConcepts":2,"removedNewlines":2,"changedLexicalCharacters":0,"changedSeedNontraceFields":2,"changedTraceHashes":3,"verifiedTraceEntries":4,"changedTracePaths":0,"changedDraftFields":1,"changedDraftQuestions":0,"changedDraftOptions":0,"changedDraftKeys":0,"changedDraftIntentCoverageOrFigures":0,"changedReviewFields":3,"sourceReviewsReused":4,"questionReviewsReused":4,"optionChecksReused":15,"sourceSolutionsReused":4,"reviewVerdictsReused":20,"passVerdicts":20,"reviseVerdicts":0,"blockedVerdicts":0,"independentConceptFormatJudgments":2,"independentDependencyImpactJudgments":1,"newSourceSolutions":0,"sourceSolutionReruns":0,"q1MathematicsReruns":0,"optionMathematicsReruns":0,"wholeReviewReruns":0,"correctionRoundsConsumedByThisReviewer":0,"validatorRuns":0,"withReviewValidator":0,"withoutReviewValidator":0,"images":0,"browser":0,"db":0,"install":0,"modelService":0,"paid":0,"git":0,"externalServices":0,"otherChatMessages":0,"skillHost":0,"bootstrap":0,"createOrAttach":0,"draftWrites":0,"canonicalWrites":0,"checkpointWrites":0,"usageWrites":0,"findings":0,"retainedStrictTraceOnlyFailures":1}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r943 CHOICE_AFFECTED_COMPOSITE_PASS
+
+6p/phy6-c5-s10 manifest cdf26669958e519f8e4d633b7afda977ff271cd1c1dc8fbc5a0bbe1f18363450 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents0/parentexec0: none.
+Returned counts {"questions":4,"single":3,"multiple":1,"options":15,"correctOptions":5,"incorrectOptions":10,"sourceTasks":4,"sourceSolutionsReused":4,"sourceSolutionReruns":0,"changedDraftQuestions":1,"unchangedDraftQuestions":3,"changedDraftTextFields":13,"changedVisibleTextFields":5,"changedInternalTextFields":8,"affectedQuestionReviews":2,"wholeQuestionReviewsCopiedUnchanged":2,"affectedQuestionMathematicsChecks":1,"unaffectedQuestionMathematicsJudgmentsReused":3,"affectedOptionChecks":4,"unaffectedOptionChecksReused":11,"affectedSourceCoverageChecks":2,"unaffectedSourceCoverageRecordsCopiedUnchanged":2,"affectedJudgmentUnits":7,"unaffectedJudgmentUnitsReused":13,"q3HistoricalContextTextUpdates":2,"reviewVerdicts":20,"passVerdicts":20,"reviseVerdicts":0,"blockedVerdicts":0,"firstFailuresRetained":1,"firstFailureUnresolved":0,"correctionRoundsConsumedSameInvocation":1,"correctionRoundsConsumedByThisReviewer":0,"affectedOnlySemanticReview":1,"wholeReviewReruns":0,"withReviewValidator":1,"withoutReviewValidator":0,"images":0,"browser":0,"db":0,"install":0,"modelService":0,"paid":0,"git":0,"externalServices":0,"otherChatMessages":0,"canonicalWrites":0,"canonicalRebind":0,"sourceChanges":0,"draftWrites":0,"parentCheckpointWrites":0,"parentUsageWrites":0,"executionFailuresRetained":1}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r935 MODERN_FINALIZE_AND_ANSWER_RETENTION_PASS
+
+6p/phy6-c5-s10 manifest 5b657f8218f07a6eaff8cc88b6224693889a343d0fb2855b5fc0d3e3dee9ba70 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents1/parentexec0: Laplace the 2nd:CHOICE_UNIT_LEAK_AFFECTED_ACTIVE.
+Returned counts {"images":0,"browser":0,"paid":0,"sourceSolutionReruns":0,"textReviewReruns":0,"figureRendererReruns":0,"officialRecordReview":1,"officialFinalize":2,"finalizeTechnicalFailures":1,"sourceTextAndMathChanges":0,"sectionAnchorStringsRebound":2,"answersRetained":4,"approvedOldFiguresReused":3,"newApprovedFigure":1}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r924 FIG197_INDEPENDENT_PASS
+
+6p/phy6-c5-s10 manifest 879ced5428e1c43194f44f3c294b677f3ab4575df1d14f8d74eb880b63f7ce3c bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents1/parentexec0: Laplace the 2nd:CHOICE_UNIT_LEAK_AFFECTED_ACTIVE.
+Returned counts {"images":7,"batches":[7],"batchCount":1,"sourceLoads":1,"sourceReopens":0,"crops":0,"currentNativeSamples":6,"nativeSampleReopens":0,"supersededFailedScreenshotLoads":0,"inspectionSheetLoads":0,"semanticReview":1,"necessaryDefects":0,"necessaryCorrectionUnits":0,"browser":0,"browserStarts":0,"browserCloses":0,"paid":0,"modelServiceCalls":0,"render":0,"validateSpec":0,"nativeCheck":0,"sourceInventoryMechanicalReruns":0,"geometryAssertionReruns":0,"textSemanticReviewReruns":0,"approvedOtherFigureReviews":0,"contentEdits":0,"recordReview":0,"promotion":0,"canonicalWrites":0,"parentCheckpointWrites":0,"usageWrites":0,"git":0,"database":0,"install":0,"newChats":0,"otherChatMessages":0,"reviewerEntryDeviations":1,"reviewerTechnicalFailedExecCalls":1}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r918 FIRST_NATIVE_CHOICE_REVISE_UNIT_LEAK
+
+6p/phy6-c5-s10 manifest 093d88ce814bc85cb437605e59a2a3351305f6496683d1258620e657a45c1754 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents1/parentexec0: Noether the 2nd:MISSING_FIG197_INDEPENDENT_ACTIVE.
+Returned counts {"questions":4,"single":3,"multiple":1,"options":15,"sourceTasks":4,"images":0,"browser":0,"paid":0,"models":0,"db":0,"install":0,"semanticReview":1,"withReviewValidator":1,"withoutReviewValidator":0,"canonicalRebind":0,"git":0,"otherChatMessages":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r915 FIG197_AUTHOR_READY_INDEPENDENT_ACTIVE
+
+6p/phy6-c5-s10 manifest 7cbed642e2f0cd9e2c723712ea4531a692c8d5fe03f41b3ed966fa8d599db9f1 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents2/parentexec0: Noether the 2nd:MISSING_FIG197_INDEPENDENT_ACTIVE; Einstein the 2nd:FIRST_NATIVE_CHOICE_INDEPENDENT_ACTIVE.
+Returned counts {"images":8,"imagesMeaning":"Image payloads actually loaded into this author context, including the original once, six first samples, and one full unscaled recovery sheet.","batches":1,"batchImageLoads":[8],"nativeScreenshotsCreated":8,"currentNativeSamples":6,"failedNativeScreenshotsPreserved":2,"inspectionSheetsCreated":1,"generatedRasterArtifacts":9,"originalPngProjectionCopies":1,"browserStarts":4,"browserCloses":4,"paid":0,"modelServiceCalls":0,"renderInvocations":1,"explicitSpecValidation":1,"rendererInternalSpecValidation":1,"buildContextInvocations":1,"nativeSixSurfaceInvocations":1,"affectedTechnicalRecoveryInvocations":2,"technicalFailures":5,"technicalFailedExecCalls":4,"technicalCaptureDefectEvents":1,"technicalCaptureScriptCorrections":2,"contentCorrections":0,"contentCorrectionMaximum":1,"textReviewReruns":0,"textEdits":0,"approvedFigureRerenders":0,"recordReview":0,"promotion":0,"adaptFinalize":0,"databaseCalls":0,"gitCalls":0,"installCalls":0,"newChats":0,"otherChatMessages":0,"serversStarted":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r910 FIRST_NATIVE_CHOICE_AUTHOR_READY_INDEPENDENT_ACTIVE
+
+6p/phy6-c5-s10 manifest 8d063b4487ef0c18e32d6256cf85eb11263fdeff3e00906419dbab2b8a564450 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents2/parentexec0: Gibbs the 2nd:MISSING_FIG197_AUTHOR_ACTIVE; Einstein the 2nd:FIRST_NATIVE_CHOICE_INDEPENDENT_ACTIVE.
+Returned counts {"projectedProseBlocks":21,"writtenSeeds":4,"conceptBlocks":4,"questions":4,"single":3,"multiple":1,"options":15,"sourceFigures":0,"newFigures":0,"fullyDeferredSources":0,"partialCoverageSources":4,"omittedTaskEntries":5,"inspectCommands":1,"explicitSeedPrepares":1,"structureValidations":1,"validatorInternalSourceRefreshes":1,"semanticReviews":0,"draftRepairs":0,"technicalFailures":0,"commandWrapperDeviations":1,"images":0,"browser":0,"paid":0,"modelServiceCalls":0,"installs":0,"database":0,"canonicalWrites":0,"git":0,"otherChats":0,"answerArtifacts":0,"inputInteractions":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r906 MODERN_ANSWER_FINALIZE_PASS
+
+6p/phy6-c5-s10 manifest 9d3ba146e237cefe1b1e83cb8eb14768c88a37c058e6f88a4178eab12353122c bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents2/parentexec0: Gibbs the 2nd:MISSING_FIG197_AUTHOR_ACTIVE; Volta the 2nd:FIRST_NATIVE_CHOICE_AUTHOR_ACTIVE.
+Returned counts {"images":0,"browser":0,"paid":0,"officialFinalizeCalls":1,"sourceSolutionReruns":0,"answers":4,"ungraded":4,"canonicalWrites":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r903 MODERN_ANSWER_GATE2_PASS
+
+6p/phy6-c5-s10 manifest fd0dbc7e2a6782bc3843be74aa82a3ca29d0b343a4f51815b1f5a9f50e0feff4 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents2/parentexec0: Gibbs the 2nd:MISSING_FIG197_AUTHOR_ACTIVE; Volta the 2nd:FIRST_NATIVE_CHOICE_AUTHOR_ACTIVE.
+Returned counts {"answers":4,"passUnits":4,"missing":0,"duplicates":0,"derived":4,"ungraded":4,"auto":0,"parts":0,"figureEvidence":0,"images":0,"imagePayloads":0,"browser":0,"paid":0,"modelCalls":0,"gate2Review":1,"affectedCorrections":0,"affectedReviews":0,"sourceReruns":0,"sourceSolutionReruns":0,"textReruns":0,"figureGateReruns":0,"choiceReads":0,"interactionsAuthored":0,"prepareCalls":0,"finalizeCalls":0,"fullProjectTests":0,"katexRuns":0,"databaseCalls":0,"installs":0,"gitOperations":0,"canonicalWrites":0,"candidateWrites":0,"checkpointWrites":0,"usageWrites":0,"chatOperations":0,"unwrappedExec":1,"preliminaryUnwrappedReadDeviations":1,"unwrappedFileReads":0,"wrappedExec":7,"totalExec":8,"completedWrappedReceiptsAtManifestWrite":6,"currentSealingExecution":1,"commandFailures":0,"unwrappedCommandFailures":0,"gate2Failures":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r896 MODERN_ANSWER_AUTHOR_READY_GATE2_CHOICE_FIG197_ACTIVE
+
+6p/phy6-c5-s10 manifest 9ab6059e667715b5967cbb670dc7990a82efa419e22353ef0c51549e4bab5b34 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents3/parentexec0: Gibbs the 2nd:MISSING_FIG197_AUTHOR_ACTIVE; Volta the 2nd:FIRST_NATIVE_CHOICE_AUTHOR_ACTIVE; Tesla the 2nd:MODERN_ANSWER_GATE2_ACTIVE.
+Returned counts {"images":0,"browser":0,"paid":0,"answers":4,"ungraded":4,"auto":0,"sourceSolutionReruns":0,"textReruns":0,"prepareCalls":1,"independentModernAnswerReviewPending":true,"canonicalWrites":0,"databaseCalls":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r884 EXACT_SAVED_TEXT_PASS_FIG197_AUTHOR_ACTIVE
+
+6p/phy6-c5-s10 manifest 562c7217af29209b87499ae6c82c21a6336a173735927aaaab0c0991b3a9bc16 bound to actual saved bytes.
+S13 complete/pushed f67b418bd0e01b31805def8d0d9dccefddcb291c; complete20/new1.
+S10 exact old approved TEXT templates restored from saved canonical authoritativeText; original repair1/1 retained.
+FIG198/199/200 passed durable bytes reused; only missing modern stages, no source/TEXT/approved-figure replay.
+Active agents1/parentexec0: Gibbs the 2nd:MISSING_FIG197_AUTHOR_ACTIVE.
+Returned counts {"images":0,"browser":0,"paid":0,"sourceReruns":0,"textSemanticReviewReruns":0,"approvedFigureRerenders":0}; historic paid69/retry0/browser22 and unknown cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved.
+Same8306 absoluteW; sharedmain read-only. finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
+## 180-6 r875 S13_NARROW_PUSHED_NEXT_S10
+
+6p/phy6-c5-s13 sealed complete and pushed f67b418bd0e01b31805def8d0d9dccefddcb291c to original codex/STEMROBIN-180-textbooks; remote exact head confirmed.
+Complete20/new1. Delivery a6f182965ccd18ac2d9f98c80c03be2ea3611f785a8b55f194885a0f60c29e3f; prior failures/expenses/pending and S19 local byte HOLD retained.
+Immediately continue 6p/phy6-c5-s10 from retained raw21blocks/4written and named source-solution PASS reports; missing modern stages only.
+finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat messages.
+
 ## 180-6 r868 COMPLETE_LESSON_SEALED_PUSH_PENDING
 
 6p/phy6-c5-s13 complete: TEXT/ANSWER/FIGURE/CHOICE independent PASS reused; DISPLAY six images PASS.
