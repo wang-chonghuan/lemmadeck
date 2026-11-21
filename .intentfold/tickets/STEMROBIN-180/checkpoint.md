@@ -1,5 +1,242 @@
 # 生产检查点
 
+## 180-6 r1647 C2S3_COMPLETE_LESSON_SEALED_PUSH_PENDING
+
+C2S3 full lesson sealed bf6b864db7c269e3b4415273552cf692d8502589502798b4f5fdd5a08bd3a64f; complete24->25/new6.
+Saved TEXT/SOURCE and generated FIG14 reused; missing FIG15 author/independent PASS promoted and recorded.
+First modern ANSWER5/ungraded5 and repaired CHOICE approved; DISPLAY native six independently approved.
+Original CHOICE REVISE preserved; only Q1 three options and its coverage changed, other four questions/thirteen options and five source solutions reused.
+Original FIG15 render failures2 and cumulative corrections2 retained; no unknown-byte restoration.
+Parent this-lesson images0/browser1/closed1; source solutions/TEXT/FIG14 not rerun. Narrow original-branch commit/push pending.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; old failures/pending/trees/locks/backups/stash preserved.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1646 C2S3_FIRST_SIX_NATIVE_DISPLAY_PASS_FULL_SEAL_NEXT
+
+6p/phy6-c2-s3 evidence e9859b6b2ad09e9c5366b680d60739cfc04870771999c296eebd0f2c6548eff6 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Volta the 3rd:C2S4_FIRST_FIGURE_AUTHOR.
+Returned counts {"images":6,"reopens":0,"browser":0,"newrenders":0,"semanticreviewsrerun":0,"paid":0,"failure":0,"database":0,"environmentChanges":0,"installations":0,"skillHostCalls":0,"gitOperations":0,"newWorktrees":0,"attachments":0,"otherChatsOpened":0,"reviewersClosed":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1641 C2S3_CHOICE_RETAINED_FIRST_SIX_DISPLAY_INDEPENDENT_ACTIVE
+
+6p/phy6-c2-s3 evidence 9100c6d6aad97d49c5856c9eda82830f3211603378a1120b8bdc932b5a6b6500 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Volta the 3rd:C2S4_FIRST_FIGURE_AUTHOR; Lovelace the 3rd:C2S3_FIRST_DISPLAY_SIX_NATIVE.
+Returned counts {"questions":5,"options":16,"changedQuestions":1,"changedOptions":3,"reusedOptions":13,"sourceSolutionReruns":0,"images":0,"browser":0,"paid":0,"databaseCalls":0,"retainedChoices":5,"retainedOptions":16,"originalReview":{"source_solutions_cumulative":5,"view_solutions_cumulative":5,"independent_option_truth_checks_cumulative":16,"new_source_solutions_stage3":0,"new_view_solutions_stage3":0,"new_independent_option_solves_stage3":0,"author_source_comparisons_stage3":5,"author_key_sets_compared_stage3":5,"author_intents_compared_stage3":5,"author_coverage_rows_compared_stage3":5,"internal_option_rationales_compared_stage3":16,"incorrect_option_misconception_chains_checked_stage3":9,"correct_option_null_misconceptions_checked_stage3":7,"images_total":2,"images_in_current_context":2,"new_images_stage3":0,"image_reopens_cumulative":0,"browser_stage3":0,"browser_this_reviewer_cumulative":0,"paid_stage3":0,"paid_this_reviewer_cumulative":0,"new_renders":0,"new_screenshots":0,"exec_failures_stage3":1,"exec_failures_this_reviewer_cumulative":1,"formal_semantic_nonpass_execs":1,"structural_or_runtime_exec_failures":0,"exec_retries_stage3":0,"exec_retries_this_reviewer_cumulative":0}}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1634 C2S3_Q1_AFFECTED_INTERNAL_PASS_RETAIN_NEXT
+
+6p/phy6-c2-s3 evidence 920679ab09827c593d3cba9bc25cac7f60a2d1d65fd4017bfc932da794d6eca0 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Volta the 3rd:C2S4_FIRST_FIGURE_AUTHOR.
+Returned counts null; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1633 C2S4_FIRST_FIGURE_AUTHOR_ACTIVE_C2S3_CHOICE_INTERNAL_ACTIVE
+
+6p/phy6-c2-s4 evidence bbe7bfd97c45e818c05bac26541d8ba90ca47d70c8662c02993ed112d76b7b44 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Lorentz the 3rd:C2S3_Q1_AFFECTED_INTERNAL_COMPARISON; Volta the 3rd:C2S4_FIRST_FIGURE_AUTHOR.
+Returned counts {"newCommands":5,"newWrappedCommands":5,"completedNewCommandReceiptsBound":4,"currentSealAndVerificationCommand":1,"commandCountingBoundary":"Four completed wrapper commands plus this fifth seal-and-verify command. Its receipt is written by the wrapper after successful verification and is detached to avoid a self-referential hash.","newAffectedReviewRuns":1,"newScientificContentReviewRuns":0,"newWholeLessonContentReviewRuns":0,"authoritativeProseFlowInvocations":1,"nestedAuthoritativeToolProcessLaunches":1,"actualNewExecutionFailures":0,"newUnresolvedReviewFindings":0,"reusedScientificFocusPasses":3,"reusedUnchangedProseUnitPasses":11,"reusedOriginalExercisePasses":6,"affectedLayoutUnitsApproved":1,"compositeProseUnits":12,"compositeOriginalExercises":6,"compositeTotalArrayUnits":18,"newlyInsertedParagraphBreaks":1,"actualSectionBoundariesVerified":4,"sourceRawReReads":0,"sourceSolutionReruns":0,"sourceReviewRuns":0,"figureReviewRuns":0,"answerReviewRuns":0,"choiceReviewRuns":0,"images":0,"browser":0,"databaseCalls":0,"externalPaidServiceCalls":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatReads":0,"canonicalWrites":0,"parentCandidateWrites":0,"originalReportWrites":0,"checkpointTicketUsageWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1631 C2S4_TEXT_COMPOSITE_PASS_RETAINED_FIGURES_MISSING_ONLY
+
+6p/phy6-c2-s4 evidence bbe7bfd97c45e818c05bac26541d8ba90ca47d70c8662c02993ed112d76b7b44 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Lorentz the 3rd:C2S3_Q1_AFFECTED_INTERNAL_COMPARISON.
+Returned counts {"newCommands":5,"newWrappedCommands":5,"completedNewCommandReceiptsBound":4,"currentSealAndVerificationCommand":1,"commandCountingBoundary":"Four completed wrapper commands plus this fifth seal-and-verify command. Its receipt is written by the wrapper after successful verification and is detached to avoid a self-referential hash.","newAffectedReviewRuns":1,"newScientificContentReviewRuns":0,"newWholeLessonContentReviewRuns":0,"authoritativeProseFlowInvocations":1,"nestedAuthoritativeToolProcessLaunches":1,"actualNewExecutionFailures":0,"newUnresolvedReviewFindings":0,"reusedScientificFocusPasses":3,"reusedUnchangedProseUnitPasses":11,"reusedOriginalExercisePasses":6,"affectedLayoutUnitsApproved":1,"compositeProseUnits":12,"compositeOriginalExercises":6,"compositeTotalArrayUnits":18,"newlyInsertedParagraphBreaks":1,"actualSectionBoundariesVerified":4,"sourceRawReReads":0,"sourceSolutionReruns":0,"sourceReviewRuns":0,"figureReviewRuns":0,"answerReviewRuns":0,"choiceReviewRuns":0,"images":0,"browser":0,"databaseCalls":0,"externalPaidServiceCalls":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatReads":0,"canonicalWrites":0,"parentCandidateWrites":0,"originalReportWrites":0,"checkpointTicketUsageWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1629 C2S3_Q1_AFFECTED_VIEW_PASS_INTERNAL_COMPARISON_NEXT
+
+6p/phy6-c2-s3 evidence e289128136ed8d7785fb7bf67042e7ecb308c55e89dbdc24c707260361ea5fe6 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Singer the 3rd:C2S4_TEXT_LAYOUT_AFFECTED_REVIEW; Lorentz the 3rd:C2S3_Q1_AFFECTED_INTERNAL_COMPARISON.
+Returned counts {"source_solution_reruns":0,"newquestions":1,"newoptions":3,"views_read_for_package_context":5,"unchanged_options_read_as_context":13,"unchanged_options_rechecked":0,"images":0,"image_reopens":0,"browser":0,"paid":0,"new_renders":0,"new_screenshots":0,"actual_failures":0,"exec_failures":0,"exec_retries":0,"stdout_preview_omissions":1,"tokensQuota":"UNKNOWN"}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1626 C2S4_FIRST_TEXT_SCOPE_PASS_LAYOUT_REVISE_RETAINED
+
+6p/phy6-c2-s4 evidence bb6f8a1f14927c2015ffa41a8065fe8232edf31492ccccbb948db89b6f198997 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Singer the 3rd:C2S4_TEXT_LAYOUT_AFFECTED_PENDING; Lorentz the 3rd:C2S3_Q1_AFFECTED_VIEW_ONLY.
+Returned counts {"proseArrayUnitsActuallyCompared":12,"narrativeProseUnitsActuallyCompared":9,"captionUnitsActuallyCompared":1,"figurePlaceholderUnitsActuallyCompared":2,"originalExercisesActuallyCompared":6,"totalArrayUnitsActuallyCompared":18,"passedArrayUnits":17,"reviseArrayUnits":1,"blockedArrayUnits":0,"actualCommandFailuresAtSeal":0,"failingTextContractFindings":1,"commandReceiptsBoundAtSeal":24,"firstTextReviewRuns":1,"sourceReviewRuns":0,"figureReviewRuns":0,"answerReviewRuns":0,"choiceReviewRuns":0,"questionsSolvedAgain":0,"answersCreated":0,"choicesCreated":0,"images":0,"browser":0,"databaseCalls":0,"externalPaidServiceCalls":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatReads":0,"canonicalWrites":0,"parentCandidateWrites":0,"checkpointTicketUsageWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1621 C2S3_Q1_ONLY_REPAIR_BOUND_AFFECTED_VIEW_ACTIVE
+
+6p/phy6-c2-s3 evidence 95eac99257928e9d00eedb1fe10d624d5e17ef96ffeea225fb5a32157e6408d7 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Singer the 3rd:C2S4_FIRST_TEXT_SCOPE_INDEPENDENT; Lorentz the 3rd:C2S3_Q1_AFFECTED_VIEW_ONLY.
+Returned counts {"modifiedQuestions":1,"modifiedOptions":3,"reusedQuestions":4,"reusedOptions":13,"questions":5,"options":16,"sourceSolutionReruns":0,"images":0,"browser":0,"paid":0,"databaseCalls":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1615 C2S3_ORIGINAL_CHOICE_REVISE_COLLECTED_Q1_ONLY_REPAIR_NEXT
+
+6p/phy6-c2-s3 evidence 1ccac6f7bd4c312e915ed16b95731e4326c034a9559f3b91584e79ee3ad66b83 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Singer the 3rd:C2S4_FIRST_TEXT_SCOPE_INDEPENDENT.
+Returned counts {"source_solutions_cumulative":5,"view_solutions_cumulative":5,"independent_option_truth_checks_cumulative":16,"new_source_solutions_stage3":0,"new_view_solutions_stage3":0,"new_independent_option_solves_stage3":0,"author_source_comparisons_stage3":5,"author_key_sets_compared_stage3":5,"author_intents_compared_stage3":5,"author_coverage_rows_compared_stage3":5,"internal_option_rationales_compared_stage3":16,"incorrect_option_misconception_chains_checked_stage3":9,"correct_option_null_misconceptions_checked_stage3":7,"images_total":2,"images_in_current_context":2,"new_images_stage3":0,"image_reopens_cumulative":0,"browser_stage3":0,"browser_this_reviewer_cumulative":0,"paid_stage3":0,"paid_this_reviewer_cumulative":0,"new_renders":0,"new_screenshots":0,"exec_failures_stage3":1,"exec_failures_this_reviewer_cumulative":1,"formal_semantic_nonpass_execs":1,"structural_or_runtime_exec_failures":0,"exec_retries_stage3":0,"exec_retries_this_reviewer_cumulative":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1607 C2S4_FIRST_TEXT_SCOPE_CANDIDATE_INDEPENDENT_ACTIVE_C2S3_INTERNAL_ACTIVE
+
+6p/phy6-c2-s4 evidence 7a4eff44278ace7d81795cf137a14b3014d8f97007dad0bf3bb7a52b59940c74 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_INTERNAL_COMPARISON_CONTEXT2; Singer the 3rd:C2S4_FIRST_TEXT_SCOPE_INDEPENDENT.
+Returned counts {"changedProseBlocks":3,"sourceReviewsRerun":0,"textReviewsRerun":0,"images":0,"browser":0,"paid":0,"databaseCalls":0,"unknownBytesRestored":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1585 C2S4_FIRST_SOURCE_PASS_TEXT_SCOPE_RECOVERY_NEXT_C2S3_INTERNAL_ACTIVE
+
+6p/phy6-c2-s4 evidence df879d1d109ec4185a8b365df91c0e60cc7753a87682ae0155d4bdf894ffc84e bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_INTERNAL_COMPARISON_CONTEXT2.
+Returned counts {"proseBlocksRead":12,"independentSolutions":6,"authorComparisons":6,"images":0,"browser":0,"paid":0,"paidRetries":0,"commands":17,"successfulCommands":16,"failedCommands":1,"technicalCommandRecoveries":1,"manualApplyPatchCalls":3,"experiments":0,"measurements":0,"newPages":0,"newFigures":0,"newModernAnswers":0,"newChoices":0,"databaseCalls":0,"renders":0,"screenshots":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1583 C2S3_FIRST_CHOICE_VIEW_REVISE_RETAINED_ORIGINAL_KEY_COMPARISON_NEXT
+
+6p/phy6-c2-s3 evidence 0327a548a68d2f47510cde5d0deb75e0345991c8fcc779fb080a50b22b6fc778 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_INTERNAL_COMPARISON_CONTEXT2; Banach the 3rd:C2S4_FIRST_SOURCE_ONLY_INDEPENDENT.
+Returned counts {"source_solutions_cumulative":5,"new_source_solutions_this_phase":0,"view_solutions_this_phase":5,"view_solutions_cumulative":5,"option_checks_by_question":{"c2s3-q1":3,"c2s3-q2":3,"c2s3-q3":3,"c2s3-q4":4,"c2s3-q5":3},"option_checks_this_phase":16,"option_checks_cumulative":16,"true_options":7,"false_options":9,"images_total":2,"images_in_current_context":2,"new_images_this_phase":0,"image_reopens_cumulative":0,"browser_this_phase":0,"browser_this_reviewer_cumulative":0,"paid_this_phase":0,"paid_this_reviewer_cumulative":0,"author_key_accesses":0,"exec_failures_this_phase":0,"exec_failures_this_reviewer_cumulative":0,"exec_retries_this_phase":0,"exec_retries_this_reviewer_cumulative":0,"new_renders":0,"new_screenshots":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1580 C2S4_TEXT_HOLD_RETAINED_SOURCE_REVIEW_AND_C2S3_VIEW_ACTIVE
+
+6p/phy6-c2-s4 evidence eb7cdd2e01e65d413ff58fd7ea7a487da64be391632861fd2e2a52a44908a6b0 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_VIEW_BLIND_CONTEXT2; Banach the 3rd:C2S4_FIRST_SOURCE_ONLY_INDEPENDENT.
+Returned counts null; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1578 C2S3_CHOICE_VIEW_ACTIVE_C2S4_FIRST_SOURCE_AND_TEXT_ACTIVE
+
+6p/phy6-c2-s4 evidence 573356362112ae534e89afea8c775e899f0acd2e05312196adb04365cc1dfca6 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents3/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_VIEW_BLIND_CONTEXT2; Noether the 3rd:C2S4_FIRST_MODERN_TEXT_AUTHOR; Banach the 3rd:C2S4_FIRST_SOURCE_ONLY_INDEPENDENT.
+Returned counts {"sourceTasksDerived":6,"currentSourceReviews":0,"modernAnswerKeys":0,"choiceQuestions":0,"imageOpens":0,"browser":0,"paid":0,"databaseCalls":0,"actualExperiments":0,"actualMeasurements":0,"rawProseBlocksRead":12,"rawPromptsRead":6}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1576 C2S3_FIRST_CHOICE_SOURCE_BLIND_PASS_VIEW_NEXT_C2S4_TEXT_AUTHOR_ACTIVE
+
+6p/phy6-c2-s3 evidence 10d1ffc6508dbe72c213e435ff2f388f4c9260ecbbb9a8a008e458f3eed213cd bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_VIEW_BLIND_CONTEXT2; Noether the 3rd:C2S4_FIRST_MODERN_TEXT_AUTHOR.
+Returned counts {"first_independent_seed_solutions":5,"images_opened":2,"images_in_current_context":2,"image_batches":1,"largest_batch":2,"image_reopens":0,"crops_or_composites":0,"browser":0,"paid":0,"new_renders":0,"new_screenshots":0,"exec_failures":0,"exec_retries":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1566 C2S3_FIRST_CHOICE_SOURCE_BLIND_ACTIVE_ANSWER_RETAINED
+
+6p/phy6-c2-s3 evidence a637e44c37b2733543af3cdb81519c27cd342345812f1870facb803fb82311e6 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Plato the 3rd:C2S3_FIRST_CHOICE_SOURCE_BLIND_CONTEXT2.
+Returned counts {"questions":5,"single":3,"multiple":2,"authorImages":2,"authorImageBatches":1,"authorReopens":0,"authorCommands":{"wrapper":".intentfold/tickets/STEMROBIN-180/tmp/resume-180-6-8306/run-command.mjs","explicit_workdir_for_every_exec":"/Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck","receipt_directory":".intentfold/tickets/STEMROBIN-180/tmp/resume-180-6-8306/commands","receipt_prefix":"c2s3-choice-author-r1523-","completed_at_manifest_creation":28,"nonzero_receipts_at_manifest_creation":2,"ledger_through_receipt_27":{"inventory_receipt":"c2s3-choice-author-r1523-inventory-28.json","inventory_receipt_sha256":"b857a11ade26eb943fa69b2fa3b84d88c5979406606d96fa9fb0cb809a18a700","ledger_stdout":"c2s3-choice-author-r1523-inventory-28.stdout","content":"包含前27条本作者回执的名称、实际SHA和exitCode，以及冻结产物实际SHA与mode。第28条回执自身SHA另在本字段绑定。"},"nonzero_receipts":[{"name":"c2s3-choice-author-r1523-whitelist-01.json","sha256":"132b06647e87f30beb88c40340a049f93d9dd59442f6f509c0a922730c39a8d8","exit_code":1,"kind":"technical_wrapper_help_probe","cause":"首次嵌套包装器帮助探测在已有回执名断言处失败。","recovery":"随后直接只读包装器与规则文件；未重跑任何作者/审稿或结构checker。"},{"name":"c2s3-choice-author-r1523-rules-12.json","sha256":"b7d3dde45754841c005677f25564c2e0262ba2f37cca5ebdf64b0d812d0f3682","exit_code":1,"kind":"read_only_rg_no_match","cause":"搜索Image Batches标题大小写不匹配，rg返回未匹配exit1。","recovery":"第16条读取实际Image batches标题下的图片规则。"}],"final_freeze_receipt":"c2s3-choice-author-r1523-final-freeze-29.json","expected_total_after_final_freeze":29,"note":"最后一条仅核对冻结文件和已完成回执的字节绑定，并冻结manifest；最终工具返回实际状态与manifest自身SHA。辅助非零回执不是内容判决，不能删除或计作独审。"},"newParentImages":0,"browser":0,"newRenders":0,"paid":0,"independentReviewPasses":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1557 C2S3_MODERN_ANSWER_FINALIZED_RETAINED_PASS_CHOICE_AUTHOR_ACTIVE
+
+6p/phy6-c2-s3 evidence 35db90530ebdc36c48ac994c6428790b8532812bff5bd9af77d7f0a8a40aa6dc bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Hypatia the 3rd:C2S3_FIRST_CHOICE_AUTHOR_ONLY.
+Returned counts {"images":0,"browser":0,"paid":0,"semanticReviewReruns":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1553 C2S3_FIRST_MODERN_ANSWER_INDEPENDENT_PASS_CHOICE_AUTHOR_ACTIVE
+
+6p/phy6-c2-s3 evidence 49cfeb839b1c18566db8dc08a83f9f5f590d5727765f43df7ac13b91453d8a44 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Hypatia the 3rd:C2S3_FIRST_CHOICE_AUTHOR_ONLY.
+Returned counts {"independentModernAnswerReviews":1,"modernAnswersCompared":5,"sourceSolutionReruns":0,"sourceReviewsRerun":0,"textReviewsRerun":0,"auto":0,"ungraded":5,"parts":0,"images":0,"imageAssetsOpened":0,"newFigureReviews":0,"browser":0,"screenshots":0,"keyboardInputChecks":0,"oldInputArtifactsProduced":0,"paid":0,"retry":0,"modelServiceCalls":0,"empiricalExperiments":0,"choiceDraftsRead":0,"oldLessonAnswersRead":0,"oldReviewerContacts":0,"databaseOperations":0,"canonicalWrites":0,"authorWrites":0,"publishOperations":0,"gitOperations":0,"installs":0,"skillHostOperations":0,"treeOrAttachOperations":0,"newChats":0,"wholeProjectChecks":0,"productionCommands":23,"failedOrNonzeroCommands":0,"executionFailures":0,"manualApplyPatchCalls":2,"newReviewArtifacts":2}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1540 C2S3_ANSWER_FIRST_INDEPENDENT_AND_CHOICE_FIRST_AUTHOR_ACTIVE
+
+6p/phy6-c2-s3 evidence c0363236541f2616208cd6304e571194d66f6f6251c25d5a20de7d10b3709b00 bound to actual saved bytes.
+Current production 6p/phy6-c2-s3; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s18 4f59180b7053eda5aa4376504aed3fa338bc552a; complete24/new5.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Hypatia the 3rd:C2S3_FIRST_CHOICE_AUTHOR_ONLY; Lagrange the 3rd:C2S3_FIRST_MODERN_ANSWER_ONLY_INDEPENDENT.
+Returned counts {"answers":5,"auto":0,"ungraded":5,"parts":0,"imageOpens":0,"browser":0,"firstAdaptFinalize":1,"firstAnswerPrepare":1,"sourceSolutionReruns":0,"textReviewsRerun":0,"figure14RendersRerun":0,"figureReviewsRerun":0,"newAnswerSemanticReviews":0,"paid":0,"databaseCalls":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1533 C2S3_FIRST_FINALIZE_PASS_ANSWER_CANDIDATE_CHOICE_FIRST_AUTHOR_ACTIVE
+
+S18 narrow push confirmed; complete24/new5 retained. Actual sourced next phy6-c2-s3.
+First adapt-finalize PASS receipt 252e0f099ed7744420e9c24d623cbdc5a65289767ebeb1d62cab2b1cf5e0ba69; saved TEXT/SOURCE/FIG14/FIG15 approvals reused without reruns.
+First modern ANSWER candidate5/ungraded5 from saved approved source solutions; proof c0363236541f2616208cd6304e571194d66f6f6251c25d5a20de7d10b3709b00; independent ANSWER still pending.
+CHOICE first author Hypatia the 3rd active; no old reviewer or chat awakened.
+Parent new images0/browser0/paid0; no unknown bytes restored. Original execution failures/HOLDs/pending/trees/locks/backups/stash retained.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; same8306 absoluteW; sharedmain read-only; finish=review.
+No DB/merge/deploy/formalhandoff/globalchecks/newtree/attach. Index adds only this actually finalized lesson.
+
+## 180-6 r1511 C4S18_NARROW_PUSHED_NEXT_SOURCED_LESSON
+
+S18 complete narrowly committed and pushed 4f59180b7053eda5aa4376504aed3fa338bc552a; exact remote HEAD confirmed.
+Complete24/new5; immediately continue actual sourced phy6-c2-s3. Historical local HOLDs and original failures retained.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; old failures/pending/trees/locks/backups/stash preserved.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
 ## 180-6 r1500 C4S18_COMPLETE_LESSON_SEALED_PUSH_PENDING
 
 S18 full lesson sealed ba50a23fae6dbeff6511d97c37dbbe3b783662e6c406246f604175ef7ffd0bb7; complete23->24/new5.
