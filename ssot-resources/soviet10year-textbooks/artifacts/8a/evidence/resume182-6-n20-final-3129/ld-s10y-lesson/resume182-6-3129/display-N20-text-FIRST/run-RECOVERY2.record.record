@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N20-text-FIRST');
+const SOURCE = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N4-FIRST/run.mjs');
+const ID = 'alg8-c3-s3-n20';
+const LESSON = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons', ID);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+assert.equal(process.cwd(), ROOT);
+const pins = {};
+const values = {};
+for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'answer-keys.json']) {
+  const bytes = await readFile(path.join(LESSON, name));
+  pins[name] = sha(bytes);
+  values[name] = JSON.parse(bytes);
+}
+assert.equal(values['lesson.json'].id, ID);
+for (const name of ['exercises.json', 'figures.json', 'answer-keys.json']) {
+  assert.equal(values[name].lesson, ID);
+}
+assert.equal(values['lesson.json'].prose.length, 11);
+assert.equal(values['exercises.json'].count, 14);
+assert.deepEqual(values['exercises.json'].exercises.map(item => String(item.number)),
+  Array.from({ length: 14 }, (_, index) => String(309 + index)));
+const figures = [...new Set([
+  ...values['lesson.json'].prose.filter(block => block.kind === 'fig').map(block => block.id),
+  ...values['exercises.json'].exercises.flatMap(item => (item.figures ?? []).map(figure => figure.id)),
+])];
+assert.deepEqual(figures, ['fig-32']);
+assert.deepEqual(values['figures.json'].figures.map(figure => figure.id), figures);
+const sourceBytes = await readFile(SOURCE);
+let code = sourceBytes.toString('utf8');
+const replaceOnce = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+replaceOnce('display-N4-FIRST', 'display-N20-text-FIRST');
+replaceOnce("const ID = 'alg7-c1-s1-n4';", `const ID = ${JSON.stringify(ID)};`);
+replaceOnce('artifacts/7a/editions/modern-us-neutral', 'artifacts/8a/editions/modern-us-neutral');
+replaceOnce('render-7a-n4-FIRST', 'render-N20-FIRST/render/8a/modern-us-neutral');
+replaceOnce("schema: 'resume182-6-n4-offline-display@1', lesson: ID, book: '7a'",
+  "schema: 'resume182-6-n20-reused-n4-offline-display@1', lesson: ID, book: '8a'");
+const start = code.indexOf('  const pins = {');
+const end = code.indexOf('  const loaded = {};', start);
+assert.ok(start > 0 && end > start);
+code = code.slice(0, start) + `  const pins = ${JSON.stringify(pins)};\n` + code.slice(end);
+replaceOnce('  assert.equal(exercises.count, 15);',
+  '  assert.equal(exercises.count, lesson.exercise_count);');
+replaceOnce('  assert.equal(standardDisplay.length, 15);',
+  '  assert.equal(standardDisplay.length, exercises.count);');
+replaceOnce("  assert.deepEqual(Object.keys(figureContracts), ['fig-01']);",
+  `  assert.deepEqual(Object.keys(figureContracts), ${JSON.stringify(figures)});`);
+replaceOnce('    const spec = JSON.parse(await record(path.join(MODERN, figure.spec)));',
+  `    const approved = JSON.parse(await record(path.join(MODERN, figure.review)));
+    assert.equal(approved.status, 'pass');
+    const spec = JSON.parse(await record(path.join(MODERN, figure.spec), approved.spec.sha256));`);
+replaceOnce('await record(path.join(MODERN, figure.svg))',
+  'await record(path.join(MODERN, figure.svg), approved.outputs.svg.sha256)');
+replaceOnce('    await record(path.join(MODERN, figure.render));\n    await record(path.join(MODERN, figure.review));',
+  `    await record(path.join(MODERN, figure.render), approved.render.sha256);
+    assert.equal(spec.display.layout, 'scroll');
+    assert.deepEqual(spec.display.widths, [640]);`);
+replaceOnce('maxWidthPx: spec.display.maxWidthPx };',
+  'maxWidthPx: spec.display.widths[0] };');
+if (process.argv.includes('--recover-formula-padding')) {
+  replaceOnce('style.textContent = `@media(min-width:${width}px) and (max-width:${width}px){`',
+    "style.textContent = ''");
+  replaceOnce("+ '.nb:has(.delimsizing.mult),.sr-nb:has(.delimsizing.mult){padding-block:1.2em}}';",
+    "+ '.nb:has(.delimsizing.mult),.sr-nb:has(.delimsizing.mult){padding-block:1.2em}';");
+  replaceOnce('        html.set(`/${surface}.html`, bytes);',
+    "        if (surface === 'exercises') report.standardDisplay.staticHtml = delivered;\n"
+      + '        html.set(`/${surface}.html`, bytes);');
+}
+replaceOnce('  const pins = ', `  report.adaptation = {
+    source: ${JSON.stringify(SOURCE)}, sha256: ${JSON.stringify(sha(sourceBytes))},
+    method: 'N4 runner reused with current N20 pins, counts, scope and approved figure contract',
+    historicalObservationClaims: 0, sourceMathReviewReruns: 0 };
+  await record(${JSON.stringify(SOURCE)}, ${JSON.stringify(sha(sourceBytes))});
+  const pins = `);
+code += `\n//# sourceURL=${OUTPUT}/reused-n4-runner.mjs\n`;
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

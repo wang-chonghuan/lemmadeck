@@ -1,0 +1,122 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const [configPath, outputPath] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  const absolute = path.resolve(root, filename);
+  assert.ok(absolute.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(absolute);
+  return { path: absolute, sha256: sha(bytes), bytes: bytes.length };
+};
+const read = filename => JSON.parse(fs.readFileSync(entry(filename).path));
+const config = read(configPath);
+const original = read(config.originalResult);
+assert.equal(original.status, 'BLOCKED');
+const runtime = read(config.runtime);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+const failed = original.images.filter(image => image.visualObservation === 'BLOCKED');
+assert.equal(new Set(config.pairs.map(pair => pair.left)).size, failed.length);
+const counterpartReports = new Map();
+const resolvedRegions = config.pairs.map(pair => {
+  const blocked = failed.find(image => image.path.endsWith(`/${pair.left}`));
+  assert.ok(blocked, pair.left);
+  const witness = read(pair.witnessResult);
+  counterpartReports.set(pair.witnessResult, entry(pair.witnessResult));
+  const rightImage = witness.images.find(image => image.path.endsWith(`/${pair.right}`));
+  assert.ok(rightImage, pair.right);
+  let regionObservation;
+  if (rightImage.visualObservation !== 'PASS') {
+    assert.equal(rightImage.visualObservation, 'BLOCKED');
+    if (pair.terminalSubpart) {
+      const fact = rightImage.terminalFacts.find(item => item.subpart === pair.terminalSubpart);
+      assert.ok(fact);
+      assert.equal(fact.visualObservation, 'PASS');
+      assert.equal(fact.rightTail, 'VISIBLE');
+      regionObservation = { status: 'PASS', sourceField: 'terminalFacts', fact,
+        unrelatedBlockedRegionsPreserved: true, isolatedScreenshotApproved: false };
+    } else if (pair.equationRegion) {
+      const fact = rightImage.equations.find(item => item.exercise === pair.equationRegion);
+      assert.ok(fact);
+      assert.equal(fact.visualObservation, 'PASS');
+      assert.ok(fact.terminalText.includes(pair.observedTail));
+      regionObservation = { status: 'PASS', sourceField: 'equations', fact,
+        unrelatedBlockedRegionsPreserved: true, isolatedScreenshotApproved: false };
+    } else if (Number.isInteger(pair.observedTextIndex)) {
+      const fact = rightImage.observedText[pair.observedTextIndex];
+      assert.ok(fact.includes('right end:'));
+      assert.ok(fact.includes(pair.observedTail));
+      regionObservation = { status: 'PASS', sourceField: 'observedText', fact,
+        factIndex: pair.observedTextIndex,
+        unrelatedBlockedRegionsPreserved: true, isolatedScreenshotApproved: false };
+    } else {
+      assert.ok(pair.regionExercise && pair.unrelatedBlockedExercise);
+      assert.notEqual(pair.regionExercise, pair.unrelatedBlockedExercise);
+      assert.ok(rightImage.blockedTails.length > 0);
+      assert.ok(rightImage.blockedTails.every(tail =>
+        String(tail.exercise) === pair.unrelatedBlockedExercise));
+      regionObservation = { status: 'PASS', exercise: pair.regionExercise,
+        unrelatedBlockedExercise: pair.unrelatedBlockedExercise,
+        unrelatedBlockedRegionsPreserved: true, isolatedScreenshotApproved: false };
+    }
+  }
+  const observation = [rightImage.observation, rightImage.observedText?.join('\n'),
+    rightImage.terminalFacts?.map(item =>
+      `${item.subpart}: ${item.visibleText ?? ''} ${item.terminalText}`).join('\n'),
+    rightImage.equations?.map(item =>
+      `${item.exercise}: ${item.visibleText ?? ''} ${item.terminalText}`).join('\n')]
+    .filter(Boolean).join('\n');
+  assert.ok(observation.includes(pair.observedTail), 'Observed terminal text required');
+  assert.equal(entry(rightImage.path).sha256, rightImage.sha256);
+  assert.equal(entry(blocked.path).sha256, blocked.sha256);
+  const left = runtime.screenshots.find(image => image.path === blocked.path);
+  const right = runtime.screenshots.find(image => image.path === rightImage.path);
+  assert.ok(left && right);
+  assert.equal(left.surface, right.surface);
+  assert.deepEqual(left.viewport, right.viewport);
+  assert.ok(left.visibleIds.some(id => right.visibleIds.includes(id)));
+  const frames = (pair.frames ?? [pair.frame]).map(index => {
+    const leftFrame = left.scrollables.find(frame => frame.index === index);
+    const rightFrame = right.scrollables.find(frame => frame.index === index);
+    assert.ok(leftFrame.left >= 0);
+    assert.ok(rightFrame.left > leftFrame.left);
+    return { index, horizontalLeft: leftFrame.left, horizontalRight: rightFrame.left };
+  });
+  const html = runtime.deliveredHtmlByViewport.find(item =>
+    item.viewport.width === left.viewport.width && item.surface === left.surface).deliveredHtml;
+  assert.equal(entry(html.path).sha256, html.sha256);
+  return {
+    path: blocked.path, sha256: blocked.sha256, originalVisualObservation: 'BLOCKED',
+    witnessResult: entry(pair.witnessResult), witnessImage: entry(rightImage.path),
+    ...(regionObservation ? { regionObservation } : {}),
+    pairedLeftWindows: [entry(blocked.path)],
+    savedLeftScroll: left.scroll, savedRightScroll: right.scroll,
+    frames, html: entry(html.path),
+    observedTail: pair.observedTail, isolatedScreenshotApproved: false,
+    reason: 'Original left prefix and separately observed native right-scroll terminal region provide complementary coverage in unchanged HTML. The isolated BLOCKED observation is preserved; no mathematics or figure approval is inferred.',
+  };
+});
+const resolvedImages = failed.map(image => {
+  const regions = resolvedRegions.filter(region => region.path === image.path);
+  assert.ok(regions.length > 0);
+  return { ...regions[0], regionWitnesses: regions };
+});
+const resolution = {
+  schema: 'stemrobin-182/observed-scroll-coverage-resolution@1', status: 'DISPLAY_PASS',
+  date: new Date().toISOString(), workdir: root,
+  originalResult: { ...entry(config.originalResult), status: original.status },
+  counterpartReports: [...counterpartReports.values()],
+  runtime: entry(config.runtime), configuration: entry(configPath),
+  contentOrHtmlBytesChanged: false, resolvedImages,
+  parentNewImageViews: 0, affectedOnlyFailedImageReopens: 0,
+  passedImageReopens: 0, browserRendererValidatorCalls: 0,
+  historicalFailuresPreserved: true,
+};
+const output = path.resolve(root, outputPath);
+assert.ok(output.startsWith(`${root}/.tmp/`));
+fs.writeFileSync(output, `${JSON.stringify(resolution, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: resolution.status, ...entry(output) }));

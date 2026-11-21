@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const require = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = require('playwright');
+const filename = path.join(root, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N20-text-FIRST/recovery-2/published/1440-exercises-formula-padding.html');
+const html = await readFile(filename, 'utf8');
+const browser = await chromium.launch({ headless: true,
+  args: ['--disable-background-networking', '--host-resolver-rules=MAP * ~NOTFOUND'] });
+let result;
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+  await context.route('**/*', route => route.abort());
+  const page = await context.newPage();
+  await page.setContent(html, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+  result = await page.evaluate(() => [...document.querySelectorAll('#ex-313 *, #ex-322 *')]
+    .filter(node => ['hidden', 'clip'].includes(getComputedStyle(node).overflowY)
+      && node.scrollHeight > node.clientHeight + 1)
+    .map(node => {
+      const style = getComputedStyle(node);
+      return { tag: node.tagName, className: node.className, client: node.clientHeight,
+        content: node.scrollHeight, height: style.height, padding: style.padding,
+        overflowX: style.overflowX, overflowY: style.overflowY,
+        parent: node.parentElement.className, html: node.outerHTML.slice(0, 1200) };
+    }));
+  await context.close();
+} finally {
+  await browser.close();
+}
+const output = path.join(root, '.tmp/ld-s10y-lesson/resume182-6-3129/clip-N20-diagnosis-FIRST.record');
+await writeFile(output, `${JSON.stringify({ date: new Date().toISOString(), cwd: root,
+  input: filename, scope: 'Failed1440 exercise313/322 inner vertical clips only',
+  nodes: result, browserLaunches: 1, contexts: 1, screenshots: 0, imagesOpened: 0,
+  noSourceMathOrPassedViewReview: true, browserClosed: true }, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ output, nodes: result }));

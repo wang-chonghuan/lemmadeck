@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const modern = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral';
+const entry = filename => {
+  const location = path.resolve(root, filename);
+  assert.ok(location.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(location);
+  return { path: location, sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+    bytes: bytes.length };
+};
+const read = (filename, expected) => {
+  const binding = entry(filename);
+  if (expected) assert.equal(binding.sha256, expected);
+  return { value: JSON.parse(fs.readFileSync(binding.path)), binding };
+};
+const flow = read(`${base}/modern-N20-flow-review-RECOVERY1/result.json`,
+  '11fcb6258ff70b27d3ce899fca578906c21a60e5df471f4b4021a964e0429f41');
+assert.equal(flow.value.status, 'TEXT_PASS');
+assert.equal(flow.value.mechanical_identity.all_prose_formula_spans_literal_and_order_identical, true);
+assert.equal(flow.value.mechanical_identity.all_source_text_fields_identical, true);
+assert.equal(flow.value.mechanical_identity.exercises_entire_file_byte_identity_to_prior_report, true);
+for (const item of [flow.value.bindings.current_lesson_template,
+  flow.value.bindings.current_exercises_template]) {
+  assert.equal(entry(item.path).sha256, item.sha256);
+}
+const figure = read(`${base}/figure-N20-review-FIRST/result.json`,
+  '84347380ab0e2f56732405f665c6e9ea9da4e7dc6c69f9be151659f4e997d98b');
+assert.equal(figure.value.status, 'pass');
+const standard = read(`${modern}/figures/fig-32.review.json`);
+assert.equal(standard.value.status, 'pass');
+const assets = [standard.value.source, standard.value.spec, standard.value.render,
+  standard.value.outputs.svg].map(item => {
+  const binding = entry(item.path);
+  assert.equal(binding.sha256, item.sha256);
+  return binding;
+});
+const spec = read(`${modern}/figures/fig-32.spec.json`);
+const exercises = read(`${modern}/lessons/alg8-c3-s3-n20/exercises.json`);
+const exercise = exercises.value.exercises.find(item => String(item.number) === '320');
+const text = spec.value.source.authoritativeText.find(item => item.exercise === '320');
+assert.ok(exercise && text);
+assert.equal(exercise.text, text.text);
+assert.equal(spec.binding.sha256, figure.value.figures[0].spec.sha256);
+assert.equal(assets[3].sha256, figure.value.figures[0].svg.sha256);
+const finalize = read(`${base}/adapt-finalize-N20-RECOVERY1/execution.json`,
+  'c9cfe579014fa05241f159a3ac79424907a5db559aa58cce39859d1f95524882');
+assert.equal(finalize.value.exitCode, 0);
+const result = {
+  schema: 'stemrobin-182/unchanged-figure-text-continuity@1',
+  status: 'EXISTING_FIGURE_PASS_REUSED',
+  date: new Date().toISOString(), cwd: root, book: '8a',
+  lesson: 'alg8-c3-s3-n20', figure: 'fig-32', ownerExercise: '320',
+  basis: 'Original independent figure PASS composed with affected-only text PASS and native finalize.',
+  figureReview: figure.binding, standardReview: standard.binding, assets,
+  affectedTextReview: flow.binding, currentTemplates: [
+    flow.value.bindings.current_lesson_template, flow.value.bindings.current_exercises_template],
+  currentExercises: exercises.binding, nativeFinalize: finalize.binding,
+  changes: 'Whitespace and external punctuation plus canonical paragraph anchors only.',
+  exactExercise320Unchanged: true, formulaSpansAndSourceFieldsUnchanged: true,
+  historicalWholeProseTextHashesRemainHistorical: true,
+  sourceImagesReopened: 0, previewImagesReopened: 0, renders: 0, validators: 0,
+  newFigureReview: false, newMathematicsApproval: false,
+  parentImageViews: 0, failuresAndUnknownCountsPreserved: true,
+};
+const output = path.join(root, base, 'figure-N20-flow-continuity-FIRST/result.record');
+fs.mkdirSync(path.dirname(output), { recursive: true });
+fs.writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: result.status, ...entry(output) }));

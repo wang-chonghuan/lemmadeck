@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = path.join(root, '.tmp/ld-s10y-lesson/resume182-6-3129');
+const destination = path.join(base, 'choices-N20-approved-FIRST');
+assert.ok(!fs.existsSync(destination), 'Preserve prior assembly');
+const inputs = {
+  'seed.json': path.join(base, 'choices-N20-author-FIRST/seed.json'),
+  'draft.json': path.join(base, 'choices-N20-F3-repair-FIRST/draft.json'),
+  'review.json': path.join(base, 'choices-N20-F3-review-FIRST/review.json'),
+};
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const canonical = value => {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key =>
+      `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  }
+  return JSON.stringify(value);
+};
+const digest = value => sha(canonical(value).replace(/[\u007f-\uffff]/g,
+  character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`));
+const buffers = Object.fromEntries(Object.entries(inputs).map(([name, filename]) =>
+  [name, fs.readFileSync(filename)]));
+const seed = JSON.parse(buffers['seed.json']);
+const draft = JSON.parse(buffers['draft.json']);
+const review = JSON.parse(buffers['review.json']);
+assert.equal(seed.source.book, '8a');
+assert.equal(seed.source.lesson, 'alg8-c3-s3-n20');
+assert.equal(review.outcome, 'pass');
+assert.equal(review.seed_sha256, digest(seed));
+assert.equal(review.draft_sha256, digest(draft));
+assert.equal(review.draft_sha256,
+  '935f316a5a1657eb0b404c0d9052c5a02f1250cc191f0d28270ddb93e9f42877');
+fs.mkdirSync(destination);
+const files = Object.entries(buffers).map(([name, bytes]) => {
+  const output = path.join(destination, name);
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  return { source: inputs[name], path: output, bytes: bytes.length, sha256: sha(bytes) };
+});
+const result = {
+  status: 'APPROVED_CHOICES_ASSEMBLED', date: new Date().toISOString(),
+  cwd: root, files, copiedFiles: 3,
+  copiedBytes: files.reduce((count, file) => count + file.bytes, 0),
+  reauthoring: 0, semanticReviews: 0, imageOpens: 0, originalInputsChanged: false,
+  historicalFailuresPreserved: true, unknownHistoricalBytesRecovered: false,
+};
+fs.writeFileSync(path.join(destination, 'assembly.record'),
+  `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(result));

@@ -1,0 +1,131 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const work = '.tmp/ld-s10y-lesson/resume182-6-3129/figure-N20-author-FIRST'
+const root = path.resolve(work)
+const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const binding = file => ({ path: path.resolve(file), sha256: digest(file), bytes: fs.statSync(file).size })
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const writeNew = (file, data) => {
+  assert(!fs.existsSync(file), `Refusing to overwrite ${file}`)
+  fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`)
+}
+const context = load(`${work}/context.json`)
+const spec = load(`${work}/spec.json`)
+const render = load(`${work}/fig-32.render.json`)
+const preview = load(`${work}/actual-complete-640.preview.json`)
+assert.equal(render.status, 'pass')
+assert.equal(preview.status, 'pass')
+assert.equal(digest(`${work}/spec.json`), render.spec.sha256)
+assert.equal(digest(`${work}/fig-32.svg`), render.output.svg.sha256)
+assert.equal(digest(spec.source.image.path), spec.source.image.sha256)
+assert(!spec.source.authoredBasis)
+assert.deepEqual(spec.source.authoritativeText, context.authoritativeText)
+assert.equal(digest(context.sourceApproval.path), context.sourceApproval.sha256)
+const names = ['prepare-0001', 'prepare-0002', 'prepare-0003', 'validate-0001', 'render-0001', 'validate-0002', 'render-0002', 'preview-0001', 'arrowhead-check-0001']
+const executions = names.map(name => {
+  const file = `${work}/receipts/${name}.json`
+  const receipt = load(file)
+  assert.equal(receipt.cwd, cwd)
+  for (const stream of ['stdout', 'stderr']) assert.equal(digest(receipt[stream].path), receipt[stream].sha256)
+  return { name, receipt: binding(file), ...receipt }
+})
+assert.deepEqual(executions.map(item => item.exitCode), [1, 1, 0, 0, 2, 0, 0, 0, 0])
+const usage = {
+  schema: 'ld-s10y-image/author-usage@1', book: '8a', figure: 'fig-32', lesson: 'alg8-c3-s3-n20', exercise: '320',
+  capabilities: ['cap1', 'cap2'], authorOnly: true,
+  images: {
+    maxBatchAllowed: 8, maxContextAllowed: 24, batches: 1,
+    currentContextImages: 2, maxBatchImages: 2, originalOpens: 1,
+    actualNormalWidthPreviewOpens: 1, reopens: 0, crops: 0, resizes: 0,
+    sourcePageGrids: 0, oldFailedCrops: 0, otherPassFigures: 0,
+    opens: [
+      { order: 1, role: 'original-full-detail-before-spec', ...binding(spec.source.image.path), width: 599, height: 576 },
+      { order: 2, role: 'actual-complete-normal-width-preview', ...binding(`${work}/actual-complete-640.preview.png`), width: 640, height: 560 },
+    ],
+  },
+  stageAttempts: { prepare: 3, draftValidation: 2, nativeCap2Render: 2, actualPreview: 1, affectedArrowheadTelemetryCheck: 1 },
+  stageFailures: 3, stageFailureExits: [1, 1, 2],
+  technicalRepairs: [
+    { cause: 'Concurrent prepared text SHA drift', failedReceipts: ['prepare-0001', 'prepare-0002'], resolution: 'Single-buffer draft capture with full text retained and source math-token checks', contentApproval: false },
+    { cause: 'Point-label footprint clearance', failedReceipts: ['render-0001'], resolution: 'Only A/B/C label offsets changed', mathematicalGeometryChanged: false },
+    { cause: 'Incorrect non-asserted preview arrowhead selector', failedReceipts: [], resolution: 'Affected-only DOM check and corrected telemetry; original report preserved', successfulPreviewRerun: false },
+  ],
+  exploratoryFailure: {
+    command: "rg -n 'axis|ticks|displacement|connects|authoritativeText|context|fontSize|arrow|screenshot|preview' .agents/skills/ld-s10y-image/scripts/render_spec.mjs .agents/skills/ld-s10y-image/scripts/validate_spec.py .agents/skills/ld-s10y-image/scripts/lib* app/src/lib/s10y* app/src/styles/app.css",
+    exitCode: 1,
+    stderr: 'zsh:1: no matches found: .agents/skills/ld-s10y-image/scripts/lib*',
+    stageProducerRan: false,
+  },
+  allNonzeroCalls: 4, successfulSourceStagesRepeated: 0, independentReviewCalls: 0,
+  buildContextCalls: 0, paidCalls: 0, generationCalls: 0, databaseCalls: 0,
+  externalNetworkRequests: 0, installs: 0, gitReadOnlyCalls: 1, gitMutationCalls: 0,
+  agentsDispatched: 0, chatsCreatedOrMessaged: 0, durablePromotions: 0, manifestEdits: 0,
+}
+writeNew(`${work}/usage.json`, usage)
+const files = []
+const walk = directory => {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name)
+    if (entry.isDirectory()) walk(file)
+    else files.push(binding(file))
+  }
+}
+walk(root)
+const preparedCurrent = Object.fromEntries(Object.entries(context.preparedInputs).map(([key, original]) => {
+  const current = binding(original.path)
+  return [key, { draftSnapshotBinding: original, currentBinding: current, matchesDraftSnapshot: original.sha256 === current.sha256 }]
+}))
+const result = {
+  schema: 'ld-s10y-image/author-result@1',
+  status: 'FIGURE_AUTHORED_NOT_APPROVED',
+  completedAt: new Date().toISOString(), cwd,
+  scope: { finite: true, ticket: 'STEMROBIN-182', session: '182-6', book: '8a', figure: 'fig-32', lesson: 'alg8-c3-s3-n20', exercise: '320', capabilities: ['cap1', 'cap2'], role: 'AUTHOR_ONLY', finish: 'result' },
+  authorComplete: true, independentFigureApproval: false, reviewAt1Created: false,
+  sourceApprovalReusedNotRerun: context.sourceApproval,
+  bindings: {
+    sourceImage: binding(spec.source.image.path), inventory: binding(`${work}/inventory.json`),
+    context: binding(`${work}/context.json`), spec: binding(`${work}/spec.json`),
+    render: binding(`${work}/fig-32.render.json`), svg: binding(`${work}/fig-32.svg`),
+    previewPng: binding(`${work}/actual-complete-640.preview.png`),
+    previewHtml: binding(`${work}/actual-complete-640.preview.html`),
+    previewEvidence: binding(`${work}/actual-complete-640.preview.json`),
+    arrowheadEvidence: binding(`${work}/arrowhead-check.json`),
+    observations: binding(`${work}/observations.md`), usage: binding(`${work}/usage.json`),
+  },
+  currentPreparedFileBindings: preparedCurrent,
+  claims: {
+    independentOriginalPixelInventoryBeforeSpec: true,
+    originalSourceImageIsDurable8aFigure32: true,
+    authoredBasisUsed: false,
+    fullPreparedTextCaptured: true,
+    fabricatedDurableModernLessonContext: false,
+    nativeDraftValidation: 'pass',
+    nativeCap2Render: 'pass', nativeObjects: 15, nativeAssertions: 19, nativeLabels: 12,
+    nativeLabelCollisions: [], actualMediaWidthPx: 640, actualMinimumTextPx: 22,
+    exactRenderedPointSegmentAndTickChecks: 'pass',
+    sharedEqualUnitCoordinateFrames: 1,
+    mobileScrollEndReachable: true, mobileClientWidthPx: 358, mobileScrollEndPx: 282,
+    actualArrowheads: 2,
+    sourceImageOpens: 1, actualPreviewImageOpens: 1, totalContextImages: 2,
+    authorVisibleClippingOrMissingGeometry: 'none observed',
+    answerAnnotations: false, fullBackgroundGridAdded: false,
+    byteDeterminismOrNativePassClaimedAsSourceApproval: false,
+  },
+  remainingFindings: [
+    { kind: 'required_parent_binding', status: 'pending', detail: 'Bind final authored lesson/exercise text before releasing independent figure review. Draft context explicitly remains provisional.' },
+    { kind: 'independent_figure_gate', status: 'not_run', detail: 'Separate reviewer must assess source fidelity, mathematics, visual usability and cultural neutrality; this author did not create review@1.' },
+    { kind: 'later_promotion_and_product_surface', status: 'outside_scope', detail: 'No durable promotion or final lesson/product acceptance. Scratch metadata must be rebound to durable outputs if later approved.' },
+  ],
+  actualExecutions: executions,
+  preservedFiles: files,
+  writesLimitedTo: root,
+  existingOtherEditsModifiedOrReverted: false,
+  completion: 'Finite figure author work completed. FIGURE_AUTHORED_NOT_APPROVED. No downstream stage started; stop at this result.',
+}
+writeNew(`${work}/result.json`, result)
+console.log(JSON.stringify({ status: result.status, result: binding(`${work}/result.json`), bindings: result.bindings, currentPreparedFileBindings: preparedCurrent, exits: executions.map(item => ({ stage: item.name, exitCode: item.exitCode })) }, null, 2))

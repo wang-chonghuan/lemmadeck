@@ -1,0 +1,81 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const id = 'alg8-c3-s3-n20';
+const file = `.tmp/ld-s10y-lesson/adapt/8a/modern-us-neutral/lessons/${id}/lesson.template.json`;
+const history = `${base}/modern-N20-flow-recovery-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = filename => ({ path: path.resolve(filename), sha256: sha(fs.readFileSync(filename)) });
+assert.ok(!fs.existsSync(history));
+fs.mkdirSync(history);
+const bytes = fs.readFileSync(file);
+const before = JSON.parse(bytes);
+assert.equal(sha(bytes), '8c4a8578b533ce057b4c2937c00e6c660868f58e1675fbdcd0e6c89d3dcb63f7');
+fs.writeFileSync(`${history}/lesson.before.record`, bytes, { flag: 'wx' });
+const audit = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}/adaptation.audit.json`;
+assert.equal(JSON.parse(fs.readFileSync(audit)).status, 'fail');
+fs.writeFileSync(`${history}/audit.before.record`, fs.readFileSync(audit), { flag: 'wx' });
+const attempts = [];
+let current = structuredClone(before), stable = false;
+for (let index = 1; index <= 5; index += 1) {
+  const input = JSON.stringify(current);
+  const result = spawnSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c',
+    'import json,sys;sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools");import edition;d=json.load(sys.stdin);edition.normalize_lesson_layout(d);print(json.dumps(d,ensure_ascii=True))'],
+  { cwd: repo, input, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+  for (const stream of ['stdout', 'stderr']) {
+    fs.writeFileSync(`${history}/normalization-${index}.${stream}.record`, result[stream], { flag: 'wx' });
+  }
+  assert.equal(result.status, 0, result.stderr);
+  const next = JSON.parse(result.stdout);
+  stable = JSON.stringify(next) === input;
+  attempts.push({ attempt: index, exitCode: result.status, changed: !stable,
+    inputSha256: sha(input), outputSha256: sha(result.stdout) });
+  current = next;
+  if (stable) break;
+}
+assert.ok(stable);
+const reverted = structuredClone(current);
+for (const [index, item] of reverted.prose.entries()) {
+  assert.equal(item.text.replace(/\s/gu, ''), before.prose[index].text.replace(/\s/gu, ''));
+  item.text = before.prose[index].text;
+}
+assert.deepEqual(reverted, before);
+current.section_breaks = [];
+const inputPath = `${history}/flow-input.record`;
+fs.writeFileSync(inputPath, `${JSON.stringify(current, null, 2)}\n`, { flag: 'wx' });
+const flow = spawnSync(process.execPath, ['.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs', '--json', inputPath],
+  { cwd: repo, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
+for (const stream of ['stdout', 'stderr']) {
+  fs.writeFileSync(`${history}/flow.${stream}.record`, flow[stream], { flag: 'wx' });
+}
+assert.equal(flow.status, 0, flow.stderr);
+const paragraphs = JSON.parse(flow.stdout).paragraphs;
+const pairs = paragraphs.slice(1).map((item, index) =>
+  ({ before: paragraphs[index].text, after: item.text }));
+const compact = value => value.replace(/\s/gu, '');
+current.section_breaks = before.section_breaks.map(anchor => {
+  const matches = pairs.filter(pair => compact(pair.before) === compact(anchor.before)
+    && compact(pair.after) === compact(anchor.after));
+  assert.equal(matches.length, 1, 'Preserve the original semantic transition exactly');
+  return matches[0];
+});
+assert.equal(current.section_breaks.length, 3);
+fs.writeFileSync(file, `${JSON.stringify(current, null, 2)}\n`);
+const output = `${history}/result.record`;
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'NATIVE_LAYOUT_STABILIZED_BOUNDARIES_REBOUND_NOT_TEXT_APPROVAL',
+  book: '8a', lesson: id, attempts,
+  before: bind(`${history}/lesson.before.record`),
+  firstFailedAudit: bind(`${history}/audit.before.record`), after: bind(file),
+  section_breaks: current.section_breaks,
+  proseChangesOnlyWhitespace: true, exerciseChanges: 0, mathematicalChanges: 0,
+  figureSpecGeometryRenderChanges: 0, sourceViews: 0, databaseWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(output)));

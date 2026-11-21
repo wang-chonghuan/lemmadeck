@@ -1,0 +1,56 @@
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import layout
+
+BASE = REPO / ".tmp/ld-s10y-lesson/resume182-6-3129"
+RAW = BASE / "raw-N20-FIRST/8a/pages/0117"
+OUT = BASE / "crop-N20-repair-FIRST/8a/pages/0117/figures/fig-32.png"
+assert not OUT.exists(), "Preserve the original failed crop"
+
+
+def binding(file):
+    data = file.read_bytes()
+    return {"path": str(file), "sha256": hashlib.sha256(data).hexdigest(),
+            "bytes": len(data)}
+
+
+review_path = BASE / "source-N20-review-FIRST/result.json"
+review = json.loads(review_path.read_bytes())
+assert binding(review_path)["sha256"] == "b2bb54d26f13fb386b3aff71f6bce34797bd82b844ed620a6a9a70929dfe93d2"
+assert review["status"] == "SOURCE_REVISE"
+assert [item["id"] for item in review["blockers"]] == ["F32-CAPTION-BLEED"]
+audit_path = RAW / "audit.json"
+audit = json.loads(audit_path.read_bytes())
+figure = next(item for item in audit["figures"] if item["id"] == "fig-32")
+x, y, width, height = figure["box"]
+assert [x, y, width, height] == [1420, 350, 575, 564]
+page = BASE / "source-N20-FIRST/8a/pages/0117/page.png"
+# Keep the approved snapped diagram and three original margins; omit bottom padding.
+rectangle = [x - 12, y - 12, width + 24, height + 12]
+OUT.parent.mkdir(parents=True, exist_ok=True)
+layout.crop(page, rectangle, OUT, pad=0)
+record = {
+    "schema": "stemrobin-182/affected-source-crop-repair@1",
+    "status": "CROP_PRODUCED_NOT_APPROVED",
+    "ticket": "STEMROBIN-182", "book": "8a", "lesson": "alg8-c3-s3-n20",
+    "originalReview": binding(review_path),
+    "originalCrop": binding(RAW / "figures/fig-32.png"),
+    "audit": binding(audit_path), "sourcePage": binding(page),
+    "snappedDiagramBox": figure["box"], "actualCropRectangle": rectangle,
+    "pad": 0, "removedOriginalBottomPaddingPx": 12, "newCrop": binding(OUT),
+    "unchanged": ["source page", "page triples", "lesson text", "exercise text",
+                  "figure ownership", "separate caption", "source block refs"],
+    "finalizeReruns": 0, "assemblyReruns": 0, "sourceGridReopens": 0,
+    "imageOpens": 0, "databaseWrites": 0, "finish": "review",
+}
+file = BASE / "crop-N20-repair-FIRST/crop.record"
+with file.open("x", encoding="utf-8") as handle:
+    handle.write(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+print(json.dumps({"record": binding(file), "crop": binding(OUT)}))

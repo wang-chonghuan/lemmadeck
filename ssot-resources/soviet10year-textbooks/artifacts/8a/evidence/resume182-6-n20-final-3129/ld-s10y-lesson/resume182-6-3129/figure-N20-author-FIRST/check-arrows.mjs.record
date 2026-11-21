@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const require = createRequire(path.join(cwd, '.agents/skills/package.json'))
+const { chromium } = require('playwright-core')
+const work = '.tmp/ld-s10y-lesson/resume182-6-3129/figure-N20-author-FIRST'
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const executablePath = [chromium.executablePath(), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(file => fs.existsSync(file))
+const browser = await chromium.launch({ executablePath, headless: true })
+try {
+  const page = await browser.newPage()
+  await page.setContent(fs.readFileSync(`${work}/fig-32.svg`, 'utf8'))
+  const arrowheads = await page.evaluate(() => [...document.querySelectorAll('[data-arrowhead-for]')].map(group => ({
+    id: group.getAttribute('data-arrowhead-for'),
+    transform: group.getAttribute('transform'),
+    fill: group.getAttribute('fill'),
+    paths: [...group.querySelectorAll('path')].map(node => node.getAttribute('d')),
+  })))
+  assert.deepEqual(arrowheads.map(item => item.id), ['ld-fig-32_ld-x-positive-arrow', 'ld-fig-32_ld-y-positive-arrow'])
+  assert(arrowheads.every(item => item.paths.length === 1 && item.paths[0] && item.transform && item.fill.includes('--ld-figure-ink')))
+  const check = {
+    schema: 'ld-s10y-image/author-arrowhead-check@1', status: 'pass',
+    svg: { path: path.resolve(`${work}/fig-32.svg`), sha256: hash(`${work}/fig-32.svg`) },
+    count: arrowheads.length, arrowheads,
+    purpose: 'Affected-only correction of preview telemetry selector. No source image reopen, rerender, screenshot, or independent review.',
+  }
+  fs.writeFileSync(`${work}/arrowhead-check.json`, `${JSON.stringify(check, null, 2)}\n`)
+  const previewPath = `${work}/actual-complete-640.preview.json`
+  const originalSha256 = hash(previewPath)
+  const archive = `${work}/receipts/preview-0001`
+  fs.mkdirSync(archive, { recursive: true })
+  fs.copyFileSync(previewPath, `${archive}/actual-complete-640.preview.original.json`)
+  const preview = JSON.parse(fs.readFileSync(previewPath, 'utf8'))
+  for (const key of ['desktop', 'mobileStart', 'mobileEnd']) {
+    assert.equal(preview[key].arrowheads, 0)
+    preview[key].arrowheads = check.count
+  }
+  preview.telemetryCorrection = {
+    originalSha256,
+    originalReport: path.resolve(`${archive}/actual-complete-640.preview.original.json`),
+    reason: 'The first preview used data-ld-arrowhead; the native renderer emits data-arrowhead-for. Only this non-asserted count field was corrected from the actual unchanged SVG.',
+    evidence: { path: path.resolve(`${work}/arrowhead-check.json`), sha256: hash(`${work}/arrowhead-check.json`) },
+  }
+  fs.writeFileSync(previewPath, `${JSON.stringify(preview, null, 2)}\n`)
+  console.log(JSON.stringify(check, null, 2))
+} finally {
+  await browser.close()
+}

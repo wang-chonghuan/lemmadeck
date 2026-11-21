@@ -1,0 +1,288 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), cwd);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129/';
+const output = path.join(cwd, base, 'choices-N20-repair-RECOVERY1');
+const seedPath = `${base}choices-N20-author-FIRST/seed.json`;
+const originalPath = `${base}choices-N20-author-FIRST/draft.json`;
+const draftPath = `${base}choices-N20-repair-RECOVERY1/draft.json`;
+const reviewPath = `${base}choices-N20-review-FIRST/review.json`;
+const priorResultPath = `${base}choices-N20-review-FIRST/result.json`;
+const affectedIds = ['n20-reduce-domain-table', 'n20-composed-cube-factors'];
+const expectedSeed = '338609df58f3f85a6cf7801beb74a970eb10b24eff37efdc285b21fe34412e93';
+const expectedDraft = 'e382df600c527ab9d9ff767b1ff95df1108e0d9c264fe6b783a2a503c27b8de6';
+const sha = value => crypto.createHash('sha256').update(value).digest('hex');
+const sort = value => Array.isArray(value) ? value.map(sort)
+  : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, sort(value[key])]))
+    : value;
+// Match Python's ensure_ascii canonical JSON, including UTF-16 surrogate escapes.
+const canonical = value => JSON.stringify(sort(value)).replace(
+  /[\u007f-\uffff]/g,
+  character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+);
+const digest = value => sha(canonical(value));
+const load = relative => JSON.parse(fs.readFileSync(path.join(cwd, relative), 'utf8'));
+const binding = relative => {
+  const absolute = path.isAbsolute(relative) ? relative : path.join(cwd, relative);
+  const bytes = fs.readFileSync(absolute);
+  const result = { path: absolute, bytes: bytes.length, bytes_sha256: sha(bytes) };
+  if (absolute.endsWith('.json')) result.canonical_sha256 = digest(JSON.parse(bytes));
+  return result;
+};
+const write = (name, value) => {
+  const target = path.join(output, name);
+  assert.equal(path.dirname(target), output);
+  fs.writeFileSync(target, value, { flag: 'wx' });
+  return target;
+};
+const writeJson = (name, value) => write(name, `${JSON.stringify(value, null, 2)}\n`);
+for (const name of ['validation.receipt.json', 'validation.stdout.txt',
+  'validation.stderr.txt', 'repair.record', 'result.json']) {
+  assert.ok(!fs.existsSync(path.join(output, name)), `Refuse repeat execution: ${name}`);
+}
+
+const seed = load(seedPath);
+const original = load(originalPath);
+const draft = load(draftPath);
+const review = load(reviewPath);
+const priorResult = load(priorResultPath);
+assert.equal(digest(seed), expectedSeed);
+assert.equal(digest(original), expectedDraft);
+assert.equal(draft.seed_sha256, expectedSeed);
+assert.equal(review.seed_sha256, expectedSeed);
+assert.equal(review.draft_sha256, expectedDraft);
+assert.equal(review.outcome, 'revise');
+assert.deepEqual(priorResult.findings.map(finding => finding.id), ['F1', 'F2']);
+
+const changes = [];
+function diff(before, after, pointer = '') {
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
+  if (before !== null && after !== null
+      && typeof before === 'object' && typeof after === 'object') {
+    assert.equal(Array.isArray(before), Array.isArray(after));
+    assert.deepEqual(Object.keys(before), Object.keys(after), `Shape changed: ${pointer}`);
+    for (const key of Object.keys(before)) {
+      diff(before[key], after[key], `${pointer}/${key}`);
+    }
+  } else {
+    changes.push({ json_pointer: pointer, before, after });
+  }
+}
+diff(original, draft);
+const allowed = new Set();
+const changedQuestions = [];
+const changedRows = [];
+const targets = [
+  { id: affectedIds[0], options: ['A', 'D'], essential: 'D', correct: 'C', source: '314' },
+  { id: affectedIds[1], options: ['B', 'C'], essential: 'B', correct: 'A', source: '317' },
+];
+for (const target of targets) {
+  const index = original.questions.findIndex(question => question.id === target.id);
+  const before = original.questions[index];
+  const after = draft.questions[index];
+  assert.equal(after.id, target.id);
+  assert.deepEqual(after.key.correct, before.key.correct);
+  assert.deepEqual(after.view.stem, before.view.stem);
+  assert.deepEqual(after.view.mode, before.view.mode);
+  for (const field of ['source_solution', 'unit_reason']) {
+    allowed.add(`/questions/${index}/intent/${field}`);
+  }
+  const coverageIndex = original.coverage.findIndex(item => item.source_number === target.source);
+  allowed.add(`/coverage/${coverageIndex}/reason`);
+  const correct = after.view.options.find(option => option.id === target.correct);
+  const essential = after.view.options.find(option => option.id === target.essential);
+  const correctRows = correct.text.split('\n\n');
+  const essentialRows = essential.text.split('\n\n');
+  assert.deepEqual(essentialRows.filter((_, row) => row !== 2),
+    correctRows.filter((_, row) => row !== 2));
+  assert.notEqual(essentialRows[2], correctRows[2]);
+  for (const optionId of target.options) {
+    const optionIndex = before.view.options.findIndex(option => option.id === optionId);
+    allowed.add(`/questions/${index}/view/options/${optionIndex}/text`);
+    const rationaleIndex = before.key.rationales.findIndex(item => item.option_id === optionId);
+    for (const field of ['derivation', 'misconception']) {
+      allowed.add(`/questions/${index}/key/rationales/${rationaleIndex}/${field}`);
+    }
+    const oldRows = before.view.options[optionIndex].text.split('\n\n');
+    const newRows = after.view.options[optionIndex].text.split('\n\n');
+    assert.equal(oldRows.length, 4);
+    assert.equal(newRows.length, 4);
+    for (let row = 0; row < 4; row += 1) {
+      if (oldRows[row] === newRows[row]) continue;
+      assert.ok(row === 2 || (row === 0 && optionId === target.essential));
+      changedRows.push({
+        question_id: target.id, source_number: target.source, option_id: optionId,
+        row: ['I', 'II', 'III', 'IV'][row],
+        json_pointer: `/questions/${index}/view/options/${optionIndex}/text`,
+        before: oldRows[row], after: newRows[row],
+        before_text_sha256: sha(oldRows[row]), after_text_sha256: sha(newRows[row]),
+        authorization: row === 2 ? 'F1/F2 affected c repair'
+          : 'Later direct human authorization: correct this one distractor row so c alone is false',
+      });
+    }
+  }
+  changedQuestions.push({
+    question_id: target.id, source_number: target.source,
+    before_canonical_sha256: digest(before), after_canonical_sha256: digest(after),
+    key_unchanged: before.key.correct,
+    false_complete_option_with_only_c_wrong: target.essential,
+    same_other_rows_as_correct_option: target.correct,
+    unchanged_rows: ['II', 'IV'],
+    changed_row_I_option: target.essential,
+    pending_review: 'Changed option contexts and cells need affected-only independent review.',
+  });
+}
+assert.equal(changes.length, 18);
+assert.deepEqual(new Set(changes.map(change => change.json_pointer)), allowed);
+assert.equal(changedRows.length, 6);
+assert.equal(changedRows.filter(row => row.row === 'III').length, 4);
+assert.equal(changedRows.filter(row => row.row === 'I').length, 2);
+assert.equal(draft.questions.length, 19);
+assert.equal(draft.questions.reduce((count, question) => count + question.view.options.length, 0), 80);
+assert.deepEqual(draft.new_figures, original.new_figures);
+assert.equal(draft.new_figures.length, 0);
+const unchanged = original.questions.filter(question => !affectedIds.includes(question.id));
+assert.equal(unchanged.length, 17);
+for (const question of unchanged) {
+  assert.deepEqual(draft.questions.find(item => item.id === question.id), question);
+  const oldReview = review.question_reviews.find(item => item.question_id === question.id);
+  for (const field of ['task_fidelity', 'redundancy', 'answer_leakage', 'mathematics']) {
+    assert.equal(oldReview[field].verdict, 'pass');
+  }
+}
+
+const inputsBefore = {
+  seed: binding(seedPath), original_draft: binding(originalPath),
+  inherited_review: binding(reviewPath), inherited_review_result: binding(priorResultPath),
+  repaired_draft: binding(draftPath),
+};
+const argv = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', seedPath, '--draft', draftPath,
+];
+const startedAt = new Date().toISOString();
+const child = spawnSync('python3', argv, {
+  cwd, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  encoding: null, maxBuffer: 8 * 1024 * 1024, timeout: 120000,
+});
+const endedAt = new Date().toISOString();
+write('validation.stdout.txt', child.stdout ?? Buffer.alloc(0));
+write('validation.stderr.txt', child.stderr ?? Buffer.alloc(0));
+const inputsAfter = {
+  seed: binding(seedPath), original_draft: binding(originalPath),
+  inherited_review: binding(reviewPath), inherited_review_result: binding(priorResultPath),
+  repaired_draft: binding(draftPath),
+};
+const unchangedBindings = JSON.stringify(inputsBefore) === JSON.stringify(inputsAfter);
+const receipt = {
+  invocation_count: 1, command: 'python3', argv, child_argv: ['python3', ...argv],
+  cwd: process.cwd(), started_at: startedAt, ended_at: endedAt,
+  exit_code: child.status, signal: child.signal,
+  execution_error: child.error ? { name: child.error.name, message: child.error.message } : null,
+  stdout: binding(path.join(output, 'validation.stdout.txt')),
+  stderr: binding(path.join(output, 'validation.stderr.txt')),
+  stdout_text: child.stdout?.toString('utf8') ?? '',
+  stderr_text: child.stderr?.toString('utf8') ?? '',
+  before: inputsBefore, after: inputsAfter,
+  input_bindings_unchanged: unchangedBindings,
+  bytecode_writes_disabled: true, review_argument_used: false,
+  meaning: 'Structural check only; no independent semantic approval of the repaired snapshot.',
+};
+writeJson('validation.receipt.json', receipt);
+const counts = {
+  question_count: 19, option_count: 80, question_and_option_count_change: 0,
+  selected_source_count: seed.exercises.length, coverage_count: draft.coverage.length,
+  affected_questions: 2, unchanged_approved_questions: 17,
+  modified_option_texts: 4, unchanged_option_texts: 76,
+  changed_row_cells: 6, changed_c_row_cells: 4, authorized_corrected_other_cells: 2,
+  changed_rationale_objects: 4, changed_rationale_scalar_fields: 8,
+  changed_intent_scalar_fields: 4, changed_coverage_reason_fields: 2,
+  changed_json_scalar_units: changes.length,
+  independently_solved_source_expressions_here: 2, full_source_resolves: 0,
+  finite_repair_rounds: 1, draft_edit_steps: 2,
+  draft_edit_step_note: 'Initial c distractors, then direct human clarification adjusted two row-I cells and their explanations before any checker run.',
+  native_structural_checker_invocations: 1, independent_semantic_reviews_here: 0,
+  image_opens: 0, generated_images: 0, rendered_images: 0,
+  new_figures: 0, figure_reviews_reopened: 0, network_calls: 0,
+  installs: 0, paid_calls: 0, database_calls: 0,
+};
+const inherited = {
+  review: inputsBefore.inherited_review,
+  review_result: inputsBefore.inherited_review_result,
+  original_review_outcome: 'revise', original_findings: priorResult.findings,
+  unchanged_question_ids: unchanged.map(question => question.id),
+  unchanged_question_hashes: unchanged.map(question => ({
+    question_id: question.id, canonical_sha256: digest(question),
+  })),
+  inherited_mathematics_evidence: {
+    independently_checked_questions: priorResult.mathematics.independently_checked_questions,
+    independently_checked_options: priorResult.mathematics.independently_checked_options,
+    all_true_sets_agreed_with_original_author: priorResult.mathematics.all_true_sets_agree_with_author,
+    applies_to: 'Original snapshot; unchanged units inherited. Changed candidate judgments are new author reasoning pending independent review.',
+  },
+  unchanged_affected_rows: 'I/II/IV retained except D-I of 314 and B-I of 317, which copy the same question correct-option row under direct human authorization.',
+  preserved_correct_options_and_keys: true,
+  preserved_source_givens_and_question_stems: true,
+  stage_passes_not_reopened: ['320 convention', 'original figure PASS', 'all unrelated stages'],
+  prior_review_reported_image_opens: priorResult.total_image_opens,
+  accounting: 'Prior usage and review are referenced, not reset or counted as new work. New repair image usage is zero.',
+  approval_boundary: 'Do not rebind the original review hash or claim an approved repaired snapshot.',
+};
+const losses = {
+  changed_question_limitations: draft.questions.filter(question => affectedIds.includes(question.id))
+    .map(question => ({ question_id: question.id, limitations: question.intent.limitations })),
+  all_limitations_unchanged: draft.questions.every((question, index) =>
+    JSON.stringify(question.intent.limitations) === JSON.stringify(original.questions[index].intent.limitations)),
+  all_omitted_tasks_unchanged: draft.coverage.every((item, index) =>
+    JSON.stringify(item.omitted_tasks) === JSON.stringify(original.coverage[index].omitted_tasks)),
+  prior_review_capability_losses: priorResult.capability_losses,
+  F1_F2_disposition: 'Proposed judgment losses repaired, not silently omitted: each c is the sole false row in one complete option. Parent independently reviews this claim.',
+  newly_omitted_source_tasks: [],
+  residual: 'Choice recognition still does not establish independently written derivations or separately mastered bundled subtasks.',
+};
+writeJson('repair.record', {
+  schema: 's10y-choice-affected-repair-record-v1', ticket: '182-6/STEMROBIN-182',
+  cwd, scope: ['314(c)', '317(c)'], changed_questions: changedQuestions,
+  exact_json_changed_units: changes, exact_changed_row_cells: changedRows,
+  inherited, losses, actual_counts: counts, bindings: inputsAfter,
+  validation_receipt: binding(path.join(output, 'validation.receipt.json')),
+  source_reasoning: binding(path.join(output, 'source-solving.md')),
+  completed_at: new Date().toISOString(),
+});
+const structuralPass = child.status === 0 && !child.error && unchangedBindings;
+writeJson('result.json', {
+  status: structuralPass ? 'REPAIRED_PENDING_AFFECTED_REVIEW' : 'STRUCTURAL_CHECK_FAILED',
+  ticket: '182-6/STEMROBIN-182', book: seed.source.book, lesson: seed.source.lesson,
+  cwd, structural_check: structuralPass ? 'pass' : 'failed',
+  semantic_review: 'pending_parent_affected_only_independent_review',
+  approved: false, repaired_draft: inputsAfter.repaired_draft,
+  existing_seed: inputsAfter.seed, immutable_original_draft: inputsAfter.original_draft,
+  input_bindings_unchanged_through_validation: unchangedBindings,
+  changed_questions: changedQuestions, actual_counts: counts,
+  inherited_approval_question_count: unchanged.length,
+  inherited_review: inputsAfter.inherited_review,
+  inherited_review_result: inputsAfter.inherited_review_result,
+  exact_change_record: binding(path.join(output, 'repair.record')),
+  validation_receipt: binding(path.join(output, 'validation.receipt.json')),
+  validation: {
+    invocation_count: 1, command: receipt.command, argv: receipt.argv, cwd: receipt.cwd,
+    started_at: receipt.started_at, ended_at: receipt.ended_at,
+    actual_exit_code: receipt.exit_code, stdout: receipt.stdout, stderr: receipt.stderr,
+  },
+  losses,
+  finalizer: binding(path.join(output, 'finalize.mjs')),
+  stop: 'Finite repair stopped. Parent owns affected-only semantic review, retention and rendering. No review copied/rebound, image opens, durable edits, git actions, services, agents or chats.',
+  finalized_at: new Date().toISOString(),
+});
+console.log(JSON.stringify({
+  status: structuralPass ? 'REPAIRED_PENDING_AFFECTED_REVIEW' : 'STRUCTURAL_CHECK_FAILED',
+  draft: inputsAfter.repaired_draft, exit_code: child.status, counts,
+  result: path.join(output, 'result.json'), record: path.join(output, 'repair.record'),
+}, null, 2));
+assert.ok(structuralPass, 'Native structural validation failed; evidence retained, do not rerun.');

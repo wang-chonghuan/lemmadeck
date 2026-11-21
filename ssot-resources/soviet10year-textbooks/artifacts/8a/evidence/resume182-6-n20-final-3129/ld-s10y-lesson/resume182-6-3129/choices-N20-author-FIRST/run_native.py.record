@@ -1,0 +1,74 @@
+"""Capture the two authorized native stages without generating mathematical content."""
+
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+WORK = ROOT / ".tmp/ld-s10y-lesson/resume182-6-3129/choices-N20-author-FIRST"
+REL = WORK.relative_to(ROOT).as_posix()
+
+
+def stamp():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+stage = sys.argv[1]
+if stage == "prepare":
+    argv = [
+        "python3", ".agents/skills/ld-s10y-choice/scripts/prepare.py",
+        "prepare", "--repo", ".", "--book", "8a",
+        "--lesson", "alg8-c3-s3-n20",
+    ]
+    for number in range(309, 323):
+        argv.extend(["--exercise", str(number)])
+    for block in (5, 7, 10):
+        argv.extend(["--concept-block", str(block)])
+    argv.extend(["--out", f"{REL}/seed.json"])
+elif stage == "validate":
+    argv = [
+        "python3", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+        "--repo", ".", "--seed", f"{REL}/seed.json",
+        "--draft", f"{REL}/draft.json",
+    ]
+else:
+    raise SystemExit("Only prepare and validate are authorized.")
+
+receipt_dir = WORK / f"{stage}-FIRST"
+receipt_dir.mkdir(exist_ok=False)
+started_at = stamp()
+environment = os.environ.copy()
+environment["PYTHONDONTWRITEBYTECODE"] = "1"
+completed = subprocess.run(argv, cwd=ROOT, env=environment, capture_output=True)
+finished_at = stamp()
+streams = {}
+for name, content in (("stdout", completed.stdout), ("stderr", completed.stderr)):
+    path = receipt_dir / name
+    with path.open("xb") as handle:
+        handle.write(content)
+    streams[name] = {
+        "path": str(path),
+        "sha256": hashlib.sha256(content).hexdigest(),
+        "bytes": len(content),
+    }
+receipt = {
+    "argv": argv,
+    "cwd": str(ROOT),
+    "exit_code": completed.returncode,
+    "started_at": started_at,
+    "finished_at": finished_at,
+    "streams": streams,
+    "environment_overrides": {"PYTHONDONTWRITEBYTECODE": "1"},
+}
+with (receipt_dir / "execution.json").open("x", encoding="utf-8") as handle:
+    json.dump(receipt, handle, ensure_ascii=True, indent=2)
+    handle.write("\n")
+print(json.dumps(receipt, ensure_ascii=True, indent=2))
+sys.stdout.write(completed.stdout.decode("utf-8", errors="replace"))
+sys.stderr.write(completed.stderr.decode("utf-8", errors="replace"))
+raise SystemExit(completed.returncode)

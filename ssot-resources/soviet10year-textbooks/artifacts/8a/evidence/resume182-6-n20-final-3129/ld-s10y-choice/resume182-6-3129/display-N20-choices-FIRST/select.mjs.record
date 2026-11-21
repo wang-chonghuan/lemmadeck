@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), ROOT);
+const METHOD = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST/select.mjs');
+let code = await readFile(METHOD, 'utf8');
+for (const [before, after] of [
+  ["display-N4-choices-FIRST');", "display-N20-choices-FIRST');"],
+  ['"lesson: \'alg7-c1-s1-n4\'"', '"lesson: \'alg8-c3-s3-n20\'"'],
+  ['"schema: \'bounded-n4-choices-reused-n10-display-selection@1\'"',
+    '"schema: \'bounded-n20-choices-reused-n4-n10-display-selection@1\'"'],
+]) {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+}
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

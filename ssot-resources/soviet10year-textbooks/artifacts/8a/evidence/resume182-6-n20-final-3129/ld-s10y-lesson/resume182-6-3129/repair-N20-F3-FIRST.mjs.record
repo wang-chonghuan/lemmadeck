@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = path.join(root, '.tmp/ld-s10y-lesson/resume182-6-3129');
+const input = path.join(base, 'choices-N20-repair-RECOVERY1/draft.json');
+const failure = path.join(base, 'choices-N20-affected-review-RECOVERY1/result.json');
+const destination = path.join(base, 'choices-N20-F3-repair-FIRST');
+assert.ok(!fs.existsSync(destination));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  const bytes = fs.readFileSync(filename);
+  return { path: filename, sha256: sha(bytes), bytes: bytes.length };
+};
+assert.equal(entry(input).sha256,
+  '698ef36b9e1965e7fe5769e742070ecb0f7dd7a0a7069b86910cb51f1874b5bd');
+const review = JSON.parse(fs.readFileSync(failure));
+assert.equal(review.status, 'REVISE');
+assert.equal(review.findings.length, 1);
+assert.equal(review.findings[0].id, 'F3');
+const draft = JSON.parse(fs.readFileSync(input));
+const question = draft.questions.find(item => item.id === 'n20-composed-cube-factors');
+assert.ok(question);
+const originalQuestion = structuredClone(question);
+const option = question.view.options.find(item => item.id === 'C');
+const before = 'I: $(a+5)(a^2+13a+43)$';
+const after = 'I: $(a+5)(a^2+a+43)$';
+assert.equal(option.text.split(before).length, 2);
+option.text = option.text.replace(before, after);
+const rationale = question.key.rationales.find(item => item.option_id === 'C');
+rationale.derivation += ' Row I also omits the 12a cross term from (a+6)^2: the correct trinomial is a^2+13a+43, not a^2+a+43. At a=1 the original is 342, whereas C-I is 270.';
+rationale.misconception += ' In I, likewise omit 12a from (a+6)^2, then retain +(a+6)+1 to obtain a^2+a+43.';
+assert.deepEqual(question.key.correct, originalQuestion.key.correct);
+assert.equal(question.view.options.find(item => item.id === 'B').text,
+  originalQuestion.view.options.find(item => item.id === 'B').text);
+fs.mkdirSync(destination);
+const output = path.join(destination, 'draft.json');
+fs.writeFileSync(output, `${JSON.stringify(draft, null, 2)}\n`, { flag: 'wx' });
+const record = {
+  schema: 'stemrobin-182/affected-choice-repair@1',
+  status: 'F3_REPAIRED_PENDING_AFFECTED_REVIEW', date: new Date().toISOString(),
+  workdir: root, input: entry(input), failure: entry(failure), output: entry(output),
+  question: question.id, option: 'C', row: 'I', before, after,
+  previousQuestion: originalQuestion, currentQuestion: question,
+  newDefectRepairRound: 1, cumulativeContentRepairRounds: 2,
+  priorF1F2ResolvedEvidenceReused: true,
+  changedOptionTexts: 1, changedRowCells: 1, changedRationaleFields: 2,
+  unchangedQuestions: 18, questionCount: 19, optionCount: 80,
+  correctSetChanged: false, existingBOnlyRowIIIContrastPreserved: true,
+  limitationsAndOmittedTasksUnchanged: true, structuralChecksHere: 0,
+  semanticReviewsHere: 0, imageViews: 0, historicalFailuresPreserved: true,
+  sourceOrAnswerOrFigureReviewRepeated: false, hostTokens: 'unknown', cost: 'unknown',
+};
+const recordPath = path.join(destination, 'repair.record');
+fs.writeFileSync(recordPath, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, output: entry(output), record: entry(recordPath) }));

@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const display = '.tmp/ld-s10y-choice/resume182-6-3129/display-N20-choices-FIRST';
+const runtime = JSON.parse(fs.readFileSync(`${display}/result.json`));
+const pairs = new Map();
+const pair = (batch, left, witnessBatch, right, frames, observedTail) => {
+  const values = pairs.get(batch) ?? [];
+  values.push({
+    left: `390-choices-${left}.png`, right: `390-choices-${right}.png`, frames,
+    witnessResult: `${display}/observations/batch${witnessBatch}/result.json`,
+    observedTail,
+  });
+  pairs.set(batch, values);
+};
+pair(4, '0001', 8, '0140', [0], '= a^3 - b^3');
+pair(4, '0001', 8, '0140', [1], '= a^3 + b^3');
+pair(4, '0001', 8, '0140', [2], '= x^3 - 100.');
+pair(4, '0001', 8, '0140', [3], '= x^3 - 1000.');
+pair(4, '0002', 7, '0087', [4], '+ 200x + 1000.');
+pair(4, '0002', 7, '0087', [5], '= x^3 + 1000.');
+pair(5, '0012', 7, '0124', [6], '+ 173^2).');
+pair(5, '0012', 7, '0124', [7], '+ 611^2).');
+pair(5, '0012', 7, '0124', [8], '+ 2779^2).');
+pair(5, '0012', 7, '0124', [9], '+ 214^2).');
+pair(5, '0012', 7, '0124', [10], '+ 173^2).');
+// Capture-frame indices differ from horizontalEnds' filtered DOM indices.
+pair(6, '0022', 7, '0126', [13], '= u^n - v^n');
+pair(7, '0025', 8, '0132', [15], '+ y + 1),');
+const ids = new Map([
+  [7, '01a1ff52-70d5-7ea1-bc5d-360940f94be5'],
+  [8, '01a1ff53-c9e6-7661-ac0a-0e01007071de'],
+]);
+const execute = (script, args) => {
+  const result = spawnSync(process.execPath, [script, ...args], { cwd: root, encoding: 'utf8' });
+  process.stdout.write(result.stdout);
+  process.stderr.write(result.stderr);
+  assert.equal(result.status, 0);
+};
+for (let batch = 4; batch <= 8; batch += 1) {
+  const output = `${display}/bindings/batch${batch}.record`;
+  assert.ok(!fs.existsSync(output), 'Do not repeat completed bindings');
+  const originalResult = `${display}/observations/batch${batch}/result.json`;
+  let resolution;
+  if (pairs.has(batch)) {
+    const config = `${display}/observations/batch${batch}-scroll-config.record`;
+    resolution = `${display}/observations/batch${batch}-scroll-resolution.record`;
+    fs.writeFileSync(config, `${JSON.stringify({
+      originalResult, runtime: `${display}/result.json`,
+      captureReport: runtime.report.path, pairs: pairs.get(batch),
+    }, null, 2)}\n`, { flag: 'wx' });
+    execute(`${base}/resolve-N20-choice-scroll-FIRST.mjs`, [config, resolution]);
+  }
+  execute(`${base}/bind-observation-FIRST.mjs`, [
+    `${display}/selection-FIRST/batch${batch}.json`, originalResult,
+    ids.get(batch) ?? 'UNKNOWN_RETAINED', output, ...(resolution ? [resolution] : []),
+  ]);
+}

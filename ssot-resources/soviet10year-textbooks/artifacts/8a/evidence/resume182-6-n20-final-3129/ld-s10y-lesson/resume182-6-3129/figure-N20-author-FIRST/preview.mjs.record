@@ -1,0 +1,156 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const require = createRequire(path.join(cwd, '.agents/skills/package.json'))
+const { chromium } = require('playwright-core')
+const work = '.tmp/ld-s10y-lesson/resume182-6-3129/figure-N20-author-FIRST'
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const binding = file => ({ path: path.resolve(file), sha256: hash(file), bytes: fs.statSync(file).size })
+const spec = load(`${work}/spec.json`)
+const render = load(`${work}/fig-32.render.json`)
+assert.equal(render.status, 'pass')
+assert.equal(hash(`${work}/spec.json`), render.spec.sha256)
+assert.equal(hash(`${work}/fig-32.svg`), render.output.svg.sha256)
+assert.deepEqual(spec.display, { purpose: 'instructional', layout: 'scroll', minTextPx: 16, widths: [640] })
+const byId = new Map(spec.objects.map(object => [object.id, object]))
+assert.deepEqual(spec.objects.filter(object => object.type === 'segment').map(object => object.id), ['B-x-projection', 'A-x-projection', 'C-x-projection', 'BA', 'BC'])
+assert.deepEqual(spec.objects.filter(object => object.type === 'point').map(object => [object.id, object.at]), [['B', [1, 2]], ['A', [3, 5]], ['C', [6, 1]]])
+for (const [axis, count] of [['x', 7], ['y', 6]]) {
+  const object = byId.get(`${axis}-axis`)
+  assert.equal(object.ticks.length, count)
+  assert.deepEqual(object.ticks.filter(tick => tick.label).map(tick => tick.label), ['2', '4', '6'])
+  object.ticks.forEach((tick, i) => assert.deepEqual(tick.at, axis === 'x' ? [i + 1, 0.08] : [-0.08, i + 1]))
+}
+const executablePath = [chromium.executablePath(), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(file => fs.existsSync(file))
+assert(executablePath)
+const browser = await chromium.launch({ executablePath, headless: true })
+try {
+  const page = await browser.newPage({ viewport: { width: 720, height: 640 }, deviceScaleFactor: 1 })
+  const networkAttempts = []
+  await page.route('**/*', route => {
+    networkAttempts.push(route.request().url())
+    return route.abort()
+  })
+  const consoleErrors = []
+  page.on('pageerror', error => consoleErrors.push(error.message))
+  const svg = fs.readFileSync(`${work}/fig-32.svg`, 'utf8')
+  const productCss = fs.readFileSync('app/src/styles/app.css', 'utf8')
+  await page.setContent('<!doctype html><html lang="en"><head><meta charset="utf-8"></head><body></body></html>')
+  const css = await page.evaluate(raw => {
+    const sheet = new CSSStyleSheet()
+    // The CSS parser omits imports without fetching fonts or build-only packages.
+    sheet.replaceSync(raw)
+    return [...sheet.cssRules].map(rule => rule.cssText).join('\n')
+  }, productCss)
+  const harnessCss = 'html{font-size:16px}body{margin:0;overflow:auto;background:var(--sr-white)}.preview-surface{width:640px;max-width:calc(100vw - 32px);margin:16px;font-size:16px}.sr-ex-fig{margin:0}.sr-figure-media{aspect-ratio:8/7}'
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Figure 32 draft</title><style>${css}\n${harnessCss}</style></head><body><main class="preview-surface"><figure id="fig-32-preview" class="sr-ex-fig" data-figure-layout="scroll" data-figure-purpose="instructional"><div class="sr-figure-media">${svg}</div></figure></main></body></html>`
+  fs.writeFileSync(`${work}/actual-complete-640.preview.html`, html)
+  await page.setContent(html)
+  await page.locator('svg text').last().waitFor()
+  const measure = () => page.evaluate(() => {
+    const host = document.getElementById('fig-32-preview')
+    const media = host.querySelector('.sr-figure-media')
+    const svg = media.querySelector('svg')
+    const svgRect = svg.getBoundingClientRect()
+    const text = [...svg.querySelectorAll('text')].map(node => {
+      const rect = node.getBoundingClientRect()
+      const matrix = node.getScreenCTM()
+      return {
+        id: node.dataset.labelId, text: node.textContent,
+        px: Number(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        bounds: { x: rect.x - svgRect.x, y: rect.y - svgRect.y, width: rect.width, height: rect.height },
+      }
+    })
+    const point = id => {
+      const node = document.getElementById(`ld-fig-32_ld-${id}`)
+      return { id, cx: Number(node.getAttribute('cx')), cy: Number(node.getAttribute('cy')), fill: getComputedStyle(node).fill }
+    }
+    const line = id => {
+      const node = document.getElementById(`ld-fig-32_ld-${id}`)
+      return { id, from: [Number(node.getAttribute('x1')), Number(node.getAttribute('y1'))], to: [Number(node.getAttribute('x2')), Number(node.getAttribute('y2'))], dash: node.getAttribute('stroke-dasharray') }
+    }
+    return {
+      mediaWidth: media.getBoundingClientRect().width,
+      mediaHeight: media.getBoundingClientRect().height,
+      svgWidth: svgRect.width, svgHeight: svgRect.height,
+      clientWidth: host.clientWidth, scrollWidth: host.scrollWidth, scrollLeft: host.scrollLeft,
+      text, points: ['B', 'A', 'C'].map(point),
+      segments: ['BA', 'BC', 'B-x-projection', 'A-x-projection', 'C-x-projection'].map(line),
+      ticks: {
+        x: [...Array(7).keys()].map(i => line(`x-axis-tick-${i}`)),
+        y: [...Array(6).keys()].map(i => line(`y-axis-tick-${i}`)),
+      },
+      arrowheads: svg.querySelectorAll('[data-arrowhead-for]').length,
+      semanticVisibleColors: [...svg.querySelectorAll('line,ellipse,text')].map(node => ({ id: node.id || node.dataset.labelId, stroke: node.getAttribute('stroke'), fill: node.getAttribute('fill') })),
+    }
+  })
+  const close = (actual, expected) => assert(Math.abs(actual - expected) < 0.05, `${actual} != ${expected}`)
+  const check = observation => {
+    close(observation.mediaWidth, 640)
+    close(observation.svgWidth, 640)
+    close(observation.svgHeight, 560)
+    assert.equal(observation.text.length, 12)
+    assert.deepEqual(observation.text.map(label => label.text).sort(), ['2', '2', '4', '4', '6', '6', 'A', 'B', 'C', 'O', 'x', 'y'].sort())
+    for (const label of observation.text) {
+      assert(label.px >= 16)
+      assert(label.bounds.x >= 0 && label.bounds.y >= 0)
+      assert(label.bounds.x + label.bounds.width <= 640 && label.bounds.y + label.bounds.height <= 560)
+    }
+    const screen = ([x, y]) => [(x + 0.9) * (640 / 9.6), (7.3 - y) * (560 / 8.4)]
+    for (const point of observation.points) {
+      const expected = screen(byId.get(point.id).at)
+      close(point.cx, expected[0]); close(point.cy, expected[1])
+      assert.notEqual(point.fill, 'none')
+    }
+    for (const line of observation.segments) {
+      const object = byId.get(line.id)
+      for (const endpoint of ['from', 'to']) {
+        const at = typeof object[endpoint] === 'string' ? byId.get(object[endpoint]).at : object[endpoint]
+        const expected = screen(at)
+        close(line[endpoint][0], expected[0]); close(line[endpoint][1], expected[1])
+      }
+      if (line.id.endsWith('-projection')) assert(line.dash && line.dash !== 'none')
+      else assert(!line.dash || line.dash === 'none')
+    }
+    for (const [axis, lines] of Object.entries(observation.ticks)) lines.forEach((tick, index) => {
+      const expected = axis === 'x' ? screen([index + 1, 0]) : screen([0, index + 1])
+      close(tick.from[0], expected[0]); close(tick.from[1], expected[1])
+    })
+  }
+  const desktop = await measure()
+  check(desktop)
+  await page.locator('.sr-figure-media').screenshot({ path: `${work}/actual-complete-640.preview.png`, animations: 'disabled' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobileStart = await measure()
+  check(mobileStart)
+  assert(mobileStart.scrollWidth > mobileStart.clientWidth)
+  await page.locator('#fig-32-preview').evaluate(host => { host.scrollLeft = host.scrollWidth - host.clientWidth })
+  await page.waitForFunction(() => {
+    const host = document.getElementById('fig-32-preview')
+    return Math.abs(host.scrollLeft - (host.scrollWidth - host.clientWidth)) <= 1
+  })
+  const mobileEnd = await measure()
+  check(mobileEnd)
+  assert.equal(consoleErrors.length, 0)
+  assert.equal(networkAttempts.length, 0)
+  const result = {
+    schema: 'ld-s10y-image/author-actual-preview@1', status: 'pass',
+    scope: 'Offline actual SVG in current product CSS figure classes; not a bound durable lesson or full product acceptance.',
+    browser: { executablePath, headless: true, deviceScaleFactor: 1 },
+    bindings: { spec: binding(`${work}/spec.json`), render: binding(`${work}/fig-32.render.json`), svg: binding(`${work}/fig-32.svg`), productCss: binding('app/src/styles/app.css'), previewHtml: binding(`${work}/actual-complete-640.preview.html`), previewPng: binding(`${work}/actual-complete-640.preview.png`) },
+    desktop, mobileStart, mobileEnd, consoleErrors, networkAttempts,
+    exactRenderedGeometryChecks: 'pass', nativeLabelCollisionCheck: render.collisions,
+    minActualTextPx: Math.min(...desktop.text.map(label => label.px)),
+    independentFigureApproval: false,
+  }
+  fs.writeFileSync(`${work}/actual-complete-640.preview.json`, `${JSON.stringify(result, null, 2)}\n`)
+  console.log(JSON.stringify({ status: result.status, mediaWidth: desktop.mediaWidth, minActualTextPx: result.minActualTextPx, mobileClientWidth: mobileStart.clientWidth, mobileScrollEnd: mobileEnd.scrollLeft, networkAttempts: networkAttempts.length, preview: result.bindings.previewPng }, null, 2))
+} finally {
+  await browser.close()
+}

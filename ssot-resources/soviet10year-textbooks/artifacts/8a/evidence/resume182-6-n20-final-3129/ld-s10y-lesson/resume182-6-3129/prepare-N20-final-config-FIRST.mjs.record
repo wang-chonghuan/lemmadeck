@@ -1,0 +1,157 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const answerBase = '.tmp/ld-s10y-answer/resume182-6-3129';
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const modern = `${book}/editions/modern-us-neutral`;
+const target = `${modern}/lessons/alg8-c3-s3-n20`;
+const read = filename => JSON.parse(fs.readFileSync(path.join(root, filename)));
+const draft = read(`${target}/choice-set/draft.json`);
+const choiceReview = read(`${target}/choice-set/review.json`);
+assert.equal(choiceReview.outcome, 'pass');
+const answerReview = read(`${answerBase}/answer-N20-grade-review-RECOVERY1/result.json`);
+assert.ok(['ANSWER_PASS', 'PASS'].includes(answerReview.status));
+const scopes = [
+  { name: 'text-and-exercises', directory: `${base}/display-N20-text-FIRST` },
+  { name: 'choices', directory: '.tmp/ld-s10y-choice/resume182-6-3129/display-N20-choices-FIRST' },
+].map(({ name, directory }) => {
+  const runtime = read(`${directory}/result.json`);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  const selection = read(`${directory}/selection-FIRST/selection.record`);
+  assert.equal(selection.counts.missing, 0);
+  const bindings = selection.batches.map((_, index) => `${directory}/bindings/batch${index + 1}.record`);
+  for (const filename of bindings) assert.equal(read(filename).status, 'DISPLAY_PASS');
+  return { name, runtime: `${directory}/result.json`,
+    selection: `${directory}/selection-FIRST/selection.record`, bindings };
+});
+const evidence = new Set([
+  `${book}/evidence/resume182-6-n20-source-3129/binding.record`,
+  `${base}/bind-observation-FIRST.mjs`, `${base}/bind-N20-figure-continuity-FIRST.mjs`,
+  `${base}/promote-N20-answers-FIRST.mjs`, `${base}/finalize-N20-FIRST.mjs`,
+  `${base}/prepare-N20-final-config-FIRST.mjs`,
+  `${base}/assemble-N20-approved-choices-FIRST.mjs`,
+  `${base}/choices-N20-approved-FIRST/assembly.record`,
+  `${base}/choices-N20-assemble-execution-FIRST/execution.json`,
+  `${base}/resolve-N20-scroll-FIRST.mjs`,
+  `${base}/resolve-N20-choice-scroll-FIRST.mjs`,
+  `${base}/prepare-N20-text-resolutions-FIRST.mjs`,
+  `${base}/prepare-N20-choice-resolutions-FIRST.mjs`,
+  `${base}/stage-N20-FIRST.mjs`,
+  `${base}/parent-N20-invocation-failure-FIRST.record`,
+  `${base}/repair-N20-F3-FIRST.mjs`,
+  `${base}/clip-N20-diagnosis-FIRST.record`,
+  `${base}/diagnose-N20-clips-FIRST.mjs`,
+  ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json',
+    'answer-keys.json', 'answer-keys.audit.json', 'choice-set/seed.json',
+    'choice-set/draft.json', 'choice-set/review.json'].map(name => `${target}/${name}`),
+  ...['spec.json', 'svg', 'render.json', 'review.json'].map(name => `${modern}/figures/fig-32.${name}`),
+  `${book}/lessons/alg8-c3-s3-n20/lesson.json`,
+  `${book}/lessons/alg8-c3-s3-n20/exercises.json`,
+  'ssot-resources/soviet10year-textbooks/artifacts/6a/lessons/alg6-c2-s1-n8/lesson.json',
+]);
+const directories = [
+  ...['modern-N20-author-FIRST', 'modern-N20-review-FIRST',
+    'modern-N20-flow-review-RECOVERY1', 'modern-N20-flow-recovery-FIRST',
+    'modern-N20-flow-recovery-RECOVERY1', 'flow-N20-recovery-execution-FIRST',
+    'flow-N20-recovery-execution-RECOVERY1', 'adapt-finalize-N20-FIRST',
+    'adapt-finalize-N20-RECOVERY1', 'render-N20-execution-FIRST',
+    'figure-N20-author-FIRST', 'figure-N20-review-FIRST',
+    'figure-N20-promotion-FIRST', 'figure-N20-record-execution-FIRST',
+    'figure-N20-promote-execution-FIRST', 'figure-N20-flow-continuity-FIRST',
+    'figure-N20-flow-bind-execution-FIRST', 'answers-prepare-N20-FIRST',
+    'answers-N20-promotion-FIRST', 'answers-N20-promote-execution-FIRST',
+    'answers-N20-grading-repair-execution-RECOVERY1',
+    'answers-finalize-N20-FIRST', 'choices-N20-author-FIRST',
+    'choices-N20-review-FIRST', 'choices-N20-repair-RECOVERY1',
+    'choices-N20-affected-review-RECOVERY1', 'choices-N20-retain-FIRST',
+    'choices-N20-F3-repair-FIRST', 'choices-N20-F3-review-FIRST',
+    'choices-N20-F3-repair-execution-FIRST',
+    'choices-N20-assemble-execution-FIRST',
+    'text-N20-bind-execution-FIRST',
+    'choice-N20-complementary-bind-execution-FIRST',
+    'choice-N20-bind1-execution-FIRST',
+    'clip-N20-diagnosis-execution-FIRST',
+    'render-N20-choices-execution-FIRST'].map(name => `${base}/${name}`),
+  `${answerBase}/answer-N20-author-FIRST`,
+  `${answerBase}/answer-N20-review-FIRST`,
+  `${answerBase}/answer-N20-grade-RECOVERY1`,
+  `${answerBase}/answer-N20-grade-review-RECOVERY1`,
+];
+const finalFigureBytes = new Map([
+  ['spec.json', fs.readFileSync(path.join(root, modern, 'figures/fig-32.spec.json'))],
+  ['fig-32.svg', fs.readFileSync(path.join(root, modern, 'figures/fig-32.svg'))],
+]);
+const collect = directory => {
+  assert.ok(fs.existsSync(path.join(root, directory)), directory);
+  for (const item of fs.readdirSync(path.join(root, directory), { withFileTypes: true })) {
+    if (['browser-tmp', '__pycache__'].includes(item.name)) continue;
+    const filename = `${directory}/${item.name}`;
+    if (item.isDirectory()) collect(filename);
+    else if (item.isFile()) {
+      const identical = finalFigureBytes.get(item.name);
+      if (!identical || !fs.readFileSync(path.join(root, filename)).equals(identical)) evidence.add(filename);
+    }
+  }
+};
+for (const directory of directories) collect(directory);
+const retainReference = reference => {
+  const absolute = path.resolve(root, reference.path);
+  assert.ok(absolute.startsWith(`${root}/`), absolute);
+  const bytes = fs.readFileSync(absolute);
+  if (reference.sha256) {
+    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'),
+      reference.sha256, absolute);
+  }
+  evidence.add(path.relative(root, absolute));
+};
+for (const scope of scopes) {
+  const directory = path.dirname(scope.runtime);
+  for (const name of ['run.mjs', 'execute.mjs', 'select.mjs']) evidence.add(`${directory}/${name}`);
+  collect(`${directory}/observations`);
+  const runtime = read(scope.runtime);
+  for (const attempt of runtime.priorAttempts ?? []) {
+    if (!attempt.path) continue;
+    retainReference(attempt);
+    const report = read(attempt.path);
+    for (const reference of report.reports ?? []) retainReference(reference);
+    for (const image of report.screenshots ?? []) {
+      if (image.captureChecks === 'FAILURE_PRESERVED') retainReference(image);
+    }
+  }
+  for (const item of fs.readdirSync(path.join(root, directory))) {
+    if (/^run-(?:FIRST|RECOVERY\d+)\.record$/.test(item)) {
+      evidence.add(`${directory}/${item}`);
+    }
+  }
+}
+for (const item of fs.readdirSync(path.join(root, base))) {
+  if (/^choice-N20-bind\d+-execution-FIRST$/.test(item)) collect(`${base}/${item}`);
+}
+const lesson = read(`${target}/lesson.json`);
+const content = { proseBlocks: lesson.prose.length, renderedParagraphs: 13,
+  exercises: 14, answers: 14, choiceQuestions: draft.questions.length,
+  options: draft.questions.reduce((count, item) => count + item.view.options.length, 0) };
+const config = {
+  additionalFailedRegionImageViews: 0,
+  expectedImages: scopes.reduce((count, scope) => count + read(scope.selection).selected.length, 0),
+  scopes, content,
+  contentApprovals: {
+    source: `${book}/evidence/resume182-6-n20-source-3129/binding.record`,
+    text: `${base}/modern-N20-flow-review-RECOVERY1/result.json`,
+    answers: `${answerBase}/answer-N20-grade-review-RECOVERY1/result.json`,
+    choices: `${target}/choice-set/review.json`,
+    figure: `${base}/figure-N20-flow-continuity-FIRST/result.record`,
+    capacityLossesRetained: true, historicalFailuresPreserved: true,
+    newMathematicsOrFigureReviewAtFinalBinding: false,
+  },
+  evidence: [...evidence],
+};
+const output = path.join(root, base, 'finalize-N20-config-FIRST.json');
+fs.writeFileSync(output, `${JSON.stringify(config, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: output, content, expectedImages: config.expectedImages,
+  evidenceReferences: config.evidence.length }));

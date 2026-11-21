@@ -1,0 +1,74 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck";
+const root = path.join(cwd, ".tmp/ld-s10y-lesson/resume182-6-3129/choices-N20-review-FIRST");
+const author = ".tmp/ld-s10y-lesson/resume182-6-3129/choices-N20-author-FIRST";
+const review = ".tmp/ld-s10y-lesson/resume182-6-3129/choices-N20-review-FIRST/review.json";
+const receiptPath = path.join(root, "validation.receipt.json");
+if (process.cwd() !== cwd) throw new Error("Wrong cwd");
+if (fs.existsSync(receiptPath)) throw new Error("Refusing a second native validation");
+
+function ordered(value) {
+  if (Array.isArray(value)) return value.map(ordered);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, ordered(value[key])]));
+  }
+  return value;
+}
+
+function binding(relativePath) {
+  const bytes = fs.readFileSync(path.join(cwd, relativePath));
+  const text = JSON.stringify(ordered(JSON.parse(bytes))).replace(/[\u007f-\uffff]/g,
+    (character) => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0"));
+  return {
+    path: relativePath,
+    bytes_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+    canonical_sha256: crypto.createHash("sha256").update(text).digest("hex")
+  };
+}
+
+const argv = [
+  ".agents/skills/ld-s10y-choice/scripts/validate.py",
+  "--repo", ".",
+  "--seed", `${author}/seed.json`,
+  "--draft", `${author}/draft.json`,
+  "--review", review
+];
+const before = [binding(`${author}/seed.json`), binding(`${author}/draft.json`), binding(review)];
+const startedAt = new Date().toISOString();
+const result = spawnSync("python3", argv, {
+  cwd,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
+  encoding: "utf8",
+  maxBuffer: 8 * 1024 * 1024
+});
+const endedAt = new Date().toISOString();
+const stdoutPath = path.join(root, "validation.stdout.txt");
+const stderrPath = path.join(root, "validation.stderr.txt");
+fs.writeFileSync(stdoutPath, result.stdout ?? "", { flag: "wx" });
+fs.writeFileSync(stderrPath, result.stderr ?? "", { flag: "wx" });
+const receipt = {
+  command: "python3",
+  argv,
+  cwd,
+  started_at: startedAt,
+  ended_at: endedAt,
+  exit_code: result.status,
+  signal: result.signal,
+  error: result.error?.message ?? null,
+  validation_invocations: 1,
+  bindings_before: before,
+  bindings_after: [binding(`${author}/seed.json`), binding(`${author}/draft.json`), binding(review)],
+  streams: {
+    stdout: { path: stdoutPath, sha256: crypto.createHash("sha256").update(result.stdout ?? "").digest("hex") },
+    stderr: { path: stderrPath, sha256: crypto.createHash("sha256").update(result.stderr ?? "").digest("hex") }
+  }
+};
+fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + "\n", { flag: "wx" });
+process.stdout.write(result.stdout ?? "");
+process.stderr.write(result.stderr ?? "");
+console.log(JSON.stringify({ receipt: receiptPath, actual_exit_code: result.status, started_at: startedAt, ended_at: endedAt }));
+process.exitCode = result.status ?? 1;

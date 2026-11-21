@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), ROOT);
+const config = JSON.parse(await readFile(process.argv[2], 'utf8'));
+const METHOD = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/finalize-N19-FIRST.mjs');
+let code = await readFile(METHOD, 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once("const lesson = 'alg8-c3-s3-n19';", "const lesson = 'alg8-c3-s3-n20';");
+once('evidence/resume182-6-n19-final-3129', 'evidence/resume182-6-n20-final-3129');
+once('display-N19-text-FIRST', 'display-N20-text-FIRST');
+once('display-N19-choices-FIRST', 'display-N20-choices-FIRST');
+once('assert.equal(inheritedImages, 2);', 'assert.equal(inheritedImages, 0);');
+once('assert.equal(images.length, 46);', `assert.equal(images.length, ${config.expectedImages});`);
+once('selected_sources: 11, questions: 14, options: 55,',
+  `selected_sources: 14, questions: ${config.content.choiceQuestions}, options: ${config.content.options},`);
+once("role: 'Existing complete-source recognition snapshot; substantive approvals reused'",
+  "role: 'New independently reviewed complete-source recognition snapshot; approved mathematics not repeated'");
+once('content: { proseBlocks: 13, exercises: 11, answers: 11, choiceQuestions: 14, options: 55 },',
+  `content: ${JSON.stringify(config.content)},`);
+once('contentApprovals: config.contentApprovals,',
+  `contentApprovals: Object.fromEntries(Object.entries(config.contentApprovals).map(([name, value]) =>
+    [name, typeof value === 'string' ? keep(value) : value])),`);
+once('historicalObservedImageViews: 8,', 'historicalObservedImageViews: 0,');
+once('recoveredKnownHistoricalReportBytes: 15174,', 'recoveredKnownHistoricalReportBytes: 0,');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

@@ -1,0 +1,197 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck";
+const relativeRoot = ".tmp/ld-s10y-lesson/resume182-6-3129/choices-N20-review-FIRST";
+const root = path.join(cwd, relativeRoot);
+if (process.cwd() !== cwd) throw new Error("Wrong cwd");
+if (fs.existsSync(path.join(root, "result.json"))) throw new Error("Evidence already finalized");
+
+function ordered(value) {
+  if (Array.isArray(value)) return value.map(ordered);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, ordered(value[key])]));
+  }
+  return value;
+}
+
+function binding(relativePath, json = false) {
+  const absolutePath = path.join(cwd, relativePath);
+  const bytes = fs.readFileSync(absolutePath);
+  const record = {
+    path: absolutePath,
+    bytes_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+    bytes: bytes.length
+  };
+  if (json) {
+    const text = JSON.stringify(ordered(JSON.parse(bytes))).replace(/[\u007f-\uffff]/g,
+      (character) => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0"));
+    record.canonical_sha256 = crypto.createHash("sha256").update(text).digest("hex");
+  }
+  return record;
+}
+
+const receipt = JSON.parse(fs.readFileSync(path.join(root, "validation.receipt.json"), "utf8"));
+const review = JSON.parse(fs.readFileSync(path.join(root, "review.json"), "utf8"));
+const current = receipt.bindings_after.map((record) => binding(record.path, true));
+const intact = current.every((record, index) =>
+  record.bytes_sha256 === receipt.bindings_before[index].bytes_sha256 &&
+  record.bytes_sha256 === receipt.bindings_after[index].bytes_sha256 &&
+  record.canonical_sha256 === receipt.bindings_before[index].canonical_sha256 &&
+  record.canonical_sha256 === receipt.bindings_after[index].canonical_sha256);
+const status = intact && receipt.exit_code === 3 && review.outcome === "revise" ? "REVISE" : "BLOCKED";
+const findings = [
+  {
+    id: "F1",
+    source_number: "314",
+    subtask: "c",
+    question_id: "n20-reduce-domain-table",
+    affected_surface: "options A-D, row III; source coverage",
+    verdict: "revise",
+    evidence: "All four options supply exactly 1/(a-6), a!=6. No mathematical proposition for this reduction differs across options; the answer is copyable with no judgment. General loss of written steps does not disclose this specific unassessed task."
+  },
+  {
+    id: "F2",
+    source_number: "317",
+    subtask: "c",
+    question_id: "n20-composed-cube-factors",
+    affected_surface: "options A-D, row III; source coverage",
+    verdict: "revise",
+    evidence: "All four options supply exactly (x-1)(x^2+10x+37). The complete correct factorization is unanimous and needs no base extraction or trinomial judgment. The specific omission is not declared."
+  }
+];
+const evidenceFiles = [
+  "blind-source-solutions.md",
+  "visible-task-fidelity.md",
+  "visible-independent-solutions.md",
+  "observations.md",
+  "validation.stdout.txt",
+  "validation.stderr.txt",
+  "validation.receipt.json",
+  "run-validation.mjs",
+  "finalize-evidence.mjs"
+].map((name) => binding(`${relativeRoot}/${name}`, name.endsWith(".json")));
+const assets = [
+  "ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-32.png",
+  ".tmp/ld-s10y-lesson/resume182-6-3129/figure-N20-author-FIRST/actual-complete-640.preview.png",
+  "ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-32.svg",
+  "ssot-resources/soviet10year-textbooks/artifacts/6a/lessons/alg6-c2-s1-n8/lesson.json"
+].map((name) => binding(name));
+const usage = {
+  cwd,
+  reviewer_kind: "independent_agent",
+  scope: "Finite NEW N20 semantic review, 182-6/STEMROBIN-182",
+  source_count: 14,
+  independently_solved_source_tasks_including_bundled_subtasks: 55,
+  question_count: 19,
+  independently_checked_option_count: 80,
+  independently_true_option_count: 24,
+  independently_false_option_count: 56,
+  total_image_opens: 2,
+  image_batches: 1,
+  image_opens_each: [
+    { ...assets[0], opens: 1 },
+    { ...assets[1], opens: 1 }
+  ],
+  extra_image_opens: 0,
+  crops: 0,
+  renders: 0,
+  figure_reapprovals: 0,
+  new_figures: 0,
+  native_validation_invocations: 1,
+  native_validation_exit_code: receipt.exit_code,
+  author_candidate_writes: 0,
+  durable_writes: 0,
+  network_calls: 0,
+  database_calls: 0,
+  env_file_reads: 0,
+  installs: 0,
+  paid_service_calls: 0,
+  git_operations: 0,
+  created_agents_or_chats: 0,
+  paused_worker_operations: 0,
+  old_answer_or_choice_reads: 0,
+  technical_recoveries: [
+    { stage: "source-only Node hash probe", first_exit_code: 1, corrected_exit_code: 0,
+      cause: "Parenthesis syntax error before any file read; no content or image stage repeated." }
+  ],
+  token_usage: null,
+  token_usage_note: "No authoritative per-turn token usage counter was available; no estimate presented as measurement.",
+  current_bindings: current,
+  evidence_files: evidenceFiles,
+  finalized_at: new Date().toISOString()
+};
+fs.writeFileSync(path.join(root, "usage.json"), JSON.stringify(usage, null, 2) + "\n", { flag: "wx" });
+const result = {
+  status,
+  semantic_outcome: review.outcome,
+  cwd,
+  ticket: "182-6/STEMROBIN-182",
+  book: "8a",
+  lesson: "alg8-c3-s3-n20",
+  reviewer: review.reviewer,
+  current_bindings: { seed: current[0], draft: current[1], review: current[2] },
+  bindings_unchanged_before_validation_after_validation_and_finalization: intact,
+  source_coverage_count: review.source_reviews.length,
+  question_review_count: review.question_reviews.length,
+  mathematics: {
+    verdict: "pass",
+    independently_checked_questions: 19,
+    independently_checked_options: 80,
+    all_true_sets_agree_with_author: true,
+    all_source_solutions_and_misconception_derivations_compared: true,
+    evidence: path.join(root, "visible-independent-solutions.md")
+  },
+  findings,
+  convention_320: {
+    status: "resolved_by_actual_definition_only_evidence",
+    definition_file: assets[3],
+    read_only_prose_indices: [5, 7, 10],
+    printed_page: 45,
+    conclusion: "General set elements are allowed as inputs. At-most-one and exactly-one agree for these total relations. I is a function; II is not. No answer key or solved example was supplied.",
+    author_provisional_text_left_unchanged: true
+  },
+  capability_losses: [
+    "All choice responses replace independently written algebraic procedures with recognition and cannot establish separately mastered bundled subtasks.",
+    "309: independently producing either distribution or identity derivation is not established.",
+    "312: independently discovering and writing four divisibility proofs is not established; valid integer-factor certificates are recognized/checked.",
+    "313: selecting values does not certify independent use of the most reasonable evaluation method.",
+    "320: independently written direction/function justifications are not established; C supplies a proposed witness that itself requires verification.",
+    "321: no actual graph drawing or actual-graph recognition; plotting/scale, connected parabola, graphical legibility and independent full-graph construction are lost. Textual graph relationships and interval image remain.",
+    "322: independently written rationality proofs and positivity justifications are not established; exact rational-value judgment remains.",
+    "Additional undeclared judgment losses for 314(c) and 317(c) require revision, as findings F1/F2."
+  ],
+  total_image_opens: 2,
+  figure_pass_unchanged: true,
+  figure_assets: assets.slice(0, 3),
+  validation: {
+    invocation_count: 1,
+    command: receipt.command,
+    argv: receipt.argv,
+    cwd: receipt.cwd,
+    started_at: receipt.started_at,
+    ended_at: receipt.ended_at,
+    actual_exit_code: receipt.exit_code,
+    stdout: receipt.streams.stdout,
+    stderr: receipt.streams.stderr,
+    stdout_text: fs.readFileSync(path.join(root, "validation.stdout.txt"), "utf8"),
+    stderr_text: fs.readFileSync(path.join(root, "validation.stderr.txt"), "utf8"),
+    receipt: binding(`${relativeRoot}/validation.receipt.json`, true),
+    meaning: "Mechanical checks passed; exit 3 preserves structurally valid non-passing semantic review."
+  },
+  evidence_files: [...evidenceFiles, binding(`${relativeRoot}/usage.json`, true)],
+  ownership: "Parent owns fixes, affected-review, retention and rendering. No candidate edits or review reruns. Finite review stopped here.",
+  finalized_at: new Date().toISOString()
+};
+fs.writeFileSync(path.join(root, "result.json"), JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({
+  status,
+  bindings_unchanged: intact,
+  seed_canonical_sha256: current[0].canonical_sha256,
+  draft_canonical_sha256: current[1].canonical_sha256,
+  review_canonical_sha256: current[2].canonical_sha256,
+  total_image_opens: 2,
+  native_validation_actual_exit_code: receipt.exit_code,
+  files: [binding(`${relativeRoot}/result.json`, true), binding(`${relativeRoot}/usage.json`, true)]
+}, null, 2));

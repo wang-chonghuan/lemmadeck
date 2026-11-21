@@ -1,0 +1,76 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const id = 'alg8-c3-s3-n20';
+const bound = item => {
+  const file = path.resolve(item.path);
+  assert.ok(file.startsWith(`${repo}/`) && fs.realpathSync(file) === file);
+  const bytes = fs.readFileSync(file);
+  assert.equal(sha(bytes), item.sha256, file);
+  return bytes;
+};
+const review = JSON.parse(bound({ path: reviewPath, sha256: reviewHash }));
+assert.equal(review.status, 'SOURCE_PASS');
+assert.equal(review.book, '8a');
+assert.equal(review.lesson, id);
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.equal(review.blockers.length, 0);
+const assemblyPath = `${base}/assembly-N20-FIRST/assembly.record`;
+const assembly = JSON.parse(fs.readFileSync(assemblyPath));
+assert.equal(assembly.status, 'SCOPED_ASSEMBLY_PASS_NOT_SOURCE_APPROVAL');
+assert.equal(assembly.lesson, id);
+const bindings = Array.isArray(review.bindings) ? review.bindings : Object.values(review.bindings);
+for (const item of bindings) bound(item);
+assert.ok(bindings.some(item => path.resolve(item.path) === path.resolve(assemblyPath)));
+const source = `${base}/assembly-N20-FIRST/artifacts/8a`;
+assert.ok(!fs.existsSync(`${root}/lessons/${id}`));
+const outputs = [];
+const promote = (origin, target) => {
+  const binding = bindings.find(item => path.resolve(item.path) === path.resolve(origin));
+  assert.ok(binding, `Review does not bind ${origin}`);
+  const bytes = bound(binding);
+  let reused = false;
+  if (fs.existsSync(target)) {
+    assert.equal(sha(fs.readFileSync(target)), sha(bytes), `Preserve existing ${target}`);
+    reused = true;
+  } else {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, bytes, { flag: 'wx' });
+  }
+  outputs.push({ path: target, sha256: sha(bytes), bytes: bytes.length, reused });
+};
+for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  promote(`${source}/lessons/${id}/${name}`, `${root}/lessons/${id}/${name}`);
+}
+for (const page of [114, 115, 116, 117]) {
+  const number = String(page).padStart(4, '0');
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    promote(`${base}/raw-N20-FIRST/8a/pages/${number}/${name}`,
+      `${root}/pages/${number}/${name}`);
+  }
+}
+for (const figure of assembly.figures) {
+  for (const extension of ['png', 'svg']) {
+    const corrected = `${base}/crop-N20-repair-FIRST/8a/pages/0117/figures/${figure}.${extension}`;
+    promote(corrected, `${root}/figures/${figure}.${extension}`);
+    promote(corrected,
+      `${root}/pages/0117/figures/${figure}.${extension}`);
+  }
+}
+const file = `${base}/source-N20-promotion-FIRST.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  schema: 'stemrobin-182/reviewed-source-promotion@1',
+  book: '8a', lesson: id, status: 'SOURCE_PASS',
+  independentReview: { path: reviewPath, sha256: reviewHash }, outputs,
+  oldLessonBytesChanged: 0, incompleteRightLessonPromoted: false,
+  imageViews: 0, databaseWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)), outputs }));

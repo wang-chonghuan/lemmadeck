@@ -1,0 +1,103 @@
+# N20 affected-only grading review
+
+Date: 2026-11-21. Ticket: STEMROBIN-182 / 182-6.
+
+Sole cwd: `/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck`.
+
+Decision: **COMPOSED ANSWER_PASS**, bound exclusively to repaired candidate SHA-256
+`88831b5e8c8666ba24502b14d996d04d6189dc6df1d8c773631d3a55f377ea55`.
+Only `N20-313-GRADING-METHOD` was substantively reviewed here.
+
+## Bindings and observed comparison
+
+All paths below are relative to the sole cwd, unless otherwise stated.
+
+- Old candidate: `.tmp/ld-s10y-answer/resume182-6-3129/answer-N20-author-FIRST/answer-keys.json`, 16566 bytes, SHA `0f237c3a1ca8cbeb17058d46de16febce9311990945ec08584fd675eaa9e5408`.
+- Current candidate: `.tmp/ld-s10y-answer/resume182-6-3129/answer-N20-grade-RECOVERY1/answer-keys.json`, 16487 bytes, SHA `88831b5e8c8666ba24502b14d996d04d6189dc6df1d8c773631d3a55f377ea55`.
+- Repair record: `.tmp/ld-s10y-answer/resume182-6-3129/answer-N20-grade-RECOVERY1/repair.record`, 1689 bytes, SHA `16020d2294eab7c5fab9ee2a9ef0bd6082d6db8aecd8f3978801da5d90de88f6`.
+- First review result: `.tmp/ld-s10y-answer/resume182-6-3129/answer-N20-review-FIRST/result.json`, 6988 bytes, SHA `3279c2e4d03afe2c21b1939a63256b393d0e15ccb305cadf9329f016b392fd6b`.
+- First review: `.tmp/ld-s10y-answer/resume182-6-3129/answer-N20-review-FIRST/review.json`, 22696 bytes, SHA `689c1911e96ae0432e41b85e0ab7533609fadadc72fbbf19561860751abb77b0`.
+
+`shasum -a 256` and read-only Node structured comparisons exited 0.
+The actual old/current/repair hashes match all three supplied hashes.
+The repair's first-result binding matches the actual first result, and that
+result's review binding matches the actual first review.
+
+The exhaustive parsed-object comparison found exactly three changed fields:
+`/answers/4/grading`: auto to ungraded; `/answers/4/parts`: the two numeric
+parts with expected 100 and 15 to []; `/answers/4/notes`: explanation now says
+the required method cannot be checked and the whole exercise is ungraded.
+Root metadata and exercise order are identical. Every other field of 313 is
+identical. All other 13 answer objects are deeply identical. All 14 full
+prompts, displayAnswer values, source facts and figureEvidence values are
+identical, and all prompts match the actual current modern exercises.
+
+## Why the finding is resolved
+
+The actual modern `exercises[number=313].text` explicitly requires the most
+reasonable method, not merely numerical results. It exactly matches candidate
+line 54. Candidate lines 56, 59 and 60 now declare whole-exercise ungraded,
+empty machine parts and an accurate reason. Line 58 retains the complete
+previously approved display solution without changing either result or method.
+
+The actual judging contract was read at `app/src/lib/textbook-answer.ts`.
+Its SHA remains `bee990b6367f8111ab30a4409c28d5e9387a01068c0bf27376326dfe4fe8ff8f`.
+Lines 74-101 compare numerical/expression values; lines 156-193 aggregate
+auto part correctness without evaluating a learner's method. Lines 196-209
+instead return ungraded, the displayAnswer and []; authenticated event
+correctness is null. No handler, validator, engine or database code was run.
+
+The repair therefore removes the false whole-exercise correct/incorrect claim.
+It does not claim to have created a method judge. Empty machine parts do not
+remove the two displayed subtasks: they remain exactly in the standard answer.
+This satisfies cap2 generation rules 6-8 and gate2 criteria 6-8.
+
+## Composed inheritance and honest counts
+
+The first review's mathematical approval of all 14 answers and 55 displayed
+tasks is inherited, not repeated. Its other 13 full answer approvals remain
+valid because those objects are identical. The first review has only one
+blocking finding; this affected-only review closes that finding.
+
+Current counts: 14 answers, 14 ungraded, 0 auto, 0 machine parts, 55 ungraded
+display tasks; derived=14, book=0, bookRaw=0. The 55 count is the sum of the
+first review's per-exercise task counts, carried forward through exact prompt
+and display equality. There were no new mathematical solves.
+
+Historical counts remain attached to the old SHA: ANSWER_REVISE, 13 accepted
+exercises, one grading finding, auto=1, ungraded=13, numeric machine parts=2,
+53 ungraded displayed tasks and two image loads. Neither historical report
+nor old author result was amended to show the new snapshot's counts.
+
+Every first-review input binding still matches its actual byte hash, including
+source, figure manifests/specs/assets, existing preview, judging contract,
+normalizer and retained definition. Existing image bytes were used for
+SHA-256 only: zero images opened, decoded, rendered, cropped or viewed.
+There was no figure reapproval.
+
+320 remains resolved by the first review's actual retained arbitrary-set
+function definition in `6a/lessons/alg6-c2-s1-n8/lesson.json`, printed p45,
+prose indices 5, 7 and 10, SHA
+`5292f911a80c2210dbac35010417e9a673fa5a7e48e0615275e988faebe73c3a`.
+Its byte hash is unchanged; no definition prose was reread or question solved.
+The source identity-extension exposition gap remains nonblocking and unchanged.
+
+## Preservation and stopping boundary
+
+Read the technical recovery reference and cap2/gate2 instructions. No
+IntentFold development capability, live ticket operation or network action was
+invoked. Only the four named files in this new review directory were written.
+The old/current candidates, repair record, first result/review and all
+first-review author companion/output hashes remain intact. The first missing
+directory failure, broad definition-locator limitation and original preview
+telemetry/correction history remain historical facts, not reset or replaced.
+Inherited usage and model cost remain unknown, not zero.
+
+No .env, DB, network, installs, paid calls, durable edits, key changes, git,
+choices/interactions, agents/chats or old workers. No full source solve,
+unaffected rereview, product validator, renderer, native or mechanical
+finalizer, self-test, display check, promotion or publishing.
+
+This finite answer review ends here. The parent owns promotion, finalize and
+display/flow verification. ANSWER_PASS is a composed content/grading review
+decision for the bound scratch candidate, not an executed downstream stage.

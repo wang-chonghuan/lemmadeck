@@ -1,0 +1,121 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N20-choices-FIRST');
+const METHOD = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST/run.mjs');
+const ID = 'alg8-c3-s3-n20';
+const TARGET = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons', ID);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+assert.equal(process.cwd(), ROOT);
+const pins = {};
+for (const name of ['seed.json', 'draft.json', 'review.json']) {
+  pins[name] = sha(await readFile(path.join(TARGET, 'choice-set', name)));
+}
+const bytes = await readFile(METHOD);
+assert.equal(sha(bytes), '482c0333411962007235b71f77b11999aa1e316ccbf59c07e716e5e2def0d0f3');
+let code = bytes.toString('utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+const section = (start, end, replacement) => {
+  assert.equal(code.split(start).length, 2, start);
+  assert.equal(code.split(end).length, 2, end);
+  const left = code.indexOf(start), right = code.indexOf(end, left);
+  assert.ok(right > left);
+  code = code.slice(0, left) + replacement + code.slice(right);
+};
+once("display-N4-choices-FIRST');", "display-N20-choices-FIRST');");
+once("const ID = 'alg7-c1-s1-n4';", `const ID = ${JSON.stringify(ID)};`);
+once('artifacts/7a/editions/modern-us-neutral', 'artifacts/8a/editions/modern-us-neutral');
+once("schema: 'resume182-6-n4-choices-offline-display@1', lesson: ID, book: '7a'",
+  "schema: 'resume182-6-n20-choices-offline-display@1', lesson: ID, book: '8a'");
+section('  const promotionPath =', '  const baseCode =', `
+  await record(${JSON.stringify(METHOD)}, ${JSON.stringify(sha(bytes))});
+  await record(${JSON.stringify(path.join(OUTPUT, 'run.mjs'))});
+  await record(${JSON.stringify(path.join(OUTPUT, 'execute.mjs'))});
+  const seed = JSON.parse(await record(path.join(CHOICES, 'seed.json'), ${JSON.stringify(pins['seed.json'])}));
+  const draft = JSON.parse(await record(path.join(CHOICES, 'draft.json'), ${JSON.stringify(pins['draft.json'])}));
+  const review = JSON.parse(await record(path.join(CHOICES, 'review.json'), ${JSON.stringify(pins['review.json'])}));
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, draft.seed_sha256);
+  assert.equal(seed.source.book, '8a');
+  assert.equal(seed.source.lesson, ID);
+  assert.deepEqual(seed.exercises.map(item => String(item.number)),
+    Array.from({ length: 14 }, (_, index) => String(309 + index)));
+  const views = draft.questions.map(({ view }) => ({ mode: view.mode, stem: view.stem,
+    figure_ids: view.figure_ids,
+    options: view.options.map(({ id, text, figure_ids }) => ({ id, text, figure_ids })) }));
+  const questionCount = views.length;
+  const optionCount = views.reduce((count, view) => count + view.options.length, 0);
+  assert.ok(questionCount >= 14);
+  assert.equal(draft.new_figures.length, 0);
+  report.approvalReuse = { outcome: review.outcome, sources: seed.exercises.length,
+    questions: questionCount, options: optionCount,
+    canonicalBindings: { seed: review.seed_sha256, draft: review.draft_sha256 },
+    checkerRerun: false, solverRerun: false, sourceReviewRerun: false, figureReviewRerun: false };
+  const oldHtmlPath = path.join(ROOT,
+    '.tmp/ld-s10y-lesson/resume182-6-3129/render-N20-choices-FIRST', ID, 'choices.html');
+  const oldHtmlBytes = await record(oldHtmlPath);
+  const lesson = JSON.parse(await record(path.join(LESSON, 'lesson.json')));
+  const manifest = JSON.parse(await record(path.join(LESSON, 'figures.json')));
+  const usedFigures = [...new Set(views.flatMap(view => [...view.figure_ids,
+    ...view.options.flatMap(option => option.figure_ids)]))];
+  assert.deepEqual(usedFigures, ['fig-32']);
+  const figureContracts = {};
+  for (const id of usedFigures) {
+    const figure = manifest.figures.find(item => item.id === id);
+    assert.ok(figure);
+    const approved = JSON.parse(await record(path.join(MODERN, figure.review)));
+    assert.equal(approved.status, 'pass');
+    const spec = JSON.parse(await record(path.join(MODERN, figure.spec), approved.spec.sha256));
+    const svgMarkup = (await record(path.join(MODERN, figure.svg), approved.outputs.svg.sha256))
+      .toString('utf8').replace(/<\\?xml[^>]*\\?>/u, '').trim();
+    await record(path.join(MODERN, figure.render), approved.render.sha256);
+    figureContracts[id] = { svgMarkup, labels: spec.objects.filter(item => item.type === 'text')
+      .map(({ id, text }) => ({ id: id + '-label', text })),
+      minimumPx: spec.display.minTextPx, layout: spec.display.layout,
+      maxWidthPx: spec.display.maxWidthPx ?? Math.max(...spec.display.widths) };
+  }
+  const preview = JSON.parse(await record(path.join(ROOT,
+    '.tmp/ld-s10y-lesson/resume182-6-3129/figure-N20-author-FIRST/actual-complete-640.preview.json'),
+    'c475df182a53074604bc7ad00b8264fc3df3591a07862989a932afba4c9bbfc0'));
+  const approvedLabels = preview.desktop.text.map(({ id, text }) => ({ id, text }));
+  assert.equal(approvedLabels.length, 12);
+  for (const label of figureContracts['fig-32'].labels)
+    assert.ok(approvedLabels.some(item => item.id === label.id && item.text === label.text));
+  figureContracts['fig-32'].labels = approvedLabels;
+`);
+section('  const choiceHtmlPath =', '  const helpers =', `
+  const { marked } = await import('file://' + path.join(ROOT, '.agents/skills/node_modules/marked/lib/marked.esm.js'));
+`);
+section('  const fragment = text =>', '  const html = new Map();', `
+  const leakage = /\\b(?:correct_index|correctIndex|answerKey|answer_key|correct|accept|expected|seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent|key)\\b/iu;
+  assert.ok(!leakage.test(oldHtmlBytes.toString('utf8')));
+  report.projection = { fields: ['view.mode', 'view.stem', 'view.figure_ids',
+    'view.options.id', 'view.options.text', 'view.options.figure_ids'],
+    heading: (lesson.printed_title || lesson.title) + ' \\u00b7 \\u9009\\u62e9\\u9898',
+    questions: questionCount, options: optionCount, sources: seed.exercises.length,
+    figureIds: usedFigures, optionLabels: 'Current view order displayed as A, B, C, D',
+    clientIntentOrKey: false, sourceSolvingOrSemanticReviewRepeated: false };
+`);
+section('      const result = await page.evaluate(({ previousHtml, sections }) =>',
+  '      report.deliveredHtml.push(delivered);\n    } else {', `
+      report.templateReuse = { path: oldHtmlPath, sha256: sha(oldHtmlBytes),
+        originalRendererUnchanged: true, currentHtmlProjected: false,
+        oldScreenshotsOpened: 0, sourceReviewRepeated: false };
+      delivered = await stage(path.join(RUN, 'published/choices.html'), oldHtmlBytes);
+`);
+once('report.templateReuse = previous.templateReuse;',
+  'report.templateReuse = previous?.templateReuse ?? report.templateReuse;');
+once("assert.equal(await page.locator('.choice').count(), 35);",
+  "assert.equal(await page.locator('.choice').count(), questionCount);");
+once("assert.equal(await page.locator('.choice-options > li').count(), 149);",
+  "assert.equal(await page.locator('.choice-options > li').count(), optionCount);");
+once('projection(option.id));', 'projection(String.fromCharCode(65 + optionIndex)));');
+once('      && expectedCells > 0 && dom.tableCells.every(cell => cell.indices.length > 0',
+  '      && dom.tableCells.every(cell => cell.indices.length > 0');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

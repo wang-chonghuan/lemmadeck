@@ -1,0 +1,450 @@
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const base = path.join(cwd, ".tmp/ld-s10y-lesson/resume182-6-3129");
+const own = path.join(base, "choices-N20-F3-review-FIRST");
+const target = "n20-composed-cube-factors";
+const files = {
+  seed: path.join(base, "choices-N20-author-FIRST/seed.json"),
+  prior_draft: path.join(base, "choices-N20-repair-RECOVERY1/draft.json"),
+  new_draft: path.join(base, "choices-N20-F3-repair-FIRST/draft.json"),
+  repair_record: path.join(base, "choices-N20-F3-repair-FIRST/repair.record"),
+  inherited_review: path.join(base, "choices-N20-affected-review-RECOVERY1/review.json"),
+  inherited_result: path.join(base, "choices-N20-affected-review-RECOVERY1/result.json"),
+  inherited_usage: path.join(base, "choices-N20-affected-review-RECOVERY1/usage.json"),
+  inherited_receipt: path.join(base, "choices-N20-affected-review-RECOVERY1/validation.receipt.json"),
+  first_review: path.join(base, "choices-N20-review-FIRST/review.json"),
+  first_result: path.join(base, "choices-N20-review-FIRST/result.json"),
+  first_usage: path.join(base, "choices-N20-review-FIRST/usage.json"),
+  choice_skill: path.join(cwd, ".agents/skills/ld-s10y-choice/SKILL.md"),
+  review_contract: path.join(cwd, ".agents/skills/ld-s10y-choice/references/review.md"),
+  native_contract: path.join(cwd, ".agents/skills/ld-s10y-choice/references/contract.md"),
+  production_resume: path.join(cwd, ".claude/skills/ld-s10y-lesson/references/production-resume.md"),
+  validator: path.join(cwd, ".agents/skills/ld-s10y-choice/scripts/validate.py"),
+  prepare_script: path.join(cwd, ".agents/skills/ld-s10y-choice/scripts/prepare.py"),
+  finalizer: path.join(own, "compose-and-validate.mjs"),
+  view_first: path.join(own, "view-first.md"),
+};
+const sha = value => crypto.createHash("sha256").update(value).digest("hex");
+const sorted = value => Array.isArray(value)
+  ? value.map(sorted)
+  : value !== null && typeof value === "object"
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, sorted(value[key])]))
+    : value;
+const canonical = value => JSON.stringify(sorted(value))
+  .replace(/[\u0080-\uffff]/g, char => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`);
+const digest = value => sha(canonical(value));
+const read = file => JSON.parse(fs.readFileSync(file, "utf8"));
+const binding = file => {
+  const bytes = fs.readFileSync(file);
+  const result = { path: file, bytes: bytes.length, bytes_sha256: sha(bytes) };
+  try {
+    result.canonical_sha256 = digest(JSON.parse(bytes.toString("utf8")));
+  } catch {}
+  return result;
+};
+const write = (name, value) => {
+  const file = path.join(own, name);
+  assert.equal(path.dirname(file), own);
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+  return binding(file);
+};
+const inputBindings = Object.fromEntries(
+  Object.entries(files).map(([name, file]) => [name, binding(file)]),
+);
+assert.equal(inputBindings.new_draft.canonical_sha256,
+  "935f316a5a1657eb0b404c0d9052c5a02f1250cc191f0d28270ddb93e9f42877");
+assert.equal(inputBindings.new_draft.bytes_sha256,
+  "8d85fbc5b40a51bcf3c38e7759ed8225778dc57475eaf8ccf67c272f5b732882");
+
+const seed = read(files.seed);
+const priorDraft = read(files.prior_draft);
+const draft = read(files.new_draft);
+const inherited = read(files.inherited_review);
+const previousResult = read(files.inherited_result);
+const previousUsage = read(files.inherited_usage);
+const repair = read(files.repair_record);
+assert.equal(inherited.outcome, "revise");
+assert.equal(previousResult.status, "REVISE");
+assert.equal(inherited.seed_sha256, digest(seed));
+assert.equal(inherited.draft_sha256, digest(priorDraft));
+assert.equal(repair.output.sha256, inputBindings.new_draft.bytes_sha256);
+assert.equal(repair.input.sha256, inputBindings.prior_draft.bytes_sha256);
+assert.equal(repair.failure.sha256, inputBindings.inherited_result.bytes_sha256);
+assert.equal(previousUsage.retained_cumulative_content_repair_rounds, 1);
+assert.equal(repair.newDefectRepairRound, 1);
+assert.equal(repair.cumulativeContentRepairRounds, 2);
+for (const [name, key] of [
+  ["first_review", "first_review"], ["first_result", "first_result"],
+  ["first_usage", "first_usage"], ["inherited_review", "review"],
+]) {
+  assert.deepEqual(inputBindings[name], previousResult.current_bindings[key]);
+}
+
+const changes = [];
+function diff(before, after, pointer = "") {
+  if (canonical(before) === canonical(after)) return;
+  if (before !== null && after !== null
+      && typeof before === "object" && typeof after === "object"
+      && Array.isArray(before) === Array.isArray(after)) {
+    for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+      diff(before[key], after[key], `${pointer}/${key}`);
+    }
+  } else {
+    changes.push({ path: pointer, before, after });
+  }
+}
+diff(priorDraft, draft);
+const questionIndex = draft.questions.findIndex(q => q.id === target);
+assert.equal(questionIndex, 13);
+assert.deepEqual(changes.map(change => change.path), [
+  "/questions/13/view/options/2/text",
+  "/questions/13/key/rationales/2/derivation",
+  "/questions/13/key/rationales/2/misconception",
+]);
+assert.equal(changes[0].after,
+  changes[0].before.replace("I: $(a+5)(a^2+13a+43)$", "I: $(a+5)(a^2+a+43)$"));
+assert.deepEqual(draft.coverage, priorDraft.coverage);
+assert.deepEqual(draft.new_figures, []);
+const changed = draft.questions[questionIndex];
+const priorQuestion = priorDraft.questions[questionIndex];
+assert.deepEqual(changed.key.correct, ["A"]);
+assert.deepEqual(changed.intent, priorQuestion.intent);
+assert.deepEqual(changed.view.options[1], priorQuestion.view.options[1]);
+const rows = text => text.split("\n\n");
+const aRows = rows(changed.view.options[0].text);
+const bRows = rows(changed.view.options[1].text);
+assert.deepEqual([aRows[0], aRows[1], aRows[3]], [bRows[0], bRows[1], bRows[3]]);
+assert.notEqual(aRows[2], bRows[2]);
+assert.equal(new Set(changed.view.options.map(option => rows(option.text)[0])).size, 2);
+
+const oldQuestionReview = inherited.question_reviews.find(q => q.question_id === target);
+const optionChecks = structuredClone(oldQuestionReview.mathematics.option_checks);
+optionChecks.find(option => option.option_id === "C").evidence =
+  "New F3-I check, recorded view-first before the key: omitting 12a from (a+6)^2, then retaining +(a+6)+1, produces exactly a^2+a+43. C-I expands to a^3+6a^2+48a+215; original minus candidate is 12a(a+5). At a=1 C-I is 270 versus the original 342, confirming the appended rationale and an actually false alternative. Inherited unchanged II and III checks remain: dropping -4y gives error 4y(y+1) (y=1: 34 versus 26); dropping +6x gives error -6x(x-1) (x=2: 49 versus 61). IV remains correct. Thus C is now false in I/II/III; the same missing-square-cross-term procedure generates all three displayed errors.";
+const reviewedQuestion = {
+  question_id: target,
+  task_fidelity: {
+    verdict: "pass",
+    evidence: "Affected-only F3 update after viewing the source 317 prose and repaired view before keys. The four exact composed expressions and binomial/trinomial shape are unchanged. C-I now gives (a+5)(a^2+a+43), versus (a+5)(a^2+13a+43) in A/B/D; the full correct a-answer is no longer unanimous and the missing 12a creates a real mathematical distinction. Historical F3's specific copy-only invariant row is resolved. A/B still differ only on III, so I/II/IV cannot select A over B and the historical F2 c repair survives. Complete-list recognition still does not establish independent written expansion/factor production or separate mastery of every subpart; C can be rejected using II or III without judging I. Those declared recognition limits remain, and ordinary elimination is allowed.",
+  },
+  redundancy: {
+    verdict: "pass",
+    evidence: "Only C-I changed: row I now has two distinct algebraic products, not four copies of the correct full answer. III continues to distinguish A/B and C's inherited cross-term error; deleting III makes A/B identical, so other-row elimination cannot bypass 317c. The changed I assertion is a genuine competing product, not a duplicated supplied answer. Inherited cross-package nonredundancy evidence is reused without rereviewing the other 18 questions; selection is not evidence of separately judging all rows.",
+  },
+  answer_leakage: {
+    verdict: "pass",
+    evidence: "The unchanged visible stem contains no internal key, truth labels or source numbers. C-I's competing coefficient a rather than 13a removes the specific unanimous full-factorization disclosure for 317a; the factor cannot be copied as an agreed result from all alternatives. The new rationale stays internal. A/B's unchanged sole-III contrast means neither C's new I error nor any other-row judgment identifies the correct complete list without distinguishing III. Valid elimination may avoid separately judging I, but that ordinary recognition loss is not the earlier unanimous-answer leakage and is honestly retained.",
+  },
+  mathematics: {
+    verdict: "pass",
+    independent_solution: "All 14 original independent source solutions, including 317, and the prior A/B/D and unchanged C-II/III/IV mathematics are inherited from RECOVERY1, not freshly solved. The inherited correct products are (a+5)(a^2+13a+43), (y+1)(y^2-7y+19), (x-1)(x^2+10x+37), (2x-y)(x^2-xy+y^2). The new view-first F3 check derives C-I by omitting 12a from (a+6)^2 and independently disproves it at a=1: 270 versus 342; original minus candidate is 12a(a+5). C's appended derivation and misconception exactly generate this changed row. A remains entirely true, B false only in III, C false in I/II/III, D false only in IV. The complete true set is exactly {A}, unchanged and agreeing with every internal truth label. This is one changed-row algebra check plus inherited mathematics, not a new blind whole-source solution.",
+    correct: ["A"],
+    option_checks: optionChecks,
+  },
+};
+const source317Coverage = {
+  verdict: "pass",
+  evidence: "Affected-only F3 update; source 317's original independent_solution is inherited verbatim. All four original composed expressions and required factor shapes remain in the complete-product question. C-I now has a genuinely false missing-12a alternative (a=1: 270 versus 342), so the full correct answer for a is no longer supplied unanimously. A/B remain identical in I/II/IV and differ only in III, preserving the resolved historical F2 distinction; the other rows cannot choose A over B. F3's specific invariant supplied-answer loss is resolved for this new snapshot, not retroactively for RECOVERY1. The unchanged limitations and omitted_tasks retain loss of independently producing four products, and unit_reason/reason retain lack of separate-mastery evidence. C may still be eliminated via II or III without judging I; ordinary complete-table recognition remains within the contract, not independent production or proof of all-row mastery.",
+};
+const reviewer = {
+  kind: "independent_agent",
+  identity: "Authorized designated independent F3 FIRST reviewer for 182-6/STEMROBIN-182; did not author any input draft. Seed 317 prose and new view, then view-first.md, preceded key/rationale/inherited-math disclosure. Exactly 18 unchanged question approvals (including 314/F1), all 14 independent source solutions, 13 source coverage checks and the one figure check inherited verbatim from RECOVERY1; only 317 F3 and affected relationships reviewed. No new agent/chat, image opening or whole-source solving. Historical FIRST F1/F2 and RECOVERY1 F3 failures retained, not rewritten.",
+};
+const review = {
+  schema: inherited.schema,
+  seed_sha256: inherited.seed_sha256,
+  draft_sha256: digest(draft),
+  reviewer,
+  source_reviews: inherited.source_reviews.map(source => source.source_number === "317"
+    ? { ...source, coverage: source317Coverage } : source),
+  figure_checks: inherited.figure_checks,
+  new_figure_reviews: inherited.new_figure_reviews,
+  question_reviews: inherited.question_reviews.map(question =>
+    question.question_id === target ? reviewedQuestion : question),
+  outcome: "pass",
+};
+const inheritedQuestions = draft.questions.filter(q => q.id !== target).map(question => {
+  const prior = priorDraft.questions.find(q => q.id === question.id);
+  assert.deepEqual(question, prior);
+  const oldReview = inherited.question_reviews.find(q => q.question_id === question.id);
+  const newReview = review.question_reviews.find(q => q.question_id === question.id);
+  assert.deepEqual(newReview, oldReview);
+  for (const check of [oldReview.task_fidelity, oldReview.redundancy,
+    oldReview.answer_leakage, oldReview.mathematics]) assert.equal(check.verdict, "pass");
+  return {
+    question_id: question.id,
+    question_canonical_sha256: digest(question),
+    review_canonical_sha256: digest(oldReview),
+    inherited_verbatim: true,
+  };
+});
+assert.equal(inheritedQuestions.length, 18);
+assert.equal(review.source_reviews.length, 14);
+for (const source of review.source_reviews) {
+  const oldSource = inherited.source_reviews.find(s => s.source_number === source.source_number);
+  assert.equal(source.independent_solution, oldSource.independent_solution);
+  if (source.source_number !== "317") assert.deepEqual(source, oldSource);
+}
+assert.deepEqual(review.figure_checks, inherited.figure_checks);
+assert.deepEqual(review.new_figure_reviews, []);
+assert.deepEqual(reviewedQuestion.mathematics.correct, changed.key.correct);
+for (const option of optionChecks) {
+  assert.equal(option.truth, changed.key.rationales.find(r => r.option_id === option.option_id).truth);
+}
+
+const outputBindings = {};
+outputBindings.review = write("review.json", review);
+outputBindings.diff = write("diff.json", {
+  previous_draft: inputBindings.prior_draft,
+  new_draft: inputBindings.new_draft,
+  repair_record: inputBindings.repair_record,
+  exact_scalar_diff: changes,
+  changed_question_ids: [target],
+  unchanged_questions: 18,
+  changed_option_texts: 1,
+  changed_row_cells: 1,
+  changed_rationale_fields: 2,
+  changed_scalar_fields: 3,
+  key_correct_sets_unchanged: true,
+  coverage_unchanged: true,
+  limitations_and_omissions_unchanged: true,
+  b_only_III_contrast_preserved: true,
+});
+outputBindings.provenance = write("review-provenance.json", {
+  reviewer,
+  input_bindings: inputBindings,
+  composed_review: outputBindings.review,
+  inherited_questions: inheritedQuestions,
+  source_records: review.source_reviews.map(source => ({
+    source_number: source.source_number,
+    independent_solution_sha256: sha(source.independent_solution),
+    independent_solution_inherited_verbatim: true,
+    coverage_inherited_verbatim: source.source_number !== "317",
+    current_coverage_canonical_sha256: digest(source.coverage),
+  })),
+  inherited_figure_checks_canonical_sha256: digest(review.figure_checks),
+  affected_view_sha256: digest(changed.view),
+  affected_key_sha256: digest(changed.key),
+  affected_intent_sha256: digest(changed.intent),
+  inherited_option_check_ids: ["A", "B", "D"],
+  updated_option_check_ids: ["C"],
+  historical_F1_F2: previousResult.inheritance.original_findings,
+  historical_F3: previousResult.findings,
+  observation_order: [
+    "Read review/native/production-resume contracts.",
+    "Read only source 317 seed prose/selected definitions and new 317 view.",
+    "Record view-first changed-row algebra and fidelity before internals or inherited math.",
+    "Receive RECOVERY1 complete review/result; compare exact repair diff and changed rationale.",
+    "Compose 18 verbatim question approvals and inherited source/image evidence; review only new F3.",
+    "One native seed+newdraft+newreview invocation, with actual receipt and streams.",
+  ],
+});
+
+const command = "python3";
+const argv = [
+  ".agents/skills/ld-s10y-choice/scripts/validate.py",
+  "--repo", ".",
+  "--seed", path.relative(cwd, files.seed),
+  "--draft", path.relative(cwd, files.new_draft),
+  "--review", path.relative(cwd, outputBindings.review.path),
+];
+const commandText = [command, ...argv].join(" ");
+outputBindings.once_marker = write("validation.once.json", {
+  cwd, command, argv, invocation_count: 1,
+  created_at: new Date().toISOString(),
+  review: outputBindings.review,
+  no_separate_structural_invocation: true,
+});
+const startedAt = new Date().toISOString();
+const child = spawnSync(command, argv, {
+  cwd,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
+  maxBuffer: 4 * 1024 * 1024,
+});
+const endedAt = new Date().toISOString();
+const stdout = child.stdout ?? Buffer.alloc(0);
+const stderr = child.stderr ?? Buffer.alloc(0);
+fs.writeFileSync(path.join(own, "validation.stdout.txt"), stdout, { flag: "wx" });
+fs.writeFileSync(path.join(own, "validation.stderr.txt"), stderr, { flag: "wx" });
+const stableInputs = Object.entries(inputBindings).every(([name, before]) =>
+  canonical(before) === canonical(binding(files[name])));
+const stableReview = canonical(outputBindings.review) ===
+  canonical(binding(outputBindings.review.path));
+const receipt = {
+  schema: "stemrobin-182/native-choice-validation-receipt@1",
+  invocation_count: 1, cwd, command, argv,
+  command_text: commandText,
+  command_sha256: digest({ cwd, command, argv }),
+  argv_canonical_sha256: digest(argv),
+  environment_overrides: { PYTHONDONTWRITEBYTECODE: "1" },
+  started_at: startedAt, ended_at: endedAt,
+  exit_code: child.status, signal: child.signal,
+  process_error: child.error ? String(child.error) : null,
+  stdout: binding(path.join(own, "validation.stdout.txt")),
+  stderr: binding(path.join(own, "validation.stderr.txt")),
+  input_bindings: inputBindings,
+  review: outputBindings.review,
+  input_bindings_unchanged: stableInputs,
+  review_binding_unchanged: stableReview,
+  no_separate_structural_invocation: true,
+  scope: "Mechanical complete-package validation only; semantic work was F3 affected-only.",
+};
+outputBindings.validation_receipt = write("validation.receipt.json", receipt);
+const approved = child.status === 0 && !child.error && !child.signal
+  && stableInputs && stableReview;
+const status = approved ? "PASS" : "BLOCKED";
+const finalObservation = [
+  "", "## Actual once-only native result", "",
+  `Command: \`${commandText}\`.`,
+  `Started: ${startedAt}; ended: ${endedAt}.`,
+  `Actual exit code: ${child.status}; signal: ${child.signal ?? "none"}.`,
+  `stdout: \`${JSON.stringify(stdout.toString("utf8"))}\`.`,
+  `stderr: \`${JSON.stringify(stderr.toString("utf8"))}\`.`,
+  `Inputs unchanged: ${stableInputs}; composed review unchanged: ${stableReview}.`,
+  `Actual finite result: ${status}. Native invocations here: 1.`,
+  "No structural repeat, repair, image/source rerun, integration or external action follows.",
+  "",
+].join("\n");
+fs.appendFileSync(path.join(own, "observations.md"), finalObservation);
+outputBindings.observations = binding(path.join(own, "observations.md"));
+const counts = {
+  total_questions: draft.questions.length,
+  total_options: draft.questions.reduce((total, q) => total + q.view.options.length, 0),
+  inherited_questions: 18, reviewed_questions: 1,
+  inherited_options: 76, reviewed_option_dispositions: 4,
+  inherited_affected_option_checks: 3, updated_affected_option_checks: 1,
+  new_changed_row_algebra_checks: 1, fresh_whole_question_solves: 0,
+  source_reviews: 14, inherited_source_solutions: 14,
+  inherited_source_coverage: 13, reviewed_source_coverage: 1,
+  changed_json_scalar_units: 3, changed_option_texts: 1,
+  changed_row_cells: 1, changed_rationale_fields: 2,
+  changed_key_correct_sets: 0, changed_coverage_records: 0,
+  image_opens: 0, inherited_figure_checks: 1, new_figure_reviews: 0,
+  native_validator_invocations: 1, separate_structural_invocations: 0,
+  full_source_resolves: 0, draft_edits: 0, content_repair_rounds_here: 0,
+  new_F3_content_repair_rounds_received: 1, cumulative_content_repair_rounds: 2,
+  generated_images: 0, rendered_images: 0, figure_reviews_reopened: 0,
+  source_reviews_rerun: 0, answer_reviews_rerun: 0,
+  agents_created_or_messaged: 0, chats_created_or_messaged: 0,
+  worktrees_created: 0, git_actions: 0, database_calls: 0,
+  installs: 0, network_calls: 0, paid_calls: 0, paid_cost: 0,
+  newly_found_unresolved_defects: 0,
+};
+const f3Disposition = {
+  original_finding: previousResult.findings.find(finding => finding.id === "F3"),
+  historical_verdict: "revise",
+  new_snapshot_disposition: "resolved",
+  evidence: "C-I now omits 12a, yielding 270 rather than 342 at a=1; row I is not unanimous. Appended rationale reproduces the wrong procedure. A/B sole-III contrast survives, so c cannot be bypassed through other rows. Recognition and separate-mastery losses remain.",
+};
+const losses = {
+  ...previousResult.losses,
+  new_specific_loss: null,
+  historical_F3_specific_loss: previousResult.losses.new_specific_loss,
+  current_F3_disposition: f3Disposition,
+  all_draft_limitations_unchanged: true,
+  all_draft_omitted_tasks_unchanged: true,
+  qualification: "F1/F2/F3 failure records are immutable history and are resolved only for their respective later snapshots. Unanimous I-answer loss is gone; independent factor production and separate row mastery remain unproved. C may be rejected on II or III without separately judging I. Inherited 321 drawing/actual-graph losses and all other historical production losses remain; no image or unchanged source was reopened.",
+};
+const finalizedAt = new Date().toISOString();
+const usage = {
+  schema: "stemrobin-182/affected-choice-review-usage@1",
+  cwd, ticket: "182-6/STEMROBIN-182", book: "8a", lesson: "alg8-c3-s3-n20",
+  bindings: { ...inputBindings, ...outputBindings },
+  counts,
+  inherited_usage_not_reset: {
+    prior_usage_binding: inputBindings.inherited_usage,
+    prior_counts: previousUsage.counts,
+    prior_inherited_usage: previousUsage.inherited_usage_not_reset,
+    no_historical_usage_reset: true,
+  },
+  prior_first_review_images: previousUsage.prior_first_review_images,
+  prior_repair_images: previousUsage.prior_repair_images,
+  prior_affected_review_images: previousUsage.images_here,
+  new_F3_repair_images: repair.imageViews,
+  images_here: 0,
+  retained_cumulative_images_from_referenced_stages:
+    previousUsage.retained_cumulative_images_from_referenced_stages + repair.imageViews,
+  prior_content_repair_rounds: previousUsage.retained_cumulative_content_repair_rounds,
+  new_content_repair_rounds: repair.newDefectRepairRound,
+  new_content_repair_rounds_note: "Received author F3 repair; reviewer authored no draft and performs 0 repairs.",
+  retained_cumulative_content_repair_rounds: repair.cumulativeContentRepairRounds,
+  historical_F1_F2: previousResult.inheritance.original_findings,
+  historical_F3: previousResult.findings,
+  current_F3_disposition: f3Disposition,
+  losses,
+  validation: receipt,
+  host_tokens: "unknown", host_cost: "unknown",
+  status, finite_gate_stopped: true, finalized_at: finalizedAt,
+};
+outputBindings.usage = write("usage.json", usage);
+const result = {
+  status,
+  semantic_outcome: review.outcome,
+  approved,
+  ticket: "182-6/STEMROBIN-182", book: "8a", lesson: "alg8-c3-s3-n20",
+  cwd, reviewer,
+  current_bindings: { ...inputBindings, ...outputBindings },
+  complete_native_review: true,
+  question_review_count: 19, source_review_count: 14,
+  input_bindings_unchanged_through_native_gate: stableInputs && stableReview,
+  counts,
+  inheritance: {
+    question_approvals_inherited_unchanged: 18,
+    includes_314_F1_approval: true,
+    affected_questions_reviewed: 1,
+    independent_source_solutions_inherited_verbatim: 14,
+    source_coverage_inherited_verbatim: 13,
+    affected_source_coverage_updated: 1,
+    figure_checks_inherited_verbatim: 1,
+    original_first_review_outcome: "revise",
+    original_first_result_status: "REVISE",
+    prior_affected_review_outcome: "revise",
+    prior_affected_result_status: "REVISE",
+    historical_F1_F2: previousResult.inheritance.original_findings,
+    historical_F3: previousResult.findings,
+    current_F3_disposition: f3Disposition,
+    no_revisit_of_unchanged_questions: true,
+    no_whole_source_solving_or_images_repeated: true,
+  },
+  affected_mathematics: {
+    verdict: "pass", true_set: ["A"],
+    option_truths: optionChecks.map(({ option_id, truth }) => ({ option_id, truth })),
+    key_unchanged_and_agrees: true,
+    new_C_I: { omitted_term: "12a", original_at_a1: 342, candidate_at_a1: 270,
+      original_minus_candidate: "12a(a+5)" },
+    b_only_III_contrast_preserved: true,
+    c_cannot_be_bypassed_using_other_rows: true,
+    scope: "Inherited existing algebra and all option dispositions, updated only changed C-I and affected rationale/relationships.",
+  },
+  findings: [],
+  losses,
+  validation: receipt,
+  ownership: {
+    writes_only: own, input_drafts_or_historical_reviews_modified: false,
+    durable_changes: false, external_actions: false,
+  },
+  stop: {
+    finite_task_complete: true, no_further_action_authorized: true,
+    no_draft_repair_or_integration: true,
+  },
+  finalized_at: finalizedAt,
+};
+const resultBinding = write("result.json", result);
+console.log(JSON.stringify({
+  status, approved, review: outputBindings.review, result: resultBinding,
+  usage: outputBindings.usage, observations: outputBindings.observations,
+  validation_receipt: outputBindings.validation_receipt,
+  stdout: receipt.stdout, stderr: receipt.stderr,
+  actual_exit_code: child.status,
+  native_validator_invocations: 1,
+  inherited_questions: 18, reviewed_questions: 1,
+  images_here: 0, cumulative_content_repairs: 2,
+  finite_task_stopped: true,
+}, null, 2));
+if (!approved) process.exitCode = 1;

@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+assert.equal(git(['diff', '--cached', '--name-only']).trim(), '', 'Preserve any existing staged edits');
+assert.equal(git(['rev-parse', 'HEAD']).trim(), git(['rev-parse', 'FETCH_HEAD']).trim());
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const modern = `${book}/editions/modern-us-neutral`;
+const lesson = 'alg8-c3-s3-n20';
+const target = `${modern}/lessons/${lesson}`;
+const binding = JSON.parse(fs.readFileSync(`${target}/offline-display.json`));
+assert.equal(binding.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(binding.displayObservationAccounting.uniqueRequiredImages, 126);
+assert.equal(binding.displayObservationAccounting.passedImageReopens, 0);
+const scope = [
+  `${book}/book.json`, `${modern}/book.json`,
+  `${book}/lessons/${lesson}`, target,
+  ...[114, 115, 116, 117].map(page => `${book}/pages/${String(page).padStart(4, '0')}`),
+  ...['png', 'svg'].map(extension => `${book}/figures/fig-32.${extension}`),
+  ...['spec.json', 'svg', 'render.json', 'review.json'].map(extension => `${modern}/figures/fig-32.${extension}`),
+  `${book}/evidence/resume182-6-n20-source-3129`,
+  `${book}/evidence/resume182-6-n20-final-3129`,
+  '.intentfold/tickets/STEMROBIN-182/progress.md',
+];
+for (const filename of scope) assert.ok(fs.existsSync(filename), filename);
+git(['add', '--', ...scope]);
+const staged = git(['diff', '--cached', '--name-only', '-z']).split('\0').filter(Boolean);
+for (const filename of staged) {
+  assert.ok(scope.some(allowed => filename === allowed || filename.startsWith(`${allowed}/`)), filename);
+  assert.ok(!filename.split('/').some(part => part === '.env' || part.startsWith('.env.')));
+  const bytes = execFileSync('git', ['show', `:${filename}`], { cwd: root, maxBuffer: 32 * 1024 * 1024 });
+  if (bytes.includes(0)) continue;
+  const text = bytes.toString('utf8');
+  assert.ok(!/(?:postgres(?:ql)?:\/\/[^\s"']+:[^\s"']+@|plane_api_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{24,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/.test(text), `Potential secret: ${filename}`);
+}
+console.log(JSON.stringify({ status: 'NARROW_STAGE_PASS', date: new Date().toISOString(),
+  head: git(['rev-parse', 'HEAD']).trim(), stagedFiles: staged.length, scope,
+  unrelatedEditsStaged: 0, secretCandidates: 0, workdir: root }));
