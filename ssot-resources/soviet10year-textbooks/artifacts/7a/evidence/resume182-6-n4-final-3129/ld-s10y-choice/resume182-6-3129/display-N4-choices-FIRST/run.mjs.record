@@ -1,0 +1,468 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST');
+const ID = 'alg7-c1-s1-n4';
+const MODERN = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral');
+const LESSON = path.join(MODERN, 'lessons', ID);
+const CHOICES = path.join(LESSON, 'choice-set');
+const HISTORY = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence');
+const BASE = path.join(HISTORY, 'resume182-6-n6-display-runtime3695/resume182-6-8a-n6-display3695-FIRST/display-helper.mjs.record');
+const EXTENSION = path.join(HISTORY, 'resume182-6-n11-display-runtime-recovery2-0789/display-FIRST/display-helper.mjs.record');
+const METHOD = path.join(HISTORY, 'resume182-6-n11-display-runtime-recovery2-0789/display-FIRST/run.mjs.record');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const norm = text => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+const own = filename => {
+  assert.ok(path.resolve(filename).startsWith(`${OUTPUT}/`), 'Write outside authorized directory');
+  return filename;
+};
+assert.equal(process.cwd(), ROOT);
+const args = process.argv.slice(2);
+assert.ok(args.length === 0 || args.length === 2 && args[0] === '--recover-formula-padding');
+const previousPath = args.length ? own(args[1]) : null;
+const previous = previousPath ? JSON.parse(await readFile(previousPath, 'utf8')) : null;
+const attemptNumber = previous ? previous.attemptNumber + 1 : 1;
+const RUN = previous ? path.join(OUTPUT, `recovery-${attemptNumber}`) : OUTPUT;
+for (const directory of ['screenshots', 'published', 'browser-tmp'])
+  await mkdir(own(path.join(RUN, directory)), { recursive: true });
+const save = (name, value) => writeFile(own(path.join(RUN, name)), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const event = value => appendFile(own(path.join(RUN, 'events.ndjson')),
+  `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+const usage = { browserLaunches: 0, browserContexts: 0, pageNavigations: 0, browserEvaluations: 0,
+  screenshotsCaptured: 0, screenshotsOpened: 0, imagesObserved: 0, rendererCalls: 0,
+  choiceHtmlCalls: 0, checkerCalls: 0, solverCalls: 0, figureReviewCalls: 0,
+  paidCalls: 0, installs: 0, dbCalls: 0, externalNetworkCalls: 0 };
+const network = { served: [], blocked: [], failures: [], pageErrors: [], consoleErrors: [],
+  warnings: [], badResponses: [] };
+const report = {
+  schema: 'resume182-6-n4-choices-offline-display@1', lesson: ID, book: '7a', edition: 'modern-us-neutral',
+  workdir: ROOT, writeRoot: OUTPUT, attemptNumber, startedAt: new Date().toISOString(),
+  status: 'RUNNING', boundary: 'choices view only; inherited semantic/source/figure approval; human visual pending',
+  inputs: [], reports: [], checks: [], faults: [], completedViews: previous?.completedViews ?? [],
+  screenshots: previous?.screenshots ?? [], coverage: previous?.coverage ?? [],
+  viewEvidence: previous?.viewEvidence ?? [], deliveredHtml: previous?.deliveredHtml ?? [],
+  priorAttempts: previous ? [...previous.priorAttempts, { path: previousPath, sha256: sha(await readFile(previousPath)),
+    attemptNumber: previous.attemptNumber, status: previous.status, failure: previous.executionFailure }] : [],
+  cleanup: { contextsCreated: 0, contextsClosedCount: 0, contextsClosed: true, browserClosed: true,
+    browserConnectedAfterClose: false, serverClosed: true, serverListeningAfterClose: false },
+  usage, network, visualObservation: 'PENDING', finalBindingOwner: 'parent',
+};
+const assertOfflineRuntime = () => assert.ok(
+  ['blocked', 'failures', 'pageErrors', 'consoleErrors', 'badResponses'].every(key => !network[key].length),
+  'Actual console/page/network fault');
+const check = async (name, success, facts = {}) => {
+  const item = { name, status: success ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(item);
+  await event({ check: item });
+  assertOfflineRuntime();
+  assert.ok(success, name);
+};
+const record = async (filename, expected, input = true) => {
+  const bytes = await readFile(filename);
+  const entry = { path: filename, sha256: sha(bytes), bytes: bytes.length };
+  if (expected) assert.equal(entry.sha256, expected, filename);
+  (input ? report.inputs : report.reports).push(entry);
+  return bytes;
+};
+const stage = async (filename, bytes) => {
+  await writeFile(own(filename), bytes, { flag: 'wx' });
+  await record(filename, sha(bytes), false);
+  return { path: filename, sha256: sha(bytes), bytes: bytes.length };
+};
+const contexts = new Set();
+let browser, server, currentPage, currentView;
+try {
+  const promotionPath = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/n4-source62-merge-FIRST/promotion.json');
+  const approvalPath = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/n4-source62-merge-FIRST/validate-merged-snapshot.execution.json');
+  const promotion = JSON.parse(await record(promotionPath));
+  const approvedExecution = JSON.parse(await record(approvalPath));
+  assert.equal(approvedExecution.exitCode, 0);
+  assert.equal(approvedExecution.workdir, ROOT);
+  const seed = JSON.parse(await record(path.join(CHOICES, 'seed.json'), promotion.currentHashes.seed));
+  const draft = JSON.parse(await record(path.join(CHOICES, 'draft.json'), promotion.currentHashes.draft));
+  const review = JSON.parse(await record(path.join(CHOICES, 'review.json'), promotion.currentHashes.review));
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, promotion.currentCanonicalHashes.seed);
+  assert.equal(review.draft_sha256, promotion.currentCanonicalHashes.draft);
+  assert.equal(seed.source.book, '7a');
+  assert.equal(seed.source.lesson, ID);
+  assert.equal(seed.exercises.length, 15);
+  const views = draft.questions.map(({ view }) => ({ mode: view.mode, stem: view.stem,
+    figure_ids: view.figure_ids, options: view.options.map(({ id, text, figure_ids }) => ({ id, text, figure_ids })) }));
+  assert.equal(views.length, 35);
+  assert.equal(views.reduce((count, view) => count + view.options.length, 0), 149);
+  assert.equal(draft.new_figures.length, 0);
+  report.approvalReuse = { promotion: promotionPath, execution: approvalPath,
+    rawHashes: promotion.currentHashes, canonicalHashes: promotion.currentCanonicalHashes,
+    outcome: review.outcome, sources: seed.exercises.length, questions: views.length, options: 149,
+    insertedQuestionNumber: promotion.insertedQuestionPosition + 1, checkerRerun: false,
+    solverRerun: false, sourceReviewRerun: false, figureReviewRerun: false };
+  const oldHtmlPath = path.join(CHOICES, 'evidence/first-choice-display/choices.html');
+  const oldHtmlBytes = await record(oldHtmlPath, 'f55816a643fd2591c58663a2a9d97506dfe9376081f2b82e24bc1f43d55e41ff');
+  const lesson = JSON.parse(await record(path.join(LESSON, 'lesson.json')));
+  const manifest = JSON.parse(await record(path.join(LESSON, 'figures.json')));
+  const usedFigures = [...new Set(views.flatMap(view => [...view.figure_ids,
+    ...view.options.flatMap(option => option.figure_ids)]))];
+  assert.deepEqual(usedFigures, ['fig-01']);
+  const figureContracts = {};
+  for (const id of usedFigures) {
+    const figure = manifest.figures.find(item => item.id === id);
+    assert.ok(figure);
+    const spec = JSON.parse(await record(path.join(MODERN, figure.spec)));
+    const svgMarkup = (await record(path.join(MODERN, figure.svg))).toString('utf8').replace(/<\?xml[^>]*\?>/u, '').trim();
+    await record(path.join(MODERN, figure.render));
+    await record(path.join(MODERN, figure.review));
+    figureContracts[id] = { svgMarkup, labels: spec.objects.filter(item => item.type === 'text')
+      .map(({ id, text }) => ({ id: `${id}-label`, text })), minimumPx: spec.display.minTextPx,
+      layout: spec.display.layout, maxWidthPx: spec.display.maxWidthPx };
+  }
+  const baseCode = (await record(BASE)).toString('utf8');
+  let extensionCode = (await record(EXTENSION)).toString('utf8');
+  await record(METHOD);
+  await record(path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N4-FIRST/run.mjs'));
+  const replaceOnce = (before, after) => {
+    assert.equal(extensionCode.split(before).length, 2, before);
+    extensionCode = extensionCode.replace(before, after);
+  };
+  const dataModule = code => `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+  replaceOnce("'./display-helper-base.mjs'", JSON.stringify(dataModule(baseCode)));
+  // Add table cells to N11's existing region collector, retaining its scrolling and screenshot method.
+  replaceOnce('const horizontalEnds = [], internalClips = [];', 'const horizontalEnds = [], internalClips = [], tableCells = [];');
+  replaceOnce('    for (const node of [root, ...root.querySelectorAll(\'*\')]) {', `
+    for (const [tableIndex, table] of [...root.querySelectorAll('table')].entries()) {
+      for (const [rowIndex, row] of [...table.rows].entries()) {
+        for (const [columnIndex, cell] of [...row.cells].entries()) {
+          const box = cell.getBoundingClientRect(), indices = [];
+          for (let y = 0; y < box.height; y += 32) for (let x = 0; x < box.width; x += 32) {
+            const width = Math.min(32, box.width - x), height = Math.min(32, box.height - y);
+            indices.push(add(cell, () => {
+              const actual = cell.getBoundingClientRect();
+              return { left: actual.left + x, right: actual.left + x + width,
+                top: actual.top + y, bottom: actual.top + y + height, width, height };
+            }, material.key, 'table-cell-region', null));
+          }
+          tableCells.push({ key: material.key, tableIndex, rowIndex, columnIndex, indices,
+            width: box.width, height: box.height, fontPx: parseFloat(getComputedStyle(cell).fontSize),
+            rightmost: columnIndex === row.cells.length - 1 });
+        }
+      }
+    }
+    for (const node of [root, ...root.querySelectorAll('*')]) {`);
+  replaceOnce('dom.formulaBoxes = extra.formulaBoxes;', 'dom.formulaBoxes = extra.formulaBoxes; dom.tableCells = extra.tableCells;');
+  replaceOnce('formulaBoxes, formulaGlyphFonts, horizontalEnds, internalClips, failed };',
+    'formulaBoxes, formulaGlyphFonts, horizontalEnds, internalClips, failed, tableCells };');
+  replaceOnce("&& image.surface === surface && image.captureChecks === 'PASS');",
+    "&& image.surface === surface && image.captureChecks === 'PASS' && image.coverageReusable !== false);");
+  report.collectorReuse = { base: BASE, extension: EXTENSION, inMemoryAdapterSha256: sha(extensionCode),
+    adaptation: 'Table-cell 32px region inventory only; existing glyph/formula/media/bring/snapshot/native capture algorithms reused' };
+  const { createDisplayHelpers } = await import(dataModule(extensionCode));
+  const requireApp = createRequire(path.join(ROOT, 'app/package.json'));
+  const { chromium } = requireApp('playwright');
+  const { PNG } = requireApp(path.join(ROOT, 'app/node_modules/playwright-core/lib/utilsBundle.js'));
+  const choiceHtmlPath = path.join(ROOT, '.claude/skills/ld-s10y-lesson/tools/choice_html.mjs');
+  await record(choiceHtmlPath);
+  await record(path.join(ROOT, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'));
+  const { choiceHtml } = await import(choiceHtmlPath);
+  const { marked } = await import(path.join(ROOT, '.agents/skills/node_modules/marked/lib/marked.esm.js'));
+  const helpers = createDisplayHelpers({ norm, own, RUN, assertOfflineRuntime, PNG,
+    same: (a, b) => JSON.stringify(a) === JSON.stringify(b), sha, report, usage, event, save, check });
+  const { projection, pageSafety, install, captureCoverage } = helpers;
+  const expectedChoice = text => {
+    const tokens = marked.lexer(text), tables = [], pieces = [];
+    if (!tokens.some(token => token.type === 'table')) return { ...projection(text), tables, literalLF: true };
+    for (const token of tokens) {
+      if (token.type !== 'table') { pieces.push(token.raw); continue; }
+      const rows = [token.header, ...token.rows].map(row => row.map(cell => cell.text));
+      tables.push(rows.map(row => row.map(projection)));
+      pieces.push(...rows.map(row => row.join(' ')));
+    }
+    return { ...projection(pieces.join(' ')), tables, literalLF: false };
+  };
+  const fragment = text => { usage.choiceHtmlCalls += 1; return choiceHtml(text); };
+  const placeholders = ids => ids.map(id => `<template data-display-figure="${id}"></template>`).join('');
+  const sections = views.map((view, index) => `<section class="choice"><p class="choice-heading">${index + 1}. `
+    + `${view.mode === 'multiple' ? '\u591a\u9009' : '\u5355\u9009'}</p>`
+    + `<div class="choice-stem">${fragment(view.stem)}${placeholders(view.figure_ids)}</div>`
+    + `<ol class="choice-options">` + view.options.map((option, optionIndex) =>
+      `<li><span class="option-id">${String.fromCharCode(65 + optionIndex)}</span>`
+      + `<div class="choice-option-body">${fragment(option.text)}${placeholders(option.figure_ids)}</div></li>`).join('')
+    + '</ol></section>');
+  const leakage = /\b(?:correct_index|correctIndex|answerKey|answer_key|correct|accept|expected|seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent|key)\b/iu;
+  assert.ok(sections.every(section => !leakage.test(section)));
+  report.projection = { fields: ['view.mode', 'view.stem', 'view.figure_ids',
+    'view.options.id', 'view.options.text', 'view.options.figure_ids'],
+    heading: `${lesson.printed_title || lesson.title} \u00b7 \u9009\u62e9\u9898`,
+    questions: 35, options: 149, sources: 15, figureIds: usedFigures, clientIntentOrKey: false,
+    sourceSolvingOrSemanticReviewRepeated: false };
+  const html = new Map();
+  if (previous) {
+    assert.ok(previous.executionFailure && previous.failedView);
+    assert.match(previous.executionFailure.message, /glyph-rules-media-and-formula-boxes-reachable/u);
+    assert.ok(previous.domFailure?.failed?.every(target => target.kind === 'text-glyph' || target.kind === 'formula-box-region'));
+    assert.ok(!previous.domFailure?.internalClips?.length);
+    for (const image of report.screenshots)
+      if (`${image.viewport.width}:${image.surface}` === previous.failedView) image.coverageReusable = false;
+    report.recovery = { failedView: previous.failedView, reason: 'Affected formula scroll-padding only',
+      priorFailurePreserved: true, semanticApprovalGranted: false };
+  }
+  server = createServer((request, response) => {
+    network.served.push({ method: request.method, path: request.url });
+    if (request.method === 'GET' && request.url === '/favicon.ico') return void response.writeHead(204).end();
+    const bytes = request.method === 'GET' ? html.get(request.url) : undefined;
+    if (!bytes) {
+      network.badResponses.push({ path: request.url, status: 404 });
+      return void response.writeHead(404).end();
+    }
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; script-src 'none'; connect-src 'none'; frame-src 'none'; form-action 'none';" }).end(bytes);
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  report.cleanup.serverClosed = false;
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  report.server = { origin, portRequested: 0, htmlOnly: true };
+  usage.browserLaunches += 1;
+  browser = await chromium.launch({ headless: true, timeout: 30000,
+    downloadsPath: own(path.join(RUN, 'browser-tmp')),
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8', TMPDIR: own(path.join(RUN, 'browser-tmp')) },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-first-run', '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'] });
+  report.cleanup.browserClosed = false;
+  report.browser = { version: browser.version(), headless: true, isolated: true, dependency: 'existing app Playwright' };
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const viewKey = `${viewport.width}:choices`;
+    if (report.completedViews.includes(viewKey)) continue;
+    currentView = { viewport, surface: 'choices' };
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block', acceptDownloads: false });
+    contexts.add(context);
+    usage.browserContexts += 1;
+    report.cleanup.contextsCreated += 1;
+    report.cleanup.contextsClosed = false;
+    context.setDefaultTimeout(20000);
+    await context.route('**/*', async route => {
+      const request = route.request(), url = new URL(request.url());
+      if (request.method() === 'GET' && url.origin === origin && !url.search && !url.hash
+        && [...html.keys(), '/favicon.ico'].includes(url.pathname)) await route.continue();
+      else { network.blocked.push({ method: request.method(), url: request.url() }); await route.abort('blockedbyclient'); }
+    });
+    await context.routeWebSocket(/.*/, async socket => { network.blocked.push({ kind: 'websocket' }); await socket.close(); });
+    const page = await context.newPage();
+    currentPage = page;
+    const nativeEvaluate = page.evaluate.bind(page);
+    page.evaluate = (...parameters) => { usage.browserEvaluations += 1; return nativeEvaluate(...parameters); };
+    page.on('pageerror', error => network.pageErrors.push(error.message));
+    page.on('console', message => {
+      if (message.type() === 'error') network.consoleErrors.push(message.text());
+      if (message.type() === 'warning') network.warnings.push(message.text());
+    });
+    page.on('requestfailed', request => network.failures.push({ url: request.url(), error: request.failure() }));
+    page.on('response', response => {
+      if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() });
+    });
+    let delivered;
+    if (!report.deliveredHtml.length) {
+      const result = await page.evaluate(({ previousHtml, sections }) => {
+        const document = new DOMParser().parseFromString(previousHtml, 'text/html');
+        const sheet = document.querySelector('.sheet');
+        const old = [...sheet.querySelectorAll(':scope > section.choice')];
+        if (old.length !== 34) throw new Error('Wrong first-display template');
+        const figures = new Map([...document.querySelectorAll('figure')].map(figure => [figure.id, figure]));
+        const template = document.createElement('template');
+        template.innerHTML = sections.join('');
+        for (const marker of template.content.querySelectorAll('template[data-display-figure]')) {
+          const figure = figures.get(marker.dataset.displayFigure);
+          if (!figure) throw new Error('Missing approved figure template');
+          marker.replaceWith(figure.cloneNode(true));
+        }
+        const current = [...template.content.querySelectorAll('section.choice')];
+        const prefixUnchanged = old.slice(0, 27).every((section, index) => section.outerHTML === current[index].outerHTML);
+        if (!prefixUnchanged) throw new Error('Unchanged pre-source62 view projection differs');
+        for (const section of old) section.remove();
+        sheet.append(template.content);
+        return { html: '<!DOCTYPE html>' + document.documentElement.outerHTML, prefixUnchanged };
+      }, { previousHtml: oldHtmlBytes.toString('utf8'), sections });
+      assert.ok(!leakage.test(result.html));
+      report.templateReuse = { path: oldHtmlPath, sha256: sha(oldHtmlBytes), oldFirstScreenshotsOpened: 0,
+        oldFirstDisplayReviewRepeated: false, unchangedFirst27ViewProjection: result.prefixUnchanged,
+        parsedInertlyOnly: true, currentHtmlProjected: true };
+      delivered = await stage(path.join(RUN, 'published/choices.html'), Buffer.from(result.html));
+      report.deliveredHtml.push(delivered);
+    } else {
+      delivered = report.deliveredHtml[0];
+      await record(delivered.path, delivered.sha256, false);
+      report.templateReuse = previous.templateReuse;
+    }
+    let bytes = await readFile(delivered.path);
+    if (previous && viewKey === previous.failedView) {
+      const adjusted = await page.evaluate(({ html, width }) => {
+        const document = new DOMParser().parseFromString(html, 'text/html');
+        const style = document.createElement('style');
+        style.id = 'choice-fraction-padding-final';
+        style.textContent = `@media(min-width:${width}px) and (max-width:${width}px){`
+          + '.nb,.sr-nb{padding:.3em .15em;margin-block:0;box-sizing:border-box;vertical-align:middle}'
+          + '.nb:has(.delimsizing.mult),.sr-nb:has(.delimsizing.mult){padding-block:1.2em}'
+          + '.choice-stem,.choice-option-body{padding-block:.3em;margin-block:0}}';
+        document.head.append(style);
+        return '<!DOCTYPE html>' + document.documentElement.outerHTML;
+      }, { html: bytes.toString('utf8'), width: viewport.width });
+      bytes = Buffer.from(adjusted);
+      assert.ok(!leakage.test(adjusted));
+      delivered = await stage(path.join(RUN, `published/${viewport.width}-choices-formula-padding.html`), bytes);
+      report.deliveredHtml.push(delivered);
+    }
+    html.set('/choices.html', bytes);
+    const served = await fetch(`${origin}/choices.html`, { signal: AbortSignal.timeout(5000) });
+    assert.equal(served.status, 200);
+    assert.equal(sha(Buffer.from(await served.arrayBuffer())), delivered.sha256);
+    usage.pageNavigations += 1;
+    const response = await page.goto(`${origin}/choices.html`, { waitUntil: 'load' });
+    assert.equal(response.status(), 200);
+    assert.equal(sha(await response.body()), delivered.sha256);
+    await page.evaluate(() => document.fonts.ready);
+    assertOfflineRuntime();
+    const materials = [];
+    const add = (key, selector, index, expected) => materials.push({ key, selector, index, expected });
+    add('title', 'h1', 0, projection(report.projection.heading));
+    add('crumb', '.crumb', 0, projection(''));
+    assert.equal(await page.locator('.choice').count(), 35);
+    assert.equal(await page.locator('.choice-options > li').count(), 149);
+    views.forEach((view, index) => {
+      const selector = `.choice:nth-of-type(${index + 1})`;
+      add(`choice-${index}-heading`, '.choice-heading', index, projection(
+        `${index + 1}. ${view.mode === 'multiple' ? '\u591a\u9009' : '\u5355\u9009'}`));
+      add(`choice-${index}-stem`, '.choice-stem', index, expectedChoice(view.stem));
+      view.options.forEach((option, optionIndex) => {
+        add(`choice-${index}-option-${optionIndex}`, `${selector} .choice-option-body`, optionIndex, expectedChoice(option.text));
+        add(`choice-${index}-label-${optionIndex}`, `${selector} .option-id`, optionIndex, projection(option.id));
+      });
+    });
+    const dom = await install(page, { materials: materials.map(({ expected, ...descriptor }) => descriptor), figureContracts });
+    await save(`${viewport.width}-choices-dom.json`, dom);
+    await record(path.join(RUN, `${viewport.width}-choices-dom.json`), undefined, false);
+    report.domFailure = { failed: dom.failed, hidden: dom.hidden, internalClips: dom.internalClips };
+    await check(`${viewKey}:glyph-rules-media-and-formula-boxes-reachable`, dom.targetCount > 0
+      && !dom.hidden.length && !dom.failed.length && !dom.internalClips.length
+      && dom.formulaGlyphFonts.every(font => /^KaTeX/u.test(font.family) && font.px > 0 && font.loaded && font.available)
+      && dom.ends.every(end => Math.abs(end.actual - end.maximum) <= 1)
+      && dom.horizontalEnds.every(end => end.left === 0 && Math.abs(end.right - end.maximum) <= 1),
+    { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed, internalClips: dom.internalClips,
+      horizontalEnds: dom.horizontalEnds, badFormulaGlyphFonts: dom.formulaGlyphFonts.filter(font =>
+        !/^KaTeX/u.test(font.family) || !font.loaded || !font.available) });
+    for (const material of materials) {
+      const actual = dom.roots.find(root => root.key === material.key), expected = material.expected;
+      const name = `${viewKey}:${material.key}:text-formulas-and-rows`;
+      assert.equal(actual.serialized, expected.serialized, name);
+      assert.deepEqual(actual.formulas.map(formula => formula.tex), expected.formulas, name);
+      if (expected.literalLF !== false) assert.deepEqual(actual.lines, expected.lines, name);
+      assert.deepEqual(actual.tables.map(rows => rows.map(row => row.map(cell => ({
+        serialized: cell.serialized, formulas: cell.formulas, lines: cell.lines })))), expected.tables ?? [], name);
+      await check(name, actual.formulas.every(formula => formula.visible && formula.nonempty),
+        { textSha256: sha(actual.serialized), formulas: expected.formulas.length,
+          tables: actual.tables.length, cells: actual.tables.reduce((n, rows) => n + rows.reduce((m, row) => m + row.length, 0), 0) });
+    }
+    const expectedCells = materials.reduce((n, material) => n + (material.expected.tables ?? [])
+      .reduce((m, rows) => m + rows.reduce((k, row) => k + row.length, 0), 0), 0);
+    await check(`${viewKey}:all-table-cells-have-readable-native-region-targets`, dom.tableCells.length === expectedCells
+      && expectedCells > 0 && dom.tableCells.every(cell => cell.indices.length > 0
+        && cell.width > 0 && cell.height > 0 && cell.fontPx >= 16),
+    { cells: dom.tableCells.length, rightmostCells: dom.tableCells.filter(cell => cell.rightmost).length });
+    for (const figure of dom.figures)
+      await check(`${viewKey}:${figure.key}:approved-svg-on-page-media`, figure.exactSvg && figure.labelBindings
+        && figure.minimumPx >= 16 && figure.labels.every(label => label.insideSvg && label.px >= figure.minimumPx)
+        && figure.layout === figure.expectedLayout && figure.mediaWidth > 0 && figure.mediaHeight > 0
+        && figure.svgWidth === figure.mediaWidth && figure.mediaWidth <= figure.expectedWidth,
+      { id: figure.id, width: figure.mediaWidth, height: figure.mediaHeight, figureReviewRepeated: false });
+    const safety = await page.evaluate(pageSafety);
+    await check(`${viewKey}:readonly-contained-loaded-fonts`, safety.documentWidth <= viewport.width
+      && safety.bodyWidth <= viewport.width && safety.scrollX === 0 && !safety.errors && !safety.widgets
+      && !safety.scripts && !safety.dangerousAttributes.length && !safety.labelBodyCollisions.length
+      && safety.sections.every((box, index, boxes) => box.left >= 0 && box.right <= viewport.width
+        && box.height > 0 && (!index || box.top >= boxes[index - 1].bottom))
+      && safety.fonts.some(font => font.family.startsWith('KaTeX') && font.status === 'loaded')
+      && safety.fonts.every(font => font.status !== 'error'), safety);
+    await captureCoverage(page, viewport, 'choices', dom);
+    await record(path.join(RUN, `${viewport.width}-choices-coverage.json`), undefined, false);
+    const images = report.screenshots.filter(image => image.viewport.width === viewport.width
+      && image.captureChecks === 'PASS' && image.coverageReusable !== false);
+    const captured = new Set(images.flatMap(image => image.visibleIds));
+    const tableCellCoverage = dom.tableCells.map(cell => ({ ...cell,
+      complete: cell.indices.every(id => captured.has(id)),
+      screenshotPaths: images.filter(image => image.visibleIds.some(id => cell.indices.includes(id))).map(image => image.path) }));
+    await save(`${viewport.width}-choices-table-coverage.json`, { viewport, cells: tableCellCoverage,
+      allCells: tableCellCoverage.length, missing: tableCellCoverage.filter(cell => !cell.complete),
+      rightmostCellsComplete: tableCellCoverage.filter(cell => cell.rightmost).every(cell => cell.complete),
+      humanReadability: 'UNOBSERVED' });
+    await record(path.join(RUN, `${viewport.width}-choices-table-coverage.json`), undefined, false);
+    await check(`${viewKey}:complete-table-cells-formulas-borders-and-rightmost-region`,
+      tableCellCoverage.every(cell => cell.complete), { cells: tableCellCoverage.length });
+    const after = await page.evaluate(pageSafety);
+    await check(`${viewKey}:contained-after-native-scrolls`,
+      after.documentWidth <= viewport.width && after.bodyWidth <= viewport.width && after.scrollX === 0);
+    report.completedViews.push(viewKey);
+    report.viewEvidence.push({ view: viewKey, viewport, surface: 'choices', deliveredHtml: delivered,
+      dom: report.reports.find(item => item.path === path.join(RUN, `${viewport.width}-choices-dom.json`)),
+      coverage: report.reports.find(item => item.path === path.join(RUN, `${viewport.width}-choices-coverage.json`)),
+      tables: report.reports.find(item => item.path === path.join(RUN, `${viewport.width}-choices-table-coverage.json`)) });
+    await event({ completedView: viewKey, deliveredHtml: delivered });
+    console.log(JSON.stringify({ completedView: viewKey, targets: dom.targetCount, tableCells: dom.tableCells.length,
+      screenshots: images.length }));
+    await context.close();
+    contexts.delete(context);
+    report.cleanup.contextsClosedCount += 1;
+    currentPage = null;
+  }
+  await check('choices-two-current-viewport-combinations', new Set(report.completedViews).size === 2
+    && new Set(report.coverage.map(item => `${item.viewport.width}:${item.surface}`)).size === 2);
+  await check('offline-html-only-no-runtime-errors', network.served.every(request => request.method === 'GET'
+    && ['/choices.html', '/favicon.ico'].includes(request.path)), network);
+} catch (error) {
+  report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+  report.failedView = currentView ? `${currentView.viewport.width}:choices` : null;
+  report.faults.push({ ...report.executionFailure, preserved: true });
+  await event({ failure: report.executionFailure, failedView: report.failedView });
+  if (currentPage && !currentPage.isClosed() && currentView) {
+    try {
+      const bytes = await currentPage.screenshot({ type: 'png', fullPage: false, animations: 'disabled' });
+      usage.screenshotsCaptured += 1;
+      const entry = await stage(path.join(RUN, 'screenshots/FAILURE-native.png'), bytes);
+      report.screenshots.push({ ...entry, ...currentView, nativeSize: true, croppedOrResized: false,
+        fullPage: false, visualObservation: 'UNOBSERVED', captureChecks: 'FAILURE_PRESERVED', coverageReusable: false });
+    } catch (captureError) { report.faults.push({ stage: 'failure-capture', message: captureError.message }); }
+  }
+} finally {
+  for (const context of contexts) {
+    try { await context.close(); report.cleanup.contextsClosedCount += 1; contexts.delete(context); }
+    catch (error) { report.faults.push({ stage: 'context-close', message: error.message }); }
+  }
+  report.cleanup.contextsClosed = contexts.size === 0 && report.cleanup.contextsCreated === report.cleanup.contextsClosedCount;
+  try {
+    if (browser) await browser.close();
+    report.cleanup.browserClosed = true;
+    report.cleanup.browserConnectedAfterClose = browser?.isConnected() ?? false;
+  } catch (error) { report.faults.push({ stage: 'browser-close', message: error.message }); }
+  try {
+    if (server?.listening) {
+      server.closeAllConnections();
+      await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    }
+    report.cleanup.serverClosed = true;
+    report.cleanup.serverListeningAfterClose = server?.listening ?? false;
+  } catch (error) { report.faults.push({ stage: 'server-close', message: error.message }); }
+  for (const entry of [...report.inputs, ...report.reports, ...report.screenshots]) {
+    try { assert.equal(sha(await readFile(entry.path)), entry.sha256); }
+    catch (error) { report.faults.push({ stage: 'preservation', path: entry.path, message: error.message }); }
+  }
+  report.finishedAt = new Date().toISOString();
+  report.cumulativeUsage = Object.fromEntries(Object.keys(usage).map(key => [key, usage[key] + (previous?.cumulativeUsage[key] ?? 0)]));
+  report.status = !report.faults.length && report.completedViews.length === 2
+    && report.cleanup.contextsClosed && report.cleanup.browserClosed && report.cleanup.serverClosed
+    ? 'RUNTIME_PASS_VISUAL_PENDING' : 'RUNTIME_FAILED_VISUAL_PENDING';
+  await save('report-FIRST.json', report);
+  console.log(JSON.stringify({ status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+    completedViews: report.completedViews, failure: report.executionFailure?.message, cleanup: report.cleanup }));
+  process.exitCode = report.status === 'RUNTIME_PASS_VISUAL_PENDING' ? 0 : 1;
+}

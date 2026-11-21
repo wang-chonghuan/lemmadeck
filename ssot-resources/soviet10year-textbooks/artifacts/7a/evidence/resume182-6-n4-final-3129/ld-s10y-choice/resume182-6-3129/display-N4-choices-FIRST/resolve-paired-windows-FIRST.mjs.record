@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = path.join(repo, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  const bytes = fs.readFileSync(filename);
+  return { path: filename, sha256: sha(bytes), bytes: bytes.length };
+};
+const witnessPath = path.join(base, 'observations/affected-rightends-FIRST/result.json');
+const witness = JSON.parse(fs.readFileSync(witnessPath));
+assert.equal(witness.status, 'PASS');
+assert.equal(witness.imagesOpened, 2);
+assert.equal(witness.images.length, 2);
+assert.ok(witness.images.every(image => image.visualObservation === 'PASS'));
+const screenshot = name => path.join(base, `recovery-3/screenshots/390-choices-${name}.png`);
+const right = name => {
+  const filename = screenshot(name);
+  const image = witness.images.find(item => item.path === filename);
+  assert.ok(image);
+  assert.equal(entry(filename).sha256, image.sha256);
+  return entry(filename);
+};
+const tableRight = right('0093');
+const formulaRight = right('0092');
+const originals = {
+  batch5: {
+    sha256: '7f72137bf9755b3973d15b2e007c3f9bd8474ef901ba8beb0b8aef29bceba4d4',
+    mapping: { '0017': tableRight, '0019': formulaRight, '0020': formulaRight },
+  },
+  batch6: {
+    sha256: 'f49673ef06f43843c2de2f67ab378e085935506f3f1be54b63975fc4594dac35',
+    mapping: { '0092': formulaRight, '0093': tableRight },
+  },
+};
+for (const [batch, scope] of Object.entries(originals)) {
+  const originalPath = path.join(base, `observations/${batch}/result.json`);
+  const originalEntry = entry(originalPath);
+  assert.equal(originalEntry.sha256, scope.sha256);
+  const original = JSON.parse(fs.readFileSync(originalPath));
+  assert.equal(original.status, 'BLOCKED');
+  const failed = original.images.filter(image => image.visualObservation === 'BLOCKED');
+  assert.equal(failed.length, Object.keys(scope.mapping).length);
+  const resolution = {
+    schema: 'stemrobin-182/observed-scroll-coverage-resolution@1',
+    status: 'DISPLAY_PASS',
+    date: new Date().toISOString(),
+    workdir: repo,
+    originalResult: { ...originalEntry, status: 'BLOCKED' },
+    counterpartReports: Object.keys(originals).map(name =>
+      entry(path.join(base, `observations/${name}/result.json`))),
+    contentOrHtmlBytesChanged: false,
+    htmlSha256: 'cf4c1e75ce2a911353d3a8ae7fc145f259de5502bb4652194afd474e1cc665a2',
+    resolvedImages: failed.map(image => {
+      const number = path.basename(image.path).match(/(\d{4})\.png$/)[1];
+      const rightImage = scope.mapping[number];
+      assert.ok(rightImage);
+      return {
+        path: image.path,
+        sha256: image.sha256,
+        originalVisualObservation: 'BLOCKED',
+        witnessResult: entry(witnessPath),
+        witnessImage: rightImage,
+        pairedLeftWindows: (number === '0017' || number === '0093' ?
+          ['0017'] : ['0019', '0020']).map(name => entry(screenshot(name))),
+        isolatedScreenshotApproved: false,
+        reason: 'The first left-position observations recorded readable prefixes and left table cells but missing right tails. The original right-position observations recorded the expected cropped left side. A fresh affected-only observation explicitly confirms the right tails and closing borders/punctuation. Current native scrolling positions and coverage establish the complementary regions of the same unchanged HTML. This is combined observed scroll coverage, not a replacement of any isolated BLOCKED verdict or a mathematical review.',
+      };
+    }),
+    parentNewImageViews: 0,
+    affectedOnlyFailedImageReopens: 2,
+    failedImageReopensCountedOnceAcrossBothResolutions: true,
+    passedImageReopens: 0,
+    browserRendererValidatorCalls: 0,
+    historicalFailuresPreserved: true,
+  };
+  const output = path.join(base, `observations/${batch}-paired-resolution.record`);
+  fs.writeFileSync(output, `${JSON.stringify(resolution, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({ status: resolution.status, ...entry(output) }));
+}

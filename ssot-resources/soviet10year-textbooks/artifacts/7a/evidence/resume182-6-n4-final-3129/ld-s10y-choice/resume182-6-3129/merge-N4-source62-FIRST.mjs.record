@@ -1,0 +1,122 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+
+const repo = "/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck";
+assert.equal(process.cwd(), repo);
+const base = path.join(repo, ".tmp/ld-s10y-choice/resume182-6-3129");
+const author = path.join(base, "n4-source62-author-FIRST");
+const reviewer = path.join(base, "n4-source62-reviewer-FIRST");
+const target = path.join(repo, "ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s1-n4/choice-set");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const load = (filename) => JSON.parse(fs.readFileSync(filename));
+const originalBytes = Object.fromEntries(["seed", "draft", "review"].map((name) => [
+  name, fs.readFileSync(path.join(target, `${name}.json`)),
+]));
+const old = Object.fromEntries(Object.entries(originalBytes).map(([name, bytes]) => [name, JSON.parse(bytes)]));
+const added = { seed: load(path.join(author, "seed.json")), draft: load(path.join(author, "draft.json")), review: load(path.join(reviewer, "review.json")) };
+assert.equal(old.review.outcome, "pass");
+assert.equal(added.review.outcome, "pass", "New SOURCE62 independent review must pass first");
+assert.equal(added.review.reviewer.kind, "independent_agent");
+assert.equal(added.seed.exercises.length, 1);
+assert.equal(added.seed.exercises[0].number, "62");
+assert.equal(added.draft.questions.length, 1);
+assert.equal(added.review.question_reviews.length, 1);
+assert.equal(added.review.source_reviews.length, 1);
+assert.equal(added.draft.new_figures.length, 0);
+assert.deepEqual(old.seed.source, added.seed.source);
+assert.ok(!old.seed.exercises.some((exercise) => exercise.number === "62"));
+for (const trace of added.seed.trace) {
+  const prior = old.seed.trace.find((item) => item.path === trace.path);
+  assert.ok(prior);
+  if (!trace.path.endsWith("/book.json")) assert.equal(trace.sha256, prior.sha256, "Changed old approved source content");
+}
+const work = path.join(base, "n4-source62-merge-FIRST");
+fs.mkdirSync(work);
+const seed = structuredClone(old.seed);
+seed.trace = structuredClone(added.seed.trace);
+const sourcePosition = seed.exercises.findIndex((exercise) => Number(exercise.number) > 62);
+seed.exercises.splice(sourcePosition, 0, structuredClone(added.seed.exercises[0]));
+const draft = structuredClone(old.draft);
+const position = draft.questions.findIndex((question) => question.source_numbers.every((number) => Number(number) > 62));
+assert.ok(position >= 0);
+draft.questions.splice(position, 0, structuredClone(added.draft.questions[0]));
+const coveragePosition = draft.coverage.findIndex((item) => Number(item.source_number) > 62);
+draft.coverage.splice(coveragePosition, 0, structuredClone(added.draft.coverage[0]));
+const write = (filename, value) => fs.writeFileSync(filename, `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+const calls = [];
+const invoke = (stage, executable, argv) => {
+  const started = new Date().toISOString();
+  const result = spawnSync(executable, argv, { cwd: repo, encoding: "utf8", timeout: 120000, maxBuffer: 8 * 1024 * 1024 });
+  const receipt = { stage, executable, argv, workdir: repo, started, finished: new Date().toISOString(), exitCode: result.status, error: result.error?.message ?? null, stdout: result.stdout, stderr: result.stderr };
+  calls.push(receipt);
+  write(path.join(work, `${stage}.execution.json`), receipt);
+  assert.equal(result.status, 0, result.stdout || result.stderr || result.error?.message);
+  return result.stdout.trim();
+};
+const digest = (name, value) => {
+  const filename = path.join(work, `${name}.json`);
+  write(filename, value);
+  const result = invoke(`digest-${name}`, "python3", [".agents/skills/ld-s10y-choice/scripts/prepare.py", "digest", filename]);
+  assert.match(result, /^[a-f0-9]{64}$/);
+  return result;
+};
+const seedDigest = digest("seed", seed);
+draft.seed_sha256 = seedDigest;
+const draftDigest = digest("draft", draft);
+const review = structuredClone(old.review);
+review.seed_sha256 = seedDigest;
+review.draft_sha256 = draftDigest;
+review.source_reviews.splice(sourcePosition, 0, structuredClone(added.review.source_reviews[0]));
+review.question_reviews.splice(position, 0, structuredClone(added.review.question_reviews[0]));
+review.reviewer = {
+  kind: "independent_agent",
+  identity: JSON.stringify({
+    role: "Combined immutable independent review evidence, not a new parent semantic review",
+    oldReviewer: old.review.reviewer,
+    oldReviewSha256: sha(originalBytes.review),
+    oldScope: { sourceExercises: 14, questions: 34, options: 143 },
+    addedReviewer: added.review.reviewer,
+    addedReview: { path: path.join(reviewer, "review.json"), sha256: sha(fs.readFileSync(path.join(reviewer, "review.json"))), source: "62", questions: 1 },
+    delta: "Insert only SOURCE62 and its independently reviewed question at the source order position. Preserve all prior source, question, figure and review objects and their relative order. Current unchanged lesson/exercises/figures trace, with book-index trace refreshed from the new official seed.",
+    inheritedSource62Hold: "Historical whole-source exclusion remains in its original report. This new complete source comparison has separate current definition evidence and independent review.",
+    integratorNewMathematicsOrImageReviews: 0,
+    boundary: "Choice snapshot only; not APP, whole-course, production-proof ability or human acceptance",
+  }),
+};
+write(path.join(work, "review.json"), review);
+invoke("validate-merged-snapshot", "python3", [
+  "-B", ".agents/skills/ld-s10y-choice/scripts/validate.py", "--repo", ".",
+  "--seed", path.join(work, "seed.json"), "--draft", path.join(work, "draft.json"),
+  "--review", path.join(work, "review.json"),
+]);
+const history = path.join(target, "review-history/source62-before-FIRST");
+fs.mkdirSync(history);
+for (const name of ["seed", "draft", "review"]) {
+  const filename = path.join(target, `${name}.json`);
+  assert.equal(sha(fs.readFileSync(filename)), sha(originalBytes[name]), "Current target changed; do not overwrite");
+}
+for (const name of ["seed", "draft", "review"]) {
+  fs.writeFileSync(path.join(history, `${name}.json`), originalBytes[name], { flag: "wx" });
+  fs.writeFileSync(path.join(target, `${name}.json`), fs.readFileSync(path.join(work, `${name}.json`)));
+}
+const record = {
+  at: new Date().toISOString(),
+  status: "NEW_SOURCE62_CHOICE_ADDED_WITH_INHERITED_34_APPROVALS",
+  workdir: repo,
+  counts: { sourceExercises: seed.exercises.length, questions: draft.questions.length, options: draft.questions.reduce((sum, question) => sum + question.view.options.length, 0) },
+  insertedQuestionPosition: position,
+  preservedPriorQuestions: 34,
+  priorMathematicalReviewsRepeated: 0,
+  imagesOpened: 0,
+  history,
+  sourceHashes: Object.fromEntries(Object.entries(originalBytes).map(([name, bytes]) => [name, sha(bytes)])),
+  currentHashes: Object.fromEntries(["seed", "draft", "review"].map((name) => [name, sha(fs.readFileSync(path.join(target, `${name}.json`)))])),
+  currentCanonicalHashes: { seed: seedDigest, draft: draftDigest },
+  executionReceipts: calls.map((call) => path.join(work, `${call.stage}.execution.json`)),
+  fullDisplay: "PENDING",
+};
+write(path.join(work, "promotion.json"), record);
+console.log(JSON.stringify(record, null, 2));

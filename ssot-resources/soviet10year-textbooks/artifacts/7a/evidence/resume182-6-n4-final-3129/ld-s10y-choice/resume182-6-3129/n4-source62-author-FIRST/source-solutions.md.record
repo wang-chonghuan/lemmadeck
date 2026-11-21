@@ -1,0 +1,100 @@
+# SOURCE62 独立源解
+
+范围：7a / modern-us-neutral / alg7-c1-s1-n4，仅当前缺失的原题 62。
+这是新题作者的内部推导，不是旧题改写、审查或语义批准。
+本文件在 seed 准备与 draft 写入之前保存。
+
+## 源题
+
+当前现代源题原文：
+
+> 62. 下述集合 $A$ 和 $B$ 中，是否一个集合为另一个集合的子集？
+> a) $A=\{-1,0,3\}$，$B=\{-4,-3,-1,0,2,3,4\}$；
+> b) $A$ 是整数集合，$B$ 是偶数集合；
+> c) $A$ 是分数集合，$B$ 是正数集合。
+
+原 7a lesson 中题 62 的集合、数值和任务相同；区别仅是分行与小问字母的排版。
+现代题 62 的 `figure_refs` 与 `figures` 均为空；没有实际源图。
+
+## 数域与定义证据
+
+本书明确把分数集定义为有理数集内整数集的余集，即 $Q\setminus Z$，
+而不是所有能够写成分子除以分母形式的数。整数 1 即使写为 $2/2$，
+仍不属于本书的分数集；同一数的不同写法不改变集合归属。
+
+获准的现代定义：`ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c4-s1-n29/lesson.json`，
+`prose[6]`，`source_refs=["p0195#10"]`：
+
+> 整数集又是更大的有理数集 $Q$ 的子集：
+> $Z\subset Q$。
+> 有理数集内整数集的余集是分数集。
+>
+> 图 $41$ 表示集合 $N$、$Z$ 和 $Q$ 之间的关系：
+> $N\subset Z\subset Q$。
+
+获准原页：`ssot-resources/soviet10year-textbooks/artifacts/7a/pages/0195/page.json`，
+第 10 个 block（`blocks[9]`）包含“有理数集内整数集的余集是分数集”。
+只读取该定义；段落提到的图 41 不参与本题判定，不打开或渲染图。
+不需要约定自然数是否含 0，也不把“正数集合”另行改成正整数集或正分数集。
+
+n4 当前正文是有理式化为分式的讲解，没有适用的集合定义段落。
+官方 seed 因此选择 `--no-concepts`。跨课定义不在 seed schema 的概念选择范围；
+其出处、原文与哈希只作为此文件及 draft 的内部证据，不新增字段，
+不把 `prose[6]` 冒充 n4 的概念索引，也不向题面添加答案提示。
+
+## a 的独立解
+
+逐个检查 $-1,0,3$，它们都在 $B$ 中，所以 $A\subseteq B$。
+另一方面，$-4\in B$ 而 $-4\notin A$，故 $B\not\subseteq A$，
+且 $A\ne B$；结论是 $A$ 为 $B$ 的真子集。
+实际上 $B\setminus A=\{-4,-3,2,4\}$，$A\setminus B=\varnothing$。
+较大的集合包含较小的集合；不能把“包含”和“为子集”的方向颠倒。
+
+## b 的独立解
+
+按偶数定义，每个偶数为 $2k$，其中 $k$ 为整数，故每个偶数都是整数，
+即 $B\subseteq A$。整数 $1$ 不是偶数，所以 $1\in A\setminus B$，
+$A\not\subseteq B$ 且 $A\ne B$；结论是 $B$ 为 $A$ 的真子集。
+“每个偶数是整数”不能逆推“每个整数是偶数”；两个集合都是无限集
+也不能推出它们相等。
+
+## c 的独立解
+
+依本书定义 $A=Q\setminus Z$。$-1/2$ 是非整数有理数，所以 $-1/2\in A$；
+它不是正数，所以 $-1/2\notin B$，从而 $A\not\subseteq B$。
+另一方面，$1$ 是正数，故 $1\in B$；它是整数，故 $1\notin A$，
+从而 $B\not\subseteq A$。结论是两者互不包含。
+两者并非不相交：$1/2\in A\cap B$。共同元素不能证明包含关系。
+上述两个反例直接使用本书分数定义与正数的符号，不引入猜测条件或条件分支。
+
+## 任务与能力边界
+
+三个数学任务分别是有限集合的逐元素包含、偶数与整数的普遍包含方向、
+分数与正数的双向不包含。共同核心是“所有元素”的量词、
+包含方向以及一个反例否定一个包含方向，适合一个统一的多选判断单位。
+
+选择题能覆盖这些关系与论证的数学判断，但不能证明学习者具有：
+
+- 自主逐一检查 a 的元素并完整书写包含关系及严格性论证的能力。
+- 自主写出 b 的普遍性包含论证并构造逆方向反例的能力。
+- 自主为 c 的两个方向各构造反例并组织说明的能力。
+
+以上生产能力必须在 `intent.limitations` 与 `coverage.omitted_tasks` 中诚实记录。
+客观识别现成论证不等于完成自主证明；不声称恢复原有自主证明能力。
+
+## 输入字节 SHA-256
+
+哈希绑定完整源文件字节；内容阅读仍仅限获准的题与定义投影。
+
+| 文件 | SHA-256 |
+| --- | --- |
+| `ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s1-n4/lesson.json` | `0543d097083d01e2b4bdf55ec12411494ecec84fa01989f836a125a95fcaea85` |
+| `ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s1-n4/exercises.json` | `6c43759ff57ca11ede9560d03d398ba9fff74f3176f4b80fbea3f97f39ea00e2` |
+| `ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c1-s1-n4/exercises.json` | `2ad082e1126ff64b159be7c439b2749c9518742e0dddc3188bdc88870a99fa8b` |
+| `ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c4-s1-n29/lesson.json` | `b38813c7362bd0a41263c421360a95bfa3c156f4c8c5112fc65750ae65b1cb47` |
+| `ssot-resources/soviet10year-textbooks/artifacts/7a/pages/0195/page.json` | `582d35cf8002afb72d9a21910bc2df6649e1b7bfb6062a0378666e4b35df567a` |
+
+工具快照：`prepare.py` 字节 SHA-256 为
+`d80664212e207478b880d7c9fac3c789be1fa533b0ff5e3843922821ca80fe56`；
+`validate.py` 字节 SHA-256 为
+`67562d11f9200ac92bd0a56cd56d9f2ce308d06df79fa2a335c0860237d59926`。

@@ -1,0 +1,172 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const configPath = process.argv[2];
+assert.ok(configPath);
+const config = JSON.parse(fs.readFileSync(configPath));
+const lesson = 'alg7-c1-s1-n4';
+const bookRoot = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a');
+const target = path.join(bookRoot, 'editions/modern-us-neutral/lessons', lesson);
+const evidence = path.join(bookRoot, 'evidence/resume182-6-n4-final-3129');
+assert.ok(!fs.existsSync(evidence), 'Preserve any prior finalization attempt');
+assert.ok(!fs.existsSync(path.join(target, 'offline-display.json')));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = filename => JSON.parse(fs.readFileSync(path.resolve(repo, filename)));
+const entry = filename => {
+  const absolute = path.resolve(repo, filename);
+  assert.ok(absolute.startsWith(`${repo}/`), 'Only current-worktree production bytes');
+  const bytes = fs.readFileSync(absolute);
+  return { path: absolute, sha256: sha(bytes), bytes: bytes.length };
+};
+const retained = new Map();
+const entries = [];
+const keep = (filename, expected) => {
+  const input = entry(filename);
+  if (expected) assert.equal(input.sha256, expected, filename);
+  if (retained.has(input.path)) return retained.get(input.path);
+  const relative = path.relative(repo, input.path);
+  let output;
+  if (!relative.startsWith('.tmp/')) {
+    output = { ...input, path: relative };
+  } else {
+    const suffix = relative.endsWith('.png') ? '' : '.record';
+    const destination = path.join(evidence, relative.slice('.tmp/'.length) + suffix);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.writeFileSync(destination, fs.readFileSync(input.path), { flag: 'wx' });
+    output = { ...input, path: path.relative(repo, destination), historical_path: input.path };
+  }
+  retained.set(input.path, output);
+  entries.push(output);
+  return output;
+};
+const images = [];
+const runtimes = [];
+for (const scope of config.scopes) {
+  const runtime = read(scope.runtime);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  const selection = read(scope.selection);
+  assert.equal(selection.counts.missing, 0);
+  const selected = selection.selected ?? selection.batches.flatMap(batch => batch.images);
+  const observed = new Map();
+  for (const bindingPath of scope.bindings) {
+    const binding = read(bindingPath);
+    assert.equal(binding.status, 'DISPLAY_PASS');
+    assert.equal(binding.agentCompletedAndClosed, true);
+    keep(bindingPath);
+    keep(binding.assignment.path, binding.assignment.sha256);
+    keep(binding.result.path, binding.result.sha256);
+    if (binding.technicalResolution)
+      keep(binding.technicalResolution.path, binding.technicalResolution.sha256);
+    for (const image of binding.images) {
+      assert.ok(!observed.has(image.path), 'No duplicated observation claim');
+      observed.set(image.path, image);
+    }
+  }
+  assert.equal(observed.size, selected.length);
+  for (const image of selected) {
+    const actual = observed.get(image.path);
+    assert.ok(actual);
+    assert.equal(actual.sha256, image.sha256);
+    images.push({
+      ...keep(image.path, image.sha256), verdict: 'PASS', scope: scope.name,
+      originalVisualObservation: actual.originalVisualObservation,
+      ...(actual.coverageResolution ? {
+        coverageResolution: keep(actual.coverageResolution.path, actual.coverageResolution.sha256),
+        isolatedScreenshotApproved: false,
+      } : {}),
+    });
+  }
+  runtimes.push({
+    scope: scope.name,
+    runtime: keep(scope.runtime),
+    selection: keep(scope.selection),
+    coverage: { ...selection.counts, pending: 0, newlyObserved: observed.size },
+  });
+}
+for (const filename of config.evidence) keep(filename);
+const surfaces = [];
+assert.deepEqual([...new Set(config.surfaces.map(item => item.name))].sort(),
+  ['choices', 'exercises', 'text']);
+assert.equal(config.surfaces.length, 4);
+for (const surface of config.surfaces) {
+  const input = entry(surface.path);
+  assert.equal(input.sha256, surface.sha256);
+  const suffix = surface.viewport ? `-${surface.viewport.width}` : '';
+  const destination = path.join(target, 'offline', `${surface.name}${suffix}.html`);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.writeFileSync(destination, fs.readFileSync(input.path), { flag: 'wx' });
+  surfaces.push({ ...entry(destination), path: path.relative(repo, destination),
+    name: surface.name, ...(surface.viewport ? { verifiedViewport: surface.viewport } : {}) });
+}
+keep(configPath);
+const retentionFile = path.join(target, 'choice-set/retention.json');
+const oldRetention = fs.readFileSync(retentionFile);
+const history = path.join(target, 'choice-set/review-history/source62-before-FIRST/retention.json');
+fs.writeFileSync(history, oldRetention, { flag: 'wx' });
+const retention = {
+  schema: 'stemrobin-182/choice-retention-current@1',
+  role: 'Current complete-source recognition snapshot with inherited independent approvals',
+  current_seed: keep(path.join(target, 'choice-set/seed.json')),
+  current_draft: keep(path.join(target, 'choice-set/draft.json')),
+  current_review: keep(path.join(target, 'choice-set/review.json')),
+  selected_sources: 15,
+  questions: 35,
+  options: 149,
+  previousRetention: keep(history),
+  historicalHoldsPreserved: true,
+  source62Resolution: config.source62Resolution,
+  current_selected_semantic_pass: true,
+  broader_display_pending: false,
+  display_evidence: { path: path.relative(repo, path.join(target, 'offline-display.json')) },
+  independent_writing_drawing_or_measurement_approved: false,
+  whole_lesson_or_app_approved: false,
+  boundary: 'Full offline display and reviewed recognition only, not autonomous proof writing or APP/DB acceptance',
+};
+fs.writeFileSync(retentionFile, `${JSON.stringify(retention, null, 2)}\n`);
+const binding = {
+  schema: 'stemrobin-182/offline-display-binding@1',
+  ticket: 'STEMROBIN-182',
+  book: '7a',
+  lesson,
+  edition: 'modern-us-neutral',
+  status: 'OFFLINE_DISPLAY_PASS',
+  date: new Date().toISOString(),
+  surfaces,
+  images,
+  runtimes,
+  inputsAndObserverReports: entries,
+  content: { proseBlocks: 6, exercises: 15, answers: 15, choiceQuestions: 35, options: 149 },
+  displayObservationAccounting: {
+    uniqueRequiredImages: images.length,
+    failedRegionReopens: config.additionalFailedRegionImageViews,
+    passedImageReopens: 0,
+    actualImageViews: images.length + config.additionalFailedRegionImageViews,
+    historicalAndOtherPhaseImageViews: 'Original records preserved, not reset',
+  },
+  parentImageViewsThisBinding: 0,
+  bindingRendererBrowserOrValidatorRuns: 0,
+  historicalFailuresAndUnknownCountsPreserved: true,
+  unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown',
+  totalCost: 'unknown',
+  databaseWrites: 0,
+  merges: 0,
+  deployments: 0,
+  finish: 'review',
+  boundary: 'Complete offline lesson only; no APP/DB acceptance or whole-ticket handoff',
+};
+const final = path.join(target, 'offline-display.json');
+fs.writeFileSync(final, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+const receipt = { date: new Date().toISOString(), status: binding.status,
+  workdir: repo, referencedFiles: entries.length,
+  copiedEvidenceFiles: entries.filter(item => item.historical_path).length,
+  copiedEvidenceBytes: entries.reduce((sum, item) => sum + (item.historical_path ? item.bytes : 0), 0),
+  copiedSurfaceFiles: surfaces.length,
+  copiedSurfaceBytes: surfaces.reduce((sum, item) => sum + item.bytes, 0),
+  observedImages: images.length, final: entry(final), surfaces };
+fs.writeFileSync(path.join(evidence, 'receipt.record'), `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(receipt));

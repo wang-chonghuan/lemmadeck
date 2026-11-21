@@ -1,0 +1,459 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N4-FIRST');
+const ID = 'alg7-c1-s1-n4';
+const MODERN = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral');
+const LESSON = path.join(MODERN, 'lessons', ID);
+const RENDER = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/render-7a-n4-FIRST', ID);
+const HISTORY = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence');
+const BASE = path.join(HISTORY, 'resume182-6-n6-display-runtime3695/resume182-6-8a-n6-display3695-FIRST/display-helper.mjs.record');
+const EXTENSION = path.join(HISTORY, 'resume182-6-n11-display-runtime-recovery2-0789/display-FIRST/display-helper.mjs.record');
+const STANDARD_METHOD = path.join(HISTORY, 'resume182-6-n11-display-runtime-recovery2-0789/display-FIRST/run.mjs.record');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const norm = text => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+const own = filename => {
+  assert.ok(path.resolve(filename).startsWith(`${OUTPUT}/`), 'Write outside authorized directory');
+  return filename;
+};
+assert.equal(process.cwd(), ROOT);
+const options = process.argv.slice(2);
+const recovery = ['--recover-formula-padding', '--recover-label-binding'].includes(options[0]);
+const formulaRecovery = options[0] === '--recover-formula-padding';
+assert.ok((!recovery && options.length === 0) || (recovery && options.length === 2));
+const previousPath = recovery ? options[1] : null;
+if (previousPath) own(previousPath);
+const previous = previousPath ? JSON.parse(await readFile(previousPath, 'utf8')) : null;
+const attemptNumber = previous ? previous.attemptNumber + 1 : 1;
+const RUN = attemptNumber === 1 ? OUTPUT : path.join(OUTPUT, `recovery-${attemptNumber}`);
+await mkdir(own(path.join(RUN, 'screenshots')), { recursive: true });
+await mkdir(own(path.join(RUN, 'published')), { recursive: true });
+await mkdir(own(path.join(RUN, 'browser-tmp')), { recursive: true });
+const save = async (name, value) => writeFile(own(path.join(RUN, name)),
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const event = value => appendFile(own(path.join(RUN, 'events.ndjson')),
+  `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+const usage = { browserLaunches: 0, browserContexts: 0, pageNavigations: 0,
+  browserEvaluations: 0, screenshotsCaptured: 0, screenshotsOpened: 0, imagesObserved: 0,
+  rendererCalls: 0, paidCalls: 0, installs: 0, dbCalls: 0 };
+const network = { served: [], blocked: [], failures: [], pageErrors: [], consoleErrors: [],
+  warnings: [], badResponses: [] };
+const report = {
+  schema: 'resume182-6-n4-offline-display@1', lesson: ID, book: '7a', edition: 'modern-us-neutral',
+  workdir: ROOT, writeRoot: OUTPUT, attemptNumber, startedAt: new Date().toISOString(),
+  status: 'RUNNING', boundary: 'text/exercises offline runtime only; no human visual, mathematics, figure or APP acceptance',
+  inputs: [], reports: [], checks: [], faults: [], completedViews: previous?.completedViews ?? [],
+  screenshots: previous?.screenshots ?? [], coverage: previous?.coverage ?? [],
+  viewEvidence: previous?.viewEvidence ?? [],
+  priorAttempts: previous ? [...previous.priorAttempts, { path: previousPath, sha256: sha(await readFile(previousPath)),
+    attemptNumber: previous.attemptNumber, status: previous.status, failure: previous.executionFailure }] : [],
+  cleanup: { contextsCreated: 0, contextsClosedCount: 0, contextsClosed: true,
+    browserClosed: true, browserConnectedAfterClose: false, serverClosed: true, serverListeningAfterClose: false },
+  usage, network,
+};
+const assertOfflineRuntime = () => assert.ok(
+  ['blocked', 'failures', 'pageErrors', 'consoleErrors', 'badResponses'].every(key => !network[key].length),
+  'Actual console/page/network fault');
+const check = async (name, success, facts = {}) => {
+  const item = { name, status: success ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(item);
+  await event({ check: item });
+  assertOfflineRuntime();
+  assert.ok(success, name);
+};
+const record = async (filename, expected, input = true) => {
+  const bytes = await readFile(filename);
+  const entry = { path: filename, sha256: sha(bytes), bytes: bytes.length };
+  if (expected) assert.equal(entry.sha256, expected, filename);
+  (input ? report.inputs : report.reports).push(entry);
+  return bytes;
+};
+const stage = async (filename, bytes) => {
+  await writeFile(own(filename), bytes, { flag: 'wx' });
+  await record(filename, sha(bytes), false);
+  return { path: filename, sha256: sha(bytes), bytes: bytes.length };
+};
+const evaluate = async (page, fn, arg) => {
+  return page.evaluate(fn, arg);
+};
+const contexts = new Set();
+let browser, server, currentPage, currentView, helpers;
+try {
+  const pins = {
+    'lesson.json': '0543d097083d01e2b4bdf55ec12411494ecec84fa01989f836a125a95fcaea85',
+    'exercises.json': '6c43759ff57ca11ede9560d03d398ba9fff74f3176f4b80fbea3f97f39ea00e2',
+    'figures.json': 'b974407836dd6b652c209d22322878220f9727df40fa4210e4e18fa1a0764125',
+    'answer-keys.json': '6429e869968ae2ddbef61ec01080e1a1e009019293fd44140f6ea7e0fb07b5cc',
+  };
+  const loaded = {};
+  for (const [name, expected] of Object.entries(pins))
+    loaded[name] = JSON.parse(await record(path.join(LESSON, name), expected));
+  const lesson = loaded['lesson.json'], exercises = loaded['exercises.json'], manifest = loaded['figures.json'];
+  const standardDisplay = loaded['answer-keys.json'].answers.map(({ exercise, displayAnswer }) =>
+    ({ exercise: String(exercise), text: displayAnswer }));
+  delete loaded['answer-keys.json'];
+  assert.equal(exercises.count, 15);
+  assert.equal(standardDisplay.length, 15);
+  assert.deepEqual(standardDisplay.map(item => item.exercise), exercises.exercises.map(item => String(item.number)));
+  assert.ok(standardDisplay.every(item => typeof item.text === 'string' && item.text.trim()));
+  const figureContracts = {};
+  for (const figure of manifest.figures) {
+    const spec = JSON.parse(await record(path.join(MODERN, figure.spec)));
+    const svgMarkup = (await record(path.join(MODERN, figure.svg))).toString('utf8').replace(/<\?xml[^>]*\?>/u, '').trim();
+    await record(path.join(MODERN, figure.render));
+    await record(path.join(MODERN, figure.review));
+    figureContracts[figure.id] = { svgMarkup, labels: spec.objects.filter(item => item.type === 'text')
+      .map(({ id, text }) => ({ id: `${id}-label`, text })), minimumPx: spec.display.minTextPx,
+      layout: spec.display.layout, maxWidthPx: spec.display.maxWidthPx };
+  }
+  assert.deepEqual(Object.keys(figureContracts), ['fig-01']);
+  report.figureLabelBinding = {
+    source: '.agents/skills/ld-s10y-image/scripts/render_spec.mjs', lines: [246, 247],
+    rule: 'Approved spec text object id -> renderer data-label-id `${object.id}-label`',
+    svgChanged: false,
+  };
+  const baseCode = (await record(BASE)).toString('utf8');
+  let extensionCode = (await record(EXTENSION)).toString('utf8');
+  await record(STANDARD_METHOD);
+  const dataModule = code => `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+  assert.equal(extensionCode.split("'./display-helper-base.mjs'").length, 2);
+  extensionCode = extensionCode.replace("'./display-helper-base.mjs'", JSON.stringify(dataModule(baseCode)));
+  const { createDisplayHelpers } = await import(dataModule(extensionCode));
+  const requireApp = createRequire(path.join(ROOT, 'app/package.json'));
+  const { chromium } = requireApp('playwright');
+  const { PNG } = requireApp(path.join(ROOT, 'app/node_modules/playwright-core/lib/utilsBundle.js'));
+  const { inline, proseFlow, proseOutline, sectionBreakIndices } = createRequire(
+    path.join(ROOT, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'))('./htmlfrag.js');
+  await record(path.join(ROOT, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'));
+  helpers = createDisplayHelpers({ norm, own, RUN, assertOfflineRuntime, PNG,
+    same: (a, b) => JSON.stringify(a) === JSON.stringify(b), sha, report, usage, event, save, check });
+  const { projection, pageSafety, install, captureCoverage } = helpers;
+  const flow = proseFlow(lesson.prose, lesson.section_breaks);
+  const paragraphs = flow.filter(block => block.kind === 'p');
+  const outline = proseOutline(lesson.prose);
+  const boundaries = sectionBreakIndices(lesson.prose, lesson.section_breaks);
+  report.projection = {
+    modernBlocks: lesson.prose.length, paragraphs: paragraphs.length, boundaries,
+    sourceProjectionReused: true, sourceReviewRepeated: false,
+    sourceLesson: { path: lesson.source.path, sha256: lesson.source.sha256 },
+    sourceBlocks: lesson.prose.map((block, index) => ({ index, refs: block.source_refs,
+      sourceTextSha256: sha(block.source_text ?? ''), modernTextSha256: sha(block.text),
+      paragraphIndices: outline.filter(item => item.blockIndex === index).map(item => item.index) })),
+    originalExercises: exercises.exercises.map(item => ({ exercise: String(item.number),
+      sourceNumber: item.source_number, pages: item.pages,
+      sourceTextSha256: sha(item.source_text), modernTextSha256: sha(item.text) })),
+    standardDisplayCount: standardDisplay.length, standardFields: ['exercise', 'displayAnswer'],
+    gradingExpectedOrChoicePayloadProjected: false, figureIds: Object.keys(figureContracts),
+  };
+  const leakage = /\b(?:key|correct|accept|expected|seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|correctIndex|answerKey|answer_key|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent)\b/iu;
+  const standardFragments = standardDisplay.map(item => ({ exercise: item.exercise, html: inline(item.text) }));
+  assert.ok(standardFragments.every(item => !leakage.test(item.html)));
+  report.standardDisplay = { source: path.join(LESSON, 'answer-keys.json'),
+    sourceSha256: pins['answer-keys.json'], fields: ['exercise', 'displayAnswer'],
+    fragmentSha256: sha(JSON.stringify(standardFragments)), method: { path: STANDARD_METHOD, lines: [274, 351] },
+    staticHtmlPersisted: previous?.standardDisplay.staticHtmlPersisted ?? false,
+    originalRendererBytesPreserved: true, staticHtml: previous?.standardDisplay.staticHtml ?? null };
+  const html = new Map();
+  report.originalRenderer = [];
+  for (const surface of ['text', 'exercises']) {
+    const filename = path.join(RENDER, `${surface}.html`);
+    const bytes = await record(filename);
+    if (previous) assert.equal(sha(bytes), previous.originalRenderer.find(item => item.surface === surface).sha256);
+    assert.ok(!leakage.test(bytes.toString('utf8')));
+    report.originalRenderer.push({ surface, path: filename, sha256: sha(bytes) });
+    html.set(`/${surface}.html`, bytes);
+  }
+  if (previous?.standardDisplay.staticHtml) {
+    const entry = previous.standardDisplay.staticHtml;
+    html.set('/exercises.html', await record(entry.path, entry.sha256));
+  }
+  if (recovery) {
+    assert.ok(previous.executionFailure && previous.failedView);
+    assert.ok(!report.completedViews.includes(previous.failedView));
+    if (!formulaRecovery) assert.match(previous.executionFailure.message, /approved-svg-on-page-media/u);
+    report.recovery = { reason: formulaRecovery ? 'Actual failed formula clipping/reachability only'
+      : 'Checker label identity projection corrected to the existing official renderer',
+      view: previous.failedView, cssChanged: formulaRecovery,
+      originalFailure: previous.executionFailure, priorFailurePreserved: true };
+  }
+  server = createServer((request, response) => {
+    network.served.push({ method: request.method, path: request.url });
+    if (request.method === 'GET' && request.url === '/favicon.ico') return void response.writeHead(204).end();
+    const bytes = request.method === 'GET' ? html.get(request.url) : undefined;
+    if (!bytes) {
+      network.badResponses.push({ path: request.url, status: 404 });
+      return void response.writeHead(404).end();
+    }
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; script-src 'none'; connect-src 'none'; frame-src 'none'; form-action 'none';" }).end(bytes);
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  report.cleanup.serverClosed = false;
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  report.server = { origin, portRequested: 0, htmlOnly: true };
+  for (const [route, bytes] of html) {
+    const response = await fetch(`${origin}${route}`, { signal: AbortSignal.timeout(5000) });
+    assert.equal(response.status, 200);
+    assert.equal(sha(Buffer.from(await response.arrayBuffer())), sha(bytes));
+  }
+  usage.browserLaunches += 1;
+  browser = await chromium.launch({ headless: true, timeout: 30000,
+    downloadsPath: own(path.join(RUN, 'browser-tmp')),
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8', TMPDIR: path.join(RUN, 'browser-tmp') },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-first-run', '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'] });
+  report.cleanup.browserClosed = false;
+  report.browser = { version: browser.version(), headless: true, isolated: true, dependency: 'existing app Playwright' };
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const pending = ['text', 'exercises'].filter(surface => !report.completedViews.includes(`${viewport.width}:${surface}`));
+    if (!pending.length) continue;
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block', acceptDownloads: false });
+    contexts.add(context);
+    usage.browserContexts += 1;
+    report.cleanup.contextsCreated += 1;
+    report.cleanup.contextsClosed = false;
+    context.setDefaultTimeout(20000);
+    await context.route('**/*', async route => {
+      const request = route.request(), url = new URL(request.url());
+      if (request.method() === 'GET' && url.origin === origin && !url.search && !url.hash
+        && [...html.keys(), '/favicon.ico'].includes(url.pathname)) await route.continue();
+      else { network.blocked.push({ method: request.method(), url: request.url() }); await route.abort('blockedbyclient'); }
+    });
+    await context.routeWebSocket(/.*/, async socket => { network.blocked.push({ kind: 'websocket' }); await socket.close(); });
+    const page = await context.newPage();
+    const nativeEvaluate = page.evaluate.bind(page);
+    page.evaluate = (...args) => {
+      usage.browserEvaluations += 1;
+      return nativeEvaluate(...args);
+    };
+    currentPage = page;
+    page.on('pageerror', error => network.pageErrors.push(error.message));
+    page.on('console', message => {
+      if (message.type() === 'error') network.consoleErrors.push(message.text());
+      if (message.type() === 'warning') network.warnings.push(message.text());
+    });
+    page.on('requestfailed', request => network.failures.push({ url: request.url(), error: request.failure() }));
+    page.on('response', response => {
+      if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() });
+    });
+    for (const surface of pending) {
+      currentView = { viewport, surface };
+      const viewKey = `${viewport.width}:${surface}`;
+      usage.pageNavigations += 1;
+      assert.equal((await page.goto(`${origin}/${surface}.html`, { waitUntil: 'load' })).status(), 200);
+      if (surface === 'exercises' && !report.standardDisplay.staticHtmlPersisted) {
+        await evaluate(page, fragments => {
+          const style = document.createElement('style');
+          style.textContent = '.standard-display{grid-column:2;min-width:0;line-height:1.9}'
+            + '.standard-label{font-size:.85em;color:var(--sub);margin:.3em 0}'
+            + '.standard-text{min-width:0;overflow-x:auto;overflow-y:hidden;padding-block:calc(.2em + 1px);margin-block:-.2em}';
+          document.head.append(style);
+          for (const fragment of fragments) {
+            const exercise = document.getElementById(`ex-${fragment.exercise}`);
+            if (!exercise || exercise.querySelector('.standard-display')) throw new Error('Missing or duplicate standard display');
+            const container = document.createElement('div'); container.className = 'standard-display';
+            const label = document.createElement('p'); label.className = 'standard-label'; label.textContent = '\u6807\u51c6\u7b54\u6848';
+            const text = document.createElement('div'); text.className = 'standard-text'; text.innerHTML = fragment.html;
+            container.append(label, text); exercise.append(container);
+          }
+        }, standardFragments);
+        const serialized = Buffer.from(await page.content());
+        assert.ok(!leakage.test(serialized.toString('utf8')));
+        report.standardDisplay.staticHtml = await stage(path.join(RUN, 'published/exercises.html'), serialized);
+        report.standardDisplay.staticHtmlPersisted = true;
+        html.set('/exercises.html', serialized);
+        usage.pageNavigations += 1;
+        const response = await page.goto(`${origin}/exercises.html`, { waitUntil: 'load' });
+        assert.equal(sha(await response.body()), sha(serialized));
+        assert.equal(sha(Buffer.from(await page.content())), sha(serialized));
+      }
+      let delivered = surface === 'text' ? report.originalRenderer.find(item => item.surface === surface)
+        : report.standardDisplay.staticHtml;
+      if (formulaRecovery && viewKey === previous.failedView) {
+        await evaluate(page, width => {
+          const style = document.createElement('style'); style.id = 'formula-padding-final';
+          style.textContent = `@media(min-width:${width}px) and (max-width:${width}px){`
+            + '.nb,.sr-nb{padding:.3em .15em;margin-block:0;box-sizing:border-box;vertical-align:middle}'
+            + '.nb:has(.delimsizing.mult),.sr-nb:has(.delimsizing.mult){padding-block:1.2em}}';
+          document.head.append(style);
+        }, viewport.width);
+        const bytes = Buffer.from(await page.content());
+        assert.ok(!leakage.test(bytes.toString('utf8')));
+        delivered = await stage(path.join(RUN, `published/${viewport.width}-${surface}-formula-padding.html`), bytes);
+        html.set(`/${surface}.html`, bytes);
+        usage.pageNavigations += 1;
+        const response = await page.goto(`${origin}/${surface}.html`, { waitUntil: 'load' });
+        assert.equal(sha(await response.body()), delivered.sha256);
+        assert.equal(sha(Buffer.from(await page.content())), delivered.sha256);
+      }
+      await evaluate(page, () => document.fonts.ready);
+      assertOfflineRuntime();
+      const materials = [];
+      const add = (key, selector, index, expected, paragraph = false) =>
+        materials.push({ key, selector, index, expected, paragraph });
+      const title = lesson.printed_title || lesson.title;
+      add('title', 'h1', 0, projection(surface === 'text' ? title : `${title} \u00b7 \u4e60\u9898`));
+      add('crumb', '.crumb', 0, projection([lesson.chapter, lesson.section,
+        `\u5370\u5237\u9875 ${lesson.start_printed ?? '?'}`].filter(Boolean).join(' \u00b7 ')));
+      if (surface === 'text') {
+        assert.equal(await page.locator('p.para').count(), paragraphs.length);
+        paragraphs.forEach((block, index) => add(`prose-${index}`, 'p.para', index, projection(block.text), true));
+        const caps = flow.filter(block => block.kind === 'cap');
+        assert.equal(await page.locator('.figcap').count(), caps.length);
+        caps.forEach((block, index) => add(`caption-${index}`, '.figcap', index, projection(block.text)));
+        assert.deepEqual(await page.locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+          flow.filter(block => block.kind === 'fig').map(block => block.id));
+        const actualBreaks = await page.locator('p.para').evaluateAll(nodes => nodes.flatMap((node, index) =>
+          parseFloat(getComputedStyle(node).borderTopWidth) > 0 ? [index] : []));
+        await check(`${viewKey}:source-anchored-paragraph-rules`, JSON.stringify(actualBreaks) === JSON.stringify(boundaries));
+        add('jump', '.jump', 0, projection(`\u53bb\u505a\u9898 \u00b7 ${exercises.count} \u9053 \u2192`));
+        assert.equal(await page.getByRole('link').getAttribute('href'), 'exercises.html');
+      } else {
+        assert.equal(await page.locator('li.ex').count(), exercises.count);
+        assert.equal(await page.locator('.standard-text').count(), standardDisplay.length);
+        assert.deepEqual(await page.locator('li.ex').evaluateAll(nodes => nodes.map(node => node.id)),
+          exercises.exercises.map(item => `ex-${item.number}`));
+        for (const exercise of exercises.exercises) {
+          const number = String(exercise.source_number ?? exercise.number), suffix = exercise.text.slice(number.length);
+          const prefix = exercise.text.startsWith(number) && (/^\.\s/u.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/u.test(suffix));
+          add(`exercise-${exercise.number}`, `#ex-${exercise.number} .body`, 0, projection(prefix ? suffix.slice(1).trimStart() : exercise.text));
+          add(`number-${exercise.number}`, `#ex-${exercise.number} .no`, 0, projection(`${number}.`));
+          const answer = standardDisplay.find(item => item.exercise === String(exercise.number));
+          add(`standard-${exercise.number}`, `#ex-${exercise.number} .standard-text`, 0, projection(answer.text));
+          add(`standard-label-${exercise.number}`, `#ex-${exercise.number} .standard-label`, 0, projection('\u6807\u51c6\u7b54\u6848'));
+        }
+        const groups = exercises.exercises.filter((item, index, all) => item.group !== (index ? all[index - 1].group : null));
+        assert.equal(await page.locator('.exgroup').count(), groups.length);
+        groups.forEach((group, index) => add(`group-${index}`, '.exgroup', index, projection(group.group || '\u7ec3\u4e60')));
+        assert.deepEqual(await page.locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+          exercises.exercises.flatMap(item => (item.figures ?? []).map(figure => figure.id)));
+        add('jump', '.jump', 0, projection('\u2190 \u56de\u8bfe\u6587'));
+        assert.equal(await page.getByRole('link').getAttribute('href'), 'text.html');
+      }
+      const dom = await install(page, { materials: materials.map(({ expected, paragraph, ...descriptor }) => descriptor), figureContracts });
+      await save(`${viewport.width}-${surface}-dom.json`, dom);
+      await record(path.join(RUN, `${viewport.width}-${surface}-dom.json`), undefined, false);
+      await check(`${viewKey}:glyph-rules-media-and-formula-boxes-reachable`, dom.targetCount > 0
+        && !dom.hidden.length && !dom.failed.length && !dom.internalClips.length
+        && dom.formulaGlyphFonts.every(font => /^KaTeX/u.test(font.family) && font.px > 0 && font.loaded && font.available)
+        && dom.ends.every(end => Math.abs(end.actual - end.maximum) <= 1)
+        && dom.horizontalEnds.every(end => end.left === 0 && Math.abs(end.right - end.maximum) <= 1),
+      { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed,
+        internalClips: dom.internalClips, horizontalEnds: dom.horizontalEnds,
+        badFormulaGlyphFonts: dom.formulaGlyphFonts.filter(font => !/^KaTeX/u.test(font.family) || !font.loaded || !font.available) });
+      for (const material of materials) {
+        const name = `${viewKey}:${material.key}:text-formulas-and-rows`;
+        const actual = dom.roots.find(root => root.key === material.key), expected = material.expected;
+        assert.equal(actual.serialized, expected.serialized, name);
+        assert.deepEqual(actual.formulas.map(formula => formula.tex), expected.formulas, name);
+        assert.deepEqual(actual.lines, expected.lines, name);
+        assert.deepEqual(actual.tables, [], name);
+        const rowPairs = actual.lines.flatMap((line, index) => {
+          if (!/^(?:[a-z]|\d+)\)\s/u.test(line)) return [];
+          let previous = index - 1;
+          while (previous >= 0 && !actual.lines[previous]) previous -= 1;
+          return [{ index, previous, current: actual.lineGeometry[index], preceding: actual.lineGeometry[previous] }];
+        });
+        const typography = !material.paragraph || parseFloat(actual.textIndent) === 0
+          && actual.mathTypography.every(font => /KaTeX_Main/u.test(font.family) && font.px >= actual.fontPx * 1.1 - 0.02);
+        await check(name, typography && actual.formulas.every(formula => formula.visible && formula.nonempty)
+          && rowPairs.every(pair => pair.previous < 0 || pair.current && pair.preceding && pair.current.top > pair.preceding.top + 0.5),
+        { textSha256: sha(actual.serialized), formulas: expected.formulas.length, rowPairs, typography });
+      }
+      for (const figure of dom.figures)
+        await check(`${viewKey}:${figure.key}:approved-svg-on-page-media`, figure.exactSvg && figure.labelBindings
+          && figure.minimumPx >= 16 && figure.labels.every(label => label.insideSvg && label.px >= figure.minimumPx)
+          && figure.layout === figure.expectedLayout && figure.mediaWidth > 0 && figure.mediaHeight > 0
+          && figure.svgWidth === figure.mediaWidth && figure.mediaWidth <= figure.expectedWidth,
+        { id: figure.id, labels: figure.labels, width: figure.mediaWidth, height: figure.mediaHeight,
+          approvedMaxWidthPx: figure.expectedWidth, figureReviewRepeated: false });
+      const safety = await evaluate(page, pageSafety);
+      await check(`${viewKey}:readonly-contained-loaded-fonts`, safety.documentWidth <= viewport.width
+        && safety.bodyWidth <= viewport.width && safety.scrollX === 0 && !safety.errors && !safety.widgets
+        && !safety.scripts && !safety.dangerousAttributes.length && !safety.labelBodyCollisions.length
+        && safety.sections.every((box, index, boxes) => box.left >= 0 && box.right <= viewport.width
+          && box.height > 0 && (!index || box.top >= boxes[index - 1].bottom))
+        && safety.fonts.some(font => font.family.startsWith('KaTeX') && font.status === 'loaded')
+        && safety.fonts.every(font => font.status !== 'error'), safety);
+      await captureCoverage(page, viewport, surface, dom);
+      await record(path.join(RUN, `${viewport.width}-${surface}-coverage.json`), undefined, false);
+      const after = await evaluate(page, pageSafety);
+      await check(`${viewKey}:contained-after-native-scrolls`,
+        after.documentWidth <= viewport.width && after.bodyWidth <= viewport.width && after.scrollX === 0);
+      report.completedViews.push(viewKey);
+      report.viewEvidence.push({ view: viewKey, surface, viewport, deliveredHtml: delivered,
+        dom: report.reports.find(item => item.path === path.join(RUN, `${viewport.width}-${surface}-dom.json`)),
+        coverage: report.reports.find(item => item.path === path.join(RUN, `${viewport.width}-${surface}-coverage.json`)) });
+      await event({ completedView: viewKey, deliveredHtml: delivered });
+      console.log(JSON.stringify({ completedView: viewKey, targets: dom.targetCount,
+        screenshots: report.coverage.find(item => item.viewport.width === viewport.width && item.surface === surface).screenshotPaths.length }));
+    }
+    await context.close();
+    contexts.delete(context);
+    report.cleanup.contextsClosedCount += 1;
+    currentPage = null;
+  }
+  await check('two-surfaces-four-combinations', new Set(report.completedViews).size === 4
+    && new Set(report.coverage.map(item => `${item.viewport.width}:${item.surface}`)).size === 4
+    && usage.rendererCalls === 0);
+  await check('offline-html-only-no-runtime-errors', network.served.every(request => request.method === 'GET'
+    && ['/text.html', '/exercises.html', '/favicon.ico'].includes(request.path)), network);
+} catch (error) {
+  report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+  report.failedView = currentView ? `${currentView.viewport.width}:${currentView.surface}` : null;
+  report.faults.push({ ...report.executionFailure, preserved: true });
+  await event({ failure: report.executionFailure, failedView: report.failedView });
+  if (currentPage && !currentPage.isClosed() && currentView) {
+    try {
+      const bytes = await currentPage.screenshot({ type: 'png', fullPage: false, animations: 'disabled' });
+      usage.screenshotsCaptured += 1;
+      const entry = await stage(path.join(RUN, 'screenshots/FAILURE-native.png'), bytes);
+      report.screenshots.push({ ...entry, ...currentView, nativeSize: true, croppedOrResized: false,
+        fullPage: false, visualObservation: 'UNOBSERVED', captureChecks: 'FAILURE_PRESERVED' });
+    } catch (captureError) { report.faults.push({ stage: 'failure-capture', message: captureError.message }); }
+  }
+} finally {
+  for (const context of contexts) {
+    try { await context.close(); report.cleanup.contextsClosedCount += 1; contexts.delete(context); }
+    catch (error) { report.faults.push({ stage: 'context-close', message: error.message }); }
+  }
+  report.cleanup.contextsClosed = contexts.size === 0
+    && report.cleanup.contextsCreated === report.cleanup.contextsClosedCount;
+  try {
+    if (browser) await browser.close();
+    report.cleanup.browserClosed = true;
+    report.cleanup.browserConnectedAfterClose = browser?.isConnected() ?? false;
+  } catch (error) { report.faults.push({ stage: 'browser-close', message: error.message }); }
+  try {
+    if (server?.listening) {
+      server.closeAllConnections();
+      await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
+    }
+    report.cleanup.serverClosed = true;
+    report.cleanup.serverListeningAfterClose = server?.listening ?? false;
+  } catch (error) { report.faults.push({ stage: 'server-close', message: error.message }); }
+  for (const entry of [...report.inputs, ...report.reports, ...report.screenshots]) {
+    try { assert.equal(sha(await readFile(entry.path)), entry.sha256); }
+    catch (error) { report.faults.push({ stage: 'preservation', path: entry.path, message: error.message }); }
+  }
+  report.originalRendererUnchanged = report.originalRenderer?.every(entry =>
+    report.inputs.some(input => input.path === entry.path && input.sha256 === entry.sha256)) ?? false;
+  report.finishedAt = new Date().toISOString();
+  report.cumulativeUsage = Object.fromEntries(Object.keys(usage).map(key =>
+    [key, usage[key] + (previous?.cumulativeUsage[key] ?? 0)]));
+  report.cumulativeUsage.fees = 'unknown';
+  report.cumulativeUsage.imagesOpened = 0;
+  report.cumulativeUsage.delegationCalls = 0;
+  report.status = !report.faults.length && report.completedViews.length === 4
+    && report.cleanup.contextsClosed && report.cleanup.browserClosed && report.cleanup.serverClosed
+    ? 'RUNTIME_PASS_VISUAL_PENDING' : 'RUNTIME_FAILED_VISUAL_PENDING';
+  await save('report-FIRST.json', report);
+  console.log(JSON.stringify({ status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+    completedViews: report.completedViews, failure: report.executionFailure?.message, cleanup: report.cleanup }));
+  process.exitCode = report.status === 'RUNTIME_PASS_VISUAL_PENDING' ? 0 : 1;
+}

@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST');
+const N4_METHOD = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N4-FIRST/select.mjs');
+const PICKER = path.join(ROOT, 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n10-text-approval-and-final-code3695/resume182-6-8a-n10-display-select3695.mjs.record');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+assert.equal(process.cwd(), ROOT);
+const resultPath = path.join(OUTPUT, 'result.json');
+const resultBytes = await readFile(resultPath), result = JSON.parse(resultBytes);
+assert.equal(result.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(result.actualExit.exitCode, 0);
+const reportBytes = await readFile(result.report.path);
+assert.equal(sha(reportBytes), result.report.sha256);
+const report = JSON.parse(reportBytes);
+assert.ok(report.checks.every(item => item.status === 'PASS'));
+assert.ok(report.cleanup.contextsClosed && report.cleanup.browserClosed && report.cleanup.serverClosed);
+assert.ok(!report.cleanup.browserConnectedAfterClose && !report.cleanup.serverListeningAfterClose);
+report.inputs = [...report.inputs, ...result.deliveredHtmlByViewport.flatMap(view => [view.dom, view.coverage, view.tables])];
+const pickerBytes = await readFile(PICKER), pickerSource = pickerBytes.toString('utf8');
+const start = pickerSource.indexOf('const groupKey =');
+assert.ok(start > 0);
+let reused = pickerSource.slice(start);
+const replaceOnce = (before, after) => {
+  assert.equal(reused.split(before).length, 2, before);
+  reused = reused.replace(before, after);
+};
+replaceOnce("'1440:choices', '1440:exercises', '1440:text', '390:choices', '390:exercises', '390:text',",
+  "'1440:choices', '390:choices',");
+assert.ok(reused.includes('`${OWN}/runtime-`'));
+reused = reused.replaceAll('`${OWN}/runtime-`', '`${OWN}/`');
+replaceOnce("lesson: 'alg8-c2-s2-n10'", "lesson: 'alg7-c1-s1-n4'");
+replaceOnce("schema: 'bounded-n10-display-selection@1'", "schema: 'bounded-n4-choices-reused-n10-display-selection@1'");
+assert.equal(reused.split("shot.captureChecks === 'PASS');").length, 3);
+reused = reused.replaceAll("shot.captureChecks === 'PASS');",
+  "shot.captureChecks === 'PASS' && shot.coverageReusable !== false);");
+const code = [
+  "import fs from 'node:fs'; import path from 'node:path'; import assert from 'node:assert/strict';",
+  "import { createHash } from 'node:crypto';",
+  `const OWN=${JSON.stringify(OUTPUT)}, input=${JSON.stringify(result.report.path)};`,
+  `const bytes=Buffer.from(${JSON.stringify(reportBytes.toString('base64'))},'base64');`,
+  `const report=${JSON.stringify(report)};`,
+  `const output=${JSON.stringify(path.join(OUTPUT, 'selection-FIRST'))};`,
+  "assert.ok(!fs.existsSync(output));",
+  "const sha=bytes=>createHash('sha256').update(bytes).digest('hex');",
+  reused,
+].join('\n');
+const startedAt = new Date().toISOString();
+const child = spawn(process.execPath, ['--input-type=module', '-'], { cwd: ROOT, stdio: ['pipe', 'pipe', 'pipe'] });
+const stdout = [], stderr = [];
+child.stdout.on('data', bytes => { stdout.push(bytes); process.stdout.write(bytes); });
+child.stderr.on('data', bytes => { stderr.push(bytes); process.stderr.write(bytes); });
+child.stdin.end(code);
+const outcome = await new Promise(resolve => {
+  child.once('error', error => resolve({ exitCode: null, signal: null, error: error.message }));
+  child.once('close', (exitCode, signal) => resolve({ exitCode, signal }));
+});
+const streams = {};
+for (const [name, chunks] of [['stdout', stdout], ['stderr', stderr]]) {
+  const bytes = Buffer.concat(chunks), filename = path.join(OUTPUT, `selection.${name}.log`);
+  await writeFile(filename, bytes, { flag: 'wx' });
+  streams[name] = { path: filename, sha256: sha(bytes), bytes: bytes.length };
+}
+const receipt = { workdir: ROOT, cwd: ROOT, command: process.execPath, argv: ['--input-type=module', '-'],
+  startedAt, finishedAt: new Date().toISOString(), ...outcome, streams,
+  source: { path: PICKER, sha256: sha(pickerBytes) },
+  currentN4Method: { path: N4_METHOD, sha256: sha(await readFile(N4_METHOD)) },
+  inMemoryCodeSha256: sha(code),
+  adaptation: 'Choices scope/path/header and stale-capture exclusion only; unchanged measured target set-cover algorithm',
+  screenshotCaptureCalls: 0, screenshotOpenCalls: 0, externalNetworkCalls: 0, paidCalls: 0 };
+const receiptPath = path.join(OUTPUT, 'selection-execution.json');
+await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+if (outcome.exitCode === 0) {
+  const selectionPath = path.join(OUTPUT, 'selection-FIRST/selection.record');
+  const selectionBytes = await readFile(selectionPath), selection = JSON.parse(selectionBytes);
+  assert.equal(selection.counts.missing, 0);
+  assert.ok(selection.batches.every(batch => batch.images.length <= 8));
+  await writeFile(path.join(OUTPUT, 'result-before-selection.json'), resultBytes, { flag: 'wx' });
+  result.selection = { path: selectionPath, sha256: sha(selectionBytes), counts: selection.counts,
+    surfaces: selection.surfaces, actualExecution: { path: receiptPath,
+      sha256: sha(await readFile(receiptPath)), exitCode: outcome.exitCode },
+    batches: await Promise.all(selection.batches.map(async batch => {
+      const filename = path.join(OUTPUT, 'selection-FIRST', `${batch.id}.json`);
+      return { id: batch.id, path: filename, sha256: sha(await readFile(filename)),
+        imageCount: batch.images.length, status: 'UNOBSERVED', freshReviewerRequired: true };
+    })) };
+  result.cleanupAllAttempts = await Promise.all([...report.priorAttempts, result.report].map(async entry => {
+    const bytes = await readFile(entry.path);
+    assert.equal(sha(bytes), entry.sha256);
+    const value = JSON.parse(bytes);
+    assert.ok(value.cleanup.contextsClosed && value.cleanup.browserClosed && value.cleanup.serverClosed);
+    assert.ok(!value.cleanup.browserConnectedAfterClose && !value.cleanup.serverListeningAfterClose);
+    return { path: entry.path, sha256: entry.sha256, cleanup: value.cleanup };
+  }));
+  result.screenshots.selected = selection.counts.selected;
+  result.screenshots.batches = selection.batches.length;
+  result.usage.selectionExecutionCalls = 1;
+  result.usage.screenshotBytesHashedBySelection = selection.usage.screenshotBytesHashed;
+  await writeFile(resultPath, `${JSON.stringify(result, null, 2)}\n`);
+  console.log(JSON.stringify({ result: resultPath, sha256: sha(await readFile(resultPath)),
+    counts: selection.counts, batches: selection.batches.length, exitCode: outcome.exitCode }));
+}
+process.exitCode = outcome.exitCode ?? 1;

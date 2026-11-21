@@ -1,5 +1,276 @@
 # 当前开发状态
 
+### 182-6 2026-11-21 15:05:55Z N4完整离线显示最终PASS，窄提交中
+
+- Dirac受影响右端2/2实际PASS，result SHA
+  fb003546ed3a2073c2029d8f54e07777b1d39fc49ba02bca57856d1b4fb43d3a；
+  实见第30题A/C尾80,90及闭括号句号、B尾85,90及闭括号句号、
+  D尾80,90及闭括号/下一行分号，表格B尾0,2,3,4及闭括号、
+  右外边线与两角完整。只重开两张FAILED图各一次，PASS重开0。
+  本次只批准所见右端，不冒充其独审整段配对；父按原左右观察、
+  同一HTML及已运行滚动/覆盖事实作技术覆盖绑定，原5孤立BLOCKED保持。
+- 配对及bind各实际exit0，choices batch5/batch6 binding SHA
+  3615e6d50649c9faadff59e1e030b185501f247fc6ebf381430c95d93bdd0823、
+  3ef6d486ada07bfde1d46e17d1eeea02e749cc1537ee8c555f8fcab87c7977ea。
+  N4三逻辑表面/两视口的全部69必要唯一原图均已覆盖绑定，
+  实际读图71次（69首读+2失败末端重开），父图0；其它历史图/次数不重置。
+- 最终离线绑定实际一次exit0，offline-display.json SHA
+  88966e1c5dabc7682479c0c6809db6c76b131ea19dab90cb79a1f036e199d820，
+  OFFLINE_DISPLAY_PASS：6正文块/15完整原题/15标准答案/
+  35选择题149选项。8自动7不自动、源/数学/图/选择既有批准复用，
+  独立证明/绘图等能力损失及历史HOLD不删除，不声称APP/DB/全工单完成。
+- 实际提升159份必要新证据/18282790字节，另4实际原生显示文件/
+  3773018字节；170引用含11既有持久源/元数据，0Node/Python/PDF包，
+  不认领未知字节恢复。三个逻辑表面中choices保留各自已测1440/390
+  实际HTML，不制造未运行共享变体。全部第一次失败、候选、旧审查/
+  未决/原树/锁/备份保留；绑定新增renderer/browser/validator0。
+- 正仅stage N4目录、该课必要证据及原progress，待窄commit/push
+  原codex/STEMROBIN-182-textbooks后继续其它有源课；未动N13/N22及
+  无关技能/N15/N19/N20/8a改动，无DB/合并/部署/handoff。
+  本轮有限新代理均已收取并关闭，旧暂停聊天/审者保持；下次原监督
+  锚点15:29:50Z不重置，宿主token及总费用unknown不估算。
+
+### 182-6 2026-11-21 15:03Z N4全部必要图已看一次，5滚动窗口原BLOCKED待配对消解
+
+- 当前成功绑定57/69唯一新图；所有69必要原PNG已各实际看过一次，
+  不是69全部PASS。choices batch5实际5PASS/3BLOCKED：0017表格B
+  闭括号/右边线未见，0019/0020第30题长公式右尾未见；
+  result SHA 7f72137bf9755b3973d15b2e007c3f9bd8474ef901ba8beb0b8aef29bceba4d4。
+  batch6实际2PASS/2BLOCKED：0092/0093右滚时左前缀/表首列裁出，
+  result SHA f49673ef06f43843c2de2f67ab378e085935506f3f1be54b63975fc4594dac35。
+  两份当前原文件实测hash未变；不覆盖孤立窗口失败。
+- 现有runtime保存真实左右位置：表格左0017/右0093，右left=26；
+  第30题左0019/0020、右0092，公式left=122/262/122/106。
+  仅以这些工具事实尚不能冒充右尾实际观察。新Dirac5仅2张FAILED
+  右窗口受影响复核在途，预计新增2实际读图，PASS重开0，父图0；
+  不裁缩/重渲染或重跑runtime/source/数学/图审。配对工具仅准备。
+- Zeno首轮四图报告曾自然completed并已通知；随后父局部澄清消息
+  排队触发其再次running，关闭回执previous_status实际running。
+  此次为取消后续澄清运行，不宣称第二轮自然完成；第一次完整报告
+  仍为上述f49673，新增未知观察/结果不认领，旧报告/消息保留。
+  非旧暂停审者；未向任何旧暂停聊天/审者发消息。
+- 父首次把choices result的screenshots计数对象当列表，jq真实exit5
+  保留；仅改读现有完整runtime报告恢复定位，browser/renderer新增0，
+  不是内容或作者失败，不重做任何已成功工具调用。
+  最终绑定/commit/push仍未执行；6a/7a/8a/review及全部原树/锁/
+  备份/失败/unknown费用保持，下一原监督锚点15:29:50Z不重置。
+
+### 182-6 2026-11-21 14:52:40Z 本地监督，N4课文习题25闭合/选择8已绑定
+
+- 当前实际33张唯一新PNG已观察并绑定覆盖PASS，父图0；
+  text/exercises四批25图闭合，choices首批8图PASS，余36未看。
+  batch3实际独立观察0045右尾90及结束大括号/句号完整，
+  result SHA 00df2de40c4ebafe0dc929cb41cc75ff557d688af082a5a71bce19b86f4395b1；
+  原batch2 BLOCKED不改，以同一HTML的左右原窗口合并覆盖技术消解，
+  batch2 binding SHA 2db8385e4974c560d4a68b5247dbb0a6a6eb4a3c314a5181d86eb203da6c2ccb，
+  明确孤立0022截图未获全公式批准；新增观察/browser/renderer/validator0。
+- Darwin最后1课文图、Kant首8选择图自然completed后收取关闭，
+  binding SHA 266d64d2acb9e08d726daf8864f1d3d4b75cc83dc65589bd93e193cf7795d278、
+  d284d29a25f2f9885248f1903192c245c6be3b52be1703050a806bc3572d9e8a。
+  旧图/旧首屏/任何PASS未重开。Banach choices2、Parfit5 choices3
+  各有限8未看图在途，未动旧暂停聊天/审者。
+- Lorentz仅choices runtime最终exit0，381检查PASS、113保存PNG含失败、
+  111有效候选/44选出（8/8/8/8/8/4）/14227目标/缺失0。
+  result SHA 4bdf5afa91287dd3b48bb39f42681baa426a58a949d14e274fd74467977e5c20；
+  运行exit1/1/0和selection exit0均保留，绑定核对与公式边界技术
+  修复只续受影响阶段，源/数学/图审/checker重跑0。
+  全部contexts/browser/server已关闭，已收取并关闭本新worker。
+- choices两个视口实际HTML的字节不同：各自视口限定公式padding规则。
+  最终准备只提升实际已测1440/390版本，不拼造未运行共享HTML；
+  文本与习题仍用同一已测原生HTML。四实际文件代表三逻辑表面，
+  未声称未测视口、APP或DB通过。final config/脚本均仅准备，未执行。
+- 本地监督检查实际14:52:40Z，比原14:49:50Z锚点晚170秒；迟到保持，
+  下一原锚点15:29:50Z不重置。finite父exec在途0，未commit/push，
+  不开替代聊天/树/attach，不迁N13/N22，原树/锁/备份/失败/
+  未决/unknown费用及无关dirty全保留，仅6a7a8a、finish=review。
+
+### 182-6 2026-11-21 N4有限观察：8已绑定，第二批7PASS/1右末端BLOCKED
+
+- Euler batch1八张各实际打开一次PASS，result SHA
+  25b5d21145e54728e3c0672beb68a877d538f0c9f8e2f1f07f768344c2dc4eb4；
+  completed收取关闭后仅绑定原图hash，binding SHA
+  297c344d19cec75a152aebfdaf2ed32716695bf0f6ec1264e32b9bc9aa3feed9，
+  父图片0、额外browser/renderer/validator0。
+- Erdos batch2八张各实际打开一次，7PASS/1BLOCKED，result SHA
+  4e2303aaa9d1352dc921c7b1a6dafd53e4e578d37593467348c5b05fb5950ba5；
+  手机390-exercises-0022中63(b)并集公式右侧不可见，结尾逗号之后
+  无结束大括号。保留该独立失败，不把目标覆盖计数当作实际已看。
+  worker自然completed后收取并关闭，不重开7张PASS或原失败图。
+- 当前报告已有390-exercises-0045原PNG的公式右向捕捉，
+  scrollables index12 left=130，公式目标4309–4317有运行覆盖；
+  这只是技术定位，不是观察批准。Bacon有限batch3在途，须实际看见
+  右末端才允许消解该显示缺口；尚未改HTML/答案或重跑runtime。
+- Lorentz仍仅choices缺失显示在途；N4 final绑定脚本已准备但未执行，
+  不将准备文件、原runtime PASS或部分观察称为全课PASS。git fetch原
+  分支实际exit0，FETCH_HEAD与HEAD同93c3ec615e9eb9fed3a9942a2f3c3e0feb9e0720；
+  未commit/push，所有无关技能/N15/N19/N20/8a草稿保留。
+
+### 182-6 2026-11-21 14:41Z 接续3129，N4答案与第62题已收口，显示待观察
+
+- 从既有实际检查点继续；3129成功附着保持，不再create/attach。
+  9208偏离及所有原树、锁、备份、失败、未决、旧暂停记录原样保留。
+  HEAD仍93c3ec615e9eb9fed3a9942a2f3c3e0feb9e0720；仅6a/7a/8a，
+  finish=review，无DB/合并/部署/新付费服务调用。N13已经交付，不重迁；
+  N22及源/答案/选择/图/已看截图PASS不重跑。
+- 五份实际N4候选/审查已由9208迁回缺项：54668字节、0图片、0覆盖，
+  resume9208-transfer-FIRST.json SHA
+  04bbd2263555986d822997575bd87cf47b561eb20398de11201beb5b2b498fa1。
+  原顶部“执行未完成”保留为历史，不认领未知字节。
+  已依独审只删除65/66两条旧HOLD notes并执行官方答案finalize一次exit0；
+  15答案/8自动7不自动，durable answer-keys.json SHA
+  6429e869968ae2ddbef61ec01080e1a1e009019293fd44140f6ea7e0fb07b5cc，
+  原27自动数学及未变答案批准复用，JSON排版改变不宣称原字节未变。
+- 新SOURCE62独审Goodall实质PASS，review SHA
+  39a0ecf0748512f9567e81c12eee6a54f658ac9f1252facdf264c00c8366f195；
+  1源/1多选/6选项，盲解后view后key，checker仅一次exit0。
+  三组比较的识别能力批准不等于自主证明或反例构造，三项能力损失保留。
+  审者首次定义提取越界与辅助计数失败保留，不宣称严格读取白名单合规。
+- merge-N4-source62-FIRST.mjs实际exit0，15源/35题/149选项；
+  只插入62及其审查，继承原34题/143选项。合并快照validator一次exit0，
+  原三份文件保存在choice-set/review-history/source62-before-FIRST；
+  新draft SHA df9df67d41f65262fbba1bc89f0e213a3e39f2d36ec6f6761d76581af1b59aa4。
+- Huygens课文/习题显示实际exit0，4/4视口表面、15原题/15标准答案，
+  保存47PNG，选25张（8/8/8/1）覆盖9645目标/缺失0；
+  result SHA 9ec3733539d0ebc01bd88a189754e1e2b27ca4e2f5de95be11af680cffb866dd，
+  RUNTIME_PASS_VISUAL_PENDING，父/worker打开PNG均0。
+  首次标签绑定checker失败保留，原renderer/CSS/图未变。
+  所有browser/context/server实际closed；两完成worker已收取并释放，
+  未唤醒或关闭任何旧暂停聊天/审者。
+- Euler新有限batch1观察、Lorentz仅缺失choices显示在途，唯一生产cwd
+  /Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck。
+  首窗口旧choices PASS不重开，整课显示尚未PASS；未commit/push。
+  本接续数次大JSON只读输出截断及scratch忽略路径搜索exit1如实保留，
+  不是producer或内容失败，不重跑已成功运行；token/费用unknown不估算。
+
+### 182-6 2026-11-21 本轮9208目录偏离保留，监督纠偏回3129
+
+- 本轮错误重播旧bootstrap参数，官方operation
+  `12292916-5943-4bfa-8eed-1c0b7c682d5a`创建9208实际completed，
+  registrationError=null，并在9208生成N4两处修订候选及受影响审查。
+  该实际调用、候选、审查、目录、refs和两个依赖链接均保留，不抹去
+  失败/偏离事实，不再create/attach/开替代生产聊天或分支。
+- 监督本轮已明确纠偏：唯一现行生产workdir恢复为
+  `/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck`。
+  HEAD仍`93c3ec615e9eb9fed3a9942a2f3c3e0feb9e0720`，原Git锁保持，
+  本轮未reset/rebase/覆盖通过结果，9208已停止新生产写入。
+- 现行db613601安装记录实际SHA
+  `fe2953fbd97dbd4ae2698492a596a966f1da58edc25ff009f1dbe7bca4589db8`
+  仍在3129；本次仅核受影响choice/image/production-resume/production
+  路径与该记录一致并重读新规则，不重跑安装、189测试或整包bootstrap。
+- N4受影响候选SHA
+  `bac14fca8ddcda6887fce3476f2ea1ee3ff7b2b79802c0cbd8ae772552de2c16`；
+  新审者Russell the 4th `01a1fe79-1f72-71a3-9c28-a2e63ba9867e`
+  已自然completed，review SHA
+  `783913ba8819eefd2206183b55c75c6ed0f97205669a079d07b7a8ad31d36252`。
+  62c/63b实质PASS；65/66现代图实际新观察一次PASS，66原12/31人
+  及27自动键数学PASS复用。PNG实际628x444，原627x443是媒体尺寸，
+  不能当作PNG尺寸。候选仅四字段内容改变，但整体JSON重新排版，
+  不宣称其它原始JSON字节逐字未变。
+- exact候选仍有65/66两条历史HOLD备注；只删除独审明确列出的这两
+  notes字段后可继承该实质批准，未finalize/升durable/整课交付。
+  迁回仅五份实际新N4结果到3129缺项位置；准备脚本已写，执行未完成，
+  不把准备回执或已知路径称为已迁回。显示准备实际新增代码/HTML为0。
+- 首次新审查spawn因槽位上限失败保留；已收取自然completed图作者
+  Parfit结果SHA
+  `a31f4ba036951c060c6a9f8fc3683600070e9153a9a55d12e067441d8f205d1b`
+  后仅释放其运行槽，previous_status实际completed；不是关闭旧暂停
+  审者或替代聊天。fig08/21仅作者候选PASS、独立图审待做；25/26
+  仍仅cap1及真实文字HOLD，全部7 renderer/3标签失败/6实际读图保留。
+- 9208 Plane首次verify与两页GET均真实HTTP200；首次JSON.parse错误
+  原响应/exit0 API回执保留，仅用production.read_json_documents解析
+  保存响应恢复、网络新增0，live182工单已读，finish=review不变。
+  9208只读输出截断/缺路径及新审者两次局部报告技术失败保留；
+  父新图0，审者新图1，无图片复制/重开、无DB/新付费/合并/部署/
+  handoff。旧失败/费用unknown/计数、原树/锁/备份/旧暂停审者保持。
+
+### 182-6 2026-11-21 12:18:27Z 最新人类立即暂停，3129安全收尾完成
+
+- 监督传达最新直接人类指令“立即暂停182-6课程生产，定时监督已PAUSED，
+  等用户另行指示才恢复”。该暂停覆盖本次和所有旧接续授权；不因已完成
+  迁移、静态PASS或旧定时锚点继续。原12:29:50Z下一监督计划不用于恢复，
+  监督的技能工具修复另行进行，本聊天不参与。
+- 实际正式生产workdir仍为
+  `/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck`；
+  HEAD仍`93c3ec615e9eb9fed3a9942a2f3c3e0feb9e0720`，
+  原`codex/STEMROBIN-182-textbooks`、STEMROBIN-182、finish=review、
+  6a/7a/8a绑定不变。本次没有新树/聊天/分支/重复attach。
+- 暂停前已按最新接续授权完成N19最小实际字节迁移FIRST exit0：
+  33文件/2426381字节，仅本课raw/modern、111–113必要原页、
+  tbl-p0112-01原图及已批准现代图、两索引和3份当前原生HTML。
+  `.tmp/resume182-6-n19-recovery3129/migration.record` SHA
+  `921c94c763f90ea1239ee05de8b460f410c8f15a6e6385689eac0b5c6fd4d109`，
+  实际command receipt SHA
+  `943fc58eb0a7b1488e129dd9620f3e1ea7070a8b0bbd628773dbc378374e1d5d`。
+  17既有证据直接原路径/hash引用，不复制整包runtime/PDF/依赖；
+  本次新图片观察/renderer/browser/validator/旧PASS重跑均0。
+  两索引修改前字节保留在本恢复目录before/；全部未提交改动保留。
+- Volta305零图格式差量审查实际已落盘PASS，SHA
+  `52cec660f80dd21a8641732f135cd981be905ca92772455a639345002bb36b94`；
+  原数值/两组q与S7配对/另10题24键数学PASS复用，未新求解。
+  Averroes准备回执实际SHA
+  `d57a4dd8ea482a719d8b115cf9a538c9d7cb6bf41b50bb2a1fc46091eab65913`，
+  回执是准备阶段，不把它当runtime完成。实际修后runtime SHA
+  `21b715b392503172064f5de9a976b0b86738f0f4e50b25eb6ed330becefea75a`，
+  446检查/0非PASS、54新习题图/36旧课文选择图、cleanup四项true，
+  仍RUNTIME_PASS_VISUAL_PENDING。两已看课文图可继承，88图尚待实际
+  观察；原90捕捉/443checks/8实际观察/BLOCKED与全部失败保持。
+  不声称N19最终显示PASS、当前整课交付或未知字节恢复。
+- 两旧代理ID查询均not_found，保存回执已收取，不唤醒/重复派同任务，
+  不声称它们自然完成或被本次关闭。唯一新绑定工具worker James
+  `01a1fe08-79f4-7bd0-b672-4e5ccc8e5cc0`在暂停时previous_status=running，
+  随后实际shutdown；不是自然completed。tools/下实际保存文件0，
+  最终绑定代码尚未完成。新图观察者未派发；父本次图片0。
+- 本次所有有限父exec已返回；没有本次启动的浏览器、服务或后台生产。
+  安全进程盘点仅匹配同时在返回的本次有限文件盘点命令，没有发现
+  本恢复目录的长运行生产进程。已取消自己的唯一在途worker，
+  未关闭旧聊天、旧Mencius/Russell或别人的进程。
+- 暂停前Plane verify真实HTTP200；随后工单列表GET真实HTTP200，
+  stdout投影jq把响应结构当数组导致exit5：
+  `Cannot index number with string "sequence_id"`。这是本地读取/投影故障，
+  不是API失败或内容HOLD；原输出未完整落盘，不声称未知响应字节恢复，
+  暂停后不重请求、不修工具、不重跑验证。所有历史故障/计数/费用unknown
+  保留，不估算宿主token或总成本。
+- 不再生产/补课/观察/验证/commit-push/合并/部署/关单/正式handoff。
+  N13/N18已交付不重迁；N16真实源缺口及raw0098–0101不交付，
+  266有效6a第二章题未动。旧0789和全部原树/锁/备份/stash/失败/
+  未决及暂停记录均保留；无DB/新付费/模型配额凭据改动，未主动向
+  监督或同伴发消息。只有用户后续明确恢复指令才能继续。
+
+### 182-6 2026-11-21 11:54:49Z 官方创建3129完成，现行迁移范围待澄清
+
+- 按本次直接人类参数仅调用一次官方create_worktree：
+  sourceRoot=`/Users/yong/work/lemmadeck-ws/lemmadeck`，
+  ref=`d08f1b1835eae826a30c44d7b02ff4b3b8947763`，
+  name=`stemrobin-182-six`，allowAsync=true；operation
+  `46908079-4935-44b6-a557-ec0fb4f14b52`实际completed/registrationError=null。
+  唯一新生产目录为`/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck`。
+  未重复attach、未创建替代聊天、未向旧聊天或审者发送消息。
+- 只读核对发现人类描述的n13阶段已被后续真实交付超越：
+  7a n13完整离线课已在`87a1d7614`交付；0789当前HEAD与本次
+  ls-remote原分支均为`93c3ec615e9eb9fed3a9942a2f3c3e0feb9e0720`，
+  即已交付8a N18。新树原本clean，已仅switch --detach到此既有
+  提交，未回退原分支、未迁移或重跑n13/n22及任何已有PASS。
+- 0789未提交progress实际SHA
+  `21e4683a388bbcec7130499aced5ca91b266d00012420960e737c1f66dbe294b`；
+  顶部仍是N19第305题标准答案展示修复，不把陈旧顶部的“准备中”
+  或worker准备回执当作最新runtime状态。实际修后report SHA
+  `21b715b392503172064f5de9a976b0b86738f0f4e50b25eb6ed330becefea75a`，
+  446检查/0非PASS、54新习题PNG、四组合36旧PNG复用、renderer新增0，
+  cleanup四项true；状态仍RUNTIME_PASS_VISUAL_PENDING。
+  selection SHA
+  `0a922bcedbc5b4ea4ab16fbbff8e9f21627c9f0d6ebc0cfd6512035b9a0b830d`，
+  90图待按实际已看范围接续，原两张课文观察可继承，不重开。
+- 本次明确限制“只迁移n13”，因此没有擅自迁移N19任何字节，
+  没有从头重做N19以绕过限制，也没有声称其观察/最终绑定/交付完成。
+  待人类澄清是否将最小迁移对象改为当前N19显示及最终绑定必需
+  实际字节；ordinary修复授权不被当作扩大迁移范围授权。
+- 11:49:50Z原监督锚点已过，本次核对实际11:54:49Z，迟到保持；
+  下一原锚点12:29:50Z，不重置40分钟周期。未启动生产exec/
+  browser/server/新审者；源树、锁、备份、旧失败、未决及未知费用
+  原样保留。一次缺失scratch路径probe与两次大只读输出截断如实
+  记录，均非producer失败；不重置或估算历史计数/宿主token/总费用。
+  仅6a/7a/8a、finish=review；无DB/合并/部署/新commit-push/handoff。
+
 ### 182-6 2026-11-21 10:19Z N18完整离线显示最终PASS，窄交付中
 
 - batch16/17 result PASS SHA
