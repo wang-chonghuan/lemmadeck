@@ -58,6 +58,12 @@ D524／D525：10p fig182 仅移动 d 子图标签，并把源图路径绑定到�
 
 [fig182 局部修改和保留失败](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d524-fig182-label-repair/repair.json) · [受影响显示检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d524-fig182-label-repair/width-check.json)
 
+D526：上述有限引用判断及 fig182 局部候选已提交并非强制推送 d74b6923；随后继续 fig164，未停在一次 push。
+
+D527／D528：10p fig164 只下移 Principal axis 标题，消除与 O1 的原唯一碰撞。20 个对象、9 个标签、全部曲面／点／半径／厚度几何及源 SHA 不变；现有渲染器和 331／342／640 px 局部 DOM／像素检查通过，SVG 仅该标题 y 改变。新查看源图、原尺寸候选和 331 px 候选 3 张；本次续作累计 8 张，停止开图。作者检查不是独立批准；原 FAIL、repair1 和 N75 其他科学／细节 HOLD 均保留，未批准整图、促进课程或记为新交付。应用测试、构建、全库审计和旧 PASS 显示检查未重复。
+
+[fig164 局部修改](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d527-fig164-label-repair/repair.json) · [受影响显示检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d527-fig164-label-repair/width-check.json)
+
 ## 机械检查
 
 | 检查 | 结果 |
