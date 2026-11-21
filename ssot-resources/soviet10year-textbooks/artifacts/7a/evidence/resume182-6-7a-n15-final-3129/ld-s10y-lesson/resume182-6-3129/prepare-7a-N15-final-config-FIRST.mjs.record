@@ -1,0 +1,126 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const choicesBase = '.tmp/ld-s10y-choice/resume182-6-3129';
+const answerBase = '.tmp/ld-s10y-answer/resume182-6-3129';
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const modern = `${book}/editions/modern-us-neutral`;
+const id = 'alg7-c2-s1-n15';
+const target = `${modern}/lessons/${id}`;
+const read = filename => JSON.parse(fs.readFileSync(filename));
+const draft = read(`${target}/choice-set/draft.json`);
+assert.equal(read(`${target}/choice-set/review.json`).outcome, 'pass');
+assert.equal(read(`${target}/choice-set/review.json`).reviewer.kind, 'self_review');
+assert.equal(read(`${answerBase}/answer-7a-N15-review-FIRST/result.json`).status, 'ANSWER_PASS');
+const scopes = [
+  { name: 'text-and-exercises', directory: `${base}/display-7a-N15-FIRST` },
+  { name: 'choices', directory: `${choicesBase}/display-7a-N15-choices-ENTRYRECOVERY1` },
+].map(({ name, directory }) => {
+  const runtime = read(`${directory}/result.json`);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  const selection = read(`${directory}/selection-FIRST/selection.record`);
+  assert.equal(selection.counts.missing, 0);
+  assert.equal(selection.counts.priorObserved, 0);
+  const bindings = selection.batches.map((_, i) => `${directory}/bindings/batch${i + 1}.record`);
+  for (const filename of bindings) assert.equal(read(filename).status, 'DISPLAY_PASS');
+  return { name, runtime: `${directory}/result.json`,
+    selection: `${directory}/selection-FIRST/selection.record`, bindings };
+});
+const evidence = new Set([
+  `${base}/bind-observation-FIRST.mjs`,
+  `${base}/bind-observation-ENTRIESRECOVERY1.mjs`,
+  `${base}/bind-7a-N15-text-FIRST.mjs`,
+  `${base}/bind-7a-N15-text-RECOVERY1.mjs`,
+  `${base}/bind-7a-N15-text-batch4-FIRST.mjs`,
+  `${base}/bind-7a-N15-choice-regions-FIRST.mjs`,
+  `${base}/finalize-7a-N15-FIRST.mjs`,
+  `${base}/prepare-7a-N15-final-config-FIRST.mjs`,
+  `${base}/assemble-7a-N15-approved-choices-FIRST.mjs`,
+  `${book}/lessons/${id}/lesson.json`, `${book}/lessons/${id}/exercises.json`,
+  ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json',
+    'answer-keys.json', 'answer-keys.audit.json', 'choice-set/seed.json',
+    'choice-set/draft.json', 'choice-set/review.json'].map(name => `${target}/${name}`),
+  ...['07', '08', '09'].flatMap(number => ['spec.json', 'svg', 'render.json', 'review.json']
+    .map(extension => `${modern}/figures/fig-${number}.${extension}`)),
+]);
+const collect = directory => {
+  for (const item of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (['browser-tmp', '__pycache__', 'screenshots'].includes(item.name)) continue;
+    const filename = `${directory}/${item.name}`;
+    if (item.isDirectory()) collect(filename);
+    else if (item.isFile()) evidence.add(filename);
+  }
+};
+for (const item of fs.readdirSync(base, { withFileTypes: true })) {
+  if (!item.isDirectory() || !/N15|n15/.test(item.name)) continue;
+  if (/^(display-|render-)/.test(item.name)) continue;
+  collect(`${base}/${item.name}`);
+}
+for (const directory of [
+  `${choicesBase}/choices-7a-N15-author-FIRST`, `${choicesBase}/choices-7a-N15-review-FIRST`,
+  `${choicesBase}/display-7a-N15-choices-FIRST`,
+  `${answerBase}/answer-7a-N15-author-FIRST`, `${answerBase}/answer-7a-N15-review-FIRST`,
+  `${book}/evidence/resume182-6-text-review-3129/7a-text-review-N15-FIRST`,
+]) collect(directory);
+const retainReference = reference => {
+  const filename = path.resolve(reference.path);
+  assert.ok(filename.startsWith(`${root}/`));
+  if (reference.sha256) assert.equal(
+    crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex'),
+    reference.sha256);
+  evidence.add(path.relative(root, filename));
+};
+for (const scope of scopes) {
+  const directory = path.dirname(scope.runtime);
+  for (const name of ['run.mjs', 'execute.mjs', 'select.mjs'])
+    evidence.add(`${directory}/${name}`);
+  collect(`${directory}/observations`);
+  const runtime = read(scope.runtime);
+  for (const attempt of runtime.priorAttempts ?? []) {
+    retainReference(attempt);
+    const report = read(attempt.path);
+    for (const entry of report.reports ?? []) retainReference(entry);
+    for (const entry of report.screenshots ?? []) {
+      if (entry.captureChecks === 'FAILURE_PRESERVED') retainReference(entry);
+    }
+  }
+}
+const lesson = read(`${target}/lesson.json`);
+const content = {
+  proseBlocks: lesson.prose.length, renderedParagraphs: 15,
+  exercises: 14, answers: 14, choiceQuestions: draft.questions.length,
+  options: draft.questions.reduce((n, item) => n + item.view.options.length, 0),
+};
+const config = {
+  additionalFailedRegionImageViews: 5,
+  expectedImages: scopes.reduce((n, scope) => n + read(scope.selection).selected.length, 0),
+  scopes, content,
+  contentApprovals: {
+    sourceSnapshot: `${book}/lessons/${id}/lesson.json`,
+    text: `${book}/evidence/resume182-6-text-review-3129/7a-text-review-N15-FIRST/result.record`,
+    affectedLayout: `${base}/modern-7a-N15-flow-review-RECOVERY1/result.json`,
+    answers: `${answerBase}/answer-7a-N15-review-FIRST/result.json`,
+    choices: `${target}/choice-set/review.json`,
+    figure07: `${modern}/figures/fig-07.review.json`,
+    affectedFigure08: `${modern}/figures/fig-08.review.json`,
+    figure09: `${modern}/figures/fig-09.review.json`,
+    capacityLossesRetained: true, historicalFailuresPreserved: true,
+    choiceReviewerKind: { declared: 'self_review', separateAgentClaimed: false },
+    unresolvedSourceFacts: {
+      figure08OriginalAFill: 'UNKNOWN_SOURCE_HOLD_RETAINED',
+      exercise326UniqueStrictOrder: 'SOURCE_INSUFFICIENT_AMBIGUITY_AWARE_ANSWER_RETAINED',
+    },
+    newMathematicsOrFigureReviewAtFinalBinding: false,
+  },
+  evidence: [...evidence],
+};
+assert.equal(config.expectedImages, 52);
+const output = `${base}/finalize-7a-N15-config-FIRST.json`;
+fs.writeFileSync(output, `${JSON.stringify(config, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.resolve(output), content,
+  expectedImages: config.expectedImages, evidenceReferences: evidence.size }));

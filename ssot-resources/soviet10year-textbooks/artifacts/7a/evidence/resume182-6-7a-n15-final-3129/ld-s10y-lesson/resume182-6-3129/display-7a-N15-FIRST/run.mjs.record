@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const source = path.join(root, base, 'display-N4-FIRST/run.mjs');
+const sourceBytes = fs.readFileSync(source);
+const id = 'alg7-c2-s1-n15';
+const target = `ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/${id}`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const values = {};
+const pins = {};
+for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'answer-keys.json']) {
+  const bytes = fs.readFileSync(`${target}/${name}`);
+  pins[name] = sha(bytes);
+  values[name] = JSON.parse(bytes);
+}
+assert.equal(values['lesson.json'].id, id);
+assert.equal(values['lesson.json'].prose.length, 13);
+assert.equal(values['exercises.json'].count, 14);
+assert.deepEqual(values['exercises.json'].exercises.map(item => String(item.number)),
+  Array.from({ length: 14 }, (_, index) => String(322 + index)));
+assert.equal(values['answer-keys.json'].status, 'ready');
+assert.equal(values['answer-keys.json'].answers.length, 14);
+assert.ok(values['answer-keys.json'].answers.every(item => item.grading === 'ungraded' && !item.parts.length));
+const figures = ['fig-07', 'fig-08', 'fig-09'];
+assert.deepEqual(values['figures.json'].figures.map(item => item.id), figures);
+let code = sourceBytes.toString('utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once('display-N4-FIRST', 'display-7a-N15-FIRST');
+once("const ID = 'alg7-c1-s1-n4';", `const ID = '${id}';`);
+once('render-7a-n4-FIRST',
+  'render-7a-N15-FIRST-work/render/7a/modern-us-neutral');
+once("schema: 'resume182-6-n4-offline-display@1'",
+  "schema: 'resume182-6-7a-n15-reused-n4-offline-display@1'");
+const start = code.indexOf('  const pins = {');
+const end = code.indexOf('  const loaded = {};', start);
+assert.ok(start > 0 && end > start);
+code = code.slice(0, start) + `  const pins = ${JSON.stringify(pins)};\n` + code.slice(end);
+once('  assert.equal(exercises.count, 15);', '  assert.equal(exercises.count, 14);');
+once('  assert.equal(standardDisplay.length, 15);', '  assert.equal(standardDisplay.length, 14);');
+once("  assert.deepEqual(Object.keys(figureContracts), ['fig-01']);",
+  `  assert.deepEqual(Object.keys(figureContracts), ${JSON.stringify(figures)});`);
+once('    const spec = JSON.parse(await record(path.join(MODERN, figure.spec)));',
+  `    const approved = JSON.parse(await record(path.join(MODERN, figure.review)));
+    assert.equal(approved.status, 'pass');
+    const spec = JSON.parse(await record(path.join(MODERN, figure.spec), approved.spec.sha256));`);
+once('await record(path.join(MODERN, figure.svg))',
+  'await record(path.join(MODERN, figure.svg), approved.outputs.svg.sha256)');
+once('    await record(path.join(MODERN, figure.render));\n    await record(path.join(MODERN, figure.review));',
+  `    await record(path.join(MODERN, figure.render), approved.render.sha256);
+    assert.equal(spec.display.layout, 'scroll');
+    assert.deepEqual(spec.display.widths, [640]);`);
+once('maxWidthPx: spec.display.maxWidthPx };',
+  'maxWidthPx: spec.display.widths[0] };');
+once('  const pins = ', `  report.adaptation = {
+    source: ${JSON.stringify(source)}, sha256: ${JSON.stringify(sha(sourceBytes))},
+    method: 'Existing N4 checker reused for first N15 observation; current scoped inputs and approved figure bindings',
+    priorImageObservationsClaimed: 0, sourceMathFigureReviewReruns: 0 };
+  await record(${JSON.stringify(source)}, ${JSON.stringify(sha(sourceBytes))});
+  const pins = `);
+if (process.argv.includes('--recover-formula-padding')) {
+  once('style.textContent = `@media(min-width:${width}px) and (max-width:${width}px){`',
+    "style.textContent = ''");
+  once("+ '.nb:has(.delimsizing.mult),.sr-nb:has(.delimsizing.mult){padding-block:1.2em}}';",
+    "+ '.nb:has(.delimsizing.mult),.sr-nb:has(.delimsizing.mult){padding-block:1.2em}'\n"
+      + "            + '.sr-nb{position:relative}'\n"
+      + "            + '.sr-nb>.katex>.katex-mathml{top:0;left:0}'\n"
+      + "            + '.sr-nb:has(.sqrt){overflow-y:auto}';");
+  once('        html.set(`/${surface}.html`, bytes);',
+    "        if (surface === 'exercises') report.standardDisplay.staticHtml = delivered;\n"
+      + '        html.set(`/${surface}.html`, bytes);');
+}
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

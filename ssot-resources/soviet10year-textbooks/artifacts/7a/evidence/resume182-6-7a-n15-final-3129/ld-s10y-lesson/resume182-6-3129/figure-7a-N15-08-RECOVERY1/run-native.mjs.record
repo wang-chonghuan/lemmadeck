@@ -1,0 +1,113 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck'
+const work = path.join(cwd, '.tmp/ld-s10y-lesson/resume182-6-3129/figure-7a-N15-08-RECOVERY1')
+assert.equal(process.cwd(), cwd)
+assert(!fs.existsSync(path.join(work, 'execution.json')), 'Single execution only; preserve first outputs.')
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: file, sha256: hash(file), bytes: fs.statSync(file).size })
+const write = (name, value) => fs.writeFileSync(path.join(work, name), value, { flag: 'wx' })
+const json = (name, value) => write(name, `${JSON.stringify(value, null, 2)}\n`)
+const old = path.join(cwd, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/evidence/fig-08/batch334')
+const specPath = path.join(work, 'spec.json')
+const baseline = JSON.parse(fs.readFileSync(path.join(old, 'current-reviewed.spec.json'), 'utf8'))
+const candidate = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+const originalReview = JSON.parse(fs.readFileSync(path.join(old, 'original-review.json'), 'utf8'))
+assert.equal(originalReview.status, 'fail')
+assert.equal(hash(path.join(old, 'current-reviewed.spec.json')), originalReview.spec.sha256)
+assert.equal(hash(path.join(old, 'current-reviewed.render.json')), originalReview.render.sha256)
+assert.equal(hash(path.join(old, 'current-reviewed.svg')), originalReview.outputs.svg.sha256)
+assert.deepEqual(candidate.source, baseline.source, 'Source inventory/text including A HOLD must stay unchanged.')
+assert.deepEqual(candidate.assertions, baseline.assertions)
+assert.deepEqual(candidate.canvas, baseline.canvas)
+assert.deepEqual(candidate.display, baseline.display)
+assert.deepEqual(candidate.layout, baseline.layout)
+assert.equal(candidate.objects.length, baseline.objects.length)
+for (const object of candidate.objects) {
+  const before = baseline.objects.find(item => item.id === object.id)
+  assert(before)
+  if (!['A', 'C'].includes(object.id)) assert.deepEqual(object, before)
+  else {
+    for (const key of ['id', 'type', 'at', 'visible', 'size']) assert.deepEqual(object[key], before[key])
+  }
+}
+assert.equal(hash(path.resolve(candidate.source.image.path)), candidate.source.image.sha256)
+const python = path.join(cwd, '.claude/skills/ld-s10y-lesson/.venv/bin/python')
+const validator = path.join(cwd, '.agents/skills/ld-s10y-image/scripts/validate_spec.py')
+const renderer = path.join(cwd, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs')
+const inputs = {
+  source: bind(path.resolve(candidate.source.image.path)),
+  context: bind(path.join(old, 'context.json')),
+  originalSpec: bind(path.join(old, 'current-reviewed.spec.json')),
+  originalRender: bind(path.join(old, 'current-reviewed.render.json')),
+  originalSvg: bind(path.join(old, 'current-reviewed.svg')),
+  firstFailure: bind(path.join(old, 'original-review.json')),
+  originalCap1: bind(path.join(old, 'original-cap1.spec.json')),
+  candidateSpec: bind(specPath),
+  validator: bind(validator),
+  renderer: bind(renderer),
+  receiptRunner: bind(path.join(work, 'run-native.mjs'))
+}
+const commands = [
+  { id: 'validate-FIRST', executable: python, argv: [validator, specPath, '--stage', 'draft', '--json'] },
+  { id: 'render-preview-FIRST', executable: process.execPath, argv: [
+    renderer, '--spec', specPath,
+    '--svg', path.join(work, 'fig-08.svg'),
+    '--report', path.join(work, 'fig-08.render.json'),
+    '--png', path.join(work, 'preview-native-640.png')
+  ] }
+]
+const receipts = []
+const startedAt = new Date().toISOString()
+for (const command of commands) {
+  const started = new Date().toISOString()
+  const child = spawnSync(command.executable, command.argv, {
+    cwd, env: { ...process.env, PYTHON: python, PYTHONDONTWRITEBYTECODE: '1' },
+    encoding: 'utf8', timeout: 120000, maxBuffer: 8 * 1024 * 1024
+  })
+  write(`${command.id}.stdout.log`, child.stdout || '')
+  write(`${command.id}.stderr.log`, child.stderr || '')
+  const receipt = {
+    schema: 'ld-s10y-image/native-execution-receipt@1',
+    ...command, cwd, startedAt: started, finishedAt: new Date().toISOString(),
+    environment: { PYTHON: python, PYTHONDONTWRITEBYTECODE: '1' },
+    exitCode: child.status, signal: child.signal, error: child.error?.message || null,
+    streams: {
+      stdout: bind(path.join(work, `${command.id}.stdout.log`)),
+      stderr: bind(path.join(work, `${command.id}.stderr.log`))
+    }
+  }
+  json(`${command.id}.execution.json`, receipt)
+  receipts.push(receipt)
+  if (child.status !== 0) break
+}
+const preservedInputs = Object.entries(inputs).map(([name, binding]) => ({
+  name, path: binding.path, sha256: hash(binding.path), unchanged: hash(binding.path) === binding.sha256
+}))
+const outputs = {}
+for (const name of ['fig-08.svg', 'fig-08.render.json', 'preview-native-640.png']) {
+  const file = path.join(work, name)
+  if (fs.existsSync(file)) outputs[name] = bind(file)
+}
+const execution = {
+  schema: 'ld-s10y-image/recovery-execution@1', cwd, startedAt,
+  finishedAt: new Date().toISOString(), inputs, receipts, outputs, preservedInputs,
+  invariants: {
+    sourceTextInventoryUnchanged: true, assertionsGeometryLayoutUnchanged: true,
+    onlyAffectedObjectsChanged: ['A', 'C'], inheritedFailurePreserved: true,
+    nativeValidatorTopLevelInvocations: receipts.filter(item => item.id === 'validate-FIRST').length,
+    nativeRendererInvocations: receipts.filter(item => item.id === 'render-preview-FIRST').length,
+    preview: 'Native --png in the same renderer invocation; no separate preview command.',
+    rendererInternalDraftValidation: 'Mandatory native renderer contract, not an author retry.',
+    approval: false, promotion: false, hostTokens: null, hostCost: null
+  },
+  status: receipts.length === 2 && receipts.every(item => item.exitCode === 0) &&
+    preservedInputs.every(item => item.unchanged) ? 'pass' : 'fail'
+}
+json('execution.json', execution)
+console.log(JSON.stringify(execution, null, 2))
+process.exitCode = execution.status === 'pass' ? 0 : 1

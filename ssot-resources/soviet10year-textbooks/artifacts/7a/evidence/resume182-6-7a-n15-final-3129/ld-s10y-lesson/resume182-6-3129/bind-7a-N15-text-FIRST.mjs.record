@@ -1,0 +1,135 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const display = `${base}/display-7a-N15-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  const file = path.resolve(filename);
+  assert.ok(file.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const read = filename => JSON.parse(fs.readFileSync(filename));
+const runtime = read(`${display}/result.json`);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(entry(runtime.report.path).sha256, runtime.report.sha256);
+const report = read(runtime.report.path);
+const ids = new Map([
+  [1, '01a1ff80-7d61-7571-8d30-bef44f19558e'],
+  [2, '01a1ff86-2626-7141-90de-17ea903e19b5'],
+  [3, '01a1ff8b-2d72-7030-8c35-90922dd6a479'],
+  [4, '01a1ff90-5613-7d70-a772-6e77711a3019'],
+]);
+const resolved = new Map();
+const pair = (batch, leftName, witnessResult, rightName, reason, frames = [], facts = []) => {
+  const resultPath = `${display}/observations/batch${batch}/result.json`;
+  const original = read(resultPath);
+  const left = original.images.find(image => image.path.endsWith(`/${leftName}`));
+  assert.equal(left.visualObservation, 'BLOCKED');
+  const witness = read(witnessResult);
+  const right = witness.images.find(image => image.path.endsWith(`/${rightName}`));
+  assert.ok(right);
+  assert.equal(right.visualObservation, 'PASS');
+  assert.equal(entry(left.path).sha256, left.sha256);
+  assert.equal(entry(right.path).sha256, right.sha256);
+  const nativeLeft = report.screenshots.find(image => image.path === left.path);
+  const nativeRight = report.screenshots.find(image => image.path === right.path);
+  assert.ok(nativeLeft && nativeRight);
+  assert.equal(nativeLeft.surface, nativeRight.surface);
+  assert.deepEqual(nativeLeft.viewport, nativeRight.viewport);
+  assert.ok(nativeLeft.visibleIds.some(id => nativeRight.visibleIds.includes(id)));
+  const horizontal = frames.map(index => {
+    const old = nativeLeft.scrollables.find(frame => frame.index === index);
+    const current = nativeRight.scrollables.find(frame => frame.index === index);
+    assert.ok(current.left > old.left);
+    return { index, horizontalLeft: old.left, horizontalRight: current.left };
+  });
+  for (const fact of facts) {
+    assert.ok(right.terminalFacts.some(item => item.terminalText === fact
+      && item.visualObservation === 'PASS' && item.rightTail === 'VISIBLE'));
+  }
+  const html = runtime.deliveredHtmlByViewport.find(surface =>
+    surface.surface === nativeLeft.surface && surface.viewport.width === nativeLeft.viewport.width).deliveredHtml;
+  assert.equal(entry(html.path).sha256, html.sha256);
+  const values = resolved.get(batch) ?? [];
+  values.push({
+    path: left.path, sha256: left.sha256, originalVisualObservation: 'BLOCKED',
+    witnessResult: entry(witnessResult), witnessImage: entry(right.path),
+    observedTail: facts.join('; '), frames: horizontal, html: entry(html.path),
+    savedLeftScroll: nativeLeft.scroll, savedRightScroll: nativeRight.scroll,
+    reason, isolatedScreenshotApproved: false, originalReportUnchanged: true,
+    ...(facts.length ? { terminalFacts: right.terminalFacts.filter(item => facts.includes(item.terminalText)) } : {}),
+  });
+  resolved.set(batch, values);
+};
+const correction = `${display}/observations/parent-325-correction/result.json`;
+pair(1, '1440-exercises-0001.png', correction, '1440-exercises-0001.png',
+  'Targeted two-image parent conflict observation corrects the inaccurate 325 wording transcription only. Original 322-324 region PASS remains; 325 subparts come from the separately observed complete next window.');
+pair(1, '1440-exercises-0002.png', correction, '1440-exercises-0002.png',
+  'Same actual 325 wording established; original complete 325/326 region PASS retained. Parent correction was two reopens of BLOCKED images, separately counted, not a new capture.');
+for (const name of ['1440-exercises-0004.png', '1440-exercises-0005.png'])
+  pair(1, name, `${display}/observations/batch1/result.json`, '1440-exercises-0007.png',
+    'Original visible prose PASS is retained. The separately first-observed complete Figure9 window supplies its full displayed extent; clipped vertical fragments stay isolated BLOCKED.');
+pair(1, '1440-text-0001.png', `${display}/observations/batch2/result.json`, '1440-text-0002.png',
+  'Original prose and Figure7 visible regions retain PASS. The separately first-observed next viewport supplies the visible Figure8 labels, points, line and right arrow; no unseen diagram is inferred.');
+pair(2, '390-exercises-0024.png', `${display}/observations/batch3/result.json`, '390-exercises-0046.png',
+  'Original prefixes plus two actually observed right-scrolled chain endpoints in unchanged HTML. Neither isolated window is full-chain approval.',
+  [0, 1], ['1/2 < 1', '-2 < -1']);
+pair(2, '390-exercises-0026.png', `${display}/observations/batch3/result.json`, '390-exercises-0069.png',
+  'Original f-panel visible PASS plus separately observed overlapping center/right g/h windows provide full Figure9 display coverage. No graph relation or source approval is inferred.', [3]);
+const figureCoverage = ['390-exercises-0026.png', '390-exercises-0066.png',
+  '390-exercises-0068.png', '390-exercises-0069.png'].map(name => {
+  const native = report.screenshots.find(image => image.path.endsWith(`/${name}`));
+  const witnessPath = name === '390-exercises-0026.png'
+    ? `${display}/observations/batch2/result.json` : `${display}/observations/batch3/result.json`;
+  const observation = read(witnessPath).images.find(image => image.path === native.path);
+  assert.ok(observation);
+  assert.equal(entry(observation.path).sha256, observation.sha256);
+  const region = native.figureRegions.find(item => item.key === 'figure-0-fig-09');
+  assert.equal(region.y, 0);
+  assert.equal(region.height, 400);
+  return { region, image: entry(observation.path), observer: entry(witnessPath),
+    actualObservation: observation.observation,
+    originalVisualObservation: observation.visualObservation };
+});
+const sorted = figureCoverage.map(item => item.region).sort((a, b) => a.x - b.x);
+let edge = 0;
+for (const region of sorted) {
+  assert.ok(region.x <= edge);
+  edge = Math.max(edge, region.x + region.width);
+}
+assert.equal(edge, 640);
+resolved.get(2).find(item => item.path.endsWith('/390-exercises-0026.png')).regionWitnesses = figureCoverage;
+pair(3, '390-exercises-0029.png', `${display}/observations/batch3/result.json`, '390-exercises-0065.png',
+  'Original 334 and 335(a)/prompt visible PASS retained; the separately first-observed final right-scroll region supplies the 335(b) equality terminal and restriction.',
+  [4], ['= 75q^2', 'q ≠ 0']);
+for (let batch = 1; batch <= 3; batch += 1) {
+  const resultPath = `${display}/observations/batch${batch}/result.json`;
+  const result = read(resultPath);
+  const values = resolved.get(batch);
+  assert.equal(values.length, result.images.filter(image => image.visualObservation === 'BLOCKED').length);
+  const resolutionPath = `${display}/observations/batch${batch}-coverage-resolution.record`;
+  const resolution = {
+    schema: 'stemrobin-182/observed-coverage-resolution@1', status: 'DISPLAY_PASS',
+    date: new Date().toISOString(), originalResult: entry(resultPath),
+    runtime: entry(`${display}/result.json`), contentOrHtmlBytesChanged: false,
+    resolvedImages: values, originalIsolatedBlockedPreserved: true,
+    parentImageViewsDuringBinding: 0,
+    priorTargetedBlockedImageReopens: batch === 1 ? 2 : 0,
+    rendererBrowserValidatorRuns: 0, finish: 'review',
+  };
+  fs.writeFileSync(resolutionPath, `${JSON.stringify(resolution, null, 2)}\n`, { flag: 'wx' });
+  const args = [`${base}/bind-observation-FIRST.mjs`,
+    `${display}/selection-FIRST/batch${batch}.json`, resultPath, ids.get(batch),
+    `${display}/bindings/batch${batch}.record`, resolutionPath];
+  const execution = spawnSync(process.execPath, args, { cwd: root, encoding: 'utf8' });
+  process.stdout.write(execution.stdout);
+  process.stderr.write(execution.stderr);
+  assert.equal(execution.status, 0);
+}

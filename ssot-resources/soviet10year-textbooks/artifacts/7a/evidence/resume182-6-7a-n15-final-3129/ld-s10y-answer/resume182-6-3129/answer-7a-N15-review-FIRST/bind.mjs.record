@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const output = '.tmp/ld-s10y-answer/resume182-6-3129/answer-7a-N15-review-FIRST';
+const authorRoot = '.tmp/ld-s10y-answer/resume182-6-3129/answer-7a-N15-author-FIRST';
+const blindRoot = '.tmp/ld-s10y-lesson/resume182-6-3129/n15-independent-source-FIRST';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = filename => {
+  const bytes = fs.readFileSync(filename);
+  return { path: path.resolve(filename), sha256: sha(bytes), bytes: bytes.length };
+};
+const verdict = JSON.parse(fs.readFileSync(`${output}/verdict.json`));
+assert.equal(verdict.status, 'ANSWER_PASS');
+const author = JSON.parse(fs.readFileSync(`${authorRoot}/result.json`));
+const candidate = bind(`${authorRoot}/answer-keys.json`);
+assert.equal(candidate.sha256, '368fe2ff73d492cc0315dbf6b236cc6239a09b2e0b38e533c125ecd0834eb3fb');
+for (const item of author.inputs) assert.equal(bind(item.path).sha256, item.sha256);
+const frozen = bind(`${blindRoot}/freeze.record`);
+assert.equal(frozen.sha256, 'edea30079f1ecebfe4be356a294a854d6e45f8dfd10bfdd5cc6597fec483cf43');
+const blind = JSON.parse(fs.readFileSync(frozen.path));
+for (const item of [...blind.inputs, blind.solutions]) assert.equal(bind(item.path).sha256, item.sha256);
+const result = {
+  ...verdict, reviewedAt: new Date().toISOString(),
+  bindings: {
+    candidate, author: bind(`${authorRoot}/result.json`),
+    authorObservations: bind(`${authorRoot}/observations.md`),
+    authorUsage: bind(`${authorRoot}/usage.json`),
+    independentSourceFreeze: frozen,
+    independentSolutions: blind.solutions,
+    verdict: bind(`${output}/verdict.json`),
+  },
+  inputBindings: author.inputs,
+};
+const resultPath = `${output}/result.json`;
+fs.writeFileSync(resultPath, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c2-s1-n15/answer-keys.json';
+assert.ok(!fs.existsSync(target));
+fs.copyFileSync(candidate.path, target, fs.constants.COPYFILE_EXCL);
+assert.equal(bind(target).sha256, candidate.sha256);
+const promotion = {
+  status: 'INDEPENDENTLY_REVIEWED_ANSWER_PROMOTED_NOT_NATIVE_FINALIZED',
+  review: bind(resultPath), candidate, target: bind(target),
+  sourceAndMathematicsChanges: 0, authorFailuresPreserved: true,
+  databaseWrites: 0, finish: 'review',
+};
+fs.writeFileSync(`${output}/promotion.record`, `${JSON.stringify(promotion, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ review: bind(resultPath), promotion: bind(`${output}/promotion.record`) }));

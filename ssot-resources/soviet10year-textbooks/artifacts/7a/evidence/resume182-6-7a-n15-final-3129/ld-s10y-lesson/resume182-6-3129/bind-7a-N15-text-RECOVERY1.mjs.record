@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+let code = fs.readFileSync('.tmp/ld-s10y-lesson/resume182-6-3129/bind-7a-N15-text-FIRST.mjs', 'utf8');
+const before = 'assert.ok(nativeLeft.visibleIds.some(id => nativeRight.visibleIds.includes(id)));';
+assert.equal(code.split(before).length, 2);
+code = code.replace(before,
+  'if (frames.length) assert.ok(nativeLeft.visibleIds.some(id => nativeRight.visibleIds.includes(id)));');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

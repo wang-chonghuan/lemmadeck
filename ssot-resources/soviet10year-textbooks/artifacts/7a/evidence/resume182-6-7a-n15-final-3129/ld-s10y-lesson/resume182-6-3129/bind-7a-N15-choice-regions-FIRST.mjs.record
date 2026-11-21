@@ -1,0 +1,175 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const display = '.tmp/ld-s10y-choice/resume182-6-3129/display-7a-N15-choices-ENTRYRECOVERY1';
+const read = file => JSON.parse(fs.readFileSync(file));
+const entry = file => {
+  const absolute = path.resolve(file);
+  assert.ok(absolute.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(absolute);
+  return { path: absolute, bytes: bytes.length,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const save = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return entry(file);
+};
+const runtimePath = `${display}/result.json`;
+const runtime = read(runtimePath);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(entry(runtime.report.path).sha256, runtime.report.sha256);
+const report = read(runtime.report.path);
+const originals = [2, 3].map(batch => ({
+  batch, file: `${display}/observations/batch${batch}/result.json`,
+  data: read(`${display}/observations/batch${batch}/result.json`),
+}));
+const images = new Map();
+for (const original of originals) {
+  assert.equal(original.data.status, 'BLOCKED');
+  assert.equal(original.data.imagesOpened, 8);
+  for (const image of original.data.images) {
+    assert.equal(entry(image.path).sha256, image.sha256);
+    assert.ok(image.regions.some(region => region.status === 'PASS'));
+    const native = report.screenshots.find(item => item.path === image.path);
+    assert.equal(native.surface, 'choices');
+    assert.deepEqual(native.viewport, { width: 390, height: 844 });
+    images.set(path.basename(image.path), { image, native, original });
+  }
+}
+const witness = (name, regionIds) => {
+  const item = images.get(name);
+  assert.ok(item, name);
+  const regions = regionIds.map(id => {
+    const region = item.image.regions.find(value => value.id === id);
+    assert.ok(region, `${name}:${id}`);
+    assert.equal(region.status, 'PASS');
+    return region;
+  });
+  return { image: entry(item.image.path), observer: entry(item.original.file),
+    actualRegions: regions };
+};
+const correction = save(`${display}/observations/parent-conflict-correction-FIRST/result.json`, {
+  schema: 'stemrobin-182/targeted-display-conflict-observation@1',
+  status: 'PASS', date: new Date().toISOString(),
+  imagesOpened: 3, targetedExistingBlockedImageReopens: 3,
+  newCaptures: 0, originalObserverReportsChanged: false,
+  images: [
+    { ...entry(images.get('390-choices-0011.png').image.path), status: 'PASS',
+      observation: 'Actual question5 uses 云杉/橡树 in prompt and options, not 椴树. The visible option text agrees with the unchanged modern candidate and desktop first observation. No tree-order mathematics was rereviewed.' },
+    { ...entry(images.get('390-choices-0016.png').image.path), status: 'PASS',
+      observation: 'Actual question14 target denominator is c^2+1. A has D1=(c+1)^2/2 and D2=(c+1)^2/[2(c^2+1)]. The first observer denominator-minus transcription is inaccurate. Off-right figure and bottom C clipping remain isolated BLOCKED.' },
+    { ...entry(images.get('390-choices-0074.png').image.path), status: 'PASS',
+      observation: 'Actual question14 A first numerator is (c+1)^2, not (c-1)^2; both A numerators have plus. B has minus in both numerators; C has negative D2 and <=0; D has denominator2 in D2. The second observer A-first-numerator transcription is inaccurate. This is display transcription only, not an answer-key review.' },
+  ],
+  observerKind: 'parent_targeted_conflict_correction', newScientificApproval: false,
+  originalFailuresAndUnknownCostsPreserved: true, finish: 'review',
+});
+const plans = [
+  [2, '390-choices-0009.png', [['390-choices-0010.png', ['q3']]]],
+  [2, '390-choices-0011.png', [['390-choices-0012.png', ['q6-options']]]],
+  [2, '390-choices-0012.png', [['390-choices-0013.png', ['q8-option-d']], ['390-choices-0073.png', ['q8-stem-and-A-C-D', 'q8-B-readable-suffix']]]],
+  [2, '390-choices-0013.png', [['390-choices-0073.png', ['q8-stem-and-A-C-D', 'q8-B-readable-suffix']], ['390-choices-0014.png', ['q10-c-d']]]],
+  [2, '390-choices-0014.png', [['390-choices-0015.png', ['upper-left-graph-visible-body', 'upper-right-graph-visible-part', 'q12-options-a-f']], ['390-choices-0077.png', ['q12-g-visible-fragment', 'q12-h']]]],
+  [2, '390-choices-0015.png', [['390-choices-0077.png', ['q12-g-visible-fragment', 'q12-h']], ['390-choices-0016.png', ['upper-left-f-graph', 'upper-g-visible-part', 'q13-options']], ['390-choices-0080.png', ['q13-g-visible-fragment', 'q13-h']]]],
+  [2, '390-choices-0016.png', [['390-choices-0080.png', ['q13-g-visible-fragment', 'q13-h']], ['390-choices-0074.png', ['q14-stem-and-A-D']]]],
+  [3, '390-choices-0017.png', [['390-choices-0074.png', ['q14-stem-and-A-D']], ['390-choices-0018.png', ['q17-stem-and-A-D']]]],
+  [3, '390-choices-0018.png', [['390-choices-0019.png', ['q19-stem-and-A-D']]]],
+  [3, '390-choices-0019.png', [['390-choices-0018.png', ['q17-stem-and-A-D']]]],
+  [3, '390-choices-0065.png', [['390-choices-0010.png', ['q3']]]],
+  [3, '390-choices-0073.png', [['390-choices-0012.png', ['q7']], ['390-choices-0013.png', ['q8-prompt-continuation']]]],
+  [3, '390-choices-0074.png', [['390-choices-0016.png', ['upper-left-f-graph', 'q13-options']], ['390-choices-0080.png', ['q13-heading-and-stem', 'q13-h']]]],
+  [3, '390-choices-0077.png', [['390-choices-0014.png', ['q11', 'q12-figure-visible-top']], ['390-choices-0015.png', ['upper-left-graph-visible-body', 'upper-right-graph-visible-part', 'q12-options-a-f']]]],
+  [3, '390-choices-0080.png', [['390-choices-0014.png', ['q12-prompt']], ['390-choices-0015.png', ['q12-options-a-f', 'q13-figure-visible-headings']], ['390-choices-0016.png', ['upper-left-f-graph', 'upper-g-visible-part', 'q13-options']]]],
+];
+const regionCoverage = [];
+for (const [key, names] of [
+  ['figure-0-fig-09', ['390-choices-0014.png', '390-choices-0015.png', '390-choices-0077.png']],
+  ['figure-1-fig-09', ['390-choices-0015.png', '390-choices-0016.png', '390-choices-0080.png']],
+]) {
+  const rectangles = names.map(name => {
+    const item = images.get(name);
+    return { image: entry(item.image.path), observer: entry(item.original.file),
+      region: item.native.figureRegions.find(region => region.key === key),
+      actualPassRegions: item.image.regions.filter(region => region.status === 'PASS'),
+      coordinateSystem: 'Native report source media coordinates, not observer-estimated viewport crops' };
+  });
+  const yEdges = [...new Set([0, 400, ...rectangles.flatMap(({ region }) =>
+    [region.y, region.y + region.height])])].sort((a, b) => a - b);
+  for (let i = 1; i < yEdges.length; i += 1) {
+    const middle = (yEdges[i - 1] + yEdges[i]) / 2;
+    if (middle < 0 || middle > 400) continue;
+    let edge = 0;
+    const spans = rectangles.filter(({ region }) =>
+      region.y <= middle && region.y + region.height >= middle)
+      .map(({ region }) => region).sort((a, b) => a.x - b.x);
+    for (const span of spans) {
+      assert.ok(span.x <= edge);
+      edge = Math.max(edge, span.x + span.width);
+    }
+    assert.equal(edge, 640);
+  }
+  regionCoverage.push({ key, sourceExtent: { width: 640, height: 400 }, rectangles,
+    sourceRelationshipsRereviewed: false, isolatedFullFigureApproval: false });
+}
+const html = runtime.deliveredHtmlByViewport[0].deliveredHtml;
+assert.equal(entry(html.path).sha256, html.sha256);
+const resolved = plans.map(([batch, name, witnesses]) => {
+  const item = images.get(name);
+  assert.equal(item.original.batch, batch);
+  const blocked = item.image.regions.filter(region => region.status === 'BLOCKED');
+  assert.ok(blocked.length);
+  return { batch, image: entry(item.image.path), originalBlockedRegionsPreserved: blocked,
+    originalObservationPreserved: item.image.visualObservation,
+    capturedVisiblePassRegions: item.image.regions.filter(region => region.status === 'PASS'),
+    witnesses: witnesses.map(([filename, ids]) => witness(filename, ids)),
+    ...(name === '390-choices-0011.png' || name === '390-choices-0016.png'
+      || name === '390-choices-0074.png' ? { targetedCorrection: correction } : {}),
+    scope: 'Complementary actually observed regions of unchanged HTML; vertical exclusions remain exclusions and each isolated clipped window stays BLOCKED',
+    ...(name === '390-choices-0073.png' || name === '390-choices-0013.png' ?
+      { q8Scope: 'Left prefixes from0013 plus right tails from0073; clipped leading fragments in0073 are not certified full prefixes' } : {}),
+  };
+});
+for (const original of originals) {
+  const assignmentPath = `${display}/selection-FIRST/batch${original.batch}.json`;
+  const assignment = read(assignmentPath);
+  assert.equal(assignment.images.length, 8);
+  const corrections = resolved.filter(item => item.batch === original.batch);
+  assert.equal(corrections.length, original.data.images.filter(image =>
+    (image.status ?? image.visualObservation) === 'BLOCKED').length);
+  const resolutionPath = `${display}/observations/batch${original.batch}-coverage-resolution.record`;
+  save(resolutionPath, {
+    schema: 'stemrobin-182/observed-region-coverage-resolution@1', status: 'DISPLAY_PASS',
+    date: new Date().toISOString(), originalResult: entry(original.file),
+    resolvedImages: corrections, regionCoverage, correction,
+    html: entry(html.path), runtime: entry(runtimePath),
+    contentOrHtmlBytesChanged: false, originalIsolatedBlockedPreserved: true,
+    parentImageViewsDuringBinding: 0, priorTargetedConflictReopens: 3,
+    rendererBrowserValidatorRuns: 0, finish: 'review',
+  });
+  const binding = {
+    schema: 'stemrobin-182/native-observer-binding@1', status: 'DISPLAY_PASS',
+    date: new Date().toISOString(), workdir: root,
+    assignment: entry(assignmentPath), result: entry(original.file),
+    technicalResolution: entry(resolutionPath),
+    method: 'Existing captured visible regions plus explicit complementary observed region coverage; original whole-image BLOCKED reports unmodified',
+    agentId: original.batch === 2 ? '01a1ff96-b7e3-7bf1-a894-20ad614364a5'
+      : '01a1ff96-d080-7770-8fad-a6edc5af530f',
+    agentCompletedAndClosed: true,
+    images: original.data.images.map(image => {
+      const requested = assignment.images.find(item => item.path === image.path);
+      assert.equal(requested.sha256, image.sha256);
+      return { ...entry(image.path), verdict: 'PASS',
+        originalVisualObservation: image.status ?? image.visualObservation,
+        coverageResolution: entry(resolutionPath), isolatedScreenshotApproved: false };
+    }),
+    parentImageViews: 0, browserRendererValidatorCalls: 0,
+    historicalFailuresAndUnknownCountsPreserved: true,
+  };
+  const output = `${display}/bindings/batch${original.batch}.record`;
+  console.log(JSON.stringify({ ...save(output, binding), status: binding.status, images: 8 }));
+}

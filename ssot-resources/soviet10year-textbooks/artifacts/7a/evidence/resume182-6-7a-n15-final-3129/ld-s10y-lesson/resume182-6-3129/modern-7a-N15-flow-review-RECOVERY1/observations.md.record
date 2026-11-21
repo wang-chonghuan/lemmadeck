@@ -1,0 +1,36 @@
+# N15 RECOVERY1 Affected-Only Layout Review
+
+Verdict: AFFECTED_ONLY_PASS. Independent finite review; 0 images opened.
+
+## Bindings
+
+- Before: `modern-7a-N15-flow-RECOVERY1/lesson.before.record`, SHA-256 `88a464365a4aff006291385d071e98a0a253e9087fd1ce401a2d7827d5a1901e`.
+- Current: `modern-7a-N15-final-FIRST/adapt/7a/modern-us-neutral/lessons/alg7-c2-s1-n15/lesson.template.json`, SHA-256 `22fd6cfb4ed10267f69dc21f311b143bc6b1a330daa22490b70d1878aa15adde`.
+- Recovery result: `modern-7a-N15-flow-RECOVERY1/result.record`, SHA-256 `92b34f8b387ee01fad508cfc6b58ed7a43b178349107543549056b8b0c41125b`.
+- Historical failed audit: SHA-256 `06e6c301cb2476f01a0422e00661209d267dfd0035f43cd98b5f2e40f00c024a`.
+- Saved flow: SHA-256 `a154cb2b75f4c49f4156f7b0ce0e69fa885c6f347a2602f48216ede77527e271`.
+
+All input paths are absolute in `result.json`, rooted at the sole requested checkout. The recovery result's before/current/audit paths and hashes match the actual supplied files; its section-break pairs match the current template.
+
+## Actual Delta
+
+Only `/prose/10/text` and `/section_breaks/0/after` differ as JSON values. Each inserts one LF after the existing semicolon, immediately before the opposite-direction clause. This delta is strictly whitespace outside formulas; it contains no punctuation replacement or non-whitespace normalization. The first pair's before selector and the entire second pair remain unchanged.
+
+The affected formula sequence is byte-identical and ordered identically: `$a<b$`, `$b>a$`, `$a>b$`, `$b<a$`. The original conditional directions, opposite-direction transition, punctuation, and non-whitespace prose remain intact. A single LF does not create a new blank-line paragraph: block 10 still contains two canonical paragraphs in the same order. The ascending/descending passages are untouched. Other prose blocks and all other top-level fields are structurally unchanged, including embedded source, figure declarations, exercise count, and errata. This comparison establishes non-change, not new source, figure, exercise, or mathematical approval.
+
+## Two Boundary Pairs
+
+The current paragraph texts, indices, and block mappings exactly match the 11 retained `flow.stdout.record` paragraphs. Indices below are zero-based.
+
+- Pair 0 uniquely joins canonical paragraphs 5 and 6: block 5 paragraph 0 to block 10 paragraph 0. The new after selector is the complete actual first paragraph of block 10, including the inserted LF. Exact matching and whitespace-collapsed matching each yield only `[5, 6]`.
+- Pair 1 uniquely joins canonical paragraphs 7 and 8: block 10 paragraph 1 to block 11 paragraph 0. It is unchanged from the retained before snapshot. Exact matching and whitespace-collapsed matching each yield only `[7, 8]`.
+
+Figure/caption blocks between prose blocks 5 and 10 are not prose paragraphs; their declarations are unchanged and no image was inspected. Both selectors name whole actual paragraphs, not fragments or distant text.
+
+The retained failed audit reports zero matches for boundary 0. The retained flow has empty `resolvedBreaks` and `boundaries`; it is paragraph evidence, not a successful production parser/audit receipt. The verdict comes from the independent, read-only affected-pair comparison above. Neither native normalization nor any passed stage was rerun.
+
+## Limits
+
+The human-stated prior TEXT_PASS at before hash `88a464365a4aff006291385d071e98a0a253e9087fd1ce401a2d7827d5a1901e` is retained, not independently reopened or repeated. No additional prior-review boundary section was needed. No findings within this affected-only scope.
+
+This PASS approves only the actual whitespace delta and its two current adjacent canonical boundary pairs. It grants no whole-text, source, figure, whole-lesson, runtime-rendering, production-audit, publishing, or database approval. No source/math recomputation, image opens, paid calls, DB/Plane access, Git operations, tool/source edits, chats, or old-agent access occurred. Only the three requested review files were written.

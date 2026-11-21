@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const output = '.tmp/ld-s10y-lesson/resume182-6-3129/n15-independent-source-FIRST';
+const modern = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const solution = JSON.parse(fs.readFileSync(`${output}/solutions.json`));
+assert.equal(solution.authorAnswersRead, false);
+assert.equal(solution.choiceDraftRead, false);
+assert.deepEqual(solution.solutions.map(item => item.exercise),
+  Array.from({ length: 14 }, (_, index) => String(322 + index)));
+const record = {
+  schema: 'stemrobin-182/blind-independent-source-freeze@1',
+  status: 'INDEPENDENT_SOLUTIONS_FROZEN_NOT_AUTHOR_REVIEW',
+  frozenAt: new Date().toISOString(),
+  workdir: root, lesson: 'alg7-c2-s1-n15',
+  solutions: bind(`${output}/solutions.json`),
+  inputs: [
+    ...['lesson.json', 'exercises.json', 'figures.json'].map(name =>
+      `${modern}/lessons/alg7-c2-s1-n15/${name}`),
+    'ssot-resources/soviet10year-textbooks/artifacts/7a/figures/fig-09.png',
+    ...['svg', 'spec.json', 'render.json', 'review.json'].map(name => `${modern}/figures/fig-09.${name}`),
+    `${output}/fig-09-current.png`, `${output}/capture.record`,
+    '.tmp/ld-s10y-lesson/resume182-6-3129/figure-7a-N15-08-promotion-FIRST/natural-number-convention.record',
+  ].map(bind),
+  newIndependentImageOpens: 2, reopens: 0,
+  candidateKeysReadAtFreeze: false, choiceDraftReadAtFreeze: false,
+  oldPassStageReruns: 0, databaseWrites: 0, finish: 'review',
+};
+const file = `${output}/freeze.record`;
+fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(file)));

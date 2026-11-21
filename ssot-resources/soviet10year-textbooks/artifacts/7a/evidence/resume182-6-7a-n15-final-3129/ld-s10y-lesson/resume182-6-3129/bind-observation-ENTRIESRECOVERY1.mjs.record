@@ -1,0 +1,9 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck');
+let code = fs.readFileSync('.tmp/ld-s10y-lesson/resume182-6-3129/bind-observation-FIRST.mjs', 'utf8');
+const before = 'const images = result.images ?? result.observations;';
+assert.equal(code.split(before).length, 2);
+code = code.replace(before, 'const images = result.images ?? result.observations ?? result.entries;');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

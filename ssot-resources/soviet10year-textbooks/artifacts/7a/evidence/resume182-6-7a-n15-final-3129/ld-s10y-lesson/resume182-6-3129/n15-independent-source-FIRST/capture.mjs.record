@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const output = path.join(root, '.tmp/ld-s10y-lesson/resume182-6-3129/n15-independent-source-FIRST');
+const input = path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/fig-09.svg');
+const bytes = fs.readFileSync(input);
+const sha = data => crypto.createHash('sha256').update(data).digest('hex');
+const requireApp = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = requireApp('playwright');
+const png = path.join(output, 'fig-09-current.png');
+assert.ok(!fs.existsSync(png));
+let browser, context;
+const facts = {
+  purpose: 'First new independent exercise331 source-solving observation; not figure reapproval or geometry rendering',
+  input: { path: input, sha256: sha(bytes) }, width: 640, height: 400,
+  svgGeometryChanged: false, nativeFigureRendererCalled: false,
+  externalRequests: [], cleanup: {},
+};
+try {
+  browser = await chromium.launch({ headless: true });
+  context = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  await context.route('**/*', async route => {
+    facts.externalRequests.push(route.request().url());
+    await route.abort();
+  });
+  const page = await context.newPage();
+  await page.setContent(`<html><head><style>body{margin:0}</style></head><body>${bytes.toString('utf8')}</body></html>`);
+  await page.locator('svg').screenshot({ path: png });
+  assert.equal(facts.externalRequests.length, 0);
+  facts.output = { path: png, sha256: sha(fs.readFileSync(png)), bytes: fs.statSync(png).size };
+} finally {
+  if (context) await context.close();
+  if (browser) await browser.close();
+  facts.cleanup = { contextClosed: true, browserClosed: true };
+  fs.writeFileSync(path.join(output, 'capture.record'), `${JSON.stringify(facts, null, 2)}\n`, { flag: 'wx' });
+}
+console.log(JSON.stringify(facts));

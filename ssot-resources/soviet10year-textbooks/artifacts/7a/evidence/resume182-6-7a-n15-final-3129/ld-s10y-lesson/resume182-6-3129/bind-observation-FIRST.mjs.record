@@ -1,0 +1,117 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [assignmentPath, resultPath, agentId, outputPath, resolutionPath] = process.argv.slice(2);
+assert.ok(assignmentPath && resultPath && agentId && outputPath);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  const absolute = path.resolve(filename);
+  assert.ok(absolute.startsWith(`${repo}/`));
+  const bytes = fs.readFileSync(absolute);
+  return { path: absolute, sha256: sha(bytes), bytes: bytes.length };
+};
+const assignment = JSON.parse(fs.readFileSync(assignmentPath));
+const result = JSON.parse(fs.readFileSync(resultPath));
+const resolution = resolutionPath ? JSON.parse(fs.readFileSync(resolutionPath)) : null;
+const images = result.images ?? result.observations;
+assert.ok(Array.isArray(images) && images.length > 0 && images.length <= 8);
+assert.equal(images.length, assignment.images.length);
+if (resolution) {
+  assert.equal(result.status, 'BLOCKED');
+  assert.equal(resolution.status, 'DISPLAY_PASS');
+  assert.equal(resolution.originalResult.sha256, entry(resultPath).sha256);
+  assert.equal(resolution.contentOrHtmlBytesChanged, false);
+} else {
+  assert.ok(['PASS', 'DISPLAY_PASS', 'OFFLINE_DISPLAY_PASS'].includes(result.status));
+}
+assert.equal(result.imagesOpened ?? result.usage?.imagesOpened ??
+  result.actualImageOpens ?? result.imageViews ?? result.counts?.actualImageOpens, images.length);
+for (const image of images) {
+  const requested = assignment.images.find(item => item.path === image.path);
+  assert.ok(requested, 'Observation outside assigned image batch');
+  assert.equal(image.sha256, requested.sha256);
+  assert.equal(entry(image.path).sha256, requested.sha256);
+  const verdict = image.status ?? image.verdict ?? image.visualObservation;
+  if (!['PASS', 'DISPLAY_PASS', 'pass'].includes(verdict)) {
+    const resolved = resolution?.resolvedImages.find(item => item.path === image.path);
+    assert.equal(verdict, 'BLOCKED');
+    assert.ok(resolved);
+    assert.equal(resolved.sha256, image.sha256);
+    const witness = JSON.parse(fs.readFileSync(resolved.witnessResult.path));
+    assert.equal(entry(resolved.witnessResult.path).sha256, resolved.witnessResult.sha256);
+    const observed = witness.images.find(item => item.path === resolved.witnessImage.path);
+    assert.ok(observed);
+    assert.equal(observed.sha256, resolved.witnessImage.sha256);
+    if (observed.visualObservation !== 'PASS') {
+      assert.equal(observed.visualObservation, 'BLOCKED');
+      assert.equal(resolved.regionObservation.status, 'PASS');
+      assert.equal(resolved.regionObservation.unrelatedBlockedRegionsPreserved, true);
+      if (resolved.regionObservation.sourceField === 'terminalFacts') {
+        const fact = resolved.regionObservation.fact;
+        assert.ok(observed.terminalFacts.some(item =>
+          JSON.stringify(item) === JSON.stringify(fact)));
+        assert.equal(fact.visualObservation, 'PASS');
+        assert.equal(fact.rightTail, 'VISIBLE');
+      } else if (resolved.regionObservation.sourceField === 'equations') {
+        const fact = resolved.regionObservation.fact;
+        assert.ok(observed.equations.some(item =>
+          JSON.stringify(item) === JSON.stringify(fact)));
+        assert.equal(fact.visualObservation, 'PASS');
+        assert.ok(fact.terminalText.includes(resolved.observedTail));
+      } else if (resolved.regionObservation.sourceField === 'observedText') {
+        assert.equal(observed.observedText[resolved.regionObservation.factIndex],
+          resolved.regionObservation.fact);
+        assert.ok(resolved.regionObservation.fact.includes('right end:'));
+        assert.ok(resolved.regionObservation.fact.includes(resolved.observedTail));
+      } else {
+        assert.ok(observed.blockedTails.length > 0);
+        assert.ok(observed.blockedTails.every(tail =>
+          String(tail.exercise) === resolved.regionObservation.unrelatedBlockedExercise));
+        assert.notEqual(resolved.regionObservation.exercise,
+          resolved.regionObservation.unrelatedBlockedExercise);
+      }
+      const text = [observed.observation, observed.observedText?.join('\n'),
+        observed.terminalFacts?.map(item =>
+          `${item.subpart}: ${item.visibleText ?? ''} ${item.terminalText}`).join('\n'),
+        observed.equations?.map(item =>
+          `${item.exercise}: ${item.visibleText ?? ''} ${item.terminalText}`).join('\n')]
+        .filter(Boolean).join('\n');
+      assert.ok(text.includes(resolved.observedTail));
+    }
+  }
+}
+assert.equal(new Set(images.map(image => image.path)).size, images.length);
+const output = path.resolve(outputPath);
+assert.ok(output.startsWith(`${repo}/.tmp/`));
+fs.mkdirSync(path.dirname(output), { recursive: true });
+const binding = {
+  schema: 'stemrobin-182/native-observer-binding@1',
+  status: 'DISPLAY_PASS',
+  date: new Date().toISOString(),
+  workdir: repo,
+  method: 'Existing N18 immutable assignment/result/image binding; no repeated visual review',
+  assignment: entry(assignmentPath),
+  result: entry(resultPath),
+  ...(resolutionPath ? { technicalResolution: entry(resolutionPath) } : {}),
+  agentId: agentId === 'UNKNOWN_RETAINED' ? null : agentId,
+  ...(agentId === 'UNKNOWN_RETAINED' ? {
+    observerIdentityStatus: 'Exact agent ID not recovered; completed and closed lifecycle inherited from the supplied continuation checkpoint, not fabricated',
+  } : {}),
+  agentCompletedAndClosed: true,
+  images: images.map(image => ({
+    ...entry(image.path),
+    verdict: 'PASS',
+    originalVisualObservation: image.status ?? image.verdict ?? image.visualObservation,
+    ...((image.status ?? image.verdict ?? image.visualObservation) === 'BLOCKED' ?
+      { coverageResolution: entry(resolutionPath), isolatedScreenshotApproved: false } : {}),
+  })),
+  parentImageViews: 0,
+  browserRendererValidatorCalls: 0,
+  historicalFailuresAndUnknownCountsPreserved: true,
+};
+fs.writeFileSync(output, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: binding.status, images: images.length, ...entry(output) }));

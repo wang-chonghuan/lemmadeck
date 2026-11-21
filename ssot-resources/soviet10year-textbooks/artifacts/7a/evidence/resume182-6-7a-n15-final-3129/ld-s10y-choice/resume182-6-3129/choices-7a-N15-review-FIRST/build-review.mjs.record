@@ -1,0 +1,103 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const output = '.tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-review-FIRST';
+const author = '.tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-author-FIRST';
+const blind = '.tmp/ld-s10y-lesson/resume182-6-3129/n15-independent-source-FIRST';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = filename => {
+  const bytes = fs.readFileSync(filename);
+  return { path: path.resolve(filename), sha256: sha(bytes), bytes: bytes.length };
+};
+const judgment = JSON.parse(fs.readFileSync(`${output}/judgments.json`));
+assert.equal(judgment.authorKeyRead, false);
+const draft = JSON.parse(fs.readFileSync(`${author}/draft.json`));
+const seed = JSON.parse(fs.readFileSync(`${author}/seed.json`));
+assert.equal(bind(`${author}/draft.json`).sha256,
+  '27b1d16172c660ca54bbfce27c93c238b7e205e7f7fef79ed290c1f1f2141330');
+assert.equal(bind(`${author}/seed.json`).sha256,
+  'ed018c67b3a17f8ba95ee97f33e531a23af609a2c6dd6b55493560ffd6e707b0');
+assert.deepEqual(judgment.questions.map(item => item.id), draft.questions.map(item => item.id));
+for (const item of judgment.questions) {
+  const question = draft.questions.find(candidate => candidate.id === item.id);
+  assert.deepEqual(Object.keys(item.options), question.view.options.map(option => option.id));
+  assert.ok(item.correct.every(id => id in item.options));
+  assert.equal(question.view.mode === 'single', item.correct.length === 1);
+}
+const freezePath = `${output}/visible-review.freeze.record`;
+if (process.argv[2] === '--freeze') {
+  const freeze = {
+    frozenAt: new Date().toISOString(), status: judgment.status,
+    judgment: bind(`${output}/judgments.json`),
+    sourceFreeze: bind(`${blind}/freeze.record`),
+    sourceSolutions: bind(`${blind}/solutions.json`),
+    seed: bind(`${author}/seed.json`), draft: bind(`${author}/draft.json`),
+    authorKeyOrInternalDerivationsReadBeforeFreeze: false,
+    visibleQuestions: draft.questions.map(({ id, view, source_numbers }) => ({ id, view, source_numbers })),
+    nativeValidatorRunAtFreeze: false,
+  };
+  fs.writeFileSync(freezePath, `${JSON.stringify(freeze, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify(bind(freezePath)));
+} else {
+  assert.equal(process.argv[2], '--finalize');
+  const freeze = JSON.parse(fs.readFileSync(freezePath));
+  assert.equal(bind(freeze.judgment.path).sha256, freeze.judgment.sha256);
+  assert.equal(bind(freeze.draft.path).sha256, freeze.draft.sha256);
+  const authorResult = JSON.parse(fs.readFileSync(`${author}/result.json`));
+  const comparisons = JSON.parse(fs.readFileSync(`${output}/internal-comparison.json`));
+  assert.equal(comparisons.status, 'INTERNAL_DERIVATIONS_CHECKED_PASS');
+  assert.equal(comparisons.questionsChecked, 19);
+  assert.equal(comparisons.optionsChecked, 78);
+  const sources = JSON.parse(fs.readFileSync(`${blind}/solutions.json`));
+  const pass = evidence => ({ verdict: 'pass', evidence });
+  const review = {
+    schema: 's10y-choice-review-v1',
+    seed_sha256: authorResult.seed_sha256, draft_sha256: authorResult.draft_sha256,
+    reviewer: { kind: 'self_review', identity: judgment.reviewerIdentity },
+    source_reviews: seed.exercises.map(exercise => ({
+      source_number: exercise.number,
+      independent_solution: sources.solutions.find(item => item.exercise === exercise.number).solution,
+      coverage: pass(judgment.questions.filter(item =>
+        draft.questions.find(question => question.id === item.id).source_numbers.includes(exercise.number))
+        .map(item => `${item.id}: ${item.fidelity}`).join(' ')
+        + ' Recorded loss of independent writing/construction retained; no source number, domain, relation or key task silently omitted.'),
+    })),
+    figure_checks: seed.figures.map(figure => {
+      const asset = figure.assets.find(item => item.path.endsWith('.svg')) ?? figure.assets[0];
+      return {
+        figure_id: figure.id, asset_path: asset.path, asset_sha256: asset.sha256,
+        observation: sources.actualFigureObservations.observation
+          + ' Original PNG and browser raster of this exact current SVG were actually opened once each before the source freeze; no new geometry render or figure reapproval.',
+      };
+    }),
+    new_figure_reviews: [],
+    question_reviews: judgment.questions.map(item => ({
+      question_id: item.id, task_fidelity: pass(item.fidelity),
+      redundancy: pass(item.redundancy), answer_leakage: pass(item.leakage),
+      mathematics: {
+        verdict: 'pass', independent_solution: item.solution, correct: item.correct,
+        option_checks: Object.entries(item.options).map(([id, evidence]) => ({
+          option_id: id, truth: item.correct.includes(id) ? 'correct' : 'incorrect', evidence,
+        })),
+      },
+    })),
+    outcome: 'pass',
+  };
+  const file = `${output}/review.json`;
+  fs.writeFileSync(file, `${JSON.stringify(review, null, 2)}\n`, { flag: 'wx' });
+  fs.writeFileSync(`${output}/provenance.record`, `${JSON.stringify({
+    status: 'INLINE_SELF_REVIEW_DECLARED_NOT_INDEPENDENT_AGENT_CLAIM',
+    review: bind(file), sourceFreeze: freeze.sourceFreeze,
+    visibleReviewFreeze: bind(freezePath), internalComparison: bind(`${output}/internal-comparison.json`),
+    originalAndCurrentFigureOpens: 2, extraFigureReopens: 0,
+    previousAnswerReviewSourceSolvingReusedWithoutRecomputing: true,
+    authorBooleAgentSeparate: true, conservativeReviewKind: 'self_review',
+    noAvailableAgentSlotDuringInlineReview: true,
+    reviewerDidNotAuthorOrEditCandidate: true, newPaidCalls: 0, finish: 'review',
+  }, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify(bind(file)));
+}

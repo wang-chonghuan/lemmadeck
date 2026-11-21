@@ -1,0 +1,165 @@
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { resolve, relative } from "node:path";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck";
+const out = resolve(cwd, ".tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-author-FIRST");
+if (process.cwd() !== cwd) throw new Error("Sole cwd mismatch");
+const hash = value => createHash("sha256").update(value).digest("hex");
+const write = (name, value) => writeFileSync(resolve(out, name), value, { flag: "wx" });
+const record = (name, value) => write(name, JSON.stringify(value, null, 2) + "\n");
+function run(name, command, argv) {
+  for (const suffix of ["stdout", "stderr", "execution.json"]) {
+    if (existsSync(resolve(out, `${name}.${suffix}`))) throw new Error("Receipt already exists");
+  }
+  const started = new Date().toISOString();
+  const result = spawnSync(command, argv, { cwd, encoding: "utf8", maxBuffer: 8 * 1024 * 1024 });
+  const stdout = result.stdout ?? "";
+  const stderr = result.stderr ?? "";
+  write(`${name}.stdout`, stdout);
+  write(`${name}.stderr`, stderr);
+  record(`${name}.execution.json`, {
+    cwd, command, argv, started, finished: new Date().toISOString(),
+    exitCode: result.status, signal: result.signal, error: result.error?.message ?? null,
+    streams: {
+      stdout: { path: `${name}.stdout`, sha256: hash(stdout) },
+      stderr: { path: `${name}.stderr`, sha256: hash(stderr) }
+    }
+  });
+  if (result.status !== 0) throw new Error(`${name} failed: ${stderr}`);
+  return stdout;
+}
+const prepare = ".agents/skills/ld-s10y-choice/scripts/prepare.py";
+const base = ["--repo", ".", "--book", "7a", "--lesson", "alg7-c2-s1-n15"];
+const action = process.argv[2];
+if (action === "inspect") {
+  const inventory = JSON.parse(run("01-inspect", "python3", [prepare, "inspect", ...base]));
+  const projected = {
+    exercises: inventory.exercises.filter(e => Number(e.number) >= 322 && Number(e.number) <= 335),
+    concepts: inventory.concept_candidates.filter(c => [1, 2, 4, 10].includes(c.block)),
+    figures: inventory.figures.filter(f => f.id.includes("09"))
+  };
+  record("inspection-projection.json", projected);
+  console.log(JSON.stringify(projected, null, 2));
+} else if (action === "prepare") {
+  const selection = [];
+  for (let n = 322; n <= 335; n++) selection.push("--exercise", String(n));
+  for (const n of [1, 2, 4, 10]) selection.push("--concept-block", String(n));
+  console.log(run("02-prepare", "python3", [prepare, "prepare", ...base, ...selection,
+    "--out", relative(cwd, resolve(out, "seed.json"))]));
+} else if (action === "validate") {
+  console.log(run("05-validate", "python3", [".agents/skills/ld-s10y-choice/scripts/validate.py",
+    "--repo", ".", "--seed", relative(cwd, resolve(out, "seed.json")),
+    "--draft", relative(cwd, resolve(out, "draft.json"))]));
+} else if (action === "freeze") {
+  const bytes = readFileSync(resolve(out, "source-solutions.json"));
+  JSON.parse(bytes);
+  record("source-solutions.freeze.json", {
+    phase: "independent source solving completed before options",
+    path: "source-solutions.json", sha256: hash(bytes),
+    frozen_at: new Date().toISOString(), draft_exists: existsSync(resolve(out, "draft.json")),
+    semantic_review: "pending"
+  });
+  console.log(hash(bytes));
+} else if (action === "evidence") {
+  const root = "ssot-resources/soviet10year-textbooks/artifacts/7a";
+  const manifestPath = `${root}/editions/modern-us-neutral/lessons/alg7-c2-s1-n15/figures.json`;
+  const figure = JSON.parse(readFileSync(resolve(cwd, manifestPath))).figures.find(f => f.id === "fig-09");
+  const specPath = `${root}/editions/modern-us-neutral/${figure.spec}`;
+  const specBytes = readFileSync(resolve(cwd, specPath));
+  const spec = JSON.parse(specBytes);
+  const conventionPath = ".tmp/ld-s10y-lesson/resume182-6-3129/figure-7a-N15-08-promotion-FIRST/natural-number-convention.record";
+  const conventionBytes = readFileSync(resolve(cwd, conventionPath));
+  const convention = JSON.parse(conventionBytes);
+  record("figure-whitelist-projection.json", {
+    manifest_path: manifestPath, manifest_sha256: hash(readFileSync(resolve(cwd, manifestPath))),
+    figure: { id: figure.id, label: figure.label, svg: figure.svg, spec: figure.spec },
+    spec_path: specPath, spec_sha256: hash(specBytes),
+    source_image: spec.source.image, inventory: spec.source.inventory,
+    canvas: spec.canvas, display: spec.display, objects: spec.objects, assertions: spec.assertions,
+    modern_svg_sha256: hash(readFileSync(resolve(cwd, `${root}/editions/modern-us-neutral/${figure.svg}`))),
+    original_png_sha256: hash(readFileSync(resolve(cwd, spec.source.image.path)))
+  });
+  record("convention-binding.json", {
+    record_path: conventionPath, record_sha256: hash(conventionBytes),
+    definitions: convention.definitions.map(d => ({ index: d.index, kind: d.kind, text: d.text })),
+    restriction: "Literal convention only; no N29 source file, exercise, answer or figure read"
+  });
+  console.log("Figure whitelist and literal convention bindings recorded.");
+} else if (action === "finalize") {
+  const canonical = {};
+  for (const name of ["seed", "draft", "source-solutions"]) {
+    canonical[name] = run(`digest-${name}`, "python3",
+      [prepare, "digest", relative(cwd, resolve(out, `${name}.json`))]).trim();
+  }
+  const frozen = JSON.parse(readFileSync(resolve(out, "source-solutions.freeze.json")));
+  const sourceHash = hash(readFileSync(resolve(out, "source-solutions.json")));
+  if (sourceHash !== frozen.sha256 || frozen.draft_exists) throw new Error("Freeze evidence mismatch");
+  const validation = JSON.parse(readFileSync(resolve(out, "05-validate.execution.json")));
+  const stdout = readFileSync(resolve(out, "05-validate.stdout"), "utf8");
+  const stderr = readFileSync(resolve(out, "05-validate.stderr"), "utf8");
+  const draft = JSON.parse(readFileSync(resolve(out, "draft.json")));
+  const seed = JSON.parse(readFileSync(resolve(out, "seed.json")));
+  const artifactNames = [
+    "seed.json", "draft.json", "source-solutions.json", "source-solutions.freeze.json",
+    "usage.json", "observations.json", "inspection-projection.json",
+    "convention-binding.json", "figure-whitelist-projection.json", "fig09-modern-view.png",
+    "commands.mjs", "render-source.mjs",
+    "01-inspect.execution.json", "01-inspect.stdout", "01-inspect.stderr",
+    "02-prepare.execution.json", "02-prepare.stdout", "02-prepare.stderr",
+    "03-render.execution.json", "05-validate.execution.json", "05-validate.stdout", "05-validate.stderr",
+    "digest-seed.execution.json", "digest-seed.stdout", "digest-seed.stderr",
+    "digest-draft.execution.json", "digest-draft.stdout", "digest-draft.stderr",
+    "digest-source-solutions.execution.json", "digest-source-solutions.stdout", "digest-source-solutions.stderr"
+  ];
+  const artifacts = artifactNames.map(name => {
+    const bytes = readFileSync(resolve(out, name));
+    return { path: resolve(out, name), sha256: hash(bytes), bytes: bytes.length };
+  });
+  const result = {
+    schema: "s10y-choice-offline-author-result-v1",
+    ticket: "STEMROBIN-182", batch: "same182-6", candidate: "FIRST", cwd,
+    book: "7a", lesson: "alg7-c2-s1-n15",
+    status: validation.exitCode === 0 ? "STRUCTURALLY_VALID_SEMANTIC_REVIEW_PENDING" : "STRUCTURAL_FAILURE",
+    seed_sha256: canonical.seed, draft_sha256: canonical.draft,
+    source_solutions_file_sha256: sourceHash,
+    source_solutions_canonical_sha256: canonical["source-solutions"],
+    frozen_before_options: true,
+    counts: {
+      seeds: seed.exercises.length, definition_blocks: seed.concepts.map(c => c.block),
+      questions: draft.questions.length,
+      single: draft.questions.filter(q => q.view.mode === "single").length,
+      multiple: draft.questions.filter(q => q.view.mode === "multiple").length,
+      options: draft.questions.reduce((n, q) => n + q.view.options.length, 0),
+      covered_seeds: draft.coverage.filter(c => c.question_ids.length > 0).length,
+      fully_deferred_seeds: draft.coverage.filter(c => c.question_ids.length === 0).length,
+      image_opens: 2, new_figures: draft.new_figures.length, structural_validate_invocations: 1
+    },
+    validation: {
+      command: validation.command, argv: validation.argv, cwd: validation.cwd,
+      exitCode: validation.exitCode, stdout, stderr,
+      receipt: resolve(out, "05-validate.execution.json"),
+      semantic_review: "pending; no review supplied"
+    },
+    capacity_loss: draft.coverage.filter(c => c.omitted_tasks.length > 0)
+      .map(c => ({ source_number: c.source_number, omitted_tasks: c.omitted_tasks, reason: c.reason })),
+    special_dispositions: {
+      "326": "Lower-pair order and possible equality preserved; unique strict full ordering remains undetermined by source.",
+      "328": "Zero excluded solely by authorized literal record, file SHA-256 a83e4a21655a4037982e1de6084e5ed7549d8bbb957774e09ec2f7f7314851ea; N29 itself not read.",
+      "331": "Actual two image opens only; inherited approvals untouched; no all-reflexive or symmetric relation invented."
+    },
+    reviewed: false, approved: false, retained: false, published: false,
+    artifacts, completed_at: new Date().toISOString()
+  };
+  record("result.json", result);
+  console.log(JSON.stringify({
+    status: result.status, counts: result.counts,
+    seed_sha256: result.seed_sha256, draft_sha256: result.draft_sha256,
+    source_solutions_file_sha256: sourceHash,
+    result_path: resolve(out, "result.json"),
+    result_file_sha256: hash(readFileSync(resolve(out, "result.json")))
+  }, null, 2));
+} else {
+  throw new Error("Unknown action");
+}

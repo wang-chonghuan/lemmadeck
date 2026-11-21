@@ -1,0 +1,30 @@
+import { createRequire } from "node:module";
+import { readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { pathToFileURL } from "node:url";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck";
+if (process.cwd() !== cwd) throw new Error("Sole cwd mismatch");
+const out = `${cwd}/.tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-author-FIRST`;
+const svg = `${cwd}/ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/fig-09.svg`;
+const require = createRequire(import.meta.url);
+const { chromium } = require(`${cwd}/app/node_modules/playwright`);
+const browser = await chromium.launch({ headless: true });
+try {
+  const page = await browser.newPage({ viewport: { width: 640, height: 400 }, deviceScaleFactor: 1 });
+  await page.goto(pathToFileURL(svg).href);
+  const size = await page.locator("svg").first().boundingBox();
+  if (!size || size.width !== 640 || size.height !== 400) throw new Error("Incomplete SVG viewport");
+  await page.locator("svg").first().screenshot({ path: `${out}/fig09-modern-view.png` });
+  const sha256 = p => createHash("sha256").update(readFileSync(p)).digest("hex");
+  writeFileSync(`${out}/03-render.execution.json`, JSON.stringify({
+    cwd, command: "node",
+    argv: [".tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-author-FIRST/render-source.mjs"],
+    exitCode: 0, source: { path: svg, sha256: sha256(svg) },
+    output: { path: `${out}/fig09-modern-view.png`, sha256: sha256(`${out}/fig09-modern-view.png`) },
+    viewport: size, purpose: "Full actual SVG viewing only; no regeneration or content approval"
+  }, null, 2) + "\n", { flag: "wx" });
+  console.log("Full 640x400 SVG raster saved; no image opened by author yet.");
+} finally {
+  await browser.close();
+}

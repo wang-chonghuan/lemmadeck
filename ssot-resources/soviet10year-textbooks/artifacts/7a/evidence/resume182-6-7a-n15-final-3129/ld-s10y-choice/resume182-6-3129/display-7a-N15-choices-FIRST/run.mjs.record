@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const source = '.tmp/ld-s10y-choice/resume182-6-3129/display-N20-choices-FIRST/run.mjs';
+let code = fs.readFileSync(source, 'utf8');
+const replace = (before, after, count = 1) => {
+  assert.equal(code.split(before).length - 1, count, before);
+  code = code.split(before).join(after);
+};
+replace('N20', '7a-N15', 4);
+replace('alg8-c3-s3-n20', 'alg7-c2-s1-n15');
+replace('artifacts/8a/editions/modern-us-neutral', 'artifacts/7a/editions/modern-us-neutral', 2);
+replace("book: '8a'", "book: '7a'");
+replace("seed.source.book, '8a'", "seed.source.book, '7a'");
+replace('schema: \'resume182-6-n20-choices-offline-display@1\'',
+  'schema: \'resume182-6-7a-n15-choices-offline-display@1\'');
+replace('String(309 + index)', 'String(322 + index)');
+replace('render-7a-N15-choices-FIRST', 'render-7a-N15-choices-FIRST-work');
+replace("['fig-32']", "['fig-09']");
+const begin = code.indexOf('  const preview = JSON.parse(await record(path.join(ROOT,');
+const end = code.indexOf('\n`);\nsection(', begin);
+assert.ok(begin > 0 && end > begin);
+code = code.slice(0, begin) + code.slice(end);
+replace('priorPreBrowserFailurePreserved: true', 'priorPreBrowserFailurePreserved: false');
+replace('matchedNaturalLanguageToken: \'correct\'',
+  'matchedNaturalLanguageToken: null');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

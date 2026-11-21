@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const destination = '.tmp/ld-s10y-lesson/resume182-6-3129/choices-7a-N15-approved-FIRST';
+assert.ok(!fs.existsSync(destination));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const inputs = {
+  'seed.json': ['.tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-author-FIRST/seed.json',
+    'ed018c67b3a17f8ba95ee97f33e531a23af609a2c6dd6b55493560ffd6e707b0'],
+  'draft.json': ['.tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-author-FIRST/draft.json',
+    '27b1d16172c660ca54bbfce27c93c238b7e205e7f7fef79ed290c1f1f2141330'],
+  'review.json': ['.tmp/ld-s10y-choice/resume182-6-3129/choices-7a-N15-review-FIRST/review.json',
+    'ee4acc4c73fbdd4dee1e8a3f6510b273fda3501e8ccbb456d1c8cf1797c12375'],
+};
+const buffers = Object.entries(inputs).map(([name, [source, expected]]) => {
+  const bytes = fs.readFileSync(source);
+  assert.equal(sha(bytes), expected);
+  return { name, source, bytes };
+});
+assert.equal(JSON.parse(buffers[2].bytes).outcome, 'pass');
+fs.mkdirSync(destination);
+const files = buffers.map(({ name, source, bytes }) => {
+  const output = path.resolve(destination, name);
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  return { source: path.resolve(source), path: output, sha256: sha(bytes), bytes: bytes.length };
+});
+const result = {
+  status: 'APPROVED_CHOICES_ASSEMBLED', date: new Date().toISOString(), cwd: root,
+  files, copiedFiles: 3, copiedBytes: files.reduce((n, item) => n + item.bytes, 0),
+  reauthoring: 0, semanticReviews: 0, imageOpens: 0, originalInputsChanged: false,
+  reviewKind: 'self_review', historicalFailuresPreserved: true,
+  unknownHistoricalBytesRecovered: false, finish: 'review',
+};
+fs.writeFileSync(`${destination}/assembly.record`, `${JSON.stringify(result, null, 2)}\n`,
+  { flag: 'wx' });
+console.log(JSON.stringify(result));

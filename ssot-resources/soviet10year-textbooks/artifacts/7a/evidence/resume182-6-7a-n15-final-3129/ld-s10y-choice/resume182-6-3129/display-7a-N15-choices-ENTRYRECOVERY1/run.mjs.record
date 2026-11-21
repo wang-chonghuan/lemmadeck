@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+let code = fs.readFileSync('.tmp/ld-s10y-choice/resume182-6-3129/display-7a-N15-choices-FIRST/run.mjs', 'utf8');
+const before = 'replace("[\'fig-32\']", "[\'fig-09\']");';
+assert.equal(code.split(before).length, 2);
+code = code.replace(before, 'replace("[\'fig-32\']", "[\'fig-09\']", 3);');
+const importLine = 'await import(`data:text/javascript;base64,${Buffer.from(code).toString(\'base64\')}`);';
+assert.equal(code.split(importLine).length, 2);
+code = code.replace(importLine,
+  'replace(\'display-7a-N15-choices-FIRST\', \'display-7a-N15-choices-ENTRYRECOVERY1\', 2);\n'
+  + importLine);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

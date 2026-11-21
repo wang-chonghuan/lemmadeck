@@ -1,5 +1,211 @@
 # 当前开发状态
 
+### 182-6 2026-11-21 19:40:10Z N15离线整课绑定实过、准备窄提交
+
+- text前三批绑定局部恢复19:30:51.735Z exit0；batch4保留COMPLETE和
+  五个off-window BLOCKED，实际互补源坐标覆盖及绑定19:31:51.207Z
+  exit0，不追认孤立截图全图PASS。原19:26:47失败保留。
+- choice第一批8图首看收取关闭；其原entries格式首次绑定
+  19:31:51.196Z exit1保留，ENTRIESRECOVERY1 19:32:48.610Z exit0。
+  Pasteur5/Erdos5各8图首看/0重开已收取关闭，原报告全部BLOCKED
+  区域和实际链尾保留；父仅0011/0016/0074三BLOCKED PNG针对性冲突
+  复看：实际橡树、c^2+1分母、A两(c+1)^2，另存更正，不改候选、
+  旧审报告或数学键。加之前325两复看，累计5，不是2或0。
+- choice区域互补绑定19:39:44.030Z exit0；text/choice原生runtime
+  不重跑，fig09两选择实例各左/右源坐标区域覆盖0--640、0--400。
+  52必要新图、0继承、5针对BLOCKED复看、0整图PASS重开，
+  显示实际观察共57；其他阶段图/历史/unknown宿主费用计数另保留。
+- final-config19:40:04.674Z及finalize19:40:10.649Z exit0，
+  OFFLINE_DISPLAY_PASS SHA
+  5da9bb22791f43e3c6e81b60a609dacdad21b2eb84656edd91935c059b78213b。
+  13正文对象/15发布段/14题及答案/19选择/78项，三离线页面
+  实际1876746bytes，317必要证据实际22669302bytes。
+  原图08 A填充UNKNOWN、326唯一排序SOURCE_HOLD仍未恢复；
+  choice reviewer.kind=self_review如实保留，不冒称AC3独立审查或
+  整工单验收。仅整课离线交付，不APP/DB/正式handoff。
+- 原分支fetch19:33:58.761Z exit0；HEAD仍原N20窄提交，
+  仅N15白名单待stage/commit/push，不stage其它7a/8a、技能、ticket。
+  N21当前现代文本拉丁小问/427美国语境/原生短段候选已准备，
+  公式编号（1）局部重附原式且native稳定，不改任何源/数学。
+  Einstein5仅零图新文本独审、Huygens5仅fig34--37新图作者在途。
+- 下一原40分钟监督20:09:50Z保持；同3129唯一生产，旧审者仍暂停，
+  原树/锁/备份/失败/9208/未决/未知字节不变，只6a7a8a/review，
+  不create/attach/替代聊天/DB或Plane写/合并/部署/安装/paid调用。
+
+### 182-6 2026-11-21 19:29:50Z 原40分钟监督接续
+
+- 本次实际19:29:26Z起检查，HEAD核对仍
+  1a5e75fb1f4a0abc5cb11bd8e1abda9af03c411e，3129唯一生产cwd；
+  不再create/attach，不动旧四审者、旧树/锁/备份/9208/未决消息。
+  原监督锚点19:29:50Z及下一20:09:50Z保持，不重新计时。
+- N15 text四首看批均已收取关闭。batch3实际328两右尾1/2<1、
+  -2<-1及335(b)=75q^2、q非零已观察；fig09四区域覆盖0--640。
+  batch4状态COMPLETE，四图可见区域PASS，五off-window区域仍BLOCKED；
+  0019实际观察fig07/08右箭头和终端标号，不能冒称单图全图批准。
+- 首次text绑定19:26:47.172Z exit1，未产生绑定；原因是相邻纵向
+  窗口visibleIds可合法不相交。只恢复该断言适用范围，保留原脚本及
+  execution SHA163a2293f558fc2cdc5699d89ad45777e431df65acd3086c3b6d9efb4d3543d6。
+  选择batch1 Helmholtz5在途，本次路径读取尚无结果，非完成声明。
+- N21源五页18空格局部独审收取关闭，SHA
+  64eea8db6b4dca72595299e6ad4850894c597e3a5aae418cf9b68bf94a434aa0；
+  19:23:37.683Z源promotion exit0，56输出，原fig37墨斑原样保留，
+  SOURCE_TEXT_PASS_WITH_ORIGINAL_SCAN_ARTIFACT_RETAINED，不宣称cleanCrop。
+  19:23:50.191Z reindex及19:24:12.868Z adapt-prepare均exit0。
+- 仅6a/7a/8a离线review；N13/N22及未变PASS不重跑。只读入口找错
+  progress/observations/execute路径失败保留在本会话，不补造字节、
+  次数或费用，无DB/Plane写、安装、paid生成、合并、部署、handoff。
+
+### 182-6 2026-11-21 19:19:50Z N15选择首次显示实过、N21空格局部收口
+
+- 官方工作树此前创建已成功，本次仅同3129接续，无create/attach/
+  替代聊天。HEAD仍1a5e75fb1f4a0abc5cb11bd8e1abda9af03c411e，
+  原codex/STEMROBIN-182-textbooks不变，旧四审者继续暂停未触碰。
+- Boole5选择首次草稿19题/78项/14源题已收取关闭；父先独解冻结，
+  19:10:19.062Z可见题与选项判断冻结后才读全部作者键/78推导和
+  coverage。19:13:28.030Z原生review构造exit0，review SHA
+  ee4acc4c73fbdd4dee1e8a3f6510b273fda3501e8ccbb456d1c8cf1797c12375；
+  明记self_review，不伪称独立代理审。326冻结英文linden标签误写
+  已另记：实际现代题为云杉/橡树，不改候选或两严格/等高结论。
+  带review validate及三实际字节装订/retain/choices-only render首过。
+- N15 text显示batch1首看8图3PASS/5BLOCKED，batch2首看8图6PASS/
+  2BLOCKED均收取关闭，全部原报告保留。batch1 alleged325两窗口
+  措辞冲突经父针对性复看同两PNG实际不存在，另记更正2重开，不改
+  旧BLOCKED；父新图计数不是0。batch2两328链尾和fig09右窗仍需
+  已采集互补首看，Hypatia5仅batch3首看在途，batch4尚未观察。
+- N15 choice首次入口19:18:13.253Z exit1，fig-32字符串匹配次数
+  误写1而实际3，继而wrapper缺report报错；浏览器/截图0，两个
+  执行失败留原路径和原入口，不伪称runtime。新ENTRYRECOVERY1
+  19:19:08.677Z实际exit0：1440/390两视图410PASS/0FAIL，80capture/
+  1browser/2contexts全部关闭。首次selection19:19:50.406Z exit0：
+  24必要新图/3批/7294targets/missing0，0观察继承。尚未整课绑定。
+- Euler5七源页审收取关闭：glyph/formula/行数/11题/所有权PASS，
+  仅18行尾分隔空格需改，原SHA
+  7d9bb214bb12d9dcf82c5021a7f5000d1f7e05b2645d3e4d991ba8cd4387bfa8。
+  原装订页三件保留；仅134/136/137/138/139五页18 ASCII空格修复，
+  五原生finalize19:15:18Z均exit0，16/20/26/24/25行/规范化0。
+  后核对入口将parse块误当带id原生JSON首次exit1保持，RECOVERY2
+  19:16:07.893Z exit0：135/140及8组PNG/SVG完全不变；未重vectorize。
+  新局部assembly19:16:27.462Z exit0，38正文/11题/8图，右界
+  p0140#5仍排除N22，record SHA
+  26d6adb44d395a01df68c95015f398f1ecf745a21187638c63fb812c88f738ad。
+  Archimedes5仅18分隔零图受影响独审在途，不重7整页。
+- Arendt5八裁图首看已收取关闭，8图/0重开；7图CROP_PASS，fig37
+  数学对象完整可读但上方非语义墨斑origin未知，原clean-crop批准
+  withheld保持，report SHA
+  171defa76ec78a0770a6cd71c9d84b18b225641e685e83182a46f913293060a0。
+  按原技能污点照抄原样，不修改原PNG/SVG，不声称clean恢复或源缺字
+  恢复，后续现代层独审须区分源事实/非语义墨斑。尚无N21整课批准。
+- 保留本次只读路径查找/入口错误和所有旧失败/未决/树/锁/备份/
+  9208/unknown费用计数。只6a7a8a/review；N13/N22及未变PASS不重跑，
+  无DB/Plane写入、合并/部署/正式handoff/安装/paid服务。原监督
+  下一19:29:50Z不重置，继续完整课窄提交后其它有源课。
+
+### 182-6 2026-11-21 19:04:22Z N15答案及四显示运行实过、N21源装订闭合
+
+- N15零图受影响flow独审AFFECTED_ONLY_PASS已收取关闭，SHA
+  1c0f94c77bcc07a3a7144a895a589726bc942e058796a6d435b77c96d8100589。
+  adapt-finalize局部恢复18:50:51.976Z exit0，随后首次render/答案
+  prepare/选择inspect分别exit0；13正文对象/15发布流块/14题。
+  原TEXT_PASS、fig07/09及fig08新独审保持，不重源或图渲染器。
+- Fermat5新14份答案已收取关闭；草稿SHA
+  368fe2ff73d492cc0315dbf6b236cc6239a09b2e0b38e533c125ecd0834eb3fb。
+  326唯一排序仍源信息不足，保留五支持箭头及两严格排序/一个等高
+  可能；原HOLD保持，不补造关系。其现代SVG开图执行失败保持，
+  作者原PNG成功1图，失败尝试不伪称成功。
+- 父仅为NEW答案/选择独审先读原题独解、实际观察331源PNG和当前
+  SVG浏览器栅格2图；无图重批准或render_spec调用，浏览器已关闭。
+  19:00:58.896Z盲解冻结exit0，freeze SHA
+  edea30079f1ecebfe4be356a294a854d6e45f8dfd10bfdd5cc6597fec483cf43，
+  冻结前未读作者键/choice稿。随后14题数学独比ANSWER_PASS，review
+  ad696493eaed96651cad97b79f5cbdc0534687024944a91fb5a5e88eb0280b98，
+  326正确歧义答案可交付不等于唯一排序源缺口恢复，331实际观察补
+  技术缺证不追认作者成功。原稿同字节promotion与answer-finalize
+  19:02:13.509Z均exit0，auto0/ungraded14/parts空，不写DB。
+- N15 text/exercises首次runtime exit1，仅334两个公式字形可达性
+  失败；1440text PASS及原native失败截图保留。仅失败预览补留白，
+  第二次运行exit0，四视图实过，3contexts/2browser/2exec/72capture，
+  全cleanup关闭。首次selection exit0：8774targets/missing0，
+  28必要新图/4批，0已观察/0重开；尚未DISPLAY_PASS或整课commit。
+- Meitner5六源页135--140首finalize均exit0已收取关闭，raw稿SHA及
+  实际回执保留；含footer行21/20/26/24/25/16。N21原图34--41五
+  页首vectorize分别exit0，8图不匹配0.004%--0.105%，未描摹42/43。
+  assembly入口首次exit1因误读flat回执为streams包装，原回执
+  bf7846d14bdada13d6022504c4af49bacf88b81f2f0e486f4d086d83e19aaf42
+  和失败入口字节保留；改用已有production.read_receipt后仅装订
+  恢复18:55:45.912Z实际exit0：
+  38正文/11题425--435/8图，右边界p0140#5排除N22，TOC提示保持。
+- 一次新选择作者spawn因席位上限失败保留，不关闭或唤醒旧暂停
+  审者；Meitner关闭后新Boole5仅N15选择首次作者在途，新Euler5
+  仅N21七整页首源审在途，图crop与现代及整课批准尚未取得。
+  父当前接续新图2（另此前134父1保持分账），原unknown宿主费用/
+  tokens/历史字节与失败计数不重置。仍只3129/6a7a8a/review，无
+  create/attach/替代聊天/旧审者动作、DB/Plane写入、合并/部署/
+  正式handoff/安装/paid服务；下一监督19:29:50Z不重置，继续生产。
+
+### 182-6 2026-11-21 18:49:52Z 原40分钟监督、N15局部flow恢复实过
+
+- 原18:49:50Z监督锚点：实际核对18:49:45.023Z开始、18:49:52Z
+  时钟确认完成，下一19:29:50Z不重置。3129仍唯一生产cwd，HEAD
+  1a5e75fb1f4a0abc5cb11bd8e1abda9af03c411e；官方checkout当前
+  detached HEAD，原远端codex/STEMROBIN-182-textbooks保持，后续显式
+  HEAD推原分支，不新create/attach/聊天。不存在本任务生产进程，
+  staged为空，无关dirty及所有旧树、锁、备份、9208、失败未决保持。
+- N15 fig08受影响独审PASS已收取关闭，report SHA
+  a256ea96392f14d250f67716d7467eb39e4d9660c561841dab668c6e83e2e95e。
+  C真实空心由fill:paper/stroke:ink修复；A现代中性位置+标记获审，
+  原A填充仍UNKNOWN/SOURCE_HOLD，不伪称恢复。作者2图/审者2图，
+  父0图/重开0；推广及原生record_review exit0，fig07/09 PASS复用。
+- N15首次adapt-finalize 18:43:01.314Z exit2仅section_breaks[0]
+  matched0，原回执/失败audit保留。局部native规范化并重绑两个原
+  语义切换18:46:48.443Z实际exit0，回执SHA
+  f74c61c33199d9621226f4ae3698ffcffc7254a898797127910d1ce7663eab7a。
+  source/数学/题/图零变化，当前lesson模板SHA
+  22fd6cfb4ed10267f69dc21f311b143bc6b1a330daa22490b70d1878aa15adde；
+  新Darwin5仅零图受影响边界独审在途，不重TEXT_PASS/全课。
+- N19两实际源页诊断已收取关闭，399/404/405a确实未印关系/RHS；
+  独审SHA405cf24793841a49722e9c9fd9d3d99ecfda8b8f5b67784880e6f2f63047e803。
+  2源图/0裁图，raw/templates未改，保持SOURCE_HOLD和TEXT_PASS，
+  fig21 review仍缺，不猜式或推整课PASS。
+- N21新源134--140物理页两原生range均exit0；父仅134网格首开1次。
+  p134首次finalize17/16行exit1保留，fig35 caption增samerow局部
+  恢复18:34:54Z exit0，图crop字节相同；16包含footer和共享图题行，
+  首观察“excluding footer”原字节保留并明确纠正。末p open续135。
+  Meitner5原135--140转写仍在执行，不替派/重复开页，140仅闭合边界，
+  不组装或批准N22。N15 ex328同册N29已找到明确0不属N定义，证据
+  保留；ex326不假定唯一顺序，后续答案依实际偏序给支持的可能性。
+- 本轮两个只读错误保留：zsh build-final*无匹配exit1；错误读取
+  assemble-N20-FIRST.mjs不存在exit1，正确文件为.py，不重已有assembly。
+  前次官方创建成功沿用；旧失败/未决消息及历史unknown字节/费用
+  不伪造、不清零。仅6a7a8a/review，无DB/Plane写入、合并/部署/
+  正式handoff/安装/paid服务；N13/N22及未变PASS不重跑，继续完整课。
+
+### 182-6 2026-11-21 18:27:52Z N20实推原分支，7a两处受影响接续在途
+
+- N20完整课窄commit18:24:40.496Z实际exit0：
+  1a5e75fb1f4a0abc5cb11bd8e1abda9af03c411e，664文件；push18:25:08.217Z
+  exit0，远端ls-remote18:25:19.886Z exit0逐SHA相同，原分支
+  codex/STEMROBIN-182-textbooks，未force/改分支/移动旧树。原标准
+  whitespace exit2保持；其它文件标准检查及唯一不可变HTML限定
+  blank-at-eol检查分别exit0，不改原证据或Git持久配置。
+- actual commit/push/remote回执SHA依次
+  a5f785cd5cada8b286d02f60cedb2099c9568d9b417ce2fd2657b71b9dcc01b7、
+  d705498207d29fc19cc2756529c167c4ed67277c615d9ecc61e4aa45f2e9b758、
+  1364ac6d77ec35a8072cb607ebc49263c0397b00805498e35d2145d2347789e8。
+- 新Sagan5 01a1ff5b-bc1b-7e30-8d86-6620eec34d65仅N15 fig08受影响
+  作者：C原空心误render实心有限修复；A源fill仍UNKNOWN，不借其它
+  点补猜，不编辑renderer，不批准自己候选，fig07/09及文字PASS复用。
+- 新Schrodinger5 01a1ff5c-a394-73d0-849f-d39d5496e1b6仅N19三处
+  399/404/405a源比较符缺口实际诊断，最多两源页，不重全课源/文字。
+  旧page notes已明确这些关系未印/未识别，本次结果前不改式/求解。
+  N19 fig21现代review当前实际不存在，不能把text PASS升为整课。
+- 父库存只读node首调用括号SyntaxError exit1原事实保留，修正后读取
+  当前book索引；缺offline-display.json不等于旧课未过显示，6a及旧
+  已过7a/8a不重跑。缺fig21 review读调用exit1/两旧PNG查找无匹配
+  exit1保留，未重source/renderer。仅3129生产，无新create/attach，
+  旧树锁备份/9208/失败未决、未暂存skills/tools/ticket和无关dirty
+  全保留。下一监督18:49:50Z不重置；不在窄提交检查点停工，finish
+  review，无DB/Plane写入、合并/部署/正式handoff/安装/paid服务。
+
 ### 182-6 2026-11-21 18:24:00Z N20窄暂存实过，原始预览尾空格保持
 
 - stage首次18:23:37.826Z actual exit0，664文件全部限定N20白名单，

@@ -1,0 +1,116 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const display = `${base}/display-7a-N15-FIRST`;
+const read = file => JSON.parse(fs.readFileSync(file));
+const entry = file => {
+  const absolute = path.resolve(file);
+  assert.ok(absolute.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(absolute);
+  return { path: absolute, bytes: bytes.length,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const assignmentPath = `${display}/selection-FIRST/batch4.json`;
+const resultPath = `${display}/observations/batch4/result.json`;
+const runtimePath = `${display}/result.json`;
+const result = read(resultPath);
+const assignment = read(assignmentPath);
+const runtime = read(runtimePath);
+assert.equal(result.status, 'COMPLETE');
+assert.equal(result.imagesOpened, 4);
+assert.equal(result.images.length, assignment.images.length);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(entry(runtime.report.path).sha256, runtime.report.sha256);
+const report = read(runtime.report.path);
+for (const image of result.images) {
+  const requested = assignment.images.find(item => item.path === image.path);
+  assert.ok(requested);
+  assert.equal(requested.sha256, image.sha256);
+  assert.equal(entry(image.path).sha256, image.sha256);
+  assert.equal(image.status, 'PASS');
+  assert.equal(image.visualObservation, 'PASS');
+  assert.ok(image.regions.some(region => region.status === 'PASS'));
+}
+const get = name => result.images.find(image => image.path.endsWith(`/${name}`));
+const witness = get('390-text-0019.png');
+for (const terminal of ['B   A\nb   a\nb)', 'B   C\nb   c']) {
+  assert.ok(witness.terminalFacts.some(fact => fact.terminalText === terminal
+    && fact.visualObservation === 'PASS' && fact.rightTail === 'VISIBLE'));
+}
+const blocked = result.images.flatMap(image => image.regions
+  .filter(region => region.status === 'BLOCKED')
+  .map(region => ({ image: entry(image.path), region })));
+assert.equal(blocked.length, 5);
+const coverage = [];
+for (const [key, names] of [
+  ['figure-0-fig-07', ['390-text-0008.png', '390-text-0009.png', '390-text-0019.png']],
+  ['figure-1-fig-08', ['390-text-0009.png', '390-text-0019.png']],
+]) {
+  const rectangles = names.map(name => {
+    const image = get(name);
+    const native = report.screenshots.find(item => item.path === image.path);
+    assert.equal(native.surface, 'text');
+    assert.deepEqual(native.viewport, { width: 390, height: 844 });
+    const region = native.figureRegions.find(item => item.key === key);
+    assert.ok(region.width > 0 && region.height > 1);
+    assert.ok(image.regions.some(item => item.status === 'PASS'
+      && item.id.startsWith(`${key}-visible-`)));
+    return { image: entry(image.path), region, actualVisibleRegions: image.regions
+      .filter(item => item.status === 'PASS' && item.id.startsWith(`${key}-visible-`)),
+      scroll: native.scroll, scrollables: native.scrollables };
+  });
+  const yEdges = [...new Set([0, 320, ...rectangles.flatMap(({ region }) =>
+    [region.y, region.y + region.height])])].sort((a, b) => a - b);
+  for (let i = 1; i < yEdges.length; i += 1) {
+    const middle = (yEdges[i - 1] + yEdges[i]) / 2;
+    if (middle < 0 || middle > 320) continue;
+    const spans = rectangles.filter(({ region }) =>
+      region.y <= middle && region.y + region.height >= middle)
+      .map(({ region }) => region).sort((a, b) => a.x - b.x);
+    let edge = 0;
+    for (const span of spans) {
+      assert.ok(span.x <= edge);
+      edge = Math.max(edge, span.x + span.width);
+    }
+    assert.equal(edge, 640);
+  }
+  coverage.push({ key, sourceExtent: { width: 640, height: 320 }, rectangles,
+    observationScope: 'Actual complementary visible diagram regions, not any isolated full-image approval' });
+}
+const html = runtime.deliveredHtmlByViewport.find(item =>
+  item.surface === 'text' && item.viewport.width === 390).deliveredHtml;
+assert.equal(entry(html.path).sha256, html.sha256);
+const resolutionPath = `${display}/observations/batch4-coverage-resolution.record`;
+const resolution = {
+  schema: 'stemrobin-182/observed-coverage-resolution@1', status: 'DISPLAY_PASS',
+  date: new Date().toISOString(), originalResult: entry(resultPath),
+  originalStatus: 'COMPLETE', coverage, blockedRegionsPreserved: blocked,
+  blockedTerminalFactsPreserved: result.images.flatMap(image => image.terminalFacts
+    .filter(fact => fact.visualObservation === 'BLOCKED').map(fact => ({ image: entry(image.path), fact }))),
+  html: entry(html.path), contentOrHtmlBytesChanged: false,
+  originalReportUnchanged: true, isolatedScreenshotApproved: false,
+  parentImageViewsDuringBinding: 0, rendererBrowserValidatorRuns: 0, finish: 'review',
+};
+fs.writeFileSync(resolutionPath, `${JSON.stringify(resolution, null, 2)}\n`, { flag: 'wx' });
+const binding = {
+  schema: 'stemrobin-182/native-observer-binding@1', status: 'DISPLAY_PASS',
+  date: new Date().toISOString(), workdir: root,
+  method: 'COMPLETE visible-region report with hash-bound complementary source-coordinate coverage',
+  assignment: entry(assignmentPath), result: entry(resultPath),
+  technicalResolution: entry(resolutionPath),
+  agentId: '01a1ff90-5613-7d70-a772-6e77711a3019', agentCompletedAndClosed: true,
+  images: result.images.map(image => ({ ...entry(image.path), verdict: 'PASS',
+    originalVisualObservation: image.visualObservation, coverageResolution: entry(resolutionPath),
+    isolatedScreenshotApproved: false })),
+  parentImageViews: 0, browserRendererValidatorCalls: 0,
+  historicalFailuresAndUnknownCountsPreserved: true,
+};
+const output = `${display}/bindings/batch4.record`;
+fs.writeFileSync(output, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: binding.status, images: 4, ...entry(output),
+  blockedRegionsRetained: blocked.length, parentImageViews: 0 }));
