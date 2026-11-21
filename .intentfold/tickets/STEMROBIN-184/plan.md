@@ -1,5 +1,23 @@
 # 开发路线
 
+## 184-6 second interaction batch ready (2026-11-21)
+
+First batch actually committed65c5585ca9349ec6532eb9410a5fc03a63e9cecc
+and ordinary-pushed to codex/STEMROBIN-184-textbooks; remote confirmation
+c9c0b5 returned that exact SHA. Six manifests/85 interactions delivered.
+Only eight selected files entered that commit; other pending changes retained.
+
+Next active 10c lessons96/97/102/103 have existing ready answers and passed
+adaptation audits. Official cap3 prepare805ee6 onceexit0, finalizee5cb3a
+onceexit0:96=0,97=10,102=0,103=4; all ready, zero needsAuthoring.
+96/102 genuinely have no written tasks; empty manifests preserve that fact.
+No new source/figure/math/choice/display reviews or new complete-lesson credit.
+Current total supplement10files/99interactions, not ten new completed lessons.
+Draft77/78 three pending flags unchanged. Source172/n82 and all other holds
+unchanged; no new image, decode, paid call, DB write, merge or deployment.
+Only four new manifests, this section and its usage key are selected next;
+the first-batch usage delivery receipt is also updated, not other record keys.
+
 ## 184-6 next missing stage: existing 10c interaction specifications (2026-11-21)
 
 Supervisor continuation after actual n81 delivery6a0ce7fcc is active.
