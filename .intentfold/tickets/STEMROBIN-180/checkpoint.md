@@ -1,5 +1,127 @@
 # 生产检查点
 
+## 180-6 r1293 S13T1_COMPLETE_LESSON_SEALED_PUSH_PENDING
+
+S13-t1 full lesson sealed 47215e23085e1e97b0a769f1a9a44e9c2c46cf3834eff74e0bc95e4489d3131e; complete22->23/new4.
+Saved TEXT/SOURCE/ANSWER/CHOICE and FIG204–206 reused, affected FIG203 approved.
+Original DISPLAY REVISE retained: original five-page PASS plus affected mobile-text PASS; original6+new1 screenshots, independent6+1 image opens, parent1, browser3/closed3.
+Offline mobile renderer nowrap repaired without changing formula/font/body/canonical bytes; runtime app.css unchanged.
+Original FIG203 occlusion failure and correction counts retained; source/geometry unchanged except approved rim paint.
+Two written reference answers are intentional offline content; choice answer keys remain absent from displayed choices.
+Narrow original-branch commit/push pending.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; all old failures and pending preserved.
+Same8306 absoluteW; sharedmain/oldtrees/locks/backups/stash read-only preserved.
+finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1292 S13T1_DISPLAY_COMPOSITE_PASS_OLD_REVISE_RETAINED
+
+6p/phy6-c5-s13-t1 evidence a3de73c4068fa684cd72b65f84a5ec24d3defbf059cca2d5c95947cab28527a6 bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Dewey the 3rd:C4S18_FIG170_CURRENT_SOURCE_AND_SIX_SAMPLES_INDEPENDENT.
+Returned counts {"images":7,"originalIndependentImages":6,"affectedIndependentImages":1,"originalScreenshots":6,"affectedScreenshots":1,"browser":0,"parentImages":1,"displayBrowserLaunches":3,"displayBrowserCloses":3,"paid":0,"reopens":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1281 S13T1_MOBILE_AFFECTED_AND_FIG170_CURRENT_INDEPENDENT_ACTIVE
+
+6p/phy6-c4-s18 evidence 4406757e2cd4ee3eb9c6feb80266bfea26269ab712238555cd1911fcdf43a05d bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Beauvoir the 3rd:S13T1_MOBILE_TEXT_ONE_IMAGE_AFFECTED_INDEPENDENT; Dewey the 3rd:C4S18_FIG170_CURRENT_SOURCE_AND_SIX_SAMPLES_INDEPENDENT.
+Returned counts null; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1258 FIG170_NEW_CURRENT_CAP_CLOSURE_HOLD_RETAINED_CAP_RECOVERY_ACTIVE_S13_DISPLAY_RECOVERY
+
+6p/phy6-c4-s18 evidence 643330d85b5fe681f396aadf5744191e81614c55e33330adf7995eefee84a674 bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Parfit the 3rd:C4S18_CURRENT_CAP_CLOSURE_AFFECTED_RECOVERY_CONTEXT13.
+Returned counts {"objects":33,"assertions":24,"labels":5,"sourceImageOpens":1,"nativeScreenshotsCreated":6,"nativeSampleImageOpens":6,"imageContextTotal":7,"imageBatches":[1,6],"imageBatchLimit":8,"imageContextLimit":24,"imageReopens":0,"crops":0,"inspectionSheets":0,"otherFigureImageOpens":0,"historicalCorrections":1,"newCandidateCorrections":1,"cumulativeCorrections":2,"additionalCorrections":0,"historicalRenderFailures":2,"currentMechanicalFailures":0,"currentAuthorVisualFailures":1,"cumulativeFigureFailures":3,"deterministicRenderCalls":2,"standaloneSpecValidationCalls":1,"internalSpecValidationCalls":2,"nativeCaptureCalls":1,"browserLaunches":3,"browsersClosed":3,"rendererBrowserLaunches":2,"rendererBrowsersClosed":2,"nativeBrowserLaunches":1,"nativeBrowsersClosed":1,"nativeContextsOpened":6,"nativeContextsClosed":6,"nativePagesOpened":6,"nativePagesClosed":6,"headedLaunches":0,"foregroundRequests":0,"userProfileConnections":0,"cdpConnections":0,"paidModelCalls":0,"paidImageCalls":0,"installs":0,"canonicalWrites":0,"databaseCalls":0,"gitCalls":0,"globalChecks":0,"officialReviews":0,"independentPasses":0,"promotions":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1249 S13T1_MOBILE_FORMULA_DISPLAY_REVISE_AFFECTED_LAYOUT_RECOVERY
+
+6p/phy6-c5-s13-t1 evidence 3617c37f9100be0d3dfc47bf5ad0463c5493d862a0e1d69491c26a7ad4307343 bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Parfit the 3rd:C4S18_NEW_MISSING_FIG170_OLD_FAILED_BYTES_UNAVAILABLE.
+Returned counts {"images":6,"imageToolCalls":6,"browser":0,"paid":0,"reopens":0,"otherImages":0,"crops":0,"inspectionSheets":0,"rendererRuns":0,"htmlPageReads":0,"databaseCalls":0,"semanticReviewReruns":0,"canonicalEdits":0,"authorEdits":0,"gitCommands":0,"globalChecks":0,"installs":0,"skillHostCalls":0,"bootstrapCalls":0,"chatOperations":0,"worktreeOperations":0,"oldAgentContacts":0,"commandFailuresObservedBeforeSealing":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1236 S13T1_FIRST_NATIVE_SIX_PAGES_READY_DISPLAY_INDEPENDENT_ACTIVE_S18_AUTHOR_ACTIVE
+
+6p/phy6-c5-s13-t1 evidence ecf32f1461f338bf9fbbb41bb20c37fa205be59fe9305e5e0aa8ceb2ce646432 bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Parfit the 3rd:C4S18_NEW_MISSING_FIG170_OLD_FAILED_BYTES_UNAVAILABLE; Arendt the 3rd:S13T1_FIRST_DISPLAY_ONLY_SIX_SAVED_SCREENSHOTS.
+Returned counts {"browser":1,"browserClosed":1,"screenshots":6,"imagesLoaded":0,"paid":0,"databaseCalls":0,"semanticReviewReruns":0,"headedBrowserLaunches":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1223 FIG203_AFFECTED_SOURCE_AND_SIX_SAMPLES_INDEPENDENT_PASS_S18_AUTHOR_ACTIVE
+
+6p/phy6-c5-s13-t1 evidence a4ceaff79f9534899fc594eef8ecdf076b1bf7848ecb428a2e2d4789fd75cc13 bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Parfit the 3rd:C4S18_NEW_MISSING_FIG170_OLD_FAILED_BYTES_UNAVAILABLE.
+Returned counts {"images":7,"sourceImages":1,"currentSampleImages":6,"imageBatches":[1,6],"maximumBatchImages":6,"contextImages":7,"batchLimit":8,"contextLimit":24,"browser":0,"paid":0,"reopens":0,"crops":0,"otherFigureImages":0,"oldSampleImages":0,"rendererCalls":0,"rasterInspectionScripts":0,"officialRecordReviewCalls":0,"promotionCalls":0,"databaseCalls":0,"gitCalls":0,"dependencyChanges":0,"globalChecks":0,"newTextSourceAnswerChoiceDisplayReviews":0,"answerChoiceContentReads":0,"canonicalOrAuthorEdits":0,"skillHostOrBootstrapCalls":0,"chatsOrWorktreesCreatedOrMessaged":0,"oldAgentContacts":0,"browserLaunches":0,"paidCalls":0,"totalImageLoads":7,"contextImageLoads":7,"sourceImageLoads":1,"currentNativeSampleImageLoads":6,"retainedHistoricalNonzeroFailures":3,"historicalRepairsUsed":1,"historicalRepairLimit":1,"additionalRepairsUsed":1,"cumulativeRepairsUsed":2,"failedWrapperInvocationsBeforeChild":1,"ownNonzeroCommandReceiptsBeforeSeal":0,"ownCommandReceiptsBeforeSeal":26}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1220 FIG203_INDEPENDENT_ACTIVE_S18_MISSING_FIG170_AUTHOR_ACTIVE
+
+6p/phy6-c5-s13-t1 evidence 8f54ecb2e1139090dc48fd4709101fe6c87139936ce687993762c5a72390a1fc bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Confucius the 3rd:S13T1_FIG203_AFFECTED_INDEPENDENT; Parfit the 3rd:C4S18_NEW_MISSING_FIG170_OLD_FAILED_BYTES_UNAVAILABLE.
+Returned counts {"originalImageLoads":1,"currentSixNativeSampleImageLoads":6,"totalImageLoads":7,"contextImageLoads":7,"imageBatches":[1,6],"maximumBatchImages":6,"batchLimit":8,"contextLimit":24,"originalReopens":0,"sampleReopens":0,"sourceCrops":0,"additionalImageRendersOrCrops":0,"currentNativeSamples":6,"browserScreenshotCalls":6,"browserLaunchAttempts":2,"browserLaunches":2,"rendererHeadlessBrowserLaunches":1,"nativeHeadlessBrowserLaunches":1,"nativeHeadedBrowserLaunches":0,"browserCloseAttempts":2,"browserCloses":2,"browsersStillOpen":0,"nativePagesOpened":6,"nativePagesClosed":6,"rendererCalls":1,"standaloneSpecValidatorCalls":1,"rendererInternalSpecValidatorCalls":1,"historicalCorrectionsUsed":1,"historicalCorrectionLimit":1,"additionalCorrectionsUsed":1,"cumulativeCorrectionsUsed":2,"correctionsUsed":2,"furtherActualFailuresOrRecoveries":0,"ownNonzeroCommandReceiptsBeforeFreeze":0,"retainedHistoricalNonzeroCommandReceipts":3,"ownCommandReceiptsBeforeFreeze":31,"paidCalls":0,"modelImageCalls":0,"externalServiceCalls":0,"externalNetworkRequests":0,"independentReviews":0,"officialRecordReviewCalls":0,"promotionCalls":0,"canonicalWrites":0,"sharedWrites":0,"sourcePhysicalWrites":0,"otherFigureImageLoads":0,"oldNativeSampleImageLoads":0,"otherFigureAuthorCalls":0,"newTextSourceAnswerChoiceGates":0,"newTextSourceAnswerChoiceContentReads":0,"databaseCalls":0,"gitCalls":0,"globalChecks":0,"installs":0,"chatsCreatedOrMessaged":0,"worktreesCreatedOrModified":0,"skillHostOrBootstrapCalls":0,"oldAgentContacts":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1216 FIG203_AFFECTED_AUTHOR_READY_CURRENT_SEVEN_IMAGES_INDEPENDENT_ACTIVE
+
+6p/phy6-c5-s13-t1 evidence 8f54ecb2e1139090dc48fd4709101fe6c87139936ce687993762c5a72390a1fc bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Confucius the 3rd:S13T1_FIG203_AFFECTED_SOURCE_AND_SIX_SAMPLES_INDEPENDENT.
+Returned counts {"originalImageLoads":1,"currentSixNativeSampleImageLoads":6,"totalImageLoads":7,"contextImageLoads":7,"imageBatches":[1,6],"maximumBatchImages":6,"batchLimit":8,"contextLimit":24,"originalReopens":0,"sampleReopens":0,"sourceCrops":0,"additionalImageRendersOrCrops":0,"currentNativeSamples":6,"browserScreenshotCalls":6,"browserLaunchAttempts":2,"browserLaunches":2,"rendererHeadlessBrowserLaunches":1,"nativeHeadlessBrowserLaunches":1,"nativeHeadedBrowserLaunches":0,"browserCloseAttempts":2,"browserCloses":2,"browsersStillOpen":0,"nativePagesOpened":6,"nativePagesClosed":6,"rendererCalls":1,"standaloneSpecValidatorCalls":1,"rendererInternalSpecValidatorCalls":1,"historicalCorrectionsUsed":1,"historicalCorrectionLimit":1,"additionalCorrectionsUsed":1,"cumulativeCorrectionsUsed":2,"correctionsUsed":2,"furtherActualFailuresOrRecoveries":0,"ownNonzeroCommandReceiptsBeforeFreeze":0,"retainedHistoricalNonzeroCommandReceipts":3,"ownCommandReceiptsBeforeFreeze":31,"paidCalls":0,"modelImageCalls":0,"externalServiceCalls":0,"externalNetworkRequests":0,"independentReviews":0,"officialRecordReviewCalls":0,"promotionCalls":0,"canonicalWrites":0,"sharedWrites":0,"sourcePhysicalWrites":0,"otherFigureImageLoads":0,"oldNativeSampleImageLoads":0,"otherFigureAuthorCalls":0,"newTextSourceAnswerChoiceGates":0,"newTextSourceAnswerChoiceContentReads":0,"databaseCalls":0,"gitCalls":0,"globalChecks":0,"installs":0,"chatsCreatedOrMessaged":0,"worktreesCreatedOrModified":0,"skillHostOrBootstrapCalls":0,"oldAgentContacts":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1195 FIG203_AFFECTED_RECOVERY_ACTIVE_HISTORICAL_OCCLUSION_FAILURE_RETAINED
+
+6p/phy6-c5-s13-t1 evidence df406f64db0bdfbd18028fa4f29b183c416b4bf37d36b086696d2e5495bd1e08 bound to actual saved bytes.
+Current production 6p/phy6-c5-s13-t1; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c4-s12 756406e77ef3ebd0dba09749b4516b244285a506; complete22/new3.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Peirce the 3rd:S13T1_FIG203_AFFECTED_PAINT_OCCLUSION_RECOVERY.
+Returned counts {"originalImageLoads":1,"currentSixNativeSampleImageLoads":6,"totalImageLoads":7,"imageBatches":[1,6],"maximumBatchImages":6,"contextImageLoads":7,"batchLimit":8,"contextLimit":24,"originalReopens":0,"sampleReopens":0,"sourceCrops":0,"additionalImageRendersOrCrops":0,"currentNativeSamples":6,"browserLaunchAttempts":2,"browserLaunches":2,"rendererHeadlessBrowserLaunches":1,"nativeHeadedBrowserLaunches":1,"browserCloseAttempts":2,"browserCloses":2,"browsersStillOpen":0,"rendererCalls":1,"standaloneSpecValidatorCalls":2,"rendererInternalSpecValidatorCalls":1,"contentAuthorCalls":1,"correctionsUsed":1,"correctionLimit":1,"paidCalls":0,"modelImageCalls":0,"externalServiceCalls":0,"externalNetworkRequests":0,"independentReviews":0,"officialRecordReviewCalls":0,"promotionCalls":0,"canonicalWrites":0,"sourcePhysicalWrites":0,"otherFigureImageLoads":0,"otherFigureAuthorCalls":0,"sourceTextAnswerChoiceGates":0,"databaseCalls":0,"gitCalls":0,"globalChecks":0,"installs":0,"chatsCreatedOrMessaged":0,"skillHostOrBootstrapCalls":0,"nonzeroCommandReceipts":3}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1193 C4S12_NARROW_PUSHED_NEXT_SOURCED_LESSON
+
+C4-S12 complete narrowly committed and pushed 756406e77ef3ebd0dba09749b4516b244285a506; exact remote HEAD confirmed.
+Complete22/new3; delivery 1ef41f774efa1c2dc3a5d461acbb57f172a639d5c8c607b5cd53af46d4430c63; immediately continue actual sourced phy6-c5-s13-t1.
+S13-t1 FIG203 historical content HOLD1/1 and S19 byte HOLD retained, not reset or reclassified.
+Latest human authorization permits affected-only reversible FIG203 recovery; old limit is history, not a new approval gate.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; all old failures and pending preserved.
+Same8306 absoluteW; sharedmain/oldtrees/locks/backups/stash read-only preserved.
+finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
 ## 180-6 r1187 COMPLETE_LESSON_SEALED_PUSH_PENDING
 
 C4-S12 complete sealed: saved TEXT/SOURCE/ANSWER/FIG150/FIG151/CHOICE/DISPLAY.

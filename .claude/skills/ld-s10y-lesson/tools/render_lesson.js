@@ -189,7 +189,8 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 .jump{display:inline-block;margin:2.5em 0 0;padding:.55em 1.1em;border-radius:6px;
   background:var(--accent);color:#fff;text-decoration:none;font-size:.95em}
 .src{color:var(--sub);font-size:.78em;font-family:ui-monospace,Menlo,monospace}
-@media (max-width:640px){.sheet{padding:1.4em 1em 4em}li.ex{grid-template-columns:2.6em 1fr}}
+@media (max-width:640px){.sheet{padding:1.4em 1em 4em}li.ex{grid-template-columns:2.6em 1fr}
+  .para .nb{white-space:normal;overflow:visible}}
 `;
 
 function page(title, crumb, bodyHtml) {
