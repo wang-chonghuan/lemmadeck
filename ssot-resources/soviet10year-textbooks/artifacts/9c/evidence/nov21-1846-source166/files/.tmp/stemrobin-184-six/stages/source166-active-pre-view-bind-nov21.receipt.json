@@ -1,0 +1,27 @@
+{
+  "stage": "source166-active-pre-view-bind-nov21",
+  "command": "node",
+  "args": [
+    "--input-type=module",
+    "-e",
+    "import fs from \"node:fs\"; import path from \"node:path\"; import crypto from \"node:crypto\"; import assert from \"node:assert/strict\"; const cwd=process.cwd(); const root=path.join(cwd,\".tmp/stemrobin-184-six/source166-active\"); const png=path.join(cwd,\".tmp/ld-s10y-lesson/9c/pages/0166/page.png\"); const bind=p=>{const b=fs.readFileSync(p);return {path:p,bytes:b.length,sha256:crypto.createHash(\"sha256\").update(b).digest(\"hex\")};}; const b=fs.readFileSync(png); assert.equal(b.subarray(0,8).toString(\"hex\"),\"89504e470d0a1a0a\"); assert.equal(b.toString(\"ascii\",12,16),\"IHDR\"); const view=path.join(root,\"nativepage.png\"); fs.symlinkSync(png,view); const mp=path.join(cwd,\"ssot-resources/soviet10year-textbooks/sources/manifest.json\"); const m=JSON.parse(fs.readFileSync(mp,\"utf8\")); const c=m.catalogs.find(c=>c.book===\"9c\"); const p=m.pdfs.find(p=>p.book===c.sourcePdf); const pdf=path.resolve(path.dirname(mp),m.pdfRoot,p.file); const runtimes=[\".tmp/stemrobin-184-six/run-stage.mjs\",\".claude/skills/ld-s10y-lesson/tools/p2c.py\",\".claude/skills/ld-s10y-lesson/tools/layout.py\",\".claude/skills/ld-s10y-lesson/.venv/bin/python\"].map(p=>{const declared=path.join(cwd,p);return {...bind(fs.realpathSync(declared)),declaredPath:declared};}); const record={phase:\"BEFORE_SINGLE_SOURCE_VIEW\",decode:false,viewPath:view,png:{...bind(png),ihdr:{width:b.readUInt32BE(16),height:b.readUInt32BE(20),bitDepth:b[24],colourType:b[25],compression:b[26],filter:b[27],interlace:b[28]}},pdf:bind(pdf),runtimes,knownChargesBeforeView:3,actualInternalLoads:\"UNKNOWN\",sourceViewAuthorized:1,templateOrLayoutRead:false}; const out=path.join(root,\"pre-view-bindings.json\"); fs.writeFileSync(out,JSON.stringify(record,null,2)+\"\\n\",{flag:\"wx\",mode:0o444}); console.log(JSON.stringify(record,null,2)); console.log(JSON.stringify(bind(out)));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "started": "2026-11-21T01:39:49.428Z",
+  "ended": "2026-11-21T01:39:49.474Z",
+  "exitCode": 1,
+  "signal": null,
+  "error": null,
+  "outputs": {
+    "stdout": {
+      "path": ".tmp/stemrobin-184-six/stages/source166-active-pre-view-bind-nov21.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "path": ".tmp/stemrobin-184-six/stages/source166-active-pre-view-bind-nov21.stderr",
+      "bytes": 1209,
+      "sha256": "3d6b117f800c52a1c27522fadb234161ee03d11dedb19666e63f4d108cc65cc9"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 165,
+  "printed_page": null,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 165
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "ae0a49f79f904e6d7fdacc9e535802a7db7ab3aca3fedf82781e2c79173f3ef6"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+因为 $u=u(x)$ 和 $v=v(x)$ 是常数因子（当 $x$ 固定），可是根据引
+理（因为函数 $u$ 可微分），有
+$\lim_{\Delta x\to 0}\Delta u=0,$
+因此，
+$(uv)'=w'=\lim_{\Delta x\to 0}\frac{\Delta w}{\Delta x}=\lim_{\Delta x\to 0}\left(v\cdot\frac{\Delta u}{\Delta x}+u\cdot\frac{\Delta v}{\Delta x}+\Delta u\cdot\frac{\Delta v}{\Delta x}\right)↵=\lim_{\Delta x\to 0}\left(v\cdot\frac{\Delta u}{\Delta x}\right)+\lim_{\Delta x\to 0}\left(u\cdot\frac{\Delta v}{\Delta x}\right)+\lim_{\Delta x\to 0}\left(\Delta u\cdot\frac{\Delta v}{\Delta x}\right)↵=v\cdot\lim_{\Delta x\to 0}\frac{\Delta u}{\Delta x}+u\cdot\lim_{\Delta x\to 0}\frac{\Delta v}{\Delta x}+\lim_{\Delta x\to 0}\Delta u\cdot\lim_{\Delta x\to 0}\frac{\Delta v}{\Delta x}↵=v\cdot u'+u\cdot v'+0\cdot v'=uv'+u'v.$
+
+<!-- p -->
+例 $1$．$((x+3)(x+15))'↵=(x+3)'(x+15)+(x+3)(x+15)'↵=(1+0)(x+15)+(x+3)(1+0)=2x+18.$
+
+<!-- p -->
+推论。常数因子可以提到导数符号外面：
+$(kf(x))'=kf'(x).$
+
+<!-- p -->
+事实上，对积 $kf(x)$（其中 $k$ 是常数）应用上述定理，得
+$(kf(x))'=k'f(x)+kf'(x)=0\cdot f(x)+kf'(x)=kf'(x).$
+
+<!-- p -->
+例 $2$．$\left(\frac{x}{15}-3\right)'=\left(\frac{x}{15}\right)'-0=\frac{1}{15}(x)'=\frac{1}{15}.$
+
+<!-- exhead -->
+习　题
+
+<!-- p owner-ex 367 -->
+利用第 $44$ 和 $45$ 小节中导出的公式，求下列各函数的
+导数：
+
+<!-- ex 367 -->
+367．а) $y(x)=\frac{x}{5};$　　б) $h(x)=-\frac{3x}{4}.$
+
+<!-- foot -->
+• 158 •

@@ -1,5 +1,33 @@
 # 开发路线
 
+## 184-6 n45 offline-complete tail delivery (2026-11-21)
+
+n45 complete offline:17proseblocks/21displayedparagraphs,8written367-374,
+8derivedanswers(7auto/1ungraded,10expressionparts),7math/1free interactions,
+7choices(5single/2multiple)/34options,0figures. FIRST source-first/view-first/
+key-last independent semantic review PASS, then official reviewed retention.
+One fresh desktop1440x960/mobile390x844 offline batch: text/written/choices,
+six actual child screenshot views, assertions and visual PASS, zero remote
+dependencies. Explicit isolated/headless authorization; not live acceptance.
+Source16425/25,16521/21,16622/22 PASS and prior independent mathematics/
+actual closures reused. Only165 ownership annotation367->367-373 and two166
+n>1 glyphs plus confirmed bottom scan-artifact counting metadata changed.
+OriginalFIRST23/22 FAIL, glyphHOLD, immutable source freezes and UNKNOWN
+charges preserved. Pipeline intake first naming failure and exact-name recovery
+retained; no native/assembly/adaptation/render or semantic review replay.
+FIRST offline comparator missed374's separate number label on both widths;
+two saved-DOM comparisons alone recovered PASS with negative controls.
+Original browser exit1/evidence/diagnosis retained; no browser replay.
+Original374 retains BOTH graph constructions as ungraded, not auto choices.
+Parent permanent24/24; new displaychild6/8,6/24;166known12/164165known6perpage.
+n44 delivered39e5f6d1 and its strictCompliance=false are not recounted/reviewed.
+n46 open tail remains incomplete. This is1complete tail lesson, not a group
+or ticket handoff. Narrow normal push tocodex/STEMROBIN-184-textbooks,
+detachedHEAD, no force/rebase.104/122/135 dirt and allHEAD usage keys preserved.
+After normal delivery immediately continue actual serialSOURCE167 for open46,
+not speculative future prefetch. No paid/DB/publication/merge/deploy/closure
+or supervisor/peer messages;finish=review.
+
 ## 184-6 n44 offline tail delivered; Git authorization corrected (2026-11-21)
 
 n44 is offline-complete:9prose/4written363-366/4answers(3auto,1ungraded),
