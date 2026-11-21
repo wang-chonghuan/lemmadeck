@@ -1,5 +1,27 @@
 # 开发路线
 
+## 184-6 existing 9c interaction supplement ready (2026-11-21)
+
+Second 10c batch committedf1d85654f31c97be9d4588c277666e5f59ef0bcc;
+ordinary push666d64 and remote confirmation001a4c returned that exact head.
+Ten 10c manifests/99interactions now delivered, including two genuine empty sets.
+
+Seven active 9c lessons have existing ready answers, passed answer/adaptation
+audits and retained choice reviews:1/2/3/ch1-ex/5/8/17. Reuse all those stages.
+Official cap3 prepare7b71f4 onceexit0 and finalize8b6019 onceexit0:
+2+7+2+20+6+1+14=52 interactions, all ready, no pending flags.
+Only new interaction files and this record selected; no source, answer, choice,
+figure, index or existing input interaction changes. Source/display gates
+not replayed and completedLessonDelta remains0.
+
+This narrow missing-stage supplement totals17files/151interactions.
+9c n14 readability HOLD is excluded. 10c114/125 zero-answer directories are
+not treated as complete new lessons; unresolved source evidence stays unchanged.
+77/E35 and78/E43/E45 remain draft needsAuthoring, not silently finalized.
+All existing holds, failures, counters and pending repair work preserved.
+No images, decodes, paid calls, DB, merge, deploy, formal handoff or closure.
+This is a production checkpoint, not whole-book completion or a human pause.
+
 ## 184-6 second interaction batch ready (2026-11-21)
 
 First batch actually committed65c5585ca9349ec6532eb9410a5fc03a63e9cecc
