@@ -44,6 +44,12 @@ D518：另修复 47 份 9p／10p 审查记录中的 249 条路径，均指向已
 
 [本批精确路径修复](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d517-retained-provenance/repair.json) · [受影响检查与剩余引用](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d517-retained-provenance/affected-check.json)
 
+D521：归档索引与实际文件再确定 17 条原 SHA 引用，已修正路径，包含 source264 的前页候选上下文和 N77 的原 seed。前页候选仍未批准；未重生成或批准课程。受影响图 metadata 校验通过，20 条未修改的临时引用仍保留。索引声称保留但实际缺失的 69 个路径已单列，不能据索引猜造资源。
+
+[本批索引路径修复及剩余项](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d520-indexed-provenance/repair.json) · [候选存在性与缺失记录](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d520-indexed-provenance/plan.json)
+
+已有“终止”或 repair1/1 记录不是永久审批限制：有确定性源和现有审查支持时，可继续普通局部修复。真实来源／字形不明及缺付费输出仍不得猜造、重购；本轮路径修复不替代这些缺失阶段。
+
 ## 机械检查
 
 | 检查 | 结果 |
