@@ -1,5 +1,256 @@
 # 生产检查点
 
+## 180-6 r1992 C2S4_COMPLETE_LESSON_SEALED_NARROW_PUSH_PENDING
+
+C2S4 full lesson sealed 06eb0feb5abd0de1f47567a2f64a14ca139ea4991474e39e6b62f9e379a97e9d; complete25->26/new7.
+Saved SOURCE/TEXT composite, approved two figures and finalized six answers reused without replay.
+First independent CHOICE5/options21 PASS retained officially; six native desktop/mobile surfaces independently approved.
+Open tasting experiment remains written/ungraded, actual time/results UNKNOWN and choice capacity loss preserved.
+First figure/TEXT/technical failures and corrections retained. Parent images0/browser1/closed1/paid0.
+Narrow original-branch commit/push pending; no partial-course seal.
+Historical paid69/retry0 and UNKNOWN costs/tokens/quota retained; old trees/locks/backups/stash/failed calls/pending preserved.
+Only absolute8306W; sharedmain read-only; finish=review; noDB/merge/deploy/close/E/newtree/attach/bootstrap/old-chat wake.
+
+## 180-6 r1978 C2S4_CHOICE_RETAINED_DISPLAY_PENDING_N27_INDEPENDENT_C2S8_SOURCE_AND_ANSWER_ACTIVE
+
+C2S4 first CHOICE independent PASS5/options21 collected/closed and official retain r1965 succeeded. Open experiment preserved, no time/result fabricated. First offline render r1966 and six native capture r1967 succeeded; browser1 closed. Mendel independently reviews six existing screenshots, no image/source/answer replay.
+N27 Planck new FIG79 candidate collected/closed; final spec ffc53098/SVG73325111/native0577050f are new unreviewed bytes, not old-byte recovery. Sagan independently reviews only source1/native1; FIG78/80 valid bindings reused, no redraw.
+C2S8 Bacon affected four-sentence TEXT PASS collected/closed, original SOURCE and other TEXT judgments inherited; first REVISE preserved. Gold asset HOLD remains separate.
+C2S8 Herschel located physical4 from actual source pixels, collected/closed; upper gold micrograph/middle crystal model owner C2S8, lower molecular photograph separately C2S3. No printedII or abc read; source right truncation retained. Physical6 wrong-page evidence unchanged. Location is not SOURCE PASS.
+Kuhn owns missing single-page shadow source transcription only; no canonical/C2S3/wholebook assembly write. Aristotle owns first six modern ANSWER candidates using approved original solutions and unchanged question TEXT; gold asset gap does not block figure-free questions.
+Complete25/new6 unchanged; old passed courses not replayed. Every production exec absolute8306W; parent images0/newpaid0, costs/tokens/quota UNKNOWN. Own agents4; no parent production exec at this stage record.
+Old trees/locks/backups/stash/paid69/retry0/failed calls/pending/unrelated changes retained. finish=review; noDB/merge/deploy/close/E/newtree/attach/SkillHost/install/old-chat wake.
+
+## 180-6 r1951 C2S4_CHOICE_INDEPENDENT_C2S8_AFFECTED_TEXT_AND_GOLD_SOURCE_ACTIVE
+
+Official8306 attachment and actual r1918 bytes confirmed; no create_worktree/attach/bootstrap replay.
+n129/C2S3/S18 and all unchanged PASS preserved. Complete25/new6; latest pushed ed9a727354bd9df5d33c7a545f55b543fa284129 unchanged.
+C2S4 CHOICE author already collected/closed; active independent is Wegener the 3rd, not the stale author in r1918 metadata. Approved TEXT/SOURCE/two figures/finalized six answers retained. First six-page offline display script prepared, not yet executed or approved.
+C2S8 Gauss collected/closed; only four-sentence candidate c77febb1d7221aaa86772b13a85d02c40173506abd4025edc629d090f39dd796, not PASS. Bacon reviews those changes only; original SOURCE and unaffected TEXT judgments retained.
+C2S8 Herschel locates actual gold plate in one bounded front-page source batch; physical6 contents-page evidence retained, not reopened, no guessed owner or canonical source write.
+N27 Planck current FIG79 candidate remains active; no historical bytes restored or old approval applied.
+Own active agents4/parentexec0; every production exec actual absolute8306W. Parent images0/newpaid0; costs/tokens/quota UNKNOWN. r1937 shell-glob failure and r1945 no-match receipt retained as execution facts, not content verdicts.
+Old trees/locks/backups/stash/paid69/retry0/failed calls/pending and all existing uncommitted changes preserved. finish=review; noDB/merge/deploy/close/E/old-chat wake.
+
+## 180-6 r1918 C2S4_FINALIZED_ANSWERS_REUSED_CHOICE_ACTIVE_N27_FIG79_AND_C2S8_AFFECTED_TEXT_ACTIVE
+
+C2S4 independent two-figure PASS collected/closed; review hashes 6e1711449e30eb3c4392baad222faa0b7aa2015395be342b0e20309d623cbc4e and 1838803efddc1e27b0156988b6c597f5c099d57e50250df939cb1e04c700a274 bound once.
+Approved geometry/SVG retained with durable-path metadata; old existing fig-16 files untouched, new lesson-owned basename fig-16-phy6-c2-s4. Durable review binding records technical relocation, not a duplicate visual/math review.
+C2S4 first adapt-finalize r1898 exit2 found duplicate same-figure reference token16; only second "figure16" reference became "this figure" and the same affected paragraph anchor updated. r1902 stale-anchor exit2 retained; r1903 official prose_flow recovered once. No data/math/figure semantics changed.
+C2S4 adapt-finalize recovery r1905 PASS, receipt SHA256 13d9ba5dce36fa95b6c34d75df25a065b97fe96f0fb16d8223b8d22a52ffc6e7; SOURCE/TEXT substance and two figure reviews reused.
+Canonical exercise array equals approved answer input array exactly. Six already finalized answers and audit retained unchanged: c69fb51871cfe7133c456c3bceabeb5472d3e4fdc46812347b7b1d7f46e51ee5 / 59d18a2b09d465d11a0b2b8918b60387bc614b06ade70457aa10ff54c1a329a2. No ANSWER finalize/browser replay.
+C2S4 new CHOICE author Nietzsche the 3rd 01a1fe6e-dae8-77f2-9d37-9cad7b013f59 owns c2s4-choice-r1908/; uses first official whitelist, no old keys, retains actual experiment/open-work capacity loss. No complete-course/batch count until choice and offline display pass.
+C2S8 first six-question SOURCE PASS collected/closed, source-review SHA256 4d4b50935ecf91f8d0a18c2461df7d30affaa828da322089d2e5feb2272ae347. Full TEXT first REVISE fc12d9f656c7e7177bb87a1598672680ed401ee6fbcf8dd9c835423bc8d31a01 preserved; source/math and unaffected TEXT judgments retained.
+C2S8 four sentence-level scope clarifications only: tenfold estimate scope, neighbouring-particle gaps versus all-pair centre distance, stable solid arrangement versus universal force ranking, generic crystal particles versus exhaustive molecules/atoms classification. No protected original value/formula/source snapshot change, no new measurement.
+Gauss the 3rd 01a1fe74-cd71-77c2-83b4-366629929ba5 owns c2s8-text-affected-r1915/ necessary working copies; independent affected TEXT review still required, old candidate files untouched.
+Gold-source diagnosis corrected from actual pixels: physical PDF page6 is a contents page, not plate II; Turing collected/closed after source read1/exec10/fail0/paid0. No owner/errata/page data fabricated, no finalize or canonical source change. Actual gold plate remains source-location HOLD only.
+N27 existing SOURCE/TEXT/ANSWER/CHOICE passed stages available; FIG79 remains unapproved and no canonical output. Planck the 3rd 01a1fe72-0ad8-7323-88cd-6038f9716bea owns n27-fig79-r1914/ for necessary current source-first candidate, not claimed old-byte recovery. Old FIG79 post-repair failure/spec gap and counts remain.
+Own active agents3/parentexec0; only actual absolute8306 workdir; parent images0/newpaid0. Complete25/new6 and latest delivered C2S3 ed9a727354bd9df5d33c7a545f55b543fa284129 unchanged.
+Ordinary small complete batches continue on original branch, no partial-course commit. finish=review; no DB/merge/deploy/E/old worker wake/new tree/attach/bootstrap; all old trees/locks/backups/stash/unknown costs/failed calls/pending preserved.
+
+## 180-6 r1892 C2S4_AFFECTED_INDEPENDENT_C2S8_SOURCE_TEXT_REVIEW_AND_GOLD_SOURCE_ACTIVE
+
+Collected and closed all three authors before dispatching reviews; their saved bytes bound once in commands/r1883-collected-saved-author-bytes.json.
+C2S4 repaired two figures have new machine render/native author PASS only; independent Einstein the 3rd 01a1fe64-b51b-78d0-ac77-a8b0ba094b35 owns c2s4-figure-review-r1884/ for source2/native2 substantive review, no rerender/browser.
+C2S4 author notes SHA256 a368a46bafed80f1f76aea45b710f82ab7729f84b7b53c02f3abefaebba24e5a; author images4/exec34/execfail0/manualeditfail1/browser2/closed2/paid0, costs UNKNOWN; first failures and repair1 retained.
+C2S8 first modern TEXT candidate lesson SHA256 2fe9306d1b8c2cf554263020f57d38d3fb1bbfae0ebbc1030b2b5cac998731ae, exercises 9324b146f9b6cd3fa08ff0c74c270d5e20dd9709ff70a73c103dd949e07c3434; figures unchanged draft bdf249d10704d29ef0a4ef425dc3ee4a3eb36c00846a39a5cfa15e0e9a5c1f0d.
+C2S8 source six-question candidate SHA256 4b804b641b8b72a88faf994aa537775d8ef77d889f8af054005b20f1b812d58f; source author exec11/fail0/images0/browser0/paid0, TEXT author exec15/fail0/images0/browser0/paid0, costs UNKNOWN.
+Independent Linnaeus the 3rd 01a1fe65-3784-7b50-b551-fb91a35e4e16 owns c2s8-independent-r1885/; SOURCE/math and TEXT separately judged, scientific questions not automatically FAIL or approval.
+Actual local source gap: C2S8 references gold-crystal plate II p0041#3, canonical page0006 not retained. First necessary prepare p0006 into c2s8-gold-source-r1890 shadow scope succeeded; receipt commands/r1890-c2s8-missing-gold-page-prepare.json SHA256 3bc304a729b5b16707c5128f9e6742f0bb0d5b00715383b1789e4dd83fa56824.
+Fresh source batch Turing the 3rd 01a1fe67-62bd-7190-b8f6-4f712415554b owns only c2s8-gold-source-r1890/ shadow page facts; no canonical change or book assembly. Verify actual page identity/owner before any source claim; no missing source guessed.
+No content, graph, whole-course or batch approval inferred from preparation/self-check/receipt. Four reported scientific expressions and missing gold asset remain scoped review questions.
+Own agents3/parentexec0; parent images0/newpaid0. Completed25/new6 unchanged, no new commit/push or half-course seal.
+Original branch/tree/locks/backups/stash, source/formula/owner repairs, old PASS/HOLD/failed calls/pending and UNKNOWN fees retained. Exact actual W; finish=review, no DB/merge/deploy/E.
+
+## 180-6 r1874 C2S4_AFFECTED_REPAIR_AND_C2S8_FIRST_TEXT_SOURCE_ACTIVE
+
+Original 180-6 resumed on direct human authorization; pause r1829 remains historical.
+C2S4 affected figure author Gibbs the 3rd 01a1fe5c-4f53-7aa3-a023-a681146d2a04 continues only fig-16/tbl-p0005-03 defects; six finalized answers and SOURCE/TEXT PASS reused.
+First successful C2S8 adapt-prepare receipt commands/r1864-c2s8-first-modern-prepare.json SHA256 904208af542f9c18865de2e8d6f2d65627e6d0b448a128a9446f739e85db740e: 13 prose blocks/6 questions/2 figures; not a content approval.
+C2S8 new TEXT author Carson the 3rd 01a1fe5f-d1e6-7613-a7a9-578cbeec18aa owns c2s8-text-r1864/ templates only.
+C2S8 first original six-question SOURCE/math author Poincare the 3rd 01a1fe60-e62d-7c31-854f-806dd24abc6a owns c2s8-source-r1871/ only; no prior answers/choices exposed.
+Own active agents3/parentexec0; new content and actual changed figures still require independent substantive review.
+Live Plane STEMROBIN-180 5d849725-dbba-4fa6-9233-9967f86bad69 read once: four-course rolling batches, unchanged PASS reused, no old answer-input interactions, no shared DB/merge/deploy/E. Ticket's historical pause lifted by current explicit human resume.
+Live read receipt commands/r1872-live-ticket-list.json SHA256 25ce174e0fc91abdd7c5a075b55b2f1791c25ba0be3f5d91e045611a9d10b349; no backend writes.
+C2S3/C2S5/C2S6/S18 and other already complete/PASS work not replayed. Complete25/new6 unchanged; latest pushed C2S3 ed9a727354bd9df5d33c7a545f55b543fa284129.
+Old paid/source/measurement/scientific HOLDs, prior failures (including locator r1863/r1866), costs UNKNOWN, original trees/locks/backups/stash and uncommitted skill/owner/formula repairs retained.
+Only actual workdir /Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck; original delivery branch codex/STEMROBIN-180-textbooks; finish=review.
+
+## 180-6 r1857 HUMAN_RESUMED_NEW_SKILL_C2S4_AFFECTED_FIGURES_ACTIVE
+
+Human resume received 2026-11-21 via supervisor; this lifts r1829 pause for original 180-6 only.
+Actual workdir /Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck; original codex/STEMROBIN-180-textbooks delivery branch, no new tree/attach/bootstrap/branch.
+Installed db61360143e803e746f5fe47700dee24beb80c22 record SHA256 69f925180c579354328ad0c0755ab7b4861402bba17da4538c73f9fe1d4fa5e5 verified once; all nine actual file hashes match installed.json.
+Reloaded local lesson/image/choice entries plus production-resume and quality-gate; no installation/smoke/189 tests or full-source acceptance replay.
+New quality-gate authorizes affected local repair without inventing an internal attempt-count approval boundary; original REVISE and repair1 remain facts, not PASS.
+Priority C2S4 source/TEXT/six finalized answers retained. fig-16 basal segregation and tbl-p0005-03 vessel1 layering/intermediate gradient remain affected defects under repair.
+Active agent1: Gibbs the 3rd 01a1fe5c-4f53-7aa3-a023-a681146d2a04, write scope tmp/resume-180-6-8306/c2s4-figure-repair-r1846/ only; fresh image context, no promotion, content/DB/Git writes or new paid call.
+Parentexec0; each production command explicitly uses actual absolute workdir and existing run-command.mjs.
+S7 FIG23 first independent PASS saved at r1829 remains valid and unpromoted; S7 FIG20 paid UNKNOWN/no-output HOLD and FIG22 first visual FAIL retained.
+Complete25/new6 unchanged; latest pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; C2S3/S18 and other unchanged PASS not replayed.
+Normally about four newly complete lessons per ordinary narrow commit/push HEAD to original branch, then immediately next sourced batch; no partial-course commit.
+Existing pause evidence/old checkpoints, failures, pending messages, original worktree/locks/backups/stash/owner/TOC/formula protection and uncommitted edits retained.
+Additional parent locator failures r1850 and r1853 retained; neither is a content verdict.
+finish=review; no shared DB/merge/deploy/close/E/new paid generation, no old-chat/old-reviewer wake or peer messages.
+
+## 180-6 r1829 PAUSED_HUMAN_REQUEST_S7_FIG23_FIRST_PASS_SAVED
+
+PAUSED by latest human instruction via supervisor; wait for a new explicit human instruction.
+Actual worktree: /Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck; preserved in place, original tree/shared main read-only.
+Saved FIG23 first independent PASS: /Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck/.intentfold/tickets/STEMROBIN-180/tmp/resume-180-6-8306/s7-fig23-independent-r1814/final-manifest.json
+SHA256 e37645851304280a2780f068eee8869c17f3125874649d96f2bb42ef929551be; official PASS was recorded once by reviewer; this closure only binds saved bytes.
+Author last seal receipt SHA256 9cb1c8dc7eeaaeb1884d245372fcb9c48c0de6a9c3091fad61209b29d939ef55 bound; original failed/missing render receipt remains UNKNOWN.
+Goodall the 3rd completed and official close_agent called; own active agents0/parentexec0/production commands0.
+Owned-process inspection found only synchronous safety-read processes, all completed; author browser2/closed2/profiles0, reviewer browser0.
+Complete25/new6 unchanged; latest pushed complete course phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129.
+S7 SOURCE/TEXT and seven finalized answers preserved; FIG19/21 old PASS, FIG23 new PASS not promoted.
+S7 FIG20 paid UNKNOWN/no-output HOLD; FIG22 first visual FAIL unrepaired; S7 no complete-course seal or delivery.
+C2S4 answers sealed; figures still REVISE after one repair. C3S30 page0108/content HOLD, C3S9 mass BLOCK repair1/1, S19 byte HOLD retained.
+Reviewer counts: {"exec":{"totalIncludingSuccessfulTerminalSeal":24,"completedBeforeTerminalSeal":23,"failures":0,"wrapperInvocations":24,"explicitWorkdirEveryInvocation":true,"uniqueLabelPrefix":"s7fig23rev-"},"failures":{"total":1,"exec":0,"imageToolPath":1,"browser":0,"render":0,"semantic":0},"browser":{"launches":0,"closeCalls":0,"closed":0},"paid":{"calls":0,"outputs":0},"cost":"UNKNOWN","tokens":"UNKNOWN","quota":"UNKNOWN","contentRepairs":0,"sourceStageReviews":0,"textStageReviews":0,"newAgentsOrChats":0,"otherAgentConversationsRead":0,"oldAuthorsOrReviewersAwakened":0,"imageRegeneration":0,"promote":0,"adaptFinalize":0,"proseAnswerOrChoiceWrites":0,"skillHost":0,"installs":0,"git":0,"database":0,"newWorktrees":0,"attachments":0,"checkpointUsageOrTicketWrites":0,"sharedMainOrOldTreeWrites":0,"lockBackupOrStashWrites":0}.
+Pause cleanup also retains r1827 missing skill-file read failure; prior failures, paid69/retry0/browser22 and UNKNOWN costs/tokens/quota untouched.
+Pause evidence: /Users/yong/.codex/worktrees/stemrobin-180-six-8306/lemmadeck/.intentfold/tickets/STEMROBIN-180/tmp/resume-180-6-8306/pause-r1829.json; SHA256 84180082b20163fa3d0d075824f6c6b2b2898a19b2b24b39ea9312461bd2c3e5.
+No new worker, images/browser/paid call, production/validation replay, commit/push, DB/merge/deploy, formal handoff, newtree/attach or peer messages.
+All saved artifacts, uncommitted edits, old checkpoints/messages, locks/backups/stash retained; finish=review.
+
+## 180-6 r1816 S7_FIG23_FIRST_RENDER_RECOVERED_FIRST_INDEPENDENT_ACTIVE
+
+6p/phy6-c2-s7 evidence 63b81af55a600b6699d2cfc51f9958297135395f028a428a5ef085af88fdda24 bound to actual saved bytes.
+Current production 6p/phy6-c2-s7; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Goodall the 3rd:S7_FIG23_FIRST_TWO_IMAGES_INDEPENDENT.
+Returned counts {"imageReads":{"source":1,"native":1,"batch":2,"lifetime":2,"limitBatch":8,"limitLifetime":24,"returnedToParent":0},"browser":{"launches":2,"officialRenderer":1,"nativeCapture":1,"finallyCloseCalls":2,"closed":2,"remainingProfiles":0},"exec":{"toolCallsIncludingThisSeal":29,"wrapperInvocations":29,"completedReceiptsBeforeSeal":28,"inspectionCommands":25,"prepare":1,"officialRender":1,"nativeCapture":1,"terminalSeal":1},"validator":{"historicalDraftPassReused":1,"oldDraftValidationReruns":0,"officialRendererInternalDraftInvocation":1},"artifacts":{"objects":34,"assertions":35,"sourceInventoryGroups":6,"labels":5,"officialRenderAttempts":1,"svgOutputs":1,"screenshots":1,"crop":0,"resize":0,"stitch":0},"newFailures":{"exec":0,"render":0,"capture":0,"browser":0,"contentRevisions":0},"authorObservation":{"sourceInventoryComparisons":1,"nativeSelfInspections":1,"sourceStageReviews":0,"textStageReviews":0,"independentReviews":0,"independentPassRecords":0,"contentRepairs":0},"paid":{"thisRunCalls":0,"thisRunArtworkOutputs":0,"historicalCalls":"UNKNOWN","historicalCost":"UNKNOWN","fig20Status":"PAID_FAIL_NO_OUTPUT_UNKNOWN_HOLD"},"prohibitedOperations":{"sourceAuthorship":0,"textAuthorship":0,"promote":0,"adaptFinalize":0,"completeCourseIncrement":0,"database":0,"git":0,"installs":0,"newWorktrees":0,"attachments":0,"skillHost":0,"otherChats":0,"oldReviewers":0,"checkpointWrites":0,"usageWrites":0,"ticketWrites":0,"sharedMainWrites":0,"oldTreeWrites":0}}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1812 S7_SEVEN_ANSWERS_FINALIZED_PASS_FIG23_FIRST_RENDER_ACTIVE
+
+6p/phy6-c2-s7 evidence 2c579fc4b653c972c2b80f6d1085e5f2f88f77a4c755640d2281edd27c7d1c67 bound to actual saved bytes.
+Current production 6p/phy6-c2-s7; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Franklin the 3rd:S7_FIG23_FIRST_UNEXECUTED_RENDER_RECOVERY.
+Returned counts {"answers":7,"auto":0,"ungraded":7,"parts":0,"images":0,"browser":0,"paid":0,"sourceReviews":0,"textReviews":0,"officialFinalizeCalls":1,"canonicalWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1804 S7_FIRST_MODERN_ANSWER_SEVEN_INDEPENDENT_AND_FIG23_RENDER_ACTIVE
+
+6p/phy6-c2-s7 evidence 017fa5a86a43a7dcc073202f5a82a344f6bcdd2a6967ad76629a4c382305e02f bound to actual saved bytes.
+Current production 6p/phy6-c2-s7; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Franklin the 3rd:S7_FIG23_FIRST_UNEXECUTED_RENDER_RECOVERY; Schrodinger the 3rd:S7_FIRST_MODERN_ANSWER_SEVEN_INDEPENDENT.
+Returned counts {"writtenQuestions":7,"modernAnswers":7,"auto":0,"ungraded":7,"parts":0,"sourceReviews":0,"textReviews":0,"sourceAuthorship":0,"textAuthorship":0,"images":0,"browser":0,"paid":0,"actualExperiments":0,"canonicalWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1799 S7_APPROVED_SOURCE_TEXT_REUSED_FIG23_FIRST_RENDER_ACTIVE
+
+6p/phy6-c2-s7 evidence 915f0638e38b40ca31ceb35f735c6dd058af094d45d8f6a4fcac1ea9d61a1a07 bound to actual saved bytes.
+Current production 6p/phy6-c2-s7; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Franklin the 3rd:S7_FIG23_FIRST_UNEXECUTED_RENDER_RECOVERY.
+Returned counts {"sourceTasksReused":7,"textBlocksReused":24,"knownTemplatesCopied":3,"sourceReviews":0,"textReviews":0,"sourceAuthorship":0,"textAuthorship":0,"images":0,"browser":0,"paid":0,"unknownBytesRestored":0,"completeCourseIncrement":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1735 C2S4_SIX_ANSWERS_FINALIZED_PASS_FIGURE_HOLD_RETAINED
+
+6p/phy6-c2-s4 evidence 73bd3c541475f430d65566d167f75fc46f03e6d9c2081dfa77116ae34307496a bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents0/parentexec0: none.
+Returned counts {"answers":6,"auto":0,"ungraded":6,"exactExpectedParts":0,"images":0,"browser":0,"paid":0,"officialFinalizeCalls":1,"canonicalWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1704 C2S4_TWO_FIGURES_REVISE_AFTER_ONE_CONTENT_REPAIR_LOCAL_HOLD
+
+6p/phy6-c2-s4 evidence 360c061e9076802d074b0d405486415435e7621365fef1e32c0c51bf4a540cf5 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Curie the 3rd:C2S4_FIRST_MODERN_ANSWER_SIX_INDEPENDENT.
+Returned counts {"images":2,"reopens":0,"browser":0,"newrenders":0,"paid":0,"nativeImages":2,"sourceImages":0,"imageBatches":1,"oldImagesReopened":0,"crops":0,"resizes":0,"stitches":0,"completedExecBeforeThisWriter":23,"completedExecFailures":1,"currentWriterExecStarted":1,"execInvocationsThroughThisWriter":24,"imageLoadFailures":0,"renderFailures":0,"browserFailures":0,"affectedIndependentFigureDecisions":2,"figurePasses":0,"figureRevises":2,"figureBlocked":0,"inheritedAuthorTechnicalFailures":4,"inheritedSemanticRevises":2,"inheritedIndependentImages":4,"inheritedCorrectionBrowserLaunches":2,"inheritedCorrectionBrowserClosures":2,"successfulImageBatchReviewReruns":0,"TEXTReapprovals":0,"SOURCEReapprovals":0,"ANSWERReviews":0,"recordReviewCalls":0,"promoteCalls":0,"canonicalWrites":0,"checkpointWrites":0,"usageWrites":0,"gitOperations":0,"DBCalls":0,"envReadsOrWrites":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatReads":0,"otherWorkerWakeupsOrClosures":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1701 C2S4_FIRST_MODERN_ANSWER_SIX_INDEPENDENT_AND_TWO_AFFECTED_FIGURES_ACTIVE
+
+6p/phy6-c2-s4 evidence 96ef595b10647e4074c78b767412c8efc628ab7d06ce95c0f9911a09d30e1d96 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents2/parentexec0: Euclid the 3rd:C2S4_TWO_AFFECTED_NATIVE_FIGURES; Curie the 3rd:C2S4_FIRST_MODERN_ANSWER_SIX_INDEPENDENT.
+Returned counts {"writtenQuestions":6,"answers":6,"auto":0,"ungraded":6,"parts":0,"images":0,"browser":0,"paid":0,"sourceReruns":0,"textReruns":0,"actualExperiments":0,"canonicalWrites":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1695 C2S4_TWO_AFFECTED_FIGURES_RENDERED_INDEPENDENT_ACTIVE
+
+6p/phy6-c2-s4 evidence 651647a6659b2c55b254e699f887564b1b1eb5388a02a4857c66b258279002a7 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Euclid the 3rd:C2S4_TWO_AFFECTED_NATIVE_FIGURES.
+Returned counts {"sourceImagesReopened":0,"parentImages":0,"newNativeOutputs":2,"browserLaunches":2,"browserClosures":2,"nativeDOMWidthAssertions":4,"paid":0,"sourceReruns":0,"textReruns":0,"originalAuthorFailures":4,"originalSemanticFigureRevisions":2,"successfulCommandsBeforeSeal":5,"failedCommandsBeforeSeal":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1679 C2S4_TWO_FIRST_FIGURES_REVISE_RETAINED_AFFECTED_REPAIR_NEXT
+
+6p/phy6-c2-s4 evidence 17c460eaa83ac81e3cbf05824d86a0762f0187e58752b1f18c781adcbfc1bb18 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Mencius the 3rd:C2S4_AFFECTED_TWO_FIGURES_REPAIR_PENDING.
+Returned counts {"images":4,"reopens":0,"browser":0,"newrenders":0,"paid":0,"sourceImages":2,"nativeImages":2,"imageBatches":1,"crops":0,"stitches":0,"completedExec":25,"completedExecFailures":0,"currentWriterExec":0,"anticipatedFinalSealExec":0,"execTotalAfterRequiredSeal":26,"inheritedAuthorTechnicalFailures":4,"independentFigureReviews":2,"figurePasses":0,"figureRevises":2,"figureBlocked":0,"TEXTReapprovals":0,"SOURCEReapprovals":0,"ANSWERReviews":0,"recordReviewCalls":0,"promoteCalls":0,"canonicalWrites":0,"indexWrites":0,"checkpointWrites":0,"usageWrites":0,"ticketWrites":0,"gitOperations":0,"DBCalls":0,"envReadsOrWrites":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatsRead":0,"otherWorkerClosures":0,"currentSealExec":1,"exec":26,"execFailures":0,"combinedObservedTechnicalFailures":4,"execCountingBoundary":"25 completed wrapper receipts, all exit 0, plus this 26th seal command; the wrapper emits its result after this manifest exists."}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1676 C2S4_TEXT_SOURCE_REUSED_FINAL_WORK_READY_FIGURE_REVIEW_ACTIVE
+
+6p/phy6-c2-s4 evidence a3f7c67cd53503e2930dac60a321bc4cbdf86958bf2e64b6ed424d62f72c5f48 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Mencius the 3rd:C2S4_FIRST_TWO_FIGURES_INDEPENDENT.
+Returned counts {"knownTemplatesCopied":3,"images":0,"browser":0,"paid":0,"canonicalWrites":0,"unknownBytesRestored":0,"sourceReruns":0,"textReviewReruns":0}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1666 C2S4_FIRST_TWO_FIGURES_INDEPENDENT_ACTIVE
+
+6p/phy6-c2-s4 evidence 0d93e7947d160434f7acc69084dd116d2200e2f99a1802269acb996cc3212cb7 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents1/parentexec0: Mencius the 3rd:C2S4_FIRST_TWO_FIGURES_INDEPENDENT.
+Returned counts {"requestedFigures":2,"draftedFigures":2,"rendererPassCandidates":2,"nativePNGOutputs":2,"sourceSubfigures":8,"sourceImagesLoaded":2,"nativeOutputsLoaded":2,"totalImagesLoadedIntoAuthorContext":4,"imageBatches":1,"imageReopens":0,"crops":0,"independentFigureReviewRuns":0,"independentApprovals":0,"recordReviewCalls":0,"promotions":0,"explicitDraftValidatorCalls":4,"explicitDraftFailures":2,"rendererInternalDraftValidatorCalls":2,"successfulTextOrSourceContentChecksRerun":0,"rendererRuns":2,"rendererFailures":0,"nativeDOMWidthAssertions":4,"browserLaunches":2,"browserClosures":2,"pages":2,"externalBrowserRequests":0,"ordinaryExecutionFailureEvents":4,"repairedCausalIssues":3,"recoveryActions":{"CSSPathCorrection":1,"JavaScriptBuildRetry":1,"displayOnlyRepair":1,"affectedDraftValidationRetries":2},"paidCalls":0,"DBCalls":0,"envReadsOrWrites":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatReads":0,"newThreads":0,"canonicalWrites":0,"indexWrites":0,"checkpointWrites":0,"usageWrites":0,"gitOperations":0,"parentC2S3Writes":0,"otherWorkerClosures":0,"completedWrapperReceipts":46,"currentDetachedSealCommand":1}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1663 C2S4_TWO_FIRST_FIGURES_AUTHOR_READY_INDEPENDENT_NEXT
+
+6p/phy6-c2-s4 evidence 0d93e7947d160434f7acc69084dd116d2200e2f99a1802269acb996cc3212cb7 bound to actual saved bytes.
+Current production 6p/phy6-c2-s4; local HOLDs and prior stage approvals retained.
+Latest complete/pushed phy6-c2-s3 ed9a727354bd9df5d33c7a545f55b543fa284129; complete25/new6.
+Only actual saved approved stages reused; missing phases authored separately; no whole-package replay.
+Active agents0/parentexec0: none.
+Returned counts {"requestedFigures":2,"draftedFigures":2,"rendererPassCandidates":2,"nativePNGOutputs":2,"sourceSubfigures":8,"sourceImagesLoaded":2,"nativeOutputsLoaded":2,"totalImagesLoadedIntoAuthorContext":4,"imageBatches":1,"imageReopens":0,"crops":0,"independentFigureReviewRuns":0,"independentApprovals":0,"recordReviewCalls":0,"promotions":0,"explicitDraftValidatorCalls":4,"explicitDraftFailures":2,"rendererInternalDraftValidatorCalls":2,"successfulTextOrSourceContentChecksRerun":0,"rendererRuns":2,"rendererFailures":0,"nativeDOMWidthAssertions":4,"browserLaunches":2,"browserClosures":2,"pages":2,"externalBrowserRequests":0,"ordinaryExecutionFailureEvents":4,"repairedCausalIssues":3,"recoveryActions":{"CSSPathCorrection":1,"JavaScriptBuildRetry":1,"displayOnlyRepair":1,"affectedDraftValidationRetries":2},"paidCalls":0,"DBCalls":0,"envReadsOrWrites":0,"installations":0,"skillHostCalls":0,"newWorktrees":0,"attachOperations":0,"oldChatReads":0,"newThreads":0,"canonicalWrites":0,"indexWrites":0,"checkpointWrites":0,"usageWrites":0,"gitOperations":0,"parentC2S3Writes":0,"otherWorkerClosures":0,"completedWrapperReceipts":46,"currentDetachedSealCommand":1}; historic paid69/retry0/browser22 and UNKNOWN cost/tokens/quota retained.
+S19 byte HOLD, oldtrees/locks/backups/stash/failed calls/pending preserved; no unknown-byte restoration.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
+## 180-6 r1653 C2S3_NARROW_PUSHED_NEXT_SOURCED_LESSON
+
+C2S3 narrowly committed and pushed ed9a727354bd9df5d33c7a545f55b543fa284129; exact remote HEAD confirmed.
+Complete25/new6; immediately continue actual sourced phy6-c2-s4. S19 and all original failures/HOLDs retained.
+Historic paid69/retry0/browser22; cost/tokens/quota UNKNOWN; old failures/pending/trees/locks/backups/stash preserved.
+Same8306 absoluteW; sharedmain read-only; finish=review; noDB/merge/deploy/formalhandoff/globalchecks/newtree/attach/old-chat wake.
+
 ## 180-6 r1647 C2S3_COMPLETE_LESSON_SEALED_PUSH_PENDING
 
 C2S3 full lesson sealed bf6b864db7c269e3b4415273552cf692d8502589502798b4f5fdd5a08bd3a64f; complete24->25/new6.
