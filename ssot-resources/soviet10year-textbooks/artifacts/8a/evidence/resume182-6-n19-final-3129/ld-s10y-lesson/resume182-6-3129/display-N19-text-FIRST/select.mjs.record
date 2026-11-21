@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const SOURCE = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N4-FIRST/select.mjs');
+assert.equal(process.cwd(), ROOT);
+let code = await readFile(SOURCE, 'utf8');
+const replaceOnce = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+replaceOnce('display-N4-FIRST', 'display-N19-text-FIRST');
+replaceOnce('"lesson: \'alg7-c1-s1-n4\'"', '"lesson: \'alg8-c3-s3-n19\'"');
+replaceOnce('"schema: \'bounded-n4-reused-n10-display-selection@1\'"',
+  '"schema: \'bounded-n19-reused-n4-n10-display-selection@1\'"');
+replaceOnce('  result.cleanupAllAttempts = ',
+  `  const actionable = selection.selected.filter(image => image.surface === 'exercises');
+  const heldText = selection.selected.filter(image => image.surface === 'text');
+  const batches = Array.from({ length: Math.ceil(actionable.length / 8) }, (_, index) => ({
+    id: \`unseen-exercises-batch\${index + 1}\`, status: 'UNOBSERVED',
+    freshReviewerRequired: true, images: actionable.slice(index * 8, (index + 1) * 8),
+  }));
+  assert.ok(batches.every(batch => batch.images.length <= 8));
+  assert.equal(result.inherited.textObservations.count, 2);
+  assert.equal(result.inherited.textObservations.targetCoverageTransferred, 0);
+  const continuation = {
+    schema: 'n19-unseen-observation-continuation@1',
+    status: 'VISUAL_PENDING_HISTORICAL_TEXT_REGION_BINDINGS_UNAVAILABLE',
+    runtimeAuthority: result.report, selectorAuthority: result.selection,
+    counts: { savedNew: selection.counts.saved, selectedNew: selection.counts.selected,
+      selectedActualTargets: selection.counts.targets, missingActualTargets: selection.counts.missing,
+      inheritedTextPassRetained: 2, inheritedBoundTargets: 0,
+      actionableNew: actionable.length, heldTextIdentityUnresolved: heldText.length,
+      newImagesOpened: 0 },
+    inherited: result.inherited,
+    coverage: selection.surfaces,
+    batches,
+    heldText: heldText.map(image => ({ ...image,
+      status: 'DO_NOT_OBSERVE_UNTIL_OLD_PASS_REGIONS_ARE_IDENTIFIED',
+      reason: 'Two old text PASS regions remain valid; absent bindings cannot authorize reopening them or treating the whole new text set as unseen.' })),
+    allSelectedActualTargetsCovered: selection.counts.missing === 0,
+    oldObservationRestored: false, newCaptureIsObservation: false,
+  };
+  const continuationPath = path.join(OUTPUT, 'observation-continuation.json');
+  await writeFile(continuationPath, \`\${JSON.stringify(continuation, null, 2)}\\n\`, { flag: 'wx' });
+  for (const batch of batches)
+    await writeFile(path.join(OUTPUT, \`\${batch.id}.json\`), \`\${JSON.stringify(batch, null, 2)}\\n\`, { flag: 'wx' });
+  result.observationContinuation = { path: continuationPath,
+    sha256: sha(await readFile(continuationPath)), counts: continuation.counts,
+    batches: await Promise.all(batches.map(async batch => {
+      const filename = path.join(OUTPUT, \`\${batch.id}.json\`);
+      return { path: filename, sha256: sha(await readFile(filename)), imageCount: batch.images.length };
+    })),
+    textDispatchBlocked: true, historicalPassReopened: 0 };
+  result.selection.batches.forEach(batch => {
+    batch.dispatchAuthorized = false;
+    batch.reason = 'Raw all-target selection is not the unseen-only observation queue; use observationContinuation.';
+  });
+  result.cleanupAllAttempts = `);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

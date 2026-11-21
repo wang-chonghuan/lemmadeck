@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const METHOD = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST/select.mjs');
+assert.equal(process.cwd(), ROOT);
+const bytes = await readFile(METHOD);
+assert.equal(createHash('sha256').update(bytes).digest('hex'),
+  'ef79257e720f051871b04ef8a8db7365b4f9cc109309c19eb08a75220220708d');
+let code = bytes.toString('utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once("display-N4-choices-FIRST');", "display-N19-choices-FIRST');");
+once('"lesson: \'alg7-c1-s1-n4\'"', '"lesson: \'alg8-c3-s3-n19\'"');
+once('"schema: \'bounded-n4-choices-reused-n10-display-selection@1\'"',
+  '"schema: \'bounded-n19-choices-reused-n4-n10-display-selection@1\'"');
+once('const code = [', `
+replaceOnce('fs.mkdirSync(output);', \`
+record.batches = record.batches.map(batch => ({ ...batch,
+  observationChecklist: [
+    'Observe only this batch, at most 8 native images; do not reopen prior PASS images.',
+    'Verify all visible Chinese/English glyphs, option labels, signs, digits and punctuation are legible.',
+    'Verify visible formula numerators, denominators, fraction rules, powers, subscripts and delimiters.',
+    'For tables, verify headings, every visible cell and collapsed gridlines, including right/bottom outside borders.',
+    'For tbl-p0112-01, verify approved English labels, givens, blanks and complete grid across linked native regions.',
+    'Verify rightward captures include final columns/formula endings; combine linked views only for observed coverage.',
+    'Return textual findings and path/hash bindings; no image payloads or presumed visual PASS.'
+  ],
+  coverageAuthority: record.authority, observationStatus: 'UNOBSERVED'
+}));
+fs.mkdirSync(output);\`);
+const code = [`);
+once('  currentN4Method: { path: N4_METHOD, sha256: sha(await readFile(N4_METHOD)) },',
+  `  currentN4Method: { path: N4_METHOD, sha256: sha(await readFile(N4_METHOD)) },
+  reusedN4ChoiceSelector: { path: ${JSON.stringify(METHOD)}, sha256: ${JSON.stringify(createHash('sha256').update(bytes).digest('hex'))} },`);
+once("  result.screenshots.selected = selection.counts.selected;", `
+  result.screenshots.selected = selection.counts.selected;
+  result.hold.pendingImages = selection.counts.pending;
+  result.hold.pendingBatches = selection.batches.length;
+  result.hold.observationChecklists = 'selection-FIRST/batch*.json';`);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

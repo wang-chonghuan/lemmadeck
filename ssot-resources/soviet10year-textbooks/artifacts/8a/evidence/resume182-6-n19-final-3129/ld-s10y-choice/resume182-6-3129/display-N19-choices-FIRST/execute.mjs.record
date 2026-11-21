@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile, readdir } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const METHOD = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N4-choices-FIRST/execute.mjs');
+assert.equal(process.cwd(), ROOT);
+let code = await readFile(METHOD, 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once("display-N4-choices-FIRST');", "display-N19-choices-FIRST');");
+once("schema: 'resume182-6-n4-choices-display-result@1'", "schema: 'resume182-6-n19-choices-display-result@1'");
+once("book: '7a', lesson: 'alg7-c1-s1-n4'", "book: '8a', lesson: 'alg8-c3-s3-n19'");
+once("args[0] === '--recover-formula-padding'",
+  "['--recover-formula-padding', '--recover-runtime'].includes(args[0])");
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-choice/resume182-6-3129/display-N19-choices-FIRST');
+const existing = (await readdir(OUTPUT)).filter(name => /^execution-\d+\.json$/u.test(name)).sort();
+const priorReceipts = await Promise.all(existing.map(async name => {
+  const filename = path.join(OUTPUT, name), bytes = await readFile(filename), value = JSON.parse(bytes);
+  return { path: filename, sha256: createHash('sha256').update(bytes).digest('hex'),
+    exitCode: value.exitCode, signal: value.signal, streams: value.streams };
+}));
+once('const number = previous ? previous.attemptNumber + 1 : 1;',
+  `const number = ${existing.length + 1};`);
+once('actualExecutions: [...(oldResult?.actualExecutions ?? []),',
+  `actualExecutions: [...(oldResult?.actualExecutions ?? ${JSON.stringify(priorReceipts)}),`);
+once("await writeFile(resultPath, `${JSON.stringify(result, null, 2)}\\n`, previous ? {} : { flag: 'wx' });", `
+result.hold = { stage: 'Substantive visual observation and final choices binding',
+  reason: 'All newly selected native screenshots remain UNOBSERVED; runtime coverage is not visual approval.',
+  oldCustomToolAnd90Png: 'NOT_RECOVERED_NOT_CLAIMED',
+  otherSurfaces: 'Out of scope; existing approvals untouched',
+  sourceMathChoiceFigureApproval: 'Reused unchanged, no new approval claimed',
+  approvalForWholeLesson: false };
+result.methodReuse = { path: ${JSON.stringify(METHOD)},
+  sha256: ${JSON.stringify(createHash('sha256').update(await readFile(METHOD)).digest('hex'))},
+  adaptation: 'Current N19 path, identity and explicit visual HOLD; original actual-exit receipt method' };
+await writeFile(resultPath, \`\${JSON.stringify(result, null, 2)}\\n\`, previous ? {} : { flag: 'wx' });`);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

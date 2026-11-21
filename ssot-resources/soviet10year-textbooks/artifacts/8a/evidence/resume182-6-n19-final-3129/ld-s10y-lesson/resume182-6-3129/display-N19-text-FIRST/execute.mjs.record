@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const SOURCE = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N4-FIRST/execute.mjs');
+const OUTPUT = path.join(ROOT, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N19-text-FIRST');
+const firstEntryPath = path.join(OUTPUT, 'execution-1.json');
+const firstEntryBytes = await readFile(firstEntryPath);
+const firstEntry = JSON.parse(firstEntryBytes);
+assert.equal(firstEntry.exitCode, 1);
+assert.equal(firstEntry.workdir, ROOT);
+for (const stream of Object.values(firstEntry.streams))
+  assert.equal(createHash('sha256').update(await readFile(stream.path)).digest('hex'), stream.sha256);
+const entryFailure = { path: firstEntryPath,
+  sha256: createHash('sha256').update(firstEntryBytes).digest('hex'),
+  exitCode: firstEntry.exitCode, signal: firstEntry.signal, streams: firstEntry.streams,
+  phase: 'entry-adaptation-before-browser', firstFailurePreserved: true };
+assert.equal(process.cwd(), ROOT);
+let code = await readFile(SOURCE, 'utf8');
+const replaceOnce = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+replaceOnce('display-N4-FIRST', 'display-N19-text-FIRST');
+replaceOnce("schema: 'resume182-6-n4-display-result@1'", "schema: 'resume182-6-n19-display-result@1'");
+replaceOnce("book: '7a', lesson: 'alg7-c1-s1-n4'", "book: '8a', lesson: 'alg8-c3-s3-n19'");
+replaceOnce('`execution-${number}.json`', '`runtime-execution-${number}.json`');
+replaceOnce('`execution-${number}.stdout.log`', '`runtime-execution-${number}.stdout.log`');
+replaceOnce('`execution-${number}.stderr.log`', '`runtime-execution-${number}.stderr.log`');
+replaceOnce('const executions = [...(priorResult?.actualExecutions ?? []),',
+  `const executions = [...(priorResult?.actualExecutions ?? [${JSON.stringify(entryFailure)}]),`);
+replaceOnce('  priorAttempts: report.priorAttempts, failure: report.executionFailure ?? null,',
+  `  priorAttempts: report.priorAttempts, failure: report.executionFailure ?? null,
+  firstEntryFailure: ${JSON.stringify(entryFailure)},
+  adaptation: report.adaptation, inherited: report.inherited,
+  checks: { passed: report.checks.filter(item => item.status === 'PASS').length,
+    failed: report.checks.filter(item => item.status === 'FAIL').length },`);
+for (const name of ['runtime-execution-1.json', 'report-FIRST.json']) {
+  if (process.argv.length > 2) break;
+  try {
+    await stat(path.join(OUTPUT, name));
+    throw new Error(`Never repeat completed initial runtime: ${name}`);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+code += `\n//# sourceURL=${OUTPUT}/reused-n4-execution-collector.mjs\n`;
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

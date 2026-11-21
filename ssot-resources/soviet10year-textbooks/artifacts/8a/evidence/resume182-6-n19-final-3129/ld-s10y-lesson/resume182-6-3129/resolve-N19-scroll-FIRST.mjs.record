@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N19-text-FIRST');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  assert.ok(filename.startsWith(`${repo}/`));
+  const bytes = fs.readFileSync(filename);
+  return { path: filename, sha256: sha(bytes), bytes: bytes.length };
+};
+const read = filename => JSON.parse(fs.readFileSync(filename));
+const originalPath = path.join(base, 'observations/batch1/result.json');
+const original = read(originalPath);
+assert.equal(entry(originalPath).sha256,
+  'ff1b00b50dd41a5b8f4533c3ce6abf18b94053f64ff91ce13122cfa4fd80b5ec');
+assert.equal(original.status, 'BLOCKED');
+const failed = original.images.filter(image => image.visualObservation === 'BLOCKED');
+assert.equal(failed.length, 1);
+assert.ok(failed[0].path.endsWith('/390-exercises-0013.png'));
+const witnessPath = path.join(base, 'observations/batch3/result.json');
+const witness = read(witnessPath);
+const rightImage = witness.images.find(image => image.path.endsWith('/390-exercises-0029.png'));
+assert.ok(rightImage);
+assert.equal(rightImage.visualObservation, 'PASS');
+assert.ok(rightImage.observation.includes('9091'), 'Explicit observed right tail required');
+assert.equal(entry(rightImage.path).sha256, rightImage.sha256);
+assert.equal(entry(failed[0].path).sha256, failed[0].sha256);
+const runtimePath = path.join(base, 'result.json');
+const runtime = read(runtimePath);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+const left = runtime.screenshots.find(image => image.path === failed[0].path);
+const right = runtime.screenshots.find(image => image.path === rightImage.path);
+assert.ok(left && right);
+assert.equal(left.scrollables.find(frame => frame.index === 1).left, 0);
+assert.equal(right.scrollables.find(frame => frame.index === 1).left, 86);
+assert.equal(left.surface, 'exercises');
+assert.equal(right.surface, 'exercises');
+assert.equal(left.viewport.width, 390);
+assert.equal(right.viewport.width, 390);
+assert.ok(left.visibleIds.some(id => right.visibleIds.includes(id)));
+const html = runtime.deliveredHtmlByViewport.find(item => item.view === '390:exercises').deliveredHtml;
+assert.equal(entry(html.path).sha256, html.sha256);
+const resolution = {
+  schema: 'stemrobin-182/observed-scroll-coverage-resolution@1',
+  status: 'DISPLAY_PASS',
+  date: new Date().toISOString(),
+  workdir: repo,
+  originalResult: { ...entry(originalPath), status: 'BLOCKED' },
+  counterpartReports: [entry(witnessPath)],
+  runtime: entry(runtimePath),
+  contentOrHtmlBytesChanged: false,
+  html: entry(html.path),
+  resolvedImages: [{
+    path: failed[0].path,
+    sha256: failed[0].sha256,
+    originalVisualObservation: 'BLOCKED',
+    witnessResult: entry(witnessPath),
+    witnessImage: entry(rightImage.path),
+    pairedLeftWindows: [entry(failed[0].path)],
+    savedLeftScroll: left.scroll,
+    savedRightScroll: right.scroll,
+    horizontalLeft: 0,
+    horizontalRight: 86,
+    isolatedScreenshotApproved: false,
+    reason: 'The original left window has readable formula prefixes but lacks the right tail. The separately observed original right-scroll window explicitly shows the terminal -9091. Native scrolling and shared unchanged HTML establish complementary observed coverage; the isolated BLOCKED result is retained, not replaced or counted as mathematical review.',
+  }],
+  parentNewImageViews: 0,
+  affectedOnlyFailedImageReopens: 0,
+  passedImageReopens: 0,
+  browserRendererValidatorCalls: 0,
+  historicalFailuresPreserved: true,
+};
+const output = path.join(base, 'observations/batch1-paired-resolution.record');
+fs.writeFileSync(output, `${JSON.stringify(resolution, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: resolution.status, ...entry(output) }));

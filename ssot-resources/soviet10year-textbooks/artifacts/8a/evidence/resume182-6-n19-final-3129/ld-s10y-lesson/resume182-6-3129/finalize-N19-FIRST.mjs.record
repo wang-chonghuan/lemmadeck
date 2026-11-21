@@ -1,0 +1,200 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const lesson = 'alg8-c3-s3-n19';
+const bookRoot = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a');
+const target = path.join(bookRoot, 'editions/modern-us-neutral/lessons', lesson);
+const evidence = path.join(bookRoot, 'evidence/resume182-6-n19-final-3129');
+const textRoot = '.tmp/ld-s10y-lesson/resume182-6-3129/display-N19-text-FIRST';
+const choiceRoot = '.tmp/ld-s10y-choice/resume182-6-3129/display-N19-choices-FIRST';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const absolute = filename => {
+  const result = path.resolve(repo, filename);
+  assert.ok(result.startsWith(`${repo}/`));
+  return result;
+};
+const read = filename => JSON.parse(fs.readFileSync(absolute(filename)));
+const entry = filename => {
+  const location = absolute(filename);
+  const bytes = fs.readFileSync(location);
+  return { path: location, sha256: sha(bytes), bytes: bytes.length };
+};
+const retained = new Map();
+const entries = [];
+const keep = (filename, expected) => {
+  const input = entry(filename);
+  if (expected) assert.equal(input.sha256, expected, filename);
+  if (retained.has(input.path)) return retained.get(input.path);
+  const relative = path.relative(repo, input.path);
+  let output = { ...input, path: relative };
+  if (relative.startsWith('.tmp/')) {
+    const suffix = relative.endsWith('.png') ? '' : '.record';
+    const destination = path.join(evidence, relative.slice('.tmp/'.length) + suffix);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.writeFileSync(destination, fs.readFileSync(input.path), { flag: 'wx' });
+    output = { ...input, path: path.relative(repo, destination), historical_path: input.path };
+  }
+  retained.set(input.path, output);
+  entries.push(output);
+  return output;
+};
+assert.ok(!fs.existsSync(evidence), 'Preserve prior finalization attempts');
+assert.ok(!fs.existsSync(path.join(target, 'offline-display.json')));
+const configPath = process.argv[2];
+assert.ok(configPath);
+const config = read(configPath);
+const images = [];
+const runtimes = [];
+let inheritedImages = 0;
+for (const scope of config.scopes) {
+  const runtime = read(scope.runtime);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  assert.equal(runtime.actualExit.exitCode, 0);
+  assert.equal(runtime.cleanup.contextsClosed, true);
+  assert.equal(runtime.cleanup.browserClosed, true);
+  assert.equal(runtime.cleanup.serverClosed, true);
+  const selection = read(scope.selection);
+  assert.equal(selection.counts.missing, 0);
+  const observed = new Map();
+  for (const bindingPath of scope.bindings) {
+    const binding = read(bindingPath);
+    assert.equal(binding.status, 'DISPLAY_PASS');
+    assert.equal(binding.agentCompletedAndClosed, true);
+    keep(bindingPath);
+    for (const item of [binding.assignment, binding.result,
+      binding.originalResult, binding.technicalResolution].filter(Boolean)) {
+      keep(item.path, item.sha256);
+    }
+    for (const image of binding.images) {
+      assert.ok(!observed.has(image.path), 'No duplicated observation claim');
+      observed.set(image.path, { ...image, inherited: !!binding.inheritedObservation });
+    }
+  }
+  assert.equal(observed.size, selection.selected.length);
+  for (const image of selection.selected) {
+    const observedImage = observed.get(image.path);
+    assert.ok(observedImage, image.path);
+    assert.equal(observedImage.sha256, image.sha256);
+    if (observedImage.inherited) inheritedImages += 1;
+    images.push({
+      ...keep(image.path, image.sha256),
+      verdict: 'PASS',
+      scope: scope.name,
+      inheritedObservation: observedImage.inherited,
+      originalVisualObservation: observedImage.originalVisualObservation,
+      ...(observedImage.coverageResolution ? {
+        coverageResolution: keep(observedImage.coverageResolution.path,
+          observedImage.coverageResolution.sha256),
+        isolatedScreenshotApproved: false,
+      } : {}),
+    });
+  }
+  keep(scope.runtime);
+  keep(scope.selection, runtime.selection.sha256);
+  keep(runtime.report.path, runtime.report.sha256);
+  for (const execution of runtime.actualExecutions) {
+    keep(execution.path, execution.sha256);
+    for (const stream of Object.values(execution.streams ?? {})) keep(stream.path, stream.sha256);
+  }
+  keep(runtime.selection.actualExecution.path, runtime.selection.actualExecution.sha256);
+  for (const surface of runtime.deliveredHtmlByViewport) {
+    for (const item of [surface.dom, surface.coverage, surface.tables].filter(Boolean)) {
+      keep(item.path, item.sha256);
+    }
+  }
+  runtimes.push({
+    scope: scope.name,
+    runtime: keep(scope.runtime),
+    selection: keep(scope.selection),
+    coverage: { ...selection.counts, pending: 0, bound: observed.size },
+    usage: runtime.usage,
+  });
+}
+assert.equal(inheritedImages, 2);
+assert.equal(images.length, 46);
+for (const filename of config.evidence) keep(filename);
+const textRuntime = read(`${textRoot}/result.json`);
+const choiceRuntime = read(`${choiceRoot}/result.json`);
+const surfaceInputs = new Map();
+for (const runtime of [textRuntime, choiceRuntime]) {
+  for (const surface of runtime.deliveredHtmlByViewport) {
+    const existing = surfaceInputs.get(surface.surface);
+    if (existing) assert.equal(existing.sha256, surface.deliveredHtml.sha256);
+    else surfaceInputs.set(surface.surface, surface.deliveredHtml);
+  }
+}
+assert.deepEqual([...surfaceInputs.keys()].sort(), ['choices', 'exercises', 'text']);
+const surfaces = [];
+for (const [name, input] of surfaceInputs) {
+  assert.equal(entry(input.path).sha256, input.sha256);
+  const destination = path.join(target, 'offline', `${name}.html`);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.writeFileSync(destination, fs.readFileSync(input.path), { flag: 'wx' });
+  surfaces.push({ ...entry(destination), path: path.relative(repo, destination),
+    name, verifiedViewports: [{ width: 1440, height: 960 }, { width: 390, height: 844 }] });
+}
+keep(configPath);
+const retentionFile = path.join(target, 'choice-set/retention.json');
+assert.ok(!fs.existsSync(retentionFile));
+const retention = {
+  schema: 'stemrobin-182/choice-retention-current@1',
+  role: 'Existing complete-source recognition snapshot; substantive approvals reused',
+  current_seed: keep(path.join(target, 'choice-set/seed.json')),
+  current_draft: keep(path.join(target, 'choice-set/draft.json')),
+  current_review: keep(path.join(target, 'choice-set/review.json')),
+  selected_sources: 11, questions: 14, options: 55,
+  historicalHoldsPreserved: true,
+  current_selected_semantic_pass: true,
+  broader_display_pending: false,
+  display_evidence: { path: path.relative(repo, path.join(target, 'offline-display.json')) },
+  independent_writing_drawing_or_measurement_approved: false,
+  whole_lesson_or_app_approved: false,
+  boundary: 'Offline display and reviewed recognition; not autonomous written production or APP/DB acceptance',
+};
+fs.writeFileSync(retentionFile, `${JSON.stringify(retention, null, 2)}\n`, { flag: 'wx' });
+const binding = {
+  schema: 'stemrobin-182/offline-display-binding@1',
+  ticket: 'STEMROBIN-182', book: '8a', lesson, edition: 'modern-us-neutral',
+  status: 'OFFLINE_DISPLAY_PASS', date: new Date().toISOString(),
+  surfaces, images, runtimes, inputsAndObserverReports: entries,
+  content: { proseBlocks: 13, exercises: 11, answers: 11, choiceQuestions: 14, options: 55 },
+  contentApprovals: config.contentApprovals,
+  displayObservationAccounting: {
+    uniqueRequiredImages: images.length,
+    inheritedKnownByteIdenticalImages: inheritedImages,
+    newlyObservedImages: images.length - inheritedImages,
+    failedRegionReopens: config.additionalFailedRegionImageViews,
+    passedImageReopens: 0,
+    actualImageViewsThisContinuation: images.length - inheritedImages +
+      config.additionalFailedRegionImageViews,
+    historicalObservedImageViews: 8,
+    historicalAndOtherPhaseCounts: 'Original records preserved; not reset',
+  },
+  parentImageViewsThisBinding: 0, bindingRendererBrowserOrValidatorRuns: 0,
+  recoveredKnownHistoricalReportBytes: 15174,
+  historicalFailuresAndUnknownCountsPreserved: true,
+  unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', totalCost: 'unknown',
+  databaseWrites: 0, merges: 0, deployments: 0, finish: 'review',
+  boundary: 'Complete offline lesson only; no APP/DB acceptance or whole-ticket handoff',
+};
+const final = path.join(target, 'offline-display.json');
+fs.writeFileSync(final, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+const receipt = {
+  date: new Date().toISOString(), status: binding.status, workdir: repo,
+  referencedFiles: entries.length,
+  copiedEvidenceFiles: entries.filter(item => item.historical_path).length,
+  copiedEvidenceBytes: entries.reduce((sum, item) =>
+    sum + (item.historical_path ? item.bytes : 0), 0),
+  copiedSurfaceFiles: surfaces.length,
+  copiedSurfaceBytes: surfaces.reduce((sum, item) => sum + item.bytes, 0),
+  observationAccounting: binding.displayObservationAccounting,
+  final: entry(final), surfaces,
+};
+fs.writeFileSync(path.join(evidence, 'receipt.record'),
+  `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(receipt));

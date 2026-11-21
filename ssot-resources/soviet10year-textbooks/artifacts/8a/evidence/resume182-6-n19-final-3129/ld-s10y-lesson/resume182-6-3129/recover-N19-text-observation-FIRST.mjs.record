@@ -1,0 +1,104 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import readline from 'node:readline';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N19-text-FIRST');
+const destination = path.join(root, 'historical-text-binding-FIRST');
+assert.ok(!fs.existsSync(destination));
+const session = '/Users/yong/.codex/sessions/2026/11/19/rollout-2026-11-19T23-08-54-01a1f611-f6a2-7452-904d-b1925b9c88c6.jsonl';
+const call = 'call_Zn5dEd9UfZGAnDSB4fRtxGKg';
+const expected = 'e540b71cef42e46a1ac97f7bc1e1bff9286f347652576909b3cacbab7358cd84';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = filename => {
+  const bytes = fs.readFileSync(filename);
+  return { path: filename, sha256: sha(bytes), bytes: bytes.length };
+};
+const selection = JSON.parse(fs.readFileSync(path.join(root, 'selection-FIRST/selection.record')));
+let raw;
+let timestamp;
+for await (const line of readline.createInterface({
+  input: fs.createReadStream(session), crlfDelay: Infinity,
+})) {
+  const event = JSON.parse(line);
+  if (event.type !== 'response_item' ||
+      event.payload?.type !== 'function_call_output' ||
+      event.payload.call_id !== call) continue;
+  assert.equal(raw, undefined);
+  assert.ok(event.payload.output.includes('Process exited with code 0'));
+  raw = event.payload.output.split('Output:\n')[1];
+  timestamp = event.timestamp;
+}
+assert.ok(raw);
+assert.equal(sha(raw), expected, 'Only exact known original bytes may be recovered');
+const original = JSON.parse(raw);
+assert.equal(original.status, 'BLOCKED');
+assert.equal(original.lesson, 'alg8-c3-s3-n19');
+const originalText = original.images.filter(image => image.path.includes('/1440-text-'));
+assert.equal(originalText.length, 2);
+const images = originalText.map(image => {
+  assert.deepEqual(image.blockers, []);
+  assert.ok(image.observations.length);
+  const current = selection.selected.find(item => item.sha256 === image.sha256);
+  assert.ok(current);
+  assert.equal(current.surface, 'text');
+  assert.equal(current.viewport.width, 1440);
+  assert.equal(entry(current.path).sha256, image.sha256);
+  return {
+    ...entry(current.path),
+    verdict: 'PASS',
+    originalVisualObservation: 'No blockers; substantive native pixel observations',
+    historicalImagePath: image.path,
+    observedNativeScroll: image.savedNativeScroll,
+    newlyOpened: false,
+  };
+});
+const mobile = selection.selected.filter(image =>
+  image.surface === 'text' && image.viewport.width === 390);
+assert.equal(mobile.length, 3);
+assert.ok(mobile.every(image => !originalText.some(old => old.sha256 === image.sha256)));
+fs.mkdirSync(destination, { recursive: true });
+const originalPath = path.join(destination, 'original-BLOCKED-batch1.record');
+fs.writeFileSync(originalPath, raw, { flag: 'wx' });
+const binding = {
+  schema: 'stemrobin-182/native-observer-binding@1',
+  status: 'DISPLAY_PASS',
+  date: new Date().toISOString(),
+  workdir: repo,
+  method: 'Exact original observer bytes from this same chat; byte-identical current native PNGs',
+  originalStatusPreserved: original.status,
+  originalResult: entry(originalPath),
+  source: { session, callId: call, timestamp },
+  agentId: original.reviewer.identity,
+  agentCompletedAndClosed: true,
+  inheritedObservation: true,
+  images,
+  newlyOpenedImages: 0,
+  parentImageViews: 0,
+  browserRendererValidatorCalls: 0,
+  recoveredKnownReportBytes: Buffer.byteLength(raw),
+  unknownHistoricalBytesRecovered: false,
+};
+const bindingPath = path.join(destination, 'binding.record');
+fs.writeFileSync(bindingPath, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+const assignment = {
+  schema: 'stemrobin-182/native-display-assignment@1',
+  id: 'mobile-text-FIRST',
+  status: 'UNOBSERVED',
+  freshReviewerRequired: true,
+  historicalTextImagesExcluded: images.map(image => ({ path: image.path, sha256: image.sha256 })),
+  sourceSelection: entry(path.join(root, 'selection-FIRST/selection.record')),
+  historicalBinding: entry(bindingPath),
+  images: mobile,
+};
+const assignmentPath = path.join(root, 'unseen-mobile-text-FIRST.json');
+fs.writeFileSync(assignmentPath, `${JSON.stringify(assignment, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  status: binding.status, inheritedImages: images.length,
+  knownRecoveredBytes: Buffer.byteLength(raw),
+  binding: entry(bindingPath), newMobileImages: mobile.length,
+  assignment: entry(assignmentPath), imagesOpened: 0,
+}));
