@@ -80,7 +80,7 @@
 <span style="text-emphasis-style: dot; text-emphasis-position: under; -webkit-text-emphasis-style: dot; -webkit-text-emphasis-position: under;">洛仑兹力</span>。
 
 <!-- fig 图 269 box 734,230,614,455 -->
-![图 269](figures/fig-269.png)
+![图 269](../../figures/fig-269.png)
 
 <!-- p open -->
 把永久磁铁或电磁
@@ -109,10 +109,10 @@
 的质量的比值）分开的仪器，是磁场作用的另一个应用。根据
 
 <!-- fig 图 270 box 271,1473,350,385 -->
-![图 270](figures/fig-270.png)
+![图 270](../../figures/fig-270.png)
 
 <!-- fig 图 271 box 785,1481,566,408 -->
-![图 271](figures/fig-271.png)
+![图 271](../../figures/fig-271.png)
 
 <!-- cap 图 270 -->
 图 270

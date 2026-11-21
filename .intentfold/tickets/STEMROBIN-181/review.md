@@ -64,6 +64,14 @@ D527／D528：10p fig164 只下移 Principal axis 标题，消除与 O1 的原�
 
 [fig164 局部修改](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d527-fig164-label-repair/repair.json) · [受影响显示检查](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d527-fig164-label-repair/width-check.json)
 
+D530：唯一独立受影响审者分别批准 fig182 的 d 标签和 fig164 的 Principal axis 标题位置，在 331／342／640 px 自行查看，不重渲染。8 张图仅在审者上下文打开，父方不重开。两份 PASS 只覆盖改动标签；fig182 的光圈前后语义 HOLD、fig164 既有源细节 HOLD、历史 FAIL／repair1、整体图和课程的未批准状态都保留。
+
+[独立标签审查及图像账本](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d530-independent-label-review/aggregate.json)
+
+D531／D532：从原 D509 失败清单处理 48 份与书级图库字节相同的页级重复图，34 份原为跟踪文件、14 份未跟踪，原件全部移到保留备份。移除前的首次检查发现相对链接并在修改前失败，回执保留；随后只修正 18 页中的 26 条 Markdown 图链接，源正文及 page.json 不变，脏稿其他内容不纳入提交。31 份缺书级对应文件的页级草稿保留。受影响路径和备份 SHA 检查通过，不表示全库资源门禁或源页审批通过，也不增加课程／页数。
+
+[重复图、链接修改及失败备份](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d531-recorded-duplicate-repair/repair.json)
+
 ## 机械检查
 
 | 检查 | 结果 |

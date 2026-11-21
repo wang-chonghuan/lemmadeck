@@ -71,7 +71,7 @@ $|\mathcal{E}_i|=\left|\frac{\Delta\Phi}{\Delta t}\right|$.
 楞次定律，磁场$\vec{B}'$和$\vec{B}$的方向一致
 
 <!-- fig 图 286 box 844,1092,438,423 -->
-![图 286](figures/fig-286.png)
+![图 286](../../figures/fig-286.png)
 
 <!-- cap 图 286 samerow -->
 图 286
