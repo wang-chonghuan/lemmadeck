@@ -1,0 +1,379 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const prefix = '.tmp/resume182-6-8a-n13-0789/';
+const bindings = {};
+const documents = {};
+const checks = [];
+
+function bind(name, relative, expectedSha, parse = true) {
+  const absolute = path.join(root, relative);
+  const bytes = fs.readFileSync(absolute);
+  const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+  if (expectedSha) assert.equal(sha256, expectedSha, `${name}: input hash changed`);
+  bindings[name] = { path: absolute, sha256, bytes: bytes.length };
+  if (parse) documents[name] = JSON.parse(bytes.toString('utf8'));
+  return documents[name];
+}
+
+function check(name, run) {
+  run();
+  checks.push(name);
+}
+
+const independent = bind('independentSolutions', `${prefix}answer-review-FIRST/independent-solutions.record`,
+  '340d03702e169417ad7987bbe5d5ad12dd8c4838b63964f18812639437ba8db0');
+check('independent solutions saved before author access', () => {
+  assert.equal(independent.independence.authorCandidateRead, false);
+  assert.equal(independent.independence.authorResultRead, false);
+  assert.equal(independent.independence.nativeAnswerTemplateRead, false);
+  assert.equal(independent.independence.savedBeforeAuthorKeys, true);
+});
+const approval = bind('modernTextApproval',
+  `${prefix}modern-text-review-FIRST/result-affected-norm1.record`,
+  'b9a2df86ca5332ae1c42ea6a6fb17ef6dda6044d6aa3d576bf0534a0ce5fa04f');
+const approved = bind('approvedModernExerciseTemplate',
+  `${prefix}modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s1-n13/exercises.template.json`,
+  'f8000e3a28e364c5d10cdbe29d840a906fb2631055dc2962a08b004504743785');
+const modern = bind('finalizedModernExercises',
+  'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s1-n13/exercises.json',
+  '880ae2da9a5963c28a623e96541b1c1eb976f125aac821520ea103ce964b3774');
+const template = bind('nativeAnswerTemplate',
+  `${prefix}answers-FIRST/8a/modern-us-neutral/lessons/alg8-c3-s1-n13/answer-keys.template.json`,
+  '5cac9c5d8a2164a16ec9f424decff36cacdffc683a4688df89efcd651dfaf81b');
+const candidate = bind('answerKey', `${prefix}answer-author-FIRST/answer-keys.json`,
+  '24d81686f6481a0a7c8caddf1f91bf860fb34c16673d82430c524145ddb90c12');
+const author = bind('authorResult', `${prefix}answer-author-FIRST/result.record`,
+  '1db079c75cfdec10bdc9c684ed9e7298d1290d93dc885c524af399b0be93b1be');
+bind('originalExerciseSource',
+  `ssot-resources/soviet10year-textbooks/artifacts/8a/${modern.source.path}`,
+  modern.source.sha256, false);
+const inheritedSource = approval.reusedPassObservations.sourceApprovalInheritedFromOriginalReview;
+assert.ok(inheritedSource.path.startsWith(`${root}/`));
+bind('inheritedSourceApproval', path.relative(root, inheritedSource.path),
+  inheritedSource.sha256, false);
+bind('nativeValidator', '.claude/skills/ld-s10y-answer/tools/lesson_answers.py', null, false);
+bind('gate2', '.claude/skills/ld-s10y-answer/references/gate-2-lesson-answers/gate.md', null, false);
+bind('reviewScript', `${prefix}answer-review-FIRST/review.mjs`, null, false);
+
+check('approval and finalized modern exercise binding', () => {
+  assert.equal(approval.status, 'TEXT_PASS');
+  assert.equal(modern.status, 'ready');
+  assert.equal(approval.approved_text_bindings.exercises.sha256,
+    bindings.approvedModernExerciseTemplate.sha256);
+  assert.deepEqual(modern.exercises, approved.exercises);
+});
+check('top-level metadata and author input bindings', () => {
+  for (const key of ['schema', 'book', 'lesson', 'edition', 'status']) {
+    assert.deepEqual(candidate[key], template[key]);
+  }
+  assert.equal(author.status, 'ANSWER_AUTHORED_NOT_APPROVED');
+  assert.deepEqual(author.answerKey, bindings.answerKey);
+  assert.deepEqual(author.nativeTemplate, bindings.nativeAnswerTemplate);
+  assert.deepEqual(author.modernExercises, bindings.finalizedModernExercises);
+});
+
+const numbers = ['218', '219', '220', '221', '222'];
+check('one ordered answer per finalized exercise', () => {
+  assert.equal(modern.count, 5);
+  assert.deepEqual(modern.exercises.map(item => item.number), numbers);
+  assert.deepEqual(template.answers.map(item => item.exercise), numbers);
+  assert.deepEqual(candidate.answers.map(item => item.exercise), numbers);
+  assert.equal(new Set(candidate.answers.map(item => item.exercise)).size, 5);
+  assert.deepEqual(independent.solutions.map(item => item.exercise), numbers);
+});
+for (let index = 0; index < 5; index += 1) {
+  const native = template.answers[index];
+  const answer = candidate.answers[index];
+  const exercise = modern.exercises[index];
+  check(`${answer.exercise}: native prompt exactly equals finalized approved task`, () => {
+    assert.equal(native.prompt, exercise.text);
+    if (Object.hasOwn(answer, 'prompt')) assert.equal(answer.prompt, exercise.text);
+    assert.deepEqual(native.figureEvidence, []);
+  });
+  check(`${answer.exercise}: source/bookRaw/identity metadata preserved`, () => {
+    const authored = new Set(['grading', 'displayAnswer', 'parts']);
+    const preparation = new Set(['prompt', 'figureEvidence']);
+    for (const key of Object.keys(native)) {
+      if (authored.has(key) || preparation.has(key)) continue;
+      assert.equal(Object.hasOwn(answer, key), true, `${answer.exercise}.${key} missing`);
+      assert.deepEqual(answer[key], native[key], `${answer.exercise}.${key} changed`);
+    }
+    for (const key of ['source', 'bookRaw', 'sourceNumber', 'groupId', 'group', 'exerciseId']) {
+      assert.equal(Object.hasOwn(answer, key), Object.hasOwn(native, key), key);
+      if (Object.hasOwn(native, key)) assert.deepEqual(answer[key], native[key], key);
+    }
+    assert.equal(answer.source, 'derived');
+    assert.equal(Object.hasOwn(answer, 'bookRaw'), false);
+    assert.deepEqual(answer.historical_entities, []);
+  });
+  check(`${answer.exercise}: zero figure references and correct grading scope`, () => {
+    assert.deepEqual(exercise.figure_refs, []);
+    assert.deepEqual(exercise.figures, []);
+    assert.equal(answer.grading, answer.exercise === '219' ? 'auto' : 'ungraded');
+    if (answer.grading === 'ungraded') assert.deepEqual(answer.parts, []);
+  });
+}
+
+// Exact rational arithmetic verifies decimals and fractions without float tolerance.
+function gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+function q(n, d = 1n) {
+  assert.notEqual(d, 0n);
+  if (d < 0n) [n, d] = [-n, -d];
+  const divisor = gcd(n, d);
+  return [n / divisor, d / divisor];
+}
+function scalar(text) {
+  text = text.trim();
+  const fraction = text.match(/^(-?)\\frac\{(-?\d+)\}\{(\d+)\}$/);
+  if (fraction) return q(BigInt(fraction[1] + fraction[2]), BigInt(fraction[3]));
+  const slash = text.match(/^(-?\d+)\/(\d+)$/);
+  if (slash) return q(BigInt(slash[1]), BigInt(slash[2]));
+  assert.match(text, /^-?\d+(?:\.\d+)?$/, `not a supported exact scalar: ${text}`);
+  const negative = text.startsWith('-');
+  const unsigned = negative ? text.slice(1) : text;
+  const [whole, decimal = ''] = unsigned.split('.');
+  return q(BigInt((negative ? '-' : '') + whole + decimal), 10n ** BigInt(decimal.length));
+}
+const add = (a, b) => q(a[0] * b[1] + b[0] * a[1], a[1] * b[1]);
+const neg = a => [-a[0], a[1]];
+const sub = (a, b) => add(a, neg(b));
+const mul = (a, b) => q(a[0] * b[0], a[1] * b[1]);
+const div = (a, b) => q(a[0] * b[1], a[1] * b[0]);
+const same = (actual, expected) => assert.deepEqual(actual, expected);
+const i = n => [BigInt(n), 1n];
+
+function line(answer, label) {
+  const result = answer.displayAnswer.split('\n').find(value => value.startsWith(label));
+  assert.ok(result, `${answer.exercise} missing full ${label} display`);
+  return result;
+}
+function mathChunks(value) {
+  return [...value.matchAll(/\$([^$]+)\$/g)].map(match => match[1]);
+}
+function terms(answer, label) {
+  const chunks = mathChunks(line(answer, label));
+  assert.ok(chunks.length);
+  return chunks[0].split(',').filter(value => value !== '\\ldots').map(scalar);
+}
+function prefixEquals(actual, expected) {
+  assert.ok(actual.length >= 5, 'full explicit example must include at least five terms');
+  assert.ok(actual.length <= expected.length);
+  assert.deepEqual(actual, expected.slice(0, actual.length));
+}
+
+const byNumber = Object.fromEntries(candidate.answers.map(answer => [answer.exercise, answer]));
+const solutions = Object.fromEntries(independent.solutions.map(solution => [solution.exercise, solution]));
+for (const number of ['218', '219', '220', '221']) {
+  for (const part of solutions[number].subparts) {
+    check(`${number} ${part.label}: every displayed term equals independent solution`, () => {
+      const actual = terms(byNumber[number], part.label);
+      const expected = part.terms.map(scalar);
+      if (number === '219') assert.deepEqual(actual, expected);
+      else prefixEquals(actual, expected);
+      if (number === '218' || number === '221') assert.equal(actual.length, 5);
+      if (number === '220') assert.equal(actual.length, 8);
+    });
+  }
+}
+for (const part of solutions['218'].subparts) {
+  check(`218 ${part.label}: initial term and next-term indexing`, () => {
+    const values = terms(byNumber['218'], part.label);
+    same(values[0], scalar(part.initialTerms[0]));
+    for (let index = 1; index < values.length; index += 1) {
+      const previous = values[index - 1];
+      const next = part.label === 'a)' ? add(previous, i(12))
+        : part.label === 'b)' ? mul(previous, i(3))
+        : part.label === 'c)' ? div(previous, i(2))
+        : div(previous, i(index + 1));
+      same(values[index], next);
+    }
+  });
+}
+for (const part of solutions['220'].subparts) {
+  check(`220 ${part.label}: both initial terms and second-order operand order`, () => {
+    const values = terms(byNumber['220'], part.label);
+    assert.deepEqual(values.slice(0, 2), part.initialTerms.map(scalar));
+    for (let index = 2; index < values.length; index += 1) {
+      same(values[index], part.label === 'a)'
+        ? add(values[index - 2], values[index - 1])
+        : sub(values[index - 2], values[index - 1]));
+    }
+  });
+}
+check('219: exactly six ordered groups of five numeric fields', () => {
+  const expectedParts = solutions['219'].subparts.flatMap(part =>
+    part.terms.map((expected, index) => ({
+      label: `${part.label} a_${index + 1}`,
+      expected: scalar(expected),
+    })));
+  const actual = byNumber['219'].parts;
+  assert.equal(actual.length, 30);
+  for (let index = 0; index < actual.length; index += 1) {
+    assert.equal(actual[index].judge, 'numeric');
+    assert.equal(actual[index].label, expectedParts[index].label);
+    assert.equal(actual[index].expected.length, 1);
+    same(scalar(actual[index].expected[0]), expectedParts[index].expected);
+    assert.equal(Object.hasOwn(actual[index], 'tolerance'), false);
+    assert.equal(Object.hasOwn(actual[index], 'unit'), false);
+  }
+});
+for (const part of solutions['219'].subparts) {
+  check(`219 ${part.label}: first term and four recurrence steps`, () => {
+    const values = terms(byNumber['219'], part.label);
+    same(values[0], scalar(part.initialTerms[0]));
+    for (let index = 1; index < values.length; index += 1) {
+      const previous = values[index - 1];
+      const next = part.label === 'a)' ? add(previous, i(1))
+        : part.label === 'b)' ? sub(previous, i(3))
+        : part.label === 'c)' ? mul(previous, i(2))
+        : part.label === 'd)' ? div(previous, i(10))
+        : part.label === 'e)' ? neg(previous)
+        : div(i(1), previous);
+      same(values[index], next);
+    }
+  });
+}
+const formulas = ['u_n=10n', 'u_n=10^n', 'u_n=2n', 'u_n=2^n'];
+for (let index = 0; index < 4; index += 1) {
+  const part = solutions['221'].subparts[index];
+  check(`221 ${part.label}: complete task, general term, initial value and recurrence`, () => {
+    const chunks = mathChunks(line(byNumber['221'], part.label));
+    assert.equal(chunks.length, 2);
+    assert.equal(chunks[1], formulas[index]);
+    assert.equal(part.domain, 'integer n>=1');
+    assert.ok(byNumber['221'].displayAnswer.includes('$n\\ge1$'));
+    const base = index < 2 ? 10 : 2;
+    const geometric = index % 2 === 1;
+    const value = n => i(geometric ? base ** n : base * n);
+    same(value(1), scalar(part.initialTerms[0]));
+    for (let n = 1; n < 6; n += 1) {
+      same(value(n + 1), geometric ? mul(value(n), i(base)) : add(value(n), i(base)));
+    }
+    assert.deepEqual(part.terms.map(scalar), Array.from({ length: 6 }, (_, n) => value(n + 1)));
+  });
+}
+
+function systemText(label) {
+  const all = byNumber['222'].displayAnswer;
+  const start = all.indexOf(`${label} `);
+  assert.ok(start >= 0);
+  const end = label === 'a)' ? all.indexOf('\nb) ') : all.length;
+  return all.slice(start, end);
+}
+function displayedPairs(label) {
+  return [...systemText(label).matchAll(/\(([^(),]+),([^(),]+)\)/g)]
+    .filter(match => !(match[1] === 'x' && match[2] === 'y'))
+    .map(match => ({ x: scalar(match[1]), y: scalar(match[2]) }));
+}
+const pairSignature = pair => `${pair.x[0]}/${pair.x[1]},${pair.y[0]}/${pair.y[1]}`;
+for (const part of solutions['222'].subparts) {
+  check(`222 ${part.label}: complete solution set, exact paired coordinates and substitution`, () => {
+    const actual = displayedPairs(part.label);
+    const expected = part.solutionPairs.map(pair => ({ x: scalar(pair.x), y: scalar(pair.y) }));
+    assert.deepEqual(actual.map(pairSignature).sort(), expected.map(pairSignature).sort());
+    for (const { x, y } of actual) {
+      if (part.label === 'a)') {
+        same(sub(mul(x, x), mul(i(2), mul(y, y))), i(14));
+        same(sub(mul(i(2), x), mul(i(3), y)), i(1));
+        same(sub(add(mul(y, y), mul(i(6), y)), i(55)), i(0));
+      } else {
+        same(sub(mul(i(3), mul(x, y)), mul(i(2), mul(y, y))), i(30));
+        same(sub(mul(i(3), x), mul(i(2), y)), i(10));
+      }
+    }
+  });
+}
+check('222: complete elimination proofs retain all and only solutions', () => {
+  const a = systemText('a)');
+  const b = systemText('b)');
+  for (const value of ['x=\\frac{1+3y}{2}', 'y^2+6y-55=0', '(y-5)(y+11)=0']) {
+    assert.ok(a.includes(value), `missing a) proof step: ${value}`);
+  }
+  for (const value of ['3xy-2y^2=y(3x-2y)', '10y=30', 'y=3', 'x=\\frac{16}{3}']) {
+    assert.ok(b.includes(value), `missing b) proof step: ${value}`);
+  }
+  assert.equal(displayedPairs('a)').length, 2);
+  assert.equal(displayedPairs('b)').length, 1);
+  assert.deepEqual(byNumber['222'].parts, []);
+});
+check('no exact keys, choices, keyboard or history artifacts', () => {
+  const prohibited = new Set([
+    'choices', 'choice', 'options', 'correct', 'correctIndex', 'keyboard', 'keyboardLayout',
+    'keyboards', 'history', 'submissionHistory', 'interaction', 'interactionSpec',
+  ]);
+  function visit(value) {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) return value.forEach(visit);
+    for (const [key, item] of Object.entries(value)) {
+      assert.equal(prohibited.has(key), false, `prohibited field: ${key}`);
+      if (key === 'judge') assert.equal(item, 'numeric');
+      visit(item);
+    }
+  }
+  visit(candidate);
+});
+check('all external inputs stable throughout read-only verification', () => {
+  for (const [name, binding] of Object.entries(bindings)) {
+    const bytes = fs.readFileSync(binding.path);
+    assert.equal(bytes.length, binding.bytes, name);
+    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), binding.sha256, name);
+  }
+});
+
+console.log(JSON.stringify({
+  schema: 'ld-s10y-answer/independent-check-evidence@1',
+  status: 'pass',
+  workdir: root,
+  bindings,
+  checks,
+  checkCount: checks.length,
+  failedChecks: [],
+  promptBinding: {
+    nativeTemplatePromptsEqualFinalizedModernTexts: 5,
+    candidatePromptFields: candidate.answers.filter(answer => Object.hasOwn(answer, 'prompt')).length,
+    explanation: 'prompt and figureEvidence are prepare-only guidance fields, not required answer-key payload fields by cap2 example or native validate_lesson. All five native prompts bind exactly to the approved finalized tasks.',
+  },
+  sourceBinding: {
+    allSourcesExactlyNativeTemplate: true,
+    sources: candidate.answers.map(answer => ({ exercise: answer.exercise, source: answer.source,
+      bookRawPresent: Object.hasOwn(answer, 'bookRaw') })),
+    originalSourceReadForHashOnly: true,
+    sourceApprovalReadForHashOnly: true,
+    sourceReReview: false,
+    sourceScanReads: 0,
+    modernTextReReview: false,
+  },
+  counts: {
+    exercises: 5,
+    autoExercises: 1,
+    ungradedExercises: 4,
+    numericParts: 30,
+    exactParts: 0,
+    expressionParts: 0,
+    letteredSubparts: 18,
+    displayedSequenceLists: 16,
+    displayedSequenceTerms: 86,
+    generalTerms: 4,
+    systems: 2,
+    solutionPairs: 3,
+    figures: 0,
+    figureRefs: 0,
+  },
+  writes: 0,
+  nativeValidatorCallsInThisScript: 0,
+  imageReads: 0,
+  browserCalls: 0,
+  renderCalls: 0,
+  hostTokens: 'unknown',
+  totalCost: 'unknown',
+}, null, 2));

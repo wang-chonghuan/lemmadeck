@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n13-0789';
+const id = 'alg8-c3-s1-n13';
+const root = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}`;
+const templatePath = `${base}/answers-FIRST/8a/modern-us-neutral/lessons/${id}/answer-keys.template.json`;
+const template = JSON.parse(fs.readFileSync(templatePath));
+const exercises = JSON.parse(fs.readFileSync(`${root}/exercises.json`));
+assert.equal(exercises.status, 'ready');
+assert.deepEqual(template.answers.map(item => item.exercise), ['218', '219', '220', '221', '222']);
+const bound = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const solutions = [
+  {
+    number: '218', grading: 'ungraded', parts: [],
+    display: '例如写出前5项：\na) $4,16,28,40,52$；\nb) $8,24,72,216,648$；\nc) $10,5,\\frac{5}{2},\\frac{5}{4},\\frac{5}{8}$；\nd) $1,\\frac{1}{2},\\frac{1}{6},\\frac{1}{24},\\frac{1}{120}$。\n其中 d) 从第2项起，用该项的序号除前一项。',
+    derivation: 'Add12, multiply3, divide2, or divide by the target index successively. The number of requested early terms is open, so these five-term examples are not a compulsory cardinality.',
+    notes: '原题只要求前几项，未固定项数；这里展示前5项作为示例，不按固定填空判分。',
+  },
+  {
+    number: '219', grading: 'auto',
+    values: [
+      ['1', '2', '3', '4', '5'],
+      ['7', '4', '1', '-2', '-5'],
+      ['-5', '-10', '-20', '-40', '-80'],
+      ['75', '7.5', '0.75', '0.075', '0.0075'],
+      ['\\frac{1}{6}', '-\\frac{1}{6}', '\\frac{1}{6}', '-\\frac{1}{6}', '\\frac{1}{6}'],
+      ['3', '\\frac{1}{3}', '3', '\\frac{1}{3}', '3'],
+    ],
+    display: 'a) $1,2,3,4,5$；\nb) $7,4,1,-2,-5$；\nc) $-5,-10,-20,-40,-80$；\nd) $75,7.5,0.75,0.075,0.0075$；\ne) $\\frac{1}{6},-\\frac{1}{6},\\frac{1}{6},-\\frac{1}{6},\\frac{1}{6}$；\nf) $3,\\frac{1}{3},3,\\frac{1}{3},3$。',
+    derivation: 'Include initial a1, then apply each recurrence four times. Six explicitly independent sequences with five finite numeric terms each; reciprocal sequence remains nonzero.',
+  },
+  {
+    number: '220', grading: 'ungraded', parts: [],
+    display: '例如写出前8项：\na) $-1,1,0,1,1,2,3,5$；\nb) $13,6,7,-1,8,-9,17,-26$。\n从第3项起，a) 把前面两项相加；b) 用前面第二项减去前面第一项，例如 $c_3=13-6=7$、$c_4=6-7=-1$。',
+    derivation: 'a: c[n+2]=c[n]+c[n+1]; b: c[n+2]=c[n]-c[n+1]. Both initial terms included. Terms after 13,6 are 7,-1,8,-9,17,-26. Open requested cardinality.',
+    notes: '前几项未指定项数，示例前8项；不把可变长度的整列伪装成固定输入。',
+  },
+  {
+    number: '221', grading: 'ungraded', parts: [],
+    display: '例如写出前5项，并给出通项公式（$n\\ge1$）：\na) $10,20,30,40,50,\\ldots$，$u_n=10n$；\nb) $10,100,1000,10000,100000,\\ldots$，$u_n=10^n$；\nc) $2,4,6,8,10,\\ldots$，$u_n=2n$；\nd) $2,4,8,16,32,\\ldots$，$u_n=2^n$。\n各通项在 $n=1$ 时给出规定的首项，并满足原递推公式。',
+    derivation: 'Constant increments yield 10+10(n-1)=10n and 2+2(n-1)=2n; constant multipliers yield 10*10^(n-1)=10^n and 2*2^(n-1)=2^n. Check initial term and recurrence for all n>=1.',
+    notes: '原题同时要求可变长度的前几项和通项公式，保留完整示例与理由，不只判通项来冒称全任务自动判分。',
+  },
+  {
+    number: '222', grading: 'ungraded', parts: [],
+    display: 'a) 全部解为 $(x,y)=(8,5)$ 或 $(-16,-11)$。\n由 $2x-3y=1$ 得 $x=\\frac{1+3y}{2}$，代入第一式得到 $y^2+6y-55=0$，即 $(y-5)(y+11)=0$，再求出对应的 $x$。两组都满足原方程组。\nb) 唯一解为 $(x,y)=(\\frac{16}{3},3)$。\n利用 $3xy-2y^2=y(3x-2y)$，得 $10y=30$，所以 $y=3$，再由 $3x-2y=10$ 得 $x=\\frac{16}{3}$。',
+    derivation: 'a substitution yields y^2+6y-55=0 -> y5 or -11, x8 or -16 respectively; direct checks 64-50=14/16-15=1 and256-242=14/-32+33=1. b factor yields10y30 ->y3 x16/3, verify48-18=30 and16-6=10.',
+    notes: 'a) 是无序的多解集合，必须保留每对坐标的配对关系；当前不把坐标槽或固定排序当整组解集判分。',
+  },
+];
+const answers = template.answers.map((native, index) => {
+  assert.equal(native.prompt, exercises.exercises[index].text);
+  assert.deepEqual(native.figureEvidence, []);
+  const solution = solutions[index];
+  const parts = solution.values ? solution.values.flatMap((row, i) => row.map((expected, j) => ({
+    label: `${String.fromCharCode(97 + i)}) a_${j + 1}`,
+    judge: 'numeric', expected: [expected],
+  }))) : [];
+  const { prompt, figureEvidence, ...metadata } = native;
+  return { ...metadata, grading: solution.grading, displayAnswer: solution.display, parts,
+    ...(solution.notes ? { notes: solution.notes } : {}) };
+});
+const candidate = { ...template, answers };
+const target = `${base}/answer-author-FIRST`;
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(target);
+const write = (name, value) => {
+  const file = `${target}/${name}`;
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return bound(file);
+};
+const solving = write('solving.record', { source: bound(`${root}/exercises.json`), solutions,
+  sourceOnlyIndependentDerivation: true, sourceImages: 0, oldAnswerOrChoiceInputs: 0 });
+const output = write('answer-keys.json', candidate);
+const result = write('result.record', {
+  schema: 'stemrobin-182/answer-author@1', status: 'ANSWER_AUTHORED_NOT_APPROVED',
+  book: '8a', lesson: id, edition: 'modern-us-neutral', nativeTemplate: bound(templatePath),
+  modernExercises: bound(`${root}/exercises.json`), solving, answerKey: output,
+  count: answers.length, auto: answers.filter(a => a.grading === 'auto').length,
+  ungraded: answers.filter(a => a.grading === 'ungraded').length,
+  numericParts: answers.flatMap(a => a.parts).length, exactParts: 0,
+  imagesViewed: 0, databaseWrites: 0, oldPassReruns: 0,
+  hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+});
+console.log(JSON.stringify(result));

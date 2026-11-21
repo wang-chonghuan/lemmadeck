@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n13-0789';
+const prior = '.tmp/resume182-6-8a-n12-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const transformations = [];
+for (const name of ['promote-answers.mjs', 'prepare-choice-review.mjs', 'bind-choice-review.mjs']) {
+  const source = `${prior}/${name}`;
+  const target = `${base}/${name}`;
+  assert.ok(!fs.existsSync(target));
+  const original = fs.readFileSync(source);
+  let code = original.toString().replaceAll('resume182-6-8a-n12-0789', 'resume182-6-8a-n13-0789')
+    .replaceAll('alg8-c3-s1-n12', 'alg8-c3-s1-n13');
+  if (name === 'promote-answers.mjs') {
+    assert.ok(code.includes('assert.equal(data.answers.length, 14);'));
+    code = code.replace('assert.equal(data.answers.length, 14);', 'assert.equal(data.answers.length, 5);');
+  }
+  if (name === 'bind-choice-review.mjs') {
+    code = code.replace("const sha = bytes", "const [expectedReviewHash] = process.argv.slice(2);\nassert.match(expectedReviewHash, /^[a-f0-9]{64}$/);\nconst sha = bytes");
+    code = code.replace(/assert.equal\(sha\(bytes\), '[a-f0-9]{64}'\);/,
+      'assert.equal(sha(bytes), expectedReviewHash);');
+    code = code.replace('assert.equal(review.question_reviews.length, 19);',
+      "const draft = JSON.parse(fs.readFileSync(`${base}/choices-FIRST/draft.json`));\nassert.equal(review.question_reviews.length, draft.questions.length);");
+    code = code.replace('assert.equal(review.source_reviews.length, 14);',
+      'assert.equal(review.source_reviews.length, 5);');
+  }
+  fs.writeFileSync(target, code, { flag: 'wx' });
+  transformations.push({
+    source: { path: path.resolve(source), sha256: sha(original), bytes: original.length },
+    output: { path: path.resolve(target), sha256: sha(Buffer.from(code)), bytes: Buffer.byteLength(code) },
+    purpose: 'Existing scoped promotion/projection binding only; no content authoring or approvals',
+  });
+}
+const output = `${base}/support-code.record`;
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'SCOPED_HELPERS_PREPARED_NOT_EXECUTED', transformations,
+  imageViews: 0, databaseWrites: 0, oldPassReruns: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.resolve(output), sha256: sha(fs.readFileSync(output)) }));

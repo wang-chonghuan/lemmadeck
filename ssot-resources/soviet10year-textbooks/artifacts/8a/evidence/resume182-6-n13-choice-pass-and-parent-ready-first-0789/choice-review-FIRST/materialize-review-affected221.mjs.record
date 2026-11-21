@@ -1,0 +1,295 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const repo = "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck";
+assert.equal(process.cwd(), repo);
+const root = ".tmp/resume182-6-8a-n13-0789/";
+const owned = `${root}choice-review-FIRST/`;
+const reviewRetentionPath =
+  "ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n13-choice-review-revise-first-0789/retention.record";
+const authorRetentionPath =
+  "ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n13-answers-pass-and-choice-author-first-0789/retention.record";
+const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
+const canonical = (value) => {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  return `{${Object.keys(value)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`)
+    .join(",")}}`;
+};
+const digest = (value) =>
+  hash(
+    canonical(value).replace(
+      /[\u007f-\uffff]/g,
+      (character) =>
+        `\\u${character.charCodeAt(0).toString(16).padStart(4, "0")}`,
+    ),
+  );
+const readBound = (file, expected) => {
+  const bytes = fs.readFileSync(file);
+  assert.equal(hash(bytes), expected, `Binding changed: ${file}`);
+  return { bytes, value: JSON.parse(bytes) };
+};
+const reviewRetention = readBound(
+  reviewRetentionPath,
+  "487bcdcb4d5d97cfe9886f29a062e3c3325422f44664c14655bb389498978713",
+);
+const authorRetention = readBound(
+  authorRetentionPath,
+  "28403a6d9f6b86fa6b1cdbfad48cb6e79393e6c718774b36f8c066f3253fd44f",
+);
+const retained = (manifest, historicalPath) => {
+  const entry = manifest.value.entries.find(
+    (candidate) => candidate.historical_path === historicalPath,
+  );
+  assert.ok(entry, `Missing retained file: ${historicalPath}`);
+  return { entry, ...readBound(entry.path, entry.sha256) };
+};
+const originalReview = retained(
+  reviewRetention,
+  `${owned}review.json`,
+);
+const originalDraft = retained(
+  authorRetention,
+  `${root}choices-FIRST/draft.json`,
+);
+const originalSeed = retained(
+  authorRetention,
+  `${root}choices-FIRST/seed.json`,
+);
+assert.ok(
+  fs.readFileSync(`${root}choices-FIRST/seed.json`).equals(originalSeed.bytes),
+);
+const draft = readBound(
+  `${root}choices-FIRST/draft.json`,
+  "9b470220c242a5b214f95cbbf11c01aa53fbc7fd0356254676c56cac3a794443",
+);
+const phase = readBound(
+  `${owned}phase2-affected221.record`,
+  "e82343739e27f4f13340ef59950f1860b06ee99d993934b1ac9b44c198970992",
+);
+const views = readBound(
+  `${owned}views-affected221.record`,
+  "422b49a9af2d7bd2b8e874e38aa1e1b01e70d7df4dfc18c21dd1ea06950a8423",
+);
+assert.equal(phase.value.phase_ordering.changed_draft_opened, false);
+assert.equal(phase.value.pre_changed_author_comparison_outcome, "pass");
+assert.equal(views.value.authorKeysAndIntentDisclosed, false);
+assert.deepEqual(
+  views.value.questions,
+  draft.value.questions.map(({ id, source_numbers, view }) => ({
+    id,
+    source_numbers,
+    view,
+  })),
+);
+
+const changes = [];
+const compare = (before, after, pointer = "") => {
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
+  if (
+    before === null ||
+    after === null ||
+    typeof before !== "object" ||
+    typeof after !== "object" ||
+    Array.isArray(before) !== Array.isArray(after)
+  ) {
+    changes.push({ path: pointer, before, after });
+    return;
+  }
+  for (const key of new Set([
+    ...Object.keys(before),
+    ...Object.keys(after),
+  ])) {
+    compare(before[key], after[key], `${pointer}/${key}`);
+  }
+};
+compare(originalDraft.value, draft.value);
+const questionIndex = draft.value.questions.findIndex(
+  (question) => question.id === "prefix-and-formula",
+);
+assert.ok(questionIndex >= 0);
+const question = draft.value.questions[questionIndex];
+const allowed = new Set(
+  [
+    "/view/options/1/text",
+    "/view/options/5/text",
+    "/intent/unit_reason",
+    "/key/rationales/1/derivation",
+    "/key/rationales/1/misconception",
+    "/key/rationales/5/derivation",
+    "/key/rationales/5/misconception",
+  ].map((suffix) => `/questions/${questionIndex}${suffix}`),
+);
+assert.equal(changes.length, 7);
+for (const change of changes) assert.ok(allowed.has(change.path));
+const restored = structuredClone(draft.value);
+restored.questions[questionIndex] =
+  originalDraft.value.questions[questionIndex];
+const restoredBytes = Buffer.from(`${JSON.stringify(restored, null, 2)}\n`);
+assert.ok(restoredBytes.equals(originalDraft.bytes));
+assert.deepEqual(question.key.correct, phase.value.complete_correct_set);
+for (const check of phase.value.affected_option_checks) {
+  const rationale = question.key.rationales.find(
+    (entry) => entry.option_id === check.option_id,
+  );
+  assert.equal(rationale.truth, check.truth);
+}
+
+const originalNames = [
+  `${owned}phase1.record`,
+  `${owned}phase2.record`,
+  `${owned}comparison.record`,
+  `${owned}review.json`,
+  `${owned}result.record`,
+  `${owned}views.record`,
+  `${root}stages/choice-independent-gate-FIRST/receipt.record`,
+];
+const originalEvidence = originalNames.map((historicalPath) => {
+  const item = retained(reviewRetention, historicalPath);
+  assert.ok(fs.readFileSync(historicalPath).equals(item.bytes));
+  return {
+    historical_path: historicalPath,
+    retained_path: item.entry.path,
+    byte_sha256: hash(item.bytes),
+    live_matches_retained: true,
+  };
+});
+
+// Carry forward immutable reviews; only resolved 221 evidence is replaced.
+const review = structuredClone(originalReview.value);
+review.draft_sha256 = digest(draft.value);
+assert.equal(
+  review.draft_sha256,
+  "275084dccb63cb4a5c15a2483956e9f2ae44d9486357231bc9a7e5456402cc26",
+);
+review.reviewer.identity =
+  "182-6 fresh independent CHOICE reviewer FIRST, same reviewer affected-only 221formula1 follow-up; original source solutions and unaffected PASS evidence reused; affected keyless judgment persisted before changed draft";
+const source = review.source_reviews.find(
+  (entry) => entry.source_number === "221",
+);
+source.coverage = {
+  verdict: "pass",
+  evidence:
+    "Affected-only resolution of FIRST coverage REVISE: all four unchanged starts/rules still have complete prefix/formula response units. New b combines an incorrect q prefix with the correct q_n=10^n; new f combines the correct p prefix with incorrect p_n=10(n+1). Prefix-only selection adds f and formula-only selection adds b, so judging both components is necessary for the full true set {a,d,e,g}. Existing independent-writing/construction limitations remain honest and unchanged; no substantive prefix or formula task is now bypassed by either component alone.",
+};
+const affected = review.question_reviews.find(
+  (entry) => entry.question_id === "prefix-and-formula",
+);
+affected.task_fidelity = {
+  verdict: "pass",
+  evidence:
+    "The precise FIRST formula-judgment bypass is resolved. Reusing the original source solution, b has an incorrect arithmetic q prefix but correct formula 10^n; f has the correct arithmetic p prefix but formula 10(n+1) fails p1=10. Prefix-only judgment yields {a,d,e,f,g}; formula-only judgment yields {a,b,d,e,g}; only their intersection {a,d,e,g} is the complete true set. Both early terms and formulas for all n>=1 must now be judged in complete response units. The four starts/rules and recognition-versus-production limitations are unchanged, with no claim of complete independent writing skill.",
+};
+affected.answer_leakage.evidence =
+  "Original answer-leakage PASS reused: neither the unchanged stem nor other seven unchanged questions exposes correct prefixes, formulas, source numbers or author keys. New b/f are intra-question mathematical component contrasts, not answer cues. The former prefix-only fidelity bypass is resolved by those contrasts, as independently recorded before changed author disclosure.";
+affected.mathematics.independent_solution =
+  "Original independent source solution and unchanged a/c/d/e/g/h mathematics PASS reused: p_n=10n with 10,20,30,40,50; q_n=10^n with 10,100,1000,10000,100000; r_n=2n and s_n=2^n with their original prefixes. New b is false solely through its prefix and new f solely through its formula. Exact full correct set {a,d,e,g} was independently confirmed in phase2-affected221.record before opening the changed draft. The unchanged key and changed b/f rationales agree.";
+affected.mathematics.option_checks.find(
+  (entry) => entry.option_id === "b",
+).evidence =
+  "Affected-only independent judgment: q2=10*10=100, not the displayed 20, so the prefix 10,20,30,40,50 is false. New q_n=10^n is true: it gives q1=10 and q_(n+1)=10q_n. The full conjunction is therefore incorrect. The changed author rationale exactly describes remembering the correct geometric formula while mistakenly generating early terms by adding 10; it produces both displayed components.";
+affected.mathematics.option_checks.find(
+  (entry) => entry.option_id === "f",
+).evidence =
+  "Affected-only independent judgment: four successive additions of 10 from p1=10 give the displayed correct prefix 10,20,30,40,50. But new paired p_n=10(n+1) gives p1=20, not 10, so the full conjunction is incorrect. The changed author rationale exactly describes correctly iterating early terms then counting n rather than n-1 increments for the formula; it produces both displayed components.";
+review.outcome = "pass";
+for (const previous of originalReview.value.source_reviews) {
+  const next = review.source_reviews.find(
+    (entry) => entry.source_number === previous.source_number,
+  );
+  assert.equal(next.independent_solution, previous.independent_solution);
+  if (previous.source_number !== "221") assert.deepEqual(next, previous);
+}
+for (const previous of originalReview.value.question_reviews) {
+  if (previous.question_id !== "prefix-and-formula") {
+    assert.deepEqual(
+      review.question_reviews.find(
+        (entry) => entry.question_id === previous.question_id,
+      ),
+      previous,
+    );
+  }
+}
+for (const previous of originalReview.value.question_reviews.find(
+  (entry) => entry.question_id === "prefix-and-formula",
+).mathematics.option_checks) {
+  if (!["b", "f"].includes(previous.option_id)) {
+    assert.deepEqual(
+      affected.mathematics.option_checks.find(
+        (entry) => entry.option_id === previous.option_id,
+      ),
+      previous,
+    );
+  }
+}
+assert.deepEqual(affected.redundancy, originalReview.value.question_reviews.find(
+  (entry) => entry.question_id === "prefix-and-formula",
+).redundancy);
+assert.equal(review.reviewer.kind, "independent_agent");
+assert.deepEqual(review.figure_checks, []);
+assert.deepEqual(review.new_figure_reviews, []);
+assert.deepEqual(draft.value.new_figures, []);
+
+const comparison = {
+  schema: "s10y-choice-independent-affected-comparison-record-v1",
+  scope: "221formula1 affected-only; no full semantic PASS replay",
+  original_review_retention: {
+    path: path.resolve(reviewRetentionPath),
+    byte_sha256: hash(reviewRetention.bytes),
+  },
+  original_author_package: {
+    path: path.resolve(authorRetentionPath),
+    byte_sha256: hash(authorRetention.bytes),
+  },
+  retained_original_draft: originalDraft.entry,
+  retained_original_seed: originalSeed.entry,
+  original_evidence: originalEvidence,
+  affected_phase2: {
+    path: path.resolve(`${owned}phase2-affected221.record`),
+    byte_sha256: hash(phase.bytes),
+    persisted_at: fs.statSync(`${owned}phase2-affected221.record`).mtime.toISOString(),
+  },
+  changed_draft_first_opened_at: "2026-11-21T01:11:02.288Z",
+  keyless_projection_byte_sha256: hash(views.bytes),
+  changed_draft_byte_sha256: hash(draft.bytes),
+  changed_draft_canonical_sha256: digest(draft.value),
+  changes,
+  restored_unaffected_bytes_sha256: hash(restoredBytes),
+  all_other_draft_bytes_match_immutable_FIRST: true,
+  keyless_projection_matches_changed_draft: true,
+  source_solutions_reused_unchanged: 5,
+  other_question_reviews_reused_unchanged: 7,
+  unchanged_affected_option_checks_reused: 6,
+  changed_author_rationales_match_prior_keyless_judgment: true,
+  correct_set: phase.value.complete_correct_set,
+  old_review_outcome: originalReview.value.outcome,
+  affected_review_outcome: review.outcome,
+  zeroimages: true,
+  image_actions: 0,
+  hostTokens: "unknown",
+  totalCost: "unknown",
+};
+const reviewFile = `${owned}review-affected221.json`;
+const comparisonFile = `${owned}comparison-affected221.record`;
+assert.ok(!fs.existsSync(reviewFile));
+assert.ok(!fs.existsSync(comparisonFile));
+const reviewBytes = Buffer.from(`${JSON.stringify(review, null, 2)}\n`);
+const comparisonBytes = Buffer.from(
+  `${JSON.stringify(comparison, null, 2)}\n`,
+);
+fs.writeFileSync(reviewFile, reviewBytes, { flag: "wx" });
+fs.writeFileSync(comparisonFile, comparisonBytes, { flag: "wx" });
+console.log(JSON.stringify({
+  review_path: path.resolve(reviewFile),
+  review_byte_sha256: hash(reviewBytes),
+  review_canonical_sha256: digest(review),
+  comparison_path: path.resolve(comparisonFile),
+  comparison_byte_sha256: hash(comparisonBytes),
+  new_draft_canonical_sha256: review.draft_sha256,
+  outcome: review.outcome,
+  original_evidence_preserved: true,
+}, null, 2));

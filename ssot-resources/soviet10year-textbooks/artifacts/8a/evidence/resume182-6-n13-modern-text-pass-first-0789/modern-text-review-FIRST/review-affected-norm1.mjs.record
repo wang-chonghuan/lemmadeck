@@ -1,0 +1,160 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck'
+assert.equal(process.cwd(), root)
+const scope = path.join(root, '.tmp/resume182-6-8a-n13-0789')
+const owned = path.join(scope, 'modern-text-review-FIRST')
+const reads = new Map()
+const checks = []
+const digest = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex')
+function read(filename, parse = true) {
+  const bytes = fs.readFileSync(filename)
+  reads.set(filename, bytes)
+  return {
+    bytes,
+    binding: { path: filename, sha256: digest(bytes), bytes: bytes.length },
+    data: parse ? JSON.parse(bytes) : undefined,
+  }
+}
+function check(name, actual) { checks.push({ name, pass: Boolean(actual) }) }
+function equal(left, right) {
+  try { assert.deepEqual(left, right); return true } catch { return false }
+}
+function verifyBinding(value, expected) {
+  check(`${value.binding.path} hash and bytes`, value.binding.sha256 === expected.sha256
+    && value.binding.bytes === expected.bytes)
+}
+const original = read(path.join(owned, 'result.record'))
+check('original TEXT_REVISE hash pinned',
+  original.binding.sha256 === '5ab805b130b5a53e4722e84542ac7c55eb19d62d4abf1909e56ecd7b3cd1adc4')
+check('original single blocker is the affected anchor', original.data.status === 'TEXT_REVISE'
+  && original.data.blockers.length === 1
+  && original.data.blockers[0].id === 'n13-first-anchor-invalid-after-native-prose-normalization')
+const proof = read(path.join(scope, 'modern-anchor-norm1/result.record'))
+check('parent affected proof hash pinned',
+  proof.binding.sha256 === 'dd43f6ea31edf03f820665dcc0ebd4c3eb21545070528d14d71d9680b931166f')
+for (const key of ['book', 'lesson', 'edition']) {
+  check(`proof ${key} same scope`, proof.data[key] === original.data[key])
+}
+const first = read(proof.data.first.path)
+const current = read(proof.data.current.path)
+const exercises = read(original.data.approved_text_bindings.exercises.path, false)
+const flowInput = read(proof.data.nativeFlowInput.path)
+const flowStdout = read(proof.data.nativeFlowStdout.path, false)
+for (const [value, expected] of [
+  [first, proof.data.first], [current, proof.data.current],
+  [exercises, original.data.approved_text_bindings.exercises],
+  [flowInput, proof.data.nativeFlowInput], [flowStdout, proof.data.nativeFlowStdout],
+]) verifyBinding(value, expected)
+check('retained complete first candidate matches original review',
+  first.binding.sha256 === original.data.approved_text_bindings.lesson.sha256
+  && first.binding.bytes === original.data.approved_text_bindings.lesson.bytes)
+check('current candidate is original template path',
+  current.binding.path === original.data.approved_text_bindings.lesson.path)
+
+const needle = '$b_5=3+5=8$\uff0c'
+const beforeText = first.data.prose[6].text
+check('exactly one insertion location in affected prose', beforeText.split(needle).length === 2)
+const expectedText = beforeText.replace(needle, `${needle}\n`)
+check('prose[6] has exactly the required new newline', current.data.prose[6].text === expectedText)
+check('first before anchor has exactly the required new newline',
+  current.data.section_breaks[0].before === first.data.section_breaks[0].before.replace(needle, `${needle}\n`))
+const expected = structuredClone(first.data)
+expected.prose[6].text = expectedText
+expected.section_breaks[0].before = first.data.section_breaks[0].before.replace(needle, `${needle}\n`)
+check('all other complete payload is identical', equal(current.data, expected))
+check('second anchor unchanged', equal(current.data.section_breaks[1], first.data.section_breaks[1]))
+check('first after anchor unchanged', current.data.section_breaks[0].after === first.data.section_breaks[0].after)
+check('current anchors match proof selections', equal(current.data.section_breaks, proof.data.selected))
+const serializedInsertion = `${needle}\\n`
+const currentRaw = current.bytes.toString('utf8')
+const insertionCount = currentRaw.split(serializedInsertion).length - 1
+check('exactly two JSON escaped newline insertions', insertionCount === 2)
+check('all other file bytes identical',
+  Buffer.from(currentRaw.replaceAll(serializedInsertion, needle)).equals(first.bytes))
+check('file length increased by exactly four bytes', current.bytes.length - first.bytes.length === 4)
+const expectedFlowInput = structuredClone(current.data)
+expectedFlowInput.section_breaks = []
+check('parent native flow input exactly current payload without selected anchors',
+  equal(flowInput.data, expectedFlowInput))
+const reportedBoundaries = flowStdout.bytes.toString('utf8').split('\n')
+  .filter((line) => line.startsWith('    break: '))
+  .map((line) => JSON.parse(line.slice('    break: '.length)))
+check('first anchor occurs exactly once in fresh native stdout',
+  reportedBoundaries.filter((item) => equal(item, current.data.section_breaks[0])).length === 1)
+check('second anchor retained in fresh native stdout',
+  reportedBoundaries.filter((item) => equal(item, current.data.section_breaks[1])).length === 1)
+
+const tools = path.join(root, '.claude/skills/ld-s10y-lesson/tools')
+for (const [filename, expectedSHA] of [
+  ['edition.py', '632af19fa758bfc61f223d82d1f53284dcced0b3b86f8399a35c3217ff4287a5'],
+  ['prose_flow.mjs', 'f2a16357e2a0d5f8541b0cb401c5193c9cb10f6333dc16f92d5c7a18a5bee309'],
+  ['htmlfrag.js', 'c2f0301c5ba7811336a5268a404f795ace7873b75eb93c42c10186f3d9c3f9f6'],
+]) check(`unchanged native helper ${filename}`, read(path.join(tools, filename), false).binding.sha256 === expectedSHA)
+const code = `
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import edition
+p = json.load(sys.stdin)
+text = p["prose"][6]["text"]
+once = edition.normalize_prose_layout(text)
+twice = edition.normalize_prose_layout(once)
+prose = [{**item} for item in p["prose"]]
+prose[6]["text"] = once
+flow, errors = edition.prose_flow_contract(prose, p["section_breaks"])
+report = {
+    "firstNormalizationStable": once == text,
+    "secondNormalizationStable": twice == once,
+    "affectedNormalizedBlock": 6,
+    "unaffectedBlocksNormalized": 0,
+    "errors": errors,
+    "paragraphCountFromNativeStdout": len(flow.get("paragraphs", [])),
+    "resolvedBreaksFromNativeStdout": flow.get("resolvedBreaks", []),
+    "boundariesFromNativeStdout": flow.get("boundaries", []),
+    "fullFinalizeCalled": False
+}
+print(json.dumps(report, ensure_ascii=False, indent=2))
+`
+const interpreter = path.join(root, '.claude/skills/ld-s10y-lesson/.venv/bin/python')
+const native = spawnSync(interpreter, ['-B', '-c', code, tools], {
+  cwd: root, encoding: 'utf8', input: JSON.stringify(current.data),
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+})
+check('native affected helper exit zero and empty stderr', native.status === 0 && native.stderr === '')
+const report = JSON.parse(native.stdout)
+check('affected normalization stable on first call', report.firstNormalizationStable)
+check('affected normalization stable on second call', report.secondNormalizationStable)
+check('native normalized anchor contract has no error', report.errors.length === 0)
+check('same two concept breaks from native stdout', equal(report.resolvedBreaksFromNativeStdout, [7, 11])
+  && report.boundariesFromNativeStdout.length === 2)
+check('both native adjacent anchors equal current anchors',
+  equal(report.boundariesFromNativeStdout.map(({ before, after }) => ({ before, after })),
+    current.data.section_breaks))
+for (const binding of original.data.evidence) {
+  verifyBinding(read(binding.path, false), binding)
+}
+for (const [filename, bytes] of reads) {
+  check(`${filename} unchanged during affected review`, bytes.equals(fs.readFileSync(filename)))
+}
+console.log(JSON.stringify({
+  status: checks.every((item) => item.pass) ? 'TEXT_PASS' : 'TEXT_REVISE',
+  original: original.binding, proof: proof.binding,
+  retainedFirst: first.binding,
+  approved_text_bindings: { lesson: current.binding, exercises: exercises.binding },
+  parentNativeFlowInput: flowInput.binding, parentNativeFlowStdout: flowStdout.binding,
+  byteDifference: { insertedEscapedNewlines: insertionCount, insertedBytes: current.bytes.length - first.bytes.length },
+  native: {
+    interpreter, flags: ['-B', '-c', '<affected-only code in review-affected-norm1.mjs>', tools],
+    exitCode: native.status, stdoutSHA256: digest(Buffer.from(native.stdout)),
+    stdoutBytes: Buffer.byteLength(native.stdout), stderrBytes: Buffer.byteLength(native.stderr), report,
+  },
+  checkCount: checks.length, failedChecks: checks.filter((item) => !item.pass),
+  sourceOrMathReviewReruns: 0, originalReviewerScriptReruns: 0,
+  imageReads: 0, imageViews: 0, fullFinalizeCalls: 0,
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2))
+process.exitCode = checks.every((item) => item.pass) ? 0 : 1

@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n13-0789';
+const root = `${repo}/ssot-resources/soviet10year-textbooks/artifacts/8a/pages/`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const reviewPath = `${base}/source-review-FIRST/result.record`;
+const reviewBytes = fs.readFileSync(reviewPath);
+assert.equal(sha(reviewBytes), '55c07cac92694c82931ee40a92af77e74b9f8d77b09243939da9fd5a0b9efd5a');
+const review = JSON.parse(reviewBytes);
+assert.equal(review.status, 'SOURCE_REVISE');
+assert.equal(review.blockers.length, 1);
+const finding = review.blockers[0];
+assert.equal(finding.ref, 'p0087#4');
+const binding = finding.affectedFiles.find(item => item.path === `${root}0087/page.md`);
+const beforePath = `${base}/assembly-FIRST/artifacts/8a/pages/0087/page.md`;
+const before = fs.readFileSync(beforePath);
+assert.equal(sha(before), binding.sha256);
+const after = fs.readFileSync(binding.path);
+assert.equal(before.length, after.length);
+const changed = [...after.keys()].filter(index => before[index] !== after[index]);
+assert.deepEqual(changed, binding.glyphByteOffsets);
+assert.equal(changed.length, 13);
+assert.ok(changed.every(index => before[index] === 0x76 && after[index] === 0x75));
+const unaffected = review.bindings.filter(item => item.path.startsWith(root)
+  && !item.path.includes('/0087/'));
+for (const item of unaffected) assert.equal(sha(fs.readFileSync(item.path)), item.sha256);
+const file = `${base}/source-glyph1.record`;
+fs.writeFileSync(file, `${JSON.stringify({
+  status: 'EXACT_AFFECTED_SOURCE_GLYPH_BYTES_BOUND_NOT_APPROVED',
+  review: { path: path.resolve(reviewPath), sha256: sha(reviewBytes) },
+  before: { path: path.resolve(beforePath), sha256: sha(before) },
+  after: { path: binding.path, sha256: sha(after), bytes: after.length },
+  changedRef: finding.ref, changedByteOffsets: changed,
+  beforeGlyph: 'v', afterGlyph: 'u', glyphsChanged: 13, unaffected,
+  newImageViews: 0, sourceRevisionRound: 1, databaseWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)), glyphsChanged: 13 }));

@@ -1,0 +1,175 @@
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const prior = '.tmp/resume182-6-8a-n12-0789';
+const base = '.tmp/resume182-6-8a-n13-0789';
+const own = `${base}/display-FIRST`;
+assert.equal(fileURLToPath(import.meta.url), path.resolve(`${base}/bootstrap-display.mjs`));
+const [stageName = 'display-code-preparation-FIRST', preservedFailurePath] = process.argv.slice(2);
+assert.match(stageName, /^display-code-preparation-(?:FIRST|RECOVERY[1-9][0-9]*)$/);
+if (preservedFailurePath)
+  assert.equal(preservedFailurePath, path.resolve(`${base}/stages/display-code-preparation-FIRST/receipt.record`));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const priorReadyFile = `${prior}/display-FIRST/ready-underbrace1.record`;
+const priorReadyPin = 'a45eea2503b6632cf3cd0a7db2de09e61b9c26978a49d18cbe214680ddc38a61';
+const assemblyFile = `${base}/assembly-FIRST/assembly.record`;
+const assemblyPin = '3898d908fd5148bd009c6762cb45b469351aca092c7687b36fc758d568cdf37b';
+const priorReadyBytes = fs.readFileSync(priorReadyFile);
+assert.equal(sha(priorReadyBytes), priorReadyPin);
+const ready = JSON.parse(priorReadyBytes);
+assert.equal(ready.status, 'SCRIPTS_PREPARED_RUNTIME_NOT_EXECUTED');
+assert.equal(ready.workdir, repo);
+const assemblyBytes = fs.readFileSync(assemblyFile);
+assert.equal(sha(assemblyBytes), assemblyPin);
+const assembly = JSON.parse(assemblyBytes);
+assert.equal(assembly.lesson, 'alg8-c3-s1-n13');
+assert.equal(assembly.status, 'SCOPED_ASSEMBLY_PASS_NOT_SOURCE_APPROVAL');
+assert.deepEqual(assembly.figures, []);
+assert.equal(assembly.exercise_count, 5);
+const implementation = ['prepare.mjs', 'run.mjs', 'display-helper.mjs', 'display-helper-base.mjs'];
+const sources = new Map();
+for (const name of implementation) {
+  const file = `${prior}/display-FIRST/${name}`;
+  const original = entry(file);
+  const expected = ready.files.find(item => item.path === original.path);
+  assert.ok(expected, `Unpinned source helper: ${file}`);
+  assert.equal(original.sha256, expected.sha256);
+  const bytes = fs.readFileSync(file);
+  assert.equal(sha(bytes), original.sha256);
+  sources.set(name, { original, sourceRecordDeclaredBytes: expected.bytes,
+    text: bytes.toString('utf8') });
+}
+const observerFile = `${prior}/observe-tools.mjs`;
+const observerSource = entry(observerFile);
+assert.equal(observerSource.path, ready.observer.output.path);
+assert.equal(observerSource.sha256, ready.observer.output.sha256);
+assert.equal(observerSource.bytes, ready.observer.output.bytes);
+const observerBytes = fs.readFileSync(observerFile);
+assert.equal(sha(observerBytes), observerSource.sha256);
+const sourcePaths = new Set([...sources.values()].map(item => item.original.path));
+const pins = ready.pins.filter(pin => !sourcePaths.has(pin.path));
+for (const pin of ready.pins) {
+  assert.equal(fs.realpathSync(pin.path), pin.realpath);
+  assert.equal(entry(pin.path).sha256, pin.sha256);
+}
+const replacements = [
+  ['resume182-6-8a-n12-0789', 'resume182-6-8a-n13-0789'],
+  ['alg8-c3-s1-n12', 'alg8-c3-s1-n13'],
+  ['n12-parent-display-ready@1', 'n13-parent-display-ready@1'],
+  ['bounded-n12-offline-display@1', 'bounded-n13-offline-display@1'],
+  ['ready-underbrace1.record', 'ready-FIRST.record'],
+];
+const adapt = (original, figures = false) => {
+  let text = original;
+  const transformations = [];
+  for (const [from, to] of replacements) {
+    const occurrences = text.split(from).length - 1;
+    text = text.replaceAll(from, to);
+    if (occurrences) transformations.push({ from, to, occurrences });
+  }
+  if (figures) {
+    const matches = [...text.matchAll(/^export const requiredFigures = (\[[^\r\n]*\]);$/gm)];
+    assert.equal(matches.length, 1, 'Exactly one existing figure inventory declaration');
+    assert.deepEqual(JSON.parse(matches[0][1]), ready.figureIds);
+    text = text.replace(matches[0][0], `export const requiredFigures = ${JSON.stringify(assembly.figures)};`);
+    transformations.push({ declaration: 'requiredFigures', from: ready.figureIds,
+      to: assembly.figures, basis: { path: path.resolve(assemblyFile), sha256: assemblyPin } });
+  }
+  for (const [from] of replacements) assert.ok(!text.includes(from), `Stale source scope: ${from}`);
+  return { text, transformations };
+};
+const prepared = implementation.map(name => ({ name, ...sources.get(name),
+  ...adapt(sources.get(name).text, name === 'prepare.mjs') }));
+const observer = adapt(observerBytes.toString('utf8'));
+const observerOut = `${base}/observe-tools.mjs`;
+assert.ok(!fs.existsSync(own), 'Do not overwrite or inherit an existing display directory');
+assert.ok(!fs.existsSync(observerOut), 'Do not overwrite another observer');
+fs.mkdirSync(own);
+const outputs = [], origins = [];
+for (const item of prepared) {
+  const output = `${own}/${item.name}`;
+  fs.writeFileSync(output, item.text, { flag: 'wx' });
+  const installed = entry(output);
+  origins.push({ source: item.original, sourceRecordDeclaredBytes: item.sourceRecordDeclaredBytes,
+    sourceRecordByteCountMatches: item.sourceRecordDeclaredBytes === item.original.bytes,
+    output: installed, transformations: item.transformations });
+  outputs.push(installed);
+}
+fs.writeFileSync(observerOut, observer.text, { flag: 'wx' });
+const observerOutput = entry(observerOut);
+// Parse the five prepared code files once; never import a runtime helper.
+const syntaxChecks = [];
+for (const output of [...outputs, observerOutput]) {
+  const check = spawnSync(process.execPath, ['--check', output.path], { cwd: repo, encoding: 'utf8' });
+  const result = { path: output.path, sha256: output.sha256,
+    command: [process.execPath, '--check', output.path], returncode: check.status,
+    signal: check.signal, error: check.error?.message ?? null,
+    stdout: check.stdout ?? '', stderr: check.stderr ?? '' };
+  syntaxChecks.push(result);
+  assert.equal(check.status, 0, JSON.stringify(result));
+}
+for (const origin of origins)
+  origin.syntaxExit = syntaxChecks.find(check => check.path === origin.output.path).returncode;
+for (const pin of pins) {
+  assert.equal(fs.realpathSync(pin.path), pin.realpath);
+  assert.equal(entry(pin.path).sha256, pin.sha256);
+}
+for (const item of outputs) pins.push({ ...item, realpath: fs.realpathSync(item.path) });
+assert.deepEqual(fs.readdirSync(own).sort(), [...implementation].sort(),
+  'FIRST must contain only fresh code, no inherited runtime or report');
+const originalBootstrap = entry(`${prior}/bootstrap-display.mjs`);
+const record = {
+  status: 'SCRIPTS_PREPARED_RUNTIME_NOT_EXECUTED', workdir: repo,
+  files: outputs, origins, pins, figures: assembly.figures, figureIds: assembly.figures,
+  exerciseCount: assembly.exercise_count,
+  inventoryBasis: { path: path.resolve(assemblyFile), sha256: assemblyPin, bytes: assemblyBytes.length },
+  parentReadyRequired: true,
+  parentGate: {
+    schema: 'n13-parent-display-ready@1', statusRequired: 'parentREADY',
+    textAnswerChoiceApprovalsMustBeIndependentlyPinned: true,
+    contentOpenedBeforeParentReady: false,
+    figureIdsMustMatchCurrentEmptyManifest: true,
+    noFigureReceipt: {
+      kind: 'native-adaptation-audit',
+      path: path.resolve('ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons',
+        assembly.lesson, 'adaptation.audit.json'),
+      hashRequiredFromFutureParentReady: true, independentFigureReviewInvented: false,
+    },
+    existingApprovalLoopUnchanged: true,
+  },
+  correctedPriorImplementation: { path: path.resolve(priorReadyFile),
+    sha256: priorReadyPin, bytes: priorReadyBytes.length },
+  bootstrap: { source: originalBootstrap, output: entry(`${base}/bootstrap-display.mjs`),
+    method: 'Existing bootstrap pattern; exact pinned n12 helper bytes with recorded scoped replacements only' },
+  preparationStage: { name: stageName, runner: entry(`${base}/run-stage.mjs`),
+    purpose: 'Code preparation and syntax only; no runtime or content checks',
+    ...(preservedFailurePath ? { preservedFirstFailure: entry(preservedFailurePath),
+      technicalRepair: 'Source SHA remains authoritative; record actual byte count separately from stale declared metadata' } : {}) },
+  observer: { source: observerSource, output: observerOutput,
+    transformations: observer.transformations,
+    syntaxExit: syntaxChecks.find(check => check.path === observerOutput.path).returncode },
+  syntaxChecks,
+  runtimeExecuted: false, runtimeCreated: false, inheritedRuntimeOrReport: false,
+  rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0, imagesObserved: 0,
+  sourceReviews: 0, mathReviews: 0, choiceReviews: 0, figureReviews: 0,
+  contentApprovalReruns: 0, contentApprovalsCreated: 0, contentFilesOpened: 0,
+  paidCalls: 0, generatedImages: 0, dependencyChanges: 0, dependenciesRelinkedOrInstalled: 0,
+  databaseCalls: 0, databaseWrites: 0, finalizations: 0,
+  actions: { paid: 0, image: 0, browser: 0, renderer: 0, contentReview: 0, dependencyChange: 0, DB: 0 },
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+};
+const output = `${own}/ready-FIRST.record`;
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, output: entry(output),
+  files: outputs, observer: observerOutput, bootstrap: record.bootstrap.output,
+  figureIds: assembly.figures, exerciseCount: assembly.exercise_count, actions: record.actions }));

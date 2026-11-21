@@ -1,0 +1,793 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "6b440516068ae890672eb4278bda35eec08cadfdaba9ed05e7ccb8c3507c67bf",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "recurrence-rows",
+      "source_numbers": [
+        "218"
+      ],
+      "view": {
+        "mode": "multiple",
+        "stem": "四个数列的条件如下，其中 $n$ 为整数。\n\n| 数列 | 第1项 | 从第2项起的规则 |\n| --- | --- | --- |\n| $(p_n)$ | $p_1=4$ | $p_{n+1}=p_n+12$，$n\\ge1$ |\n| $(q_n)$ | $q_1=8$ | $q_{n+1}=3q_n$，$n\\ge1$ |\n| $(r_n)$ | $r_1=10$ | $r_{n+1}=r_n/2$，$n\\ge1$ |\n| $(s_n)$ | $s_1=1$ | $s_n=s_{n-1}/n$，$n\\ge2$ |\n\n选择所有正确给出相应数列前5项的选项。",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$(p_n)$：$4,\\ 16,\\ 28,\\ 40,\\ 52$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$(q_n)$：$8,\\ 11,\\ 14,\\ 17,\\ 20$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$(s_n)$：$1,\\ 1,\\ \\frac12,\\ \\frac16,\\ \\frac1{24}$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$(r_n)$：$10,\\ 5,\\ \\frac52,\\ \\frac54,\\ \\frac58$。",
+            "figure_ids": []
+          },
+          {
+            "id": "e",
+            "text": "$(q_n)$：$8,\\ 24,\\ 72,\\ 216,\\ 648$。",
+            "figure_ids": []
+          },
+          {
+            "id": "f",
+            "text": "$(p_n)$：$4,\\ 16,\\ 16,\\ 16,\\ 16$。",
+            "figure_ids": []
+          },
+          {
+            "id": "g",
+            "text": "$(r_n)$：$10,\\ 5,\\ \\frac53,\\ \\frac5{12},\\ \\frac1{12}$。",
+            "figure_ids": []
+          },
+          {
+            "id": "h",
+            "text": "$(s_n)$：$1,\\ \\frac12,\\ \\frac16,\\ \\frac1{24},\\ \\frac1{120}$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Construct coherent early-term rows for additive, multiplicative, fixed-division and new-index-division recurrences.",
+        "source_solution": "a) Starting at 4, repeatedly add 12: 4+12=16, 16+12=28, 28+12=40, 40+12=52. After n-1 additions, a_n=4+12(n-1)=12n-8.\nb) Successive products are 8*3=24, 24*3=72, 72*3=216, 216*3=648; b_n=8*3^(n-1).\nc) Repeatedly halve: 10/2=5, 5/2, (5/2)/2=5/4, (5/4)/2=5/8; c_n=10/2^(n-1).\nd) The new indices are 2,3,4,5: 1/2, (1/2)/3=1/6, (1/6)/4=1/24, (1/24)/5=1/120. Hence d_n=1/(2*3*...*n)=1/n!, including d_1=1.",
+        "unit_reason": "A complete row retains the initial condition and every recurrence transition. Multiple selection compares four different update procedures without splitting individual terms into answer slots.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+          "The source asks for the first few terms without fixing their number; five is an explicit condition of this authored question only."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "a",
+          "d",
+          "e",
+          "h"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "Four successive additions of 12 to 4 give 16,28,40,52.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Replace multiplication by 3 with addition of 3: 8+3=11, then 14,17,20.",
+            "misconception": "Confuse multiplying the previous term by 3 with adding 3 to it."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Use the preceding index as divisor: s_2=1/1=1, s_3=1/2, s_4=(1/2)/3=1/6, s_5=(1/6)/4=1/24.",
+            "misconception": "Use s_n=s_(n-1)/(n-1), shifting every required new-term divisor down by one."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "Repeated division by 2 gives 5,5/2,5/4,5/8 without rounding.",
+            "misconception": null
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "derivation": "Successively multiply the evolving term by 3: 24,72,216,648.",
+            "misconception": null
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "derivation": "For every term after the first, compute p_1+12=4+12=16 instead of updating the preceding term.",
+            "misconception": "Keep using the initial value in place of the preceding term."
+          },
+          {
+            "option_id": "g",
+            "truth": "incorrect",
+            "derivation": "Divide by the new index rather than by 2: r_2=10/2=5, r_3=5/3, r_4=(5/3)/4=5/12, r_5=(5/12)/5=1/12.",
+            "misconception": "Transfer the changing-index division rule to the fixed-division sequence."
+          },
+          {
+            "option_id": "h",
+            "truth": "correct",
+            "derivation": "Divide successively by the new indices 2,3,4,5; the product of the divisors gives the factorial denominators.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "signed-increments",
+      "source_numbers": [
+        "219"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(p_n)$ 和 $(q_n)$ 满足\n$$p_1=1,\\quad p_{n+1}=p_n+1;\\qquad q_1=7,\\quad q_{n+1}=q_n-3,$$\n其中 $n=1,2,3,\\ldots$。哪张表正确给出两个数列各自的前5项？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $2,\\ 3,\\ 4,\\ 5,\\ 6$ |\n| $(q_n)$ | $4,\\ 1,\\ -2,\\ -5,\\ -8$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $1,\\ 2,\\ 3,\\ 4,\\ 5$ |\n| $(q_n)$ | $7,\\ 10,\\ 13,\\ 16,\\ 19$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $1,\\ 2,\\ 3,\\ 4,\\ 5$ |\n| $(q_n)$ | $7,\\ 4,\\ 1,\\ -2,\\ -5$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $1,\\ 1,\\ 1,\\ 1,\\ 1$ |\n| $(q_n)$ | $7,\\ 4,\\ 1,\\ -2,\\ -5$ |",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Construct complete five-term rows for positive and negative additive updates, including passage across zero.",
+        "source_solution": "Four successive additions of 1 to the initial value give 2,3,4,5; a_n=n.\n7-3=4, 4-3=1, 1-3=-2, -2-3=-5; a_n=7-3(n-1).",
+        "unit_reason": "The response is one complete two-row table. It compares the direction of two additive recurrences and tests retaining the initial term and continuing subtraction through zero.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "c"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Perform an update before recording the first position: p begins at p_2=2 and q at q_2=4. Continue four more updates to obtain the displayed rows.",
+            "misconception": "Exclude both stated initial terms and label terms 2 through 6 as the first five."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "The p row follows its rule. For q, use q_(n+1)=q_n+3, producing 10,13,16,19 after 7.",
+            "misconception": "Replace subtraction of 3 with addition of 3."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "Include each initial term, then apply four additions of 1 to p and four subtractions of 3 to q.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "The q row follows its rule. Replace p_n+1 with p_n*1, so p stays equal to 1 at every step.",
+            "misconception": "Interpret adding 1 as multiplying by 1."
+          }
+        ]
+      }
+    },
+    {
+      "id": "signed-scaling",
+      "source_numbers": [
+        "219"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(p_n)$ 和 $(q_n)$ 满足\n$$p_1=-5,\\quad p_{n+1}=2p_n;\\qquad q_1=75,\\quad q_{n+1}=0.1q_n,$$\n其中 $n=1,2,3,\\ldots$。哪张表正确给出两个数列各自的前5项？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $-5,\\ 10,\\ -20,\\ 40,\\ -80$ |\n| $(q_n)$ | $75,\\ 7.5,\\ 0.75,\\ 0.075,\\ 0.0075$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $-5,\\ -10,\\ -20,\\ -40,\\ -80$ |\n| $(q_n)$ | $75,\\ 7.5,\\ 0.75,\\ 0.075,\\ 0.0075$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $-5,\\ -3,\\ -1,\\ 1,\\ 3$ |\n| $(q_n)$ | $75,\\ 7.5,\\ 0.75,\\ 0.075,\\ 0.0075$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "| 数列 | 前5项 |\n| --- | --- |\n| $(p_n)$ | $-5,\\ -10,\\ -20,\\ -40,\\ -80$ |\n| $(q_n)$ | $75,\\ 750,\\ 7500,\\ 75000,\\ 750000$ |",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Construct five-term rows under positive scaling factors, preserving a negative sign and exact decimal scaling.",
+        "source_solution": "Multiplication by positive 2 preserves the negative sign at each step: -5*2=-10, then -20,-40,-80; a_n=-5*2^(n-1).\n0.1=1/10, so divide each preceding term by 10. The exact decimals are 7.5,0.75,0.075,0.0075; a_n=75/10^(n-1).",
+        "unit_reason": "A complete paired table compares growth in negative magnitude with contraction of a positive decimal. The unit requires four consistent updates in each row rather than isolated sign or decimal clicks.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "b"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Use multiplier -2 instead of 2 for p: -5*(-2)=10, 10*(-2)=-20, then 40,-80. Apply the correct tenth scaling to q.",
+            "misconception": "Make the multiplier negative because the initial term is negative, causing alternating signs."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "A positive factor 2 retains the negative sign; factor 0.1 divides each positive term by 10. Both rows include their initial values and exactly four updates.",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Replace 2p_n with p_n+2, giving -3,-1,1,3 after -5. The q row uses its stated multiplier.",
+            "misconception": "Confuse multiplication by 2 with addition of 2."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "The p row follows its rule. For q, divide by 0.1 instead of multiplying by it, so each term is multiplied by 10.",
+            "misconception": "Use the reciprocal scaling factor by reversing multiplication and division."
+          }
+        ]
+      }
+    },
+    {
+      "id": "two-cycles",
+      "source_numbers": [
+        "219"
+      ],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $(p_n)$ 和 $(q_n)$ 满足\n$$p_1=\\frac16,\\quad p_{n+1}=-p_n;\\qquad q_1=3,\\quad q_{n+1}=\\frac1{q_n},$$\n其中 $n=1,2,3,\\ldots$。选择所有正确给出相应数列前5项的选项。",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$(p_n)$：$\\frac16,\\ -\\frac16,\\ \\frac16,\\ -\\frac16,\\ \\frac16$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$(q_n)$：$3,\\ 1,\\ \\frac13,\\ \\frac19,\\ \\frac1{27}$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$(p_n)$：$\\frac16,\\ -6,\\ \\frac16,\\ -6,\\ \\frac16$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$(q_n)$：$3,\\ \\frac13,\\ 3,\\ \\frac13,\\ 3$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Construct complete early-term cycles for negation and reciprocation, preserving magnitude or reciprocal pairing.",
+        "source_solution": "Negation flips the sign at every step without changing magnitude; a_n=(-1)^(n-1)/6.\nThe reciprocal of 3 is 1/3; the reciprocal of 1/3 is 3. Repeating yields a two-cycle, and every denominator is nonzero.",
+        "unit_reason": "Multiple selection compares two distinct self-inverse updates through complete five-term rows. Each row must respect every transition; the task is not one response per sign or fraction.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "a",
+          "d"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "Repeated negation alternates the sign and keeps the magnitude 1/6 unchanged.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Replace taking the reciprocal of the current term with dividing the current term by the initial value 3: 3/3=1, then 1/3,1/9,1/27.",
+            "misconception": "Treat reciprocal formation as repeated scaling by 1/3 rather than applying 1/q_n."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Read -p_n as -1/p_n: -(1/(1/6))=-6, then -(1/(-6))=1/6; the mistaken negative-reciprocal update repeats.",
+            "misconception": "Insert a reciprocal into the negation rule."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "The reciprocal of 3 is 1/3, and the reciprocal of 1/3 is 3. Neither value is zero, so all updates are defined.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "two-step-sum",
+      "source_numbers": [
+        "220"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(c_n)$ 满足\n$$c_1=-1,\\quad c_2=1,\\quad c_{n+2}=c_n+c_{n+1}\\quad(n=1,2,3,\\ldots).$$\n哪个选项正确给出这个数列的前8项？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$-1,\\ 1,\\ 2,\\ 4,\\ 8,\\ 16,\\ 32,\\ 64$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$-1,\\ 1,\\ -2,\\ 3,\\ -5,\\ 8,\\ -13,\\ 21$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$-1,\\ 1,\\ 0,\\ -1,\\ -2,\\ -3,\\ -4,\\ -5$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$-1,\\ 1,\\ 0,\\ 1,\\ 1,\\ 2,\\ 3,\\ 5$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Construct a complete prefix of an order-two additive recurrence with both initial terms.",
+        "source_solution": "Retain -1 and 1. Then c_3=-1+1=0, c_4=1+0=1, c_5=0+1=1, c_6=1+1=2, c_7=1+2=3, c_8=2+3=5.",
+        "unit_reason": "One eight-term prefix tests a moving pair of previous terms, including cancellation, repeated values and later propagation. It cannot be settled by treating each requested term as an independent blank.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+          "The source asks for the first few terms without fixing their number; eight is an explicit condition of this authored question only."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "d"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Keep c_1,c_2, but replace c_n+c_(n+1) with 2c_(n+1). Starting from c_2=1, repeatedly double to obtain 2,4,8,16,32,64.",
+            "misconception": "Use the newest term twice rather than the two consecutive preceding terms."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Use c_(n+2)=c_n-c_(n+1): -1-1=-2, 1-(-2)=3, -2-3=-5, 3-(-5)=8, -5-8=-13, 8-(-13)=21.",
+            "misconception": "Replace addition of the two previous terms with older-minus-newer subtraction."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Keep the older input frozen at c_1=-1, using c_(k+1)=c_1+c_k for k>=2. This gives 0,-1,-2,-3,-4,-5 after the initial pair.",
+            "misconception": "Fail to advance the older member of the two-term recurrence window."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "After -1,1, add each moving pair: -1+1=0, 1+0=1, 0+1=1, 1+1=2, 1+2=3, 2+3=5.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "two-step-difference",
+      "source_numbers": [
+        "220"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(c_n)$ 满足\n$$c_1=13,\\quad c_2=6,\\quad c_{n+2}=c_n-c_{n+1}\\quad(n=1,2,3,\\ldots).$$\n哪个选项正确给出这个数列的前8项？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$13,\\ 6,\\ -7,\\ -13,\\ -6,\\ 7,\\ 13,\\ 6$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$13,\\ 6,\\ 7,\\ -1,\\ 8,\\ -9,\\ 17,\\ -26$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$13,\\ 6,\\ 7,\\ 1,\\ 6,\\ 5,\\ 1,\\ 4$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$13,\\ 6,\\ 19,\\ 25,\\ 44,\\ 69,\\ 113,\\ 182$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Construct a complete prefix of an order-two subtraction recurrence, preserving operand order and negative values.",
+        "source_solution": "c_3=13-6=7, c_4=6-7=-1, c_5=7-(-1)=8, c_6=-1-8=-9, c_7=8-(-9)=17, c_8=-9-17=-26.",
+        "unit_reason": "Subtraction is not commutative, unlike the other order-two recurrence. One complete eight-term row captures the older-minus-newer order and the consequences of subtracting negative terms.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+          "The source asks for the first few terms without fixing their number; eight is an explicit condition of this authored question only."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "b"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Reverse the subtraction to c_(n+2)=c_(n+1)-c_n: 6-13=-7, -7-6=-13, -13-(-7)=-6, -6-(-13)=7, 7-(-6)=13, 13-7=6.",
+            "misconception": "Subtract the older term from the newer term instead of the newer from the older."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "Compute older minus newer in a moving pair: 13-6=7, 6-7=-1, 7-(-1)=8, -1-8=-9, 8-(-9)=17, -9-17=-26.",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Use absolute differences: |13-6|=7, |6-7|=1, |7-1|=6, |1-6|=5, |6-5|=1, |5-1|=4.",
+            "misconception": "Force each difference to be nonnegative by inserting an absolute value."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Use addition instead: 13+6=19, 6+19=25, 19+25=44, 25+44=69, 44+69=113, 69+113=182.",
+            "misconception": "Apply the two-term addition recurrence in place of the stated difference recurrence."
+          }
+        ]
+      }
+    },
+    {
+      "id": "prefix-and-formula",
+      "source_numbers": [
+        "221"
+      ],
+      "view": {
+        "mode": "multiple",
+        "stem": "四个数列的条件如下，所有下标均从1开始，递推式对整数 $n\\ge1$ 成立。\n\n| 数列 | 第1项 | 递推式 |\n| --- | --- | --- |\n| $(p_n)$ | $p_1=10$ | $p_{n+1}=p_n+10$ |\n| $(q_n)$ | $q_1=10$ | $q_{n+1}=10q_n$ |\n| $(r_n)$ | $r_1=2$ | $r_{n+1}=r_n+2$ |\n| $(s_n)$ | $s_1=2$ | $s_{n+1}=2s_n$ |\n\n选择所有同时正确给出相应数列前5项和通项公式的选项。每个通项公式均要求对所有整数 $n\\ge1$ 成立。",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$(p_n)$：前5项为 $10,\\ 20,\\ 30,\\ 40,\\ 50$；通项为 $p_n=10n$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$(q_n)$：前5项为 $10,\\ 20,\\ 30,\\ 40,\\ 50$；通项为 $q_n=10n$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$(r_n)$：前5项为 $2,\\ 4,\\ 8,\\ 16,\\ 32$；通项为 $r_n=2^n$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$(s_n)$：前5项为 $2,\\ 4,\\ 8,\\ 16,\\ 32$；通项为 $s_n=2^n$。",
+            "figure_ids": []
+          },
+          {
+            "id": "e",
+            "text": "$(q_n)$：前5项为 $10,\\ 100,\\ 1000,\\ 10000,\\ 100000$；通项为 $q_n=10^n$。",
+            "figure_ids": []
+          },
+          {
+            "id": "f",
+            "text": "$(p_n)$：前5项为 $20,\\ 30,\\ 40,\\ 50,\\ 60$；通项为 $p_n=10(n+1)$。",
+            "figure_ids": []
+          },
+          {
+            "id": "g",
+            "text": "$(r_n)$：前5项为 $2,\\ 4,\\ 6,\\ 8,\\ 10$；通项为 $r_n=2n$。",
+            "figure_ids": []
+          },
+          {
+            "id": "h",
+            "text": "$(s_n)$：前5项为 $1,\\ 2,\\ 4,\\ 8,\\ 16$；通项为 $s_n=2^{n-1}$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "For every supplied recurrence, give both early terms and a general formula, distinguishing additive from multiplicative growth and respecting index 1.",
+        "source_solution": "a) Starting at 10, n-1 increments of 10 give 10+10(n-1)=10n. At n=1 this is 10; replacing n with n+1 increases it by 10.\nb) There are n-1 multiplications after the initial factor 10: 10*10^(n-1)=10^n. At n=1 the formula gives 10, and successive terms have ratio 10.\nc) 2+2(n-1)=2n; the first five terms are 2,4,6,8,10. The formula has initial value 2 and constant successive difference 2.\nd) 2*2^(n-1)=2^n; the first five terms are 2,4,8,16,32. The initial value is 2 and each successive ratio is 2.",
+        "unit_reason": "Each response is a complete prefix-plus-formula pair. Multiple selection compares all four initial-value rules in one coherent task; matching only an early coincidence, particularly 2,4, does not settle a formula.",
+        "concept_blocks": [
+          7,
+          8,
+          9,
+          10
+        ],
+        "limitations": [
+          "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+          "Selecting a prefix and formula does not demonstrate independently constructing a general term.",
+          "The source asks for the first few terms without fixing their number; five is an explicit condition of this authored question only."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "a",
+          "d",
+          "e",
+          "g"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "Starting at 10, n-1 increments of 10 give 10+10(n-1)=10n. Its first five values are exactly the displayed prefix.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Replace q_(n+1)=10q_n by q_(n+1)=q_n+10. Starting at 10 gives the displayed arithmetic prefix and q_n=10+10(n-1)=10n.",
+            "misconception": "Treat multiplying by 10 as adding 10 when extending the sequence and deriving its formula."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Replace r_(n+1)=r_n+2 by r_(n+1)=2r_n. This yields 2,4,8,16,32 and 2*2^(n-1)=2^n.",
+            "misconception": "Infer doubling from the common first two values 2,4 instead of respecting the additive recurrence."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "The initial factor 2 followed by n-1 doublings gives 2*2^(n-1)=2^n; evaluation at n=1,...,5 gives 2,4,8,16,32.",
+            "misconception": null
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "derivation": "The initial factor 10 followed by n-1 multiplications by 10 gives 10*10^(n-1)=10^n and the displayed first five values.",
+            "misconception": null
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "derivation": "Count an increment even at the first position: p_n=10+10n=10(n+1), giving 20,30,40,50,60 at indices 1 through 5.",
+            "misconception": "Apply n increments after the supplied first value instead of n-1, shifting both prefix and formula."
+          },
+          {
+            "option_id": "g",
+            "truth": "correct",
+            "derivation": "Starting at 2, n-1 additions of 2 give 2+2(n-1)=2n and the displayed first five terms.",
+            "misconception": null
+          },
+          {
+            "option_id": "h",
+            "truth": "incorrect",
+            "derivation": "Count the n-1 doublings but omit the initial factor 2. The resulting formula 2^(n-1) gives 1,2,4,8,16.",
+            "misconception": "Use a geometric sequence formula with implicit initial value 1 instead of the stated initial value 2."
+          }
+        ]
+      }
+    },
+    {
+      "id": "complete-paired-solution-sets",
+      "source_numbers": [
+        "222"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "求下面两个方程组各自的全部实数解。有序对按 $(x,y)$ 的顺序书写。\n\n$$\\text{方程组 I：}\\quad\\begin{cases}x^2-2y^2=14,\\\\2x-3y=1.\\end{cases}$$\n$$\\text{方程组 II：}\\quad\\begin{cases}3xy-2y^2=30,\\\\3x-2y=10.\\end{cases}$$\n\n哪张表正确给出两个方程组各自的完整解集？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "| 方程组 | 完整解集 |\n| --- | --- |\n| I | $\\{(8,5)\\}$ |\n| II | $\\{(\\frac{16}{3},3)\\}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "| 方程组 | 完整解集 |\n| --- | --- |\n| I | $\\{(8,-11),(-16,5)\\}$ |\n| II | $\\{(\\frac{16}{3},3)\\}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "| 方程组 | 完整解集 |\n| --- | --- |\n| I | $\\{(8,5),(-16,-11)\\}$ |\n| II | $\\{(\\frac{16}{3},3)\\}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "| 方程组 | 完整解集 |\n| --- | --- |\n| I | $\\{(8,5),(-16,-11)\\}$ |\n| II | $\\{(\\frac43,3)\\}$ |",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Solve both full systems and retain every correctly paired solution, contrasting quadratic elimination with a shared-factor reduction.",
+        "source_solution": "a) The linear equation gives x=(1+3y)/2. Substitution yields (1+6y+9y^2)/4-2y^2=14, hence y^2+6y-55=0=(y-5)(y+11). Therefore y=5 or y=-11. Their corresponding x values are 8 and -16 respectively.\nb) Factor the first equation as y(3x-2y)=30. The second equation replaces the factor by 10, so 10y=30 and y=3. Then 3x-6=10 gives x=16/3.\nThe linear equation determines exactly one x for each y, substitution is reversible, and the factored quadratic has exactly these two roots. There are no lost or extra pairs.\nThe factor 3x-2y is the nonzero constant 10, so y is forced to 3 and the remaining linear equation forces x=16/3. No additional branch exists.",
+        "unit_reason": "One table of full ordered-pair sets requires complete solutions of both systems. It exposes completeness, coordinate pairing and the distinct reduction procedures without asking separate questions for x, y or each root.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selecting complete solution sets does not demonstrate independently producing the substitution, factorization or completeness argument."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "c"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "For I, correctly factor (y-5)(y+11)=0 but retain only y=5, giving x=8 and the singleton set. For II, the shared factor gives y=3,x=16/3.",
+            "misconception": "Discard the negative root y=-11 although the system imposes no positivity restriction."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Obtain the separate coordinate lists x=8,-16 and y=5,-11 for I, then reverse only the y list when assembling pairs, yielding (8,-11),(-16,5). Solve II by its shared factor.",
+            "misconception": "Treat the two coordinate sets as independently pairable and lose the correspondence imposed by 2x-3y=1."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "I: x=(1+3y)/2 gives y^2+6y-55=(y-5)(y+11)=0, so the complete pairs are (8,5),(-16,-11). II: y(3x-2y)=30 and 3x-2y=10 force y=3 and x=16/3, with no other branch.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Solve I correctly. For II, the factorization correctly gives y=3, but move -2y to the other side without changing sign: 3x=10-2y=4, yielding x=4/3.",
+            "misconception": "After determining y, keep the wrong sign when rearranging 3x-2y=10."
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "218",
+      "question_ids": [
+        "recurrence-rows"
+      ],
+      "omitted_tasks": [
+        "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+        "The source asks for the first few terms without fixing their number; five is an explicit condition of this authored question only."
+      ],
+      "reason": "All four verbal recurrences are represented by complete five-term candidates. Production and the unspecified source prefix length remain explicit limitations; no mathematical subtask is deferred."
+    },
+    {
+      "source_number": "219",
+      "question_ids": [
+        "signed-increments",
+        "signed-scaling",
+        "two-cycles"
+      ],
+      "omitted_tasks": [
+        "Selecting a complete prefix does not demonstrate independently writing the sequence."
+      ],
+      "reason": "All six exactly-five-term tasks are covered in coherent pairs: signed increments, positive scaling, and self-inverse operations. The distinction between those update families determines the three response units, not the six printed subpart letters."
+    },
+    {
+      "source_number": "220",
+      "question_ids": [
+        "two-step-sum",
+        "two-step-difference"
+      ],
+      "omitted_tasks": [
+        "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+        "The source asks for the first few terms without fixing their number; eight is an explicit condition of this authored question only."
+      ],
+      "reason": "Both initial conditions and all six subsequent transitions are visible in each eight-term candidate. Addition and order-sensitive subtraction warrant distinct complete-prefix questions; eight is newly specified, not attributed to the source."
+    },
+    {
+      "source_number": "221",
+      "question_ids": [
+        "prefix-and-formula"
+      ],
+      "omitted_tasks": [
+        "Selecting a complete prefix does not demonstrate independently writing the sequence.",
+        "Selecting a prefix and formula does not demonstrate independently constructing a general term.",
+        "The source asks for the first few terms without fixing their number; five is an explicit condition of this authored question only."
+      ],
+      "reason": "All four tasks include both a five-term prefix and a general formula for every integer n>=1. A single multiple-selection unit compares addition, multiplication and index origin without omitting either early terms or formulas."
+    },
+    {
+      "source_number": "222",
+      "question_ids": [
+        "complete-paired-solution-sets"
+      ],
+      "omitted_tasks": [
+        "Independent written substitution, factorization and proof that no further ordered-pair solutions exist are not elicited by selecting a table."
+      ],
+      "reason": "Both full real solution sets are represented in one paired table, including both roots for the first system and the unique pair for the second. No root, equation or coordinate-pairing task is deferred."
+    }
+  ]
+}

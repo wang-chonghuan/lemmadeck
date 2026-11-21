@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n13-0789/display-FIRST';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)),
+  bytes: fs.statSync(file).size, realpath: fs.realpathSync(file) });
+const first = entry(`${base}/ready-FIRST.record`);
+assert.equal(first.sha256, '6500c58925bf5517340f7cc160330fb3aadd226bc9a7191359deab0c6ab4943b');
+const ready = JSON.parse(fs.readFileSync(first.path));
+const run = entry(`${base}/run.mjs`);
+const original = ready.files.find(item => item.path === run.path);
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n13-display-code-and-supervision-first-0789/retention.record';
+const retained = JSON.parse(fs.readFileSync(evidence)).entries.find(item => item.sha256 === original.sha256);
+assert.ok(retained);
+assert.equal(entry(retained.path).sha256, original.sha256);
+const expected = fs.readFileSync(retained.path, 'utf8')
+  .replaceAll('headless: false', 'headless: true')
+  .replace("path.join(OWN, 'ready-FIRST.record')", "path.join(OWN, 'ready-headless1.record')");
+assert.equal(fs.readFileSync(run.path, 'utf8'), expected,
+  'Only headless launch/report and the affected readiness filename may change');
+ready.files = ready.files.map(item => item.path === run.path ? run : item);
+ready.pins = ready.pins.map(item => item.path === run.path ? run : item);
+ready.historicalImplementation = [original];
+ready.headlessAdjustment = {
+  originalReadiness: first, originalRuntimeCode: { ...original, retained_path: retained.path },
+  currentRuntimeCode: run, rendererRuns: 0, browserRuns: 0,
+  changedAssertions: 0, formalHeadedAppAcceptance: false,
+};
+const file = `${base}/ready-headless1.record`;
+fs.writeFileSync(file, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(entry(file)));

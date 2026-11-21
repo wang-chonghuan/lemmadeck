@@ -1,0 +1,100 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [delivered] = process.argv.slice(2);
+assert.match(delivered, /^[a-f0-9]{40}$/u);
+const prior = '.tmp/resume182-6-8a-n13-0789';
+const next = '.tmp/resume182-6-8a-n14-0789';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: sha(bytes), bytes: bytes.length };
+};
+const read = file => JSON.parse(fs.readFileSync(file));
+const receiptNames = ['delivery-check-FIRST', 'delivery-commit-FIRST',
+  'delivery-push-FIRST', 'delivery-remote-confirm-FIRST'];
+for (const name of receiptNames) {
+  assert.equal(read(`${prior}/stages/${name}/receipt.record`).returncode, 0);
+}
+assert.equal(fs.readFileSync(`${prior}/stages/delivery-remote-confirm-FIRST/stdout.txt`, 'utf8').trim(),
+  `${delivered}\trefs/heads/codex/STEMROBIN-182-textbooks`);
+const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' });
+assert.equal(head.status, 0);
+assert.equal(head.stdout.trim(), delivered);
+const offline = read(`${root}/editions/modern-us-neutral/lessons/alg8-c3-s1-n13/offline-display.json`);
+assert.equal(offline.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(offline.coverage.pending, 0);
+const approvalFile = `${prior}/source-review-FIRST/result-affected-glyph1.record`;
+assert.equal(entry(approvalFile).sha256,
+  'e156f32cc2ab81c3699d9b03f07a51c69e23fb80c7a4b9b5d224ac9821f688c0');
+const approval = read(approvalFile);
+assert.equal(approval.status, 'SOURCE_PASS');
+const files = ['page.md', 'page.json', 'audit.json'].map(name => {
+  const bound = entry(`${root}/pages/0088/${name}`);
+  assert.equal(approval.bindings.find(item => item.path === bound.path)?.sha256, bound.sha256);
+  return bound;
+});
+const page = read(`${root}/pages/0088/page.json`);
+const headingIndex = page.blocks.findIndex(block => block.kind === 'h3'
+  && /^14\.\s/u.test(block.lines.join('\n')));
+assert.equal(headingIndex, 1);
+assert.equal(page.blocks[0].kind, 'h2');
+const tocFile = 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json';
+const objects = [];
+const visit = value => {
+  if (!value || typeof value !== 'object') return;
+  if (!Array.isArray(value)) objects.push(value);
+  for (const child of Object.values(value)) visit(child);
+};
+visit(read(tocFile));
+const target = objects.find(item => item.id === 'alg8-c3-s2-n14');
+const right = objects.find(item => item.id === 'alg8-c3-s2-n15');
+assert.equal(target.printedNumber, 14);
+assert.equal(right.printedNumber, 15);
+assert.equal(page.meta.printed_page, target.page);
+const offset = page.meta.page - page.meta.printed_page;
+const newPages = Array.from({ length: right.page + offset - page.meta.page },
+  (_, index) => page.meta.page + index + 1);
+assert.deepEqual(newPages, [89, 90, 91]);
+for (const physical of newPages) {
+  assert.ok(!fs.existsSync(`${root}/pages/${String(physical).padStart(4, '0')}/page.json`));
+}
+assert.ok(!fs.existsSync(`${root}/lessons/${target.id}`));
+assert.ok(!fs.existsSync(next), 'Do not repeat a source continuation');
+fs.mkdirSync(next);
+const copied = ['run-stage.mjs', 'retain.mjs'].map(name => {
+  const file = `${next}/${name}`;
+  const code = fs.readFileSync(`${prior}/${name}`, 'utf8')
+    .replaceAll('resume182-6-8a-n13-0789', 'resume182-6-8a-n14-0789')
+    .replaceAll('resume182-6-n13-', 'resume182-6-n14-')
+    .replaceAll('alg8-c3-s1-n13', target.id);
+  fs.writeFileSync(file, code, { flag: 'wx' });
+  return { source: entry(`${prior}/${name}`), output: entry(file) };
+});
+const record = {
+  status: 'NEXT_SOURCE_READY_FOR_NEW_PAGE_PREPARATION_NOT_CONTENT_APPROVAL',
+  time: new Date().toISOString(), ticket: 'STEMROBIN-182', book: '8a',
+  lesson: target.id, workdir: repo, copied,
+  deliveredPriorLesson: { commit: delivered,
+    receipts: receiptNames.map(name => entry(`${prior}/stages/${name}/receipt.record`)) },
+  reusedPage88: { approval: entry(approvalFile), files,
+    sourceWork: path.resolve(`${prior}/source/8a/pages/0088`),
+    sourcePixelsAndRecognitionRerun: false, nativeFinalizationRerun: false },
+  toc: { file: entry(tocFile), target, next: right, offset },
+  scope: { start: 'p0088#2', sectionAncestor: 'p0088#1', newPhysicalPages: newPages,
+    rightBoundary: 'Locate exact unit15 heading on physical91 and exclude it.',
+    preserveNextLessonFragments: true, promoteOnlyCompleteN14: true },
+  previousFailuresLocksBackupsPendingMessagesAndUnknownUsagePreserved: true,
+  unknownHistoricalBytesRecovered: false, parentImageViews: 0,
+  createOrAttachCalls: 0, databaseWrites: 0, merges: 0, deployments: 0,
+  finish: 'review', hostTokens: 'unknown', totalCost: 'unknown',
+};
+const file = `${next}/bootstrap.record`;
+fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, output: entry(file), newPages }));

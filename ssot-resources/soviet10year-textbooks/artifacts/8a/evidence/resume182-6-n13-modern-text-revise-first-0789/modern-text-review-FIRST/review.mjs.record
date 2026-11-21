@@ -1,0 +1,217 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck'
+assert.equal(process.cwd(), root)
+const scope = path.join(root, '.tmp/resume182-6-8a-n13-0789')
+const lessonId = 'alg8-c3-s1-n13'
+const tools = path.join(root, '.claude/skills/ld-s10y-lesson/tools')
+const book = path.join(scope, 'assembly-AFFECTED-glyph1/artifacts/8a')
+const candidate = path.join(scope, 'modern-FIRST/adapt/8a/modern-us-neutral/lessons', lessonId)
+const reads = new Map()
+const checks = []
+const digest = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex')
+const equal = (left, right) => {
+  try { assert.deepEqual(left, right); return true } catch { return false }
+}
+function read(filename) {
+  const bytes = fs.readFileSync(filename)
+  reads.set(filename, bytes)
+  return {
+    binding: { path: filename, sha256: digest(bytes), bytes: bytes.length },
+    data: JSON.parse(bytes),
+  }
+}
+function check(name, actual) {
+  checks.push({ name, pass: Boolean(actual) })
+}
+function pinned(filename, expected) {
+  const value = read(filename)
+  check(`${path.relative(scope, filename)} hash pinned`, value.binding.sha256 === expected)
+  return value
+}
+const source = pinned(
+  path.join(scope, 'source-review-FIRST/result-affected-glyph1.record'),
+  'e156f32cc2ab81c3699d9b03f07a51c69e23fb80c7a4b9b5d224ac9821f688c0',
+)
+const author = pinned(
+  path.join(scope, 'modern-author-FIRST/result.record'),
+  'c7fc94f8633af2c1614b479f76c6cdc23be3b81b2528af18276a26e7dcdaf16e',
+)
+const anchors = pinned(
+  path.join(scope, 'modern-author-FIRST/section-breaks.record'),
+  '8b273a90f767b06bde1162a8e7408cca2c8979edfcf4662cd78ebe64bf1d6578',
+)
+const rawLesson = read(path.join(book, 'lessons', lessonId, 'lesson.json'))
+const rawExercises = read(path.join(book, 'lessons', lessonId, 'exercises.json'))
+const lesson = read(path.join(candidate, 'lesson.template.json'))
+const exercises = read(path.join(candidate, 'exercises.template.json'))
+const profile = read(path.join(root, '.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json'))
+check('reused source decision is SOURCE_PASS', source.data.status === 'SOURCE_PASS')
+for (const raw of [rawLesson, rawExercises]) {
+  check(`approved raw binding ${path.basename(raw.binding.path)}`, source.data.bindings.some(
+    (entry) => equal(entry, raw.binding),
+  ))
+}
+check('latest lesson author hash', equal(anchors.data.after, lesson.binding))
+check('latest exercises author hash', author.data.outputs.some((entry) => equal(entry, exercises.binding)))
+check('latest anchors copied exactly', equal(anchors.data.selected, lesson.data.section_breaks))
+check('lesson source snapshot exact', equal(lesson.data.source.data, rawLesson.data))
+check('exercise source snapshot exact', equal(exercises.data.source.data, rawExercises.data))
+for (const [modern, raw, filename] of [
+  [lesson.data, rawLesson, 'lesson.json'],
+  [exercises.data, rawExercises, 'exercises.json'],
+]) {
+  check(`${filename} source identity`, modern.source.path === `lessons/${lessonId}/${filename}`
+    && modern.source.sha256 === raw.binding.sha256)
+  check(`${filename} edition`, modern.edition === 'modern-us-neutral')
+}
+check('lesson schema', lesson.data.schema === 'ld-s10y-lesson/edition-lesson@1')
+check('exercise schema', exercises.data.schema === 'ld-s10y-lesson/edition-exercises@1')
+for (const [key, value] of Object.entries(rawLesson.data)) {
+  if (key !== 'prose') check(`lesson identity ${key}`, equal(lesson.data[key], value))
+}
+check('15 raw and modern prose objects', rawLesson.data.prose.length === 15 && lesson.data.prose.length === 15)
+check('5 raw and modern exercises', rawExercises.data.count === 5 && exercises.data.count === 5
+  && rawExercises.data.exercises.length === 5 && exercises.data.exercises.length === 5)
+check('exercise order 218-222', equal(exercises.data.exercises.map((item) => item.number),
+  ['218', '219', '220', '221', '222']))
+check('no source-bound math correction', equal(lesson.data.errata, []))
+
+const ordinal = 'abcdefghijklmnopqrstuvwxyz'
+const cyrillic = '\u0430\u0431\u0432\u0433\u0434\u0435'
+const formulas = (text) => [...text.matchAll(/\$([^$]+)\$/gs)].map((match) => match[1])
+function outside(text) { return text.replace(/\$[^$]+\$/gs, '') }
+function latinize(text) {
+  return text.split(/(\$[^$]+\$)/gs).map((part) => part.startsWith('$') ? part
+    : part.replace(/(?<![A-Za-z0-9_\u0400-\u04ff])([\u0430-\u0435])(?=\))/gu,
+      (label) => ordinal[cyrillic.indexOf(label)])).join('')
+}
+const squeeze = (text) => text.replace(/\s/gu, '')
+function metadata(item, omitted) {
+  return Object.fromEntries(Object.entries(item).filter(([key]) => !omitted.includes(key)))
+}
+const itemReports = []
+for (const [kind, rawItems, modernItems] of [
+  ['prose', rawLesson.data.prose, lesson.data.prose],
+  ['exercise', rawExercises.data.exercises, exercises.data.exercises],
+]) {
+  rawItems.forEach((raw, index) => {
+    const modern = modernItems[index]
+    const id = kind === 'prose' ? `prose[${index}]` : `exercise ${raw.number}`
+    const ignored = ['text', 'lines', 'source_text', 'changes', 'numeric_changes', 'historical_entities']
+    check(`${id} metadata/refs/groups`, equal(metadata(raw, ignored), metadata(modern, ignored)))
+    check(`${id} exact source_text`, modern.source_text === raw.text)
+    check(`${id} complete text whitespace/ordinal only`, squeeze(latinize(raw.text)) === squeeze(modern.text))
+    check(`${id} exact formula literals in order`, equal(formulas(raw.text), formulas(modern.text)))
+    check(`${id} digits and numbers unchanged`, equal(raw.text.match(/\d+/g), modern.text.match(/\d+/g)))
+    check(`${id} no extra changes`, modern.changes.every((change) => ['layout', 'enum-latin'].includes(change)))
+    check(`${id} no numeric/culture exception`, equal(modern.numeric_changes, [])
+      && equal(modern.historical_entities, []))
+    check(`${id} no Cyrillic in actual modern text`, !/[\u0400-\u04ff]/u.test(modern.text))
+    check(`${id} CJK punctuation outside math`, formulas(modern.text).every((formula) => !/[、，；。？！：]/u.test(formula)))
+    const labels = [...outside(modern.text).matchAll(/(?<![a-z])([a-f])\)/g)].map((match) => match[1])
+    if (kind === 'exercise') {
+      check(`${id} lines agree with text`, modern.lines.join('\n') === modern.text)
+      check(`${id} prefix/each part own line`, modern.lines.length === labels.length + 1
+        && !/^[a-f]\)/.test(modern.lines[0])
+        && modern.lines.slice(1).every((line, part) => line.startsWith(`${ordinal[part]}) `)))
+      check(`${id} ordinal natural order`, equal(labels, [...ordinal.slice(0, labels.length)]))
+    }
+    itemReports.push({
+      id, refs: raw.source_refs ?? raw.pages, formulaCount: formulas(raw.text).length,
+      labels, fullTextWhitespaceAndOrdinalOnly: squeeze(latinize(raw.text)) === squeeze(modern.text),
+    })
+  })
+}
+const ex221 = exercises.data.exercises.find((item) => item.number === '221')
+check('221 already source-correct u, 13 occurrences, no v',
+  (ex221.text.match(/u_/g) ?? []).length === 13 && !/v_/.test(ex221.text))
+check('zero text figure refs and inventory', lesson.data.figures.length === 0
+  && exercises.data.exercises.every((item) => item.figures.length === 0 && item.figure_refs.length === 0))
+
+const flowCommand = ['node', path.join(tools, 'prose_flow.mjs'), '--json', lesson.binding.path]
+const flow = spawnSync(flowCommand[0], flowCommand.slice(1), { cwd: root, encoding: 'utf8' })
+check('native prose_flow exit 0 and empty stderr', flow.status === 0 && flow.stderr === '')
+const flowData = JSON.parse(flow.stdout)
+check('two actual concept breaks from native stdout', equal(flowData.resolvedBreaks, [7, 11])
+  && flowData.boundaries.length === 2
+  && equal(flowData.boundaries.map(({ before, after }) => ({ before, after })), lesson.data.section_breaks))
+const helperCode = `
+import json, sys
+from pathlib import Path
+sys.path.insert(0, sys.argv[1])
+import edition
+p = json.load(sys.stdin)
+errors = []
+layout_differences = []
+book = Path(p["book"])
+for key, filename in (("lesson", "lesson.json"), ("exercises", "exercises.json")):
+    errors += edition.validate_source(book, p[key]["source"], book / "lessons" / p["id"] / filename, key)
+forbidden = p["profile"]["forbidden_terms"] + p["profile"]["forbidden_person_names"]
+for key, raw_key, field in (("lesson", "rawLesson", "prose"), ("exercises", "rawExercises", "exercises")):
+    for i, (raw, modern) in enumerate(zip(p[raw_key][field], p[key][field])):
+        label = f"{key}.{field}[{i}]"
+        errors += edition.validate_text(raw["text"], modern["text"], modern["changes"],
+            modern["numeric_changes"], label, forbidden, modern["historical_entities"],
+            math_corrections=[], source_lines=raw.get("lines") if key == "exercises" else None)
+        if key == "exercises":
+            errors += edition.validate_numbered_subpart_layout(modern["text"])
+        elif edition.normalize_prose_layout(modern["text"]) != modern["text"]:
+            layout_differences.append({"label": label, "before": modern["text"],
+                "after": edition.normalize_prose_layout(modern["text"])})
+normalized_prose = [{**item, "text": edition.normalize_prose_layout(item["text"])}
+    for item in p["lesson"]["prose"]]
+normalized_flow, normalized_flow_errors = edition.prose_flow_contract(
+    normalized_prose, p["lesson"]["section_breaks"])
+errors += normalized_flow_errors
+print(json.dumps({"helpers": ["validate_source", "validate_text", "validate_numbered_subpart_layout",
+    "normalize_prose_layout", "prose_flow_contract"], "errors": errors,
+    "layoutDifferences": layout_differences, "normalizedProseFlow": normalized_flow,
+    "sourceBindingsChecked": 2,
+    "textItemsChecked": 20, "fullFinalizeCalled": False}, ensure_ascii=True, indent=2))
+`
+const helperCommand = [
+  path.join(root, '.claude/skills/ld-s10y-lesson/.venv/bin/python'),
+  '-B', '-c', helperCode, tools,
+]
+const helper = spawnSync(helperCommand[0], helperCommand.slice(1), {
+  cwd: root, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  input: JSON.stringify({
+    book, id: lessonId, lesson: lesson.data, exercises: exercises.data,
+    rawLesson: rawLesson.data, rawExercises: rawExercises.data, profile: profile.data,
+  }),
+})
+check('native text/source helpers exit 0 and empty stderr', helper.status === 0 && helper.stderr === '')
+const helperData = JSON.parse(helper.stdout)
+check('native text/source helpers no errors', helperData.errors.length === 0)
+for (const [filename, bytes] of reads) {
+  check(`${path.relative(root, filename)} stable during review`, bytes.equals(fs.readFileSync(filename)))
+}
+console.log(JSON.stringify({
+  schema: 'stemrobin-182/independent-modern-text-check@1',
+  status: checks.every((item) => item.pass) ? 'PASS' : 'REVISE',
+  book: '8a', lesson: lessonId, edition: 'modern-us-neutral', workdir: root,
+  candidateBindings: { lesson: lesson.binding, exercises: exercises.binding },
+  rawBindings: { lesson: rawLesson.binding, exercises: rawExercises.binding },
+  provenance: { source: source.binding, author: author.binding, anchors: anchors.binding },
+  nativeProseFlow: {
+    command: flowCommand, exitCode: flow.status,
+    stdoutSHA256: digest(Buffer.from(flow.stdout)), stdoutBytes: Buffer.byteLength(flow.stdout),
+    stderrBytes: Buffer.byteLength(flow.stderr), report: flowData,
+  },
+  nativeTextHelpers: {
+    command: [helperCommand[0], '-B', '-c', '<inline read-only helper code in review.mjs>', tools],
+    exitCode: helper.status, stdoutSHA256: digest(Buffer.from(helper.stdout)),
+    stdoutBytes: Buffer.byteLength(helper.stdout), stderrBytes: Buffer.byteLength(helper.stderr),
+    report: helperData,
+  },
+  items: itemReports,
+  checkCount: checks.length, failedChecks: checks.filter((item) => !item.pass),
+  imageViews: 0, imageReads: 0, fullFinalizeCalls: 0, oldReviewerCalls: 0,
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2))
+process.exitCode = checks.every((item) => item.pass) ? 0 : 1

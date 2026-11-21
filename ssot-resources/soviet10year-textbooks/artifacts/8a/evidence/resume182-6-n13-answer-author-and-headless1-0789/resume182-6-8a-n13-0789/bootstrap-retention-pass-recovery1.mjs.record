@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n13-0789';
+const first = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n13-modern-text-pass-first-0789';
+assert.ok(fs.existsSync(`${first}/modern-text-review-FIRST/result-affected-norm1.record`));
+assert.ok(!fs.existsSync(`${first}/retention.record`));
+const original = fs.readFileSync(`${base}/retain.mjs`, 'utf8');
+assert.ok(original.includes('assert.ok(!fs.existsSync(target));'));
+assert.ok(original.includes("for (const book of ['6a', '7a', '8a'])"));
+const code = original
+  .replace('assert.ok(!fs.existsSync(target));',
+    "assert.ok(fs.existsSync(target));\nassert.ok(!fs.existsSync(`${target}/retention.record`));")
+  .replace("for (const book of ['6a', '7a', '8a'])",
+    "register(target);\nfor (const book of ['6a', '7a', '8a'])");
+const generated = `${base}/retain-pass-recovery1.mjs`;
+fs.writeFileSync(generated, code, { flag: 'wx' });
+const result = spawnSync('node', [generated, 'modern-text-pass-first',
+  `${base}/modern-text-review-FIRST/result-affected-norm1.record`,
+  `${base}/modern-text-review-FIRST/review-affected-norm1.mjs`,
+  `${base}/modern-text-review-FIRST/native-affected-norm1.record`,
+  `${base}/stages/modern-finalize-FIRST`,
+  `${base}/stages/answers-prepare-FIRST`,
+  `${base}/stages/choice-inspect-FIRST`,
+  `${base}/stages/retention-modern-anchor-and-parent-contract1-FIRST`,
+  `${base}/stages/retention-modern-text-pass-FIRST`,
+], { cwd: repo, encoding: 'utf8' });
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+process.exitCode = result.status ?? 1;

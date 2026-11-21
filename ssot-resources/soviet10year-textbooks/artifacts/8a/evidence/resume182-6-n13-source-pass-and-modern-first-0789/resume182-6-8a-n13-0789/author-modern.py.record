@@ -1,0 +1,88 @@
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+BASE = REPO / ".tmp/resume182-6-8a-n13-0789"
+TARGET = BASE / "modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c3-s1-n13"
+HISTORY = BASE / "modern-author-FIRST"
+HISTORY.mkdir()
+
+
+def bind(file):
+    data = file.read_bytes()
+    return {"path": str(file), "sha256": hashlib.sha256(data).hexdigest(), "bytes": len(data)}
+
+
+source_review = BASE / "source-review-FIRST/result-affected-glyph1.record"
+assert bind(source_review)["sha256"] == "e156f32cc2ab81c3699d9b03f07a51c69e23fb80c7a4b9b5d224ac9821f688c0"
+assert json.loads(source_review.read_bytes())["status"] == "SOURCE_PASS"
+documents = {}
+inputs = []
+for name in ("lesson", "exercises"):
+    file = TARGET / f"{name}.template.json"
+    data = file.read_bytes()
+    (HISTORY / f"{name}.before.record").write_bytes(data)
+    inputs.append(bind(file))
+    documents[name] = json.loads(data)
+
+labels = dict(zip("\u0430\u0431\u0432\u0433\u0434\u0435", "abcdef"))
+enum_changes = []
+for block in documents["lesson"]["prose"]:
+    original = block["source_text"]
+    text = original.replace(". ", ".\n").replace(".\u0423", ".\n\u0423")
+    text = text.replace(".\u4e8e\u662f ", ".\n\u4e8e\u662f ")
+    text = text.replace("$\u5229\u7528", "$\n\n\u5229\u7528")
+    text = re.sub(r"^([\u0430-\u044f])\)", lambda m: labels[m[1]] + ")", text)
+    block["text"] = edition.normalize_prose_layout(text)
+    block["changes"] = []
+    if re.match(r"^[\u0430-\u044f]\)", original):
+        block["changes"].append("enum-latin")
+        enum_changes.append(block["source_refs"])
+    comparable = re.sub(r"^([\u0430-\u044f])\)", lambda m: labels[m[1]] + ")", original)
+    assert "".join(block["text"].split()) == "".join(comparable.split())
+    if block["text"] != comparable:
+        block["changes"].append("layout")
+
+for exercise in documents["exercises"]["exercises"]:
+    original = exercise["text"]
+    exercise["text"] = re.sub(
+        r"(?m)^([\u0430-\u044f])\)", lambda m: labels[m[1]] + ")", original
+    )
+    exercise["lines"] = exercise["text"].splitlines()
+    if exercise["text"] != original:
+        exercise["changes"] = list(dict.fromkeys([*exercise["changes"], "enum-latin"]))
+        enum_changes.append(exercise["number"])
+
+edition.normalize_lesson_layout(documents["lesson"])
+edition.normalize_exercise_layout(documents["exercises"])
+assert documents["lesson"]["errata"] == []
+outputs = []
+for name, document in documents.items():
+    data = (json.dumps(document, ensure_ascii=False, indent=2) + "\n").encode()
+    file = TARGET / f"{name}.template.json"
+    file.write_bytes(data)
+    (HISTORY / f"{name}.after.record").write_bytes(data)
+    outputs.append(bind(file))
+
+record = {
+    "schema": "stemrobin-182/modern-text-author@1",
+    "status": "MODERN_TEXT_AUTHORED_NOT_APPROVED",
+    "book": "8a", "lesson": "alg8-c3-s1-n13", "edition": "modern-us-neutral",
+    "sourceApproval": bind(source_review), "inputs": inputs, "outputs": outputs,
+    "prose": len(documents["lesson"]["prose"]),
+    "exercises": len(documents["exercises"]["exercises"]),
+    "ordinalChanges": enum_changes, "mathCorrections": [],
+    "cultureOrNumberChanges": 0, "rawChanges": 0, "imageViews": 0,
+    "figures": [], "oldPassReruns": 0, "databaseWrites": 0,
+    "hostTokens": "unknown", "totalCost": "unknown", "finish": "review",
+}
+file = HISTORY / "result.record"
+file.write_text(json.dumps(record, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(bind(file)))

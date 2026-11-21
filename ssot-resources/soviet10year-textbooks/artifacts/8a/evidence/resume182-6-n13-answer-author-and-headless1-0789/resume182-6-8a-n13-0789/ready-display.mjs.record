@@ -1,0 +1,299 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const base = path.join(repo, '.tmp/resume182-6-8a-n13-0789');
+const edition = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral');
+const id = 'alg8-c3-s1-n13';
+const lesson = path.join(edition, 'lessons', id);
+const choices = path.join(lesson, 'choice-set');
+const nativeChoicePath = path.join(choices, 'review.json');
+const outputPath = path.join(base, 'parent-ready.record');
+assert.equal(process.cwd(), repo, 'Only the assigned workdir is authorized');
+assert.equal(fileURLToPath(import.meta.url), path.join(base, 'ready-display.mjs'));
+assert.equal(fs.realpathSync(base), base);
+const args = process.argv.slice(2);
+assert.equal(args.length, 6, 'Required: textPath textHash answerPath answerHash choicePath choiceHash');
+const [textPath, textHash, answerPath, answerHash, choicePath, choiceHash] = args;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const safePath = filename => {
+  assert.ok(typeof filename === 'string' && path.isAbsolute(filename));
+  assert.equal(path.resolve(filename), filename, 'Use canonical absolute paths');
+  assert.ok(filename.startsWith(`${repo}/`), 'Inputs must stay in this checkout');
+  assert.ok(!filename.split(path.sep).some(part => /^\.env(?:\.|$)/u.test(part)));
+  assert.equal(fs.realpathSync(filename), filename, 'No symlinked inputs');
+  assert.ok(fs.statSync(filename).isFile());
+};
+const validHash = hash => assert.match(hash, /^[a-f0-9]{64}$/u, 'An explicit SHA-256 is required');
+
+// Validate all six arguments before opening any approval or future content.
+for (const [filename, hash] of [[textPath, textHash], [answerPath, answerHash], [choicePath, choiceHash]]) {
+  validHash(hash);
+  safePath(filename);
+  assert.ok(filename.startsWith(`${base}/`) || filename === nativeChoicePath);
+  assert.ok(['.record', '.json'].includes(path.extname(filename)));
+  assert.ok(!['lesson.json', 'exercises.json', 'figures.json', 'answer-keys.json', 'seed.json', 'draft.json']
+    .includes(path.basename(filename)), 'Content cannot approve itself');
+}
+assert.equal(new Set([textPath, answerPath, choicePath]).size, 3, 'Three separate approvals are required');
+const snapshots = new Map();
+const bound = filename => {
+  safePath(filename);
+  if (!snapshots.has(filename)) snapshots.set(filename, fs.readFileSync(filename));
+  return { path: filename, sha256: sha(snapshots.get(filename)) };
+};
+const read = (filename, hash) => {
+  const item = bound(filename);
+  if (hash !== undefined) {
+    validHash(hash);
+    assert.equal(item.sha256, hash, `Changed approved bytes: ${filename}`);
+  }
+  return JSON.parse(snapshots.get(filename));
+};
+const binding = item => {
+  assert.ok(item && typeof item === 'object');
+  validHash(item.sha256);
+  return read(item.path, item.sha256);
+};
+const owner = (review, requireIdentity = true) => {
+  const identities = [review, review.scope, review.source]
+    .filter(item => item && typeof item === 'object');
+  for (const [field, expected] of [['book', '8a'], ['lesson', id], ['edition', 'modern-us-neutral']]) {
+    for (const item of identities)
+      if (Object.hasOwn(item, field)) assert.equal(item[field], expected, `Wrong ${field}`);
+    if (requireIdentity) assert.ok(identities.some(item => item[field] === expected),
+      `Approval lacks ${field} identity`);
+  }
+};
+const independent = review => assert.equal(review.reviewer?.kind, 'independent_agent');
+const passed = review => review.status === 'pass' || review.status === 'PASS'
+  || review.outcome === 'pass' || /^PASS(?:_|$)/u.test(review.verdict ?? '');
+const textReview = read(textPath, textHash);
+const answerReview = read(answerPath, answerHash);
+const choiceReview = read(choicePath, choiceHash);
+for (const review of [textReview, answerReview, choiceReview]) independent(review);
+owner(textReview);
+owner(answerReview);
+owner(choiceReview, choicePath !== nativeChoicePath);
+assert.equal(textReview.status, 'TEXT_PASS');
+assert.ok(passed(answerReview), 'The answer approval is not pass');
+assert.ok(passed(choiceReview), 'The independent choice approval is not pass');
+assert.deepEqual(Object.keys(textReview.approved_text_bindings ?? {}).sort(), ['exercises', 'lesson']);
+assert.ok(answerReview.answerKey, 'The answer approval must pin its candidate');
+
+// Choice approval may be the native independent review, or an external result
+// explicitly pinning it. A native outcome alone is never independent evidence.
+let nativeChoice;
+if (choicePath === nativeChoicePath) {
+  nativeChoice = choiceReview;
+} else {
+  const reviewBinding = choiceReview.nativeReview ?? choiceReview.review;
+  assert.ok(reviewBinding, 'The external choice result must pin nativeReview (or review)');
+  assert.equal(reviewBinding.path, nativeChoicePath);
+  nativeChoice = binding(reviewBinding);
+}
+assert.equal(nativeChoice.outcome, 'pass');
+owner(nativeChoice, false);
+if (nativeChoice.reviewer) independent(nativeChoice);
+validHash(nativeChoice.seed_sha256);
+validHash(nativeChoice.draft_sha256);
+
+const displayRecordPath = path.join(base, 'display-FIRST/ready-FIRST.record');
+const displayRecord = read(displayRecordPath, '6500c58925bf5517340f7cc160330fb3aadd226bc9a7191359deab0c6ab4943b');
+assert.equal(displayRecord.parentGate.schema, 'n13-parent-display-ready@1');
+assert.equal(displayRecord.parentGate.statusRequired, 'parentREADY');
+assert.equal(displayRecord.parentGate.textAnswerChoiceApprovalsMustBeIndependentlyPinned, true);
+assert.deepEqual(displayRecord.figureIds, []);
+assert.deepEqual(displayRecord.figures, []);
+assert.equal(displayRecord.exerciseCount, 5);
+const preparePath = path.join(base, 'display-FIRST/prepare.mjs');
+assert.equal(bound(preparePath).sha256, '2cb961385559347b5dd4f078a15d64785d0fe4f6ca1d2a75b8a6e41de59941d3');
+assert.equal(displayRecord.files.find(item => item.path === preparePath)?.sha256, bound(preparePath).sha256);
+
+const finalLesson = read(path.join(lesson, 'lesson.json'));
+const exercises = read(path.join(lesson, 'exercises.json'));
+const manifest = read(path.join(lesson, 'figures.json'));
+const adaptation = read(path.join(lesson, 'adaptation.audit.json'));
+const answers = read(path.join(lesson, 'answer-keys.json'));
+const answersAudit = read(path.join(lesson, 'answer-keys.audit.json'));
+assert.ok(Array.isArray(exercises.exercises));
+const count = exercises.exercises.length;
+assert.equal(count, displayRecord.exerciseCount, 'This gate covers the five current exercises');
+for (const value of [finalLesson, exercises, manifest]) {
+  assert.equal(value.status, 'ready');
+  assert.equal(value.edition, 'modern-us-neutral');
+}
+assert.equal(finalLesson.id, id);
+assert.equal(exercises.lesson, id);
+assert.equal(manifest.lesson, id);
+assert.equal(exercises.count, count);
+assert.equal(finalLesson.exercise_count, count);
+assert.equal(exercises.source.data.exercises.length, count);
+assert.ok(finalLesson.source.data.prose.length > 0 && finalLesson.prose.length > 0);
+const numbers = exercises.exercises.map(item => {
+  assert.ok(item.number !== undefined && item.number !== null);
+  return String(item.number);
+});
+assert.equal(new Set(numbers).size, count);
+assert.deepEqual(numbers, exercises.source.data.exercises.map(item => {
+  assert.ok(item.number !== undefined && item.number !== null);
+  return String(item.number);
+}));
+const normalized = (value, kind) => {
+  const result = structuredClone(value);
+  result.status = 'ready';
+  if (kind === 'lesson') result.exercise_count = count;
+  else result.count = count;
+  return result;
+};
+for (const [name, final] of [['lesson', finalLesson], ['exercises', exercises]]) {
+  const template = binding(textReview.approved_text_bindings[name]);
+  assert.deepEqual(final, normalized(template, name),
+    'Final must equal the approved normalized template modulo native ready/status/count changes');
+}
+assert.equal(answers.schema, 'ld-s10y-answer/lesson-answers@1');
+assert.equal(answersAudit.schema, 'ld-s10y-answer/lesson-audit@1');
+owner(answers);
+owner(answersAudit);
+assert.equal(answers.status, 'ready');
+assert.equal(answersAudit.status, 'pass');
+assert.equal(answers.count, count);
+assert.equal(answersAudit.answerCount, count);
+assert.equal(answers.answers.length, count);
+assert.deepEqual(answers.answers.map(answer => String(answer.exercise)), numbers);
+assert.deepEqual(answers, normalized(binding(answerReview.answerKey), 'answers'),
+  'Final answer keys must equal the approved candidate modulo native ready/status/count changes');
+const noExact = value => {
+  if (!value || typeof value !== 'object') return;
+  for (const [key, item] of Object.entries(value)) {
+    assert.ok(!['exact', 'exact_key', 'exact_keys'].includes(key), 'Exact keys are prohibited');
+    if (key === 'judge') assert.notEqual(String(item).toLowerCase(), 'exact', 'Exact judging is prohibited');
+    noExact(item);
+  }
+};
+noExact(answers);
+for (const answer of answers.answers) {
+  assert.ok(typeof answer.displayAnswer === 'string' && answer.displayAnswer.trim());
+  assert.ok(Array.isArray(answer.parts));
+  assert.ok(['auto', 'ungraded'].includes(answer.grading));
+  assert.equal(answer.parts.length === 0, answer.grading === 'ungraded',
+    'Native contract: ungraded has no judging parts; auto has at least one');
+}
+
+const noFigureReceipt = displayRecord.parentGate.noFigureReceipt;
+assert.equal(noFigureReceipt.kind, 'native-adaptation-audit');
+assert.equal(noFigureReceipt.path, path.join(lesson, 'adaptation.audit.json'));
+assert.equal(noFigureReceipt.hashRequiredFromFutureParentReady, true);
+assert.equal(noFigureReceipt.independentFigureReviewInvented, false);
+assert.equal(adaptation.lesson, id);
+assert.equal(adaptation.edition, 'modern-us-neutral');
+assert.equal(adaptation.status, 'pass');
+assert.deepEqual(adaptation.errors, []);
+assert.equal(adaptation.figures, 0, 'The actual native audit is the no-figure receipt');
+assert.deepEqual(manifest.figures, []);
+assert.deepEqual(finalLesson.figures, []);
+const refs = item => [...new Set([...(item.figure_refs ?? []),
+  ...(item.figures ?? []).map(figure => figure.id)])];
+for (const item of [...finalLesson.prose, ...exercises.exercises]) assert.deepEqual(refs(item), []);
+
+const canonical = value => {
+  const ordered = item => Array.isArray(item) ? item.map(ordered)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map(key => [key, ordered(item[key])])) : item;
+  return sha(JSON.stringify(ordered(value)).replace(/[\u007f-\uffff]/gu,
+    character => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+const seed = read(path.join(choices, 'seed.json'));
+const draft = read(path.join(choices, 'draft.json'));
+assert.equal(seed.schema, 's10y-choice-seed-v1');
+assert.equal(draft.schema, 's10y-choice-draft-v1');
+assert.equal(seed.source.book, '8a');
+assert.equal(seed.source.lesson, id);
+if (Object.hasOwn(seed.source, 'edition')) assert.equal(seed.source.edition, 'modern-us-neutral');
+assert.equal(nativeChoice.seed_sha256, canonical(seed));
+assert.equal(nativeChoice.draft_sha256, canonical(draft));
+assert.equal(draft.seed_sha256, canonical(seed));
+assert.deepEqual(seed.figures, []);
+assert.deepEqual(draft.new_figures, []);
+assert.deepEqual(seed.exercises, exercises.exercises.map(item => ({
+  number: String(item.number), text: item.text, figure_ids: refs(item),
+})));
+for (const name of ['lesson.json', 'exercises.json', 'figures.json']) {
+  const filename = path.join(lesson, name);
+  const traces = seed.trace.filter(item => path.resolve(repo, item.path) === filename);
+  assert.equal(traces.length, 1);
+  assert.equal(traces[0].sha256, bound(filename).sha256);
+}
+for (const concept of seed.concepts) assert.equal(concept.text, finalLesson.prose[concept.block]?.text);
+assert.ok(draft.questions.length > 0, 'Derive the retained choice count, not the original exercise count');
+assert.equal(new Set(draft.questions.map(question => question.id)).size, draft.questions.length);
+for (const question of draft.questions) {
+  const view = question.view;
+  assert.ok(['single', 'multiple'].includes(view.mode));
+  assert.ok(typeof view.stem === 'string' && view.stem.trim());
+  assert.deepEqual(view.figure_ids, []);
+  assert.ok(view.options.length >= 2 && view.options.length <= 26);
+  for (const option of view.options) {
+    assert.ok(typeof option.id === 'string' && option.id.trim());
+    assert.ok(typeof option.text === 'string' && option.text.trim());
+    assert.deepEqual(option.figure_ids, []);
+  }
+}
+if (choiceReview.approved_choice_bindings) {
+  assert.deepEqual(Object.keys(choiceReview.approved_choice_bindings).sort(), ['draft', 'seed']);
+  for (const [name, final] of [['seed', seed], ['draft', draft]])
+    assert.deepEqual(final, binding(choiceReview.approved_choice_bindings[name]),
+      'Retained choices must equal the byte-pinned approved choices');
+}
+
+const priorUsagePath = path.join(repo, '.tmp/resume182-6-8a-n12-0789/upstream-usage.record');
+const priorUsage = read(priorUsagePath, '927c6f55e4d8e929884297090d914199280b3c84bdcb6f700d12e5bfe96a49f6');
+assert.equal(priorUsage.schema, 'stemrobin-182/upstream-usage-preservation@1');
+const counters = ['rendererCalls', 'browserLaunches', 'browserContexts', 'pageNavigations',
+  'screenshotsCaptured', 'imagesObserved', 'sourceReviews', 'mathReviews', 'choiceReviews', 'figureReviews',
+  'validatorCalls', 'finalizations', 'figureRenders', 'paidCalls', 'generatedImages', 'dbCalls',
+  'appVisits', 'productionInteractions', 'dependencyChanges', 'gitOperations', 'otherChatsMessaged'];
+for (const counter of counters) {
+  const value = priorUsage.cumulative?.[counter];
+  assert.ok(Object.hasOwn(priorUsage.cumulative, counter)
+    && (value === null || value === 'unknown' || Number.isInteger(value) && value >= 0),
+  `Missing actual or explicitly unknown cumulative ${counter}`);
+}
+assert.ok(priorUsage.previous && Array.isArray(priorUsage.currentEvidence));
+const files = {
+  modern: ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+    .map(name => bound(path.join(lesson, name))),
+  answers: ['answer-keys.json', 'answer-keys.audit.json'].map(name => bound(path.join(lesson, name))),
+  choices: ['seed.json', 'draft.json', 'review.json'].map(name => bound(path.join(choices, name))),
+  figures: [],
+};
+const choiceReceipts = choicePath === nativeChoicePath
+  ? [bound(nativeChoicePath)] : [bound(choicePath), bound(nativeChoicePath)];
+const ready = {
+  schema: 'n13-parent-display-ready@1', status: 'parentREADY', ticket: 'STEMROBIN-182',
+  scope: { root: repo, book: '8a', edition: 'modern-us-neutral', lesson: id },
+  authorization: { offlineDisplay: true, rendererCalls: 1, appAcceptance: false, production: false },
+  files: Object.values(files).flat(),
+  approvals: {
+    modern: { status: 'pass', files: files.modern,
+      receipts: [bound(textPath), bound(path.join(lesson, 'adaptation.audit.json'))] },
+    answers: { status: 'pass', finalized: true, files: files.answers,
+      receipts: [bound(answerPath), bound(path.join(lesson, 'answer-keys.audit.json'))] },
+    choices: { status: 'pass', retained: true, files: files.choices, receipts: choiceReceipts },
+    figures: { status: 'pass', ids: [], files: [], receipts: [bound(noFigureReceipt.path)] },
+  },
+  upstreamUsage: bound(priorUsagePath), currentImageAccountingPreserved: true, oldPassReruns: 0,
+  databaseWrites: 0, finish: 'review',
+};
+
+// Recheck the validated snapshot before an exclusive future parent receipt write.
+for (const [filename, bytes] of snapshots) {
+  safePath(filename);
+  assert.equal(sha(fs.readFileSync(filename)), sha(bytes), `Input changed during the gate: ${filename}`);
+}
+assert.equal(fs.realpathSync(base), base);
+fs.writeFileSync(outputPath, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bound(outputPath)));
