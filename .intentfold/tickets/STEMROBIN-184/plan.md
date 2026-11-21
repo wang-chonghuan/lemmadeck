@@ -1,5 +1,564 @@
 # 开发路线
 
+## 184-6 repair189 loaded; n48 offline complete, narrow delivery pending (2026-11-21)
+
+Latest human resume is effective. Original worktree/branch restored at HEAD
+a7bcea6baebcb68445437e0056ebbeb4abecef36; recovered changes remain uncommitted.
+Local lesson/image/choice skills and production-resume/quality-gate reloaded.
+Install recordc205150e names repairdb613601; all nine actual file hashes match
+its installed hashes, including recorded merges with pre-existing local patches.
+No install/smoke/189test/bootstrap/attach/newtree/branch or full-source intake.
+Ignored source-progress/display metadata/repair and completion drafts are absent,
+not claimed recovered. Existing plan/usage and durable n48 HOLD remain authority.
+Missing n48 render technical stage alone rebuilt via owner p2c render:
+14prose/6exercises; text/exercises HTML hashes match original native bindings.
+Choice view HTML reconstructed also matches original native input byte-for-byte.
+New display candidate752efa75: source text unchanged, four duplicate body
+number prefixes removed, three existing formula+punctuation spans made atomic;
+all canonical math/source-number/answer/choice/condition files unchanged.
+Metadata again358client/551scroll/overflow-auto; actual right-end evidence pending.
+Fresh forkfalse McClintock01a1fe5e-7a75-7a12-9db5-cfb7bb05cf80 returned
+affectedPASS: manifest6610132a/report209fe509/execution9b7fc651, firstexit0.
+Actual native wheel0to193 exposes finalformula; all four source labels and
+q6A/q8A-B punctuation independently readable. Six actualviews/no failedload/
+reopen/crop/extra capture; hiddenchargesUNKNOWN, browser/serverCLOSED.
+Bounded intake then actualreviewerCLOSED. Complete-n48 draft reconstructed
+from restoredplan/usage/currentdurable evidence, not claimed originalbytes.
+FirstcompletionPASS, manifest555a54d3; only new affected bytes retained,
+oldpackages referenced/no copies. Newdelta1; sixwrittenanswers4auto/2ungraded,
+8choicequestions/32options,14prose/0figures and original source limits intact.
+Original68click native and SOURCE/TEXT/ANSWER/CHOICE PASS reused, not replayed.
+Parent24/24zero images/decodes, originalsixviews/failedload/UNKNOWN and
+SOURCE172localHOLD intact. No paid/DB/merge/deploy/ticketclosure/peer messages.
+Original remote branch fetched; normal fast-forward push is possible. Narrow
+n48 delivery excludes unrelated104/122/135 and repair189 tool changes.
+
+## 184-6 human PAUSE; display metadata saved, repair UNEXECUTED (2026-11-21)
+
+Latest direct-human pause relayed by existing supervisor takes effect now;
+resume only after a new human instruction. No further production, review,
+verification, commit/push, merge/deploy, ticket closure or new workers.
+Actual worktree remains /Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck;
+locks/backups/all artifacts and uncommitted changes remain untouched.
+FIRSTaffected metadata exit0, output93d47f2a: target formula .nb already has
+overflow-x:auto, clientWidth358/scrollWidth551. Actual right-end reachability/
+clarity NOT tested; no screenshot/imageview/decode or original gate replay.
+Metadata browser/server actuallyCLOSED. Existing Dalton alreadyCLOSED; no new
+independent reviewer created/dispatched. No owned producer remains running.
+n48-display-repair.mjs is DRAFT only; candidate receipt/HTML absent, no duplicate
+number or punctuation repair applied. complete-n48.mjs remainsUNEXECUTED,
+newdelta0; semantic8/32PASS/nativePASS/visualHOLD/failed request/UNKNOWN intact.
+Three guessed render-tool paths and root playwright skill lookup were absent;
+actual files located, no producer/install. CSS read truncated; not full intake.
+SOURCE172localHOLD and SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED unchanged.
+Parentpermanent24/24zero newimages/decodes, strictCompliance=false preserved.
+No supervisor/peer message, model/quota/credential change or Git/DB operation.
+
+## 184-6 n48 choices retained; visual HOLD intaken and reviewer CLOSED (2026-11-21)
+
+Same continuation, finish=review; no freshness/bootstrap/backend/Grill replay.
+Dalton Stage3 manifest3c5ed8f8/findingsb1aaf839/reviewf5d2d1bf returnedPASS.
+Bounded intake6a096970 binds exact frozen seed/draft/review and actual first
+validator exit0; no proof/script/scalar/history reread gate or stage replay.
+All8questions/32options match independently frozen true sets. Q5 shared-row
+discrimination loss, source n=0UNKNOWN and graph-production/elimination losses
+remain explicit. AuthorEpicurus already actuallyCLOSED; prior snapshots intact.
+Approved trio materialized2f407906 byte-identically; FIRSTofficial retention
+exit0, intakea50561a6. No question/answer/content changes after semantic review.
+Six existing screenshots released2d62aecb only after Stage3 intake; actualsame
+Dalton submission01a1fdfc-4935-7062-b41e-80a94c1d2635, dispatch8b531255.
+Visual manifest7679f196/report1d60a8e5/findings ee75aa4e returnedHOLD,
+accepted=false. Mobile negative-integer proof equation's right-hand tail is
+not visible; local scrolling access remainsUNKNOWN, not a whole-page overflow
+or mathematical failure. Minor defects: duplicate382-385 outer/body labels,
+mobileq6A/q8A-B orphan full stops. No presentation correction or extra capture.
+Bounded intakecbe34840 then actualDaltonCLOSED31ef5335. Six successfulviews,
+one wrong-path request returned noimage; seven requests/hiddenchargesUNKNOWN,
+zero reopens/crops/newraster/sourceaccess. Parentzero newimages/decodes.
+HOLD retainedFIRSTonce16files, durable manifest875e6416; no priorpackage copies.
+complete-n48.mjs remainsUNEXECUTED, completionevidenceABSENT, newdelta0.
+This is a local visual HOLD, not a user production pause or wholebook completion.
+SOURCE172localHOLD/canonicalABSENT/FIRST_NATIVE24_23_FAIL remains; known164-172
+charges74 unchanged. SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED. Parentpermanent
+24/24zero newimages/decodes; strictCompliance=false and historicaldelta4 intact.
+No Git/paid/network/DB/publication/merge/deploy/ticketclosure/newchats/worktrees
+or supervisor/peer messages. No formal defence/build/handoff has run.
+
+## 184-6 n48 modern/answers retained; cold choice author active (2026-11-21)
+
+Science Stage2 manifest76f4b86d/comparison05a32cf6 accepted scoped386/387.
+Bounded intake961f7ede followed actualEinstein closure3555eb8f; no proof
+replays or source-convention promotion. Historical direct-user wording in
+the child manifest is clarified as actual parent control/release provenance.
+Recovered six-exercise raw retained2c8a0b19, no assembler replay.
+First index wrapper used Node on Python and failed before p2c; interpreter-
+only recovery passed. Firstmodern finalize failed Cyrillic387enumeration;
+snapshot e0f5c873 preserved, only a)/b) modern labels repaired. RecoveryPASS;
+14proseblocks/6exercises/0figures, one source-bound concept boundary.
+Modern retained852ec362; existing owner API updated only its index.
+Six answers:4expression-auto/2ungraded; Gate2a5e1b25f reuses accepted science.
+FIRSTanswer/interaction finalizersPASS;4math/2free/0pending. Retained0a6e1ede.
+FIRSToffline text/exercises renderPASS; no screenshot observation yet.
+
+Epicurus01a1fde2-10a3-7c80-a672-2e38d36f43ec actualforkfalse cold
+modern-prose-only choice authorOPEN, dispatch0fad4e69. No answer disclosure.
+New source-first/view-next/key-last reviewer and offline native test scopes
+drafted only; semantic choices/visual/course completion remainpending.
+One overbroad read-only progress selection truncated; not FULL historical
+intake, not another gate, no operation replay. SOURCE172localHOLD unchanged;
+SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED. Complete delta0. No Git/paid/DB/
+publication/merge/deploy/ticketclosure or supervisor/peer messages.
+Parentpermanent24/24zero images/decodes; strictCompliance=false preserved.
+
+## 184-6 n48 independent science Stage1 intaken; exact comparison active (2026-11-21)
+
+Einstein Stage1 manifest3c0cdf06/findings e1a644bc received. Bounded intake
+53f2c4fe verified13manifest entries, substantive386conditions/387graph proofs,
+input provenance and actual32/32first-executionPASS. No extra script/scalar/
+history reread gate. Zero images/decodes; source conventions remainHOLD.
+Exact9parent-file release324fc996 followed actualsame-context submission
+01a1fddc-e54f-72e2-b57b-76adc1ab0821 and dispatch497c155b.
+Stage2 working; reviewerOPEN. Raw/modern/answers/choices stillpending.
+Local course-stage scripts and cold choice-author scope drafted only.
+SOURCE172localHOLD/no diagnostic chain; SOURCE173+UNREAD_UNPREPARED.
+No assembler/native/science replay, newcompletion/Git/paid/DB/publication/
+merge/deploy/closure or supervisor/peer messages. Parentpermanent24/24zero.
+One read-only lookup for nonexistent gate-3-edition reference failed;
+actual edition-text-contract read instead, no producer ran or replayed.
+
+## 184-6 SOURCE172 numeric cause retained; n48 missing science active (2026-11-21)
+
+Curie diagnosticfdd1c2d7: retained left-edge component383/native380
+extends merged1791..1889; tall-envelope expansion splits bands19/20.
+All24frozenranges reproduced, body23 unchanged. Main1454/1522band20pixels;
+attribution/exacteducationalink stillUNKNOWN. Sole preregistered
+counterfactual skipped, no exclusion recommended/applied; no native repair.
+Full intake0b90c366 then actualCLOSED227cd183; known73+1=74, parent0.
+Evidence retained once56newTEXTfiles/64priorreferences, manifest873dc862.
+Original firstFAIL/reviewHOLD packages unchanged; canonical172 ABSENT.
+R16,390radical,scientific/convention/strictglyphHOLDs remain; no further
+full-page review or diagnostic chain. Affected-glyph draft UNDISPATCHED.
+
+n48 cold whitelist-only release02ffeb35 then Einstein the 2nd
+01a1fdd5-9a8d-7152-8e58-4dc5be1c4bc8 actualforkfalse dispatchfb41f292.
+New386conditionalhandling/387graphscience only, zeroimages; no parentdraft
+or oldproof release before frozen independent result. Subsequent intake uses
+manifest/actualnative/substantivecontent/affectedevidence, no exhaustive
+scalar/script/history reread as an additional gate. Reuse passed phases.
+SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED; delta0, no newpaid/DB/Git/
+publication/merge/deploy/ticketclosure or supervisor/peer messages.
+
+## 184-6 SOURCE172 review fully intaken and CLOSED; sole count diagnostic active (2026-11-21)
+
+Russell Stage2 manifest79678cb8/reportf625eccc fully consumed:
+13ownedfiles/12self-excluded101561bytes,760JSONscalar leaves, full
+26literal/math comparisons/14objects, plan/holds/all3scripts/both nestedtrios.
+All23rows/18requests/22mathsegments correspond; seven rawserialization
+differences disclosed, R16semicolon-versus-comma remainsHOLD. No forced
+punctuation/base/real/composition/simple-function convention or body edit.
+FIRSTnative24/23FAIL/band20y1840..1889 remains. Incoming embedded171tail
+supports object continuity only; outgoing50fragment OPEN. All14Stage1 and
+6authorHOLDs preserved. Frozen plan explanatory owners_exercises typo
+disclosed; actual owner_exercises checked correctly, no frozenfile edit.
+Custody1dd734bc,intakec582b87a; Russell actuallyCLOSED4130d2bc.
+
+Review HOLD retained FIRST0 once67newTEXTfiles/27priorreferences,
+manifesta125151f. Original firstFAIL56file package92f858a1 not recopied.
+Canonical172 ABSENT, qualified coverage only/fullfidelity=false,
+known164-17273 unchanged; parent0images/decodes, hiddenUNKNOWN, delta0.
+R16 correction deferred pending truly bounded affected-only clarification;
+this does not block separate numerical count-cause evidence.
+
+Exact count-only releasee71118c8 then Curie the 2nd
+01a1fdc8-003e-7c11-928b-888a07b1eb83 actualforkfalse dispatch0d80e79d.
+Sole source-pixel worker: max1programmaticoriginalacquisition,0views/crops/
+newraster/nativechecks. Frozen independent observation + exact components/
+text overlap required; count-changing mask alone not attribution proof.
+No exclusion applied/authorized, actualcharge pending not counted.
+SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED; n48coldscienceUNDISPATCHED.
+No newGit/paid/backend/DB/publish/merge/deploy/ticketclosure. Not a pause.
+
+## 184-6 SOURCE172 blind Stage1 fully consumed; exact comparison next (2026-11-21)
+
+Same invocation, not a production pause. Russell Stage1 complete source/body/
+inventory/report/proofs/coverage/scripts and both nested stage trios, including
+all111 saved actual/expected checks, consumed before this resume. No replay.
+Manifest c013e414,15ownedfiles/14self-excludedoutputs84207bytes,376JSONscalar
+leaves; custody f81f95fb. Independently23rows/14objects/18requests.
+Actual1originalview adds known72+1=73; parent permanent24/24 remains0new.
+All14HOLDs preserved, especially R16semicolon versus authorcomma,
+390radical endpoint, base/real/composition/simple-function conventions,
+blemish attribution and incoming/outgoing boundaries. No source/native/
+wholelesson approval or correction. Exact15authorTEXT release follows
+intake, previous171tail embedded only; no prior canonical dereference.
+Resume broad progress/plan/usage rg output truncated, not an evidence-package
+consumption claim or producer failure. SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED.
+No new Git/backend/paid/DB/publication/merge/deploy/ticketclosure; delta0.
+Intake FIRST0 e12a7796; exact15input release FIRST0 e48ea7b3.
+Same Russell Stage2 actuallysubmitted01a1fdbf-e7bb-77f0-b661-b7902fe2d059,
+dispatch9efe0118. Observer remains soleOPEN. Full Stage2 consumption and
+actual closure pending; zero new images/decodes/proofs/native/source replays.
+
+## 184-6 SOURCE172 FIRST24/23FAIL fully retained; sole blind review active (2026-11-21)
+
+Lagrange the 2nd author manifest2d3704f5 fully consumed:22ownedfiles,
+6externalstageoutputs,4preparedreferences,1exactsymlink and1695JSONscalar
+leaves. Entire25363byte evidence.mjs read in two complete ranges, full
+23physicalrows/26textitems/14objects/8exercises and all source/runtime/
+continuity/uncertainty ledgers bound. Custodyd4d21810, intake661e9f19.
+FIRSTprepare0/native1:24machinebands versus23sourcephysicalrows; body
+d7d5be77 unchanged in first/final/native candidates. No wrap, figure,
+normalization, exclusion or correction. Unmatchedband20y1840..1889 remains
+HOLD/UNKNOWN; provisional gutter attribution is not source-ink proof.
+Heading50 and lower paragraph OPEN. No173+read/preparation/prefetch.
+
+Actualauthorcharge6=2creations+3programmaticopens+1originalview; known
+164-17272=historical66+6. Grid-generated original open is separately counted,
+not a gridPNG view/open. Parent0, hiddeninternalsUNKNOWN, native intrinsic
+readonlyGitvalidation2 author-reported; no independentGitcommand. Canonical171
+whole-file byte-read for final-open/folio filtering disclosed, no earlier
+prose displayed. Parent initial cat guessed absent report.md and exited1;
+actual package uses native-result/inventory/ledgers, all subsequently consumed.
+No producer replay or scientific verdict follows from that read failure.
+
+Author actuallyCLOSED75efaa15. FIRSTfailure retained once56TEXTfiles,
+manifest92f858a1; canonical172 ABSENT, delta0, strictCompliance=false.
+Russell the 2nd01a1fdb4-00a0-71a3-be96-2a9b24530045 actuallyforkfalse
+dispatcheda604b9e9, sole source observer. Max1originalwholepageview,
+0extraimages/ROIs/reopens/decodes and no expectedheading/count/formulas/
+machinefault or gutterattribution supplied. Full original-first source and
+independent visible-math Stage1 pending; author release prohibited before
+full frozen intake. Actualreviewcharge pending, not counted.
+
+n48 rawassembly recovery and new missing-science parentdraft remain
+separate scoped work, not complete lessons or source172 approval. No DB,
+publication, Git/fetch/commit/push, merge, deployment or ticketclosure.
+Parent permanent24/24zero views/decodes; oldn17, n44strictCompliance=false
+and unrelated104/122/135 preserved. This is not a production pause.
+
+n48 new parentdraft retained once18TEXTfiles, manifest6e4f04e3. Cold
+problem-only whitelist2373bytes/ae3a1ea9 includes386/387 and source169
+formula(1) statement/restrictions only, no expectedanswers or oldproof
+replay. Independent missing-science comparison still UNDISPATCHED.
+SOURCE172 exact15-input same-context release/submission controls drafted
+but cannot execute before full blind Stage1 intake. Count-only diagnostic
+contract drafted, not dispatched or authorized to openpixels yet: one
+programmatic original acquisition at most,0views/crops/newimages/native
+runs, attribution tied to frozen independent observation and exact
+numeric components. No count exclusion has been applied.
+
+## 184-6 SOURCE171 qualified retention complete; SOURCE172 active; n48 assembly recovered (2026-11-21)
+
+Same invocation, finish=review, no bootstrap/freshness/backend/Grill or old
+delivery replay. Harvey Stage2 full report5929bytes/ledger7783bytes and
+247JSONscalar leaves consumed; manifest6a8f5038, custody88e9b73f, intake
+74e6c948. Independently frozen left/right components support 须 at unchanged
+HIGH qualitative confidence. Current author/native already 须, so no body
+repair or native/source/math rerun. Strict glyph/font certification remains
+UNKNOWN; original reviewer approved=false, first fidelity HOLD and Parfit's
+provisional HOLD/UNKNOWN stay historical and unchanged. Harvey actually
+CLOSED after full intake, closure9a23c8b9. Known164-17166 unchanged; parent0.
+
+Composite qualified coverage plus this narrow field finding accepted
+a3d780d2. Qualified canonical retention FIRST0: manifest5814cc76228af982,
+109new evidence files,114prior files referenced, original120file HOLD
+package130c1ec2 not recopied. Canonical171 page.md d74269ca, page.json
+a7d1c503, audit c3444613 remain byte-identical to first native24/24.
+No full strict fidelity, graph solution or whole lesson approval; delta0.
+
+Serial172 absence preflight c0628d84 and actual forkfalse author dispatch
+70dc0450 passed. Lagrange the 2nd01a1fda9-f87e-7031-a09e-8232c52735c9 is
+sole source observer, new172only, max1originalview/8knownoperations normally5.
+No expected heading/count/formulas supplied. Outputs still not intaken;
+actual charge pending, not counted. SOURCE173+UNREAD_UNPREPARED_NOT_PREFETCHED.
+
+n48 FIRST raw assembly producer printed7exercises and unresolved387/q1;
+wrapper semantic assertion exit1. Existing assembler cannot match labelnull
+ex-cont against387. Full FIRST failure9files retained once, manifest
+a5e2586c; canonical source and shared tool unchanged. New assembly-only
+metadata identity bridge uses canonical171 continuation binding, not new
+printed ink. Recovery producer printed6exercises correctly but wrapper
+expected-lines assertion also failed through shallow-list alias mutation.
+Both failed trios/scripts remain unchanged. TEXT-only saved-output check
+FIRST0 verified all6numbers and387refs p0170#16+p0171#1 against immutable
+canonical lines, no assembler replay; companion e3a8cf0c, intake1c1236e6.
+Heading49 and all n49 prose excluded. Raw promotion/modernization/answers/
+choices/completion not approved:386zero-power convention and387graph-specific
+shape/answer evidence remain separate missing phases. Historical scientific
+HOLDs unchanged. This checkpoint is not completion or a production pause.
+
+Recovery text package retained once19newfiles, manifestedceb9a7; original
+first9file failure is reference-only, no old package copies. Parent-authored
+new missing-phase386conditional interpretation and387graph draft frozen
+before exact arithmetic, preregistrationd7168e0f. First10coordinate/slope
+casesPASS, no source/math/native or assembly replay; draftmanifestd063f2b1.
+This is NOT independent approval. n=0source convention staysHOLD; no
+unconditional key or graphical render approved. Cold TEXT-only scoped
+review contract drafted, not dispatched while sole172source author is open.
+
+No new Git/fetch/commit/push/DB/publication/merge/deploy/ticketclosure.
+Parent permanent24/24zero image views/decodes; oldn17, n44strictCompliance=false
+and unrelated104/122/135 preserved. Formal defence stays for actual handoff.
+
+## 184-6 SOURCE171 native crop Stage1 fully received; exact comparison active (2026-11-21)
+
+Harvey original-only crop observation reads 须 at HIGH qualitative visual
+confidence before alternatives. Native acquisitionFIRST0, exact geometry
+[0,1680,1695,1753] preserves1695x73RGB pixels,371205bytes equal source
+regionsha ba7cd962. Newcrop PNGsha75fb141c,5201bytes; parenthashcustody
+only, never viewed/decoded. Original1695x2381 sourcePNG73a07ae7 unchanged.
+
+All12ownedfiles/3externalstage outputs/521JSONscalar leaves, complete
+acquire.py/freeze.mjs, proof and all16Pythonmethod entries consumed.
+Manifest434b1fcd, custody54950e6e, intake00a332a8. Actual charge3:
+1originalImage.open+1cropcreation+1cropview,0wholepageview. Ten load-method
+entries (7original/3crop) are separate from opens; hiddeninternalsUNKNOWN.
+Known164-17166=historical63+3, no decoder/global/corpus recount or reset.
+
+Same-context comparison release61d530f9 and actual submission01a1fda5-
+bc44-7d11-a349-da20f72f9eaf recordede2ef477f. Prior readers' identities
+and alternatives released only after independent freeze. Stage2new0views/
+decodes/replays/corrections. No literal-field resolution accepted yet;
+full reviewer/Parfit old HOLD records and first120file package unchanged.
+Harvey remains sole observer OPEN; canonical171 ABSENT.
+
+Qualified-retention helper now requires accepted final crop finding, actual
+closure and any necessary affected correction; it references original
+120file HOLD package instead of recopying it. Next source172author/review
+contracts are drafted ONLY. SOURCE172+UNREAD_UNPREPARED_NOT_PREFETCHED.
+Parent permanent24/24zero views/decodes; no newcomplete/DB/publish/Git.
+
+## 184-6 SOURCE171 provisional glyph result retained as HOLD; one native ROI active (2026-11-21)
+
+Parfit Stage1 manifest81f828a4/3files/142JSONscalar leaves fully consumed,
+intakefad3e105/custodyb208c938. Visible left彡-like/rightboxed components
+support provisional 须 at MODERATE confidence; exact strokesHOLD/UNKNOWN.
+Actual additional1whole-pageview charged:known164-17163=62+1, no reset.
+
+Same-context releasecf5c2edc and submission01a1fd99-402b-7573-acb2-
+3b38c70d8674 produced Stage2 manifest03b66bed/3new files/230scalar leaves.
+Three earlier Stage1 outputs referenced/hash-bound only, not recopied or
+semantically replayed. Full intake005c7c21/custody7724b052 accepted ONLY
+limited provisional support; no correction justified or performed, exact
+disagreement remainsHOLD, all earlier statuses unchanged. Parfit actually
+CLOSED, receiptbb959071. Full-source reviewer remains closed too.
+
+ONE newly bounded native-pixel crop attempt authorized15b99032 and actual
+forkfalse dispatch7cdc345b:Harvey01a1fd9e-7d3f-7bf1-9f96-f3240852f227
+is sole independent observer. Prior frozen R18machine locator1685..1747
+used only for geometry. Exact one ROI [0,1680,originalWidth,1753] native
+pixels; max1originalpixelopen+1cropcreation+1cropview,0wholepageviews/
+extraROIs/reopens/resampling. No source recount/math/native gate replay.
+Actual charge pending, not pre-counted. All competing readings withheld
+until new original-only crop observation is frozen. No second crop attempt.
+
+Parent permanent24/24zero views/decodes. Canonical171 ABSENT, source and
+native bodies untouched; original firstHOLD manifest130c1ec2 remains intact.
+SOURCE172+UNREAD_UNPREPARED_NOT_PREFETCHED, no dependent course promotion
+or new completion credit. No paid/fetch/commit/push/DB/publish/deploy/closure.
+
+## 184-6 SOURCE171 literal HOLD fully retained; one affected glyph observer active (2026-11-21)
+
+Full Stage2 manifestc0906f0b/14owned files/720JSONscalar leaves consumed:
+all24rows,10objects,6mark groups,2requests and9findings. Incoming387
+graphing continuation ends before observed49heading, but neither fulln48
+completion nor graph-specific solution/shape approval is granted. n49tail
+OPEN and all scientific/notation/history/glyph/markUNKNOWN remain.
+
+R18 is a real unresolved literal discrepancy: blind Stage1 必需 versus
+author/native 必须. No reading chosen or body changed. Full fidelityHOLD,
+review.approved=false. Qualified coverage and page-local boundary alone
+accepted by intake4fd4f5ed/custody4a19e03c. Original own text-check FAIL
+exit1 (receipt0644 incorrectly required0444) and corrected TEXT-only
+PASS exit0 retained; source/math/native stages not replayed.
+
+Leibniz actually CLOSED after full intake, receiptac7ed664. FIRST fidelity
+HOLD retention passed once:120new files, manifest130c1ec29762c6d99cf037f1b
+8238af0910097dde07b890763d644ed4b3c96f4. Canonical171 ABSENT, delta0,
+strictCompliance=false; existing native24/24 only accounting.
+
+New affected-character-only clarification authorized272a1a67 and actual
+forkfalse dispatch861e4660:Parfit01a1fd95-0d1c-7750-80d9-57d358daf2da
+is sole open independent observer. Max1original whole-page view,0crop/
+decode/grid/reopen; no whole-page recount, math or native/source-stage
+replay. Competing readings withheld until independent neighborhood/stroke
+freeze. Actual new charge pending; known164-17162 remains historical,
+no budget reset. Parent permanent24/24zero newviews/decodes.
+
+SOURCE172+UNREAD_UNPREPARED_NOT_PREFETCHED. Its drafted contract/absence
+helper are UNEXECUTED control text, not preparation or authorization bypass.
+No newfetch/commit/push/DB/publication/merge/deploy/ticketclosure.
+
+## 184-6 SOURCE171 Stage1 fully received; same-context Stage2 released (2026-11-21)
+
+Leibniz Stage1 manifestb338b2ab,14owned files,807JSONscalar leaves; every
+literal24row group,10semantic objects, all symbols/scripts/marks/boundaries,
+P01-P06 universal proofs, frozen preregistration and62exact cases consumed.
+One independent exact invocation0, no native/source replay. Entire stdout
+261-end tail consumed after initial bounded range, not hidden truncation.
+Custody76de4705 and semantic intakeba5b3255 passed. Actual reviewer1original
+view, parent0; historical61+1=62known, hidden image internalsUNKNOWN.
+
+The independent10semantic objects versus author7native blocks is pending
+explicit Stage2 grouping reconciliation, not a premature count/fidelity defect.
+Incoming request/parent, outgoing prose and loweredR glyph remainHOLD/UNKNOWN;
+author/native fidelity not yet approved and no complete lesson credit.
+
+Exact15frozen author/body/inventory/candidate/mapping/native/uncertainty/
+continuity/report/operation/read TEXT inputs released by94499c0c. Same-context
+submission01a1fd88-edc8-7983-9a9f-0ab754a3528a actually recordedce03aeac.
+Prior170only final-open-object/folio tail permitted, no previous source/math
+or evidence reopening. Stage2new0views/decodes/replays. Reviewer stillOPEN.
+Canonical171not retained; SOURCE172+UNREAD_UNPREPARED_NOT_PREFETCHED.
+Next-page contract drafting is control text only, not source access/dispatch.
+
+## 184-6 SOURCE171 author intake/closure complete; sole blind review active (2026-11-21)
+
+Same invocation, no bootstrap/freshness/backend/Grill or passed-stage replay.
+Full prior author consumption recorded by first intake74812cf9:27owned files,
+one exact symlink,4prepared outputs,6stage outputs;24source/native rows,
+7objects,0figures/errors/normalizations/exclusions, first prepare0/native0.
+First/final body identity and observation-before-metadata/continuity freezes
+bound. This is custody/accounting only, not independent fidelity/math/boundary.
+Source body4af38373 and author manifestb2e59679 remain immutable.
+
+Pasteur01a1fd75-9775-7ce1-89ce-8702d8e59eac actually CLOSED after intake,
+previous status completed; closuree1c8beee. Actual author charge6=2creations+
+3programmatic opens+1original view; historical55+6=61, not exhaustive decoder
+accounting. Extra grid-overlay open and all earlier deviations remain disclosed.
+Parent permanent24/24 unchanged, zero new parent views/decodes.
+
+ONE fresh forkfalse reviewer Leibniz01a1fd80-be3a-7d42-9f04-a207200cc400
+actually dispatched, receiptb840ba29. Stage1 original-only max1view, author/
+counts/heading/formulas/continuity withheld until complete frozen intake.
+Stage2 same context new0views; no source/math/native replay. n48 boundary
+approval pending, n49 outgoing prose OPEN; no new lesson completion credit.
+SOURCE172+UNREAD_UNPREPARED_NOT_PREFETCHED; n46/n47 delivery not replayed.
+
+Resume-time targeted plan query also named nonexistent scratch plan.md and
+returned exit2; no producer stage failed or reran. All original FAIL/HOLD/
+UNKNOWN, oldn17, n44strictCompliance=false and unrelated104/122/135 preserved.
+No new fetch/commit/push/paid/DB/publication/merge/deploy/ticket closure.
+
+## 184-6 SOURCE170 retained; SOURCE171 actually source-first active (2026-11-21)
+
+Goodall actual counter/native FIRST0/0 returned19/19,17blocks, unchanged
+R09envelope994..1089 and every unaffected band. Whole candidate/native MD
+d5c26d and JSON55d347 unchanged; auditc9a2cc onlyaccounting changed.
+Full14ownedfiles/2source-symlinks/6stage outputs custodye302773f and qualified
+intaked26140e2 accepted. Actual2opens/8load-method entries(6original);
+decoder internalsUNKNOWN, no image-tool views. Known164-17055=53+2.
+Prepackaging executed script hash is reference-only; final39904byte script
+fully consumed, package-only edit claim remains worker-reported. Worker
+user-clarification wording is qualified as actual parent-delegated scope.
+Goodall actuallyCLOSED73c1bd75; source/math review not repeated.
+
+FIRSTcanonical retention passed:174new evidencefiles,8earlier files
+referenced, priorFIRSTFAIL package not recopied. Manifest e567a74e501db91d
+ff47b6aa1e8c4caeaa0edf20eca24653d63d051089ee06bc; source170canonical3files.
+Original20/19FAIL/allHOLD/UNKNOWN remain. strictCompliance=false,
+completeLessonDelta0; n48incomplete387OPEN,386scientificHOLD preserved.
+
+SOURCE171absencepreflight8788e547 and actualforkfalse source-author dispatch
+cb565cc8 passed. Pasteur01a1fd75-9775-7ce1-89ce-8702d8e59eac owns new171
+only, max1originalview/8known operations(normally5), actualcharge pending.
+No expected title/count/operands given. Fresh blind reviewhandoff prepared
+only; no reviewer dispatch before actual author intake/closure.
+SOURCE172+UNREAD_UNPREPARED_NOT_PREFETCHED. Parent permanent24/24zero
+newviews/decodes. No newfetch/commit/push/DB/publication/merge/deploy/closure.
+
+## 184-6 SOURCE170 independent review closed; actual recovery dispatched (2026-11-21)
+
+Stage2 full intake dfdd1648 accepted qualified19rows/17objects/C01-C15,
+94text-custody matches; originalFIRSTnativeFAIL20/19 remains unchanged.
+Only R09 extra machine band is a technical discrepancy; incoming paragraph
+closed from authorized prior tail only, outgoing387OPEN and lesson completion
+UNKNOWN.386HOLD/all source glyph/scan/historyUNKNOWN retained. Avicenna
+actuallyCLOSED, receipt3b764902, cumulative1view/Stage2new0/parent0.
+
+Goodall01a1fd6d-7df3-7980-908b-d1c8334a114a forkfalse recovery actualdispatch
+81c0eb09 follows two-open preregistrationaba0c31b. ONE changed-counter first;
+ONE affected officialnative only if it passes. Intrinsic unchanged read-only
+p2c workspace-root validation clarified via submission01a1fd6f-46ca-75a3-
+a7fd-7d583889a321; no independentGit/bypass or budget reset. Actual recovery
+result/charge pending. Original failure retained, canonical170absent.
+
+Parent initial text-consistency range stopped430; remaining431-end consumed
+before semantic intake. Later broad historical progress metadata search
+truncated and is not semantic evidence or any source/native gate.
+SOURCE171handoff text prepared ONLY; no source read/prepare/prefetch/dispatch.
+Parent permanent24/24zero newviews/decodes; known164-17053 pending recovery.
+
+## 184-6 SOURCE170 Stage1 accepted; narrow synthetic recovery ready (2026-11-21)
+
+Avicenna blind Stage1 received:19row groups, R09one tall formula row,
+R10/R11only true wrap;450/450exact assertions plus general proofs.
+386convention/formula(1)/second-clause HOLD,387missing operandsOPEN and
+historical references/glyph registrationUNKNOWN remain. Same-context Stage2
+submitted01a1fd66-0a7e-7203-9dbf-5baef06335ef after13exact frozen text inputs;
+reviewer stillOPEN, no source/math/native replay and no new reviewer images.
+
+Gibbs full numeric/control-flow intake accepted and agent actuallyCLOSED.
+Original line_bands1/_single_fraction_row37;1pixel open/0image views.
+Earliest blocker:25px attached carrier rejected by0.6h lower bound before
+terminal arrow veto. Current narrow proposal uses carrierheight>shaftheight,
+retaining detached full-height support, alignment/reach/upper bound and
+original terminal arrow guards. SyntheticFIRSTred4failures preserved;
+affected4PASS, focused27PASS, short-rule8PASS, all pureNumPy/no textbook reads.
+Actual SOURCE170 counter/native recovery is stillUNPROVEN.
+
+Known164-17053=46+author5+review1+diagnostic1. Two-open zero-view technical
+recovery preregistered separately; actual charge pending, no count reset.
+Parent permanent24/24zero newviews/decodes. Original nativeFAIL20/19 immutable;
+canonical170not retained, delta0. SOURCE171+UNREAD_UNPREPARED_NOT_PREFETCHED.
+
+## 184-6 SOURCE170 FIRST20/19FAIL fully retained; independent cause work active (2026-11-21)
+
+Plato FIRST prepare0/native1; source-body19rows/17blocks, machine20rows,
+6numbered382-387/7instantiated task slots/0figures. Original first/final
+candidate bodies byte-identical except native envelope LF; no added wrap,
+count exclusion, pixel/counter/code edit or retry. Original author hypothesis:
+R09/example3 single tall formula is split into bands9/10; independent source
+approval NOT granted. Exercise387OPEN; SOURCE171+stillunread/unprepared.
+
+All primary texts fully consumed;29manifest outputs+manifest parsed/hash-bound,
+exact symlink verified. Original failure retained once as a5e0322e55498e676527
+d56a0db611eda50adc6ac9a10d21867024f1ce1f1cbb. Source PNG/grid/PDF/runtime
+referenced, not copied. Author E01implicit-cwd, filename truncation, wrong
+initial resolver filter and pre-enumeration SyntaxError remain disclosed.
+Actual author5known operations; prior46+5=51. Plato actually CLOSED.
+
+Sole blind source reviewer Avicenna01a1fd5d-cd5a-7a10-b23b-d62da230c741
+has ONE original view authorized, no author/template/layout/TOC release.
+Separate Gibbs01a1fd5e-a3a3-7022-87ea-16599e3e5b07 is a control-flow
+diagnostic worker, NOT another source reviewer: ZERO views, maxONE original
+pixel open, no edits/native/test/source-stage reruns. Actual new charges
+remain pending until returned. Parent permanent24/24zero newviews/decodes.
+No dependent assembly/edition/answers/choices or scientific PASS claim.
+
+## 184-6 n47 remotely delivered; SOURCE170 actually active (2026-11-21)
+
+Qualified n47 final retention FIRST passed: complete delta1,6prose,
+4written/14requests/10auto parts/1ungraded,4choices/16options/0figures.
+Manifest4f8127f5578b95fc292f89058b7833bd572846254fb68dc2de5cfda3f08b2988
+retains174new files and references immutable HOLD bytes without recopying.
+Target fetch ONCE confirmed e6aa79cc. Narrow365file stage and staged-only
+path/credential/whitespace checks passed, zero test/browser/source replays.
+Detached commita7bcea6baebcb68445437e0056ebbeb4abecef36 ordinary FF pushed
+to codex/STEMROBIN-184-textbooks; actual remote confirmed same SHA.
+Historical local branchbd853c unchanged; committed49/working52pages keeps
+unrelated104/122/135outside commit. Commit stdout55088bytes fully retained;
+UI truncation is presentation only, not missing execution receipt.
+
+Immediate SOURCE170 absent-root preflight and actual forkfalse author
+dispatch FIRST passed. Plato01a1fd53-a810-73f3-8e76-de76bf13f0e0 owns only
+new source170-active/prepared0170/unique stages, maximum1source view/
+8known operations; normal5. No expected title/count/template supplied.
+Native/source/review not yet accepted. Fresh independent reviewer prompt
+prepared but no reviewer dispatched before actual author intake/closure.
+SOURCE171+UNREAD_UNPREPARED_NOT_PREFETCHED; parent24/24zero newimages.
+No bootstrap/backend/Grill/paid/credentials/DB/publication/merge/deploy/closure.
+
 ## 184-6 n47 qualified offline PASS accepted, narrow delivery next (2026-11-21)
 
 Sagan's FIRST standalone choices acquisition exit0, 19/19 new assertions
