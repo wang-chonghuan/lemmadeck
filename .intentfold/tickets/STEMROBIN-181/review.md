@@ -4,11 +4,11 @@
 
 ## 可查看成果
 
-2026-11-21 检查点沿用现有计量：148 门已推送完整课程、577 页已消费源页。D595 新增 1 门双语 N23，未新增源页；D541 的 N97、D500 的实验课及 D482 源页均未重复计数。这不是全库完整性统计。
+2026-11-21 检查点沿用现有计量：149 门已推送完整课程、577 页已消费源页。D595 新增双语 N23，D695 新增双语 N25，均未新增源页；D541 的 N97、D500 的实验课及 D482 源页均未重复计数。这不是全库完整性统计。
 
 | 材料 | 中文 | English | 交付边界 |
 | --- | --- | --- | --- |
-| 10p N25 交流电路中的电感 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d603-n25-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d603-n25-complete-course/offline/en/text.html) | 完整离线课程已保留，未 commit／push，等待本批交付；23 个源块、3 幅图、0 道题 |
+| 10p N25 交流电路中的电感 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d603-n25-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d603-n25-complete-course/offline/en/text.html) | D695 已普通提交并推送 ee4314d60；23 个源块、3 幅图、0 道题 |
 | 10p N97 距离的相对性 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d541-n97-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d541-n97-complete-course/offline/en/text.html) | 内容 0a62a6a8b 已推送；原文 22 块、3 幅图、0 道题 |
 | 10p 实验作业，10 个实验 | [课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d500-laboratory-complete-course/offline/zh/text.html) | [Course](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d500-laboratory-complete-course/offline/en/text.html) | 已提交 c2a90ab、检查点 d66fa86e；既有必要门禁及 DISPLAY PASS 复用 |
 | N153 已批准子集 | [书写题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/zh-mobile-written.html) · [只读答案](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/zh-mobile-answers.html) · [选择题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/zh-mobile-choices.html) | [书写题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/en-mobile-written.html) · [只读答案](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d474-n153-approved-subset/display/en-mobile-answers.html) · [选择题](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d482-current-approved-progress/display/en-mobile-choices.html) | 每语言 59 条只读答案、55 题／220 选项；整课未交付 |
@@ -164,3 +164,35 @@ written／standards 八个视图首次独立像素审查通过（8次开图）�
 D689／D691：两处标点均通过受影响独立目视复核，实际2次开图、无重开；文字、公式和四个选项完整，原显示失败保留，其余 PASS 直接复用。所有本轮子审者均已收取并关闭。t15 的原生、只读标准答案、图43和显示通过项不丢失，但原题5无条件数值任务仍 HOLD，选择题不促进、不调用 retain/publisher、不计整课。N25 是当前唯一完整节尾课，沿既有交付分支单独普通提交；这不是整组完成或正式 review handoff，后续有源缺失阶段继续。
 
 D692–D695：N25 真实节尾小批次已普通提交并非强制推送，远端 HEAD 确认为 ee4314d60e515fcad448cedad6b33927e456d49c，仅增加 N25 一门完整课，累计149门／577源页。t15／N30限定保留产物不计为完成；全部技能改动、其它未提交课程、锁与备份未纳入本批。第67页目录暂存误带的四份本地重复图恢复为未跟踪，原文件及备份完整保留；只改两条 Markdown 链接指向相同书级图，源文、page.json、图像及审批不变，无重跑全库审计。已进入 D696 的 N29 图51–54首次现代图工作，双语正文 PASS 和源字形／拓扑／付费 HOLD 直接复用与保留，不以一次 push 结束生产。
+
+D696–D700：N29 四张原图首次建立像素 source inventory，作者实际6次开图。图52产生首份可编辑 spec/SVG，第一次原生检查因三个 fill:none 不符合语义颜色契约退出2；只移除这三个可选 fill 字段，几何、来源、标签和正文不变，恢复检查及首次 render、331／342／640px离线 DOM 检查通过。首个失败稿及实际回执保留，图52首次独立 SOURCE／semantic／display 审查由 D699 进行，作者通过项不冒充独立审批。图51来源及 paid HOLD、图53字形／截止曲线 HOLD、图54连接／极性 HOLD 分别保留，无猜造输出或新付费；N29 原生全文西里尔下标与整课 HOLD 不变。
+
+另从实际题面确认 N27 四道原题均无 figure_refs，可继续其尚缺的选择题首稿，不以图47来源 HOLD 阻断这些纯文本任务。D697 双语白名单复制仅四份规定 JSON 和原始图的库存资产，没有旧答案、选项或交互配置，首次 inspect 通过；D698 按相关定义选择与原题盲解顺序开始新首稿，不能将该准备状态计为语义通过、整课完成或新交付。父方仍24次开图；所有新持久稿使用 draft 名称，原始路径与失败作为历史证据保留，没有重跑已通过正文或重建全书。
+
+D699／D701：图52首次独立复核实际4次开图、无原生重跑；粗部件、标签、顺序、绘图几何、三宽度显示及 neutral 通过，但下方偏右的宽电极端点／下行引线／包络粗线接触仍无法从原图确定。SOURCE 与依赖该拓扑的 semantic／math 保持 HOLD，不判定候选一定错误，也不按三极管惯例猜连线。没有官方全图 PASS sidecar、促进或整课定稿；作者原生 PASS 和首次失败继续保留。N30 只继续第1/2题的独立纯文本选择题阶段，第3/4题的实际振荡器图依赖批准仍 HOLD，不默删或转为整课通过。
+
+D705 接续：已收取并关闭原 D698 作者，实际 seed／draft／view 字节与报告绑定相同；N27 每语言2题／9选项覆盖四道原题，结构通过不是语义批准。D704 开始首次 source-first／view-first／key-blind 独立选项复核；D703 沿 D702 已完成白名单只写 N30 第1／2题首稿，不重复作者、已通过正文或源检查。t15 转轴、图47与图52来源、N30 第3／4题和付费图181缺口继续仅局部 HOLD。
+
+本次监督纠偏保留 `804de0478` 及所有既有字节，不回滚。今后推送后的回执与自SHA更新只留本地现有检查点，随下一次实质产物提交带上，不再连续作纯计量补提交。压缩、检查点和一次推送不是整组完成或停止许可；没有正式 handoff、数据库写入、付费、合并、部署或关闭。
+
+D703／D704／D711：N30 第1／2题双语首稿已收取并关闭作者，两语言各2道单选题，首次结构校验均退出0；第3／4题图依赖 HOLD 不改。N27 首次独立 source-first／view-first／key-blind 复核通过，两语言全部18选项先独立判定再核键，首次官方 `--review` 校验均退出0，无修订或重试。审者实质接受完整表格识别和相位平均功率命题判断的范围，并记录不能证明独立书写／推导、可仅凭电容行排除表格而未证明线圈掌握的局限。原稿、正式审查、冻结记录与实际回执已保留，不据此批准整课；D712 首次选项 DISPLAY 和 D713 N30 首次盲审仍在执行。
+
+D707／D709／D710：N31 是 D-028 已推送课程，未重做或重复计量。复用源101–104页批准，N36 首次装订8正文／4问题，t7 首次装订9题并双语备料；第一次 t7 第8题空图引用警告保留。仅补已批准源99／100页和原图63的库存绑定，受影响装订后该题实际 `figure_refs` 登记为图63，N36 两份原始 JSON SHA 均不变，D708 文本作者的工作模板未被覆盖。N35 原始课 JSON 与既有批准字节完全相同，两语言已通过 SCI／ZHEN／原生文本检查的模板直接恢复为可编辑工作副本，没有重写或重审。图63旧记录是作者拒绝，不是独立全图批准；D706 仅修原两个220标签的原生失败，首次独立图义／源像素／显示审查仍缺。完整计量仍149门／577源页。
+
+D717：N36／t7 双语首稿和四项原生文本 PASS 已保留；仅重绑 t7 原题8的源快照／图63库存 metadata，翻译正文不变。N36／t7 的首份独立 SCI／ZHEN／13道原题复核由 D718 进行，尚未据此定稿、编写标准答案或选择题。N32 复用批准源页完成10正文／零题的首次装订和双语准备，D716 首稿与 D724 图57首次现代图作者继续执行；历史图26只登记库存，不批准无关节尾。
+
+D712／D719／D720：N27 首次四个选项视图 DOM 通过，三个独立像素视图通过，中文手机选项d首列竖排 HOLD。D719 新隔离预览只给该表格首列加 mobile-scoped `white-space:nowrap`，题面／数学／字体字节不变；三标签整行、页面无横向溢出、右列末端可访问。D720 两张受影响截图独立像素 PASS，三份旧 PASS 直接复用。首轮失败和本地接收断言误读状态的技术失败均保留，没有重审语义、促进选择题或批准整课；父方零新开图，D712 审者4次、D720 审者2次且已关闭。
+
+D713／D714／D722：N30 第1／2题首次 source-first／view-first／key-blind 双语选择题复核 PASS，两个首次官方 `--review` 实际退出0，审者已关闭、零开图。仅收存该范围审查与冻结记录，原第3／4题、图55、西里尔全文／拓扑／来源 HOLD 继续保留。图63首次独立 SOURCE／SCI／NEUTRAL／331／342／640px DISPLAY 全图 PASS，官方 hash-bound `review@1` 已保留；审者6次开图并已关闭，没有重渲染或继承旧作者拒绝为审批。N35 复用原正文批准，只接续 D721 缺失原生收口和四个正文 DOM 视图；N30 只接续 D723 首次选项 DISPLAY。D722 精确回执接收只读取既有实际执行，没有重跑生产器。计量149门／577页，HEAD804de0478和所有失败／锁／备份／费用保留；无新 commit／push、数据库、付费、发布、合并、部署、关闭或正式 handoff。
+
+D747／D748／D745：N36 第4题仅推导字段的双语受影响 SCI／ZHEN 通过，其余字段和八份显示答案不变；原答案失败保留。首次双语答案原生收口通过，每语种 auto=0、ungraded=4。选择题首次 source-first／view-first／key-blind 独审通过，每语言4原题、5单元、22选项；三个阶段先冻结再读键，首次官方校验均退出0。自由书写能力损失及概念重叠局限已实质记录，不把识别任务当成独立书写证明。
+
+D749／D755／D756／D757／D758／D761：首次 DISPLAY 在原生调用时发现答案隔离根缺课程归属索引，补入已有原课字节并仅重建该隔离索引后，双语首次 render 通过。习题页未实际用到公式的嵌入字体，字体可用性断言首次失败；只显式请求已有字体加载，复用已通过的中文桌面正文视图，续做其余15视图。16个双语桌面／手机 text、written、answers、choices 视图 DOM 通过，两批各8张独立像素审查通过，长图缩放的可辨认范围限制明确保留。N36 已完整离线保留，原课与两个 edition 索引只新增该课；EN 作者工具的原投影与原 seed trace 字节均持久保留，无改键、重审、重渲染或输入交互。N35 的 D738 完整成果直接复用，两门待本批交付，仍为149门已推送／577源页。
+
+[N36 完整离线课程及首轮失败](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d761-n36-complete-course/batch-ready.json)
+
+D741／D742／D751／D752／D759／D760／D765：N33 首次双语正文独审只发现开头输电比较缺有功功率、功率因数、接法及固定电阻条件；仅修两语言 prose[0].text，首句、其他字段、公式和边界锚点不变，受影响原生文本及独立 SCI／ZHEN 均通过。图60 的两条独立三叶绕组、四开端及单独铁芯线通过首次 SOURCE／SCI／neutral／331／342／640px 独审；作者截图高度断言原失败和三个原生 PASS 不重跑。当前源图路径只迁移到同 SHA 的既有持久 PNG，几何／SVG／源文不改，迁移 metadata 的受影响原生绑定通过。最小可编辑原课、双语稿和图60保留到 d765 attempt；图58／59仍需语义图像，N33不入完整课计量或正式索引。
+
+[N33 局部通过成果及原失败](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d765-n33-current-retained/retained.json)
+
+D750／D753：图80的实际双面板人物、船只和水下仪器场景需要新语义画作，路由为 generated，零付费下 HOLD；没有执行替代 SVG、原生图渲染或 N42 整课定稿。N34 复用96–99页来源闭合及 D744 原生25／25，首次装订22源块、零题、图61／62，双语文本原生检查通过。D762 首次正文独审、D763 两图首次路由、D764 N41和D766 N37既有来源接续正在进行，不把准备或作者通过当成整课批准。父方仍24次开图、零新开图；已复用原五个子上下文及其真实累计计数，无新聊天／分支／工作树、共享DB、付费、技能安装、全项目检查、监督或同伴消息、合并、部署、关闭或正式 handoff。
