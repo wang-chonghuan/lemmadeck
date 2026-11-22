@@ -1,0 +1,281 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "e2c57907734a4e8618468d6391da4f129db82e5bf1f9ffaf412f63dab3f1a619",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q1075-bundles",
+      "source_numbers": ["1075"],
+      "view": {
+        "mode": "single",
+        "stem": "书柜里的书分别按 $4$ 本、$5$ 本或 $6$ 本捆一包，每次都剩 $1$ 本；按 $7$ 本捆一包则没有剩余。书不多于 $400$ 本。书柜里有多少本书？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$121$ 本", "figure_ids": []},
+          {"id": "B", "text": "$301$ 本", "figure_ids": []},
+          {"id": "C", "text": "$721$ 本", "figure_ids": []},
+          {"id": "D", "text": "$840$ 本", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine the count satisfying all bundle remainders, exact seven-bundle condition and upper bound.",
+        "source_solution": "N-1 is divisible by lcm(4,5,6)=60, so N=60k+1 with0<=k<=6. Divisibility by7 gives4k+1=0 modulo7, hence k=5 modulo7. The only allowed k is5, giving301=4*75+1=5*60+1=6*50+1=7*43.",
+        "unit_reason": "One complete book count combines all simultaneous conditions. Separate remainder clicks would not require solving the system.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing a supplied count does not demonstrate writing the congruence proof; checking all conditions and the bound remains required."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "121=60*2+1 meets the first three remainder conditions, but121=7*17+2, not divisible by7.", "misconception": "Stop after finding a positive member60k+1 with k=2, checking only the4,5,6 bundle conditions and omitting the7 condition."},
+          {"option_id": "B", "truth": "correct", "derivation": "The congruences force k=5 modulo7;0<=k<=6 admits only5.301 meets every remainder and is at most400.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "721=60*12+1=7*103 meets all bundle conditions but exceeds400.", "misconception": "Use k=5+7=12 in the correct congruence class while omitting the upper bound."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "4*5*6*7=840 is divisible by4,5,6,7, so the first three remainders are0 rather than1; it also exceeds400.", "misconception": "Replace the remainder-one conditions by divisibility and multiply4*5*6*7 as a common multiple, obtaining840."}
+        ]
+      }
+    },
+    {
+      "id": "q1076-cut-invariant",
+      "source_numbers": ["1076"],
+      "view": {
+        "mode": "single",
+        "stem": "从一张纸开始，每次可选择现有的某几块或全部纸块，把每一块分别剪成 $4$ 块。哪条推理能证明不可能恰好得到 $50$ 块？以下 $t$ 表示从开始起被剪成四块的纸块总次数；同一轮剪多块时逐块计数。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "每剪一块，净增加 $3$ 块，所以总块数为 $1+3t$。它除以 $3$ 余 $1$，而 $50$ 除以 $3$ 余 $2$，故不可能。", "figure_ids": []},
+          {"id": "B", "text": "每剪一块，净增加 $4$ 块，所以总块数为 $1+4t$。它除以 $4$ 余 $1$，而 $50$ 除以 $4$ 余 $2$，故不可能。", "figure_ids": []},
+          {"id": "C", "text": "每剪一块，总块数都变为原来的 $4$ 倍，所以总块数为 $4^t$。$50$ 不是 $4$ 的整数次幂，故不可能。", "figure_ids": []},
+          {"id": "D", "text": "开始只有 $1$ 块，每剪一块就增加奇数块，所以总块数始终是奇数。$50$ 是偶数，故不可能。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove impossibility for all permitted partial or whole-paper cutting sequences by an invariant.",
+        "source_solution": "Each replacement removes one piece and adds four, so it increases total by3. Starting from1, after t individual replacements the total is1+3t. Cutting r pieces simultaneously increases by3r. All reachable totals are1 modulo3, unlike50 which is2 modulo3.",
+        "unit_reason": "Choose a universal invariant proof, not a few observed counts or an assertion that50 is absent. Every candidate reaches the same impossibility conclusion, so the learner must judge its reasoning.",
+        "concept_blocks": [],
+        "limitations": ["Proof recognition does not demonstrate independently inventing or writing the invariant."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Replacing one by four gives delta3;1+3t is invariant modulo3. Since50=3*16+2, no t works, including simultaneous cuts.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "After the first cut there are4 pieces, not1+4=5. The removed old piece was counted twice.", "misconception": "Add the four new pieces without subtracting the one replaced piece, giving erroneous net increase4."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "After the first cut there are4 pieces; cutting only one of those produces7 rather than16. The source permits partial cuts.", "misconception": "Treat each permitted individual-piece replacement as if every existing piece were cut, yielding4^t instead of1+3t."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "The first cut produces4, an even total. Adding an odd increment toggles parity rather than preserving oddness.", "misconception": "Assume odd initial count plus repeated odd increments stays odd, ignoring odd+odd=even."}
+        ]
+      }
+    },
+    {
+      "id": "q1077-digit-count-table",
+      "source_numbers": ["1077"],
+      "view": {
+        "mode": "single",
+        "stem": "在所有十进制四位数中，分别统计：只含奇数数字的数、只含偶数数字的数、既含奇数数字又含偶数数字的数。题目不要求数字互不相同。哪一行的三个计数都正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "只含奇数：$625$；只含偶数：$625$；两类都有：$8750$。", "figure_ids": []},
+          {"id": "B", "text": "只含奇数：$120$；只含偶数：$96$；两类都有：$4320$。", "figure_ids": []},
+          {"id": "C", "text": "只含奇数：$625$；只含偶数：$500$；两类都有：$7875$。", "figure_ids": []},
+          {"id": "D", "text": "只含奇数：$625$；只含偶数：$256$；两类都有：$8119$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Count all three parity classes of four-digit numbers, with correct leading-zero and repeated-digit handling.",
+        "source_solution": "There are9000 four-digit numbers. Odd-only has5 choices in each position:5^4=625. Even-only has4 nonzero thousands choices and5 choices at each other position:4*5^3=500. The classes are disjoint; mixed is9000-625-500=7875. Source contains no distinct-digit restriction.",
+        "unit_reason": "A complete three-class count is one coherent partition task; the zero-leading restriction and complement rule must agree across the row.",
+        "concept_blocks": [],
+        "limitations": ["A complete-result selection does not establish independently writing a counting derivation. The non-distinct condition makes explicit the absence of an extra source restriction."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "This row counts10000 length-four strings including leading zero, giving625 even-only strings and10000-625-625=8750 mixed strings. Those are not the required four-digit integers.", "misconception": "Allow zero in the first position and use10^4 as the universe instead of9000."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "With an invented distinct-digit restriction, odd-only is5*4*3*2=120; even-only is4*4*3*2=96; total distinct-digit four-digit numbers is9*9*8*7=4536 and mixed is4536-120-96=4320. The source imposes no such restriction.", "misconception": "Replace independent positional choices by sampling without replacement and exclude repeated digits throughout."},
+          {"option_id": "C", "truth": "correct", "derivation": "5^4=625;4*5^3=500;9000-625-500=7875. Zero is allowed in lower places, repetitions are allowed, and the three categories partition the actual universe.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "4^4=256 removes zero from every even-digit position, omitting such four-digit numbers as2000. Subtracting this undersized class from9000 gives8119, not the mixed count.", "misconception": "Apply the nonzero-thousands restriction to every even-digit position, then compute9000-625-256."}
+        ]
+      }
+    },
+    {
+      "id": "q1080-false-proof",
+      "source_numbers": ["1080"],
+      "view": {
+        "mode": "single",
+        "stem": "下面推导声称 $4=5$：\n\n$16-36=25-45$；\n\n$16-36+\\frac{81}{4}=25-45+\\frac{81}{4}$；\n\n$4^2-2\\cdot4\\cdot\\frac92+\\left(\\frac92\\right)^2=5^2-2\\cdot5\\cdot\\frac92+\\left(\\frac92\\right)^2$；\n\n$\\left(4-\\frac92\\right)^2=\\left(5-\\frac92\\right)^2$；\n\n$4-\\frac92=5-\\frac92$；\n\n$4=5$。\n\n第一个不成立的步骤是哪一个？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "写出起始等式 $16-36=25-45$。", "figure_ids": []},
+          {"id": "B", "text": "在起始等式两边同时加上 $\\frac{81}{4}$。", "figure_ids": []},
+          {"id": "C", "text": "把展开式改写成 $\\left(4-\\frac92\\right)^2=\\left(5-\\frac92\\right)^2$。", "figure_ids": []},
+          {"id": "D", "text": "由两个平方相等，推出 $4-\\frac92=5-\\frac92$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Identify the actual invalid inference in the supplied false proof, retaining its complete chain.",
+        "source_solution": "Both starting sides equal-20; adding81/4 gives1/4. Completing squares is valid. The square bases are-1/2 and1/2, so their squares agree but their signs differ. The first invalid implication is u^2=v^2 => u=v; the justified result is |u|=|v| or u=+/-v.",
+        "unit_reason": "The whole chain must be considered to distinguish a valid arithmetic or square-completion step from the lost-sign inference.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the defective step does not itself demonstrate writing a repaired proof or explaining the absolute-value rule."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "16-36=-20 and25-45=-20, so the equality is true.", "misconception": "Evaluate subtraction as unsigned distance, replacing16-36 by20 while retaining25-45=-20, and blame the starting equality."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Adding the same number to both sides preserves equality; each side becomes-20+81/4=1/4.", "misconception": "Mistake the later contradictory conclusion as proof that adding a positive fraction to two negative equal values is invalid."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "(4-9/2)^2=16-36+81/4; (5-9/2)^2=25-45+81/4. Both are exact identities.", "misconception": "Check only the two displayed base numerals4 and5, infer their completed squares must differ, and ignore the shift9/2."},
+          {"option_id": "D", "truth": "correct", "derivation": "4-9/2=-1/2 whereas5-9/2=1/2. Equal squares justify equal absolute values, not equal signed bases. This is the first false inference.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1081-natural-pairs",
+      "source_numbers": ["1081"],
+      "view": {
+        "mode": "single",
+        "stem": "求满足 $x^2-y^2=69$ 的所有自然数有序对 $(x,y)$。哪一组恰好包含全部解？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\{(10,13),(34,35)\\}$", "figure_ids": []},
+          {"id": "B", "text": "$\\{(13,10),(35,34)\\}$", "figure_ids": []},
+          {"id": "C", "text": "$\\{(35,34)\\}$", "figure_ids": []},
+          {"id": "D", "text": "$\\{(23,3),(69,1)\\}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find all natural ordered pairs, not a witness or an unordered pair, satisfying the positive square difference.",
+        "source_solution": "(x-y)(x+y)=69. Both positive factors have equal parity. Ordered smaller/larger factor pairs(1,69),(3,23) give x=(r+s)/2,y=(s-r)/2 and hence(35,34),(13,10). Both check. No solution has a zero coordinate, so the answer does not depend on whether0 belongs to N.",
+        "unit_reason": "A complete solution set tests both factor decomposition and recovering ordered coordinates without splitting individual factors into clicks.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the complete set does not demonstrate generating and exhausting the factor-pair argument in writing."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "10^2-13^2=-69 and34^2-35^2=-69, the wrong sign.", "misconception": "Recover the same factor pairs but interchange x and y, treating the difference as unordered."},
+          {"option_id": "B", "truth": "correct", "derivation": "169-100=69 and1225-1156=69. The only positive factor pairs of69 give precisely these two solutions.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "(35,34) is a valid solution from1*69 but(13,10) from3*23 is missing.", "misconception": "Use only the trivial factorization69=1*69 and stop before checking its nontrivial factor pair."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "23^2-3^2=520 and69^2-1^2=4760. The factors of69 represent x+y and x-y, not x and y themselves.", "misconception": "Use larger and smaller factors directly as coordinates, skipping sum-and-difference inversion and division by2."}
+        ]
+      }
+    },
+    {
+      "id": "q1082-radical-proof",
+      "source_numbers": ["1082"],
+      "view": {
+        "mode": "multiple",
+        "stem": "要证明 $\\sqrt{11+6\\sqrt2}+\\sqrt{11-6\\sqrt2}$ 的值是自然数，下面哪些推理成立？选择所有成立的推理。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$11+6\\sqrt2=(3+\\sqrt2)^2$，且 $11-6\\sqrt2=(3-\\sqrt2)^2$，所以可把两个根式分别化为平方的算术平方根。", "figure_ids": []},
+          {"id": "B", "text": "$3>\\sqrt2$，所以 $\\sqrt{(3-\\sqrt2)^2}=3-\\sqrt2$；较小的根式不需要改变这个正数的符号。", "figure_ids": []},
+          {"id": "C", "text": "$3+\\sqrt2>0$，所以 $\\sqrt{(3+\\sqrt2)^2}=3+\\sqrt2$；与 $3-\\sqrt2$ 相加得自然数 $6$。", "figure_ids": []},
+          {"id": "D", "text": "对于非负数 $u,v$ 总有 $\\sqrt u+\\sqrt v=\\sqrt{u+v}$，所以这里可以先把两个被开方数相加，再开平方。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Establish square decompositions, correct principal-root signs and cancellation yielding a positive natural number.",
+        "source_solution": "The two radicands are(3+sqrt2)^2 and(3-sqrt2)^2. Both bases are positive because3>sqrt2. Their principal roots sum to(3+sqrt2)+(3-sqrt2)=6.",
+        "unit_reason": "The three complementary valid proof relationships form one complete proof task. The learner must judge every claim, not merely select the only natural-number output.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of the identities and sign conditions does not demonstrate independently discovering the conjugate-square decomposition or writing the proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Expanding(3+/-sqrt2)^2 gives9+2+/-6sqrt2=11+/-6sqrt2; both decompositions are exact.", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "3^2=9>2 implies3>sqrt2. Hence3-sqrt2>0 and sqrt((3-sqrt2)^2)=|3-sqrt2|=3-sqrt2.", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "3+sqrt2 is positive; taking its principal square root preserves it. Adding the positive conjugate3-sqrt2 cancels sqrt2 and yields6.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "For u=v=1, sqrt u+sqrt v=2 but sqrt(u+v)=sqrt2. Here adding radicands yields sqrt22, not the actual sum6.", "misconception": "Treat the square-root operation as additive and drop the2sqrt(uv) cross term in the square of the sum."}
+        ]
+      }
+    },
+    {
+      "id": "q1083-nonnegative-inequality",
+      "source_numbers": ["1083"],
+      "view": {
+        "mode": "single",
+        "stem": "设 $a,b,c,d\\ge0$，记 $L=\\sqrt{(a+c)(b+d)}$，$R=\\sqrt{ab}+\\sqrt{cd}$。哪条推理能对所有这些数证明 $L\\ge R$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$L,R\\ge0$，且 $L^2-R^2=(ad-bc)^2\\ge0$，所以 $L\\ge R$。", "figure_ids": []},
+          {"id": "B", "text": "$L,R\\ge0$，且 $L^2-R^2=(\\sqrt{ab}-\\sqrt{cd})^2\\ge0$，所以 $L\\ge R$。", "figure_ids": []},
+          {"id": "C", "text": "$L,R\\ge0$，且 $L^2-R^2=(a-c)(d-b)\\ge0$，所以 $L\\ge R$。", "figure_ids": []},
+          {"id": "D", "text": "$L,R\\ge0$，且 $L^2-R^2=(\\sqrt{ad}-\\sqrt{bc})^2\\ge0$，所以 $L\\ge R$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove the nonnegative-variable inequality with its full universal domain, including zero cases.",
+        "source_solution": "L^2-R^2=ad+bc-2sqrt(abcd)=(sqrt(ad)-sqrt(bc))^2>=0. Since L,R>=0, comparing squares establishes L>=R. No division excludes any zero case.",
+        "unit_reason": "All candidates state the desired inequality, so only checking the decisive square-difference identity and its sign settles the question.",
+        "concept_blocks": [],
+        "limitations": ["Choosing the complete proof does not demonstrate independently discovering or writing the square-difference identity."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "At a=b=1,c=0,d=4, L^2-R^2=5-1=4 while(ad-bc)^2=16. The alleged identity fails.", "misconception": "Replace sqrt(ad) and sqrt(bc) in the correct difference-of-square-roots identity by ad and bc, forgetting that the terms being squared are roots."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "At a=b=1,c=d=0, L^2-R^2=1-1=0 but(sqrt(ab)-sqrt(cd))^2=1. The within-term products do not give the uncancelled cross products.", "misconception": "Take the difference of the two summands of R and square it, instead of expanding L^2-R^2 and retaining ad and bc."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "At a=b=1,c=d=0, the claimed right side(1-0)(0-1)=-1, not the actual difference0 and not nonnegative.", "misconception": "Replace the radical cross term by the product ab+cd to factor ad+bc-ab-cd as(a-c)(d-b), then assume nonnegative inputs make their differences nonnegative."},
+          {"option_id": "D", "truth": "correct", "derivation": "Expanding givesad+bc-2sqrt(abcd), exactly(sqrt(ad)-sqrt(bc))^2. Its nonnegativity and L,R>=0 justify unsquaring, including zeros.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1084-rational-closure",
+      "source_numbers": ["1084"],
+      "view": {
+        "mode": "multiple",
+        "stem": "设 $u=a+b\\sqrt2$，$v=c+d\\sqrt2$，其中 $a,b,c,d$ 都是有理数；谈到商时要求 $v\\ne0$。要证明这种形式的数的和、差、积以及有定义的商仍能写成同样形式，下面哪些恒等式及其系数说明成立？选择所有成立的项。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$u+v=(a+c)+(b+d)\\sqrt2$，两个系数都是有理数。", "figure_ids": []},
+          {"id": "B", "text": "$u+v=(a+c)+(bd)\\sqrt2$，两个系数都是有理数。", "figure_ids": []},
+          {"id": "C", "text": "$u-v=(a-c)+(b-d)\\sqrt2$，两个系数都是有理数。", "figure_ids": []},
+          {"id": "D", "text": "$u-v=(a-c)+(b+d)\\sqrt2$，两个系数都是有理数。", "figure_ids": []},
+          {"id": "E", "text": "$uv=(ac+2bd)+(ad+bc)\\sqrt2$，两个系数都是有理数。", "figure_ids": []},
+          {"id": "F", "text": "$uv=(ac+bd)+(ad+bc)\\sqrt2$，两个系数都是有理数。", "figure_ids": []},
+          {"id": "G", "text": "$\\dfrac uv=\\dfrac{ac-2bd}{c^2-2d^2}+\\dfrac{bc-ad}{c^2-2d^2}\\sqrt2$；当 $v\\ne0$ 时分母非零，两个系数都是有理数。", "figure_ids": []},
+          {"id": "H", "text": "$\\dfrac uv=\\dfrac{ac-2bd}{c^2+2d^2}+\\dfrac{bc-ad}{c^2+2d^2}\\sqrt2$；当 $v\\ne0$ 时分母非零，两个系数都是有理数。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove closure for all four defined arithmetic operations with rational coefficients, treating the nonzero divisor rather than claiming division by zero.",
+        "source_solution": "Addition/subtraction combine coefficients. Product uses(sqrt2)^2=2. For a nonzero v, rationalize with c-d*sqrt2 to get numerator(ac-2bd)+(bc-ad)*sqrt2 and denominatorc^2-2d^2. This rational denominator cannot vanish: d=0 would force c=0; d!=0 would make(c/d)^2=2 and contradict irrationality of sqrt2. A reduced rational root of2 would force both numerator and denominator even. All resulting coefficients are rational.",
+        "unit_reason": "One multiple question independently checks the four closure formulas and required coefficient/domain facts. Every operation has a genuine competing false identity, so one quotient distinction cannot select an otherwise supplied complete table.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of complete identities does not demonstrate independently expanding or rationalizing them in writing.", "The original prose does not explicitly exclude a zero divisor. The view qualifies the quotient as defined only for v!=0; this is not recovery of an explicit original zero-divisor condition."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "E", "G"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Collect the rational and sqrt2 terms; rational numbers are closed under addition.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "With a=c=0,b=d=1, u+v=2sqrt2 while this formula gives sqrt2. Rationality ofbd cannot repair the false identity.", "misconception": "Multiply the two radical coefficients while adding the numbers, givingbd rather thanb+d."},
+          {"option_id": "C", "truth": "correct", "derivation": "Distribute the minus sign through c+d*sqrt2; rational differencesa-c andb-d remain rational.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "With a=c=0,b=d=1, the actual difference is0 but the formula gives2sqrt2.", "misconception": "Subtract c but fail to distribute the outer minus sign to d*sqrt2, leavingb+d."},
+          {"option_id": "E", "truth": "correct", "derivation": "Expand four terms:ac+(ad+bc)*sqrt2+bd*(sqrt2)^2=ac+2bd+(ad+bc)*sqrt2. All coefficients are rational sums/products.", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "With a=c=0,b=d=1, uv=2 but the formula gives1.", "misconception": "Replace(sqrt2)^2 by1 instead of2 when combining the product of the radical terms."},
+          {"option_id": "G", "truth": "correct", "derivation": "Multiply numerator and denominator by c-d*sqrt2. Denominator isc^2-2d^2 and numerator isac-2bd+(bc-ad)*sqrt2. Nonzero rational coefficientsc,d cannot satisfyc^2=2d^2 unless both vanish, using irrationality ofsqrt2. Thus v!=0 guarantees a nonzero rational denominator and rational output coefficients.", "misconception": null},
+          {"option_id": "H", "truth": "incorrect", "derivation": "With a=c=0,b=d=1, u/v=1, while the formula gives-2/2=-1. The conjugate product is a difference, not a sum.", "misconception": "Use the conjugate numerator but change the denominator product(c+d*sqrt2)(c-d*sqrt2) to c^2+2d^2, dropping the subtraction sign."}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1075", "question_ids": ["q1075-bundles"], "omitted_tasks": ["Independent production of the book-count congruence derivation."], "reason": "All four bundle conditions and the400 bound are retained in one complete-count judgment."},
+    {"source_number": "1076", "question_ids": ["q1076-cut-invariant"], "omitted_tasks": ["Independent invention and written production of the invariant proof."], "reason": "The complete invariant recognition covers partial and simultaneous cuts and universal impossibility."},
+    {"source_number": "1077", "question_ids": ["q1077-digit-count-table"], "omitted_tasks": ["Independent written construction of the three counting derivations."], "reason": "The entire three-category partition, leading zero distinction and absence of a distinct-digit restriction are retained."},
+    {"source_number": "1080", "question_ids": ["q1080-false-proof"], "omitted_tasks": ["Written explanation or repair of the invalid implication."], "reason": "Complete original proof chain and locating its actual first false step remain visible."},
+    {"source_number": "1081", "question_ids": ["q1081-natural-pairs"], "omitted_tasks": ["Independent production and exhaustion of factor pairs."], "reason": "All natural ordered solutions and sign/order restrictions are retained; zero-membership convention does not affect them."},
+    {"source_number": "1082", "question_ids": ["q1082-radical-proof"], "omitted_tasks": ["Independent discovery and written production of the conjugate-square proof."], "reason": "Both radicand decompositions, principal-root signs and resulting natural number are checked as coherent proof relationships."},
+    {"source_number": "1083", "question_ids": ["q1083-nonnegative-inequality"], "omitted_tasks": ["Independent construction and writing of the square-difference proof."], "reason": "The universal nonnegative domain including zeros and the decisive identity are retained. No extra equality-condition task is imposed."},
+    {"source_number": "1084", "question_ids": ["q1084-rational-closure"], "omitted_tasks": ["Independent written expansion and rationalization proofs.", "No quotient is asserted for a zero divisor; original prose omits that qualification."], "reason": "All four defined arithmetic operations and rational output coefficients are retained. Nonzero divisor is explicitly qualified, not claimed to have been explicit in the source."}
+  ]
+}

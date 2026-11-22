@@ -1,0 +1,273 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "3647f4a3da3ed790dd6c369cc19da40a62e742d414c4e990b676c6b4b41f1507",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q1062-decimal-square-proof",
+      "source_numbers": ["1062"],
+      "view": {
+        "mode": "single",
+        "stem": "一个两位数的十位数字为 $n$、个位数字为 $5$，其中 $n\\in\\{1,2,\\ldots,9\\}$。把 $n(n+1)$ 后面添写 $25$ 可以得到这个数的平方。哪条等式链能证明这条规则，即每一步等号都成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(10n+5)^2=100n^2+50n+25=100n(n+1)+25$。", "figure_ids": []},
+          {"id": "B", "text": "$(10n+5)^2=100n^2+100n+5=100n(n+1)+25$。", "figure_ids": []},
+          {"id": "C", "text": "$(10n+5)^2=100n^2+100n+25=100n(n+1)+25$。", "figure_ids": []},
+          {"id": "D", "text": "$(10n+5)^2=(10n)^2+5^2=100n(n+1)+25$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "证明末位为5的两位数平方的普遍十进制规则，而非只算一个例子。",
+        "source_solution": "n是1到9的整数。(10n+5)^2=100n^2+100n+25=100n(n+1)+25；乘100把整数n(n+1)向左移两位，末两位再添25。每个候选都写同一个最终目标，因此不能靠照抄题干目标选出正确证明，必须检查展开与提取因子的等号。",
+        "unit_reason": "一个完整等式链对应原题一个普遍证明；三个错误链与正确链具有相同终点，比较的是证明步骤。",
+        "concept_blocks": [],
+        "limitations": ["选择正确链不能展示独立写出展开和十进制位值证明；可用某个n的反例淘汰错误链。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "中间式把交叉项2·10n·5误写为10n·5=50n；与真实展开差50n，n>=1时不为0。最后又把50n当成100n提成目标因式，故链不是证明。", "misconception": "展开平方时漏掉交叉项的系数2，再把错误中间式直接接到已给的算法目标。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "中间式将5^2误保留为5，真实常数应25，差20；最终补成已给目标并不能使前一个等号成立。", "misconception": "平方展开中只平方含变量的项，常数5未平方，却抄接题干的末尾25。"},
+          {"option_id": "C", "truth": "correct", "derivation": "交叉项为100n，常数为25；100n^2+100n=100n(n+1)，每一步对全部允许n成立。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "平方和中没有真实交叉项100n，因n>=1不能相等；中间式等于100n^2+25而不是最终目标。", "misconception": "误用(a+b)^2=a^2+b^2，再把没有交叉项的结果接到给定目标。"}
+        ]
+      }
+    },
+    {
+      "id": "q1063-digit-usage-conditional",
+      "source_numbers": ["1063"],
+      "view": {
+        "mode": "single",
+        "stem": "一个两位正整数的平方用数字 $0,2,3,5$ 写出。数字的使用方式分别作两种解释：一、四个列出的数字都实际出现，不添别的数字；二、只限制数字取自这个集合，允许重复，也允许不出现全部四个数字。分别找出每种解释下满足条件的全部两位数。哪组完整结果正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "解释一：$\\{55\\}$；解释二：$\\{15,45,50,55\\}$。", "figure_ids": []},
+          {"id": "B", "text": "解释一：$\\{45,50,55\\}$；解释二：$\\{15,45,50,55\\}$。", "figure_ids": []},
+          {"id": "C", "text": "解释一：$\\{55\\}$；解释二：$\\{45,50,55\\}$。", "figure_ids": []},
+          {"id": "D", "text": "解释一：空集；解释二：$\\{50\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在不替原题选取未明说的数字使用约定的前提下，完整求出两个明确解释各自的两位数。",
+        "source_solution": "原文字没有另说数字是否都出现；原意保留资格，不把解释二宣称成原书规则。解释一中平方最多四位，所以四数字均出现必各一次。平方末位不能为2或3；若末位0则末两位00，不能各一次，故末位5并以25结尾，余前缀只能30，因此3025=55^2。解释二中根只能末位0或5；10,20,...,90的平方只有2500符合，15,25,...,95的平方依次225,625,1225,2025,3025,4225,5625,7225,9025，符合者15,45,55。完整较宽集合为15,45,50,55。",
+        "unit_reason": "两种解释共用同一平方数字约束，一个完整条件结果记录诚实保留原文字的使用资格；不把每个数字或候选值拆成格子题。",
+        "concept_blocks": [],
+        "limitations": ["原题数字使用的原意并未恢复；所示两个条件解释不冒充原书明确给定。", "完整集合识别不能展示自由排位、穷尽末位和逐平方的独立求数过程；可通过某个反例淘汰整组。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "55^2=3025四数字均出现；较宽解释的225,2025,2500,3025依次来自15,45,50,55，末位0/5穷尽其他根后没有遗漏。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "45^2=2025和50^2=2500都没有3，所以解释一错误。若误只要求0、2、5各出现，忽略必须出现3，正会留下45、50、55；解释二仍是正确完整集合。", "misconception": "解释一检查所有列出的数字时漏检3，只要求0、2、5出现。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "15^2=225使用的数字均允许，较宽解释允许三位平方，故遗漏15。错误把两位数的平方一律限定为四位，便只留下45、50、55；解释一未受此额外限制影响。", "misconception": "把两位数的平方误认成必为四位数，排除合法的三位平方225。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "错误断定允许数字中的平方末位只能0，会只检查10,20,...,90，较宽解释留下50；四数字全出现不可能末尾00，便错误得空集。遗漏了同样合法的平方末位5，包括3025。", "misconception": "平方末位筛选漏掉5，只保留0，随后在两个解释中都只检查末位0的根。"}
+        ]
+      }
+    },
+    {
+      "id": "q1064-reversal-sum-all",
+      "source_numbers": ["1064"],
+      "view": {
+        "mode": "single",
+        "stem": "把一个两位数的数字倒序后，仍得到一个两位数；这两个数的和是某个自然数的平方。满足条件的全部原两位数是哪一组？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\{29,38,47,56,65,74,83,92\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$\\{18,27,36,45,54,63,72,81\\}$。", "figure_ids": []},
+          {"id": "C", "text": "$\\{29,38,47,56\\}$。", "figure_ids": []},
+          {"id": "D", "text": "空集。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "用数位表达式、平方整除和两位反序边界求出全部原数。",
+        "source_solution": "两个数10a+b、10b+a要求1<=a,b<=9，其和11(a+b)在22到198之间。若为k^2，11是质数故11|k，且5<=k<=14，只有k=11。于是a+b=11，a=2到9，得到29,38,47,56,65,74,83,92。反序对两项都是不同的原数，不能只选较小代表。",
+        "unit_reason": "一个完整数集保留求所有原数的任务、反序两位边界及穷尽要求。",
+        "concept_blocks": [],
+        "limitations": ["集合识别不能证明独立推导11整除平方根和穷尽数位范围；可以用反例或观察反序闭合淘汰部分集合。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "每个数两位且两数字非零，反序仍两位；每对和为121=11^2，a+b=11的允许数位全部列出。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "这组数字和均9，原数与反数之和均99而非平方。例如18+81=99。把平方条件误套成数位和等9会恰列这八个非零数位的数。", "misconception": "把原数与反数之和为平方，误替换成原数的数字和等于9的数字和判据。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "四个数本身有效，但漏掉各自反数65,74,83,92。把反序对当成无序对象并只保留较小代表，生成这一半集合。", "misconception": "把求全部原数错当作求不同的无序反序对，每对仅取较小数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "29与92的和121已反驳空集。若误要求两个加数自身都是平方，检查两位平方16,25,36,49,64,81发现其反序均非平方，会错误得空集。", "misconception": "把两个数的和是平方，误读成两个数分别都是平方。"}
+        ]
+      }
+    },
+    {
+      "id": "q1065-four-consecutive-square",
+      "source_numbers": ["1065"],
+      "view": {
+        "mode": "single",
+        "stem": "四个连续的自然数写成 $n,n+1,n+2,n+3$。哪条恒等式能把它们的积加 $1$ 写成一个自然数的平方？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$n(n+1)(n+2)(n+3)+1=(n^2+3n+1)^2$。", "figure_ids": []},
+          {"id": "B", "text": "$n(n+1)(n+2)(n+3)+1=(n^2+3n)^2$。", "figure_ids": []},
+          {"id": "C", "text": "$n(n+1)(n+2)(n+3)+1=(n^2+n+1)^2$。", "figure_ids": []},
+          {"id": "D", "text": "$n(n+1)(n+2)(n+3)+1=(n^2+3n-1)^2$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别四连续自然数乘积加1的完整平方恒等式与自然数底数。",
+        "source_solution": "设t=n(n+3)=n^2+3n，内两项积(n+1)(n+2)=t+2。原式=t(t+2)+1=t^2+2t+1=(t+1)^2。n>=0时t+1>=1为正整数，因此无论原自然数约定是否包含0均给出自然数平方；不恢复或新增0的成员约定。",
+        "unit_reason": "一个完整平方表示对应原题一个普遍证明；有意义的差别是配对及完成平方的交叉项。",
+        "concept_blocks": [],
+        "limitations": ["恒等式识别不能展示自行发现首尾配对和写出对全部自然数的证明；有限反例足以淘汰错误选项。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "首尾积t、内项积t+2给t(t+2)+1=(t+1)^2；底数n^2+3n+1>=1且为整数。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "错误舍去t^2+2t+1中的2t+1，只留下t^2，生成该式。n=1时原式25，候选16。", "misconception": "把两因子t和t+2的积加1错当成t的平方，忽略2t+1。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "误把相邻项n(n+1)设为t'=n^2+n，并仍认为另一对为t'+2，再套完成平方公式，生成(t'+1)^2；实际另一对为n^2+5n+6。n=2原式121，候选49。", "misconception": "没有核对两对乘积的差，就把首尾配对的差2规则套到相邻配对。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把t^2+2t+1的正交叉项错配成(t-1)^2，生成所示负1底数；n=2原式121，候选81。", "misconception": "完成平方时把正交叉项2t配成了负号底数t-1。"}
+        ]
+      }
+    },
+    {
+      "id": "q1066-digit-sum-square-proof",
+      "source_numbers": ["1066"],
+      "view": {
+        "mode": "single",
+        "stem": "一个 $60$ 位十进制正整数 $M$ 恰有 $30$ 个数位是 $0$、另 $30$ 个是 $1$。哪段理由能证明，无论这些数字怎样排列，$M$ 都不是自然数的平方？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$M$ 的数字和为 $30$，所以 $M$ 能被 $3$ 整除；平方数都不能被 $3$ 整除，故 $M$ 不是平方。", "figure_ids": []},
+          {"id": "B", "text": "$M$ 的数字和为 $30$，所以 $M$ 能被 $3$ 整除但不能被 $9$ 整除；若 $M$ 是平方，平方根必被 $3$ 整除，从而 $M$ 被 $9$ 整除，矛盾。", "figure_ids": []},
+          {"id": "C", "text": "$M$ 的数字和为 $30$，所以 $M$ 不能被 $9$ 整除；所有自然数的平方都能被 $9$ 整除，故 $M$ 不是平方。", "figure_ids": []},
+          {"id": "D", "text": "$30$ 能被 $2$ 整除但不能被 $4$ 整除，所以 $M$ 也能被 $2$ 整除但不能被 $4$ 整除；平方若被 $2$ 整除就必被 $4$ 整除，因此 $M$ 不是平方。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从准确数字计数得到适用于全部排列的整除矛盾证明。",
+        "source_solution": "数字和为30，十进制数字和判据给3|M且9不整除M。若M=m^2，由质数3整除m^2得3|m，故9|M矛盾。不假定末位是0或1中的哪一个，不把数字和的奇偶性等同于原数奇偶性。",
+        "unit_reason": "一个完整理由链保留原题普遍不可能性的证明；所有选项结论相同，必须判断整除前提和平方的必要条件。",
+        "concept_blocks": [],
+        "limitations": ["选择正确理由不能展示独立构造整除矛盾或证明质数整除平方的引理；可用反例否定错误的普遍命题。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "3整除M是真，但平方数9能被3整除，否定其普遍排除命题。错误直接把3整除当成不能平方的条件，生成这条理由。", "misconception": "把平方数被3整除时还须被9整除，误缩成平方数一律不能被3整除。"},
+          {"option_id": "B", "truth": "correct", "derivation": "数字和30在3、9两个判据下给必需的不同整除结果；平方根含3因子时平方含9因子，与9不整除M矛盾。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "9不整除M是真，但平方1、4均不被9整除。漏掉前提3整除平方，错误把相应的条件结论推广到所有平方，生成此链。", "misconception": "把有条件的平方含9因子判据误推广为所有自然数平方均含9因子。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "偶平方必被4整除是真，错误在数字和判据被套到2和4。30个1可排在前30位、后30位全0，所得M被4整除；也可在末两位留11且其它位置补28个1，此时M为奇数。原数的2/4整除性质不能由数字和30推出。", "misconception": "把适用于3和9的十进制数字和整除判据，不加验证地替换成2和4。"}
+        ]
+      }
+    },
+    {
+      "id": "q1067-units-power-difference",
+      "source_numbers": ["1067"],
+      "view": {
+        "mode": "single",
+        "stem": "$43^{43}-17^{17}$ 的末位数字是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$0$。", "figure_ids": []},
+          {"id": "B", "text": "$6$。", "figure_ids": []},
+          {"id": "C", "text": "$4$。", "figure_ids": []},
+          {"id": "D", "text": "$8$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "用两个不同的幂末位循环求差的末位。",
+        "source_solution": "3的幂末位循环3,9,7,1，43除4余3，故第一项末位7；7的幂末位循环7,9,3,1，17除4余1，故第二项末位7。差是正数且被10整除，末位0。",
+        "unit_reason": "一个末位结果就是原题的单一目标；两条循环和差必须共同处理。",
+        "concept_blocks": [],
+        "limitations": ["选末位不能展示独立写出循环、指数余数和减法证明。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "43^43末位7，17^17末位7，正差末位0。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "忽略指数，只用底数末位3-7=-4，补10得6，恰得到此候选；真实两项末位都是7。", "misconception": "把幂的末位直接当成底数末位，随后做末位减法。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把第二个底数7也误套3,9,7,1循环：17余1时给3；第一项仍给7，差7-3=4。", "misconception": "对两个不同末位底数套用同一个3的幂末位循环。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "错用指数减1的循环位置：43-1余2给3^42末位9，17-1余0给7^16末位1，差9-1=8。", "misconception": "循环索引整体少一位，用n-1代替指数n来查末位。"}
+        ]
+      }
+    },
+    {
+      "id": "q1068-digit-equation-all",
+      "source_numbers": ["1068"],
+      "view": {
+        "mode": "single",
+        "stem": "一个两位数的两个数字之和的两倍，等于这两个数字的积。不额外假定两个数字相等或不同，满足条件的全部两位数是哪一组？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\{36,44,63\\}$。", "figure_ids": []},
+          {"id": "B", "text": "空集。", "figure_ids": []},
+          {"id": "C", "text": "$\\{36,63\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$\\{44\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "把原题数位条件完整求解，不由单数措辞或无根据的相等/不同假定删解。",
+        "source_solution": "设十位a=1到9、个位b=0到9。2(a+b)=ab化为(a-2)(b-2)=4；允许数位解只对应正因数对(1,4),(2,2),(4,1)，得(3,6),(4,4),(6,3)，全部数36,44,63。原文字虽用单数并不数学保证唯一，三个都符合未改条件。",
+        "unit_reason": "一个完整解集保留数位方程和全部合法根，不拆成逐数真假格子。",
+        "concept_blocks": [],
+        "limitations": ["解集识别不能展示独立建立方程、因数配对和检查数位域；原题单数措辞不被当成额外唯一性给定。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "三正因数对给36,44,63，逐个有18=18、16=16、18=18；数位界与零、负因数情形排除后无其它解。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "若把数字和误当成整两位数，会列2(10a+b)=ab，即b(a-2)=20a。a<=2时左端非正，a>=3时左端<=9(a-2)<20a，便错误得空集；真实36已反驳。", "misconception": "把题目中的两个数字的和，错误替换为这个两位数的数值。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "额外规定两数字必须不同，便从完整解集中删44，留下36和63；原题没有该条件，44确满足16=16。", "misconception": "把数位求数题误设为两个数位一定不同，删除合法重数字解。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "额外令a=b后方程4a=a^2，合法数位a=4给44；这忽略了36、63两个不同数位解。", "misconception": "因题目说求这个数而未经根据假定两个数位相等，只求重复数字解。"}
+        ]
+      }
+    },
+    {
+      "id": "q1069-open-interval-witness",
+      "source_numbers": ["1069"],
+      "view": {
+        "mode": "single",
+        "stem": "是否存在分母写为 $20$、分子为整数，并严格位于 $]\\frac4{13},\\frac5{13}[$ 内的分数？哪项完整判断正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "不存在这样的分数。", "figure_ids": []},
+          {"id": "B", "text": "存在，例如 $\\frac6{20}$。", "figure_ids": []},
+          {"id": "C", "text": "存在，例如 $\\frac7{20}$。", "figure_ids": []},
+          {"id": "D", "text": "存在，例如 $\\frac8{20}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断开区间中的分母20分数是否存在，并用满足两个严格端点的见证证明。",
+        "source_solution": "p/20的条件乘260>0得到80<13p<100，整数p=7给80<91<100，因此7/20存在。p=6、8分别给78、104，不在区间。唯一性可计算但不是原题额外要求，视图只要求合法存在见证。",
+        "unit_reason": "一个完整存在判断和见证对应原题；不能仅选存在二字而不检查提出的分数。",
+        "concept_blocks": [],
+        "limitations": ["识别合法见证不能展示自主构造分子及写出两个严格不等式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "7/20的交叉乘积给80<91<100，直接反驳不存在。错误要求20必须为13的倍数，认为不同分母不能在该区间取分数，会得到错误无解判断。", "misconception": "把区间端点的分母13误当作内部所有分数分母必须整除的约束。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "6/20在左端以下，因为6*13=78<80。误把左侧分子下界80/13向下取整得6，而不是找严格大于它的整数。", "misconception": "处理严格下界时向下取整，选了位于下界之外的分子6。"},
+          {"option_id": "C", "truth": "correct", "derivation": "7*13=91，满足80<91<100，故4/13<7/20<5/13，开端点均保持。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "8/20在右端以上，因为8*13=104>100。误将上界100/13向上取整为8，越过了严格上界。", "misconception": "处理严格上界时向上取整，选了位于上界之外的分子8。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1062", "question_ids": ["q1062-decimal-square-proof"], "omitted_tasks": ["不认证独立写出完整的普遍展开及十进制位值证明。"], "reason": "完整链比较保留原算法普遍性与平方展开目标，所有候选同终点不靠结论照抄选键。"},
+    {"source_number": "1063", "question_ids": ["q1063-digit-usage-conditional"], "omitted_tasks": ["未恢复原题未另明说的数字使用原意。", "不认证独立排位和穷尽全部平方候选。"], "reason": "保留原列举数字与两位数条件，两个明确条件解释各完整给出结果，不把新条件解释冒充原书约定或假装原歧义已解决。"},
+    {"source_number": "1064", "question_ids": ["q1064-reversal-sum-all"], "omitted_tasks": ["不认证独立建立数位方程和穷尽全部两位原数。"], "reason": "完整解集保留反序也须两位、和为平方及全部原数目标，不把反序对折为一个代表。"},
+    {"source_number": "1065", "question_ids": ["q1065-four-consecutive-square"], "omitted_tasks": ["不认证独立发现配对、完成平方并写出普遍证明。"], "reason": "完整自然数平方恒等式保留全部连续自然数情形；无论原N是否含0，正确底数均为正整数。"},
+    {"source_number": "1066", "question_ids": ["q1066-digit-sum-square-proof"], "omitted_tasks": ["不认证自主构造不可能性证明和质数整除平方引理。"], "reason": "所有排列的精确60位/30零/30一条件保留，比较理由而不是抄题干的共同不可能结论。"},
+    {"source_number": "1067", "question_ids": ["q1067-units-power-difference"], "omitted_tasks": ["不认证自行写出两个不同的循环和末位减法过程。"], "reason": "保留两底数和两指数以及差的末位单一目标。"},
+    {"source_number": "1068", "question_ids": ["q1068-digit-equation-all"], "omitted_tasks": ["不认证独立建立数位方程和因数对穷尽证明。"], "reason": "原数位条件未变，完整列出三个实际解，原单数措辞不被偷偷加成唯一性或数位相等条件。"},
+    {"source_number": "1069", "question_ids": ["q1069-open-interval-witness"], "omitted_tasks": ["不认证独立构造存在见证并书写交叉乘积证明。"], "reason": "保留开区间两端和分母20，完整存在见证同时满足两个严格界；不把可推唯一性加成原书要求。"}
+  ]
+}

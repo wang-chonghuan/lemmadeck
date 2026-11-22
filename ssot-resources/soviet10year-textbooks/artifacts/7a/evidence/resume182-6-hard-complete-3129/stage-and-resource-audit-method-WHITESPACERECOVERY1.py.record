@@ -1,0 +1,116 @@
+"""Stage only the complete hard lesson and apply the existing resource rules."""
+
+import importlib.util
+import json
+import re
+import subprocess
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+assert Path.cwd() == REPO
+LESSON = "ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-hard"
+EVIDENCE = "ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-hard-complete-3129"
+PROGRESS = ".intentfold/tickets/STEMROBIN-182/progress.md"
+allowed = [
+    f"{LESSON}/choice-set",
+    f"{LESSON}/answer-keys.json",
+    f"{LESSON}/answer-keys.audit.json",
+    EVIDENCE,
+    PROGRESS,
+]
+spec = importlib.util.spec_from_file_location("resource_audit", REPO / "ssot-resources/audit.py")
+audit = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(audit)
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=REPO)
+
+
+prior_staged = [p.decode() for p in git("diff", "--cached", "--name-only", "-z").split(b"\0") if p]
+assert prior_staged
+assert all(
+    any(relative == scope or relative.startswith(scope + "/") for scope in allowed)
+    for relative in prior_staged
+), "Preserve unrelated staging"
+assert git("rev-parse", "HEAD") == git("rev-parse", "FETCH_HEAD"), "Sync before staging"
+ready = json.loads((REPO / EVIDENCE / "lesson-ready.json").read_text())
+assert ready["status"] == "COMPLETE_OFFLINE_LESSON_READY_FOR_REVIEW"
+assert (ready["sources"], ready["answers"], ready["questions"], ready["options"], ready["newFigures"]) == (
+    44, 44, 49, 202, 8
+)
+assert ready["databaseWrites"] == 0
+method = REPO / EVIDENCE / "stage-and-resource-audit-method-WHITESPACERECOVERY1.py.record"
+with method.open("xb") as output:
+    output.write(Path(__file__).read_bytes())
+method.chmod(0o444)
+git("add", "--", *allowed)
+paths = [p.decode() for p in git("diff", "--cached", "--name-only", "-z").split(b"\0") if p]
+assert paths
+secrets = re.compile(
+    r"(?:postgres(?:ql)?://[^\s\"']+:[^\s\"']+@|plane_api_[A-Za-z0-9]{20,}|"
+    r"sk-[A-Za-z0-9_-]{24,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)"
+)
+counts = {"jsonFiles": 0, "textFiles": 0, "binaryFiles": 0}
+
+
+def check(relative, data):
+    assert any(relative == scope or relative.startswith(scope + "/") for scope in allowed), relative
+    assert not any(part == ".env" or part.startswith(".env.") for part in Path(relative).parts)
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        counts["binaryFiles"] += 1
+        text = None
+    if text is not None:
+        assert not secrets.search(text), f"Potential secret: {relative}"
+    if relative.startswith(audit.FROZEN_PREFIXES):
+        return
+    path = REPO / relative
+    assert relative.startswith("ssot-resources/") and path.is_relative_to(audit.ARTIFACTS), relative
+    assert path.name not in audit.TRANSIENT_NAMES and ".template." not in path.name, relative
+    assert not ("pages" in path.parts and "figures" in path.parts), relative
+    if path.suffix == ".json":
+        counts["jsonFiles"] += 1
+        assert not list(audit.json_tmp_references(json.loads(data))), relative
+    if text is not None:
+        counts["textFiles"] += 1
+        for pattern, legacy in audit.LEGACY_REFERENCE_PATTERNS:
+            assert not pattern.search(text), (relative, legacy)
+
+
+for relative in paths:
+    check(relative, git("show", f":{relative}"))
+git("diff", "--cached", "--check")
+result = {
+    "status": "HARD_NARROW_STAGED_RESOURCE_RULES_PASS",
+    "workdir": str(REPO),
+    "ruleSource": "ssot-resources/audit.py unchanged",
+    "auditedStagedFiles": len(paths),
+    **counts,
+    "sources": 44,
+    "answers": 44,
+    "questions": 49,
+    "options": 202,
+    "newFigures": 8,
+    "secretCandidates": 0,
+    "whitespaceErrors": 0,
+    "sourceLessonExerciseFigureChanges": 0,
+    "globalOrFullTicketAcceptanceClaimed": False,
+    "newImagesOpened": 0,
+    "historicalUnknownBytesRecovered": False,
+    "firstGlobalResourceAuditExit": 1,
+    "losslessFailureStreams": 2,
+    "originalNarrowStageFailurePreserved": True,
+    "finish": "review",
+    "fees": "UNKNOWN",
+    "databaseWrites": 0,
+}
+record = f"{EVIDENCE}/narrow-staged-resource-rules-WHITESPACERECOVERY1.record"
+data = (json.dumps(result, indent=2, ensure_ascii=True) + "\n").encode()
+check(record, data)
+with (REPO / record).open("xb") as output:
+    output.write(data)
+(REPO / record).chmod(0o444)
+git("add", "--", record)
+print(json.dumps({**result, "checkedReceiptAdded": True, "finalStagedFiles": len(paths) + 1}))

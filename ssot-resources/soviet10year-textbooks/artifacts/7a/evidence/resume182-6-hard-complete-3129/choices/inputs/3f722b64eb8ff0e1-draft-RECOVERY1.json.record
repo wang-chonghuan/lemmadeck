@@ -1,0 +1,692 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "5eb97bd1575aadb49c7a40d70915be183681c51ccd9e6cea7c955c849c4f2856",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q1070-lock-guarantee",
+      "source_numbers": [
+        "1070"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "有 $6$ 把锁和 $6$ 个钥匙，每把锁恰有一个钥匙，每个钥匙也只对应一把锁。每次尝试用一个钥匙开一把锁，得知成功或失败；可以不实际开锁而推断已经唯一确定的对应。在最坏情况下，保证确定全部对应所需的最少尝试次数是多少？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "$6$ 次",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "$15$ 次",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "$21$ 次",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "$36$ 次",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine the minimal worst-case full-correspondence trial guarantee for a six-pair bijection.",
+        "source_solution": "Test at most5 keys for firstlock and infer the sixth if needed; remove its pair and continue4,3,2,1,0 trials. Total15. For a consistent adversary answering failure whenever a bijection survives,forced successes give no new information. Relative to the final unique matching,each of15 unordered lock pairs needs at least one negative cross-edge test to rule out swapping its two keys. These edge pairs are disjoint,so at least15 trials are required in that worst case.",
+        "unit_reason": "One complete minimal guarantee judges inference and failed tests rather than counting successful openings alone.",
+        "concept_blocks": [],
+        "limitations": [
+          "Original prose does not explicitly specify bijection,single-pair testing,inferred-match allowance or minimal worst-case quantifier;the view states that qualified model rather than claiming it recovered.",
+          "Selecting a count does not demonstrate constructing an optimal testing strategy or its lower-bound proof."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "B"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "Six successful openings would suffice if known in advance,but a worst-case bijection requires eliminating15 pair-swaps.6 trials cannot guarantee that.",
+            "misconception": "Count one successful opening for each lock and omit all unsuccessful trials needed to find its key."
+          },
+          {
+            "option_id": "B",
+            "truth": "correct",
+            "derivation": "5+4+3+2+1=15 gives an algorithm;the pair-swap adversary gives a matching lower bound15.",
+            "misconception": null
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "6+5+4+3+2+1=21 is sufficient but not minimal:it unnecessarily verifies the last remaining key at every stage when the correspondence is already forced.",
+            "misconception": "Require a success test even after all other candidate keys have failed,ignoring the explicitly allowed inference."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "6*6=36 tests all pairs and is sufficient but not minimal;removing known pairs and using inference achieves15.",
+            "misconception": "Test the entire six-by-six key/lock matrix without exploiting the one-to-one correspondence."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1071-sort-weighings",
+      "source_numbers": [
+        "1071"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "有四个质量互不相同的正质量小球，用没有砝码的杠杆天平比较。要对任意这样的四球质量都保证确定从重到轻的完整顺序，在最坏情况下最少需要多少次称量？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "$3$ 次",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "$4$ 次",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "$5$ 次",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "$6$ 次",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Find the minimal universal worst-case weighing guarantee for sorting four distinct masses,not just finding the heaviest.",
+        "source_solution": "Compare within two pairs,then their heavier members. Relabel soA>B,C>D,A>C. A is greatest;compareB,C and ifB<C compareB,D. At most5 comparisons sort allfour. For a lower bound consider24 assignments of weights1,2,4,8. Every useful comparison of disjoint subsets has only heavy-left/heavy-right outcomes since subset sums are distinct. Four weighings yield at most16 leaves,not enough for24 orders;five are necessary even if group weighings are allowed.",
+        "unit_reason": "A complete minimal guarantee preserves sorting all four unknown masses rather than only a tournament winner or one favorable ordering.",
+        "concept_blocks": [],
+        "limitations": [
+          "The minimal worst-case reading is explicit;the original only asks a sufficient weighing count without separately stating minimum.",
+          "Selecting the number does not demonstrate performing the adaptive sorting algorithm or proving its lower bound."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "C"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "Three pairwise comparisons can find the heaviest but not sort allfour. Treating balance equality as a guaranteed third information outcome also fails on the24 assignments of1,2,4,8,where useful subset comparisons are binary.",
+            "misconception": "Use3^3>=24 by counting left-heavy,right-heavy,equal as three available outcomes for every weighing,without checking worst-case equality availability."
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "The binary no-equality family has24 possible orders but2^4=16 leaves at most,so4 cannot give a universal guarantee.",
+            "misconception": "After finding the maximum in3 comparisons,assume one further comparison orders the three remaining balls;it can distinguish only two branches,not all remaining orders."
+          },
+          {
+            "option_id": "C",
+            "truth": "correct",
+            "derivation": "Two pair comparisons,one heavier-member comparison,and at most two comparisons to insert the remaining lighter ball give5. The24-order binary lower bound proves no4-weighing method suffices.",
+            "misconception": null
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "All six unordered pairs can be compared,but the adaptive five-comparison algorithm is a smaller guarantee,so6 is not minimal.",
+            "misconception": "Count all4*3/2 pair comparisons and assume every pair must be directly weighed rather than inferred by transitivity."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1072-grade-permutation",
+      "source_numbers": [
+        "1072"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "Alex 预估自己得 $5$ 分，Sam 预估自己得 $3$ 分，Ben 预估自己不会得 $5$ 分。实际三人分别得 $3,4,5$ 分，且恰好两人的预估正确、一人的预估错误。各人的分数是哪一项？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "Alex $5$ 分，Sam $3$ 分，Ben $4$ 分。",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "Alex $5$ 分，Sam $4$ 分，Ben $3$ 分。",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "Alex $4$ 分，Sam $3$ 分，Ben $5$ 分。",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "Alex $3$ 分，Sam $5$ 分，Ben $4$ 分。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Find the full unique assignment under the exact two-true-prediction constraint,including Ben's negation.",
+        "source_solution": "Exhausting the six permutations shows only(5,4,3) has exactly two true predictions:Alex true,Sam false,Ben true. The permutation(5,3,4) has three true predictions;the other four have zero or one.",
+        "unit_reason": "A complete three-student assignment tests the coupled permutation and truth-count constraints together.",
+        "concept_blocks": [],
+        "limitations": [
+          "Complete-assignment selection does not demonstrate writing a full case analysis."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "B"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "Alex5,Sam3 andBen4 make all three predictions true,not exactlytwo.",
+            "misconception": "Satisfy the three literal predictions independently and omit the condition that exactly one prediction is false."
+          },
+          {
+            "option_id": "B",
+            "truth": "correct",
+            "derivation": "Alex's5 andBen's not5 are true,Sam's3 is false;the scores3,4,5 are each used once. Remaining permutations fail the two-true count.",
+            "misconception": null
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "Alex's prediction is false,Sam's true,Ben's not5 false. Only one is true.",
+            "misconception": "Treat Ben's statement as predicting5 rather than not5,so miscount Sam andBen as the two correct predictors."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "OnlyBen's prediction is true;Alex andSam are both wrong.",
+            "misconception": "Impose exactly one true prediction instead of exactly one false prediction."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1073-hundred-strategy",
+      "source_numbers": [
+        "1073"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "两人轮流报数：第一人先报 $1$ 到 $10$ 中的一个整数，以后每次在已报总数上加 $1$ 到 $10$ 中的一个整数，报出新总数。报出 $100$ 的人获胜。对手一次加了 $r$，可以从前后报数算出 $r$。哪项给出保证获胜的完整策略？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "第一人先报 $1$，以后对手加 $r$ 时，自己加 $11-r$。两人每对回合共增加 $11$，第一人能报到 $100$。",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "第一人先报 $10$，以后对手加 $r$ 时，自己加 $11-r$。两人每对回合共增加 $11$，第一人能报到 $100$。",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "第一人先报 $1$，以后对手加 $r$ 时，自己加 $10-r$。两人每对回合共增加 $10$，第一人能报到 $100$。",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "第一人先报 $1$，以后对手加 $r$ 时，自己也加 $r$。两人每对回合共增加 $2r$，第一人能报到 $100$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Identify the winning player together with a legal strategy reaching100 against every opponent increment.",
+        "source_solution": "First start1 and complement each increment r by11-r. Legal replies1..10 control totals1+11k through89,then100. Opponent totals before final response lie90..99 and cannot skip or reach100,so no unstated overshoot prohibition is needed.",
+        "unit_reason": "All options claim a first-player win,so the learner must judge the actual legal increment strategy and target congruence rather than copy the winner alone.",
+        "concept_blocks": [],
+        "limitations": [
+          "Strategy recognition does not demonstrate discovering or playing the strategy.",
+          "The first-ten-number integer interpretation is explicit;no extra ban on overshooting100 is added."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "11-r is in1..10;controlled totals1,12,...,89,100 include the target. Opponent moves from89 can only reach90..99;the first wins on its legal complement.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "Controlled totals10+11k include98 but not100. From98 the opponent adds2 and wins before any response.",
+            "misconception": "Use the correct11-increment pairing but begin at10 instead of the residue100 modulo11,which is1."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "If r=10,the response0 is illegal. Even if smaller opponent increments are used,controlled totals1+10k miss100;from91 opponent can add9 towin.",
+            "misconception": "Pair increments to10 rather than11,forgetting increments range1..10 rather than0..9."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "If opponent repeatedly adds5,the controlled first-player totals are1,11,...,91. Opponent can then add9 toreach100 and win.",
+            "misconception": "Copy increments rather than complement them,so the opponent controls the paired total and can select a winning final increment."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1074-corner-game-strategy",
+      "source_numbers": [
+        "1074"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "在标准 $8\\times8$ 棋盘上，棋子从左下角开始。列坐标从左到右、行坐标从下到上均依次编号为 $0,1,\\ldots,7$，所以左下角为 $(0,0)$，右上角为 $(7,7)$。两人轮流把它向右、向上或沿右上对角线移动一个相邻格，不能出棋盘；到达右上角的人获胜。哪项正确给出保证获胜的玩家和策略？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "第一人先走右上对角线，以后每次重复对手刚走的方向一步。这样第一人每次走完都使两个格坐标为奇数，并能先到右上角。",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "第一人先走右上对角线，以后每次都走右上对角线，不论对手怎样走。这样第一人能先到右上角。",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "第一人先向右一步，以后每次重复对手刚走的方向一步。这样第一人能先到右上角。",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "第二人每次重复第一人刚走的方向一步，便能先到右上角，不论第一人怎样开局。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine the winner with a legal complete response strategy in the standard adjacent-step corner game.",
+        "source_solution": "Coordinates0..7:start(0,0),target(7,7). Firstdiagonal to(1,1),then copy the opponent's direction. After each first-player move both coordinates are odd. An opponent move makes at least one even and cannot hit(7,7). Copying remains legal because changed coordinates go from odd<=5 to even<=6 to odd<=7. Monotone finite moves lead to first-player victory.",
+        "unit_reason": "One full winning-strategy judgment retains both the winner and the reason arbitrary opponent moves cannot break the invariant.",
+        "concept_blocks": [],
+        "limitations": [
+          "The source's standard chessboard convention is explicitly8x8 in the view;the original does not print dimensions.",
+          "Recognizing a strategy does not demonstrate discovering or playing it."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "With coordinates0..7,the first-player positions stay odd/odd,opponent positions have an even coordinate,and every copied move is in bounds. Only first can reach odd/odd target(7,7).",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "Counterplay:firstdiagonal(1,1),opponentright(2,1),firstdiagonal(3,2),opponentup(3,3),firstdiagonal(4,4),opponentdiagonal(5,5),firstdiagonal(6,6),opponentdiagonal(7,7) wins.",
+            "misconception": "Treat always moving diagonally as equivalent to preserving odd/odd coordinates,ignoring an opponent's one-axis move."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "After first right(1,0),opponent can moveup to(1,1) and own the odd/odd invariant. Copying repeated upward moves eventually asks first to move from(1,7) out ofbounds.",
+            "misconception": "Use the copying response without establishing both initial coordinates odd by a diagonal opening."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "First can repeatedly move diagonally;second copies to(2,2),(4,4),(6,6),but first reaches(7,7) before the next copy.",
+            "misconception": "Give the copy strategy to the second player without checking that a target with odd coordinates is reached by the unmatched first opening."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1078-round-robin-counts",
+      "source_numbers": [
+        "1078"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "一次单循环象棋比赛中，每对选手恰赛一局，胜者得 $1$ 分、和棋各得 $\\frac12$ 分、负者得 $0$ 分。参赛者都是一级选手或名手，总人数多于 $9$、少于 $25$。每个人对一级选手所得的分数恰为自己总分的一半。不额外规定名手必须战胜一级选手。总人数及名手人数的全部可能结果是哪项？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "总人数 $16$；名手人数可能为 $6$ 或 $10$。",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "总人数 $16$；名手人数只能为 $10$。",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "总人数 $16$；名手人数只能为 $6$。",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "总人数 $25$；名手人数可能为 $10$ 或 $15$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine all player/master counts under the explicit complete round-robin scoring model without an unprovided dominance assumption.",
+        "source_solution": "Letf first-class,m masters,n=f+m. Their cross-class points sum tofm,and each class's cross points equal its within-class total,so2fm=f(f-1)+m(m-1). Hence(f-m)^2=n. Strict9<n<25 forcesn16,then(f,m)=(10,6) or(6,10). Both feasible:all within-class games drawn;pair the ten members of the larger class into five pairs,each pair's members win against complementary three members of the smaller class and draw the rest. Each larger-class member scores4.5 both within/across,each smaller-class member2.5 both within/across.",
+        "unit_reason": "A complete count result tests the square constraint,both symmetric class-count branches and their feasibility rather than assuming title rank fixes scores.",
+        "concept_blocks": [],
+        "limitations": [
+          "The source does not specify a single round robin or win/draw/loss points;the view explicitly qualifies that competition model,not recovered source facts.",
+          "Complete-result recognition does not demonstrate constructing the points-conservation proof or a feasible tournament."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "(f-m)^2=n in the strict range forces16;the two differences+/-4 give masters6 or10. The complementary-win/draw construction demonstrates both actually satisfy each player'shalf-points condition.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "Masters6 is also feasible:ten first-class players can each score4.5 within/across andsix masters each2.5. No dominance rule excludes that.",
+            "misconception": "Assume the higher title forces masters to win more cross-class points and discard the feasiblemasters6 branch."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "Masters10 is feasible by interchanging titles in the same construction. No condition fixes the sign off-m.",
+            "misconception": "Use onlyf-m=4 when taking the square root of(f-m)^2=16,discardingf-m=-4."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "25 is a square and counts10,15 fit the point equation,but total25 violates the strict upper boundn<25.",
+            "misconception": "Replace the strict upper bound byn<=25 and retain the endpoint square25."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1086-four-real-factors",
+      "source_numbers": [
+        "1086"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "允许因式含实数系数。设 $\\alpha=\\frac{1+\\sqrt5}{2}$，$\\beta=\\frac{\\sqrt5-1}{2}$，$s=\\sqrt\\alpha$，$t=\\sqrt\\beta$，$h=\\sqrt{2s}$。哪一项恰把 $x^8+x^4-1$ 写成四个都含变量的因式的乘积？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "$(x^2+hx+s)(x^2-hx+s)(x^2+t)(x^2-t)$",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "$(x^2+hx+s)(x^2+hx+s)(x^2+t)(x^2-t)$",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "$(x^2+hx+s)(x^2-hx+s)(x^2+\\beta)(x^2-\\beta)$",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "$(x^2+hx+\\alpha)(x^2-hx+\\alpha)(x^2+t)(x^2-t)$",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Recognize a complete four-nonconstant-factor decomposition in the explicit real-coefficient domain.",
+        "source_solution": "alpha-beta1,alpha*beta1,s^2alpha,t^2beta,h^2=2s. The first conjugate pair multiplies tox^4+alpha,the second tox^4-beta,whose product isx^8+x^4-1. Each of thefour factors is a nonconstant quadratic.",
+        "unit_reason": "The full four-factor product must satisfy every coefficient,not just a constant term or an initial two-factor decomposition.",
+        "concept_blocks": [],
+        "limitations": [
+          "Original prose does not specify the coefficient field;real coefficients are explicitly qualified without claiming a recovered rational/integer restriction.",
+          "The view supplies shorthand real constants;recognition does not demonstrate independently discovering the nested-radical factorization."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "Firstpair=x^4+(2s-h^2)x^2+s^2=x^4+alpha;secondpair=x^4-t^2=x^4-beta. Product=x^8+(alpha-beta)x^4-alpha*beta=x^8+x^4-1.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "Repeating the plus factor creates nonzero odd powers:its x^7 coefficient after multiplication is2h>0,where target is even.",
+            "misconception": "Use the same sign twice instead of a conjugate pair,so the linear cross terms do not cancel."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "Lastpair isx^4-beta^2 instead ofx^4-beta. Atx0 the product constant is-alpha*beta^2=-beta,not-1.",
+            "misconception": "Usebeta rather than its square roott when factoringx^4-beta as a difference of squares."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "Firstpair constant isalpha^2,notalpha;the complete constant is-alpha^2*beta=-alpha,not-1,and an extra x^2 term remains.",
+            "misconception": "Usealpha instead of its square roots as the constant in the two quadratic factors."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q1088-real-root-square-sum",
+      "source_numbers": [
+        "1088"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "实系数方程 $x^2+(a-1)x-2a=0$ 要有两个实根，且这两个实根的平方和等于 $9$。参数 $a$ 的全部可能值是哪一组？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "$\\{2\\}$",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "$\\{-4,2\\}$",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "$\\{-4\\}$",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "$\\{-2,4\\}$",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine all parameters with actual real roots and square sum9,checking the root domain as well as coefficient invariants.",
+        "source_solution": "Rootsum1-a,product-2a yield square sum(1-a)^2+4a=(a+1)^2=9,formal candidates2,-4. Discriminanta^2+6a+1 is17 ata2 and-7 ata-4. Only2 has real roots satisfying the task.",
+        "unit_reason": "One complete parameter set combines the square-sum algebra with existence of the specified real roots;the formal second candidate is not silently accepted.",
+        "concept_blocks": [],
+        "limitations": [
+          "The original does not explicitly name the root field. The view qualifies real roots;it does not claim a complex-domain ambiguity resolved or introduce complex numbers to the learner.",
+          "Parameter-set recognition does not demonstrate independently deriving or checking the discriminant."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "Ata2,the discriminant17 is positive and squared-root sum(a+1)^2=9. The other formal candidate has no real roots.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "-4 gives discriminant-7,so it violates the real-root requirement despite solving the formal square-sum equation.",
+            "misconception": "Solve(a+1)^2=9 and keep both algebraic parameter roots without checking whether the original quadratic has real roots."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "-4 has no real roots,and2 is the valid omitted parameter.",
+            "misconception": "Keep only the minus brancha+1=-3 and omit both the plus branch and real-root discriminant check."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "At-2 and4,the actual square-sum expression(a+1)^2 is1 and25,respectively,not9.",
+            "misconception": "Completea^2+2a+1 as(a-1)^2 instead of(a+1)^2 and solve(a-1)^2=9 to get4,-2."
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "1070",
+      "question_ids": [
+        "q1070-lock-guarantee"
+      ],
+      "omitted_tasks": [
+        "Independent execution or written optimal-strategy proof.",
+        "Original trial/bijection/minimum model is not recovered as an explicit source contract."
+      ],
+      "reason": "The full minimum guarantee is judged in the explicitly stated corresponding-key model with inference."
+    },
+    {
+      "source_number": "1071",
+      "question_ids": [
+        "q1071-sort-weighings"
+      ],
+      "omitted_tasks": [
+        "Independent performance and writing of the optimal sorting strategy."
+      ],
+      "reason": "A universal worst-case minimum is explicitly asked;lower bound covers group weighings andall four-ball orders."
+    },
+    {
+      "source_number": "1072",
+      "question_ids": [
+        "q1072-grade-permutation"
+      ],
+      "omitted_tasks": [
+        "Written exhaustive truth-count case analysis."
+      ],
+      "reason": "All student predictions,negation,grades and exactly-one-false condition remain."
+    },
+    {
+      "source_number": "1073",
+      "question_ids": [
+        "q1073-hundred-strategy"
+      ],
+      "omitted_tasks": [
+        "Independent discovery or execution of a winning play sequence."
+      ],
+      "reason": "Winner and legal against-all-opponents strategy are judged together;the strategy needs no extra overshoot rule."
+    },
+    {
+      "source_number": "1074",
+      "question_ids": [
+        "q1074-corner-game-strategy"
+      ],
+      "omitted_tasks": [
+        "Independent discovery or board execution of the invariant strategy."
+      ],
+      "reason": "Standard8x8 size is explicit;adjacent legal moves,winner and complete response strategy remain."
+    },
+    {
+      "source_number": "1078",
+      "question_ids": [
+        "q1078-round-robin-counts"
+      ],
+      "omitted_tasks": [
+        "Independent points-conservation proof and feasible-tournament construction.",
+        "Original unprovided schedule/scoring contract is not recovered."
+      ],
+      "reason": "The qualified complete round-robin task retains total count and both feasible master counts without a dominance assumption."
+    },
+    {
+      "source_number": "1086",
+      "question_ids": [
+        "q1086-four-real-factors"
+      ],
+      "omitted_tasks": [
+        "Independent discovery and construction of four factors.",
+        "Original allowed coefficient field is not recovered."
+      ],
+      "reason": "A complete four-nonconstant-factor identity is judged over explicit real coefficients rather than guessed rational restrictions."
+    },
+    {
+      "source_number": "1088",
+      "question_ids": [
+        "q1088-real-root-square-sum"
+      ],
+      "omitted_tasks": [
+        "Independent derivation and real-root-domain proof.",
+        "Original root-field qualification is not recovered."
+      ],
+      "reason": "All parameters are judged in the explicit real-root task;the extraneous algebraic value is not silently retained."
+    }
+  ]
+}

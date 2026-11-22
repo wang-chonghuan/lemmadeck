@@ -1,0 +1,133 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = `${repo}/.tmp/ld-s10y-lesson/resume182-6-3129`;
+const resource = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const target = `${resource}/editions/modern-us-neutral/lessons/alg7-hard`;
+const evidence = `${resource}/evidence/resume182-6-hard-complete-3129/answers`;
+const finalized = `${base}/hard-answer-finalize-root-FIRST/7a/editions/modern-us-neutral/lessons/alg7-hard`;
+const read = file => JSON.parse(fs.readFileSync(path.resolve(repo, file)));
+const bind = file => {
+  const bytes = fs.readFileSync(path.resolve(repo, file));
+  return { path: file, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const answers = read(`${finalized}/answer-keys.json`);
+const candidate = read(`${base}/answers-hard-FIRST/author/answer-keys-COMBINED4.json`);
+assert.deepEqual(answers, { ...candidate, status: 'ready', count: candidate.answers.length });
+const audit = read(`${finalized}/answer-keys.audit.json`);
+assert.equal(audit.status, 'pass');
+assert.equal(audit.answerCount, 44);
+const nativeFile = `${base}/hard-answer-native-finalize-execution-RECOVERY1/execution.json`;
+assert.equal(read(nativeFile).exitCode, 0);
+const captureFile = `${base}/hard-answer-display-RECOVERY1/capture-RECOVERY1.record`;
+const capture = read(captureFile);
+assert.equal(capture.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(capture.ownedBrowsersClosed, true);
+assert.equal(capture.screenshots.length, 108);
+const names = [
+  'visual-0-7-RECOVERY1.record', 'visual-8-15-FIRST.record',
+  'visual-16-23-FIRST.record', 'visual-24-31-FIRST.record',
+  'visual-32-39-FIRST.record', 'visual-40-47-FIRST.record',
+  'visual-48-55-FIRST.record', 'visual-56-63-FIRST.record',
+  'visual-64-71-FIRST.record', 'visual-72-79-FIRST.record',
+  'visual-80-87-FIRST.record', 'visual-88-95-FIRST.record',
+  'visual-96-103-FIRST.record', 'visual-104-107-FIRST.record',
+];
+const observed = [];
+const reviewFiles = names.map(name => {
+  const file = `${base}/hard-answer-display-reviews-FIRST/${name}`;
+  const review = read(file);
+  assert.equal(review.status, 'VISUAL_PASS');
+  const indices = review.observedScreenshotIndices ?? review.scope?.indices;
+  assert.ok(Array.isArray(indices) && indices.length > 0 && indices.length <= 8);
+  let items = review.screenshots ?? review.images ?? review.reviews;
+  if (!items && review.originalReview) {
+    assert.equal(bind(review.originalReview.path).sha256, review.originalReview.sha256);
+    items = read(review.originalReview.path).images;
+  }
+  assert.ok(Array.isArray(items));
+  for (const index of indices) {
+    const item = items.find(item => item.index === index);
+    assert.ok(item && item.sha256 === capture.screenshots[index].sha256);
+    observed.push(index);
+  }
+  return file;
+});
+assert.deepEqual(observed.slice().sort((a, b) => a - b), Array.from({ length: 108 }, (_, index) => index));
+assert.equal(new Set(observed).size, 108);
+assert.ok(!fs.existsSync(path.resolve(repo, `${evidence}/binding.json`)));
+const retained = [];
+const byHash = new Map();
+const archive = source => {
+  assert.ok(path.resolve(repo, source).startsWith(`${base}/`));
+  const fact = bind(source);
+  if (byHash.has(fact.sha256)) return byHash.get(fact.sha256);
+  const extension = source.endsWith('.png') ? '.png' : '.record';
+  const file = `${evidence}/inputs/${fact.sha256.slice(0, 16)}-${path.basename(source)}${source.endsWith(extension) ? '' : extension}`;
+  fs.mkdirSync(path.dirname(path.resolve(repo, file)), { recursive: true });
+  fs.writeFileSync(path.resolve(repo, file), fs.readFileSync(path.resolve(repo, source)), { flag: 'wx' });
+  const result = bind(file);
+  assert.equal(result.sha256, fact.sha256);
+  byHash.set(fact.sha256, result);
+  retained.push(result);
+  return result;
+};
+const originalEvidence = [
+  `${base}/bind-hard-answer-durable-FIRST-before-count-FAILED.record`,
+  `${base}/hard-answer-durable-binding-execution-FIRST/execution.json`,
+  `${base}/answers-hard-FIRST/author/answer-keys-COMBINED3.json`,
+  `${base}/answers-hard-FIRST/author/answer-keys-COMBINED4.json`,
+  `${base}/answers-hard-FIRST/reviewer/answer-review-43-FIRST.record`,
+  `${base}/answers-hard-FIRST/reviewer/answer-review-4-RECOVERY1.record`,
+  `${base}/answers-hard-FIRST/reviewer/answer-review-44-RECOVERY1.record`,
+  `${base}/answers-hard-FIRST/serialization1069-COMBINED4.record`,
+  `${base}/hard-answer-native-finalize-execution-FIRST/execution.json`,
+  nativeFile, captureFile,
+  `${base}/hard-answer-display-FIRST/capture-FIRST.record`,
+  `${base}/hard-answer-display-reviews-FIRST/visual-0-7-FIRST.record`,
+  ...reviewFiles,
+];
+const approvedEvidence = originalEvidence.map(archive);
+for (const file of [
+  `${base}/hard-answer-durable-binding-execution-FIRST/execution.json`,
+  `${base}/hard-answer-native-finalize-execution-FIRST/execution.json`,
+  nativeFile,
+]) {
+  for (const fact of Object.values(read(file).streams)) {
+    assert.equal(bind(fact.path).sha256, fact.sha256);
+    archive(fact.path);
+  }
+}
+const screenshots = capture.screenshots.map(item => {
+  assert.equal(bind(item.path).sha256, item.sha256);
+  return { ...archive(item.path), exercise: item.exercise, viewport: item.viewport, scrollStep: item.scrollStep };
+});
+for (const name of ['answer-keys.json', 'answer-keys.audit.json']) {
+  const destination = path.resolve(repo, `${target}/${name}`);
+  assert.ok(!fs.existsSync(destination), 'Preserve existing canonical content instead of silently replacing it');
+  fs.writeFileSync(destination, fs.readFileSync(`${finalized}/${name}`), { flag: 'wx' });
+}
+const record = {
+  schema: 'stemrobin-182/approved-lesson-answer-binding@1',
+  status: 'SEMANTIC_NATIVE_AND_ALL_NEW_ANSWER_DISPLAY_PASS',
+  recordedAt: new Date().toISOString(),
+  book: '7a', lesson: 'alg7-hard', edition: 'modern-us-neutral',
+  answerCount: 44, auto: 14, ungraded: 30,
+  outputs: [bind(`${target}/answer-keys.json`), bind(`${target}/answer-keys.audit.json`)],
+  approvedEvidence, retained, screenshots,
+  approvedScreenshotObservations: 108,
+  semanticRepairScope: '1070 adversary qualification;1091/1096 model-qualified ungraded displays;1079 first comparison',
+  serializationRepairScope: '1069 numeric key LaTeX braces only, value7/20 unchanged',
+  bindingTechnicalRecovery: 'Official finalize count metadata included in exact comparison; all answers unchanged',
+  originalFailuresAndSourceQualificationsPreserved: true,
+  oldPassImageReopens: 0, sourceMathReruns: 0,
+  unknownHistoricalBytesRecovered: false,
+  fees: 'UNKNOWN', tokens: 'UNKNOWN', finish: 'review', databaseWrites: 0,
+};
+const output = `${evidence}/binding.json`;
+fs.writeFileSync(path.resolve(repo, output), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(bind(output)));
