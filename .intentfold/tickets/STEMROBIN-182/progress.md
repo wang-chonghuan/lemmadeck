@@ -1,5 +1,340 @@
 # 当前开发状态
 
+### 182-6 2026-11-22 18:06Z N23临时索引窄审通过，保持旧HEAD待普通push
+
+- 本次接续实核ticket.worktree及本树检查点，仍仅3129生产；
+  0create/attach/切换/替代聊天/安装，原失败未决和暂停审者不动。
+  顶部retain误写18:51更正为实际17:51:58Z，未发生18:51执行。
+- 18:05:08--11Z普通fetch实exit0，原分支交付父仍e8f52eead；
+  18:05:20--21Z临时索引实exit0，普通索引及HEAD7cf00cfa均不改。
+  FIRST脚本925的计数是相对旧checkout HEAD，不是本次增量；
+  实际相对交付父仅466个N23文件，N11/N26远端历史原样保留。
+- 窄audit FIRST18:05:31Z实exit1，仅比较基准错误，误把远端旧文件算入；
+  原失败回执SHAb73fbfac9e929ca724354b33e759c9a0c498a52d826fc7c4852be574e4f921d8保留。
+  新RECOVERY1只改diff基准为交付父，18:05:59--18:06:06Z实exit0，
+  回执SHAdcc999918b0e19196325c6d19027bd6feacd582555da27d6079b1c81f9fb9172；
+  466文件资源规则/秘密/空白检查PASS，0全局audit或内容PASS重跑。
+- N23已有源/正文/图/答案/选择/76显示观察及最终绑定全部继承；
+  下一临时索引commit-tree以远端父创建窄提交，普通push原分支，
+  仍finish=review，0DB/Plane写/force/reset/stash/rebase/合并/部署/handoff。
+
+### 182-6 2026-11-22 18:03Z N23完整离线绑定完成，待窄commit/push原分支
+
+- 8a/alg8-c4-s2-n23实完成：34正文块、8原题、8答案（5auto/3ungraded）、
+  5现代图、10选择题/46选项。所有原源/正文/图/答案PASS直接继承，
+  新选择有独立盲解及逐选项语义PASS，无新图或重解答案。
+- 新独立选择review SHA1028b3b365fce319f3bef867c865e042af391181df03b2b628ebcc1d9162d685；
+  原官方retain17:51:58Z实exit0；两视口原生只读choice
+  显示17:52:14--18Z实PASS，14张全部实际观察，无新缺陷。
+  各原错误和真实UTC执行字段保持，以实际回执为准。
+- 原52必要正文/书写题截图的观察全部实接；首批图题REVISE原样保存，
+  仅共享proseFlow的唯一标签配对排版修复，所有来源/现代JSON/图字节不改。
+  54/55/56六张受影响截图、57/58四张受影响截图独立实PASS。
+  所有观察共76次，最大单上下文8，父0；64张冗余捕获本地保留不重看。
+- 18:03:04--05Z最终绑定actual exit0，
+  offline-display.json SHA50d4fd498ee849b07ab99d4e0dff2b18206b7f94b1de8c5b5b464d3dfccdc320，
+  94213字节。新final证据212去重对象/6175916stored字节；
+  三离线HTML已耐久，原失败图/回执/计数/费用UNKNOWN不删。
+  旧工具字节只从已知7cf00cfa Git对象复用且匹配原回执哈希，
+  不称未知历史字节恢复，不整包迁移或重复源/图/答案审查。
+- 原生本课validate_publish17:54:18Z仅一次实exit0；三聚焦caption测试实PASS，
+  无全项目测试/全局audit/正式handoff重跑或全组完成宣称。
+  全部本轮观察者/作者/选择审者已自然完成并关闭，旧暂停审者仍不动。
+- 原生索引协调实exit0：24原课/22现代课/120页，远端旧条目全部字典不变；
+  候选仅scratch，9必要Git JSON输入用于索引，不迁移8108现场。
+  当前待临时Git索引窄stage与普通push；以e8f52eead为父，
+  保留N11/N26远端提交、不切换/reset/stash/rebase/force或修改旧树。
+- 本轮第三槽spawn失败和父ENOBUFS/jq把Markdown当JSON失败均留工具历史，
+  仅修技术接收方式，不重跑成功生产。只3129/6a7a8a/finish=review；
+  N28/N29科学HOLD保留，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 17:43Z N23显示标签技术恢复PASS，图题关联缺陷局部修复
+
+- 现有图证据实际13:12:52Z已留存，figures/binding.record含五图20成品引用、
+  91去重对象、27实际执行回执；直接继承。父误重放留存命令17:35:47Z
+  被Never overwrite拒绝exit1，原执行回执留存，无产物覆盖或图重审。
+- 原显示FIRST/RECOVERY1失败保持。五图SVG/640媒体宽度实一致，
+  唯一失败为检查器漏axis.ticks自动标签。新RECOVERY2仅改标签投影，
+  17:35:08--26Z实际exit0，四正文/书写题桌面手机组合运行PASS、
+  115新native截图；浏览器/两个context/server均实关闭。
+  原失败图1张及各计数不删除；显示语义观察尚未全完成。
+- fresh批01实际开8张，record
+  SHA4388b4bee9c9aab71a56ea89435e99b0d55ab2a7145878e410dbcfe192ed79d3，
+  7张局部PASS，1张REVISE仅图54/55/56图题均堆在第三图后。
+  不是源/曲线数学缺陷，也不是普通viewport裁切误报。
+  已完成观察者关闭，批02只8--15图新有界观察在途。
+- 最小htmlfrag.proseFlow修复只对连续图组全部图题唯一匹配时交错展示；
+  缺失/重复/不唯一时保持顺序，来源/现代JSON/选用定义/图资产不改。
+  三聚焦测试17:41:02Z实PASS；只本课显示renderer17:41:15--16Z实exit0，
+  新输出另存，不覆盖旧截图/原失败；六受影响图题native捕获在途，
+  还未预记受影响视觉PASS或全课完成。
+- 选择作者新8源/10题/46选项、7single/3multiple，初稿结构实exit0一次；
+  独立盲源求解记录先于选项且原稿0444，
+  handoff SHAbbf94c08e14134c20c62433d2c356760737a7ca7b2c19b995cc17c24614cf6fd。
+  作者已完成关闭，fresh Kant仅新选择独审在途；无新图/答案重解。
+- live182实GET仍started且finish=review，范围与窄恢复一致；
+  原分支HEAD7cf00cfa之后远端eeddee96c及e8f52eead两提交实见，
+  后续交付须保留其N11/N26历史及索引，不force/reset/覆盖。
+  当前尚无新完整课或push。仅3129/6a7a8a，父0开图，
+  0DB/Plane写/合并/部署/正式handoff，8108/原树锁备份/费用UNKNOWN全保留。
+
+### 182-6 2026-11-22 17:32Z 接续根纠正，3129继续N23缺失阶段
+
+- 按交接已核实的最新人类接续及实际ticket.worktree，仅
+  /Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck生产，
+  每个生产命令显式workdir。旧2026-11-20 bootstrap不重放；
+  8108误建与其检查点中的旧授权说法保留历史，由本条取代，
+  0create/attach/切换/替代聊天/安装/整包迁移。工作者不自行继续周期巡检。
+- 8108完整保留，尚未迁移任何字节。N26远端提交
+  e8f52eeadf046114181cbec37980adc4b646e755及103图观察PASS不重跑；
+  N28/N29科学HOLD仍保留，不因技术恢复批准。
+  N29实质文本比较位于8108 scratch/source-N29-review-FIRST/
+  source-manuscript-comparison-FIRST.record，
+  SHA2a8146e17ad335b1e3bb843ce3e3294e1f35f91f6eb1f0d3b2c00558d2089d0f；
+  三crop观察在source-N29-glyph-detail-FIRST/
+  glyph-observations-FIRST.record，
+  SHA8e4e8144dcd66bb6ce728bfef8c7f9f3cc638c170f8d54991dafdf41b1cf3698。
+  仅以实际路径引用，未称未知字节恢复；N30已备料但尚未作者/观察。
+- N23现有源/正文/图/答案PASS继承。实际八题答案提升回执
+  .tmp/ld-s10y-lesson/resume182-6-3129/answers-N23-promotion-FIRST.record
+  为13:10:16Z，状态EIGHT_SEMANTIC_AND_NATIVE_PASS_ANSWERS_PROMOTED_DISPLAY_PENDING；
+  8答案/5auto/3ungraded，已有语义独审及native，不重新解题或审查答案。
+  现代课目录目前六成品文件，选择题未生成；检查现有显示FIRST/
+  RECOVERY1实际结果后只补未完成显示及绑定。
+- 原12:58Z与全部旧失败/计数/UNKNOWN费用、锁、备份、dirty和暂停聊天/
+  审者原样保留。父图片上下文已24，0父开图；新必要显示由新有界批次。
+  仅6a/7a/8a，finish=review；完整课后窄commit/普通push原分支再接有源课，
+  不写DB/Plane、不force/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 12:58Z 图57唯一来源说明REVISE，仅受影响元数据修复续同槽
+
+- Aquinas首次新图实REVISE仅57，54/55/56/58 PASS继承；
+  record51818字节0444
+  SHA12c25b9d42d1415a6bc79152a1fbb0d426c516d6f0136ddc5b4f6363a2bc3edb。
+  五数学/640预览均充分；只纠正把现代y=8延伸归为两源笔画到上框，
+  源右支实在框内止、左高笔画与粗网格重合。原REVISE及作者记录不改。
+- 12:57:28Z仅新57 provenance候选实际exit0：
+  spec656193字节
+  SHA68d9f109e288118b469bbe47fb2157d65b90b86398f448a8d0a95b97a68a708f；
+  inventory84677字节
+  SHA404cc30916414145cde026602f4d6f8dbe9b124ee06128809421052b83a8cdc8。
+  除唯一inventory描述外spec投影严格相同，源/正文/几何/assertion/
+  坐标/画布/显示不改，现代延伸明确单列，不编造源端点数值。
+- 为实际新spec哈希仅该REVISE图12:57:45Z validator及52--54Z
+  renderer各续一次exit0，原4图和数学/曲线/图片审查不重跑。
+  原与新SVG均SHA990a6354bb1df5ba2092165e9990172510edf342c6873ab4e7e59fcabc0c5e80，
+  实cmp exit0，现640PNG/实际像素/曲线检查全部直接复用，0新开图/
+  捕获/converter；新native回执及增量计数保留，不伪记零次render。
+  新报告SHAc667421d179923d2bc882cb298e9fbcabea1679f73084105ec350c94b5fa6b8e。
+  同Aquinas interrupt=true即时接续只说明元数据受影响项，四PASS
+  与既有10图实际观察继承，尚未返回，不预写图全PASS/提升。
+- 父误扩source映射投影输出截断、错validator回执路径读失败留工具历史，
+  未按每标量审包、未复开源图。当前只有Aquinas受影响说明复核和Bohr
+  八题独审在途，父exec已结束；下一监督约13:15Z。无新完整课/
+  commit/push/DB/Plane写/force/合并/部署/关单/handoff；
+  仅3129/6a7a8a/review，旧树锁备份暂停审者/失败未决及UNKNOWN费用保留。
+
+### 182-6 2026-11-22 12:55Z N23八题答案候选实接，限定盲独审在途
+
+- McClintock实完成所有449--456候选求解，answer-keys10993字节0444
+  SHA61f447fa64d014aa384e06c4a2edd832df679e1416c2a23e19e48c00bc80fc09；
+  author24414字节0444
+  SHAeea4eba4b759926cdd778ed2d7a95838e7925eca1fc314a88b1631b3e8d9a726。
+  实际文件/权限/哈希/范围一次接收：8draft答案、5auto/3ungraded、
+  22parts，候选数学检查和冻结实际exit0，非Gate2/native/全课PASS。
+  原失败/来源/完整solution记录及UNKNOWN计数费用不改。
+- 仅关闭本轮已完成作者，fresh Bohr同题面先冻结独立盲解，再看候选；
+  只Gate2新八题语义/判分及标准答案充分性，不读旧选择/答案/图，
+  不重跑原PASS，实际MathLive/native仍待现代图收口后原官方工具。
+  当前Aquinas五图独审及Bohr八题答案独审在途，父exec均结束。
+- 五图提升helper仅准备未执行；0新完整课/commit/push或预记显示PASS。
+  下一监督约13:15Z，仅3129/6a7a8a/finish=review；
+  原树锁备份/旧暂停聊天审者/失败未决保留，0DB/Plane写/安装/
+  create/attach/force/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 12:48Z N23正文限定PASS、五图候选实接
+
+- Carson新现代正文独审PASS25269字节、0444，
+  SHAc2456371f5c7141fb763d8ca53ac92d4e827c730651e73b678db4ba617ce3af1；
+  文件/范围/哈希一次实接后仅关闭本轮完成槽。N11现存源定义支持本册
+  正自然数，旧原点/符号性质补足两零端点；两原作者HOLD及印刷证明省略
+  保留，不写源勘误，不扩称图/答案/选择/显示或全课批准。
+  12:45:01Z新正文去重留存实际exit0，binding44199字节
+  SHA953cf364433f653b9564fb1f52142d402c1e013c6fe81f50fe45c90aa0c3d7c0，
+  28实际gzip对象/34原路径映射/50806stored字节，0新图或重审。
+- Nash五图54--58作者实返回仅候选，receipt46791字节、0444，
+  SHA49e9e45671ac34eaf7012c7a1d3f61c9535d490aaa1667fc6c7757eb40a5cf5f；
+  文件/权限/哈希实接。5validator/5render首次PASS，五640px预览实看，
+  原图5+预览5共10load，min20px，0付费/图或converter失败；
+  原missing-directory发现失败保留。父jq误读figures字段exit5保留，
+  仅读实际outputs别名，不重跑任何producer或开图。
+  只关闭本轮已完成Nash，fresh Aquinas限定首次现代图独审在途。
+- fresh McClintock只八新题449--456答案求解/候选在途，使用已独审
+  冻结现代题面，无题目图引用。8a/answers.json实际不存在，父jq失败保留；
+  由题面推导，不伪称书后答案/prepare/finalize已运行，待现代五图收口
+  后原官方prepare仅一次并绑定同题面，再独审/native/显示。
+  N23图提升及正文显示helper仅准备未执行，尚无新完整课/commit/push。
+- 当前仅本轮Aquinas/McClintock在途，父exec已结束；
+  下一监督约13:15Z，仅3129/6a7a8a/finish=review。原树锁备份/
+  暂停旧聊天审者/失败未决/计数费用UNKNOWN保留；全部旧PASS不重跑，
+  0create/attach/安装/DB/Plane写/force/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 12:37Z N23新现代正文实接，两源约定观察交限定独审
+
+- Aristotle正文作者实返回TEXT_AUTHOR_FROZEN_FOR_PARENT_REVIEW，
+  author SHA40e95a64aecf7c32d725d730903c83f49eebe61207709376516385e31bdc9be2；
+  两候选已冻结，lesson
+  SHA433a7d4d93fc79514d513e43f974c6dc4b49cf5e2f3b3b2f95f45fa8a4aa1a5d，
+  exercises
+  SHAd52e452520417d114d77451f964e70ddd15059c71bb056eac38e304b1dc25720。
+  native布局/两prose-flow/保存检查实际exit0，六语义边界；
+  原作者工具失败保留，不把机械保存检查当语义批准。
+- 作者保留N23-NATURAL-CONVENTION及N23-PROOF-ZERO-ENDPOINTS观察，
+  未擅改自然数/0^0/证明/源页或添加勘误。父仅定位本册已耐久N11
+  自然数序列及真分数定义段落，不重审N11旧源/PASS；
+  fresh Carson只N23现代正文独审与这两观察的依据判定，不读图/答案/选择。
+  原两HOLD不删除或预记解决，不把观察当已证明原书错误。
+- 五实际新figure contexts12:36:42Z exit0，
+  回执SHA799ffff6023d957273b1d065fec2163cb71cdaaf6d638cfd8f91ec16d7c06bb4；
+  使用冻结全正文和明确指数1--5，仍候选输入，未写现代图或完整课批准。
+  首次新图作者spawn因并发槽满失败；保留该失败，未触碰旧暂停审者。
+  只关闭本轮已完成Aristotle后新Nash实dispatch，
+  只自己的figure-8a-N23-author-FIRST候选目录。新五原PNG将首次
+  inventory供新图语义，比对不是重做原CROP_PASS；0付费调用授权。
+- 当前只有本轮Carson/Nash在途，父exec已全部结束，下一监督约13:15Z。
+  不提前finalize/答案/选择/显示/commit/push。仅3129/6a7a8a/review，
+  旧聊天审者/全部原树锁备份/旧失败未决/原计数费用UNKNOWN保留；
+  N13/N22/第二章/所有旧PASS/全局原FAILED不重跑，
+  0create/attach/安装/bootstrap/DB/Plane写/合并/force/部署/关单/handoff。
+
+### 182-6 2026-11-22 12:35Z 本聊天监督及N23源实际提升留存
+
+- 实UTC12:35:03Z监督，原分支fetch12:34:55--57Z实际exit0，
+  回执SHAb1b0ce79bafaaaeadcd9843b617d548a659287217ba76a63e20a61a1299b774f。
+  HEAD/FETCH_HEAD均7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0，
+  左右0/0，暂存空；父fetch exec已结束，下一监督约13:15Z。
+  无create/attach/切换/合并/force，旧聊天与旧暂停审者不动。
+- N23新源28实际文件提升12:29:34Z exit0，
+  promotion14837字节
+  SHA74b1791d4d835712493c34a7e67364b92d1f15d8c3725be168ca28fe66dabcfd；
+  只本课3装订文件/5页15事实文件/五图10PNG和SVG。
+  不复制pages/*/figures；151边界事实保留，不提升N24课或59/60图。
+  12:29:38Z原reindex实际exit0，只更新现有索引为23保留原课；
+  12:29:43Z原adapt-prepare实际exit0，新34正文/8题/5图模板。
+  0旧源审/作者/原生/旧现代或显示PASS重跑。
+- Popper窄源留存一次12:33:49Z exit0，binding152485字节
+  SHAd45d1ba54823601042cf613a78bcd1c4813d30e67b3bd15107023b558e726072，
+  已核实际状态/范围/文件/哈希/回执一次；52去重对象/15逐字节gzip，
+  stored120936字节，引用28已耐久输出，不复制PDF/runtime/原树。
+  原作者HOLD问句/两记录/两源审/3原候选/5native及15实执行回执/
+  30流/9helper原字节保留；原失败和UNKNOWN费用不覆盖，
+  仅关闭本轮已完成Popper槽。父0新图，不称未知历史字节恢复。
+- 目前fresh Aristotle仅现代正文作者在途，拥有本课两可写模板和自己的
+  scratch，无图/答案/选择/独审/提升授权。五图context helper仅写
+  未执行，待冻结正文哈希后构建；不预记现代批准或完整N23。
+  无关dirty及N13/N22/第二章/所有原PASS/全局原FAILED全部保留。
+  仍仅3129/6a7a8a/finish=review，0DB/Plane写/安装/bootstrap/
+  新完整课commit/push/正式handoff/关单/合并/部署。
+
+### 182-6 2026-11-22 12:28Z 同树实接N23两限定独审，旧创建绑定不重放
+
+- 已核对本聊天3129官方attachment及ticket.worktree，仍仅返回的
+  /Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck生产；
+  0create/attach/切换/迁移/安装/bootstrap，所有原树及锁备份保留。
+- 同Gauss OUTPUTRECOVERY1实完成，author记录83159字节
+  SHA0489638c9b5527c71b755583f104c9b16902b020ebfdd3d5d37d2c7a73531a96，
+  五页native均实exit0；原FIRST输出范围HOLD和未决问句保持。
+  首次新源vectorize仅147/149五图54--58，源PNG不改，实际exit0；
+  新N23独立装订实际exit0，assembly10765字节
+  SHA92d999076e2c6140d94a9f9abc7611fc3b7fe26918e525936209b90602280561，
+  34正文块/8题/5图，450跨页及456右边界闭合，N24不认领。
+- 两实独审状态/范围/文件/只读权限/哈希一次接收：
+  Chandrasekhar148/150/151 SOURCE_PASS26112字节
+  SHA5810d8082a901e710be60202ca54c75be16f754fa5e732bc7f61cfc70d969fd3；
+  Boole147/149 SOURCE_PASS及54--58 CROP_PASS30066字节
+  SHA78c35043182ce63efc60fd61e80df58f42b7d76c9d5226382dcc0740b8de85f1。
+  两者无实质修复项，各3/7图片首看；父0复开，仅关闭本轮已完成槽，
+  旧暂停聊天审者不动，不把单审范围扩称现代/完整N24批准。
+- 下一仅提升N23真实已审源页/五图/装订，复用原索引命令后准备新现代层。
+  新helper已写但尚未执行，不预记耐久提升/新完整课/新commit/push。
+  hard7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0已推不变；
+  N13/N22/第二章/全部旧PASS及全局原FAILED不重跑。
+  一次错误gate路径读失败及rg无匹配保留为工具历史，非内容失败。
+  仍仅6a7a8a/finish=review，0DB/Plane写/force/合并/部署/关单/
+  正式handoff，计数费用UNKNOWN/旧失败未决保留，下一监督约12:35Z。
+
+### 182-6 2026-11-22 12:18Z N23源作者实接，普通输出范围冲突已即时接续同槽
+
+- GaussFIRST实返回HOLD：author-record.json53166字节
+  SHA5035229ecfdcf249033a3677bfd0b7e2d8daec82d63642b09c7352c0ba2facda，
+  147--151五页草稿/5源图load/0crop及reopen/0prepare。148和150
+  首次native实际exit0；147/149/151未执行，不冒称内容失败或native失败。
+  已接收状态/范围/记录实际字节，原FIRST0444及其未决问句保持。
+- 唯一HOLD是委托输出范围没有包含官方finalize必需的三个work/figures
+  目录，不是数学/源歧义，也不需要新增人类审批。依当前普通修复授权
+  已interrupt=true即时续同Gauss，增加仅147/149/151对应native裁图输出目录；
+  148/150和已看5源页直接继承，不重author/native/开图或重新prepare147。
+  145/146/N22全部旧源PASS不重跑；147此前仅备料，今次是N23首次转写观察。
+  新OUTPUTRECOVERY1结果尚未返回；原记录/失败计数/费用不覆盖。
+- 目前原图inventory为N23五图54--58、N24边界一图59；N23八原题
+  449--456，450跨149/150，456在151闭合后才到N24标题。
+  这是作者来源事实，独立源/裁图审查尚pending，不据此批准整课。
+  N24边界最后p仍open、图60下页引用未闭，保持NOT_CLAIMED。
+- 本轮无新完整课/commit/push或耐久提升；hard原分支
+  7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0已推状态不变。
+  仅3129/6a7a8a/finish=review，0DB/Plane写/force/合并/部署/关单/
+  正式handoff/create/attach/安装，旧暂停聊天审者/原树锁备份失败/未决消息保留；
+  父所有exec结束，当前只本轮Gauss在途，下一监督约12:35Z。
+
+### 182-6 2026-11-22 12:11Z N23新源备料一次通过，限定源作者在途
+
+- N23本册已批准N21元数据为physical134/printed127，偏移+7；
+  与live TOC N23印140/N24印144核对后目标physical147--150，
+  151只闭合右边界。147已在原N22备料实际exit0，不重复prepare/
+  capture/源审145--147，也不把旧备料存在当文字批准。
+- 只新148--151准备12:08:34--39Z实际exit0，
+  SHA152dcbcc37cf5d3a7d0b1a450abd3b92b7fdf608711a023b318310cb98943304，
+  四页各prepare.0001实际0，未读取或改原N22已批准页/图/正文/答案/显示。
+  fresh Gauss01a20329-59b1-75b2-8357-a7c7ed382836只新147--151源作者，
+  147实际原备料直接复用，输出仅raw-8a-N23-FIRST及自己的author记录。
+  初始5图、每批至多8/每context至多24；父图片22保持，不接图片payload。
+  新文字/页级native结果尚未返回，独立源审及现代/答案/选择尚未开始，
+  不预写SOURCE_PASS或新完整N23，不发布边界N24。
+- 限定N23装订helper只准备，直接调用原assembler，章标题仅绑定
+  已批准134原字节，旧课装订/源审不重跑。12:11:28Z AST语法实exit0，
+  SHA0ec3b00dcf934360508af346c3822fb5ba47fdde6c279bbb04183af4ad69e785；
+  尚未装订、vectorize、提升、reindex或新commit/push。
+- hard完整窄push7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0保持，
+  暂存已空，无关dirty全部保留。当前父exec已结束，只本轮Gauss在途；
+  0create/attach/切换/安装/bootstrap/DB/Plane写/force/合并/部署/
+  关单/正式handoff。下一监督约12:35Z，仍仅3129/6a7a8a/review，
+  所有原树/锁/备份/失败/未决消息/旧暂停聊天审者和UNKNOWN费用保留。
+
+### 182-6 2026-11-22 12:07Z hard完整课原分支窄commit/push实完成，续下一新源课
+
+- 本课真实窄commit12:06:18Z exit0：
+  7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0，456文件，
+  回执SHAe621c6ebca4ccdb9a3e94e5d203867ca8f44f16029297d9d826dc17e8d2e0e16。
+  12:06:22--30Z普通push原codex/STEMROBIN-182-textbooks真实exit0，
+  SHAbcd73d712980e0e3df328c064deeee9e42aa2e5b5e665a4c19ee9b2def5e915e。
+  12:06:52Z只读ls-remote exit0实返回完整同SHA，
+  回执SHAbc3601e8324f68fb204f52e066ce96cdbfec353c14759b12036bfa60d0d6d2aa。
+  HEAD detached照旧，无force/切换/合并/部署。
+- 新完整离线课为7a alg7-hard：44源/44答案/49题/202项/8图及108实看答案帧。
+  下方尚未commit/push文字保留为历史时点；本轮失败/窄恢复/压缩字节/
+  全部图作者与审者原计数均保持，不声称未知费用或未知历史字节恢复。
+- 当前范围来源清点不构成新的审查：既有modern目标的有效独审直接复用，
+  仅6a第二章n8 self_review依原授权完整跳过。7a N10/N19/N20/N28/
+  c3-ex/c4-ex及8a N5/c1-ex既有科学/来源/修复次数HOLD不因目录缺失清除。
+  后续选择未处理8a N23“函数y=x^n”，TOC印刷140至143，
+  下一N24印刷144；先定位本册物理源页，只新未处理源，不重做N22。
+- 本轮来源清点一条node误把book.pages计数当数组的TypeError、可选字段
+  查无匹配均留工具历史；不是内容失败，不重放任何成功生产阶段。
+  所有父git exec已结束，当前无审批或attach卡点；下一监督约12:35Z。
+  仍仅3129/6a7a8a/finish=review，原树/锁/备份/旧暂停聊天审者保留；
+  N13/N22/第二章/旧源答案图选择显示PASS及全局原FAILED不重跑，
+  0DB/Plane写/正式handoff/关单/应用或依赖改动。
+
 ### 182-6 2026-11-22 16:29:52Z N26完整离线课实绑定PASS，待窄commit/push
 
 - Mencius/Jason/Fermat各8/8/2新图实首看、0重开，completed后自然关闭：
