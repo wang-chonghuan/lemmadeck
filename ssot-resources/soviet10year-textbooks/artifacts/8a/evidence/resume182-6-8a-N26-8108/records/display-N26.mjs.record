@@ -1,0 +1,145 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+import { choiceHtml } from '../../../.claude/skills/ld-s10y-lesson/tools/choice_html.mjs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const scratch = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const lesson = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c4-s2-n26');
+const written = path.join(scratch, 'source-N26/render/8a/modern-us-neutral/alg8-c4-s2-n26');
+const mode = process.argv[2];
+assert.ok(['written', 'practice'].includes(mode));
+const root = path.join(scratch, `display-8a-N26-${mode}-FIRST`);
+assert.ok(!fs.existsSync(root));
+fs.mkdirSync(path.join(root, 'screenshots'), { recursive: true });
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const { proseInline } = require(path.join(repo, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'));
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const title = JSON.parse(fs.readFileSync(path.join(lesson, 'lesson.json'), 'utf8')).title;
+const normalize = html => html.replaceAll('class="sr-nb"', 'class="nb"').replaceAll('class="sr-prose-math"', 'class="prose-math"');
+const files = {};
+const inputs = [bind(path.join(lesson, 'lesson.json')), bind(path.join(lesson, 'exercises.json'))];
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+const errors = [];
+const external = [];
+page.on('pageerror', error => errors.push(error.message));
+await page.route('**/*', async route => {
+  if (/^https?:/.test(route.request().url())) {
+    external.push(route.request().url());
+    await route.abort();
+  } else await route.continue();
+});
+const frames = [];
+const surfaces = [];
+try {
+  if (mode === 'written') {
+    files.text = path.join(written, 'text.html');
+    files.exercises = path.join(written, 'exercises.html');
+  } else {
+    const keysFile = path.join(lesson, 'answer-keys.json');
+    const draftFile = path.join(lesson, 'choice-set/draft.json');
+    const reviewFile = path.join(lesson, 'choice-set/review.json');
+    const keys = JSON.parse(fs.readFileSync(keysFile, 'utf8'));
+    const draft = JSON.parse(fs.readFileSync(draftFile, 'utf8'));
+    const review = JSON.parse(fs.readFileSync(reviewFile, 'utf8'));
+    assert.equal(keys.status, 'ready');
+    assert.equal(keys.answers.length, 20);
+    assert.equal(review.outcome, 'pass');
+    assert.deepEqual(draft.new_figures, []);
+    inputs.push(bind(keysFile), bind(draftFile), bind(reviewFile));
+    await page.goto(pathToFileURL(path.join(written, 'exercises.html')).href);
+    const sheet = async (kind, html) => {
+      await page.evaluate(({ titleHtml, kind, html }) => {
+        document.querySelector('.sheet').innerHTML = `<h1>${titleHtml}</h1><p class="crumb">${kind}</p><ol class="ex">${html}</ol>`;
+      }, { titleHtml: normalize(proseInline(title)), kind, html });
+      const file = path.join(root, kind === '标准答案' ? 'answers.html' : 'choices.html');
+      fs.writeFileSync(file, await page.content(), { flag: 'wx' });
+      return file;
+    };
+    files.answers = await sheet('标准答案', keys.answers.map(a =>
+      `<li class="ex" data-answer="${a.exercise}"><span class="no">${a.exercise}.</span><div class="body">${normalize(proseInline(a.displayAnswer))}</div></li>`).join(''));
+    const choiceMarkup = draft.questions.map((q, i) => {
+      assert.deepEqual(q.view.figure_ids, []);
+      return `<li class="ex" data-question="${q.id}"><span class="no">${i + 1}.</span><div class="body"><div class="choice-stem">${normalize(choiceHtml(q.view.stem))}</div><div class="choice-mode">${q.view.mode === 'single' ? '单选' : '多选'}</div>${q.view.options.map((o, j) => {
+        assert.deepEqual(o.figure_ids, []);
+        return `<div class="choice-option"><span class="choice-marker">${q.view.mode === 'single' ? '&#9675;' : '&#9633;'} ${String.fromCharCode(65 + j)}.</span><div class="choice-option-body">${normalize(choiceHtml(o.text))}</div></div>`;
+      }).join('')}</div></li>`;
+    }).join('');
+    files.choices = await sheet('选择题', choiceMarkup);
+    await page.addStyleTag({ content: '.choice-option{display:flex;gap:10px;margin:12px 0}.choice-marker{flex:none}.choice-option-body{min-width:0;flex:1;overflow-x:auto}.choice-mode{font-size:16px;color:#666;margin-top:8px}table{border-collapse:collapse}th,td{padding:6px;border:1px solid #999}.choice-stem{overflow-x:auto}' });
+    fs.writeFileSync(files.choices, await page.content());
+  }
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    for (const [surface, file] of Object.entries(files)) {
+      await page.goto(pathToFileURL(file).href);
+      await page.evaluate(() => document.fonts.ready);
+      assert.equal(await page.locator('.katex-error,.err,.sr-tex-err').count(), 0, `${surface}: math rendering`);
+      assert.ok((await page.locator('.sheet').innerText()).trim().length > 100);
+      if (surface === 'exercises') assert.equal(await page.locator('li.ex').count(), 20);
+      if (surface === 'answers') assert.equal(await page.locator('[data-answer]').count(), 20);
+      if (surface === 'choices') {
+        assert.equal(await page.locator('[data-question]').count(), 24);
+        assert.equal(await page.locator('.choice-option').count(), 105);
+        assert.equal(await page.locator('[data-question="q-fourth-root-approximations"] table tbody tr').count(), 11);
+      }
+      const geometry = await page.evaluate(() => {
+        const scrollable = [...document.querySelectorAll('.nb,.sr-nb,.body,.choice-stem,.choice-option-body')]
+          .filter(e => e.scrollWidth > e.clientWidth + 1);
+        scrollable.forEach((e, i) => e.dataset.displayScroll = String(i));
+        return {
+          height: document.documentElement.scrollHeight,
+          width: document.documentElement.scrollWidth,
+          scrollers: scrollable.map(e => ({ id: e.dataset.displayScroll, top: e.getBoundingClientRect().top + window.scrollY, bottom: e.getBoundingClientRect().bottom + window.scrollY, clientWidth: e.clientWidth, scrollWidth: e.scrollWidth })),
+        };
+      });
+      assert.ok(geometry.width <= viewport.width + 1, `${surface}: page overflow ${geometry.width}`);
+      const maxY = Math.max(0, geometry.height - viewport.height);
+      const ys = [];
+      for (let y = 0; y < maxY; y += viewport.height - 64) ys.push(y);
+      if (!ys.includes(maxY)) ys.push(maxY);
+      const capture = async (y, state, fraction = state === 'right' ? 1 : 0) => {
+        await page.evaluate(({ y, fraction }) => {
+          for (const e of document.querySelectorAll('[data-display-scroll]')) e.scrollLeft = fraction * (e.scrollWidth - e.clientWidth);
+          window.scrollTo(0, y);
+        }, { y, fraction });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const actualY = await page.evaluate(() => window.scrollY);
+        assert.ok(Math.abs(actualY - y) <= 2, `${surface}: unreachable position`);
+        const image = path.join(root, 'screenshots', `${String(frames.length).padStart(3, '0')}-${viewport.width}-${surface}-${state}.png`);
+        await page.screenshot({ path: image, animations: 'disabled' });
+        frames.push({ index: frames.length, surface, viewport, scrollY: actualY, horizontalState: state, horizontalFraction: fraction, ...bind(image) });
+      };
+      for (const y of ys) {
+        await capture(y, 'left');
+        const visible = geometry.scrollers.filter(s => s.top < y + viewport.height && s.bottom > y);
+        if (visible.length) {
+          const steps = Math.max(1, ...visible.map(s => {
+            const range = s.scrollWidth - s.clientWidth;
+            return range <= s.clientWidth ? 1 : Math.ceil(range / Math.max(1, s.clientWidth - 16));
+          }));
+          for (let i = 1; i < steps; i++) await capture(y, `middle-${i}-of-${steps}`, i / steps);
+          await capture(y, 'right');
+        }
+      }
+      surfaces.push({ surface, viewport, file: bind(file), geometry, captured: frames.filter(f => f.surface === surface && f.viewport.width === viewport.width).length });
+    }
+  }
+  assert.deepEqual(errors, []);
+  assert.deepEqual(external, []);
+  const report = { at: new Date().toISOString(), workdir: repo, lesson: 'alg8-c4-s2-n26', mode, status: 'RUNTIME_PASS_NEW_PIXELS_PENDING', inputs, surfaces, frames, errors, externalRequests: external, newImageViews: 0, hostTokenUsageAndCost: null };
+  const record = path.join(root, 'capture.record');
+  fs.writeFileSync(record, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({ ...bind(record), screenshots: frames.length, surfaces: surfaces.map(s => ({ surface: s.surface, viewport: s.viewport, captured: s.captured })) }, null, 2));
+} finally {
+  await browser.close();
+}

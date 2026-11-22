@@ -1,0 +1,100 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 161,
+  "printed_page": 154,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 161
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "361e936fbeb3da2e1f1d1e4a29e18fe276a1cb6d5f25dc2ef57bd4f8802a4ec2"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "First-view source uncertainty: in p0161#13, the 3 on the right-hand sixth root appears below the 2 baseline, encoded as 2_3. Adjacent equations retain their printed 2^3. Independent source review is required; no mathematical erratum or correction was registered.",
+    "DETAIL1 independently certified the printed subscript from one line crop (glyph record SHA256 e797fd4c7fda560a3f901577ebb8664b08ad465b731c979f40aed0d3a20428cc). Separate root-definition proof certified the minimal exponent correction (math record SHA256 ae851bf740201ebaaf17e01f1aae8d381d0f206b06c07d098a0ac8509a6d61ea). The faithful formula remains unchanged."
+  ],
+  "errata": [
+    {
+      "id": "p0161-math-1",
+      "block": "p0161#13",
+      "original": "$\\sqrt[3]{\\sqrt{2^3}}=\\sqrt[6]{2_3}$",
+      "reason": "Independent source detail confirms printed subscript 3. It has no defined index meaning here. The nonnegative left expression has sixth power 2^3; the same radicand with exponent 3 is the unique nonnegative sixth-root expression under the minimal digit-position correction."
+    }
+  ],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\sqrt{\sqrt[3]{64}}=\sqrt[6]{64}$。
+
+<!-- p -->
+定理 $3$ 如果 $a\geqslant0$，那么 $\sqrt[n]{\sqrt[k]{a}}=\sqrt[nk]{a}$（$n$ 和 $k$ 是自然数）。
+
+<!-- p -->
+式 $\sqrt[n]{\sqrt[k]{a}}$ 的值是非负的，此外，式 $\sqrt[n]{\sqrt[k]{a}}$ 的 $nk$ 次幂等
+于 $a$。
+
+<!-- p -->
+实际上：
+$(\sqrt[n]{\sqrt[k]{a}})^{nk}=((\sqrt[n]{\sqrt[k]{a}})^n)^k=(\sqrt[k]{a})^k=a$。
+
+<!-- p -->
+于是，根据 $n$ 次算术根的定义，等式 $\sqrt[n]{\sqrt[k]{a}}=\sqrt[nk]{a}$（$a\geqslant0$）
+是真等式。
+
+<!-- p -->
+定理 $4$ 如果 $a\geqslant0$，那么 $\sqrt[nk]{a^{mk}}=\sqrt[n]{a^m}$（$n$、$k$ 和 $m$ 是自
+然数）。
+
+<!-- p -->
+根据定理 $3$ 得到：
+$\sqrt[nk]{a^{mk}}=\sqrt[n]{\sqrt[k]{a^{mk}}}=\sqrt[n]{\sqrt[k]{(a^m)^k}}=\sqrt[n]{a^m}$。
+
+<!-- p -->
+我们已经证明，如果根指数和被开方式的幂指数同乘以
+或者同除以同一个自然数，那么根式的值不变。
+
+<!-- p -->
+有时，我们把根式的这个性质叫做根式的基本性质（和分
+式的基本性质类似）。
+
+<!-- p -->
+我们举一个应用定理 $3$ 和定理 $4$ 的例子。
+
+<!-- p -->
+化简 $\sqrt[3]{2\sqrt{2}}$。
+
+<!-- p -->
+把因数 $2$ 移到平方根号下面，得到：
+$\sqrt[3]{2\sqrt{2}}=\sqrt[3]{\sqrt{2^2\times2}}=\sqrt[3]{\sqrt{2^3}}$。
+
+<!-- p -->
+根据定理 $3$，得：$\sqrt[3]{\sqrt{2^3}}=\sqrt[6]{2_3}$。
+
+<!-- p -->
+应用定理 $4$，得：$\sqrt[6]{2^3}=\sqrt{2}$。
+
+<!-- p -->
+因此，$\sqrt[3]{2\sqrt{2}}=\sqrt{2}$。
+
+<!-- ex 478 open -->
+478. 求下列各式的值：
+
+<!-- foot -->
+154

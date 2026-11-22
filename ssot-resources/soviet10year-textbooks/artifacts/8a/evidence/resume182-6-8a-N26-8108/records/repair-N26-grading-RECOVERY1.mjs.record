@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const first = path.join(root, 'answers-8a-N26-author-candidate-FIRST.json');
+const bytes = fs.readFileSync(first);
+assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), '0c305a4187306167666efa7d21dc368e86f4d889b1d6a986f76683e729751e1c');
+const document = JSON.parse(bytes);
+const exact = (label, expected) => ({ label, judge: 'exact', expected });
+const repairs = {
+  491: {
+    parts: ['>', '>', '<', '<', '>', '<'].map((value, i) => exact(`${String.fromCharCode(97 + i)})`, [value])),
+    notes: 'The prompt asks for comparison, not a submitted proof. Grade each strict relation; retain the common-power explanations in the displayed answer.',
+  },
+  492: {
+    parts: ['负', '正', '正', '正'].map((value, i) => exact(`${String.fromCharCode(97 + i)})`, [`\\text{${value}}`, value === '负' ? '-' : '+'])),
+    notes: 'The prompt asks for each difference sign. Grade the finite sign categories, accepting the sign or its word; the explanation is not an extra submission requirement.',
+  },
+  497: {
+    parts: [exact('6 是否为项', ['\\text{是}']), exact('-6 是否为项', ['\\text{不是}']), exact('5 是否为项', ['\\text{不是}'])],
+    notes: 'Grade the three requested membership decisions. These labels describe the requested quantities, not invented printed subparts; the index and reasoning remain in the displayed answer.',
+  },
+};
+for (const answer of document.answers) {
+  const repair = repairs[answer.exercise];
+  if (repair) Object.assign(answer, { grading: 'auto', ...repair });
+}
+const original = JSON.parse(bytes);
+for (const [i, answer] of document.answers.entries()) {
+  assert.equal(answer.displayAnswer, original.answers[i].displayAnswer);
+  if (!repairs[answer.exercise]) assert.deepEqual(answer, original.answers[i]);
+}
+assert.equal(document.answers.filter(a => a.grading === 'auto').length, 10);
+assert.equal(document.answers.reduce((n, a) => n + a.parts.length, 0), 51);
+const output = path.join(root, 'answers-8a-N26-author-candidate-GRADING-RECOVERY1.json');
+fs.writeFileSync(output, `${JSON.stringify(document, null, 2)}\n`, { flag: 'wx' });
+const sha256 = crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex');
+const record = {
+  at: new Date().toISOString(), workdir: repo, author: 'parent actual grading repair',
+  status: 'CANDIDATE_AFFECTED_REVIEW_PENDING', input: { path: first, sha256: crypto.createHash('sha256').update(bytes).digest('hex') },
+  output: { path: output, sha256 }, affected: ['491', '492', '497'],
+  mathematicsOrDisplayChanges: 0, previousAnswerRowsChanged: 0,
+  auto: 10, ungraded: 10, numericParts: 38, exactParts: 13,
+  tableMethodEvidenceHold489: 'unchanged; table lookup0, precisionUNKNOWN',
+  finalize: 0, dbWrites: 0, hostTokenUsageAndCost: null,
+};
+fs.writeFileSync(path.join(root, 'answers-8a-N26-grading-GRADING-RECOVERY1.record'), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record, null, 2));

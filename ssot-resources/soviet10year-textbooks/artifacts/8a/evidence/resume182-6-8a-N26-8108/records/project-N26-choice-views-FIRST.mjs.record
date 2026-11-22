@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const input = path.join(root, 'choices-8a-N26-FIRST/draft.json');
+const bytes = fs.readFileSync(input);
+assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), 'a5ea81dc5affbf3c60b61ad7e6bb6a6b4d462fdcd07d2f2ff4e0b5da34da1314');
+const draft = JSON.parse(bytes);
+assert.equal(draft.questions.length, 24);
+const output = path.join(root, 'choices-8a-N26-views-FIRST.json');
+const view = draft.questions.map(({ id, view }) => ({ id, view }));
+fs.writeFileSync(output, `${JSON.stringify(view, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ at: new Date().toISOString(), inputSHA256: crypto.createHash('sha256').update(bytes).digest('hex'), output, outputSHA256: crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex'), questions: view.length, intentOrKeyIncluded: false, sourceMappingIncluded: false }));

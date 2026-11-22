@@ -1,5 +1,526 @@
 # 当前开发状态
 
+### 182-6 2026-11-22 16:29:52Z N26完整离线课实绑定PASS，待窄commit/push
+
+- Mencius/Jason/Fermat各8/8/2新图实首看、0重开，completed后自然关闭：
+  practice40--57完成，58/58 PASS；最后三record SHA
+  bf67f12b7edb1c2e04e4b655f39c98b2bf6dc96e8a08eb1e55936c4fffa05b63、
+  c47c6b419afe99328e97ab525154fb7ad32da5641ad8de88a83d56db92c9fdc5、
+  5418a150d67c26f7d365abfdd6d0364b2bf996df2896a4cf0697b7af30627352。
+  父仍context24/本次0图。书写45既有首看PASS直接复用，共103真实显示观察。
+- 16:29:52Z final retain FIRST实exit0，逐输入、窗口、表面HTML及
+  独立观察哈希/不重计绑定通过；保留12,267,596实际证据字节，
+  binding148937字节SHA
+  a0787a25db5dc3af122646ec324c44d556b96d839101f23e72d8f8852b704f7b。
+  新课20书写题/103印刷分题/35正文块/0图；
+  20标准答案10auto/10ungraded、38numeric/13exact；
+  24选择题9single/15multiple/105项、20源coverage独审通过。
+  所有原FIRST失败/REVISE、source159未知中间audit字节不能恢复、
+  原489表HOLD与现代新编表来源区分均保留，不冒称未知字节恢复。
+- 尚未执行N26stage/commit/push。本次候选只N26页159--165/raw/modern/
+  选择/答案/索引/必要计行修复及测试/本证据和progress；
+  ticket.json和7a N14未完答案草稿排除；无doc-only提交。
+- 最近监督16:03:42Z/下次16:43:42Z；唯一8108/旧树迁移0字节，
+  仅6a/7a/8a/finish=review。N13/N22及旧PASS/所有旧HOLD、原树锁备份失败未决/
+  旧暂停审者保持，费用/token UNKNOWN，
+  0DB/Plane写/合并/部署/关单/正式handoff/全产品验收。
+
+### 182-6 2026-11-22 16:26Z N26练习40/58首看PASS，提交前原分支fetch成功
+
+- Sagan/Newton各8新图实首看/0重开并自然completed后关闭：
+  practice24--39累计40/58 PASS；record SHA
+  05e5b0ec721de86b057e4a7161bef808a0456beae9937412fb7503eb87b2f5cf、
+  2fe98a645c0b11fe6b81df9a8d5323df0353c850294d225ba2fa105ead14c001。
+  fresh Mencius只40--47在途。桌面全部25窗口/手机答案11窗口已实际看完，
+  剩手机选择18窗口；父context24/0图、0复开旧PASS、0重数学审。
+- 16:26:16--19Z N26提交边界普通fetch实exit0，
+  原codex/STEMROBIN-182-textbooks未发生改写；stage入口仅新增
+  HEAD/FETCH_HEAD同头硬断言，尚未运行stage/最终绑定/commit/push。
+  此fetch不是40分钟监督的新锚点；最近监督16:03:42Z/下次16:43:42Z。
+- 8108唯一生产/旧树迁移0字节，仅6a/7a/8a/finish=review；
+  N13/N22及旧PASS/N14/N25/N27/其它旧源HOLD、原树锁备份失败未决/
+  旧暂停聊天审者保持；费用/token UNKNOWN，
+  0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 16:21:55Z N26练习24/58首看PASS，继续有界batch4
+
+- Ptolemy/Ohm/Socrates三个本轮fresh观察者已各8张实首看/0重开，
+  completed后自然关闭，practice0--23累计24/58 PASS；
+  record SHA依次28dbb6c939ab667a94085b7840d76a9469b29ff21316206d18bab2d6b42e23fb、
+  5f7ae2719a3dab3cc87081c9a207c48096a263d41937caff206c026461b60951、
+  6c07828402bf496b1125e237c91c2b97b15785f838bc50265c17566fd6a6e370。
+  fresh Sagan只24--31在途；每批完成再开下一批，父context24/0新图。
+  不把在途当PASS；书写45/45 PASS及所有旧数学/源/选择批准复用。
+- 窄绑定/stage脚本已备，stage语法FIRST实exit0；尚未实际最终绑定/
+  暂存/commit/push。最初猜的cap4-adapt.md只读sed实exit1路径不存在，
+  已rg定位并读真实edition-text-contract.md，不算生产失败或内容复核。
+- 只读库存确认8a N9实际无题离线PASS保持，不因缺answer/choice文件重做；
+  7a N19/N20/N28及8a N16的旧源HOLD保持。下一独立有源候选8a N28
+  alg8-c4-s3-n28，TOC印刷163--169（物理170--176边界）；
+  当前仅定位，等N26完整窄push后才生产，不迁移旧HOLD页/模板。
+- 最近监督16:03:42Z，下次约16:43:42Z；唯一8108/旧树迁移0字节，
+  仅6a/7a/8a/finish=review。旧树锁备份失败未决/旧暂停审者全部保持，
+  费用/token UNKNOWN，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 16:18Z N26选择首次原生保留通过，58新练习显示窗口首看在途
+
+- 16:14:47Z受影响review同字节机械绑定实exit0，16:15:01Z
+  native retain实checker-with-review一次exit0，24题/105项/20源保留。
+  Sartre自然完成已收取并关闭，本轮record SHA
+  8746770236b47fc7e1c52a464c4444a517c068abe03c90357d2dfd183c65e4da；
+  旧暂停审者不动，FIRST blocked和现代新表来源边界保持。
+- 16:15:05--08Z practice capture FIRST实exit0，58新窗口：
+  桌面答案6/选择19，手机答案11/选择22，20答案/24题/105项/11表行；
+  runtime无pageerror/外部请求/页面横溢出，尚非像素PASS。
+  fresh Ptolemy仅0--7首看在途，父context24/0新图，书写45 PASS不重开。
+- 纠正本次16:14段的技术诊断：逐行实核绑定器和捕获器原状态常量
+  同为RUNTIME_PASS_NEW_PIXELS_PENDING；所用常量patch实为同字节no-op，
+  并无真实常量故障/修复。实际新增仅监督receipt及必要159测试证据
+  保留列表；不把初步误读声称成代码缺陷或测试PASS。
+  本次只读audit留存路径均存在；窄stage脚本已准备，未执行。
+- 唯一生产8108；旧树迁移0字节，仅6a/7a/8a/finish=review。
+  N14/N25/N27 HOLD、N13/N22与旧PASS、全部原树锁备份失败未决保持，
+  费用/token UNKNOWN；0DB/Plane写/合并/部署/关单/正式handoff。
+  最近监督仍16:03:42Z，下次约16:43:42Z。
+
+### 182-6 2026-11-22 16:14Z 同8108即时续接，N26受影响选择复核PASS待首次练习显示
+
+- 只在8108绝对workdir继续，0重复create/attach/替代聊天；旧树迁移0字节。
+  已收取Sartre实际16:07--08Z新review/record，最终candidate合同PASS，
+  review文件SHA 05ad9d038794c1d399ff1aecb93e50ae4db7ec89a26602e84054af3483c4313f。
+  仅489受影响内部比较；其它23完整题对象/19覆盖及其原审条目未变，
+  独立view冻结真集{c}、11表行/8新编表查证据复用，不重解旧PASS。
+  原FIRST blocked文件保留，原表inspection0/lookup0/precisionUNKNOWN/HOLD，
+  未知原表字节恢复false；这是现代新编表任务PASS，不是原表恢复。
+- 45/45书写窗口已实首看PASS，父图像context24，不再加载或重开。
+  捕获器已准备24题/105选项/11表行断言及超两屏公式中间水平窗口；
+  尚未执行答案/选择捕获、选择retain、最终绑定、N26完整课commit/push。
+  续接读文件时rg无匹配实exit1保留，不当作内容失败。
+- 16:03:42--44Z原分支普通fetch实exit0，HEAD/FETCH_HEAD同为
+  eeddee96c7d87019559296c8a714b8aaf55362c4，左右0/0；
+  16:03:43Z只读Plane GET成功，finish=review不变。
+  下次监督约16:43:42Z，不补造间隔内监督。
+  绑定脚本仅技术常量/监督receipt窄修，不计新复核PASS。
+- N14/N25/N27 HOLD及N13/N22/源答案选择图旧PASS、原树锁备份失败计数、
+  未决消息/旧暂停聊天审者保持；费用/token UNKNOWN。
+  仅6a/7a/8a，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 15:48Z N26书写45/45首看PASS，489真实选择任务修订仍待审
+
+- 最后fresh单图44已实首看PASS，batch7中75487710027b1eaa6eb04751819f9b9efa8dcdd14420e562208f5a5209118e11
+  是图SHA而不是观察recordSHA，父只读JSON已区分；0图重开。
+  合计45/45 written窗口首看PASS。Lagrange本轮自然完成已关闭，
+  父context仍24；答案/选择显示尚未捕获。
+- Sartre phase2只看views，先冻结24个真集及105选项证据（57true/48false），
+  views-review FIRST SHA
+  176342400601cf9a043ca82c1f9602afa35c0de76744b22d4f954deb3cdf933a，
+  views SHA d0a46ec4a6d011076b031c773249c545bd15d97ec3eb05378388878a4507a821。
+  489实任务忠实缺陷：原查表被数值识别替代；其它view无冗余/泄漏失败。
+  已按顺序才披露FIRST full draft/key做冻结真集比较，
+  原缺陷不得豁免或改写PASS。FIRST final语义record/review仍在途。
+- 父只修489真实缺陷，15:47:59Z另存TABLE-RECOVERY1：
+  新编11行平方根Markdown表，六位值逐项用精确整数平方舍入界认证，
+  对四个源被开方数实执行8次本题表查，并用原值四次幂界认证最终四位；
+  23其它题及19其它coverage对象不变，原四被开方数和所有选项不变。
+  15:48:12Z新结构检查实1次exit0；这是结构/作者数据证据，非独立语义PASS。
+  原FIRST文件和失败保留；原书表inspection0/lookup0/precisionUNKNOWN/
+  HOLD保持，未知字节恢复false，不把本题新数据声称成原表来源。
+  修订view/key尚未交Sartre，不提前作affected批准。
+- 仍未执行选择retain/答案选择捕获/最终绑定/新完整课commit/push；
+  最近实际监督15:20:15--28Z，下次约16:00:15Z。
+  仅8108生产，旧树迁移0字节；6a/7a/8a、finish=review，
+  N14/N25/N27 HOLD与N13/N22/旧PASS/原树锁备份失败未决消息保持；
+  费用/token UNKNOWN，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 15:42Z N26选择结构入口恢复通过，书写显示44/45实际PASS
+
+- Russell现有作者实际返回并自然关闭，原seed/独解/draft FIRST不改：
+  24题（9single/15multiple）、105选项、20源coverage，
+  draft73267字节SHA
+  a5ea81dc5affbf3c60b61ad7e6bb6a6b4d462fdcd07d2f2ff4e0b5da34da1314；
+  独解SHA101f49c02a01c394ad0ab83ce2b61e12a0d87b84c10e9c9e0e34223c833996b1，
+  作者record SHA60440076c911bedf5deb7c7e0489303dd600e8251d1d6ceb73288e5a0c7b310f。
+  FIRST结构调用实126，execute.mjs直接作为可执行文件而permission denied；
+  wrapper/validator实际均0，原stderr在作者record逐字保留，不假装有execution.json。
+  父只补node入口，15:34:48Z EXECRECOVERY1实校验1次exit0，
+  草稿字节不变，结构PASS不等于语义批准。
+- 15:35:32Z父机械只投影24个{id,view}，不含intent/key/source mapping。
+  fresh Sartre先源解冻结SHA
+  8492141fea73f6a51d6256eb1be2dc980bc4446b52b22dadf2d373ce8b0d9e96；
+  99非表分题核算通过；其一辅助算术错误已在冻结record内明确订正，
+  不将订正从真实用量抹去。4表查仍无证据/precisionUNKNOWN。
+  现仅披露view做任务忠实/冗余/泄漏和独立所有选项真集；
+  全draft/key尚未披露，语义审在途，不提前记录PASS。
+- 新显示观察batch3/4/5/6各实8图/0重开、hash逐实际匹配PASS，
+  SHA依次b1c5950d76901ad7d411495dbcf1223908e612fcf2ecb5677e5e7724e6043fa7、
+  fb3d658e6b7976690adcad14f3830db8f4b1ec86222a6f755cfb8efd128d06f7、
+  172ace7196092c13ea966710577ea267552d851fe5425bcddc82261d3edc5063、
+  6f42cb7bd84e475056b603e8ee128f87d2bf7b72a3d452723b7f4c0ee7962f5a。
+  加父12，共44/45书写窗口实际PASS；fresh最后单图44正在首看。
+  父context仍24，未重开这些批次。仅自然完成的新观察者释放槽，
+  旧暂停聊天/审者不关闭、不唤醒。答案/选择显示尚未捕获。
+- 最终绑定只准备，拟保留实际必要勘误单行crop及159页衔接旧源审记录，
+  未复制整PDF/整旧证据包，未执行绑定/新完整课commit/push。
+  最近实际监督15:20:15--28Z，下次约16:00:15Z。
+  8108唯一生产/旧树迁移0字节，仅6a/7a/8a、finish=review；
+  N14/N25/N27 HOLD、N13/N22/旧PASS、原树/锁/备份/失败/未决消息/
+  UNKNOWN费用保持，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 15:34Z N26答案ready，当前选择作者即时收口接续
+
+- Wegener受影响分级审实PASS，SHA
+  2fb7f556f9e307797e2d17ea19c2d62cc89a53d36f85b16eace6580cc01ed2f9；
+  GRADING-RECOVERY1候选SHA
+  61c6cdb96fffa85888b0debe3a319b575a7c4755879017ecc138f3e38c786674。
+  父15:30:47Z实际同字节写入N26答案草稿，
+  15:30:52--54Z native finalize FIRST实exit0，
+  20答案ready、10auto/10ungraded、38numeric/13exact。
+  本命令包含实际MathLive键盘编辑合同检查，未另重跑；
+  子过程逐候选stdout未由native finalize输出，不虚报未知详细次数。
+  489原查表HOLD/lookup0/precisionUNKNOWN保持，不是表查PASS。
+- 只关闭本轮自然完成的Wegener，旧暂停审者不动；
+  fresh Sartre实际成功创建为同N26 choice独立source-only审者，
+  先seed独解冻结，再只披露view，最后key比较；0重开旧作者/旧PASS。
+  之前fresh spawn槽满失败仍在，不把恢复写成首调用成功。
+- 父只读stat实得Russell草稿15:27:04Z、73267字节，未计语义/结构PASS；
+  未收到结构检查/作者最终record时，已interrupt=true即时续接同作者，
+  要求保留现稿并只收集或执行未完结构检查与记录，0替代作者。
+  原排队消息、失败、计数和费用UNKNOWN不抹除。
+- display首批12/45观察保持，父context24不再加载图。
+  最终绑定脚本仅准备、未执行，未将现阶段宣称完整课交付；
+  无新commit/push。最近实际监督15:20:15--28Z，下次约16:00:15Z。
+  8108唯一生产/旧树迁移0字节，仅6a/7a/8a、finish=review；
+  N14/N25/N27 HOLD与N13/N22/旧PASS/原树锁备份未决消息保持，
+  0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 15:27Z N26答案三项分级窄修待审，首次显示12/45实际观察
+
+- Wegener FIRST独立比较实完成，record SHA
+  6ec02f7bd256d1b37a301b054dc1bd33a7749af0fed9efd445a848dfd014c7da：
+  20题/103分题显示数学PASS，38numeric parts核验通过；
+  491/492/497真实分级REVISE，有限大小/正负/是非可可靠判定，
+  不可把作者附的证明变成原题未要求的提交条件。
+  489 derived计算近似满足展示，但原查表方法证据HOLD及精度UNKNOWN不撤销。
+  FIRST中“人类提供/认证”实际来自父代理事实消息，不是新增人类授权；
+  原字节保持，affected新审已要求正确归因。
+- 15:26:38Z父仅三项grading/parts/notes窄修，另存GRADING-RECOVERY1；
+  20 displayAnswer逐字段相同、其它17答案行逐对象不变，
+  10auto/10ungraded、38numeric/13exact parts。
+  原FIRST冻结不覆盖；Wegener受影响审已派，不把在途当PASS。
+  产品answer-key/finalize仍0，真实MathLive编辑合同尚未执行。
+- 15:22:58--15:23:00Z written capture FIRST实exit0：
+  桌面1440x960正文8/书写12，手机390x844正文9/书写16，共45窗口，
+  20题齐全，0页面横溢出/数学错误/外部请求；运行时通过不等于像素通过。
+  父实首看桌面正文0--7八张及手机正文20/22/24/26四张，
+  12张像素PASS、0重开；两个独立父观察record保留。
+  父本context承接12+新12=24，现在停止父图像加载。
+  其余33窗口未观察，答案/选择捕获尚未执行；旧PASS不重跑。
+- fresh choice source-reviewer首次spawn实槽满失败，0创建/观察，
+  原失败record保留；未关闭或唤醒旧暂停审者以腾槽。
+  Russell本轮作者仍在途，0替代重派；首次读未生成review路径的
+  sed失败及TOC只读jq末尾null失败保留，不是内容复核失败。
+  最近监督实15:20:15--28Z，下次约16:00:15Z。
+  8108唯一生产、迁移0字节、原树/锁/备份/失败/未决消息/UNKNOWN费用保持；
+  仅6a/7a/8a，finish=review，0DB/Plane写/合并/部署/正式handoff/新commit。
+
+### 182-6 2026-11-22 15:20Z 同8108接续，N26源/现代层保留且尚非完整交付
+
+- 已核当前绝对cwd为8108，0新create/attach/替代聊天，旧树迁移仍0字节。
+  15:20:15--28Z原分支普通fetch实exit0，stderr110字节SHA
+  7f39d215c9712ccc8914a16d9cf17b7e1f5c27c3130077abc789b63ab77591f8；
+  label中的1516Z只是旧拟定名，不是实际执行时刻。HEAD/FETCH_HEAD同为
+  eeddee96c7d87019559296c8a714b8aaf55362c4，实左右0/0。
+  下次监督约16:00:15Z，不补造此前间隔内监督。
+- 补记上段实际：Avicenna受影响源文TEXTRECOVERY1通过，SHA
+  a4076cbee66c915484110c4248c0ad53b8dd86049809df5ac43547e3215ffdd4。
+  N26隔离assemble FIRST实15:00:51Z通过；
+  modern prepare/layout/finalize FIRST至15:02:30Z通过，
+  仅拉丁分题、3真实概念边界及已绑定2_3→2^3最小勘误。
+  20题478--497、103分题、35正文块、0本课图；N27未完边界不提升。
+- 15:04:35--36Z实际只保留本树合格159--165页md/json/audit、
+  N26 raw/modern及衍生索引；原孤立4题/N27和N27图仍scratch。
+  原页下标2_3不改。这是局部产物保留，不是完整课交付。
+  15:13:35Z written render FIRST已通过，返回HTML复用，0截图观察。
+- Wegener独立20/103解冻结SHA
+  4377979c37a4f3c1f7f6e692136f605faf9ee6b88ee9ccb83bfa09f562f00396；
+  正比较父FIRST候选SHA
+  0c305a4187306167666efa7d21dc368e86f4d889b1d6a986f76683e729751e1c。
+  7auto/13ungraded/38numeric parts尚为候选，不计答案PASS。
+  独立作者额外dispatch槽满失败保留；父作者身份不冒称独立。
+  489 TABLE_METHOD_EVIDENCE_HOLD与精度UNKNOWN保持，候选明确给计算
+  六位近似而非表读值。Russell既有作者仍在途，0替代重派。
+- N14 SOURCE_CONVENTION_HOLD、N25 SOURCE_GLYPH_HOLD、
+  N13/N22/旧PASS/原树锁备份失败计数未决消息/旧暂停审者全部保持。
+  父图片context承接12、本接续新增0；费用/token UNKNOWN。
+  finish=review，仅6a/7a/8a，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 14:56Z N26真实源窄修与计数恢复，完整课仍未交付
+
+- Meitner已实际完成并自然关闭：六图FIRST/1批、六次finalize，
+  160 FIRST实24/25 FAIL，161--165实25/22/21/25/20行PASS；
+  作者两JSON行record SHA
+  9e5ce6cc9ebbe6a8f525e962d3e5c26596edf1f1c324bd0fc534f374048fe926。
+  原FIRST不改，160失败md/json/audit另已逐字节保留，
+  其中audit SHA
+  cf6293e3ea34c7dbb261eeb6ec7e00fcd51584482e089a668c483a30823eda73。
+- 160 TRACE1仅NumPy bool序列化技术失败（stderr1219字节）原样留，
+  TRACE2/3实定位1149--1231与1258--1338两波浪强调正文行，
+  非漏稿。layout只补真实平直分数线横向支撑判据，
+  不把波浪线认分数线；修前layout快照保留。
+  新4合成测试FIRST通过；相关53项实执行、7项因缺历史渲染skipped，
+  其余通过；brace4通过。160 RECOVERY1实25/25 exit0，
+  159受同代码影响只读诊断仍22行，未prepare/finalize/加载其图片。
+- 首fresh细节spawn实因槽满失败，没有创建聊天或执行图像；
+  仅关闭已自然完成的Meitner后，fresh Arendt首看161单行crop一次，
+  独立按字边界认证原印下标3，record SHA
+  e797fd4c7fda560a3f901577ebb8664b08ad465b731c979f40aed0d3a20428cc，
+  crop SHA
+  c791c08d50d0b125fe30fda7b43a6b19c7ea1d404700a69bf387e8b201d0cd99。
+  Arendt自然完成并关闭；父新增图片加载0，仍承接12，不重复旧审者。
+- Avicenna FIRST比较SHA
+  e7d74d739347256aca98af75eec5c4735fba87cf6f55c1b8383a731ff0bd3494：
+  3源标点差异，其余可判定138行/103分题一致；
+  独立数学候选评估SHA
+  ae851bf740201ebaaf17e01f1aae8d381d0f206b06c07d098a0ac8509a6d61ea，
+  仅2_3→2^3字位修正数学正确且在最小约束下唯一。
+  两冻结稿中的“用户告知/确认”实际是父工具事实转述，
+  不是新增人类授权；原字节不改，此处明确归属。
+- 160/161受影响前raw3文件及body FIRST均已快照；
+  只修3标点并在161新增source-bound p0161-math-1，
+  忠实原式2_3仍保留。两页TEXTRECOVERY1实14:55:32--33Z
+  25/25 exit0；162--165与159未再finalize。
+  Avicenna受影响比较已派，未把在途当PASS，0现代/答案/选择/
+  显示/完整课commit。本段全部实际失败/工具计数与费用UNKNOWN保留。
+- 8108唯一生产、旧树迁移0字节；N25/N14 HOLD及N27边界图HOLD，
+  N13/N22/其余旧PASS/原树锁备份失败未决消息/旧暂停审者不动。
+  下一监督约15:14:52Z，仅6a/7a/8a、finish=review，
+  0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 14:43Z 同8108接续，补记真实元数据与N26独立首次观察
+
+- 本次实际cwd及ticket指针均为已成功创建的8108绝对工作树；
+  未重create/attach/新聊天，旧树迁移仍0字节，旧失败/未决消息保持。
+  Meitner现有作者仍在途，尚未收集最终结果，不另派替代作者。
+- 14:40:28Z图61原PDF元数据FIRST实通过：仅1504x2176、
+  1-bit、186ppi源位图，已备2480x3509页没有更高原生像素。
+  原stdout279字节SHA
+  27aef990bda4de73e02f5a968685fa325aff5b1e56d7ccbf74ab14fa633286be；
+  0新提取/渲染/图像加载。不能据此认证正y额外数字不存在，
+  N25 SOURCE_GLYPH_HOLD继续，不重复放大同像素。
+- Avicenna实际独立160--165六首次图像/1批、0重开/裁图；
+  冻结record SHA
+  1e5ac5d209a6d84630b5f32c5eed74c75b4bc77b357846f55bea1d514fd9144b。
+  478--497共20题；478--493有103印刷分题，494--497属复习栏。
+  478跨161/162、484跨162/163，497止165首两行问号。
+  N26无图；165所有图/表归未完N27，不能提升或算N26图。
+  物理行160--165依次25/25/22/21/25/20，165图题samerow、
+  表两排独立遮罩。此记录是源观察，不是作者匹配/数学/完整课PASS。
+- N26自身仅161 L21末根式2旁3字位HOLD；不得由相邻代数猜成2^3
+  或无源登记勘误。165图65的P0点/原点O或0两HOLD属N27，
+  原样留在边界，不阻断独立N26，也不假清除。
+  N14及N13/N22/旧PASS/原树锁备份计数费用UNKNOWN全部保持。
+  下次监督约15:14:52Z；仅6a/7a/8a、finish=review，
+  0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 14:36:04Z 实际40分钟监督完成，N26六新源页首次转写/观察在途
+
+- 14:34:51--56Z普通fetch原codex/STEMROBIN-182-textbooks实exit0；
+  实stderr110字节SHA
+  7f39d215c9712ccc8914a16d9cf17b7e1f5c27c3130077abc789b63ab77591f8。
+  HEAD/FETCH_HEAD均eeddee96c7d87019559296c8a714b8aaf55362c4、
+  左右0/0，无同步改写需求。下一约15:14:52Z，不补造间隔内检查。
+  本次只本聊天/已有progress记录，0其它聊天消息/旧审者唤醒/自动化。
+- N26新prepare160--163实14:32:35--41Z exit0，
+  164--165实14:33:13--16Z exit0；只修超四页调用合同，原失败字节保留，
+  6页各实际FIRST一次，159 prepare/finalize/视图均0。
+  Fresh Meitner负责六页FIRST作者，Avicenna负责独立六页首次源观察冻结；
+  写域分离，仅同8108 scratch，0新聊天/DB/现代/答案/选择/显示批准。
+  任务已派，不把在途或文件出现算完整源/完整课PASS。
+- 14:36:04Z实际复用同树159三文件7996字节，逐字节SHA相同，
+  仅进入source-N26-raw/8a/pages/0159隔离输入；
+  原source-N25-raw不改。这是本轮已产源事实的同树复用，
+  不是旧树迁移/未知字节恢复；旧树迁移仍0字节。
+  159有22/22行audit及独立文字匹配证据；N25尾在N26标题前，
+  不升级N25图61源HOLD、不提升未完整N27。
+- Huygens未决细节record实SHA
+  b3a7e662f10546d393b4853e4bfb92c6c15f2c8fcc0283b12e2516b942bbde2b；
+  x1确认与正y数值存在/不存在UNKNOWN严格分开。原N25/N14 HOLD、
+  N13/N22/旧源答案选择图显示PASS/原树锁备份失败计数未决消息全部保持，
+  费用/token UNKNOWN。仅6a/7a/8a、finish=review，
+  0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 14:32Z N25图61源标签仍HOLD，继续有源N26而不猜补标签
+
+- Faraday两源裁图FIRST实2视图/1批，5 shell/1 edit，冻结SHA
+  3d4d824903a58456fc0e71fb2b3e1744e4c91bc465cf8917188456f7b3294835；
+  图62竖排x非负条件已实际读出，图61x1/正y数值全集当时未认证。
+  两图18x18、半单位格及一般k记录保留，不由曲线形状选k值。
+- 父仅图61两个未决区域新裁图各首看一次，加本父首次原裁图覆盖查看，
+  实3视图，承接context9+3=12；原页/图62/旧PASS不重开。
+  父record SHA1732a311d93f8964f1541f808c4161a5962390be55375cc844058497d6d5e5af，
+  父观察不代替独审。fresh Huygens同3图各首次、1批/0重开，
+  x1独立识别通过，正y轴墨迹中的额外打印值存在/不存在均不能认证。
+  原HOLD及冻结字节保留，未补y=1/2、其它点或箭头。
+  Kepler/Faraday/Huygens只关闭本轮自然完成槽；旧暂停聊天审者不动。
+- N25因此保持SOURCE_GLYPH_HOLD，不finalize现代图、不做其答案/选择/
+  显示或完整课commit。现代prepare仅一次成功并留FIRST模板快照；
+  scratch草稿只小问Cyrillic→Latin及proseFlow两真实概念边界，
+  11题467--477/数学与数字改动0/复习g1不变，未提升为ready或产品层。
+  159恢复和同计数器旧短句反例修复保持，49分式测试实通过、
+  7因缺本地源渲染skipped，不声称这些已跑或整体产品验收。
+- 按既有“继续其它有源课”授权，父选8a alg8-c4-s2-n26，
+  本树持久raw/modern无该目标，旧progress所述n26为7a源段，
+  不把它迁入或重做。实际TOC起印刷152、下一27起158，
+  故已认证物理159文字复用，只新prepare160--165。
+  首调用6页超production既有1--4页合同，实exit1/0页执行；
+  原stdout74/stderr55字节及失败回执保留。仅拆两个不相交合法范围
+  160--163、164--165接续，未重prepare159，尚未计新完整课。
+- 8108仍唯一生产、迁移0字节，N11已交付窄push eeddee96c保持；
+  N14 SOURCE_CONVENTION_HOLD、N13/N22/其余旧PASS/原树锁备份失败计数/
+  未决消息与未知费用不改。下一监督约14:34Z，最近实际13:54Z；
+  仅6a/7a/8a、finish=review，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 14:24Z N25源文窄修通过，159行数恢复；图细节仍待首次独立观察
+
+- 只在8108、0新worktree/attach/替代聊天/迁移/安装/付费生成。
+  新Kepler源稿FIRST比较SHA
+  f809f35b58a7029874c05427523cf179146574a3cc463346d3db9aa5c6dca42f，
+  确认469(a)少1零与4标点位置差异；其它公式、题号、续题、
+  图归属及边界吻合冻结事实。157/158修前body及page.md/json/audit
+  8文件逐字节快照保留；只修4实际行、5差异，不改469(b)。
+  affected-only比较实通过，SHA
+  0dc5737d6e0bc180422d1c2ed21329176a466b8d8b48911e2b63ff83a6c70eca；
+  0图重开。Kepler本次12 shell/1 edit/0 image，累计31/3/5，
+  实5次错快照路径失败及2次正常diff exit1保留，不计为内容失败；
+  “human澄清”归因已另记为父事实说明，冻结原稿不改。
+- 159误合并确认在初始merge入口，不是漏转写。
+  layout.py修前FIRST及RECOVERY1实际字节快照保留；
+  新规则让完整高分式与含至少3正常字形的下一短句分开。
+  新4合成测试首次1失败（夹具横笔误似分数线）原件/回执保留，
+  修夹具后4通过；已有brace4通过。
+  分式49测试首1失败/7 skipped已在修前快照复现；
+  不删/降级有效反例，继续修同计数器的分式外短句纵向归属后
+  49实通过/7 skipped。RECOVERY2实际159计数22且bands与RECOVERY1相同。
+- 159 finalize只失败阶段RECOVERY1实exit0，22印刷/22稿行；
+  157/158仅因新源文差异TEXTRECOVERY1各实exit0，15/25行。
+  156未再finalize；原FIRST所有执行流/失败计数保留。
+  官方159收口重写当前page/audit，未在此动作前另外冻结失败audit；
+  原失败stdout222字节及其执行record仍在，不声称未知中间audit字节恢复。
+- 本树scratch隔离assemble FIRST及矢量绑定均实exit0，N25为11题、
+  15正文块/4图；承上466和未完N26只在scratch，不提升/提交/发布。
+  156/157新4源图vectorize FIRST各实通过，像素不匹配
+  0.018%/0.016%/0.006%/0.012%；这是描摹证据，不是现代图批准。
+  Faraday只新批首次看两份61/62源裁PNG，查此前未认证轴/微字；
+  尚未收到结果、不提前解除HOLD。父不重开该批。
+- 0现代图/答案/选择/新显示/完整课交付声明；N14及原N13/N22/旧PASS/
+  原树锁备份失败未决消息/旧暂停聊天审者不动。费用/token UNKNOWN。
+  最近实际监督仍13:54:05--07Z，下一约14:34Z；
+  finish=review，0DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 14:14:33Z 同8108即时续作，N25首次源准备与159计数故障原样保留
+
+- 本次核已有官方attachment及本树ticket指针，仍只生产于
+  /Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck；
+  0新create/attach/替代聊天/迁移。旧首次attach失败、排队未决消息、
+  全部原树/锁/备份保持；未声称旧排队接续已执行。
+- 前段父在既有人类“继续其它有源课”授权下选新8a alg8-c4-s2-n25，
+  非人类直接指定此编号，非旧3129 N23迁移。physical156--159
+  prepare FIRST及155左边界FIRST均exit0；父5张首次视图，
+  本context承接父此前4张计数合计9，无裁图/重开。
+  N25起156页中、止159页N26前，11题467--477；
+  467跨157--158并拥有63/64，474跨158--159，477在独立复习题栏。
+  图61/62属于正文；155及156顶466(b)、159的N26不进入本课。
+- 首次作者源正文0156--0159、compose脚本及全部执行流原地保留。
+  compose FIRST exit0；finalize156/157/158 FIRST分别16/15/25行exit0；
+  finalize159 FIRST exit1，机器23行、作者及独立像素观察22行。
+  不重跑前三页成功动作，不添加假换行或把声明改成23。
+  159 TRACE1/2/3及fraction FIRST诊断均保留；已定位N26定理2
+  高分式与后续“我们来证明定理1。”被合并后错误均分成3行，
+  尚未修改生产layout.py，不把计数成功当源批准。
+- 新Kepler独立首次5页观察冻结record SHA
+  004b7955420372cdc10360a80fe700b568f57ea2e006e686aa634edfec0a9712，
+  7 shell/1 apply_patch/5首次视图/0裁图重开，宿主token/费用UNKNOWN；
+  尚未关闭，本次只准备复用冻结事实做源稿比较，不重开像素。
+  原record中“human选N25”归因不准确，实际为父按继续授权选择；
+  原字节不改，仅此处澄清。
+- 独立观察469(a)为1000000、469(b)为-100000；
+  作者158当前(a)100000待比较后窄修，FIRST必须保留。
+  图61正纵轴数字全集及图62拥挤非负标记微字形尚未认证；
+  两图一般k无固定值，不猜k=2或替成3。155不明前题归属与
+  477复习语义范围HOLD保留，不虚构459或整课数学PASS。
+- 最近实际监督仍13:54:05--07Z，下一约14:34Z；本次核状态不补造
+  新fetch/实时Plane监督。N11已窄commit/push eeddee96c，
+  N14 SOURCE_CONVENTION_HOLD、N13/N22及旧源/答案/选择/图/显示PASS
+  不重跑。仅6a/7a/8a、finish=review，0DB/Plane写/合并/部署/关单/
+  正式handoff/未知字节恢复声明。
+
+### 182-6 2026-11-22 14:02:25Z 即时续接原8108，N14源HOLD与N4误派真实工作保留
+
+- 本次只核已有官方attachment，仍唯一生产于
+  /Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck；
+  0新create/attach/聊天/迁移/安装。前次实际监督为
+  13:54:05--07Z，HEAD/FETCH_HEAD均eeddee96c7d87019559296c8a714b8aaf55362c4，
+  左右0/0，无同步需求；下一约14:34Z，不补造监督已执行。
+- N14 Dewey已自然完成并关闭。FIRST源独解冻结SHA
+  ff70bc2ff9ea5042e948724a35bb5ace96031dc0cf0a37eebcc470b28c8e8ca6，
+  作者17答案候选SHA
+  84f7e43bace26e68c478efea31142f171943a319d22487ac2a3d42a8467debe8。
+  FIRST比较record13699字节，SHA
+  918c6fb311ef578d740359a7e1b7ba7c633aa3fa8af7d705e224753afa7a80c0；
+  305--320及321(a,c,d)分别PASS，321(b)两种条件分类数学正确，
+  但原源未定义平行是否包括重合，完整源资格BLOCKED。
+  SOURCE_CONVENTION_HOLD不撤销/降级，answer-keys仍draft/untracked；
+  display-N14.mjs仅备妥未执行，finalize/render/capture均0。
+  所有候选、冻结、比较及已有失败字节原地保留。
+- 前父错误地将缺retention.json推断为缺choices，误prepare并派6a N4；
+  发现既有seed/draft/review后已立即停止两代理，待自然完成再关闭。
+  Curie报告独解20源49--68，13 shell/1 apply_patch，
+  仅写source-solutions-FIRST.record，SHA
+  28caf8496929bdc1c0087f2c47242326f2a4d48a4301c3a17d4f483224254688；
+  0新题/选项/图/审查。Lovelace报告20源与5定义，
+  9 shell/0文件/0视图或键比较/0批准。停止后均无动作。
+  多余新seed8937字节，SHA
+  7e2cf62a9474a1fbf7b9037b1d6f1905f8d158ce82b81dfd7625d9b52e6760a6，
+  canonical SHA7b90ccedd2efcfa660bad46251c3240e0d50af73e2fe60ef20ff1cf203c327f4。
+  真实误派工作与计数保留，不声称本轮全局0重跑，宿主费用/token UNKNOWN。
+- 既有6a N4为20ready答案/20源/34题134项选择PASS，旧独审者
+  STEMROBIN-182 / 会话A / reviewer-6a-n4；旧证明缺陷与修复保持。
+  原progress第四批收口还记录source→view→key及桌面/手机显示PASS，
+  不以缺lesson-local evidence/HTML为理由重新prepare/render/看图。
+  8a N4亦已有9选源/9题38项及32(a)端点源HOLD；
+  8a N9为0习题，不把缺答案文件当新生产任务。
+  下步先定位真实产物和旧检查点，再选确缺的授权阶段。
+- n13本轮迁移0字节；n22/所有原树锁备份失败/未决消息/旧暂停聊天
+  与审者保持。仅6a/7a/8a、finish=review；
+  0DB/Plane写/force/合并/部署/关单/正式handoff/未知字节恢复声明。
+
+### 182-6 2026-11-22 13:45:02Z N11实窄提交推送，继续有源N14缺失答案
+
+- 13:42:39--40Z本课窄stage真实exit0，88文件、秘密/空白检查通过，
+  stdout26002字节
+  SHAa50c3c33385f84a4f1bcdc5fc016765bb442c891fb6555d3bfed44d940c7089e。
+  13:42:53Z普通commit真实exit0，HEAD
+  eeddee96c7d87019559296c8a714b8aaf55362c4；
+  13:42:57--13:43:05Z普通push真实exit0，原
+  codex/STEMROBIN-182-textbooks从7cf00cfa9到eeddee96c，
+  实stderr106字节
+  SHAaf2e226776f7a3635eecee1e61c5e0816260d266b46d57903ab890be15672a51。
+  未force/新分支/合并；只本课新答案、必要evidence及progress交付；
+  ticket.json工作树指针仍未提交，不声称APP/全单/完整选择能力批准。
+- 按授权继续本树有源7a alg7-c2-s1-n14缺失答案：
+  17题305--321、0题目图，既有课文/正文图/选择/显示PASS不重跑。
+  13:45:02Z官方prepare一次真实exit0，仅产生scratch模板。
+  FIRST17答案候选新写，1auto/16ungraded/2numeric parts；
+  图象319保留(7,14)/(0,0)空点与定义域，320保留7箭头/4自环。
+  321(b)平行是否含重合原源未声明，保留两种条件答案及
+  SOURCE_CONVENTION_HOLD，不伪造单一键或源约定已解决。
+  fresh Dewey仅源独解冻结，尚未见作者候选，不提前算独审/finalize。
+- 正确prepare输出是scratch模板，读取不存在持久答案的探测exit1
+  原历史保留，不重跑prepare，不视作科学失败。
+  n13本轮迁移0字节/n22/所有旧PASS/原树锁备份失败计数费用UNKNOWN/
+  未决消息/旧暂停聊天与审者保持。仅6a/7a/8a/finish=review，
+  0DB/Plane写/合并/部署/关单/正式handoff；下一监督仍约13:54Z。
+
 ### 182-6 2026-11-22 13:41:57Z N11新答案与剩余全显示实PASS，装订count技术恢复
 
 - 本树8108仍唯一生产，0create/attach/迁移/安装/旧聊天接续。

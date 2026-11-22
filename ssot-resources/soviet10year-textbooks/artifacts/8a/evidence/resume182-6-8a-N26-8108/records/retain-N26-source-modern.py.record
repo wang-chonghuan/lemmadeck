@@ -1,0 +1,97 @@
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+repo = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck")
+assert Path.cwd() == repo
+tools = repo / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(tools))
+import edition
+
+work = repo / ".tmp/ld-s10y-lesson/resume182-6-8108"
+source = work / "source-N26-raw/8a"
+target = repo / "ssot-resources/soviet10year-textbooks/artifacts/8a"
+lesson_id = "alg8-c4-s2-n26"
+evidence = work / "N26-retain-source-modern-FIRST"
+evidence.mkdir()
+
+
+def bind(file):
+    data = file.read_bytes()
+    return {
+        "path": str(file.relative_to(repo)),
+        "bytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    }
+
+
+raw = edition.load(source / "lessons" / lesson_id / "lesson.json")
+exercises = edition.load(source / "lessons" / lesson_id / "exercises.json")
+assert raw["exercise_count"] == len(exercises["exercises"]) == 20
+assert [item["number"] for item in exercises["exercises"]] == [str(n) for n in range(478, 498)]
+assert not raw["figures"] and all(not item["figure_refs"] for item in exercises["exercises"])
+modern = source / "editions/modern-us-neutral/lessons" / lesson_id
+audit = edition.load(modern / "adaptation.audit.json")
+assert audit["status"] == "pass" and audit["errata"] == 1 and audit["figures"] == 0
+copied = []
+for page in range(159, 166):
+    page_source = source / "pages" / f"{page:04d}"
+    page_target = target / "pages" / f"{page:04d}"
+    assert not page_target.exists(), page_target
+    assert not edition.load(page_source / "audit.json")["errors"]
+    page_target.mkdir()
+    for name in ("page.md", "page.json", "audit.json"):
+        src, dst = page_source / name, page_target / name
+        shutil.copy2(src, dst)
+        assert src.read_bytes() == dst.read_bytes()
+        copied.append(bind(dst))
+for relative in (
+    Path("lessons") / lesson_id,
+    Path("editions/modern-us-neutral/lessons") / lesson_id,
+):
+    assert not (target / relative).exists(), relative
+    shutil.copytree(source / relative, target / relative)
+    for src in sorted((source / relative).iterdir()):
+        dst = target / relative / src.name
+        assert src.read_bytes() == dst.read_bytes()
+        assert b".tmp/" not in dst.read_bytes() and b"/Users/" not in dst.read_bytes()
+        copied.append(bind(dst))
+for relative in ("book.json", "editions/modern-us-neutral/book.json"):
+    shutil.copy2(target / relative, evidence / relative.replace("/", "_"))
+python = "/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python"
+subprocess.run([
+    python, str(tools / "p2c.py"), "reindex", "--book", "8a",
+    "--toc", "ssot-resources/soviet10year-textbooks/toc/8a/zh.json",
+], check=True, cwd=repo)
+incoming = edition.load(source / "editions/modern-us-neutral/book.json")["lessons"]
+assert len(incoming) == 1 and incoming[0]["id"] == lesson_id
+profile = tools.parent / "profiles/modern-us-neutral.json"
+old_index = edition.load(evidence / "editions_modern-us-neutral_book.json")
+assert old_index["profile"]["sha256"] == hashlib.sha256(profile.read_bytes()).hexdigest()
+edition.update_book_index(target, target / "editions/modern-us-neutral", profile, incoming)
+new_index = edition.load(target / "editions/modern-us-neutral/book.json")
+new_index["profile"] = old_index["profile"]
+edition.dump(target / "editions/modern-us-neutral/book.json", new_index)
+before = {item["id"]: item for item in old_index["lessons"]}
+after = {item["id"]: item for item in new_index["lessons"]}
+assert set(after) == set(before) | {lesson_id}
+assert all(after[key] == value for key, value in before.items())
+record = {
+    "status": "QUALIFIED_SOURCE_AND_MODERN_RETAINED_NOT_FULL_LESSON",
+    "lesson": lesson_id,
+    "copied": copied,
+    "indexes": [bind(target / file) for file in ("book.json", "editions/modern-us-neutral/book.json")],
+    "oldTreeMigrationBytes": 0,
+    "boundaryLessonsPromoted": [],
+    "n27FiguresPromoted": 0,
+    "previousEditionRowsChanged": 0,
+    "sourceReplay": 0,
+    "dbWrites": 0,
+    "cost": "UNKNOWN",
+}
+with (evidence / "retention.record").open("x") as handle:
+    handle.write(json.dumps(record, indent=2) + "\n")
+print(json.dumps(record, indent=2))

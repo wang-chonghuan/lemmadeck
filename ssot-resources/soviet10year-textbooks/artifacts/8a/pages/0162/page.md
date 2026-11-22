@@ -1,0 +1,71 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 162,
+  "printed_page": 155,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 162
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "4cb20718817a8151300e8bd660ad7a03939b4936dd8b3baa8bac513733b2fa61"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Horizontal subparts share printed rows; tall fractions do not add labelrow or invented wrap markers."
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 478 cont -->
+а) $\sqrt[3]{8\times27}$；　б) $\sqrt[3]{125\times27}$；　в) $\sqrt[4]{16\times81}$；
+г) $\sqrt[4]{625\times16}$；　д) $\sqrt[3]{0.001\times125}$； е) $\sqrt[4]{0.0016\times81}$；
+ж) $\sqrt[5]{243\times\frac{1}{32}}$；　з) $\sqrt[4]{\frac{1}{81}\times10000}$。
+
+<!-- ex 479 -->
+479. 计算：
+а) $\sqrt[4]{7^4\times2^4}$；　б) $\sqrt[5]{6^5\times3^5}$；　в) $\sqrt[3]{2^6\times3^{12}}$；
+г) $\sqrt[5]{3^{10}\times0.5^{15}}$；　д) $\sqrt[3]{24\times9}$；　е) $\sqrt[3]{75\times45}$；
+ж) $\sqrt[4]{54\times24}$；　з) $\sqrt[4]{3\frac{3}{8}\times1\frac{1}{2}}$。
+
+<!-- ex 480 -->
+480. 求下列各积的值：
+а) $\sqrt{20}\cdot\sqrt{5}$；　б) $\sqrt[3]{100}\cdot\sqrt[3]{10}$；　в) $\sqrt[4]{8\times3}\cdot\sqrt[4]{2\times27}$；
+г) $\sqrt[4]{25\times2}\cdot\sqrt[4]{25\times8}$；　　д) $\sqrt[5]{3^2\times5^3}\cdot\sqrt[5]{3^3\times5^2}$；
+е) $\sqrt[6]{7^4\times2^3}\cdot\sqrt[6]{7^2\times2^3}$；　ж) $\sqrt[3]{9+\sqrt{17}}\cdot\sqrt[3]{9-\sqrt{17}}$；
+з) $\sqrt[4]{10-\sqrt{19}}\cdot\sqrt[4]{10+\sqrt{19}}$。
+
+<!-- ex 481 -->
+481. 求下列根式的值：
+а) $\sqrt[3]{\frac{8}{125}}$；　б) $\sqrt[3]{\frac{3^6}{5^3}}$；　в) $\sqrt[4]{\frac{2^4}{7^8}}$；　г) $\sqrt[3]{3\frac{3}{8}}$；
+д) $\sqrt[4]{3\frac{13}{81}}$。
+
+<!-- ex 482 -->
+482. 求下列分式的值：
+а) $\frac{\sqrt{8}}{\sqrt{2}}$；　б) $\frac{\sqrt[3]{54}}{\sqrt[3]{2}}$；　в) $\frac{\sqrt[4]{3}}{\sqrt[4]{48}}$；　г) $\frac{\sqrt[5]{5}}{\sqrt[5]{500000}}$。
+
+<!-- ex 483 -->
+483. 已知字母表示非负数，把下列各式写成单项式：
+а) $\sqrt{25a^2}$；　б) $\sqrt[3]{8b^3}$；　в) $\sqrt[4]{81c^4}$；　г) $\sqrt[5]{32x^{10}}$；
+д) $\sqrt[3]{8x^{12}}$。
+
+<!-- ex 484 open -->
+484. 把下列各式写成分式：
+
+<!-- foot -->
+155

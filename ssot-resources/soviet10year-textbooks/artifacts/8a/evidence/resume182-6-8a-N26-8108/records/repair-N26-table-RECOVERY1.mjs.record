@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const original = path.join(root, 'choices-8a-N26-FIRST');
+const output = path.join(root, 'choices-8a-N26-TABLE-RECOVERY1');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bytes = fs.readFileSync(path.join(original, 'draft.json'));
+assert.equal(hash(bytes), 'a5ea81dc5affbf3c60b61ad7e6bb6a6b4d462fdcd07d2f2ff4e0b5da34da1314');
+const draft = JSON.parse(bytes);
+const before = JSON.parse(bytes);
+fs.mkdirSync(output);
+fs.copyFileSync(path.join(original, 'seed.json'), path.join(output, 'seed.json'), fs.constants.COPYFILE_EXCL);
+const integer6 = decimal => {
+  const [whole, fraction = ''] = decimal.split('.');
+  assert.ok(fraction.length <= 6);
+  return BigInt(whole) * 1000000n + BigInt(fraction.padEnd(6, '0'));
+};
+const arguments_ = ['1.272792', '1.3', '1.62', '1.767484', '1.8', '2.5', '3.124', '4.2', '4.242641', '6.25', '18'];
+const table = arguments_.map(x => {
+  const y = Math.sqrt(Number(x)).toFixed(6);
+  const m = integer6(y);
+  const scaled = 4n * integer6(x) * 1000000n;
+  assert.ok((2n * m - 1n) ** 2n < scaled && scaled < (2n * m + 1n) ** 2n, `Square-root rounding: ${x}`);
+  return { x, sqrt: y, roundingProvedByExactIntegerMidpointBounds: true };
+});
+const lookup = new Map(table.map(row => [integer6(row.x).toString(), row.sqrt]));
+const traces = ['18', '1.62', '3.124', '6.25'].map(x => {
+  const first = lookup.get(integer6(x).toString());
+  const second = lookup.get(integer6(first).toString());
+  assert.ok(second);
+  const final = Number(second).toFixed(4);
+  const m = BigInt(final.replace('.', ''));
+  const scaled = 16n * integer6(x) * 10000000000n;
+  assert.ok((2n * m - 1n) ** 4n < scaled && scaled < (2n * m + 1n) ** 4n, `Fourth-root final rounding: ${x}`);
+  return { radicand: x, firstTableValue: first, secondTableValue: second, roundedFourPlaces: final };
+});
+assert.deepEqual(traces.map(t => t.roundedFourPlaces), ['2.0598', '1.1282', '1.3295', '1.5811']);
+const question = draft.questions.find(q => q.id === 'q-fourth-root-approximations');
+question.view.stem = [
+  '查下表计算 $\\sqrt[4]{18}$、$\\sqrt[4]{1.62}$、$\\sqrt[4]{3.124}$、$\\sqrt[4]{6.25}$，选出依次正确的一组近似值。表中的平方根值保留小数点后六位；中间查得值不再舍入，最后把结果四舍五入到小数点后四位。',
+  '',
+  '| $x$ | $\\sqrt{x}$ |',
+  '| --- | --- |',
+  ...table.map(row => `| $${row.x}$ | $${row.sqrt}$ |`),
+].join('\n');
+question.intent.task = 'Use the provided authored square-root table to evaluate every fourth root, choosing the necessary nested square-root operation and retaining the six-place intermediate table value.';
+question.intent.source_solution += ' TABLE-RECOVERY1 supplies a newly authored eleven-row square-root table, not a recovered source table. Every six-place entry is verified with exact integer square-root rounding bounds. Actual two-step lookups in this authored table produce 4.242641→2.059767,1.272792→1.128181,1.767484→1.329468,2.500000→1.581139; rounding to four places gives the unchanged numerical answers. Original source-table precision/provenance remain UNKNOWN and its historical HOLD remains.';
+question.intent.unit_reason = 'All four radicands require converting the fourth root to successive square-root table lookups. The table also contains the one-place prematurely rounded arguments, so every candidate tuple uses available rows and mere table-value copying does not select the correct operation or intermediate precision.';
+question.intent.limitations = [
+  'Choice recognition cannot prove independent written working or record the learner actually consulting each row; the provided data retain the table-lookup mathematical task.',
+  'The eleven-row six-decimal table and final four-place condition are newly authored modern question data. They are not recovered original-table bytes, its precision, or its interpolation rules.',
+  'Original source-table provenance/precision remain UNKNOWN with the historical HOLD retained. The modern supplied table is separately qualified; no original lookup is claimed.',
+];
+question.key.rationales.find(r => r.option_id === 'c').derivation += ' The supplied table gives the same four-place tuple after two lookups, preserving each six-place intermediate value. These are actual authored-table lookups, not original-table observations.';
+const coverage = draft.coverage.find(c => c.source_number === '489');
+coverage.omitted_tasks = [
+  'Independent production of written intermediate work and direct observation of a learner table consultation are not established by choice recognition.',
+  'Recovering the original table provenance, its precision and interpolation procedure remains unavailable; none is asserted by the supplied modern table.',
+];
+coverage.reason = 'All four source radicands and the square-root-table method are retained using explicitly supplied modern table data. The learner must distinguish one lookup, prematurely rounded intermediate lookup, and the nested square-root operation; this is not numerical-only recognition. The old source-table HOLD is retained as provenance, not silently waived.';
+for (const [i, q] of draft.questions.entries()) {
+  if (q.id !== question.id) assert.deepEqual(q, before.questions[i]);
+}
+for (const [i, c] of draft.coverage.entries()) if (c.source_number !== '489') assert.deepEqual(c, before.coverage[i]);
+assert.deepEqual(question.view.options, before.questions.find(q => q.id === question.id).view.options);
+const draftFile = path.join(output, 'draft.json');
+fs.writeFileSync(draftFile, `${JSON.stringify(draft, null, 2)}\n`, { flag: 'wx' });
+const viewsFile = path.join(output, 'affected-view.json');
+fs.writeFileSync(viewsFile, `${JSON.stringify({ id: question.id, view: question.view }, null, 2)}\n`, { flag: 'wx' });
+const record = {
+  at: new Date().toISOString(), workdir: repo, author: 'parent actual affected table-task repair',
+  status: 'AFFECTED_VIEW_AND_INTERNAL_REVIEW_PENDING', changedSourceNumbers: ['489'], otherQuestionsChanged: 0,
+  originalDraftSHA256: hash(bytes), draftSHA256: hash(fs.readFileSync(draftFile)), viewsSHA256: hash(fs.readFileSync(viewsFile)),
+  authoredTable: table, actualAuthoredTableLookupTrace: traces,
+  originalTable: { inspections: 0, lookups: 0, precision: 'UNKNOWN', status: 'HOLD_RETAINED', recoveredUnknownBytes: false },
+  sourceRadicandsOrOptionsChanged: 0, newFigures: 0, imagesOpened: 0, hostTokenUsageAndCost: null,
+};
+fs.writeFileSync(path.join(output, 'author-TABLE-RECOVERY1.record'), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ at: record.at, draftSHA256: record.draftSHA256, viewsSHA256: record.viewsSHA256, tableRows: table.length, authoredLookups: traces.length * 2, originalTableLookups: 0, status: record.status }, null, 2));

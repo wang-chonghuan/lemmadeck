@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const candidate = path.join(root, 'answers-8a-N26-author-candidate-GRADING-RECOVERY1.json');
+const review = path.join(root, 'answers-8a-N26-review-FIRST/review-GRADING-RECOVERY1.record');
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+assert.equal(hash(review), '2fb7f556f9e307797e2d17ea19c2d62cc89a53d36f85b16eace6580cc01ed2f9');
+assert.equal(hash(candidate), '61c6cdb96fffa85888b0debe3a319b575a7c4755879017ecc138f3e38c786674');
+const text = fs.readFileSync(review, 'utf8');
+assert.match(text, /^affected_semantic_outcome: PASS$/m);
+assert.ok(text.includes(hash(candidate)));
+const output = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c4-s2-n26/answer-keys.json');
+fs.copyFileSync(candidate, output, fs.constants.COPYFILE_EXCL);
+assert.equal(hash(output), hash(candidate));
+console.log(JSON.stringify({ at: new Date().toISOString(), output, sha256: hash(output), status: 'REVIEWED_DRAFT_FINALIZE_PENDING', dbWrites: 0, sourceReruns: 0 }));

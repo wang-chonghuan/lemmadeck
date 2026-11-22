@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [label, command, ...args] = process.argv.slice(2);
+assert.match(label, /^[A-Za-z0-9_-]+$/);
+assert.ok(command);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108', label);
+fs.mkdirSync(root, { recursive: false });
+const startedAt = new Date().toISOString();
+const result = spawnSync(command, args, {
+  cwd: repo,
+  encoding: 'buffer',
+  maxBuffer: 64 * 1024 * 1024,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+});
+const streams = {};
+for (const name of ['stdout', 'stderr']) {
+  const bytes = result[name] || Buffer.alloc(0);
+  const file = path.join(root, name);
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+  streams[name] = {
+    path: file,
+    bytes: bytes.length,
+    sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+  };
+}
+const record = {
+  startedAt,
+  completedAt: new Date().toISOString(),
+  cwd: repo,
+  command: [command, ...args],
+  exitCode: result.status,
+  signal: result.signal,
+  error: result.error?.message || null,
+  ...streams,
+};
+const file = path.join(root, 'execution.json');
+fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record, null, 2));
+process.exitCode = result.status ?? 1;
