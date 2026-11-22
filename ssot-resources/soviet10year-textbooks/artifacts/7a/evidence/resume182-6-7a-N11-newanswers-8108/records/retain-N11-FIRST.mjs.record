@@ -1,0 +1,171 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const scratch = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const source = path.join(scratch, 'display-7a-N11-FIRST');
+const lesson = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n11');
+const target = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-7a-N11-newanswers-8108');
+assert.ok(!fs.existsSync(target));
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.relative(repo, file), bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const capture = JSON.parse(fs.readFileSync(path.join(source, 'capture.record'), 'utf8'));
+const reviewPath = path.join(scratch, 'answers-7a-N11-review-FIRST/review-GRADING-RECOVERY1.record');
+const reviewText = fs.readFileSync(reviewPath, 'utf8');
+assert.equal(reviewText.match(/^Verdict: (\w+)$/m)?.[1], 'PASS');
+const approvedCandidate = bind(path.join(scratch, 'answers-7a-N11-candidate-GRADING-RECOVERY1.json'));
+assert.ok(reviewText.includes(approvedCandidate.sha256));
+const candidate = JSON.parse(fs.readFileSync(path.join(repo, approvedCandidate.path), 'utf8'));
+const finalAnswers = JSON.parse(fs.readFileSync(path.join(lesson, 'answer-keys.json'), 'utf8'));
+assert.equal(candidate.status, 'draft');
+assert.equal(finalAnswers.status, 'ready');
+assert.deepEqual({ ...finalAnswers, status: 'draft' }, candidate);
+assert.equal(bind(path.join(lesson, 'answer-keys.json')).sha256, capture.input.sha256);
+const audit = JSON.parse(fs.readFileSync(path.join(lesson, 'answer-keys.audit.json'), 'utf8'));
+assert.equal(audit.status, 'pass');
+assert.equal(audit.answerCount, 16);
+assert.equal(audit.auto, 8);
+assert.equal(audit.ungraded, 8);
+assert.equal(finalAnswers.answers.reduce((sum, answer) => sum + answer.parts.length, 0), 37);
+const exercises = JSON.parse(fs.readFileSync(path.join(lesson, 'exercises.json'), 'utf8'));
+assert.deepEqual(finalAnswers.answers.map(a => a.exercise), exercises.exercises.map(e => e.number));
+assert.equal(capture.status, 'RUNTIME_PASS_NEW_PIXELS_PENDING');
+assert.deepEqual(capture.errors, []);
+assert.deepEqual(capture.externalRequests, []);
+for (const surface of capture.surfaces) {
+  assert.equal(bind(surface.file.path).sha256, surface.file.sha256);
+}
+const originalWindows = [];
+for (const surface of ['text', 'exercises']) {
+  for (const width of [1440, 390]) {
+    const filename = path.join(lesson, `evidence/first-text-written-display/alg7-c1-s4-n11-${surface}-${width}.png`);
+    const priorReview = JSON.parse(fs.readFileSync(path.join(lesson, 'evidence/first-text-written-display/first-display-review.json'), 'utf8'));
+    const window = priorReview.visible_windows.find(w => w.kind === surface && w.viewport.width === width);
+    assert.equal(window.status, 'PASS');
+    assert.equal(bind(filename).sha256, window.png.rawSHA256);
+    originalWindows.push({ surface, viewport: window.viewport, ...bind(filename), observationReused: true, reopened: false });
+  }
+}
+const priorChoiceReview = JSON.parse(fs.readFileSync(path.join(lesson, 'choice-set/evidence/first-choice-display/first-display-review.json'), 'utf8'));
+for (const width of [1440, 390]) {
+  const filename = path.join(lesson, `choice-set/evidence/first-choice-display/n11-${width}-first.png`);
+  const window = priorChoiceReview.visible_windows.find(w => w.viewport.width === width);
+  const key = width === 1440 ? 'desktop_png' : 'mobile_png';
+  assert.equal(window.status, 'PASS');
+  assert.equal(bind(filename).sha256, priorChoiceReview.raw_sha256_bindings[key].actual_raw_sha256);
+  originalWindows.push({ surface: 'choices', viewport: window.viewport, ...bind(filename), observationReused: true, reopened: false });
+}
+const observations = fs.readdirSync(path.join(scratch, 'display-observers'))
+  .filter(file => file.endsWith('.record'))
+  .map(file => {
+    const filename = path.join(scratch, 'display-observers', file);
+    return { filename, data: JSON.parse(fs.readFileSync(filename, 'utf8')) };
+  });
+const approved = new Set();
+for (const { data } of observations) {
+  assert.equal(data.status, 'PASS');
+  assert.ok(data.frames.length <= 8);
+  for (const frame of data.frames) {
+    const original = capture.frames.find(f => f.index === frame.index);
+    assert.ok(original);
+    assert.equal(frame.sha256, original.sha256);
+    assert.equal(bind(original.path).sha256, original.sha256);
+    assert.equal(frame.status, 'PASS');
+    assert.ok(!approved.has(frame.index), 'Do not count an image twice');
+    approved.add(frame.index);
+  }
+}
+assert.equal(approved.size, capture.frames.length, 'Missing first pixel observation');
+fs.mkdirSync(target, { recursive: true });
+const retained = [];
+const retain = (file, name) => {
+  const dest = path.join(target, name);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(file, dest, fs.constants.COPYFILE_EXCL);
+  assert.equal(bind(file).sha256, bind(dest).sha256);
+  retained.push(bind(dest));
+  return bind(dest);
+};
+for (const file of [
+  'answers-7a-N11-candidate-FIRST.json',
+  'answers-7a-N11-candidate-GRADING-RECOVERY1.json',
+  'answers-7a-N11-grading-GRADING-RECOVERY1.record',
+  'answers-7a-N11-freeze-FIRST.record',
+  'answers-7a-N11-author-FIRST.md',
+  'freeze-N11.mjs',
+  'display-N11.mjs',
+  'retain-N11.mjs',
+  'repair-N11-grading.mjs',
+  'execute.mjs',
+  'create-worktree-FIRST.record',
+  'answers-7a-N11-review-FIRST/independent-solutions.record',
+  'answers-7a-N11-review-FIRST/review-FIRST.record',
+  'answers-7a-N11-review-FIRST/review-GRADING-RECOVERY1.record',
+  'answers-7a-N11-grading-GRADING-RECOVERY1/execution.json',
+  'answers-7a-N11-grading-GRADING-RECOVERY1/stdout',
+  'answers-7a-N11-grading-GRADING-RECOVERY1/stderr',
+  'answers-7a-N11-prepare-FIRST/execution.json',
+  'answers-7a-N11-prepare-FIRST/stdout',
+  'answers-7a-N11-prepare-FIRST/stderr',
+  'answers-7a-N11-freeze-FIRST/execution.json',
+  'answers-7a-N11-freeze-FIRST/stdout',
+  'answers-7a-N11-freeze-FIRST/stderr',
+  'answers-7a-N11-finalize-FIRST/execution.json',
+  'answers-7a-N11-finalize-FIRST/stdout',
+  'answers-7a-N11-finalize-FIRST/stderr',
+  'display-7a-N11-capture-FIRST/execution.json',
+  'display-7a-N11-capture-FIRST/stdout',
+  'display-7a-N11-capture-FIRST/stderr',
+]) retain(path.join(scratch, file), `records/${file}.record`);
+retain(path.join(source, 'answers.html'), 'answers.html');
+retain(path.join(source, 'capture.record'), 'capture.record');
+for (const { filename } of observations) retain(filename, `observations/${path.basename(filename)}`);
+const images = capture.frames.map(frame => ({
+  ...frame,
+  historicalPath: frame.path,
+  ...retain(frame.path, `screenshots/${path.basename(frame.path)}`),
+}));
+const prior = [
+  'lesson.json', 'exercises.json', 'figures.json',
+  'choice-set/seed.json', 'choice-set/draft.json', 'choice-set/review.json',
+  'choice-set/retention.json',
+  'evidence/first-text-written-display/first-display-review.json',
+  'choice-set/evidence/first-choice-display/first-display-review.json',
+  'evidence/first-text-written-display/text.html',
+  'evidence/first-text-written-display/exercises.html',
+  'choice-set/evidence/first-choice-display/choices.html',
+].map(file => bind(path.join(lesson, file)));
+const record = {
+  at: new Date().toISOString(),
+  workdir: repo,
+  book: '7a',
+  lesson: 'alg7-c1-s4-n11',
+  status: 'NEW_ANSWERS_AND_REMAINING_OFFLINE_DISPLAY_PASS',
+  answers: bind(path.join(lesson, 'answer-keys.json')),
+  nativeAudit: bind(path.join(lesson, 'answer-keys.audit.json')),
+  independentAnswerReview: retained.find(f => f.path.endsWith('/review-GRADING-RECOVERY1.record.record')),
+  priorUnchangedEvidence: prior,
+  retained,
+  frames: images,
+  unchangedOriginalWindows: originalWindows,
+  newImagesObserved: approved.size,
+  oldInitialWindowsReopened: 0,
+  oldSourceMathFigureChoiceReviewReruns: 0,
+  preservation: {
+    priorSelectedChoiceScopeUnchanged: '15 sources, 14 questions, 84 options; source148 construction stays written and ungraded',
+    priorFailedCallsAndUnknownHistoricalBytesPreserved: true,
+    historicalUnknownBytesRecovered: false,
+    dbWrites: 0,
+    appOrWholeTicketAcceptance: false,
+    finish: 'review',
+  },
+  hostTokenUsageAndCost: null,
+};
+const output = path.join(target, 'binding.record');
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...bind(output), screenshots: images.length, answers: 16 }));

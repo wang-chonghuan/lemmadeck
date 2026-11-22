@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = '.tmp/ld-s10y-lesson/resume182-6-8108';
+const lesson = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n11';
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const source = path.join(lesson, 'answer-keys.json');
+const target = path.join(root, 'answers-7a-N11-candidate-FIRST.json');
+assert.ok(!fs.existsSync(target));
+fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL);
+fs.chmodSync(target, 0o444);
+const record = {
+  at: new Date().toISOString(),
+  workdir: repo,
+  status: 'CANDIDATE_FROZEN_INDEPENDENT_REVIEW_PENDING',
+  inputs: ['lesson.json', 'exercises.json', 'figures.json'].map(f => bind(path.join(lesson, f))),
+  officialPrepare: bind(path.join(root, 'answers-7a-N11-prepare-FIRST/execution.json')),
+  candidate: bind(target),
+  priorEvidence: [
+    'evidence/first-text-written-display/first-display-review.json',
+    'choice-set/evidence/first-choice-display/first-display-review.json',
+    'choice-set/review.json',
+    'choice-set/retention.json',
+  ].map(f => bind(path.join(lesson, f))),
+  oldEvidenceUnchanged: true,
+  newImageViews: 0,
+  hostTokenUsageAndCost: null,
+  firstSpawnFailure: 'agent thread limit reached',
+  closedNaturallyCompletedAgents: [
+    '01a2035f-0a47-7f01-b48c-c0710da6614f',
+    '01a2035e-1d09-7f93-a095-99421bef2ab5',
+  ],
+  freshReviewer: '01a20367-9072-7ac3-9cc0-b1d45cb46676',
+};
+const output = path.join(root, 'answers-7a-N11-freeze-FIRST.record');
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ...bind(output), candidate: record.candidate }));

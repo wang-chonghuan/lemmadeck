@@ -1,5 +1,108 @@
 # 当前开发状态
 
+### 182-6 2026-11-22 13:41:57Z N11新答案与剩余全显示实PASS，装订count技术恢复
+
+- 本树8108仍唯一生产，0create/attach/迁移/安装/旧聊天接续。
+  Turing16--23首看实PASS，
+  SHAd52f135354380644ce1865b7ac8c4d3558f29dae4b6b2235d4dec63cc68df624；
+  Planck24--31首看实PASS，
+  SHA72963676d89d301343fa4bd36be3f4719eec00180d5c8a3b94cb7a1df2f8e10e；
+  父32--39本批报告
+  SHA13f7e4fffa2e172e8b964dc578b40a040e2ec404b5f580fec44803772cf0ae3f。
+  40新图首次实际观察已齐，6旧初始窗口只核已有哈希，不重开；
+  本轮新数学修复0、新图重捕获0、源/选择/图/已看PASS重跑0。
+  只关闭本轮自然完成观察者，旧暂停审者保留。
+- 首次retain 13:41:21Z真实exit1，失败stderr23733字节
+  SHA2675adffce814fb4e9229aeca4d5b356dae2f7203bfc8f2eff8aec8e543a9cc6；
+  发生于持久目标写入前，仅官方finalize新增count16未纳入比较。
+  原script另留FIRST字节快照，原失败/输出/计数不覆盖。
+  13:41:57Z只续COUNTRECOVERY1真实exit0：
+  答案严格等于独审候选加status ready/count16，其余字段不变。
+  持久binding.record55611字节
+  SHAfaee1bcbe114647816d89759a89d3d37fa2906cd6d3c8c2a883b0c5b2869f1e5，
+  84实际留存引用、40新PNG、6旧初始窗口引用、16答案/8auto/
+  8ungraded/37parts。FIRST答案REVISE、窄修PASS、原错误均原字节留存。
+  不声称恢复任何未知旧producer字节、宿主token或费用。
+- 13:38:08--11Z普通fetch原codex/STEMROBIN-182-textbooks实exit0，
+  回执SHAb7627747f3c632650983ea0694fc32f776142549c25d3ad64ca5d79d4344efa8；
+  HEAD/FETCH_HEAD皆7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0，
+  左右0/0，不需同步改写。现在窄stage本课新答案/evidence/progress，
+  ticket.json工作树指针只本地保持；尚未commit/push，不提前计交付。
+- N11新答案及本次剩余离线显示已完成；原choice 15源/14题/84项
+  selected-package限定不改，不把148作图或142证明的自主产出能力、
+  应用判分/DB集成/全单验收升级为PASS。仅6a/7a/8a/finish=review；
+  原树/锁/备份/失败/未决消息/n13/n22/旧PASS保持；
+  无DB/Plane写/合并/部署/关单/正式handoff，下一监督仍约13:54Z。
+
+### 182-6 2026-11-22 13:35:48Z N11新答案独审窄修复PASS，显示首看续接
+
+- 仍仅官方返回8108生产；0新create/attach/聊天/迁移/安装。
+  当前N11答案prepare、finalize各实成功一次，16答案/8auto/8ungraded/
+  37parts。Laplace先独解冻结后FIRST比较：数学正确，因有限exact集合
+  拒绝合法变形、expression不能确保要求的分式形式而REVISE。
+  仅135/136/137/138/139/147 grading及parts改ungraded/空；
+  全displayAnswer不变，原FIRST候选/REVISE/修复回执不覆盖。
+  affected-only review实PASS，
+  SHAca74501a88232eb857113ad764419cdca27ab79f267d055c9ba4c909a1c9851e。
+  证明142与真实作图148仍ungraded，x零次幂仍排除零。
+- 新显示capture一次实成功：40PNG/runtime PASS，旧初始窗口不重看、
+  旧renderer不重跑，0外网请求，浏览器已关。
+  Banach首看0--7八图实限定PASS，报告
+  SHAa9f5ff778c189acc8e8e3be83f722ab48e46077c20c02ff215cf831814f0e289；
+  只关闭该自然完成槽。fresh Hilbert只首看8--15，仍待结果。
+  父上一context已看32--35，本次只新看36--39，八图本批完整；
+  144(c)原待右端在36实可见，35/36两端并集覆盖，不重开32--35。
+  16--31尚未看，不提前绑定/计完整课/交付。
+- 只补本课确缺答案及首次未覆盖显示。已有选择范围15源/14题/84项
+  不变；148真实构图不冒充选择能力或APP验收。
+  n13/n22/源/答案/选择/图/已看PASS不重跑，原树/锁/备份/
+  失败/计数/费用UNKNOWN/未决消息/旧暂停聊天审者保持。
+  本次错误skill路径只读探测exit1保留工具历史，不是内容失败。
+  上次监督13:14Z，下一约13:54Z；仅6a/7a/8a/finish=review，
+  无DB/Plane写/合并/部署/关单/正式handoff。
+
+### 182-6 2026-11-22 13:14Z 本次即时接续8108，官方创建完成，复用已交付N13
+
+- 最新直接人类要求恢复同一182-6；本次仅一次官方create_worktree，
+  sourceRoot=/Users/yong/work/lemmadeck-ws/lemmadeck，
+  ref=d08f1b1835eae826a30c44d7b02ff4b3b8947763，
+  name=stemrobin-182-six，allowAsync=true。
+  operation=8a8536f8-3db2-4567-b5bc-28cc42711315，
+  initial pending/revision1，completed/revision92，registrationError=null。
+  唯一新生产workdir为
+  /Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck。
+  未新建聊天或重复attach；全部原树、锁、备份、旧失败和未决消息保留。
+- 从原7262 progress顶部2026-11-22 04:29:29Z检查点接收事实，不改原树：
+  原记录已核N13迁移0文件/0字节、190留存引用/178文件、92显示引用，
+  包含17观察报告和74截图，missing=0、pending=0。
+  当前原分支只读fetch实exit0，既有HEAD为
+  7cf00cfa91bee80e35d688e3c5c0f0cd92ae6dc0；指定起点祖先检查exit0。
+  仅本次新建干净树switch --detach到该既有提交实exit0，
+  没有回退/改写原分支、创建新分支或合并其它分支。
+  N13已有87a1d761429fa395c6e62ede3492dd596c718390交付及
+  OFFLINE_DISPLAY_PASS，复用原记录，不重复源/答案/选择/图/截图PASS。
+  本轮N13迁移0字节、display finalize0、renderer0、新图加载0；
+  历史未知producer字节、batch4用量和宿主费用UNKNOWN保持。
+- 13:14Z live Plane只读GET实际HTTP200，182仍started/finish=review；
+  初GET sequence_id过滤未生效，输出多工单，后只从实际results选182。
+  不写Plane，不把其它工单或旧监督暂停当本次直接恢复授权。
+- 原3129 progress已有12:58Z N23局部修复接续；新到达Heisenberg
+  结果只声明原N23图留存完成，尚未迁移或重新执行。
+  原N23五图binding.record报告274243字节、
+  SHA a142d43b566638c75146d6751ba4bcdc401654afe2fa15e8412e536fb0c1ce09；
+  全部原候选/报告/图/失败原地保留，未唤醒旧聊天或暂停审者。
+  本次“只迁移N13缺失字节”不扩为迁移这些未提交产物。
+- 不把N13已交付当新课；当前从本树有源7a alg7-c1-s4-n11继续：
+  16道135--150题、0题目图，现存现代题面、选择及已看显示证据复用，
+  只补当前确缺的answer-keys.json及新答案证据，不重做已过阶段。
+  所需既有依赖仅以本树ignored链接复用，不复制/安装runtime或读.env。
+  新课独立实质复核仍必要，父自审不冒充独审。
+- 本聊天每40分钟监督及普通修复直接解决授权保留；实际13:14Z，
+  下一约13:54Z，不补造旧排队接续或按时监督已执行。
+  仅6a/7a/8a，finish=review；完整课窄commit/push原分支后续其它有源课，
+  无DB/合并/部署/关单、正式handoff或主动同伴消息。
+  本轮只读错误路径/不存在scratch探测保留工具历史，不作为内容失败。
+
 ### 182-6 2026-11-22 12:05Z hard窄暂存通过，原失败日志字节无损保留
 
 - 首次窄stage12:02:50--58Z真实exit1，

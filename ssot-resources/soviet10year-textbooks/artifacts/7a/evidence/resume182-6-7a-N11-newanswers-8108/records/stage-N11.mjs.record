@@ -1,0 +1,63 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const lesson = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n11';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-7a-N11-newanswers-8108';
+const progress = '.intentfold/tickets/STEMROBIN-182/progress.md';
+const allowed = file => file === progress || file === `${lesson}/answer-keys.json`
+  || file === `${lesson}/answer-keys.audit.json` || file.startsWith(`${evidence}/`);
+const git = args => {
+  const result = spawnSync('git', args, { cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout;
+};
+const binding = JSON.parse(fs.readFileSync(path.join(evidence, 'binding.record'), 'utf8'));
+assert.equal(binding.status, 'NEW_ANSWERS_AND_REMAINING_OFFLINE_DISPLAY_PASS');
+assert.equal(binding.newImagesObserved, 40);
+assert.equal(binding.unchangedOriginalWindows.length, 6);
+assert.equal(binding.preservation.priorSelectedChoiceScopeUnchanged,
+  '15 sources, 14 questions, 84 options; source148 construction stays written and ungraded');
+assert.deepEqual(git(['diff', '--cached', '--name-only']).trim(), '');
+const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const filename = path.join(directory, entry.name);
+  return entry.isDirectory() ? walk(filename) : [filename];
+});
+const files = [progress, `${lesson}/answer-keys.json`, `${lesson}/answer-keys.audit.json`, ...walk(evidence)];
+const checked = [];
+for (const file of files) {
+  assert.ok(allowed(file));
+  assert.ok(!/(^|\/)\.env($|\/|\.)/.test(file));
+  const bytes = fs.readFileSync(file);
+  const binary = bytes.includes(0) || /\.(png|jpe?g|webp|gz)$/.test(file);
+  if (!binary) {
+    const text = bytes.toString('utf8');
+    assert.ok(!/(?:postgres(?:ql)?:\/\/|sk-[A-Za-z0-9_-]{24,}|ghp_[A-Za-z0-9]{20,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/.test(text),
+      `Possible secret in ${file}`);
+    if (file.endsWith('/answer-keys.json') || file.endsWith('/answer-keys.audit.json')) {
+      JSON.parse(text);
+      assert.ok(!text.includes('.tmp/'));
+      assert.ok(!text.includes('/Users/'));
+    }
+  }
+  checked.push({ path: file, bytes: bytes.length, binary, sha256: crypto.createHash('sha256').update(bytes).digest('hex') });
+}
+git(['add', '--', ...files]);
+const staged = git(['diff', '--cached', '--name-only']).trim().split('\n');
+assert.deepEqual(new Set(staged), new Set(files));
+assert.ok(staged.every(allowed));
+git(['diff', '--cached', '--check']);
+console.log(JSON.stringify({
+  at: new Date().toISOString(),
+  workdir: repo,
+  status: 'N11_NARROW_STAGE_PASS',
+  fileCount: files.length,
+  checked,
+  wholeLessonChoiceAcceptance: false,
+  dbWrites: 0,
+  finish: 'review',
+}, null, 2));
