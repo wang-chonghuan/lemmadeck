@@ -1,0 +1,155 @@
+{
+  "schema": "ld-s10y-lesson/science-review@1",
+  "ticket": "STEMROBIN-181",
+  "lesson": "phy9-c1-s2-n26",
+  "edition": "modern-us-neutral",
+  "status": "fail",
+  "reviewType": "first-independent-complete-substantive-prose-science-review",
+  "scope": "Complete frozen n26 modern prose against its authoritative source lesson. Prior PDF68/69 source-text preparation is reused; no source-image gate, prior passed lesson review or figure review repeated.",
+  "freezeAttribution": "Main relayed the author freeze in this chat. Actual source/template hashes match the frozen manifest; no direct human confirmation of author filesystem state is claimed.",
+  "bindings": {
+    "freeze": {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/9p-n26-prose-freeze.json",
+      "sha256": "290766dc8df6304511176b6e7e7c7ba65f6f5460a185e3ba1fb1db3a9971f3ad"
+    },
+    "lesson": {
+      "path": ".tmp/ld-s10y-lesson/adapt/9p/modern-us-neutral/lessons/phy9-c1-s2-n26/lesson.template.json",
+      "sha256": "d891c6b5d226262c2a1492b66b0a16d019320d9a9100adb099a707c0011bf139"
+    },
+    "source": {
+      "path": "ssot-resources/soviet10year-textbooks/artifacts/9p/lessons/phy9-c1-s2-n26/lesson.json",
+      "sha256": "b03adb6c0c666d8105663a2a1ba41bb0a258c8dea0ad188d307a3fef0f86e8b2"
+    },
+    "profile": {
+      "path": ".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json",
+      "sha256": "f03840602a5de0c22b7eea096fe24db758c6d66b6532c75cda26c6766a1573f1"
+    },
+    "editionValidator": {
+      "path": ".claude/skills/ld-s10y-lesson/tools/edition.py",
+      "sha256": "dca44244d8a68be0d8937c9db093edb23bf118b587e06b9210f58af8724667d9"
+    },
+    "proseFlowTool": {
+      "path": ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+      "sha256": "f2a16357e2a0d5f8541b0cb401c5193c9cb10f6333dc16f92d5c7a18a5bee309"
+    },
+    "htmlfrag": {
+      "path": ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+      "sha256": "ea287aaa85e46634cca1fecfef88b15f097a1c0870475a206d005cba19f0ba28"
+    }
+  },
+  "findings": [
+    {
+      "id": "n26-closed-system-internal-energy-scope",
+      "severity": "blocking-science-condition",
+      "sourceBlocks": ["p0068#2", "p0068#3"],
+      "modernPointers": ["/prose/0/text", "/prose/1/text"],
+      "quotedClaims": [
+        "对于本课讨论的封闭系统，热传递和外界对系统做功都可以改变内能。",
+        "若能量传递只通过做功进行，内能的变化等于外界对系统做的功："
+      ],
+      "issue": "Closed means no mass crosses the boundary, not that all transferred energy changes internal energy. Restricting transfer channels to heat/work still does not exclude changes of the system's macroscopic kinetic or potential energy. The text presents the two internal-energy equalities without stating the additional energy-store restriction.",
+      "independentPhysicalCheck": "A sealed gas-containing body can receive mechanical work that increases its bulk motion or raises it, without that work all becoming internal energy. The work-only transfer condition alone therefore does not establish the printed internal-energy equality.",
+      "targetedRepair": "Scope this lesson's closed-system model to negligible or unchanged initial-to-final macroscopic kinetic and potential energy, in addition to the existing heat/work and no-mass-transfer conditions. State the common restriction before the two special cases so it governs both. Retain the rigid sealed bottle and exclusion of other work modes; do not introduce a new equation.",
+      "mathDisposition": "Original $\\Delta U=Q.$ and $\\Delta U=A.$ are valid within the clarified model. Preserve these exact spans and equation labels (2-35)/(2-36); this is a prose-condition repair, not a source erratum."
+    },
+    {
+      "id": "n26-work-producing-expansion-and-temperature-model",
+      "severity": "blocking-science-condition",
+      "sourceBlocks": ["p0068#5"],
+      "modernPointers": ["/prose/3/text"],
+      "quotedClaims": [
+        "对本课讨论的一定量气体，内能增加表现为温度升高。",
+        "绝热膨胀时，气体本身对外做正功（$A'>0$），外界对气体的功 $A<0$，所以气体的内能减小。"
+      ],
+      "issue": "The expansion sentence reads as if every adiabatic expansion performs positive external work. Free expansion need not do external work. Also, fixed quantity of gas alone does not define a temperature-only internal-energy model; the generic references to this lesson's gas model never explicitly identify that approximation.",
+      "independentPhysicalCheck": "An ideal gas freely expanding into an evacuated region in an insulated rigid enclosure does no external boundary work; its internal energy and equilibrium temperature need not decrease. For a real gas, internal energy can also depend on configuration/volume, so an unqualified internal-energy change is not a universal temperature rule.",
+      "targetedRepair": "Make the existing positive-work statement conditional on adiabatic expansion in which the gas actually does work on its surroundings. Name the fixed-amount ideal-gas, or equivalent temperature-only internal-energy, approximation governing the temperature conclusions. A short narrative distinction for expansion without external work is sufficient; no new task, numerical value or formula is required.",
+      "mathDisposition": "Keep $(2-36)$, $A'>0$ and $A<0$ exactly as source-authored spans, inside the properly conditional case. Do not rewrite source snapshots or register a formula correction."
+    }
+  ],
+  "passedScienceAssessments": [
+    {
+      "sourceBlocks": ["p0068#2", "p0068#3", "p0068#5"],
+      "aspect": "sign conventions",
+      "status": "pass",
+      "assessment": "A is consistently external work on the gas, while A' is gas work on its surroundings. Absorbed Q increases internal energy in the stated no-work bottle case. The signs themselves are not the defect."
+    },
+    {
+      "sourceBlocks": ["p0068#4"],
+      "aspect": "adiabatic definition and timescale",
+      "status": "pass",
+      "assessment": "Adiabatic is defined by absence of heat exchange, not by constant temperature, isolation from work, or speed alone. The text explicitly says rapid processes are not automatically adiabatic and permits the approximation only when heat exchange is negligible."
+    },
+    {
+      "sourceBlocks": ["p0068#7", "p0068#9"],
+      "aspect": "historical demonstration and safety",
+      "status": "pass",
+      "assessment": "The ether/cotton/piston example is explicitly a source-described historical demonstration involving flammability, pressure and flame, not a self-study operation task. Independent construction or trial is discouraged; suitable equipment and qualified-teacher safety protection are required. No new quantities or operating procedure beyond the retained source description are invented."
+    },
+    {
+      "sourceBlocks": ["p0069#1", "p0069#2"],
+      "aspect": "diesel and history",
+      "status": "pass",
+      "assessment": "The described diesel mechanism uses compression-heated air and later fuel injection under suitable ignition conditions. The comparison is specifically with common gasoline spark ignition, not a universal denial of diesel starting aids or every possible ignition device. The source-bound name 狄塞尔 is retained with its own historical_entities reason."
+    },
+    {
+      "sourceBlocks": ["p0069#5"],
+      "aspect": "compressor",
+      "status": "pass",
+      "assessment": "Compression heating and cooling equipment are retained. Whether an operating compressor is approximately adiabatic is explicitly left dependent on heat transfer and operating conditions."
+    },
+    {
+      "sourceBlocks": ["p0069#6"],
+      "aspect": "atmospheric parcel and cloud",
+      "status": "pass",
+      "assessment": "The example is an ascending parcel expanding as surrounding pressure falls, not free expansion into vacuum. Small external heat exchange qualifies the adiabatic approximation; saturation conditions qualify possible condensation/cloud formation. It does not claim all rising air necessarily makes clouds or impose a dry-adiabatic numerical rate after condensation."
+    }
+  ],
+  "sourceMathAndStructure": {
+    "status": "pass",
+    "sourceSnapshotEqualsAuthoritativeLesson": true,
+    "sourceTextIdentityOrderRefsKindsLabelsPagesUnchanged": true,
+    "lessonIdentityAndFigureReferencesUnchanged": true,
+    "sourceNodes": 13,
+    "nodeTypes": {"p": 9, "fig": 2, "cap": 2},
+    "exactMathSpans": 10,
+    "mathSpansBySourceBlock": [
+      {"block": "p0068#2", "spans": ["$\\Delta U=Q.$", "$(2-35)$", "$Q$"]},
+      {"block": "p0068#3", "spans": ["$\\Delta U=A.$", "$(2-36)$"]},
+      {"block": "p0068#5", "spans": ["$(2-36)$", "$A'>0$", "$A<0$"]},
+      {"blocks": ["p0068#7", "p0068#9"], "spans": ["$42$"]},
+      {"block": "p0069#2", "spans": ["$43$"]}
+    ],
+    "exactMathAndNonMathNumbersUnchangedPerBlock": true,
+    "errata": [],
+    "writtenTasks": 0,
+    "inventedTasks": 0
+  },
+  "deterministicChecks": {
+    "status": "pass",
+    "errors": [],
+    "method": "Read-only native edition.validate_identity_fields, edition.validate_text and prose_flow_contract; independent literal dollar-span comparison and source snapshot equality.",
+    "publishedProseParagraphs": 14,
+    "resolvedSectionBreaks": [2, 9],
+    "distinction": "Structural validation passes but cannot prove the missing physical conditions identified in the substantive findings."
+  },
+  "changedOnlyRepairScope": {
+    "targets": ["p0068#2", "p0068#3", "p0068#5"],
+    "recheckRequirements": [
+      "Review only the clarified closed-system energy-store assumptions and the conditional work/temperature statements after author freeze.",
+      "Verify exact original math spans, numerical tokens, source snapshots and block identity remain unchanged.",
+      "If paragraph anchors change, recompute the existing native proseFlow boundaries before freezing; do not edit anchor content separately.",
+      "Inherit unaffected rapid-process, safety, diesel, compressor, cloud, history and figure-reference assessments from this first complete review. Do not repeat the whole review."
+    ]
+  },
+  "execution": {
+    "writes": ["This report only"],
+    "authorTemplatesSourceFiguresSharedToolsOrTestsEdited": false,
+    "figurePixelsReviewed": false,
+    "oldReportsOrPassedCasesReReviewed": false,
+    "answersOrChoiceConfigsRead": false,
+    "testsBrowserAppDatabaseNetworkInstall": false,
+    "finalizeAssemblePromotionCommitOrOtherChatMessaging": false,
+    "figureGate": "fig42/43 remain independently gated elsewhere; this prose report is not figure approval."
+  }
+}
