@@ -46,6 +46,28 @@ def sha256(path: Path) -> str:
             digest.update(chunk)
     return digest.hexdigest()
 
+def source_image_path(value: str, expected_sha: str, root: Path | None = None) -> Path:
+    declared = Path(value)
+    if declared.is_file() or not declared.is_absolute():
+        return declared
+    parts = declared.parts
+    marker = ("ssot-resources", "soviet10year-textbooks", "artifacts")
+    for index in range(len(parts) - len(marker) + 1):
+        if parts[index:index + len(marker)] != marker:
+            continue
+        prefix = parts[:index]
+        if ".codex" not in prefix or "worktrees" not in prefix or prefix[-1:] != ("lemmadeck",):
+            return declared
+        repo = (root or Path.cwd()).resolve()
+        candidate = repo.joinpath(*parts[index:]).resolve()
+        if not candidate.is_relative_to(repo / "ssot-resources"):
+            return declared
+        # Relocation never changes a spec or substitutes different source pixels.
+        if candidate.is_file() and sha256(candidate) == expected_sha:
+            return candidate
+        return declared
+    return declared
+
 
 def finite_number(value: Any) -> bool:
     return (
@@ -897,7 +919,7 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         if not isinstance(image_path, str) or not image_path:
             errors.append("source.image.path must be nonempty")
         elif stage in {"rendered", "approved"}:
-            path = Path(image_path)
+            path = source_image_path(image_path, image_sha)
             if not path.is_file():
                 errors.append(f"missing source image: {path}")
             elif image_sha != sha256(path):

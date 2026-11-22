@@ -83,7 +83,10 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
     return out, warn
 
 
-def cut_lessons(stream: list[dict]) -> list[dict]:
+def cut_lessons(
+    stream: list[dict],
+    binding_errors: list[dict] | None = None,
+) -> list[dict]:
     """h3 开一节。h1/h2 记作祖先标题，跟着下一节走。"""
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
@@ -104,7 +107,33 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
             lessons.append(cur)
             continue
         if b["kind"] == "foot":
-            continue
+            if b.get("label") != "note":
+                continue
+            if b.get("owner_exercise"):
+                matches = [
+                    candidate
+                    for lesson in lessons
+                    for candidate in lesson["blocks"]
+                    if candidate["kind"] == "ex"
+                    and str(candidate.get("label")) == str(b["owner_exercise"])
+                ]
+                if len(matches) != 1:
+                    error = "教学脚注 owner-ex 无法唯一绑定已出现的原题"
+                    if binding_errors is None:
+                        raise ValueError(error)
+                    binding_errors.append({
+                        "page": b["page"], "ref": b["ref"], "error": error,
+                        "affected_refs": [
+                            ref for target in matches
+                            for ref in target.get("spans") or [target["ref"]]
+                        ],
+                    })
+                    continue
+                target = matches[0]
+                target["lines"] = target["lines"] + ["\n".join(b["lines"])]
+                target.setdefault("spans", [target["ref"]]).append(b["ref"])
+                continue
+            b = {**b, "kind": "p"}
         if cur is None:                     # 小节标题之前的内容（承前页的残段）
             cur = {"chapter": pending["h1"], "section": pending["h2"], "number": None,
                    "title": "（承上页）", "printed_title": None, "blocks": [],
@@ -251,9 +280,25 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
                     shutil.copystat(source, target)
 
 
-def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
+def claim_figures(
+    lessons: list[dict],
+    stream: list[dict],
+    binding_errors: list[dict] | None = None,
+) -> tuple[list[str], list[str]]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     errors, warn = [], []
+    def owner_error(figure: dict, message: str) -> None:
+        errors.append(message)
+        if binding_errors is not None:
+            binding_errors.append({
+                "page": figure["page"], "ref": figure["ref"], "error": message,
+                "affected_refs": [
+                    ref for candidate in lessons for exercise in candidate["exercises"]
+                    if str(exercise["number"]) == str(figure["owner_exercise"])
+                    or _source_number(exercise) == str(figure["owner_exercise"])
+                    for ref in exercise.get("pages", [])
+                ],
+            })
     fig_by_num, all_figs = {}, []
     for b in stream:
         if b["kind"] != "fig":
@@ -286,14 +331,14 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             if len(scoped_matches) == 1:
                 matches = scoped_matches
             elif len(source_matches) > 1:
-                errors.append(
+                owner_error(figure,
                     f"{figure['id']} 的 owner-ex {owner_number} 在本小节跨栏目重复，"
                     "必须写栏目限定标识（例如 g2-1）")
                 continue
             else:
                 matches = identity_matches or source_matches
             if len(matches) != 1:
-                errors.append(
+                owner_error(figure,
                     f"{figure['id']} 指定给第 {owner_number} 题，但本小节没有这道题")
                 continue
             owner = matches[0]

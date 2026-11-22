@@ -118,6 +118,7 @@ class SourceBook:
         self.book = book
         self._pages = None
         self._candidates = None
+        self._binding_errors = []
 
     def pages(self) -> list[tuple[Path, dict]]:
         if self._pages is None:
@@ -132,20 +133,33 @@ class SourceBook:
             merged, _ = assemble.merge_across_pages(
                 assemble.load_stream(self.book, self.pages())
             )
-            candidates = assemble.cut_lessons(merged)
+            candidates = assemble.cut_lessons(merged, self._binding_errors)
             book_path = self.book / "book.json"
             numbering = load(book_path).get("exercise_numbering", "book") if book_path.exists() else "book"
             for candidate in candidates:
                 candidate["prose"], candidate["exercises"] = assemble.split_lesson(
                     candidate, numbering,
                 )
-            figure_errors, _ = assemble.claim_figures(candidates, merged)
-            if figure_errors:
+            figure_errors, _ = assemble.claim_figures(candidates, merged, self._binding_errors)
+            diagnosed = {error["error"] for error in self._binding_errors}
+            if any(error not in diagnosed for error in figure_errors):
                 raise SystemExit(
                     "ERROR: 无法从权威页重建来源引用: " + "; ".join(figure_errors)
                 )
             self._candidates = candidates
         return self._candidates
+
+    def assert_bindings(self, candidate: dict) -> None:
+        refs = {
+            ref for block in candidate["blocks"]
+            for ref in block.get("spans") or [block["ref"]]
+        }
+        pages = {candidate["start_page"]} | {
+            block["page"] for block in candidate["blocks"]
+        } | {int(ref[1:5]) for ref in refs if re.match(r"^p\d{4}#", ref)}
+        for error in self._binding_errors:
+            if pages & {error["page"] - 1, error["page"]} or refs & set(error["affected_refs"]):
+                raise SystemExit(f"ERROR: {error['ref']}: {error['error']}")
 
 
 def _authoritative_source_targets(
@@ -185,6 +199,7 @@ def _authoritative_source_targets(
         )
 
     candidate = matches[0]
+    source_book.assert_bindings(candidate)
     raw_prose = lesson.get("prose", [])
     source_prose = candidate.get("prose", [])
     if len(raw_prose) != len(source_prose):
