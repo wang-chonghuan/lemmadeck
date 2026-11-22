@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1491-n42-sentence-affected-text/en.before-native.json\"))\nbaseline=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1486-n42-affected-text/en.lesson.draft.json\"))\nprepared=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1443-n42-first-missing-en/prepared.json\"))\nraw=edition.load(Path(prepared[\"source\"][\"path\"]))\nbook=Path(prepared[\"source\"][\"path\"]).parents[2]\nraw_ex=edition.load(book/\"lessons\"/lesson[\"id\"]/\"exercises.json\")\nfor i in [25]:\n    assert edition.math_signature(lesson[\"prose\"][i][\"text\"])==edition.math_signature(baseline[\"prose\"][i][\"text\"]),(i,\"unchanged math\")\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],[])\nboundaries=[]\nfor prefix in [\"**Water vapor pressure**\",\"Knowing water vapor pressure alone\",\"Along the path in Figure\",\"**Humidity-measuring instruments**\",\"**The wet- and dry-bulb instrument**\",\"**Why humidity matters**\",\"**Worked examples**\",\"2. In the textbook\"]:\n    matches=[i for i,p in enumerate(flow[\"paragraphs\"]) if p[\"text\"].startswith(prefix)]\n    assert len(matches)==1 and matches[0]>0,(prefix,matches)\n    i=matches[0]\n    boundaries.append({\"before\":flow[\"paragraphs\"][i-1][\"text\"],\"after\":flow[\"paragraphs\"][i][\"text\"]})\nlesson[\"section_breaks\"]=boundaries\nflow,flow_errors=edition.prose_flow_contract(lesson[\"prose\"],boundaries)\nerrors.extend(flow_errors)\ncorrections,errata_errors=edition.validate_errata(book,raw,raw_ex,lesson,{\"exercises\":[]})\nerrors.extend(errata_errors)\nprofile=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nfor i in [25]:\n    source=raw[\"prose\"][i]\n    modern=lesson[\"prose\"][i]\n    errors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],f\"en.prose[{i}]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\"),corrections.get(f\"lesson.prose[{i}]\"),modern.get(\"notation_changes\")))\ncomparison=json.loads(json.dumps(lesson))\ncomparison[\"section_breaks\"]=baseline[\"section_breaks\"]\nfor i in [25]:\n    comparison[\"prose\"][i][\"text\"]=baseline[\"prose\"][i][\"text\"]\nassert comparison==baseline,\"Only named affected text and boundary anchors may change\"\nassert len(boundaries)==len(baseline[\"section_breaks\"]),\"Concept boundary count unchanged\"\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T21:23:18.337Z",
+  "finishedAt": "2026-11-22T21:23:18.557Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1491-n42-sentence-affected-readability-native/stdout.txt",
+      "bytes": 67550,
+      "sha256": "9de5277ec4cab6bfa28e08f5dfc96be44c430409cd13ef242d76cac6f8839c02"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1491-n42-sentence-affected-readability-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
