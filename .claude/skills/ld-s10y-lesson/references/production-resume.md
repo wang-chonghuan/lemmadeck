@@ -3,9 +3,10 @@
 Use the active ticket's authorization, not the skill's usual publish default.
 An offline repair or a paused production assignment does not authorize DB writes,
 deployment or starting other workers. This is the binding delivery sequence for
-the lesson, image, choice and answer skills, not an optional batching suggestion.
+the lesson, image, choice and answer skills. Workers must follow this lean
+workflow; "strict" does not authorize additional checks, paperwork or waiting gates.
 
-## Strict delivery sequence
+## Required worker workflow
 
 Source pages and shared inputs may be prepared together, and multi-lesson tools
 may reuse their invocation-local source stream. Delivery is different: finish and
@@ -14,30 +15,29 @@ a chapter, a context checkpoint or the next scheduled inspection.
 
 1. Complete the selected lesson and every component required by the assignment:
    prose, exercises, figures, answers/interactions and choices where requested.
-   Obtain the required substantive source, mathematics and option review, and
-   check the complete lesson's offline desktop/mobile display once. Reuse valid,
-   unchanged bound evidence; do not repeat the author's or reviewer's work as a
-   parent acceptance gate. A raw page, approved figure or structural pass alone
-   is not a complete lesson.
+   Keep the existing substantive source, mathematics and option review. Check
+   the complete new/changed lesson's desktop/mobile display once, using offline
+   or product evidence applicable to its current files and display contract;
+   do not require both surfaces to repeat the same display review. Reuse valid,
+   unchanged bound evidence. Stable keyboards, judging and other shared app
+   behavior do not need a full functional retest for every new lesson.
 2. Retain the reviewed lesson and its necessary dependencies under
    `ssot-resources/soviet10year-textbooks/artifacts/<book>/`. Use the existing
-   page, edition, figure, answer and choice paths. Retain indispensable review
-   snapshots and their referenced receipts/streams there too when scratch holds
-   the only copy; use a lesson-local `evidence/` directory for supporting files
-   without an existing durable location. Preserve original bytes, failures,
-   source bindings and hashes. Record retained locations in the existing
-   checkpoint, not a new handoff package. Paths/hashes pointing only into an
-   auto-cleanable worker tree or ignored `tmp/` are not a backup. Never commit
-   secrets, runtime dependencies or whole duplicate evidence packages.
-3. Before publication, commit this lesson's owned artifacts and required
+   page, edition, figure, answer and choice paths, preserving indispensable
+   source/review evidence and original failures. Do not leave the only copy in
+   an auto-cleanable worker tree or ignored `tmp/`. Use the existing checkpoint;
+   do not manufacture per-command receipts, new evidence packages or duplicate
+   shared assets. Never commit secrets or runtime dependencies.
+3. Promptly commit this lesson's owned artifacts and required
    source/index/asset changes, then ordinary push to the worker's recorded
    existing branch. Use the exact authorized absolute workdir. Do not stage
    unrelated dirty or already staged work, use `git add -A`, create a replacement
    branch, merge, deploy or force push. For a detached checkout, push
-   `HEAD:<recorded-existing-branch>`. Confirm the necessary files are committed
-   and the remote branch contains that commit once; no content re-review is
-   needed. A checkpoint, Git lock, local commit or successful tool call is not
-   remote preservation. Failed push stops dependent publication, not preservation.
+   `HEAD:<recorded-existing-branch>`. A normal successful push result is enough;
+   inspect remote refs only if the outcome is uncertain. Do not add file-by-file
+   rehashing or another review before saving. A local commit or Git lock alone
+   is not remote preservation. Failed push blocks that lesson's publication,
+   not unrelated source work.
 4. Submit that pushed lesson immediately to the already authorized DB writer
    using the existing checkpoint and its lesson ID, branch/commit and retained
    paths. Multi-session production uses one caller-designated writer; producers
@@ -51,20 +51,22 @@ a chapter, a context checkpoint or the next scheduled inspection.
    earlier lessons. Do not turn single-lesson submission into a four-lesson queue
    gate, periodic full intake or a new service. A busy writer does not prevent
    source work on the next authorized lesson.
-5. After the required writes succeed, perform one affected-lesson DB readback
-   and the required cap7 product/display check. This is cap7's readback, not an
-   extra query pass before repeating cap7. Reuse the offline semantic
-   display review; the product check verifies actual publication/integration,
-   not a second full content review. Keep actual results in existing durable
-   evidence/checkpoint locations. New indispensable result files created after
-   the first push need an evidence-only commit and ordinary push; do not rerun
-   generation or reviews to save them. Record local completion, pushed commit
-   and verified DB publication separately. A pushed lesson is not yet verified
-   in the DB, and a DB row is not a backup of its source/review artifacts.
+5. After the required writes succeed, perform one small affected-lesson DB
+   readback for edition, content presence/counts and the requested components.
+   Use the publishers' existing validation; do not prepend an identical checker.
+   Reuse applicable display evidence from step 1. Only an uncovered display or
+   integration change, an actual failure, or an explicit functional-test request
+   needs the affected cap7 check; do not run the full product suite per lesson.
+   Record the actual push and publication results in the existing checkpoint.
+   Publication notes alone do not require a second commit/push; retain them at
+   the existing durable location or include them in the next normal commit.
+   Changed course/review bytes still need affected review and prompt preservation.
+   A DB row is not a backup of source/review artifacts.
 
-Continue with the next authorized lesson after its predecessor's immediate
-delivery/submission, not after a batch report. Offline-only assignments stop at
-their authorized handoff; they do not call publishers. Explicitly paused
+After saving/pushing and recording the single-lesson submission, continue the
+next authorized lesson without waiting for the DB writer, a batch report or
+inspection. This SOP does not create a background writer. Offline-only
+assignments stop at their authorized handoff; they do not call publishers. Explicitly paused
 assignments remain paused even after this SOP is repaired or installed.
 If a rule is missing or conflicts with the assignment, report the concrete
 conflict to the caller before that stage; do not invent an extra gate or bypass
@@ -179,6 +181,6 @@ Keep the first failure receipt and changed candidate snapshot once. Do not copy
 Node, Python, whole PDFs or a whole earlier evidence package into each new batch.
 Only a genuinely required changed input or output needs new bytes.
 Follow the image skill's bounded contexts; return text and evidence paths/hashes,
-not image-bearing history. Check each completed lesson once at the required
-display surfaces, then only affected changes after a real defect. A new handoff,
+not image-bearing history. Keep one applicable desktop/mobile display review of
+new/changed content, then only affected checks after a real defect. A new handoff,
 commit, push or checkpoint alone does not invalidate a passed review.

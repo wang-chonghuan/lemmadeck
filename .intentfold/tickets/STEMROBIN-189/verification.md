@@ -123,3 +123,27 @@ Both existing automations were read back as `PAUSED`. Cursor-aware snapshots
 remain unchanged: 181/182/184/187/188 are idle; 180 is `notLoaded`, not a fresh
 pause acknowledgment. No resume message was sent, no worker was replaced, and
 production/monitoring pause records remain effective.
+
+## 2026-11-22 Lean-Workflow Clarification
+
+The user clarified that workers must strictly follow a lean SOP, not a more
+restrictive procedure. This supersedes the preceding follow-up's mandatory
+per-lesson full cap7 run, extra remote-ref confirmation and receipt-only push.
+
+- New/changed content retains substantive source, math and option review and one
+  applicable desktop/mobile display review. Offline and product display are not
+  automatically both required; actual uncovered display differences still need
+  affected inspection. Unchanged shared keyboard/judging behavior is not a
+  mandatory full retest for each lesson.
+- A normal successful push is sufficient. Publication gets one small lesson
+  readback; no second push just for routine notes, duplicate publisher checker,
+  new receipt package or wait for the writer/inspection before the next lesson.
+- Scenario inspection covered ordinary new content, changed content/interaction
+  needing affected checks, and uncertain/failed push. This was instruction review,
+  not a claim that production or full functional checks ran.
+- Only the two changed skill entrypoints' `quick_validate` and `git diff --check`
+  were rerun; both passed. The previous 58 behavior tests and corpus/app checks
+  were not repeated because no executable tool or application code changed.
+
+No production chat or automation was resumed, and no DB write, merge or deployment
+was performed.
