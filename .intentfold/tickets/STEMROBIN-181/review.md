@@ -1,10 +1,10 @@
 # STEMROBIN-181 Review
 
-2026-11-21 最新明确恢复已覆盖 D606 暂停，181-6 正在原工作树继续缺失课程阶段。已交付成果直接复用；整单正式 handoff 仍受内容 HOLD 和资源机械检查阻断。工单保持 In Progress，finish=review，未合并、发布或关闭。D606 暂停与失败记录作为历史保留。
+2026-11-22 最新明确恢复已覆盖旧暂停，181-6 正在原工作树继续缺失课程阶段。已交付成果直接复用；整单正式 handoff 仍受内容 HOLD 和资源机械检查阻断。工单保持 In Progress，finish=review，未合并、发布或关闭。旧暂停与失败记录作为历史保留。
 
 ## 可查看成果
 
-2026-11-21 检查点沿用现有计量：149 门已推送完整课程、577 页已消费源页。D595 新增双语 N23，D695 新增双语 N25，均未新增源页；D541 的 N97、D500 的实验课及 D482 源页均未重复计数。这不是全库完整性统计。
+2026-11-22 检查点沿用实际推送计量：152 门完整课程、577 页已消费源页。D767 新增双语 N35/N36，D783 新增双语 N34，均未新增源页；旧课程英文归档恢复不重复计数。这不是全库完整性统计。
 
 | 材料 | 中文 | English | 交付边界 |
 | --- | --- | --- | --- |
@@ -212,3 +212,21 @@ D778／D779：N34 首次独立整课显示审阅通过，两语桌面／手机�
 D774：N37 图66／67首次确定性作者和当前三宽度预览通过，图66首失败及两次技术修复保留；图68必需手部艺术，hybrid HOLD。作者两批实际8+4张，真实累计13。D782仅开始图66／67首次独立来源／SCI／neutral／显示审阅。发现同编号图64的既有 generated 成果后，D781只核查其真实来源、原审批及本课适用范围，不开图、不重生成；D772原HOLD记录不删除。N38／N39也发现较早正式索引及交付证据，D776／D777已转为先核实际完成与缺项、复用通过项；不把索引当批准，也不重写已审正文。
 
 [N34 完整离线课程](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d779-n34-complete-course/batch-ready.json)
+
+D783：N34 完整离线课程及 N37 已审局部成果已普通提交并推送 `e6dc4d09effd6948817a56a6c8912864d70d37c6`，独立远端 SHA 已确认。计量为152门／577源页；推送回执留本地随下一批实质产物提交，没有纯计量补提交。
+
+D781／D782／D785／D789：N37 图64的既有同源 generated 整图审批及真实历史生成记录适用本课，按原完整 spec/png/generation/review tuple 直接引用，保留640px滚动合同，不复制、改绑或重审该 tuple。图66／67首次独立 SOURCE／SCI／neutral／保存宽度显示通过，批准产物已保留到 d780 双语 attempt，只改相应 manifest 合同。审者源冻结前曾读取标签／曲线 metadata 的披露保留，不伪造重新盲审。图65／68必需手部艺术仍 HOLD；没有整课 finalize／render／DISPLAY／索引或新课程计量。
+
+[N37 图66／67已审保留](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d785-n37-approved-figures/retained.json) · [图64原审批直接复用](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d789-n37-fig64-unchanged-reuse/integrated.json)
+
+D776／D777／D788／D790／D791：历史 D029 已完整交付并推送 N38/N39；较新英文 canonical 目录缺文件不等于缺作者或审批。N38四份、N39六份原批准课文／习题／审计／答案 JSON 仅改 edition，lesson另加 locale=en，标题采用原已独立显示的英文版本；原文、数学、顺序、来源与审批均复用。图69–71字节复制不变，N39共享70／71不覆盖，图72只有路径及实际衍生 render-report SHA 改绑，原记录保留。N39原 seed/draft/review 和五份历史 trace／图资产快照按原相对路径持久保留，使用原 Python canonical digest 绑定，不运行选择题 checker／retain_choices 或语义复审。受影响路径绑定通过，EN索引只加两课行，其余行／header不变；完整课程及源页增量均0。
+
+D776在历史交付被确认前实际误做8次外层调用（6成功、2准备失败）及1次嵌套KaTeX调用，全部失败／新重复稿保留但未采用，纠正后没有继续生产。D777仅库存，D784再次确认 N13/N14及图17已交付，不重复修复或计数。
+
+[N38英文原批准产物归档](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d790-n38-approved-en-canonical/integrated.json) · [N39英文及历史追溯归档](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d791-n39-approved-en-canonical/integrated.json)
+
+D792：N46仅库存，未找到历史完整交付。physical124–129候选范围已绑定，无漂移；126／127的O/M/x拉丁／西里尔脚本身份来源未决，保留原SOURCE HOLD及N47独立边界缺陷，不执行作者、原生、渲染或复审。父方仍永久24图；五个既有子上下文累计分别为12／14／13／18／16，库存不开图、不重置预算；无数据库、付费API、广域测试、技能修改／安装、新聊天／分支／工作树、监督／同伴消息、合并、部署、关闭或正式handoff。
+
+D794：N50仅库存，未找到完整交付凭据；原source138–139报告及其访问失败原因未实际取得，相关阶段保持缺失／未知，不能把不可访问的诊断当成永久语义HOLD。原始查找失败保留；D796只接续精确SHA证据访问恢复，D793的N51库存仍在运行，没有提前记为通过。
+
+[D784／D792／D794实际库存与回执](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d795-inventory-retention/collected.json)
