@@ -4,7 +4,7 @@
 
 ## 可查看成果
 
-2026-11-22 检查点沿用实际推送计量：152 门完整课程、577 页已消费源页。D767 新增双语 N35/N36，D783 新增双语 N34，均未新增源页；旧课程英文归档恢复不重复计数。这不是全库完整性统计。
+2026-11-22 最新实际推送计量：152 门完整课程、581 页已消费源页。D827只新增四页SOURCE，旧课程英文归档恢复不重复计数。这不是全库完整性统计。
 
 | 材料 | 中文 | English | 交付边界 |
 | --- | --- | --- | --- |
@@ -268,3 +268,13 @@ D820–D826：只在新的隔离根删除“够”、恢复两处分号及“两
 D814–D824：复用D030既有N43／N52／N58完整交付、正文／科学／图／原生／显示审批，补新版EN身份与路径留存。只改四份课程JSON的edition和lesson的locale，采用原显示标题；fig81／82／103／114原tuple字节及同SHA持久ZH metadata引用不改。受影响绑定通过，索引分别只加单行并保留全部现存行／header，包括N38／N39／N44。N52首次把历史originalPath误认作活跃scratch依赖的失败报告仍留存；确定性恢复只重新分类引用，没改metadata或重跑批准阶段。
 
 D827将以上三课与D807的N44旧英文恢复、四页新SOURCE及上一实质推送后的本地回执纳入同一普通manifest提交／推送。最新已确认远端仍0eda2b8f5、152／577；本地消费581，待本批实际推送回执。没有新完整课程、付费、DB／发布器／输入交互、技能改动、全项目测试／构建、合并、部署、关闭或正式handoff。父方／Ohm／Halley／Dewey永久累计24；Mill14、Beauvoir15，不重置。
+
+D827实际普通提交adebd1484e78f55c5866113547ee611443280d8b，226个manifest内文件；显式非强制push后独立远端查询同SHA。沿用原detached工作树，没有新建／切换分支、重置或丢弃脏文件；技能改动及其他脏产物未纳入提交。实际计量152／581，137整页及t14仍未计数；推送后回执保持本地，随下一实质批次提交。
+
+[D827实际推送与独立远端核对](/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/evidence/reports/d1816-d827-restoration-source-batch/actual-push.json)
+
+D828首次局部装订通过：N49为13个源块／8道原题／图96–98，N50为10个源块／零题／图99–100。两个edition各一次备料通过，五页源MD／JSON／audit字节不变，无重裁图／矢量化／来源复审。装订器额外输出的t14六题和N51开放段落只留隔离根，未批准或促进。D829／D830做首次中英正文作者；D831做图99／100首次现代图工作；D832仅做图96–98库存／路由。D833先冻结八题源解，D834独立源解先于答案候选，均零开图；审批和完整课计量不因此增加。
+
+D834-D840: N49/N50 bilingual text author/native stages have completed; their first independent SCI/ZHEN review and all16 N49 read-only standards remain pending D837. Eight independent source solutions were frozen before candidates. N51 first closure assembly has11objects/0tasks andfig101/102; D839 checks only the139-to140text join and exact closure using frozen139 and approved140/141evidence. D832 routesfig96 tohybrid paid-artHOLD; D838 authors only deterministicfig97/98, D831 onlyfig99/100. No passed stage replay or new course/page count. Parent/Ohm/Halley/Dewey permanently24images; Beauvoir18 beforeD838; Mill14 beforeD831, final author count not yet received. Known completions and existing assignments are now recorded; no production, review, commit, push, DB, paid call or formalhandoff in this checkpoint.
+
+D837-D848: N49/N50 first independent SCI/ZHEN and all16 N49 read-only standards PASS; D843 first answer native PASS perlocale auto0/ungraded8, no input cases. D839 confirms N51 exact source closure as two separate complete139/140paragraphs, not an open/cont merge; D842 first bilingual preparation PASS, D844 author active. D838 fig97/98 first author/native PASS, preserving fig98 angle-domain failure and affected-only recovery; author actual18+2=20, independent figure approvals still pending. D831 complete text context bound but fine source arrow/occlusion/count/connection facts HOLD before specs; D847 targeted clarification only,20+atmost4. D846 first eight-source bilingual choice author uses D845 answer-free whitelist. D848 minimal editable raw and bilingual drafts, native readonly keys, candidate figures and first failures retained under attempts/evidence, not formal indexes. No new complete course/source-page counts; no passed-stage replay, paid/DB/publisher/input, skill/broadtest changes, merge/deploy/closure or formalhandoff.
