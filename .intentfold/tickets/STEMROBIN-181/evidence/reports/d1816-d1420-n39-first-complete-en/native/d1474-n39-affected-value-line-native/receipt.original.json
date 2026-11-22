@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1474-n39-unit-value-lines/en.before-native.json\"))\nbaseline=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1429-n39-affected-text/en.lesson.draft.json\"))\nassert edition.math_signature(lesson[\"prose\"][2][\"text\"])==edition.math_signature(baseline[\"prose\"][2][\"text\"])\nassert edition.number_signature(lesson[\"prose\"][2][\"text\"])==edition.number_signature(baseline[\"prose\"][2][\"text\"])\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\ncomparison=json.loads(json.dumps(lesson))\nfor before,after in [[\"as approximately $7.4\",\"as approximately:\\n$7.4\"],[\"its approximate value is $p_\",\"its approximate value is:\\n$p_\"]]:\n    comparison[\"prose\"][2][\"text\"]=comparison[\"prose\"][2][\"text\"].replace(after,before)\nassert comparison==baseline,\"Only two value-introduction colons and line breaks may change\"\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T20:52:59.092Z",
+  "finishedAt": "2026-11-22T20:52:59.208Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1474-n39-affected-value-line-native/stdout.txt",
+      "bytes": 33425,
+      "sha256": "9c1eabb7c2a72edc5b7c454e939df89765a847f133e7eabd0522839bb2656dcf"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1474-n39-affected-value-line-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}

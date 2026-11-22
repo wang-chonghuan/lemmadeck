@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1428-n38-affected-text/en.before-native.json\"))\nbaseline=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1423-n38-first-missing-en/en.lesson.draft.json\"))\nindices=[10,13]\nfor index in indices:\n    assert edition.math_signature(lesson[\"prose\"][index][\"text\"])==edition.math_signature(baseline[\"prose\"][index][\"text\"])\nedition.normalize_lesson_layout(lesson)\nif 1:\n    candidate_flow,candidate_errors=edition.prose_flow_contract(lesson[\"prose\"],[])\n    assert not candidate_errors,candidate_errors\n    boundaries=[]\n    for prefix in [\"At constant temperature $T$\",\"**Vapor in equilibrium\"]:\n        matches=[i for i,p in enumerate(candidate_flow[\"paragraphs\"]) if p[\"text\"].startswith(prefix)]\n        assert len(matches)==1 and matches[0]>0,(prefix,matches)\n        i=matches[0]\n        boundaries.append({\"before\":candidate_flow[\"paragraphs\"][i-1][\"text\"],\"after\":candidate_flow[\"paragraphs\"][i][\"text\"]})\n    lesson[\"section_breaks\"]=boundaries\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\ncomparison=json.loads(json.dumps(lesson))\nif 1:\n    comparison[\"section_breaks\"]=baseline[\"section_breaks\"]\nfor index in indices:\n    comparison[\"prose\"][index][\"text\"]=baseline[\"prose\"][index][\"text\"]\nassert comparison==baseline,\"Only named affected text may change\"\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T20:26:34.377Z",
+  "finishedAt": "2026-11-22T20:26:34.569Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1428-n38-affected-text-native/stdout.txt",
+      "bytes": 32551,
+      "sha256": "0ae158d3bcead92d752b3eac2ce364b2eeb58b9cd620df53f0b98a208a86752c"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1428-n38-affected-text-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}

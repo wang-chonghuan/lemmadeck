@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1466-n39-unit-joiners/en.before-native.json\"))\nbaseline=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1429-n39-affected-text/en.lesson.draft.json\"))\nassert lesson[\"prose\"][2][\"text\"].count(\"\\u2060\")==6\nassert edition.math_signature(lesson[\"prose\"][2][\"text\"])==edition.math_signature(baseline[\"prose\"][2][\"text\"])\nassert edition.number_signature(lesson[\"prose\"][2][\"text\"])==edition.number_signature(baseline[\"prose\"][2][\"text\"])\ncomparison=json.loads(json.dumps(lesson))\ncomparison[\"prose\"][2][\"text\"]=comparison[\"prose\"][2][\"text\"].replace(\"\\u2060\",\"\")\nassert comparison==baseline,\"Only unit word-joiners may change\"\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\ncomparison=json.loads(json.dumps(lesson))\ncomparison[\"prose\"][2][\"text\"]=comparison[\"prose\"][2][\"text\"].replace(\"\\u2060\",\"\")\nassert comparison==baseline,\"Normalization must preserve every other field and all boundaries\"\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T20:45:29.142Z",
+  "finishedAt": "2026-11-22T20:45:29.247Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1466-n39-affected-unit-joiner-native/stdout.txt",
+      "bytes": 33453,
+      "sha256": "b59460e1a4c1560f5ceb3b9c6ec022ee4c0c47446ed26d60dd990ca8735401c6"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1466-n39-affected-unit-joiner-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
