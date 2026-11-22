@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0, \"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1123-n30-interaction-effects/en.lesson.draft.json\"))\nprepared=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1085-n30-first-missing-en/prepared.json\"))\nzh=edition.load(Path(prepared[\"approvedZh\"][\"path\"]))\nraw=edition.load(Path(prepared[\"source\"][\"path\"]))\nprofile=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\nindex=2\nmodern,approved,source=lesson[\"prose\"][index],zh[\"prose\"][index],raw[\"prose\"][index]\nassert edition.normalize_prose_layout(modern[\"text\"]) == modern[\"text\"],\"normalizer stability\"\nassert edition.math_signature(modern[\"text\"]) == edition.math_signature(approved[\"text\"])\nerrors.extend(edition.validate_identity_fields(source,modern,[\"kind\",\"id\",\"printed_page\",\"source_refs\"],\"en.prose[2]\"))\nerrors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],\"en.prose[2]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\")))\nprint(json.dumps({\"status\":\"PASS\" if not errors else \"FAIL\",\"affectedIndices\":[2],\"flowParagraphs\":len(flow[\"paragraphs\"]),\"errors\":errors}))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T14:48:53.645Z",
+  "finishedAt": "2026-11-22T14:48:53.733Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1123-n30-interaction-effects-affected-native/stdout.txt",
+      "bytes": 78,
+      "sha256": "4590f4d3ab3e6607b37b52a1f054163e0d8504a7dd77a3ace54a601f8146c70f"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1123-n30-interaction-effects-affected-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
