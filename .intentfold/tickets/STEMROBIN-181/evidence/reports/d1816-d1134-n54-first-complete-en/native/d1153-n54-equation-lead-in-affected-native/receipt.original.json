@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0, \"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1153-n54-equation-lead-in/en.lesson.draft.json\"))\nprepared=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1129-n54-first-missing-en/prepared.json\"))\nzh=edition.load(Path(prepared[\"approvedZh\"][\"path\"]))\nraw=edition.load(Path(prepared[\"source\"][\"path\"]))\nprofile=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\nindex=5\nmodern,approved,source=lesson[\"prose\"][index],zh[\"prose\"][index],raw[\"prose\"][index]\nassert edition.normalize_prose_layout(modern[\"text\"]) == modern[\"text\"],\"normalizer stability\"\nassert edition.math_signature(modern[\"text\"]) == edition.math_signature(approved[\"text\"])\nerrors.extend(edition.validate_identity_fields(source,modern,[\"kind\",\"id\",\"printed_page\",\"source_refs\"],\"en.prose[5]\"))\nerrors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],\"en.prose[5]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\")))\nprint(json.dumps({\"status\":\"PASS\" if not errors else \"FAIL\",\"affectedIndices\":[5],\"flowParagraphs\":len(flow[\"paragraphs\"]),\"errors\":errors}))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T15:42:42.528Z",
+  "finishedAt": "2026-11-22T15:42:42.642Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1153-n54-equation-lead-in-affected-native/stdout.txt",
+      "bytes": 79,
+      "sha256": "8c5170bdd389390fa60ed4df327a3fa2d49f2fb7b5fb72ff8e1534e51b3800fe"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1153-n54-equation-lead-in-affected-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}

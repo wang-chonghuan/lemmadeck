@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "from PIL import Image,ImageChops\nimport json\noriginal=Image.open(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d1133/full-course-display/en-mobile-whole.png\").convert(\"RGB\")\nbottom=Image.open(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d1173/mobile-tail/en-mobile-bottom-viewport.png\").convert(original.mode)\nassert original.size==(390,16656) and bottom.size==(390,844)\nassert ImageChops.difference(original.crop((0,0,390,272)),original.crop((0,16384,390,16656))).getbbox() is None\nfixed=original.copy()\nfixed.paste(bottom.crop((0,572,390,844)),(0,16384))\nassert ImageChops.difference(original.crop((0,0,390,16384)),fixed.crop((0,0,390,16384))).getbbox() is None\nassert ImageChops.difference(fixed.crop((0,16384,390,16656)),bottom.crop((0,572,390,844))).getbbox() is None\nassert ImageChops.difference(original.crop((0,16384,390,16656)),fixed.crop((0,16384,390,16656))).getbbox() is not None\nfixed.save(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d1173/mobile-tail/en-mobile-whole-tail-corrected.png\")\nprint(json.dumps({\"status\":\"PASS\",\"dimensions\":[390,16656],\"replacedRows\":[16384,16656],\"pixelsBefore16384Unchanged\":True,\"tailEqualsActualBottomViewport\":True,\"originalDefectiveImageUnmodified\":True,\"independentPixelApproval\":False}))"
+  ],
+  "startedAt": "2026-11-22T16:02:59.269Z",
+  "finishedAt": "2026-11-22T16:02:59.420Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1173-n54-replace-only-defective-saved-png-tail/stdout.txt",
+      "bytes": 232,
+      "sha256": "bc26fd7a31b81049633d7718a3a0dbb3d44d1487936ca9d92d524ff1bb9343d0"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1173-n54-replace-only-defective-saved-png-tail/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
