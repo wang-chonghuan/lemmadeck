@@ -1,0 +1,15 @@
+{
+  "command": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "args": [
+    "-B",
+    "-c",
+    "\nimport json,pathlib,sys\nrepo=pathlib.Path(sys.argv[1]);own=pathlib.Path(sys.argv[2])\nassert pathlib.Path.cwd()==repo\nsys.path.insert(0,str(repo/'.claude/skills/ld-s10y-lesson/tools'))\nimport assemble\nbook=own/'artifacts/9-10g'\nstream=assemble.load_stream(book)\nstart=next(i for i,b in enumerate(stream) if b['ref']=='p0308#4')\nend=next(i for i,b in enumerate(stream) if b['ref']=='p0309#9')\nselected=stream[start:end]\nassert selected[0]['kind']==stream[end]['kind']=='h3'\nassert selected[-1]['ref']=='p0309#8'\nancestor=repo/'.intentfold/tickets/STEMROBIN-188/tmp/source302-author/artifacts/9-10g/pages/0302/page.json'\nheading=assemble.load_stream(book,[(ancestor,json.loads(ancestor.read_text()))])[0]\nassert heading['ref']=='p0302#1' and heading['kind']=='h1'\nmanifest=json.loads((repo/'ssot-resources/soviet10year-textbooks/sources/manifest.json').read_text())\ncatalog=next(c for c in manifest['catalogs'] if c['book']=='9-10g')\nstatus=assemble.run(book,repo/'ssot-resources/soviet10year-textbooks/toc/9-10g/zh.json',\n    repo/'.claude/skills/ld-s10y-lesson/profiles/soviet-cn.json',strict=True,\n    work=own/'work/9-10g',exercise_numbering=catalog.get('exerciseNumbering','book'),\n    stream=[heading,*selected])\nprint(json.dumps({'exitCode':status,'selectedRefs':[b['ref'] for b in selected],\n    'rightBoundaryExcluded':'p0309#9','source308AffectedReviewPending':True,'images':0}))\nsys.exit(status)\n",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/appendix-s4-source-repair-02"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "exitCode": 0,
+  "stdout": "[assemble] 9-10g: 3 页 → 1 个小节, 0 道题, 1 张编号插图\n    geo910-appendix-s4       印刷页 301  正文 12 块  题  0 道  图 1 张\n  ⚠ TOC 里这些小节落在已抽范围内却没装订出来: 关于合同图形的定理（§31）（印刷页 295）; 多面角的面角的性质（§41）（印刷页 302）\n  ✓ 通过 全书题号连续 + 图号连续 + 引用齐全 + 公式\n{\"exitCode\": 0, \"selectedRefs\": [\"p0308#4\", \"p0308#5\", \"p0308#6\", \"p0308#7\", \"p0308#8\", \"p0308#9\", \"p0308#10\", \"p0308#11\", \"p0308#12\", \"p0309#1\", \"p0309#2\", \"p0309#3\", \"p0309#4\", \"p0309#5\", \"p0309#6\", \"p0309#7\", \"p0309#8\"], \"rightBoundaryExcluded\": \"p0309#9\", \"source308AffectedReviewPending\": true, \"images\": 0}\n",
+  "stderr": "",
+  "error": null
+}

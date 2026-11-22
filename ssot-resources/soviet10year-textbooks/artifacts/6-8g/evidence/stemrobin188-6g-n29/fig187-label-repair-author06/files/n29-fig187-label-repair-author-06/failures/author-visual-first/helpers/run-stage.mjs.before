@@ -1,0 +1,43 @@
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { R, OWN, run } from './evidence.mjs';
+
+const stage = process.argv[2];
+const renderHelper = path.join(R, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs');
+const figure = name => path.join(OWN, 'figures', `fig-187.${name}`);
+if (stage === 'repair-spec') {
+  const receipt = run('repair-spec', [process.execPath, path.join(OWN, 'repair-spec.mjs')], {
+    inputs: [path.join(OWN, 'first/fig-187.FIRST.json'), path.join(OWN, 'first/fig-187.seal.json')],
+    outputs: [figure('spec.json'), path.join(OWN, 'repair-binding.json'), path.join(OWN, 'context/fig-187.context.json')]
+  });
+  process.exitCode = receipt.exitCode;
+} else if (stage === 'native187-repair-03') {
+  const receipt = run(stage, [process.execPath, renderHelper, '--spec', figure('spec.json'), '--svg', figure('svg'), '--report', figure('render.json')], {
+    inputs: [figure('spec.json'), path.join(OWN, 'context/fig-187.context.json'), path.join(OWN, 'image-ledger.json')],
+    outputs: [figure('svg'), figure('render.json')],
+    helpers: [path.join(R, '.agents/skills/ld-s10y-image/scripts/validate_spec.py'), path.join(R, '.agents/skills/ld-s10y-image/scripts/materialize_arrowheads.mjs')],
+    chargeFailure: true
+  });
+  process.exitCode = receipt.exitCode;
+} else if (stage === 'physical-display') {
+  const receipt = run('physical-display', [process.execPath, path.join(OWN, 'display.mjs')], {
+    inputs: [figure('spec.json'), figure('svg'), figure('render.json'), path.join(OWN, 'image-ledger.json')],
+    outputs: [path.join(OWN, 'contacts/fig-187.display.json'), path.join(OWN, 'contacts/fig-187.contact.svg'), path.join(OWN, 'contacts/fig-187.contact.png')],
+    chargeFailure: true
+  });
+  process.exitCode = receipt.exitCode;
+} else if (stage === 'reserve-contact-open') {
+  const receipt = run(stage, [process.execPath, path.join(OWN, 'reserve-contact-open.mjs')], {
+    inputs: [path.join(OWN, 'contacts/fig-187.contact.png'), path.join(OWN, 'contacts/fig-187.display.json')],
+    outputs: [path.join(OWN, 'image-ledger.json')]
+  });
+  process.exitCode = receipt.exitCode;
+} else if (stage === 'diagnose-spans') {
+  const receipt = run(stage, ['/usr/bin/python3', path.join(OWN, 'diagnose-spans.py')], {
+    inputs: [figure('spec.json'), figure('svg'), path.join(R, '.intentfold/tickets/STEMROBIN-188/tmp/n29-fig187189-author-first-06/figures/fig-187.spec.json'), path.join(R, '.intentfold/tickets/STEMROBIN-188/tmp/n29-fig187189-author-first-06/figures/fig-187.svg')],
+    outputs: []
+  });
+  process.exitCode = receipt.exitCode;
+} else {
+  assert.fail('Unknown affected-only stage');
+}

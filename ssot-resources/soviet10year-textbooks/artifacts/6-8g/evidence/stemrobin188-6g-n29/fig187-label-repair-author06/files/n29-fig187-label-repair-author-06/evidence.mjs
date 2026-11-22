@@ -1,0 +1,79 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+export const R = '/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck';
+export const OWN = path.dirname(fileURLToPath(import.meta.url));
+export const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+export function bind(p) {
+  p = path.resolve(p);
+  const s = fs.statSync(p);
+  return { path: p, sha256: hash(p), bytes: s.size, mode: (s.mode & 0o777).toString(8).padStart(4, '0'), birthtime: s.birthtime.toISOString(), mtime: s.mtime.toISOString(), ctime: s.ctime.toISOString() };
+}
+export function write(p, value) {
+  assert.ok(path.resolve(p).startsWith(OWN + '/'), 'Outside own root');
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, typeof value === 'string' || Buffer.isBuffer(value) ? value : JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+}
+export function read(p) { return JSON.parse(fs.readFileSync(p, 'utf8')); }
+export function ledgerEvent(event) {
+  const currentPath = path.join(OWN, 'image-ledger.json');
+  const ledger = read(currentPath);
+  ledger.events.push({ ...event, at: new Date().toISOString() });
+  ledger.chargedImages = ledger.events.reduce((sum, e) => sum + e.charge, 0);
+  assert.ok(ledger.chargedImages <= 8);
+  assert.ok(ledger.chargedImages <= 24);
+  fs.writeFileSync(currentPath, JSON.stringify(ledger, null, 2) + '\n');
+  return ledger;
+}
+export function run(stage, argv, { inputs = [], outputs = [], helpers = [], chargeFailure = false } = {}) {
+  assert.equal(process.cwd(), R);
+  const stem = path.join(OWN, 'receipts', stage);
+  assert.ok(!fs.existsSync(stem + '.json'), 'Use a new stage ID for each failed-stage repair');
+  const inputsBefore = inputs.map(bind);
+  const helperPaths = [...new Set([fileURLToPath(import.meta.url), ...helpers, ...argv.filter(p => path.isAbsolute(p) && fs.existsSync(p) && /\.(mjs|js|py)$/.test(p))])];
+  const helpersBefore = helperPaths.map(bind);
+  const helperBytes = helperPaths.map(p => [p, fs.readFileSync(p)]);
+  const countersBefore = read(path.join(OWN, 'image-ledger.json'));
+  const startedAt = new Date().toISOString();
+  const result = spawnSync(argv[0], argv.slice(1), {
+    cwd: R, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', TMPDIR: path.join(OWN, 'runtime-tmp') }
+  });
+  write(stem + '.stdout', result.stdout || '');
+  write(stem + '.stderr', result.stderr || '');
+  if (result.status !== 0 && chargeFailure) {
+    const nestedFailureAlreadyCharged = read(path.join(OWN, 'image-ledger.json')).events
+      .slice(countersBefore.events.length).some(e => e.kind === 'failed-render-or-display-attempt');
+    if (!nestedFailureAlreadyCharged) ledgerEvent({ kind: 'failed-render-or-display-attempt', stage, charge: 1, conservativelyCharged: true });
+  }
+  const receipt = {
+    stage, cwd: R, argv, startedAt, completedAt: new Date().toISOString(), exitCode: result.status,
+    signal: result.signal, error: result.error?.message || null,
+    streams: { stdout: bind(stem + '.stdout'), stderr: bind(stem + '.stderr') },
+    inputsBefore, inputsAfter: inputs.map(bind), helpersBefore,
+    outputs: outputs.filter(p => fs.existsSync(p)).map(bind),
+    imageCountersAtCall: countersBefore, imageCountersAfterCall: read(path.join(OWN, 'image-ledger.json'))
+  };
+  write(stem + '.json', receipt);
+  if (result.status !== 0) {
+    const failRoot = path.join(OWN, 'failures', stage);
+    const snapshots = [];
+    for (const p of [...inputs, ...outputs].filter(p => fs.existsSync(p))) {
+      const target = path.join(failRoot, 'files', path.basename(p));
+      write(target, fs.readFileSync(p));
+      snapshots.push({ original: bind(p), snapshot: bind(target) });
+    }
+    for (const [p, bytes] of helperBytes) {
+      const target = path.join(failRoot, 'helpers', path.basename(p) + '.before');
+      write(target, bytes);
+      snapshots.push({ original: helpersBefore.find(h => h.path === p), snapshot: bind(target) });
+    }
+    write(path.join(failRoot, 'failure.json'), { receipt: bind(stem + '.json'), snapshots, counters: receipt.imageCountersAfterCall, dependentStagesStopped: true });
+  }
+  console.log(JSON.stringify({ stage, exitCode: result.status, receipt: bind(stem + '.json'), stdout: result.stdout, stderr: result.stderr }));
+  return receipt;
+}

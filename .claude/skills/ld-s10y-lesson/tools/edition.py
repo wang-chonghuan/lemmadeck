@@ -707,14 +707,10 @@ def marker_order(markers: list[re.Match[str]]) -> dict[str, int] | None:
     return {label: index for index, label in enumerate(expected)}
 
 
-def normalize_numbered_subparts(text: str) -> str:
-    """Sort a complete numeric or lettered sequence and line-break its parts."""
-    if not isinstance(text, str):
-        return text
-    text = re.sub(r"^(\s*\d+\.)\s*(?=1[)）])", r"\1\n", text)
+def numbered_subpart_markers(text: str) -> list[re.Match[str]]:
     masked_text = masked_math(text)
     depths = nesting_depths(masked_text)
-    markers = [
+    return [
         marker
         for marker in PART_MARKER.finditer(masked_text)
         if depths[marker.start()] == 0
@@ -724,6 +720,51 @@ def normalize_numbered_subparts(text: str) -> str:
         )
         and not re.search(r"图\s*$", masked_text[max(0, marker.start() - 3):marker.start()])
     ]
+
+
+
+def structural_subpart_markers(text: str) -> list[re.Match[str]]:
+    markers = numbered_subpart_markers(text)
+    if not markers:
+        return []
+    prefix = text[:markers[0].start()]
+    anchor = (
+        r"(?:^|\n)[\t \u3000]*$|^\s*\d+[.．]\s*$"
+        if markers[0].group("open")
+        else r"(?:^|[\n:：;；])[\t \u3000]*$|^\s*\d+[.．]\s*$"
+    )
+    if re.search(anchor, prefix) is None:
+        return []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        if not text[marker.end():end].strip(" \t\r\n\u3000,，;；.。．!?！？"):
+            return []
+    return markers
+
+
+
+def canonical_subpart_labels(text: str) -> str:
+    """Keep complete structural labels separate from numeric problem data."""
+    markers = structural_subpart_markers(text)
+    if len(markers) < 2:
+        return text
+    order = marker_order(markers)
+    if order is None or len(markers) > len(LATIN_PARTS):
+        return text
+    for marker in reversed(markers):
+        start, end = marker.span("label")
+        text = text[:start] + LATIN_PARTS[order[marker.group("label")]] + text[end:]
+    return text
+
+
+
+def normalize_numbered_subparts(text: str) -> str:
+    """Sort a complete numeric or lettered sequence and line-break its parts."""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"^(\s*\d+\.)\s*(?=1[)）])", r"\1\n", text)
+    masked_text = masked_math(text)
+    markers = numbered_subpart_markers(text)
     if len(markers) < 2:
         return text
     order = marker_order(markers)
@@ -883,8 +924,30 @@ def validate_text(
         errors.append(f"{label} 已改写但 changes 为空")
     if modern == source and changes:
         errors.append(f"{label} 未改写但 changes 非空")
-    canonical_source = normalize_numbered_subparts(source)
-    canonical_modern = normalize_numbered_subparts(modern)
+    source_candidates = numbered_subpart_markers(source)
+    modern_candidates = numbered_subpart_markers(modern)
+    numeric_label_style_changed = (
+        any(marker.group("label").isdigit() for marker in source_candidates)
+        != any(marker.group("label").isdigit() for marker in modern_candidates)
+    )
+    if numeric_label_style_changed and max(len(source_candidates), len(modern_candidates)) >= 2:
+        source_markers = structural_subpart_markers(source)
+        modern_markers = structural_subpart_markers(modern)
+        if (
+            len(source_markers) < 2
+            or len(source_markers) != len(modern_markers)
+            or marker_order(source_markers) is None
+            or marker_order(modern_markers) is None
+        ):
+            errors.append(f"{label} 的完整小问标号数量或顺序结构不匹配")
+            canonical_source = normalize_numbered_subparts(source)
+            canonical_modern = normalize_numbered_subparts(modern)
+        else:
+            canonical_source = normalize_numbered_subparts(canonical_subpart_labels(source))
+            canonical_modern = normalize_numbered_subparts(canonical_subpart_labels(modern))
+    else:
+        canonical_source = normalize_numbered_subparts(source)
+        canonical_modern = normalize_numbered_subparts(modern)
     expected_math_source = canonical_source
     for correction in math_corrections or []:
         expected_math_source = expected_math_source.replace(

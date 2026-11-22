@@ -1,0 +1,245 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { charge, owned, read, record, repo, write } from './evidence.mjs'
+
+const requireApp = createRequire(path.join(repo, 'app/package.json'))
+const requireLesson = createRequire(path.join(repo, '.claude/skills/ld-s10y-lesson/package.json'))
+const { chromium } = requireApp('playwright')
+const { Resvg } = requireLesson('@resvg/resvg-js')
+const specPath = owned('figures/fig-187.spec.json')
+const svgPath = owned('figures/fig-187.svg')
+const svg = fs.readFileSync(svgPath, 'utf8')
+const spec = read(specPath)
+const delta = read(owned('repair-delta.json'))
+assert.equal(read(owned('figures/fig-187.render.json')).status, 'pass')
+assert(!svg.includes('raw-path-layer'), 'brackets must not use raw path geometry')
+
+const cssPath = path.join(repo, 'app/src/styles/app.css')
+const productCss = fs.readFileSync(cssPath, 'utf8')
+const selectors = [
+  '.sr-read-fig',
+  '.sr-figure-media',
+  '.sr-figure-media svg,\n.sr-figure-media img,\n.sr-figure-vector',
+  '.sr-read-fig[data-figure-layout="scroll"],\n.sr-ex-fig[data-figure-layout="scroll"]',
+  '.sr-read-fig[data-figure-layout="scroll"] .sr-figure-media,\n.sr-ex-fig[data-figure-layout="scroll"] .sr-figure-media',
+]
+const rules = selectors.map((selector) => {
+  const start = productCss.indexOf(`${selector} {`)
+  assert(start >= 0, `missing product rule: ${selector}`)
+  const end = productCss.indexOf('}', start)
+  return productCss.slice(start, end + 1)
+})
+const executablePath = [
+  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+  chromium.executablePath(),
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].find((file) => file && fs.existsSync(file))
+assert(executablePath, 'existing Chromium required; no install permitted')
+const browser = await chromium.launch({ executablePath, headless: true })
+let browserClosed = false
+const measurements = []
+let normalizedInner
+try {
+  const context = await browser.newContext({ viewport: { width: 640, height: 400 } })
+  await context.route('**/*', (route) => route.abort())
+  const page = await context.newPage()
+  const html = `<!doctype html><meta charset="utf-8"><style>
+    :root{--sr-ink:#15201f;--sr-ink-soft:#64746f;--sr-ink-dim:#64746f;--sr-line:#cbd5cf;--sr-white:#fff}
+    html,body{margin:0;background:white;font-size:16px}
+    ${rules.join('\n')}
+    .sr-read-fig{margin:0;max-width:100%}
+  </style><figure class="sr-read-fig" data-figure-layout="scroll" aria-label="fig-187"><div class="sr-figure-media">${svg}</div></figure>`
+  fs.mkdirSync(path.dirname(owned('display/fig-187.html')), { recursive: true })
+  fs.writeFileSync(owned('display/fig-187.html'), html, { flag: 'wx' })
+  await page.setContent(html, { waitUntil: 'load' })
+  await page.evaluate(() => document.fonts.ready)
+  for (const width of [640, 300, 358]) {
+    await page.setViewportSize({ width, height: 400 })
+    await page.locator('figure').evaluate((element) => { element.scrollLeft = 0 })
+    for (const phase of width === 640 ? ['start'] : ['start', 'end']) {
+      if (phase === 'end') {
+        await page.mouse.move(width / 2, 160)
+        await page.mouse.wheel(10000, 0)
+        await page.waitForFunction(() => {
+          const figure = document.querySelector('figure')
+          return Math.abs(figure.scrollLeft - (figure.scrollWidth - figure.clientWidth)) < 1
+        })
+      }
+      const measured = await page.evaluate(({ spans, nativeWidth, nativeHeight }) => {
+        const figure = document.querySelector('figure')
+        const media = document.querySelector('.sr-figure-media')
+        const svgNode = media.querySelector('svg')
+        const mr = svgNode.getBoundingClientRect()
+        const fr = figure.getBoundingClientRect()
+        const plainRect = (rect) => ({ x: rect.x, y: rect.y, width: rect.width, height: rect.height })
+        const coordinate = (node, x, y) => {
+          const point = svgNode.createSVGPoint()
+          point.x = x
+          point.y = y
+          const transformed = point.matrixTransform(node.getScreenCTM())
+          return { x: transformed.x - mr.x, y: transformed.y - mr.y }
+        }
+        const bracketResults = spans.map((span) => {
+          const segments = span.after.map((part, index) => {
+            const node = document.getElementById(`ld-fig-187_ld-${part.id}`)
+            if (!node) return { id: part.id, missing: true }
+            const style = getComputedStyle(node)
+            const bbox = node.getBBox()
+            const rect = node.getBoundingClientRect()
+            const start = coordinate(node, node.x1.baseVal.value, node.y1.baseVal.value)
+            const end = coordinate(node, node.x2.baseVal.value, node.y2.baseVal.value)
+            const matrix = node.getScreenCTM()
+            const stroke = parseFloat(style.strokeWidth) * Math.hypot(matrix.a, matrix.b)
+            const finite = [bbox.x, bbox.y, bbox.width, bbox.height, rect.x, rect.y, rect.width, rect.height, start.x, start.y, end.x, end.y, stroke].every(Number.isFinite)
+            const intended = [span.intendedPixelVertices[index], span.intendedPixelVertices[index + 1]]
+              .map(([x, y]) => ({ x: x * mr.width / nativeWidth, y: y * mr.height / nativeHeight }))
+            const endpointError = Math.max(
+              Math.hypot(start.x - intended[0].x, start.y - intended[0].y),
+              Math.hypot(end.x - intended[1].x, end.y - intended[1].y),
+            )
+            const insideMedia = [start, end].every((point) =>
+              point.x - stroke / 2 >= 0 && point.y - stroke / 2 >= 0 &&
+              point.x + stroke / 2 <= mr.width && point.y + stroke / 2 <= mr.height)
+            const visible = style.display !== 'none' && style.visibility === 'visible' &&
+              Number(style.opacity) > 0 && Number(style.strokeOpacity) > 0 &&
+              style.stroke !== 'none' && stroke > 0 && Math.hypot(end.x - start.x, end.y - start.y) > 0
+            const inWindow = rect.right >= fr.left && rect.left <= fr.right && rect.bottom >= fr.top && rect.top <= fr.bottom
+            return {
+              id: part.id, tag: node.tagName, svgBBox: plainRect(bbox), screenRect: plainRect(rect),
+              start, end, intended, endpointError, finite, insideMedia, visible, inWindow,
+              strokeCssPx: stroke, computedStroke: style.stroke, computedDisplay: style.display,
+              computedVisibility: style.visibility, clipPath: style.clipPath,
+            }
+          })
+          return { id: span.id, sourceInterval: span.sourceInterval, segments }
+        })
+        const labels = [...svgNode.querySelectorAll('text')].map((node) => {
+          const rect = node.getBoundingClientRect()
+          return {
+            id: node.getAttribute('data-label-id'), text: node.textContent,
+            fontCssPx: parseFloat(getComputedStyle(node).fontSize) * mr.width / nativeWidth,
+            rect: plainRect(rect),
+          }
+        })
+        return {
+          viewportWidth: innerWidth, phase: figure.scrollLeft ? 'end' : 'start',
+          mediaWidth: mr.width, mediaHeight: mr.height, figureWidth: fr.width,
+          scrollLeft: figure.scrollLeft, scrollWidth: figure.scrollWidth, clientWidth: figure.clientWidth,
+          bracketResults, labels,
+        }
+      }, { spans: delta.spans, nativeWidth: spec.canvas.width, nativeHeight: spec.canvas.height })
+      assert.equal(measured.viewportWidth, width)
+      assert.equal(measured.figureWidth, width)
+      assert.equal(measured.mediaWidth, 640)
+      assert.equal(measured.mediaHeight, 320)
+      assert.equal(measured.clientWidth, width)
+      assert.equal(measured.scrollWidth, 640)
+      assert.equal(measured.scrollLeft, phase === 'start' ? 0 : 640 - width)
+      assert.equal(measured.bracketResults.length, 6)
+      for (const span of measured.bracketResults) {
+        assert.equal(span.segments.length, 6)
+        for (const part of span.segments) {
+          assert(!part.missing && part.tag === 'line', `missing segment: ${part.id}`)
+          assert(part.finite && part.insideMedia && part.visible, `invisible/nonfinite/outside: ${part.id}`)
+          assert(part.endpointError < 1e-7, `wrong span coordinate: ${part.id}`)
+        }
+      }
+      assert.equal(measured.labels.length, 23)
+      assert(Math.min(...measured.labels.map((label) => label.fontCssPx)) >= 16)
+      const h = measured.labels.find((label) => label.id === 'right-h-name-label').rect
+      const b = measured.labels.find((label) => label.id === 'right-B-label').rect
+      assert(h.x + h.width <= b.x || b.x + b.width <= h.x || h.y + h.height <= b.y || b.y + b.height <= h.y, 'right h/B overlap')
+      measurements.push(measured)
+    }
+  }
+  // Export computed colors only in the evidence preview; the generated SVG stays untouched.
+  normalizedInner = await page.evaluate(() => {
+    const source = document.querySelector('.sr-figure-media svg')
+    const clone = source.cloneNode(true)
+    const sourceNodes = [source, ...source.querySelectorAll('*')]
+    const cloneNodes = [clone, ...clone.querySelectorAll('*')]
+    for (let index = 0; index < cloneNodes.length; index++) {
+      for (const attr of ['fill', 'stroke']) {
+        if (cloneNodes[index].getAttribute(attr)?.includes('var(')) {
+          cloneNodes[index].setAttribute(attr, getComputedStyle(sourceNodes[index])[attr])
+        }
+      }
+    }
+    return clone.innerHTML
+  })
+} finally {
+  await browser.close()
+  browserClosed = true
+}
+assert(browserClosed)
+write('display/fig-187.bounds.json', {
+  schema: 'STEMROBIN-188/svg-span-visibility@1', status: 'pass',
+  currentSpec: record(specPath), currentSvg: record(svgPath), productCss: record(cssPath),
+  productRulesUsed: rules, headless: true, offlineHarnessOnly: true,
+  actualProductFullLessonOrDBNotOpened: true, browserClosed, activeBrowserSessions: 0,
+  checks: ['all 36 line elements exist', 'getBBox/getBoundingClientRect/getScreenCTM finite',
+    'both rendered endpoints match original intended pixel coordinates at fixed640',
+    'entire stroke footprint inside media', 'nonzero visible stroke and segment length',
+    '23 labels remain at least16px', 'right h/B remain disjoint', 'actual300/358 horizontal wheel reaches both ends'],
+  measurements,
+})
+
+const views = [
+  { key: 'fixed640', width: 640, scrollLeft: 0, x: 64, y: 32 },
+  { key: '300-start', width: 300, scrollLeft: 0, x: 64, y: 408 },
+  { key: '300-end', width: 300, scrollLeft: 340, x: 404, y: 408 },
+  { key: '358-start', width: 358, scrollLeft: 0, x: 16, y: 784 },
+  { key: '358-end', width: 358, scrollLeft: 282, x: 394, y: 784 },
+]
+for (const view of views) charge('generated-contact-component-view', { view: view.key, status: 'charged before raster call', mediaWidth: 640, viewportWidth: view.width, scrollLeft: view.scrollLeft })
+const contactSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1120" viewBox="0 0 768 1120">
+  <rect width="768" height="1120" fill="white"/>
+  ${views.map((view) => `<text x="${view.x}" y="${view.y - 12}" font-family="Arial" font-size="13" fill="#15201f">${view.key}</text>
+  <svg x="${view.x}" y="${view.y}" width="${view.width}" height="320" viewBox="${view.scrollLeft} 0 ${view.width} 320" overflow="hidden">
+    <svg width="640" height="320" viewBox="0 0 960 480">${normalizedInner}</svg>
+  </svg>`).join('\n')}
+</svg>`
+const contactSvgPath = owned('display/fig-187.contact.svg')
+fs.writeFileSync(contactSvgPath, contactSvg, { flag: 'wx' })
+const raster = new Resvg(contactSvg, { background: 'white', font: { loadSystemFonts: true } }).render()
+assert.equal(raster.width, 768)
+assert.equal(raster.height, 1120)
+const pngPath = owned('display/fig-187.contact.png')
+fs.writeFileSync(pngPath, raster.asPng(), { flag: 'wx' })
+const pixels = raster.pixels
+const inkNear = (x, y) => {
+  let count = 0
+  for (let py = Math.floor(y) - 1; py <= Math.floor(y) + 1; py++) {
+    for (let px = Math.floor(x) - 1; px <= Math.floor(x) + 1; px++) {
+      const offset = (py * raster.width + px) * 4
+      if (px >= 0 && px < raster.width && py >= 0 && py < raster.height &&
+          pixels[offset] < 240 && pixels[offset + 1] < 240 && pixels[offset + 2] < 240 && pixels[offset + 3] > 0) count++
+    }
+  }
+  return count
+}
+const pixelEvidence = delta.spans.map((span) => {
+  const parts = span.after.map((part, index) => {
+    const start = span.intendedPixelVertices[index]
+    const end = span.intendedPixelVertices[index + 1]
+    const fractions = [0.25, 0.5, 0.75]
+    const samples = fractions.map((fraction) => {
+      const x = views[0].x + (start[0] + fraction * (end[0] - start[0])) * 2 / 3
+      const y = views[0].y + (start[1] + fraction * (end[1] - start[1])) * 2 / 3
+      const count = inkNear(x, y)
+      assert(count > 0, `blank bracket stroke sample: ${part.id}@${fraction}`)
+      return { fraction, contactX: x, contactY: y, inkPixelsIn3x3: count }
+    })
+    return { id: part.id, samples }
+  })
+  return { id: span.id, status: 'pass', sourceInterval: span.sourceInterval, parts }
+})
+write('display/fig-187.pixel-evidence.json', {
+  status: 'pass', svg: record(svgPath), contactSvg: record(contactSvgPath), contactPng: record(pngPath),
+  mediaWidth: 640, pixelChecks: '108 positive ink samples on all36 bracket segments; RGB below240 in3x3 neighborhoods',
+  noRasterCropsOrReopens: true, previewPalette: 'browser computed neutral colors; emitted source SVG unchanged',
+  pixelEvidence, generatedComponentsCharged: 5, browserClosed: true, sessions: 0,
+})
+console.log(JSON.stringify({ status: 'pass', bracketSpans: 6, segmentBounds: 36, inkSamples: 108, fixedMedia: 640, windows: measurements.map(({ viewportWidth, scrollLeft }) => ({ viewportWidth, scrollLeft })), contact: record(pngPath), chargedSoFar: read(owned('image-ledger.json')).chargedImages, sessions: 0 }))

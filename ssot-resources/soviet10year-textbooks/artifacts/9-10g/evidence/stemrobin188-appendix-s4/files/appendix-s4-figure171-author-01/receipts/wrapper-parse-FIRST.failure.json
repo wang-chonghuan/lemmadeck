@@ -1,0 +1,19 @@
+{
+  "schema": "figure-author/tool-failure@1",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "tool": "functions.exec_command",
+  "toolResultChunk": "7899bb",
+  "command": "node",
+  "argv": [
+    "-e",
+    "const fs=require(\"node:fs\"),p=require(\"node:path\"),c=require(\"node:crypto\"),cp=require(\"node:child_process\"),a=require(\"node:assert/strict\");const cwd=\"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck\";a.equal(process.cwd(),cwd);const base=\".intentfold/tickets/STEMROBIN-188/tmp/appendix-s4-figure171-author-01\",specPath=base+\"/candidate-01/spec.json\",templatePath=\".intentfold/tickets/STEMROBIN-188/tmp/appendix-s4-source-repair-02/work/adapt/9-10g/modern-us-neutral/lessons/geo910-appendix-s4/lesson.template.json\",hash=x=>c.createHash(\"sha256\").update(fs.readFileSync(x)).digest(\"hex\"),spec=JSON.parse(fs.readFileSync(specPath)),template=JSON.parse(fs.readFileSync(templatePath));a.equal(hash(templatePath),\"9c5b2560546198b86ac2b8e76e37807610af00ffdf5a194560e92eb47d00fbe4\");a.deepEqual(spec.source.authoritativeText.map(x=>x.text),template.prose.filter(x=>x.kind===\"p\").map(x=>x.text));a.equal(template.exercise_count,0);fs.mkdirSync(base+\"/receipts\",{recursive:true});const command=\"python3\",argv=[\".agents/skills/ld-s10y-image/scripts/validate_spec.py\",specPath,\"--stage\",\"draft\"],startedAt=new Date().toISOString(),r=cp.spawnSync(command,argv,{cwd,encoding:\"utf8\"}),endedAt=new Date().toISOString(),out=base+\"/receipts/validate-draft-FIRST.stdout\",err=base+\"/receipts/validate-draft-FIRST.stderr\";fs.writeFileSync(out,r.stdout||\"\");fs.writeFileSync(err,r.stderr||\"\");const receipt={schema:\"figure-author/command-receipt@1\",cwd,command,argv,startedAt,endedAt,exitCode:r.status,signal:r.signal,error:r.error?.message||null,inputSpec:{path:specPath,sha256:hash(specPath)},authoritativeTextBinding:{path:templatePath,sha256:hash(templatePath),completeParagraphCount:spec.source.authoritativeText.length,exactCurrentTextMatch:true,exerciseCount:0},streams:{stdout:{path:out,sha256:hash(out)},stderr:{path:err,sha256:hash(err)}};fs.writeFileSync(base+\"/receipts/validate-draft-FIRST.command.json\",JSON.stringify(receipt,null,2)+\"\\n\");console.log(JSON.stringify(receipt,null,2));process.stdout.write(r.stdout||\"\");process.stderr.write(r.stderr||\"\");process.exitCode=r.status??1;"
+  ],
+  "exitCode": 1,
+  "outputExcerpt": "Expected ',', got ';'\nSyntaxError: Unexpected token ';'\nNode.js v24.16.0",
+  "outputExcerptIsAbbreviated": true,
+  "classification": "technical-wrapper-parse-failure",
+  "nativeValidatorStarted": false,
+  "nativeRenderStarted": false,
+  "contentChanged": false,
+  "repair": "Add the missing receipt-object closing brace; preserve the same spec and native command. Do not treat this as content failure or approval."
+}

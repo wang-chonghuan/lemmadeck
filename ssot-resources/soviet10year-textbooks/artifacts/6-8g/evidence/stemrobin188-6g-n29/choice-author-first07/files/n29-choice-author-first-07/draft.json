@@ -1,0 +1,276 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "a2e92cf7a7f551c8d5bf20b38d484f51bee1ad411624f7004a4f23260ac2e898",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "n29-distance-classification",
+      "source_numbers": ["364"],
+      "view": {
+        "mode": "single",
+        "stem": "已知圆周 $(O,r)$，$r>0$，直线 $a$ 到圆心的距离为 $h$。按 $h>r$、$h<r$、$h=r$ 的顺序，哪一组给出了圆周与直线的完整位置关系？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "相交、有两个交点；不相交；相切、有一个交点。", "figure_ids": []},
+          {"id": "B", "text": "不相交；相交、有两个交点；相切、有一个交点。", "figure_ids": []},
+          {"id": "C", "text": "不相交；相切、有一个交点；相交、有两个交点。", "figure_ids": []},
+          {"id": "D", "text": "不相交；相交、有两个交点；不相交。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Classify all three circle-line positions in the original order, keeping strict inequalities distinct from equality.",
+        "source_solution": "Statement 5 gives zero intersections for h>r, statement 11 two for h<r, and statement 7 one for h=r. Thus the complete ordered relationship is disjoint/secant/tangent with counts 0,2,1. An infinite line, not a truncated segment, is being classified.",
+        "unit_reason": "One coherent ordered classification retains the distance criterion and all three cases; separate clicks per printed value would fragment the single relationship.",
+        "concept_blocks": [5, 7, 11, 15],
+        "limitations": ["Recognition of a complete classification does not demonstrate independently writing the three-case argument."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Reverse the strict comparisons: assign two intersections to h>r and none to h<r, while retaining the equality rule. This produces the displayed order 2,0,1.", "misconception": "Reversing which center-to-line distance puts the line within reach of the radius."},
+          {"option_id": "B", "truth": "correct", "derivation": "Apply h>r -> 0, h<r -> 2, h=r -> 1, so the line is respectively disjoint, secant and tangent.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Treat any line within radius distance as having only a nearest contact, giving one point when h<r; then incorrectly move the two-intersection case to equality.", "misconception": "Swapping interior cutting with boundary contact rather than distinguishing strict inequality from equality."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Replace the disjoint test h>r with h>=r. This preserves the first two cases but excludes the nearest point when h=r.", "misconception": "Using a non-strict inequality for the no-contact case and losing the tangent boundary."}
+        ]
+      }
+    },
+    {
+      "id": "n29-points-on-rays",
+      "source_numbers": ["365"],
+      "view": {
+        "mode": "multiple",
+        "stem": "给定角 $AOB$ 和其内部的一点 $M$，长度 $a>0$。要在两条射线边上分别作出到 $O$ 的距离为 $a$ 的点，以及到 $M$ 的距离为 $a$ 的点。选择所有成立的作法或结论；点在射线端点处时也要按距离条件判断。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "作圆周 $(O,a)$；它在每条射线边上截取的点，就是该边上到 $O$ 距离为 $a$ 的点。", "figure_ids": []},
+          {"id": "B", "text": "作圆周 $(M,a)$；求它与每条边的支撑直线的交点，再保留位于该射线上的点。", "figure_ids": []},
+          {"id": "C", "text": "若 $M$ 到某边支撑直线的距离小于 $a$，则该射线边上必有两个到 $M$ 距离为 $a$ 的点。", "figure_ids": []},
+          {"id": "D", "text": "若 $a=|OM|$，则 $O$ 满足到 $M$ 距离为 $a$ 的条件，并属于两条射线边。", "figure_ids": []},
+          {"id": "E", "text": "若 $a<|OM|$，则两条射线边上都没有到 $M$ 距离为 $a$ 的点。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve both distance-locus constructions on the original rays, not their complete supporting lines, including the shared vertex boundary.",
+        "source_solution": "For the first task use (O,a): each ray has exactly its point at parameter a, with coincident descriptions identified. For the second use (M,a), intersect supports and retain nonnegative ray parameters. If u is a ray direction, m=(M-O).u and h is distance to its supporting line, the roots are m +/- sqrt(a^2-h^2) for a>h, the single root m for a=h, and none for a<h. Each root still needs t>=0. Thus line roots need not all be ray roots, even when M is inside an obtuse convex angle. If a=OM, O is an admissible shared point counted once.",
+        "unit_reason": "One multiple-response unit connects both constructions through fixed-distance loci and the essential line-to-ray filter; its statements test mechanisms and endpoints rather than individual answer slots.",
+        "concept_blocks": [5, 7, 11],
+        "limitations": ["The learner recognizes two construction procedures and their boundaries but does not draw the circles or produce every intersection."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "P is on (O,a) exactly when OP=a. On a ray O+t*u with t>=0, OP=t, so the unique parameter is t=a.", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "The circle is the full locus MP=a; intersecting each support and applying ray membership removes extension-only points without losing any legitimate point.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Apply the two-intersection rule for a supporting line and omit the ray filter. For O=(0,0), a positive x-axis side and a second side at 150 degrees, M=(-1,1) is interior. With a=6/5 its x-axis roots are -1 +/- sqrt(11)/5, both negative, though h=1<a.", "misconception": "Transferring a supporting-line intersection count directly to a ray."},
+          {"option_id": "D", "truth": "correct", "derivation": "When a=OM, MO=a, so O lies on (M,a); each angle side is a ray that includes its endpoint O.", "misconception": null},
+          {"option_id": "E", "truth": "incorrect", "derivation": "Treat the vertex distance OM as the minimum distance to both whole rays. In a right angle with M=(1,1) and a=6/5<sqrt(2), the positive x-axis roots 1 +/- sqrt(11)/5 are both positive, so admissible points exist.", "misconception": "Using distance to the common vertex as if it were the shortest distance to either ray."}
+        ]
+      }
+    },
+    {
+      "id": "n29-fixed-radius-contact",
+      "source_numbers": ["366"],
+      "view": {
+        "mode": "single",
+        "stem": "已知直线 $a$、其上的点 $M$ 及长度 $r>0$。哪一作法能得到全部半径为 $r$、与 $a$ 相切于 $M$ 的圆周？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "在 $a$ 上取到 $M$ 距离为 $r$ 的两个点，分别以它们为圆心、$r$ 为半径作圆。", "figure_ids": []},
+          {"id": "B", "text": "以 $M$ 为圆心、$r$ 为半径作一个圆，直线 $a$ 即为其在 $M$ 处的切线。", "figure_ids": []},
+          {"id": "C", "text": "过 $M$ 作 $a$ 的垂线，在垂线上取到 $M$ 距离为 $r$ 的两个点，分别以它们为圆心作半径为 $r$ 的圆。", "figure_ids": []},
+          {"id": "D", "text": "过 $M$ 作 $a$ 的垂线，只在 $a$ 的一侧取到 $M$ 距离为 $r$ 的点，以它为圆心作半径为 $r$ 的圆。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct the complete two-circle family for a prescribed positive radius and prescribed contact point on an infinite line.",
+        "source_solution": "A tangent circle's center C satisfies CM perpendicular to a and CM=r. The perpendicular through M has exactly two points at distance r, one in each half-plane. Each resulting circle is tangent by theorem 35; theorem 37 proves no other center can work.",
+        "unit_reason": "The response is the complete center construction, including both sides, not a separate response for center, radius and contact.",
+        "concept_blocks": [10, 17],
+        "limitations": ["Selection does not demonstrate constructing the perpendicular or marking the two radius-length offsets."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Set CM=r but put C on a instead of its normal. The center-to-line distance is zero, so the radius-r circle cuts a at two points rather than touching it once.", "misconception": "Satisfying the radius equation while replacing perpendicular center placement by placement along the given line."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Choose the contact point itself as center. Then M is not on a circle of positive radius r, and a passes through its center as a secant.", "misconception": "Confusing contact point and center."},
+          {"option_id": "C", "truth": "correct", "derivation": "For either perpendicular offset C, CM=r and a is perpendicular to CM at M, so theorem 35 proves contact; theorem 37 restricts every solution to those two offsets.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Construct one valid perpendicular offset but impose an unprovided half-plane restriction, dropping the reflected second circle with the same radius and contact.", "misconception": "Treating a chosen side of the line as an original constraint and mistaking one solution for the complete family."}
+        ]
+      }
+    },
+    {
+      "id": "n29-tangent-at-point",
+      "source_numbers": ["367"],
+      "view": {
+        "mode": "single",
+        "stem": "点 $P$ 在圆周 $(C,r)$ 上，$r>0$。要过 $P$ 作该圆周的切线，哪一条直线符合要求？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "过 $P$ 且垂直于 $CP$ 的直线。", "figure_ids": []},
+          {"id": "B", "text": "过 $C$ 且垂直于 $CP$ 的直线。", "figure_ids": []},
+          {"id": "C", "text": "经过 $C$ 和 $P$ 的直线。", "figure_ids": []},
+          {"id": "D", "text": "过 $P$ 且与 $CP$ 成 $45^\\circ$ 角的直线。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct the unique tangent through a given circle point using the contact radius.",
+        "source_solution": "Join C to P and draw the perpendicular through P. Theorem 35 makes it tangent. Theorem 37 requires every tangent at P to have this direction, and uniqueness of a perpendicular through P makes it the sole solution.",
+        "unit_reason": "One complete line description checks both incidence at the circle point and perpendicular direction.",
+        "concept_blocks": [10, 17],
+        "limitations": ["Recognizing the tangent construction does not demonstrate drawing it."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "P is the circle endpoint of radius CP; the line through that endpoint perpendicular to CP is tangent by theorem 35.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Retain perpendicular direction but draw through the center rather than P. This line is a diameter support, has two intersections, and does not pass through P.", "misconception": "Misplacing the base point of the perpendicular."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Use the joining line CP itself as the purported tangent. Its center-to-line distance is zero, so it is a secant through opposite circle points.", "misconception": "Confusing the contact radius line with the tangent line perpendicular to it."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Replace the required right angle by half a right angle. The center-to-line distance is r*sin(45 degrees)<r, so the line has a second intersection.", "misconception": "Applying angle-halving to the tangent-radius angle instead of the perpendicular criterion."}
+        ]
+      }
+    },
+    {
+      "id": "n29-two-ray-construction",
+      "source_numbers": ["368"],
+      "view": {
+        "mode": "multiple",
+        "stem": "要作与给定角的两条射线边都相切的圆周；另一项要求圆周还经过第一条边上的已知点 $T$。设两边的支撑直线为 $L_1,L_2$，顶点为 $O$，候选圆心为 $C$。选择所有成立的作法或存在性结论。半径须为正；相切点必须在原来的射线上。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "若 $C$ 到 $L_1,L_2$ 的距离相等且为正，并且两垂足分别在两条射线上，则以这共同距离为半径作圆可满足第一项要求。", "figure_ids": []},
+          {"id": "B", "text": "第二项要求中，圆心必须在过 $T$ 垂直于 $L_1$ 的直线上，还须检查圆心到 $L_2$ 的距离等于 $CT$，且在 $L_2$ 上的垂足属于第二条射线。", "figure_ids": []},
+          {"id": "C", "text": "只要 $C$ 到 $L_1,L_2$ 的距离相等且为正，就可取该距离为半径作圆，不必检查垂足是否在两条射线上。", "figure_ids": []},
+          {"id": "D", "text": "若两边的支撑直线不同且 $T=O$，则不存在满足第二项要求的正半径圆周。", "figure_ids": []},
+          {"id": "E", "text": "若两边为相反射线且 $T=O$，可取公共支撑直线在 $O$ 处垂线上的任意非顶点为圆心，以 $CO$ 为半径作圆。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Retain both free construction and construction through a specified side point, including contact-on-ray constraints and vertex/straight-angle boundaries.",
+        "source_solution": "For free centers the exact test is equal positive distances to the supports with both contact feet on the original rays. Construct equal-distance loci, filter candidates, and use the common distance. For distinct noncollinear rays only the smaller-sector bisector ray works; no acute-angle condition is needed, and for a nonconvex named angle that ray need not be in its named interior. Requiring passage through T forces the first contact to be T, so intersect the normal at T with the equal-distance locus and filter the second foot. For noncollinear distinct rays T!=O gives one center, with r=OT*tan(delta/2); T=O gives none. For opposite rays both feet must be O: the normal at O minus O gives all free centers, and a prescribed T works exactly when T=O. The intrinsic foot test also covers coincident-ray cases without guessing the source angle convention.",
+        "unit_reason": "One multiple unit distinguishes two related constructions by the added prescribed-contact constraint, and directly judges existence boundaries. It is not split by printed subpart labels or radius/center answer slots.",
+        "concept_blocks": [10, 17],
+        "limitations": ["Recognition does not demonstrate compass/straightedge construction, production of an admissible center, or actual inspection of the completed circle.", "Conditional straight/nonconvex checks do not assert that the textbook's unstated angle convention includes those cases; the main foot criterion does not require that convention."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "D", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "At each admissible foot H_i, CH_i is the positive radius and is perpendicular to L_i. Theorem 35 supplies line tangency, and ray membership supplies the required original-side contact.", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "A circle through T tangent to L1 must contact L1 at T, hence CT perpendicular L1. Equality of its radius CT to distance from C to L2 and membership of the second foot then give the second ray contact.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Solve only the equal-distance equation and discard contact locations. For the positive coordinate-axis rays, C=(-1,-1), r=1 gives supporting-line tangencies at (-1,0) and (0,-1), neither on the respective ray.", "misconception": "Promoting supporting-line tangency to ray tangency without admissibility checks."},
+          {"option_id": "D", "truth": "correct", "derivation": "A circle through O tangent to each support would need the nonzero radius CO perpendicular to both distinct supporting lines, which is impossible.", "misconception": null},
+          {"option_id": "E", "truth": "correct", "derivation": "For opposite rays O is on both. Any nonzero normal offset gives a circle whose sole contact with their common line is O, satisfying both ray contacts and passage through T=O.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n29-center-locus",
+      "source_numbers": ["369"],
+      "view": {
+        "mode": "single",
+        "stem": "给定角的两边为射线 $R_1,R_2$，其支撑直线为 $L_1,L_2$。求与两条边都相切的正半径圆周的圆心集合。对候选点 $C$，记它在 $L_1,L_2$ 上的垂足为 $H_1,H_2$。哪一表述给出了不依赖锐角假设的完整集合？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "所有到 $L_1,L_2$ 距离相等且为正的点 $C$，无论 $H_1,H_2$ 位于何处。", "figure_ids": []},
+          {"id": "B", "text": "所有到 $L_1,L_2$ 距离相等且为正，且 $H_1\\in R_1$、$H_2\\in R_2$ 的点 $C$。", "figure_ids": []},
+          {"id": "C", "text": "所有满足 $H_1\\in R_1$、$H_2\\in R_2$ 且到两条支撑直线距离均为正的点 $C$，两距离不必相等。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine the exact center locus with both necessity and sufficiency, retaining ray contacts and nonzero radius.",
+        "source_solution": "The locus is exactly equal positive supporting-line distances with both perpendicular feet on the rays, by tangent-radius perpendicularity and its converse. For distinct noncollinear rays this becomes the smaller-sector bisector ray excluding the vertex, not both full supporting-line bisectors. For opposite rays it becomes the full perpendicular at O excluding O. A named nonconvex interior does not alter the two rays; the intrinsic locus avoids an unsupported angle-range convention.",
+        "unit_reason": "A complete set description tests the universal admissibility rule and both directions of the locus argument. It is distinct from choosing a single construction or imposing a prescribed contact.",
+        "concept_blocks": [10, 17],
+        "limitations": ["Choosing a locus description does not demonstrate drawing or independently proving the locus."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Keep equal distances but remove the feet condition, thereby admitting circles tangent only to extensions. For positive coordinate-axis rays C=(-1,-1) has equal positive distances while both feet lie on opposite extensions.", "misconception": "Replacing the ray locus by the larger locus for two supporting lines."},
+          {"option_id": "B", "truth": "correct", "derivation": "Necessity: each contact is a perpendicular foot and both radii equal the same positive radius. Sufficiency: choose that common distance as radius, apply theorem 35 at both feet, and their ray membership supplies exactly the requested contacts.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Check contact locations but allow different required radii. For positive coordinate-axis rays C=(1,2) has admissible feet (1,0),(0,2), but the required radii are 2 and 1; no one circle centered at C can be tangent to both.", "misconception": "Solving each side-contact condition with its own radius instead of requiring one common circle."}
+        ]
+      }
+    },
+    {
+      "id": "n29-finite-triangle-incircle",
+      "source_numbers": ["371"],
+      "view": {
+        "mode": "single",
+        "stem": "给定非退化三角形 $ABC$，求作与它的三条边都相切的圆周。这里三条边是有限线段，切点须在相应边段上。哪一作法对任意这样的三角形均正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "取两条边的垂直平分线的交点，以它到顶点 $A$ 的距离为半径作圆。", "figure_ids": []},
+          {"id": "B", "text": "取 $A$ 处内角平分线与 $B$ 处外角平分线的交点，以它到直线 $AB$ 的距离为半径作圆。", "figure_ids": []},
+          {"id": "C", "text": "取两条中线的交点，以它到直线 $AB$ 的距离为半径作圆。", "figure_ids": []},
+          {"id": "D", "text": "取 $A$、$B$ 两处内角平分线的交点，以它到直线 $AB$ 的距离为半径作圆。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct the unique circle tangent to all three finite triangle sides, not an excircle on extensions or a circumcircle through vertices.",
+        "source_solution": "Internal bisectors at A and B intersect at interior I. Bisector equal-distance properties give one positive common distance r to all three supports; theorem 35 gives supporting-line tangencies. Each endpoint-to-I line makes half an interior triangle angle, strictly below 90 degrees, so projections from both endpoints of every side are positive and its foot lies strictly within the segment. Conversely ray-contact conditions at A and B force a candidate center onto the two internal bisector rays; their unique intersection I proves completeness. Excenters fail finite-side conditions on two extensions, even though their supporting-line distances are equal. This construction works for obtuse triangles without an acute-triangle premise.",
+        "unit_reason": "One center-and-radius construction preserves the three-side equal-distance mechanism and finite-segment boundary. Independent choices for each side or radius would obscure the common circle.",
+        "concept_blocks": [10, 17],
+        "limitations": ["Selection recognizes the incircle construction and its contact constraints but does not demonstrate constructing the bisectors, feet or circle."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Replace equal distance to side lines by equal distance to vertices. Perpendicular bisectors locate the circumcenter and the proposed radius gives a circle through A,B,C, not one tangent to all three side segments.", "misconception": "Using the vertex-distance locus for a side-tangency task."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Replace the internal bisector at B by an external one. The center is an excenter and its circle is tangent to the three supports, but two contact feet are on side extensions, so it fails three finite-side tangencies.", "misconception": "Treating external-bisector equal distances to supporting lines as sufficient for contacts on the finite sides."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Use medians to locate the centroid and choose its AB distance. For A=(0,0),B=(4,0),C=(0,3), the centroid is (4/3,1); its AB distance is 1 while its AC distance is 4/3, so the same radius cannot make both tangencies.", "misconception": "Mistaking centroid balancing of vertex coordinates for equality of perpendicular side distances."},
+          {"option_id": "D", "truth": "correct", "derivation": "The internal bisector intersection has equal positive distances to all supports, and both endpoint projections put each foot inside its side segment. With this common radius theorem 35 supplies all three contacts.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n29-nearest-point-proof",
+      "source_numbers": ["372"],
+      "view": {
+        "mode": "single",
+        "stem": "点 $A$ 不在直线 $p$ 上，$O\\in p$，且 $O$ 是 $p$ 上离 $A$ 最近的点。过 $A$ 作 $p$ 的垂线，垂足为 $H$。以下哪一论证能由最近点条件推出 $AO\\perp p$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "若 $H\\ne O$，则 $AHO$ 中 $AH$ 是斜边，故 $AH>AO$；这与最近点条件矛盾，所以 $H=O$。", "figure_ids": []},
+          {"id": "B", "text": "由于 $H,O$ 都在 $p$ 上，所以 $AH=AO$；这表明 $H=O$，从而 $AO\\perp p$。", "figure_ids": []},
+          {"id": "C", "text": "若 $H\\ne O$，则直角三角形 $AHO$ 中 $AO^2=AH^2+HO^2$，故 $AH<AO$；这与最近点条件矛盾，所以 $H=O$。", "figure_ids": []},
+          {"id": "D", "text": "由于 $O$ 在 $p$ 上，所以过 $A$、$O$ 的直线只能是 $p$ 的垂线，从而 $AO\\perp p$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove nearest-point perpendicularity from the stated minimum condition using a strict contradiction, without citing the desired closest-point theorem.",
+        "source_solution": "Construct perpendicular foot H independently of the minimum claim. If H differs from O, right triangle AHO has AO^2=AH^2+HO^2>AH^2, so AH<AO. Since H is on p, this contradicts O being nearest. Thus H=O and AO is perpendicular to p. The proof requires A outside p and does not assume uniqueness; the strict inequality proves it. It uses Pythagorean length comparison, not theorem 32 or the candidate proof of theorem 37.",
+        "unit_reason": "The full contradiction argument is one response unit: right angle, strict distance comparison, minimum contradiction and conclusion. Selecting an isolated inequality would omit the proof mechanism.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of a complete proof does not demonstrate independently writing the proof or constructing its auxiliary perpendicular."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "At H the triangle is right, but designate AH rather than AO as hypotenuse. This reverses the strict comparison; moreover AH>AO would agree with O being nearest, not contradict it.", "misconception": "Misidentifying the hypotenuse and using the wrong inequality direction for a minimum contradiction."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Transfer common membership H,O in a line to equal distances from A, although those distances depend on position. Equality is not justified and is used to force coincident feet without the necessary strict comparison.", "misconception": "Treating every point on a line as equally distant from an external point."},
+          {"option_id": "C", "truth": "correct", "derivation": "If HO>0, Pythagoras gives AO>AH. H belongs to p, so it would be nearer than O, contradicting the hypothesis. Hence HO=0 and the constructed perpendicular AH is exactly AO.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Drop the minimum hypothesis and infer perpendicularity from O in p alone. For p the x-axis, A=(0,1),O=(1,0) belongs to p but AO is not perpendicular to p.", "misconception": "Replacing a minimizing condition with mere incidence."}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "364", "question_ids": ["n29-distance-classification"], "omitted_tasks": ["Independent production of the three-case written argument is not demonstrated."], "reason": "All three original relationships and the equality boundary are retained in one coherent classification."},
+    {"source_number": "365", "question_ids": ["n29-points-on-rays"], "omitted_tasks": ["Physical construction of both fixed-distance circles and production of all intersections on the given rays."], "reason": "Both original distance centers are retained, with a complete intersection/filter method, ray-count limits and the vertex boundary; there is no lost mathematical subpart."},
+    {"source_number": "366", "question_ids": ["n29-fixed-radius-contact"], "omitted_tasks": ["Independent perpendicular and radius-offset construction of the two circles."], "reason": "Both possible sides of the infinite line and completeness of the radius-fixed solution family are retained."},
+    {"source_number": "367", "question_ids": ["n29-tangent-at-point"], "omitted_tasks": ["Independent geometric drawing of the unique tangent."], "reason": "The contact-point incidence and perpendicular-radius criterion are retained together."},
+    {"source_number": "368", "question_ids": ["n29-two-ray-construction"], "omitted_tasks": ["Independent production of free-center and prescribed-contact compass/straightedge constructions and inspection of the resulting circle."], "reason": "Both original tasks are solved and represented by admissible-center and prescribed-contact mechanisms. No acute-angle restriction is introduced; straight, vertex and nonconvex boundaries remain explicit or convention-independent."},
+    {"source_number": "369", "question_ids": ["n29-center-locus"], "omitted_tasks": ["Independent drawing and proof of the entire center locus."], "reason": "The exact necessary/sufficient locus, positive radius, ray feet and straight/nonconvex boundary behavior are retained."},
+    {"source_number": "370", "question_ids": [], "omitted_tasks": ["HOLD: unconditional existence and uniqueness claim for a common tangent to the two circles, pending an actual allowed definition of circle-circle tangency or equivalent centers/contact statement."], "reason": "The N29 whitelist defines line-circle tangency only. FIRST preserves the independent conditional single-common-point solution but does not import an absent circle-circle rule or fabricate a keyed item. This is a local source-definition loss, not a structural or semantic rejection of the other eight sources."},
+    {"source_number": "371", "question_ids": ["n29-finite-triangle-incircle"], "omitted_tasks": ["Independent construction of internal bisectors, the common perpendicular radius and the incircle."], "reason": "The full incircle mechanism and finite-side contact checks are retained; excircles on extensions are not accepted and obtuse triangles remain allowed."},
+    {"source_number": "372", "question_ids": ["n29-nearest-point-proof"], "omitted_tasks": ["Independent production of the auxiliary construction and contradiction proof."], "reason": "The minimum-to-perpendicular proof mechanism is retained, including the strict Pythagorean comparison and A outside the line; no closest-point theorem or source proof is borrowed."}
+  ]
+}
