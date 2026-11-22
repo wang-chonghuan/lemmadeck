@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1182-n9-emphasis-boundary/en.before-native.json\"))\nbefore=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1179-n9-first-missing-en/en.lesson.draft.json\"))\nprepared=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1176-n9-first-missing-en/prepared.json\"))\nzh=edition.load(Path(prepared[\"approvedZh\"][\"path\"]))\nraw=edition.load(Path(prepared[\"source\"][\"path\"]))\nindex=4\nlesson[\"prose\"][index][\"text\"]=edition.normalize_prose_layout(lesson[\"prose\"][index][\"text\"])\ncomparison=json.loads(json.dumps(lesson))\ncomparison[\"prose\"][index][\"text\"]=before[\"prose\"][index][\"text\"]\nassert comparison==before\nassert \"\".join(lesson[\"prose\"][index][\"text\"].split())==\"\".join(before[\"prose\"][index][\"text\"].replace(\"**\",\"\").split())\nassert edition.math_signature(lesson[\"prose\"][index][\"text\"])==edition.math_signature(zh[\"prose\"][index][\"text\"])\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\nprofile=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nmodern,source=lesson[\"prose\"][index],raw[\"prose\"][index]\nerrors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],\"en.prose[4]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\")))\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T16:19:32.367Z",
+  "finishedAt": "2026-11-22T16:19:32.481Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1182-n9-only-emphasis-boundary-affected-native/stdout.txt",
+      "bytes": 13911,
+      "sha256": "cee105143fdcabf712e42704dea401b462bec13d85e957e9ab25764a9d71387b"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1182-n9-only-emphasis-boundary-affected-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}

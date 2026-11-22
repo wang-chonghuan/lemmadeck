@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0, \"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1193-n9-turning-point-sentence/en.lesson.draft.json\"))\nprepared=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1176-n9-first-missing-en/prepared.json\"))\nzh=edition.load(Path(prepared[\"approvedZh\"][\"path\"]))\nraw=edition.load(Path(prepared[\"source\"][\"path\"]))\nprofile=edition.load(Path(\"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\nindex=2\nmodern,approved,source=lesson[\"prose\"][index],zh[\"prose\"][index],raw[\"prose\"][index]\nassert edition.normalize_prose_layout(modern[\"text\"]) == modern[\"text\"],\"normalizer stability\"\nassert edition.math_signature(modern[\"text\"]) == edition.math_signature(approved[\"text\"])\nerrors.extend(edition.validate_identity_fields(source,modern,[\"kind\",\"id\",\"printed_page\",\"source_refs\"],\"en.prose[2]\"))\nerrors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],\"en.prose[2]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\")))\nprint(json.dumps({\"status\":\"PASS\" if not errors else \"FAIL\",\"affectedIndices\":[2],\"flowParagraphs\":len(flow[\"paragraphs\"]),\"errors\":errors}))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-22T16:32:30.141Z",
+  "finishedAt": "2026-11-22T16:32:30.257Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1193-n9-turning-point-sentence-affected-native/stdout.txt",
+      "bytes": 79,
+      "sha256": "2b0ca3404e754421d21208e5ecc5b6e5c47d9e46960e058d62b21e5114c01266"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1193-n9-turning-point-sentence-affected-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
