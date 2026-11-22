@@ -1,0 +1,97 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c4-s1-n21';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n21-final-3129/resource-boundary-recovery';
+const canonical = `${target}/offline-display.json`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const firstBytes = fs.readFileSync(canonical);
+assert.equal(sha(firstBytes), '0c2d90f567ffe8c5cba80447893f003e992b5ad3adeb80c07e4c1cb3c5245b39');
+assert.ok(!fs.existsSync(evidence), 'Preserve previous recovery');
+const document = JSON.parse(firstBytes);
+assert.equal(document.status, 'OFFLINE_DISPLAY_PASS');
+const audit = JSON.parse(fs.readFileSync(`${base}/N21-resource-audit-20261122-FIRST/execution.json`));
+assert.equal(audit.exitCode, 1);
+const stderr = fs.readFileSync(audit.streams.stderr.path);
+assert.equal(sha(stderr), audit.streams.stderr.sha256);
+assert.equal(stderr.length, audit.streams.stderr.bytes);
+const lines = stderr.toString('utf8').split('\n').filter(Boolean);
+assert.equal(lines.length, 7432);
+const relevant = lines.filter(line => line.includes('/alg8-c4-s1-n21/')
+  || /artifacts\/8a\/pages\/0(?:134|135|136|137|138|139|140)\/figures\//u.test(line));
+assert.equal(relevant.length, 461);
+const disposable = value => value.startsWith('.tmp/') || value.includes('/.tmp/')
+  || (value.startsWith('.intentfold/tickets/') && value.includes('/tmp/'));
+let removed = 0;
+const clean = value => {
+  if (Array.isArray(value)) return value.map(clean);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value).flatMap(([key, child]) => {
+    if (key === 'historical_path' && typeof child === 'string' && disposable(child)) {
+      removed++;
+      return [];
+    }
+    return [[key, clean(child)]];
+  }));
+};
+const current = clean(document);
+assert.equal(removed, 443);
+const surfaceCopies = document.surfaces.filter(surface => ['text', 'exercises'].includes(surface.name))
+  .map(surface => {
+    const bytes = fs.readFileSync(surface.path);
+    assert.equal(sha(bytes), surface.sha256);
+    assert.equal(bytes.length, surface.bytes);
+    const destination = surface.path.replace(/\/(text|exercises)\.html$/u, '/$1-display.html');
+    assert.notEqual(destination, surface.path);
+    assert.ok(!fs.existsSync(destination));
+    return { original: surface.path, destination, bytes, sha256: surface.sha256 };
+  });
+assert.equal(surfaceCopies.length, 2);
+fs.mkdirSync(evidence, { recursive: true });
+const keep = (file, bytes) => {
+  fs.writeFileSync(file, bytes, { flag: 'wx', mode: 0o444 });
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const originalBinding = keep(`${evidence}/offline-display-FIRST.json.record`, firstBytes);
+for (const surface of surfaceCopies) {
+  keep(surface.destination, surface.bytes);
+  assert.ok(fs.readFileSync(surface.destination).equals(fs.readFileSync(surface.original)));
+  current.surfaces.find(entry => entry.path === surface.original).path = surface.destination;
+}
+const auditReceiptBytes = fs.readFileSync(`${base}/N21-resource-audit-20261122-FIRST/execution.json`);
+const auditReceipt = keep(`${evidence}/global-audit-FIRST.execution.record`, auditReceiptBytes);
+const excerpt = keep(`${evidence}/N21-audit-FIRST.stderr-excerpt.record`, Buffer.from(`${relevant.join('\n')}\n`));
+current.resourceBoundaryRecovery = {
+  originalBinding,
+  changes: '443 historical_path metadata fields omitted from canonical JSON; exact original bytes retained. Two unchanged HTML surfaces have nontransient delivery filenames.',
+  originalGlobalAudit: auditReceipt,
+  auditScope: 'First global audit remains exit 1. Subsequent checking is the proposed narrow committed scope, not global acceptance.',
+  originalHtmlFilesAndPageFiguresPreserved: true,
+  imageOrMathematicsRechecks: 0,
+  sameBytesVisualApprovalInherited: true,
+  unknownHistoricalBytesRecovered: false,
+};
+const finalBytes = Buffer.from(`${JSON.stringify(current, null, 2)}\n`);
+fs.writeFileSync(canonical, finalBytes);
+const result = {
+  status: 'N21_RESOURCE_METADATA_REPAIRED',
+  workdir: repo,
+  originalBinding,
+  canonical: { path: canonical, sha256: sha(finalBytes), bytes: finalBytes.length },
+  removedHistoricalFields: removed,
+  surfaces: surfaceCopies.map(({ original, destination, bytes, sha256 }) =>
+    ({ original, destination, bytes: bytes.length, sha256, byteIdentical: true })),
+  firstGlobalAudit: { exitCode: 1, failureLines: lines.length, stderrBytes: stderr.length, auditReceipt, excerpt },
+  originalLocalAuditStreamsPreserved: true,
+  originalPageFiguresPreservedAndExcludedFromStage: true,
+  newImagesOpened: 0,
+  rendererBrowserMathematicsCalls: 0,
+  totalCost: 'UNKNOWN',
+};
+keep(`${evidence}/repair-method.mjs.record`, fs.readFileSync(`${base}/repair-N21-resource-boundary-RECOVERY1.mjs`));
+keep(`${evidence}/recovery.record`, Buffer.from(`${JSON.stringify(result, null, 2)}\n`));
+console.log(JSON.stringify(result));

@@ -1,0 +1,151 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const modern = `${book}/editions/modern-us-neutral`;
+const target = `${modern}/lessons/alg8-c4-s1-n21`;
+const read = file => JSON.parse(fs.readFileSync(file));
+const draft = read(`${target}/choice-set/draft.json`);
+assert.equal(read(`${target}/choice-set/review.json`).outcome, 'pass');
+assert.equal(read(`${base}/choices-N21-q07-disclosure-RECOVERY1/affected-result.json`).approved, true);
+assert.equal(read(`${base}/answers-finalize-N21-20261122-FIRST/execution.json`).exitCode, 0);
+assert.equal(read(`${base}/adapt-finalize-N21-20261122-FIRST/execution.json`).exitCode, 0);
+const scopes = [
+  { name: 'text-and-exercises', directory: `${base}/display-N21-text-20261122-FIRST` },
+  { name: 'choices', directory: '.tmp/ld-s10y-choice/resume182-6-3129/display-N21-choices-20261122-FIRST' },
+].map(({ name, directory }) => {
+  const runtime = read(`${directory}/result.json`);
+  assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+  const selection = read(`${directory}/selection-FIRST/selection.record`);
+  assert.equal(selection.counts.missing, 0);
+  const bindings = selection.batches.map((_, index) => `${directory}/bindings/batch${index + 1}.record`);
+  for (const file of bindings) assert.equal(read(file).status, 'DISPLAY_PASS');
+  return { name, runtime: `${directory}/result.json`,
+    selection: `${directory}/selection-FIRST/selection.record`, bindings };
+});
+const evidence = new Set([
+  `${base}/source-8a-N21-promotion-FIRST.record`,
+  `${base}/source-8a-N21-review-pages-FIRST/result.json`,
+  `${base}/source-8a-N21-review-crops-FIRST/result.json`,
+  `${base}/source-8a-N21-separators-review-RECOVERY1/result.json`,
+  `${base}/independent-source-8a-N21-FIRST/freeze.record`,
+  `${base}/modern-8a-N21-text-review-FIRST/result.json`,
+  `${base}/modern-8a-N21-prose-normalization-FIRST/result.record`,
+  `${base}/figure-8a-N21-set-review-FIRST/result.json`,
+  `${base}/figure-8a-N21-grid-review-FIRST/result.json`,
+  `${base}/answers-N21-review-FIRST/result.json`,
+  `${base}/answers-N21-review-FIRST/affected434c-RECOVERY1/result.json`,
+  `${base}/answers-N21-promotion-20261122-FIRST/result.record`,
+  `${base}/bind-N21-observation-LIFECYCLERECOVERY1.mjs`,
+  `${base}/bind-N21-completed-batch-FIRST.mjs`,
+  `${base}/bind-observation-FIRST.mjs`,
+  `${base}/diagnose-N21-scroll-20261122-FIRST.mjs`,
+  `${base}/resolve-N21-scroll-20261122-FIRST.mjs`,
+  `${base}/N21-scroll-diagnosis-20261122-FIRST.record`,
+  `${base}/N21-scroll-resolution-20261122-FIRST.record`,
+  `${base}/bind-N21-choice-figure-regions-FIRST.mjs`,
+  `${base}/bind-N21-choice-figure-regions-RECOVERY1.mjs`,
+  `${base}/N21-choice-figure-region-binding-FIRST.record`,
+  `${base}/prepare-N21-final-config-20261122-FIRST.mjs`,
+  `${base}/finalize-N21-20261122-FIRST.mjs`,
+  ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json',
+    'answer-keys.json', 'answer-keys.audit.json', 'choice-set/seed.json',
+    'choice-set/draft.json', 'choice-set/review.json'].map(file => `${target}/${file}`),
+  ...['lesson.json', 'lesson.md', 'exercises.json'].map(file =>
+    `${book}/lessons/alg8-c4-s1-n21/${file}`),
+]);
+const currentSnapshots = new Map([
+  ...['seed.json', 'draft.json', 'review.json'].map(file =>
+    [file, fs.readFileSync(`${target}/choice-set/${file}`)]),
+  ['answer-keys.json', fs.readFileSync(`${target}/answer-keys.json`)],
+]);
+const collectRecords = directory => {
+  assert.ok(fs.existsSync(directory), directory);
+  for (const item of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (['browser-tmp', 'screenshots', 'html', 'published', 'render', '__pycache__'].includes(item.name)) continue;
+    const file = `${directory}/${item.name}`;
+    if (item.isDirectory()) collectRecords(file);
+    else if (item.isFile() && !/\.(?:png|svg)$/u.test(item.name)) {
+      const current = currentSnapshots.get(item.name);
+      if (!current || !fs.readFileSync(file).equals(current)) evidence.add(file);
+    }
+  }
+};
+for (const name of [
+  'answers-prepare-N21-20261122-FIRST', 'answers-finalize-N21-20261122-FIRST',
+  'answers-N21-review-FIRST', 'answers-N21-parent-FIRST', 'answers-N21-434c-RECOVERY1',
+  'adapt-finalize-N21-20261122-FIRST', 'choices-N21-author-20261122-FIRST',
+  'choices-N21-review-20261122-FIRST', 'choices-N21-q07-disclosure-RECOVERY1',
+  'choices-N21-q07-repair-execution-RECOVERY1', 'choices-N21-retain-20261122-FIRST',
+  'render-N21-choices-20261122-FIRST',
+  'N21-scroll-diagnosis-execution-20261122-FIRST',
+  'N21-scroll-resolution-execution-20261122-FIRST',
+  'N21-choice-figure-regions-execution-FIRST',
+  'N21-choice-figure-regions-execution-RECOVERY1',
+]) collectRecords(`${base}/${name}`);
+for (let number = 34; number <= 41; number += 1) {
+  for (const extension of ['spec.json', 'svg', 'render.json', 'review.json'])
+    evidence.add(`${modern}/figures/fig-${number}.${extension}`);
+}
+for (const scope of scopes) {
+  const directory = path.dirname(scope.runtime);
+  for (const file of ['run.mjs', 'execute.mjs', 'select.mjs']) evidence.add(`${directory}/${file}`);
+  const selection = read(scope.selection);
+  for (let index = 1; index <= selection.batches.length; index += 1) {
+    collectRecords(`${directory}/observations-batch${index}-FIRST`);
+    const binding = read(scope.bindings[index - 1]);
+    evidence.add(binding.observerLifecycle.path);
+    if (binding.technicalResolution) evidence.add(binding.technicalResolution.path);
+    const execution = surfaceName => `${base}/display-N21-${surfaceName}-bind${index}-20261122-FIRST`;
+    collectRecords(execution(scope.name === 'choices' ? 'choices' : 'text'));
+  }
+}
+const lesson = read(`${target}/lesson.json`);
+const answers = read(`${target}/answer-keys.json`);
+const content = {
+  proseBlocks: lesson.prose.length,
+  renderedParagraphs: read(`${base}/modern-8a-N21-prose-normalization-FIRST/result.record`).renderedParagraphs,
+  exercises: 11, answers: answers.answers.length,
+  autoAnswers: answers.answers.filter(answer => answer.grading === 'auto').length,
+  choiceQuestions: draft.questions.length,
+  options: draft.questions.reduce((count, question) => count + question.view.options.length, 0),
+};
+assert.equal(content.proseBlocks, 38);
+assert.equal(content.answers, 11);
+assert.equal(content.choiceQuestions, 23);
+assert.equal(content.options, 93);
+assert.equal(content.autoAnswers, 2);
+for (const file of evidence) assert.ok(fs.statSync(file).isFile(), file);
+const config = {
+  scopes, content, evidence: [...evidence],
+  figureRegionCoverage: `${base}/N21-choice-figure-region-binding-FIRST.record`,
+  expectedImages: scopes.reduce((count, scope) => count + read(scope.selection).selected.length, 0),
+  inheritedImages: 0,
+  actualImageViewsThisContinuation: scopes.reduce((count, scope) =>
+    count + read(scope.selection).selected.length, 0) - 8,
+  additionalFailedRegionImageViews: 0,
+  contentApprovals: {
+    source: `${base}/source-8a-N21-separators-review-RECOVERY1/result.json`,
+    originalSourceFindings: `${base}/source-8a-N21-review-pages-FIRST/result.json`,
+    text: `${base}/modern-8a-N21-text-review-FIRST/result.json`,
+    answers: `${base}/answers-N21-review-FIRST/affected434c-RECOVERY1/result.json`,
+    choices: `${base}/choices-N21-q07-disclosure-RECOVERY1/affected-result.json`,
+    setFigures: `${base}/figure-8a-N21-set-review-FIRST/result.json`,
+    gridFigures: `${base}/figure-8a-N21-grid-review-FIRST/result.json`,
+    historicalFailuresPreserved: true,
+    originalFigure37InkAndUnapprovedCleanCropPreserved: true,
+    endpoint431Membership: 'UNKNOWN; narrow q10 only',
+    source428LostTasks: 'Plotting and original arrow-to-point inference supplied/unassessed; disclosed, not restored',
+    newMathematicsOrFigureReviewAtFinalBinding: false,
+  },
+};
+const output = `${base}/finalize-N21-config-20261122-FIRST.json`;
+fs.writeFileSync(output, `${JSON.stringify(config, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.resolve(output),
+  sha256: crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex'),
+  content, expectedImages: config.expectedImages, evidenceReferences: evidence.size }));

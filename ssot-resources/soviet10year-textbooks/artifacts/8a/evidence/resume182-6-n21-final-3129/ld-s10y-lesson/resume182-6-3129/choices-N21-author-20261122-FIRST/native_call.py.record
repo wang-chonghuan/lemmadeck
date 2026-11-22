@@ -1,0 +1,46 @@
+"""Preserve offline native command evidence without overwriting earlier calls."""
+
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+OUT = ROOT / ".tmp/ld-s10y-lesson/resume182-6-3129/choices-N21-author-20261122-FIRST"
+label, *argv = sys.argv[1:]
+if not label or "/" in label or not argv:
+    raise SystemExit("Expected a local call label followed by native argv.")
+paths = {name: OUT / f"{label}.{name}" for name in ("stdout.txt", "stderr.txt", "execution.json")}
+if any(path.exists() for path in paths.values()):
+    raise SystemExit("Existing call evidence is immutable; use a new recovery label.")
+env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+started = datetime.datetime.now(datetime.timezone.utc).isoformat()
+call = subprocess.run(argv, cwd=ROOT, env=env, capture_output=True)
+ended = datetime.datetime.now(datetime.timezone.utc).isoformat()
+for name, data in (("stdout.txt", call.stdout), ("stderr.txt", call.stderr)):
+    with paths[name].open("xb") as stream:
+        stream.write(data)
+receipt = {
+    "cwd": str(ROOT),
+    "argv": argv,
+    "exit_code": call.returncode,
+    "started_at": started,
+    "finished_at": ended,
+    "streams": {
+        name: {
+            "path": str(paths[f"{name}.txt"]),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        }
+        for name, data in (("stdout", call.stdout), ("stderr", call.stderr))
+    },
+}
+with paths["execution.json"].open("x", encoding="utf-8") as stream:
+    json.dump(receipt, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+sys.stdout.buffer.write(call.stdout)
+sys.stderr.buffer.write(call.stderr)
+print(json.dumps({"receipt": str(paths["execution.json"]), "exit_code": call.returncode}))
+raise SystemExit(call.returncode)

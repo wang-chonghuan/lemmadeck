@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const git = args => execFileSync('git', args, {
+  cwd: repo, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
+});
+assert.equal(git(['diff', '--cached', '--name-only']).trim(), '', 'Preserve prior staged changes');
+assert.equal(git(['rev-parse', 'HEAD']).trim(), git(['rev-parse', 'FETCH_HEAD']).trim());
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const modern = `${book}/editions/modern-us-neutral`;
+const target = `${modern}/lessons/alg8-c4-s1-n21`;
+const display = JSON.parse(fs.readFileSync(`${target}/offline-display.json`));
+assert.equal(display.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(display.content.choiceQuestions, 23);
+assert.equal(display.content.options, 93);
+assert.equal(display.content.answers, 11);
+assert.equal(display.displayObservationAccounting.uniqueRequiredImages, 86);
+assert.equal(display.displayObservationAccounting.passedImageReopens, 0);
+const scope = [
+  `${book}/book.json`, `${modern}/book.json`,
+  `${book}/lessons/alg8-c4-s1-n21`,
+  ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json',
+    'answer-keys.json', 'answer-keys.audit.json', 'offline-display.json',
+    'choice-set'].map(file => `${target}/${file}`),
+  ...['text-display.html', 'exercises-display.html', 'choices.html']
+    .map(file => `${target}/offline/${file}`),
+  ...Array.from({ length: 7 }, (_, index) => String(134 + index).padStart(4, '0'))
+    .flatMap(page => ['page.md', 'page.json', 'audit.json'].map(file => `${book}/pages/${page}/${file}`)),
+  ...Array.from({ length: 8 }, (_, index) => 34 + index).flatMap(number => [
+    ...['png', 'svg'].map(extension => `${book}/figures/fig-${number}.${extension}`),
+    ...['spec.json', 'svg', 'render.json', 'review.json'].map(extension =>
+      `${modern}/figures/fig-${number}.${extension}`),
+  ]),
+  `${book}/evidence/resume182-6-n21-final-3129`,
+  '.intentfold/tickets/STEMROBIN-182/progress.md',
+];
+for (const file of scope) assert.ok(fs.existsSync(file), file);
+git(['add', '--', ...scope]);
+const staged = git(['diff', '--cached', '--name-only', '-z']).split('\0').filter(Boolean);
+for (const file of staged) {
+  assert.ok(scope.some(allowed => file === allowed || file.startsWith(`${allowed}/`)), file);
+  assert.ok(!file.split('/').some(part => part === '.env' || part.startsWith('.env.')));
+  const bytes = execFileSync('git', ['show', `:${file}`], { cwd: repo, maxBuffer: 64 * 1024 * 1024 });
+  if (bytes.includes(0)) continue;
+  assert.ok(!/(?:postgres(?:ql)?:\/\/[^\s"']+:[^\s"']+@|plane_api_[A-Za-z0-9]{20,}|sk-[A-Za-z0-9_-]{24,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)/u.test(bytes.toString('utf8')),
+    `Potential secret: ${file}`);
+}
+git(['diff', '--cached', '--check']);
+console.log(JSON.stringify({
+  status: 'NARROW_STAGE_PASS', workdir: repo,
+  head: git(['rev-parse', 'HEAD']).trim(), stagedFiles: staged.length,
+  scope, unrelatedEditsStaged: 0, secretCandidates: 0,
+  templatesAndUnfinishedLessonsExcluded: true,
+}));

@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const directory = '.tmp/ld-s10y-choice/resume182-6-3129/display-N21-choices-20261122-FIRST';
+const read = file => JSON.parse(fs.readFileSync(file));
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const selectionPath = `${directory}/selection-FIRST/selection.record`;
+const selection = read(selectionPath);
+const observedRegion = (batch, name) => {
+  const resultPath = `${directory}/observations-batch${batch}-FIRST/result.json`;
+  const result = read(resultPath);
+  assert.equal(result.status, 'PASS');
+  const image = result.images.find(image => path.basename(image.path) === name);
+  assert.equal(image.status, 'PASS');
+  assert.equal(entry(image.path).sha256, image.sha256);
+  const region = image.figureRegions.find(region => region.key === 'figure-0-fig-41');
+  assert.equal(region.status ?? region.verdict, 'PASS');
+  const rectangle = region.sourceRectangle ?? region.assignmentRectangle ?? region.rectangle ?? region;
+  const expected = selection.selected.find(selected => selected.path === image.path)
+    .figureRegions.find(region => region.key === 'figure-0-fig-41');
+  for (const key of ['x', 'y', 'width', 'height']) assert.equal(rectangle[key], expected[key]);
+  return { image: entry(image.path), result: entry(resultPath), region,
+    sourceRectangle: Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, rectangle[key]])) };
+};
+const desktop = observedRegion(1, '1440-choices-0004.png');
+const left = observedRegion(2, '390-choices-0016.png');
+const right = observedRegion(5, '390-choices-0145.png');
+assert.deepEqual(desktop.sourceRectangle, { x: 0, y: 0, width: 640, height: 400 });
+assert.deepEqual(left.sourceRectangle, { x: 0, y: 0, width: 358, height: 400 });
+assert.deepEqual(right.sourceRectangle, { x: 282, y: 0, width: 358, height: 400 });
+assert.ok(left.sourceRectangle.x + left.sourceRectangle.width >= right.sourceRectangle.x);
+assert.equal(right.sourceRectangle.x + right.sourceRectangle.width, desktop.sourceRectangle.width);
+const originalPath = `${directory}/observations-batch4-FIRST/result.json`;
+const original = read(originalPath).images.find(image =>
+  path.basename(image.path) === '390-choices-0132.png');
+assert.ok(original.figureRegions.some(region =>
+  region.scope === 'DECLARED_RECTANGLE_PIXELS_ONLY_NOT_FIGURE_APPROVAL'));
+const record = {
+  status: 'DISPLAY_REGION_PASS',
+  workdir: repo,
+  figure: 'figure-0-fig-41',
+  coordinateSystem: 'Media-relative source coordinates, not screenshot pixel coordinates',
+  selection: entry(selectionPath),
+  desktopFullRegion: desktop,
+  mobileRegions: [left, right],
+  mobileUnion: { x: 0, y: 0, width: 640, height: 400, horizontalOverlap: 76 },
+  excludedAmbiguousFigureClaim: {
+    originalResult: entry(originalPath),
+    image: entry(original.path),
+    originalRegionRecords: original.figureRegions,
+    reason: 'Source y was interpreted as PNG y. No whole-source-region approval is taken from this claim; the genuine full left/right windows settle coverage.',
+    visibleProseAndActualFragmentPassRetained: true,
+    originalBytesChanged: false,
+  },
+  offWindowApprovalInIsolatedImages: false,
+  sourceMathOrFigureFidelityReviewRepeated: false,
+  parentImageViews: 0,
+  rendererBrowserValidatorRuns: 0,
+  previousFailuresAndUnknownCostsPreserved: true,
+};
+const output = `${base}/N21-choice-figure-region-binding-FIRST.record`;
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, ...entry(output) }));

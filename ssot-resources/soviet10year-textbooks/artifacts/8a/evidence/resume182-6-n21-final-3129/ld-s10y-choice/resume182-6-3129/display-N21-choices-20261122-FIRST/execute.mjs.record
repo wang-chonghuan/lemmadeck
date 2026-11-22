@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+let code = await fs.readFile(path.join(repo,
+  '.tmp/ld-s10y-choice/resume182-6-3129/display-N20-choices-FIRST/execute.mjs'), 'utf8');
+code = code.replaceAll('display-N20-choices-FIRST', 'display-N21-choices-20261122-FIRST');
+code = code.replaceAll('alg8-c3-s3-n20', 'alg8-c4-s1-n21');
+code = code.replaceAll('resume182-6-n20-choices', 'resume182-6-n21-choices');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

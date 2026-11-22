@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n21-final-3129/terminal-receipts';
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const receipts = [
+  ['prepare-N21-final-config-execution-20261122-FIRST', 0],
+  ['finalize-N21-execution-20261122-FIRST', 0],
+  ['N21-resource-boundary-repair-RECOVERY1-execution', 1],
+  ['N21-resource-boundary-repair-RECOVERY2-execution', 0],
+].map(([name, expectedExit]) => {
+  const file = `${base}/${name}/execution.json`;
+  const bytes = fs.readFileSync(file);
+  const receipt = JSON.parse(bytes);
+  assert.equal(receipt.cwd, repo);
+  assert.equal(receipt.exitCode, expectedExit);
+  const streams = Object.entries(receipt.streams).map(([stream, reference]) => {
+    const bytes = fs.readFileSync(reference.path);
+    assert.equal(digest(bytes), reference.sha256);
+    return { stream, reference, bytes };
+  });
+  return { name, file, bytes, streams };
+});
+assert.ok(!fs.existsSync(evidence));
+fs.mkdirSync(evidence, { recursive: true });
+const retained = [];
+const keep = (file, bytes, outputName) => {
+  const output = `${evidence}/${outputName}`;
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  const entry = { path: output, historicalPath: path.resolve(file),
+    sha256: digest(bytes), bytes: bytes.length };
+  retained.push(entry);
+  return entry;
+};
+for (const receipt of receipts) {
+  keep(receipt.file, receipt.bytes, `${receipt.name}.execution.record`);
+  for (const stream of receipt.streams)
+    keep(stream.reference.path, stream.bytes, `${receipt.name}.${stream.stream}.record`);
+}
+const script = `${base}/retain-N21-terminal-receipts-FIRST.mjs`;
+keep(script, fs.readFileSync(script), 'retention-method.mjs.record');
+const record = { status: 'ACTUAL_FINAL_BINDING_AND_BOUNDARY_RECOVERY_RECEIPTS_RETAINED', workdir: repo,
+  actualExits: receipts.map(receipt => ({
+    name: receipt.name, exitCode: JSON.parse(receipt.bytes).exitCode,
+  })),
+  retained, rendererBrowserOrReviewCalls: 0, historicalFailuresPreserved: true,
+  globalResourceAudit: {
+    exitCode: 1,
+    receipt: 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n21-final-3129/resource-boundary-recovery/global-audit-FIRST.execution.record',
+    fullOriginalStreamsPreservedLocally: true,
+    globalPassClaimed: false,
+  } };
+fs.writeFileSync(`${evidence}/binding.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, files: retained.length,
+  bytes: retained.reduce((total, item) => total + item.bytes, 0),
+  path: path.resolve(`${evidence}/binding.record`) }));

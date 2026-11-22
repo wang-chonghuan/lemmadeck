@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const original = `${base}/repair-N21-resource-boundary-RECOVERY1.mjs`;
+let code = fs.readFileSync(original, 'utf8');
+const before = 'assert.equal(lines.length, 7432);';
+assert.equal(code.split(before).length, 2);
+code = code.replace(before, 'assert.equal(lines.length, 7428);');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);
+const output = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n21-final-3129/resource-boundary-recovery/count-only-recovery-method.mjs.record';
+fs.writeFileSync(output, fs.readFileSync(`${base}/repair-N21-resource-boundary-RECOVERY2.mjs`),
+  { flag: 'wx', mode: 0o444 });

@@ -1,0 +1,71 @@
+"""Apply the unchanged resource auditor rules to the exact staged N21 scope."""
+
+import importlib.util
+import json
+import subprocess
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+assert Path.cwd() == REPO
+spec = importlib.util.spec_from_file_location("resource_audit", REPO / "ssot-resources/audit.py")
+audit = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(audit)
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=REPO)
+
+
+paths = [entry.decode() for entry in git("diff", "--cached", "--name-only", "-z").split(b"\0") if entry]
+assert paths, "No staged scope"
+errors = []
+json_files = 0
+text_files = 0
+for relative in paths:
+    path = REPO / relative
+    assert relative.startswith("ssot-resources/soviet10year-textbooks/artifacts/8a/") or relative == (
+        ".intentfold/tickets/STEMROBIN-182/progress.md"
+    ), relative
+    data = git("show", f":{relative}")
+    if relative.startswith(audit.FROZEN_PREFIXES):
+        continue
+    if not relative.startswith("ssot-resources/") and path.suffix.lower() in audit.PRODUCT_BINARY_SUFFIXES:
+        if not relative.startswith(audit.CODE_ASSET_PREFIXES):
+            errors.append(f"product binary outside ssot-resources: {relative}")
+    if path.is_relative_to(audit.ARTIFACTS):
+        if path.name in audit.TRANSIENT_NAMES or ".template." in path.name:
+            errors.append(f"tracked 10y transient artifact: {relative}")
+        if "pages" in path.parts and "figures" in path.parts:
+            errors.append(f"page-level duplicate figure: {relative}")
+        if path.suffix == ".json":
+            json_files += 1
+            try:
+                document = json.loads(data)
+            except (json.JSONDecodeError, UnicodeDecodeError) as error:
+                errors.append(f"invalid JSON: {relative}: {error}")
+            else:
+                for pointer, value in audit.json_tmp_references(document):
+                    errors.append(f"persistent JSON depends on disposable work: {relative}:{pointer}={value}")
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        continue
+    text_files += 1
+    for pattern, legacy in audit.LEGACY_REFERENCE_PATTERNS:
+        if pattern.search(text):
+            errors.append(f"legacy resource reference {legacy!r}: {relative}")
+
+print(json.dumps({
+    "status": "N21_STAGED_RESOURCE_RULES_PASS" if not errors else "N21_STAGED_RESOURCE_RULES_FAIL",
+    "scope": "Exact staged changed files only; not a rerun or PASS of the global audit",
+    "workdir": str(REPO),
+    "unchangedRuleSource": "ssot-resources/audit.py",
+    "stagedFiles": len(paths),
+    "jsonFiles": json_files,
+    "textFiles": text_files,
+    "failureCount": len(errors),
+    "errors": errors,
+    "firstGlobalAuditExit": 1,
+    "globalAcceptanceClaimed": False,
+}, ensure_ascii=True))
+raise SystemExit(bool(errors))

@@ -1,0 +1,99 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 140,
+  "printed_page": 133,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 140
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "24e0d92f72faee2ccb510d65aea27cbbdfaa7ce024ce2dd4e4eafca177abb548"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST source transcription from one page.grid.png opening; approval pending.",
+    "Printed page 133 was directly observed. The first line closes exercise 433.",
+    "N21 includes review exercises 434 and 435 and stops immediately before this page's h3 for unit 22.",
+    "Unit 22 prose and figures 42 / 43 are full-page boundary facts only, not assembled, adapted, approved or published.",
+    "Captions 42 and 43 share one printed row. High fractions each occupy one printed formula row."
+  ],
+  "errata": [],
+  "printed_lines": 16,
+  "figures": [
+    {
+      "id": "fig-42",
+      "label": "图 42",
+      "box": [
+        661,
+        2490,
+        555,
+        516
+      ]
+    },
+    {
+      "id": "fig-43",
+      "label": "图 43",
+      "box": [
+        1409,
+        2506,
+        542,
+        500
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 433 cont -->
+出关系 $p$.
+
+<!-- exhead -->
+复习题
+
+<!-- ex 434 -->
+434. 约分：
+а) $\frac{(b+4)^2-1}{b^3+125}$； б) $\frac{(p-5)^2-4}{27-p^3}$；
+в) $\frac{(x-2)^3+27}{x^3+1}$； г) $\frac{(a+1)^3+1}{a^3-1}$.
+
+<!-- ex 435 -->
+435. 计算：
+а) $8^{-3}\cdot(\frac{1}{2})^{-10}$； б) $81^5\cdot9^{-11}$；
+в) $1.5^3\cdot(\frac{3}{8})^{-1}+(-\frac{1}{3})^{-1}$.
+
+<!-- h3 -->
+22. 已知函数的反函数的概念
+
+<!-- p -->
+图42中用箭头号给出了集合 $A$ 和 $B$ 的元素之间的关系
+$p$. 这个关系是函数，因为集合 $A$ 的每一个元素都和集合 $B$ 的
+不多于一个元素相对应. $p$ 的相反关系，即集合 $B$ 和 $A$ 的元
+素之间的关系 $h$（图43）不是函数，因为在集合 $B$ 里，有一个元
+素（数2）对应于集合 $A$ 的元素多于一个（数5和6）.
+
+<!-- fig 图 42 box 661,2490,555,516 -->
+![图 42](figures/fig-42.png)
+
+<!-- cap 图 42 -->
+图 42
+
+<!-- fig 图 43 box 1409,2506,542,500 -->
+![图 43](figures/fig-43.png)
+
+<!-- cap 图 43 samerow -->
+图 43
+
+<!-- foot -->
+133

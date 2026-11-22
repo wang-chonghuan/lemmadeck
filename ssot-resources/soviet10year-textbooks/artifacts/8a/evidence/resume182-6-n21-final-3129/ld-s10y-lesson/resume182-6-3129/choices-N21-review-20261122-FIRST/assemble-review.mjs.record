@@ -1,0 +1,94 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const output = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/choices-N21-review-20261122-FIRST');
+const author = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/choices-N21-author-20261122-FIRST');
+if (process.cwd() !== repo) throw new Error('Wrong cwd');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const source = read(path.join(output, 'source-solutions.json'));
+const visible = read(path.join(output, 'visible-review.json'));
+const comparison = read(path.join(output, 'review-comparison.json'));
+const draft = read(path.join(author, 'draft.json'));
+const seed = read(path.join(author, 'seed.json'));
+if (sha(path.join(output, 'source-solutions.json')) !== visible.source_solution_file_sha256) {
+  throw new Error('Frozen source solutions changed');
+}
+if (sha(path.join(author, 'seed.json')) !== '13e1f94b5372a208a80490ad5c9fa09464b15c7df8bf903d9ab1941d7a5782c0'
+    || sha(path.join(author, 'draft.json')) !== 'd37780f5992a651eaf70ebe9407eb3885ca4bf0c4b64f28db3e99327553c6537') {
+  throw new Error('Author snapshot changed during review');
+}
+const sameSet = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+let checkedOptions = 0;
+const agreement = visible.question_reviews.map(review => {
+  const question = draft.questions.find(item => item.id === review.question_id);
+  if (!question || !sameSet(review.mathematics.correct, question.key.correct)) {
+    throw new Error(`Key disagreement at ${review.question_id}; preserve instead of normalizing`);
+  }
+  const optionChecks = review.mathematics.option_checks.map(check => {
+    const rationale = question.key.rationales.find(item => item.option_id === check.option_id);
+    if (!rationale || rationale.truth !== check.truth) throw new Error(`Truth disagreement ${question.id}/${check.option_id}`);
+    checkedOptions += 1;
+    return {
+      option_id: check.option_id,
+      independent_truth: check.truth,
+      author_truth: rationale.truth,
+      agreement: true,
+      independent_evidence: check.evidence,
+      semantic_rationale_comparison: comparison.rationale_comparison[question.id]
+    };
+  });
+  return {question_id: question.id, exact_complete_set_agrees: true, option_checks: optionChecks};
+});
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: comparison.seed_sha256,
+  draft_sha256: comparison.draft_sha256,
+  reviewer: comparison.reviewer,
+  source_reviews: comparison.source_reviews.map(item => ({
+    source_number: item.source_number,
+    independent_solution: source.sources.find(s => s.number === item.source_number).solution,
+    coverage: item.coverage
+  })),
+  figure_checks: comparison.figure_checks,
+  new_figure_reviews: comparison.new_figure_reviews,
+  question_reviews: visible.question_reviews.map(item => ({
+    ...item, ...(comparison.question_overrides[item.question_id] ?? {})
+  })),
+  outcome: comparison.outcome
+};
+// Mechanical assembly never derives mathematics; all judgments are frozen/manual.
+const writeNew = (name, data) => fs.writeFileSync(path.join(output, name), `${JSON.stringify(data, null, 2)}\n`, {flag: 'wx'});
+writeNew('review.json', review);
+writeNew('key-rationale-agreement.json', {
+  note: 'Semantic derivations manually compared after blind freeze; these equality checks are mechanical agreement, not proof.',
+  seed_sha256: comparison.seed_sha256,
+  draft_sha256: comparison.draft_sha256,
+  source_count: seed.exercises.length,
+  question_count: agreement.length,
+  option_count: checkedOptions,
+  questions: agreement
+});
+writeNew('freeze-receipt.json', {
+  recorded_at: new Date().toISOString(),
+  cwd: repo,
+  argv: process.argv,
+  phase_order: ['seed_prose_definitions_and_two_actual_images', 'source_solutions_written_and_hashed', 'jq_visible_projection', 'all_visible_options_and_fidelity_written_and_hashed', 'author_intent_key_coverage_comparison', 'native_review_assembly'],
+  source_freeze_sha256: sha(path.join(output, 'source-solutions.json')),
+  visible_freeze_sha256: sha(path.join(output, 'visible-review.json')),
+  seed_bytes_sha256: sha(path.join(author, 'seed.json')),
+  draft_bytes_sha256: sha(path.join(author, 'draft.json')),
+  seed_canonical_sha256: comparison.seed_sha256,
+  draft_canonical_sha256: comparison.draft_sha256,
+  review_bytes_sha256: sha(path.join(output, 'review.json')),
+  current_review_outcome: review.outcome,
+  changed_blind_judgments: [{
+    question_id: 'q07',
+    before: 'Visible central inverse task pass, with explicit pending check for declaration of original-arrow inference loss.',
+    after: 'revise: author internals declare only plotting loss and still claim all five arrows are read.',
+    changed_mathematics: false
+  }]
+});
+console.log(JSON.stringify({outcome: review.outcome, sources: review.source_reviews.length, questions: review.question_reviews.length, options: checkedOptions, review_sha256: sha(path.join(output, 'review.json'))}, null, 2));

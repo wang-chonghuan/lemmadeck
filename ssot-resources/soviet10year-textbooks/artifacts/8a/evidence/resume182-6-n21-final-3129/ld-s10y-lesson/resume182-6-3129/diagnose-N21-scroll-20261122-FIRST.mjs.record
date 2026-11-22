@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const directory = '.tmp/ld-s10y-lesson/resume182-6-3129/display-N21-text-20261122-FIRST';
+const read = file => JSON.parse(fs.readFileSync(file));
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const runtime = read(`${directory}/result.json`);
+const report = read(runtime.report.path);
+const selection = read(`${directory}/selection-FIRST/selection.record`);
+const selected = new Set(selection.selected.map(image => image.path));
+const viewport = runtime.deliveredHtmlByViewport.find(surface =>
+  surface.viewport.width === 390 && surface.surface === 'exercises');
+assert.equal(entry(viewport.dom.path).sha256, viewport.dom.sha256);
+const dom = read(viewport.dom.path);
+assert.equal(dom.internalClips.length, 0);
+const coverage = report.coverage.find(surface =>
+  surface.viewport.width === 390 && surface.surface === 'exercises');
+assert.equal(coverage.missingTargets.length, 0);
+const blocked = `${directory}/observations-batch2-FIRST/result.json`;
+assert.equal(read(blocked).status, 'BLOCKED');
+const image = name => report.screenshots.find(image => path.basename(image.path) === name);
+const initial = image('390-exercises-0056.png');
+const witness = image('390-exercises-0070.png');
+const regions = ['exercise-425', 'standard-425'].map(key => {
+  const end = dom.horizontalEnds.find(item => item.key === key);
+  assert.ok(end.formula && end.maximum === 20 && end.right === 20);
+  assert.equal(initial.scrollables.find(item => item.index === end.index).left, 0);
+  assert.equal(witness.scrollables.find(item => item.index === end.index).left, 20);
+  const formula = coverage.formulaCoverage.find(item => item.key === key && item.formulaIndex === 0);
+  assert.equal(formula.complete, true);
+  const selectedWitnesses = formula.screenshotPaths.filter(file => selected.has(file));
+  assert.ok(selectedWitnesses.includes(initial.path) && selectedWitnesses.includes(witness.path));
+  return { key, formulaIndex: 0, measuredContainer: end, formulaWidth: formula.width,
+    selectedWitnesses: selectedWitnesses.map(entry),
+    interpretation: 'Native horizontally scrollable container has both ends reachable; requires actual right-tail observation before visual resolution' };
+});
+const diagnosis = {
+  status: 'SCROLL_WINDOW_DIAGNOSIS_RIGHT_TAIL_OBSERVATION_PENDING',
+  workdir: repo,
+  originalBlockedResult: entry(blocked),
+  originalBlockedImage: entry(initial.path),
+  rightEndWitnessImage: entry(witness.path),
+  nativeDom: viewport.dom,
+  runtime: entry(`${directory}/result.json`),
+  selection: entry(`${directory}/selection-FIRST/selection.record`),
+  regions,
+  contentOrHtmlBytesChanged: false,
+  originalBlockPreserved: true,
+  parentImageViews: 0,
+  browserRendererValidatorCalls: 0,
+};
+const output = '.tmp/ld-s10y-lesson/resume182-6-3129/N21-scroll-diagnosis-20261122-FIRST.record';
+fs.writeFileSync(output, `${JSON.stringify(diagnosis, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: diagnosis.status, ...entry(output) }));

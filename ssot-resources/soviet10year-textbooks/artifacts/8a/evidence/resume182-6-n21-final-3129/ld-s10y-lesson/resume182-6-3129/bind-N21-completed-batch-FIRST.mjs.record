@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [surface, batch, agentId, resultSha, confirmedLifecycle, resolutionPath] = process.argv.slice(2);
+assert.ok(['text', 'choices'].includes(surface));
+assert.match(batch, /^[1-7]$/u);
+assert.match(agentId, /^[a-z0-9-]+$/u);
+assert.equal(confirmedLifecycle, 'observed_completed_and_closed');
+const directory = surface === 'text'
+  ? '.tmp/ld-s10y-lesson/resume182-6-3129/display-N21-text-20261122-FIRST'
+  : '.tmp/ld-s10y-choice/resume182-6-3129/display-N21-choices-20261122-FIRST';
+const assignment = `${directory}/selection-FIRST/batch${batch}.json`;
+const result = `${directory}/observations-batch${batch}-FIRST/result.json`;
+const bytes = fs.readFileSync(result);
+assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), resultSha);
+const lifecycle = `${directory}/observations-batch${batch}-FIRST/lifecycle.record`;
+const record = {
+  schema: 'stemrobin-182/observed-agent-lifecycle@1',
+  agentId,
+  assignment,
+  observedCompleted: true,
+  observedClosed: true,
+  completionEvidence: 'Parent received multi_agent_v1 completed status with this result path and digest',
+  closeEvidence: 'Parent subsequently called multi_agent_v1.close_agent and received previous_status.completed',
+  observedResult: { path: path.resolve(result), sha256: resultSha },
+  parentImageViews: 0,
+  repeatedReview: false,
+  historicalFailuresAndUnknownCostsPreserved: true,
+};
+fs.writeFileSync(lifecycle, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+const output = execFileSync(process.execPath, [
+  '.tmp/ld-s10y-lesson/resume182-6-3129/bind-N21-observation-LIFECYCLERECOVERY1.mjs',
+  assignment, result, agentId, `${directory}/bindings/batch${batch}.record`, lifecycle,
+  ...(resolutionPath ? [resolutionPath] : []),
+], { cwd: repo, encoding: 'utf8' });
+process.stdout.write(output);

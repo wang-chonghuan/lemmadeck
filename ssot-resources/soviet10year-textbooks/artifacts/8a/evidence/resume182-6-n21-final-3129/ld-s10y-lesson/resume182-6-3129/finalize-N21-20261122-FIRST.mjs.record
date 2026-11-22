@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const config = JSON.parse(await fs.readFile(process.argv[2], 'utf8'));
+let code = await fs.readFile(path.join(repo,
+  '.tmp/ld-s10y-lesson/resume182-6-3129/finalize-N19-FIRST.mjs'), 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once("const lesson = 'alg8-c3-s3-n19';", "const lesson = 'alg8-c4-s1-n21';");
+once('evidence/resume182-6-n19-final-3129', 'evidence/resume182-6-n21-final-3129');
+once('display-N19-text-FIRST', 'display-N21-text-20261122-FIRST');
+once('display-N19-choices-FIRST', 'display-N21-choices-20261122-FIRST');
+once('assert.equal(inheritedImages, 2);', `assert.equal(inheritedImages, ${config.inheritedImages});`);
+once('assert.equal(images.length, 46);', `assert.equal(images.length, ${config.expectedImages});`);
+once('selected_sources: 11, questions: 14, options: 55,',
+  `selected_sources: 11, questions: ${config.content.choiceQuestions}, options: ${config.content.options},`);
+once("role: 'Existing complete-source recognition snapshot; substantive approvals reused'",
+  "role: 'N21 independently reviewed recognition snapshot with disclosed capacity losses; unchanged approvals reused'");
+once('content: { proseBlocks: 13, exercises: 11, answers: 11, choiceQuestions: 14, options: 55 },',
+  `content: ${JSON.stringify(config.content)},`);
+once('contentApprovals: config.contentApprovals,',
+  `contentApprovals: Object.fromEntries(Object.entries(config.contentApprovals).map(([name, value]) =>
+    [name, typeof value === 'string' && value.startsWith('.tmp/') ? keep(value) : value])),
+    figureRegionCoverage: keep(config.figureRegionCoverage),`);
+once('historicalObservedImageViews: 8,',
+  'historicalObservedImageViews: 8, earlierBatch1ActualImagesIncludedOnce: true,');
+once('actualImageViewsThisContinuation: images.length - inheritedImages +\n      config.additionalFailedRegionImageViews,',
+  `actualImageViewsThisContinuation: ${config.actualImageViewsThisContinuation},`);
+once('recoveredKnownHistoricalReportBytes: 15174,', 'recoveredKnownHistoricalReportBytes: 0,');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

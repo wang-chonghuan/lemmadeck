@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const directory = `${base}/display-N21-text-20261122-FIRST`;
+const read = file => JSON.parse(fs.readFileSync(file));
+const entry = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: path.resolve(file), sha256: crypto.createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length };
+};
+const diagnosisPath = `${base}/N21-scroll-diagnosis-20261122-FIRST.record`;
+const diagnosis = read(diagnosisPath);
+assert.equal(diagnosis.status, 'SCROLL_WINDOW_DIAGNOSIS_RIGHT_TAIL_OBSERVATION_PENDING');
+assert.equal(entry(diagnosis.originalBlockedResult.path).sha256, diagnosis.originalBlockedResult.sha256);
+assert.equal(entry(diagnosis.runtime.path).sha256, diagnosis.runtime.sha256);
+assert.equal(entry(diagnosis.nativeDom.path).sha256, diagnosis.nativeDom.sha256);
+const witnessPath = `${directory}/observations-batch4-FIRST/result.json`;
+const witness = read(witnessPath);
+assert.equal(witness.status, 'PASS_VISIBLE_REGIONS_ONLY');
+const observed = witness.images.find(image => image.path === diagnosis.rightEndWitnessImage.path);
+assert.ok(observed);
+assert.equal(observed.sha256, diagnosis.rightEndWitnessImage.sha256);
+assert.equal(entry(observed.path).sha256, observed.sha256);
+const observations = [
+  { key: 'exercise-425', flag: 'exercise425', text: 'exercise425 right end: (5, 50)}', tail: '(5, 50)}' },
+  { key: 'standard-425', flag: 'standard425', text: 'standard425 right end: 5 \u2192 50', tail: '5 \u2192 50' },
+].map(item => {
+  assert.ok(observed.observedText.includes(item.text));
+  assert.equal(observed.rightTerminalGlyphsFullyVisibleInsideWindow[item.flag], true);
+  const region = diagnosis.regions.find(region => region.key === item.key);
+  assert.ok(region && region.measuredContainer.maximum === 20);
+  return { key: item.key, actualObservedText: item.text, observedTail: item.tail,
+    measuredCoverage: region, terminalGlyphsObservedComplete: true };
+});
+for (const surface of read(diagnosis.runtime.path).deliveredHtmlByViewport) {
+  assert.equal(entry(surface.deliveredHtml.path).sha256, surface.deliveredHtml.sha256);
+}
+const resolution = {
+  status: 'DISPLAY_PASS',
+  workdir: repo,
+  originalResult: diagnosis.originalBlockedResult,
+  contentOrHtmlBytesChanged: false,
+  originalFailurePreserved: true,
+  isolatedScreenshotApproved: false,
+  method: 'Actual separately observed horizontal right-tail windows plus native reachable-end coverage; original blocked result unchanged',
+  diagnosis: entry(diagnosisPath),
+  resolvedImages: [{
+    path: diagnosis.originalBlockedImage.path,
+    sha256: diagnosis.originalBlockedImage.sha256,
+    witnessResult: entry(witnessPath),
+    witnessImage: { path: observed.path, sha256: observed.sha256 },
+    observations,
+    observedTail: observations.map(item => item.tail).join('; '),
+    scope: 'Two 425 formula right tails only; untouched off-window regions remain unapproved in isolated views',
+  }],
+  parentImageViews: 0,
+  newBrowserRendererValidatorCalls: 0,
+  sourceMathAnswersAndFigurePassesRepeated: false,
+};
+const output = `${base}/N21-scroll-resolution-20261122-FIRST.record`;
+fs.writeFileSync(output, `${JSON.stringify(resolution, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: resolution.status, ...entry(output) }));

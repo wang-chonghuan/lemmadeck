@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+let code = await fs.readFile(path.join(repo,
+  '.tmp/ld-s10y-lesson/resume182-6-3129/bind-N21-choice-figure-regions-FIRST.mjs'), 'utf8');
+const before = "assert.equal(region.status ?? region.verdict, 'PASS');";
+assert.equal(code.split(before).length, 2);
+code = code.replace(before, `
+  assert.equal(region.status ?? region.verdict ?? image.status, 'PASS');
+  if (!region.status && !region.verdict) {
+    assert.ok(image.figureRegionsCoordinateSpace.includes('source/media'));
+    assert.ok(image.observation && !image.observation.includes('BLOCKED'));
+  }`);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

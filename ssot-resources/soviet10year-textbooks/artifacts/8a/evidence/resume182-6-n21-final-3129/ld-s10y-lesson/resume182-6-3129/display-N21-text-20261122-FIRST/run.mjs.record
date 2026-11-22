@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), root);
+const source = path.join(root, '.tmp/ld-s10y-lesson/resume182-6-3129/display-N20-text-FIRST/run.mjs');
+let code = await readFile(source, 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+code = code.replaceAll('display-N20-text-FIRST', 'display-N21-text-20261122-FIRST');
+code = code.replaceAll('alg8-c3-s3-n20', 'alg8-c4-s1-n21');
+once("values['lesson.json'].prose.length, 11", "values['lesson.json'].prose.length, 38");
+once("values['exercises.json'].count, 14", "values['exercises.json'].count, 11");
+once("length: 14 }, (_, index) => String(309 + index)", "length: 11 }, (_, index) => String(425 + index)");
+once("assert.deepEqual(figures, ['fig-32']);",
+  "assert.deepEqual(figures, ['fig-34', 'fig-35', 'fig-36', 'fig-37', 'fig-38', 'fig-39', 'fig-40', 'fig-41']);");
+once("'render-N20-FIRST/render/8a/modern-us-neutral'",
+  "'render-N21-20261122-FIRST/render/8a/modern-us-neutral'");
+once("schema: 'resume182-6-n20-reused-n4-offline-display@1'",
+  "schema: 'resume182-6-n21-reused-n4-offline-display@1'");
+const start = code.indexOf("replaceOnce('  const baseCode =', `");
+const end = code.indexOf("if (process.argv.includes('--recover-formula-padding'))", start);
+assert.ok(start > 0 && end > start);
+code = code.slice(0, start) + code.slice(end);
+once('current N20 pins', 'current N21 pins');
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

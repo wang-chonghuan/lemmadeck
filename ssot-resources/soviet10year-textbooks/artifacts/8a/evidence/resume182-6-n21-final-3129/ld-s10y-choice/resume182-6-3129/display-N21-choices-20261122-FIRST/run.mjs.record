@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+let code = await fs.readFile(path.join(repo,
+  '.tmp/ld-s10y-choice/resume182-6-3129/display-N20-choices-FIRST/run.mjs'), 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+code = code.replaceAll('display-N20-choices-FIRST', 'display-N21-choices-20261122-FIRST');
+code = code.replaceAll('alg8-c3-s3-n20', 'alg8-c4-s1-n21');
+code = code.replaceAll('resume182-6-n20-choices', 'resume182-6-n21-choices');
+once("render-N20-choices-FIRST', ID, 'choices.html'",
+  "render-N21-choices-20261122-FIRST/html', ID, 'choices.html'");
+once('Array.from({ length: 14 }, (_, index) => String(309 + index))',
+  'Array.from({ length: 11 }, (_, index) => String(425 + index))');
+once('assert.ok(questionCount >= 14);',
+  'assert.equal(questionCount, 23); assert.equal(optionCount, 93);');
+once("assert.deepEqual(usedFigures, ['fig-32']);",
+  "assert.deepEqual(usedFigures, ['fig-41']);");
+const previewStart = code.indexOf('  const preview = JSON.parse(');
+const previewEnd = code.indexOf("  figureContracts['fig-32'].labels = approvedLabels;", previewStart);
+assert.ok(previewStart > 0 && previewEnd > previewStart);
+code = code.slice(0, previewStart) + code.slice(
+  previewEnd + "  figureContracts['fig-32'].labels = approvedLabels;".length);
+const diagnosisStart = code.indexOf('  report.leakageDiagnosis = {');
+const diagnosisEnd = code.indexOf('  report.projection = {', diagnosisStart);
+assert.ok(diagnosisStart > 0 && diagnosisEnd > diagnosisStart);
+code = code.slice(0, diagnosisStart) + `
+  report.bindingBoundary = {
+    currentLesson: 'alg8-c4-s1-n21',
+    nativeChoiceHtmlOnly: true,
+    originalN20FailuresRemainAtTheirOwnPaths: true,
+    sourceMathAnswersFiguresAndPreviousScreenshotsRepeated: false,
+    semanticReview: 'Existing affected-disclosure PASS reused; lost tasks not restored',
+  };
+` + code.slice(diagnosisEnd);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

@@ -1,5 +1,236 @@
 # 当前开发状态
 
+### 182-6 2026-11-22 06:45Z N21窄暂存资源规则PASS，准备普通commit/push
+
+- 边界RECOVERY2实际exit0；首版offline-display实际251221字节
+  保存SHA 0c2d90f567ffe8c5cba80447893f003e992b5ad3adeb80c07e4c1cb3c5245b39，
+  当前canonical SHA 66b67bf222e02b7439c172668fc4797d19a941a231b70053c4f0ffbe7fee8786。
+  仅移除443个历史路径字段，388实际资源引用及86已观图不变；
+  两个非临时HTML均与原文件逐字节相同，原文件不删/不暂存。
+- 按未修改ssot-resources/audit.py规则检查真实index中454个N21文件，
+  53JSON/359文本，06:44:51.041Z--06:44:58.465Z实际exit0/0失败。
+  这只证明窄提交资源边界，不是全局audit PASS或完整工单验收；
+  全局原exit1/7428非空FAIL及所有历史问题保留。
+- 窄暂存脚本首轮已暂存正确范围并完成秘密扫描，末尾diff--check
+  因原始page.md的18处尾空格exit2，父脚本exit1；原源PASS字节不改，
+  明确保留此诊断，不把原源warn包装为diff全绿。不含页级重复图、
+  原临时HTML、技能脏改、7a未完产物或ticket.json。
+- 当前fetch已实际结束，HEAD/FETCH_HEAD同为
+  4d8d02830a11b400fdf68e01534a82d9261c270e，未switch/rebase/force。
+  保存实际stage失败/资源scope成功回执并只核新增记录后，
+  普通commit/push原codex/STEMROBIN-182-textbooks；未执行前不计已推。
+- 8a N1只限定读取当前六源/六选择/21选项、0源图/新图；
+  reviewer.kind仍self_review，缺真正AC3独审，未新生产或重看旧截图。
+  一次目录递归列表含历史包输出截断原记录保留，后续排除history。
+  旧暂停聊天/审者/原树/锁/备份不动，UNKNOWN费用不清零，
+  finish=review，无DB/Plane写、合并、部署、关单、正式handoff。
+
+### 182-6 2026-11-22 N21资源边界恢复接续，首轮全局失败保留
+
+- 本轮只在原3129显式绝对workdir接续，未create/attach/换树，
+  未回旧N13 bootstrap。顶部06:33Z绑定及已审86图直接复用。
+- 首轮全局audit实际exit1，06:34:16.209Z--06:35:44.705Z：
+  stdout 0字节、stderr 2514441字节/7428条非空FAIL/7432换行；
+  摘要原7432条FAIL计数纠正，原receipt及日志保留，
+  不重跑全局扫描、不读全文、不声称全局或整工单PASS。
+- 已从原stderr限定读取N21相关461条：16条页级重复图，
+  443条offline-display历史路径字段，2条offline/text.html与
+  offline/exercises.html临时文件名。后两条不是legacy-reference；
+  接续摘要该分类有误，原摘要与日志不改。
+- 只修N21交付元数据：首版绑定保存实际同字节.record，
+  当前JSON移除历史disposable字段但保留已保存资源绑定；
+  HTML内容不改，仅新增同字节非临时文件名，原HTML与页图原地保留
+  且不暂存。按未修改auditor规则检查窄提交集合，历史全局失败另记。
+- 本轮一次只读JSON摘要replacer递归RangeError/exit1及一次
+  不存在handoff.md的rg/exit2原工具记录保留；不当内容失败。
+  首次边界修复因7432/7428计数断言exit1，产品写入前停止；
+  原脚本和失败保留，RECOVERY2仅修该断言，不重跑全局audit。
+  一次过宽usage关键词查询输出截断也保留，后续限定字段/行数。
+  未commit/push、未新增看图/浏览器/源审/数学审，费用UNKNOWN；
+  旧树/锁/备份/暂停任务/失败/计数不动，finish=review。
+
+### 182-6 2026-11-22 06:33Z N21完整离线课绑定成功，待窄普通提交
+
+- N21最终绑定实际exit0：06:33:13.942Z--06:33:14.165Z，
+  offline-display SHA 0c2d90f567ffe8c5cba80447893f003e992b5ad3adeb80c07e4c1cb3c5245b39。
+  38 prose items/28渲染段落、425--435共11书面题、11标准答案
+  （2auto/9ungraded）、23选择题/93选项、八图；正文/习题/选择
+  三离线面均验证1440x960和390x844。仅离线内容，不当APP/DB验收。
+- 86所选图已全部实际观察并绑定：此前batch1八图直接复用，
+  本次接续新增78图/0父开图/0重开。12批真实观察者均已completed
+  后close；旧暂停聊天/审者和6106工作不动。所有费用/token UNKNOWN。
+- 344所需证据文件实际保存32655507字节，三最终HTML
+  2746027字节；现有最终候选同字节不重复复制。只保存N21所需新
+  显示、报告/失败及最终绑定，未迁N13/未知旧字节/整个旧包/PDF/依赖。
+  最终receipt记录388去重引用；旧失败、计数和原REVISE原地保留。
+- 选择0132观察者将媒体source y误读作PNG y，其原记录保留并明确
+  排除为整图批准依据；桌面完整图及手机0016左窗/0145右窗均实看，
+  source左右358宽、重叠76，共覆盖640x400，未重开0132或其它PASS图。
+  新绑定器首次矩形层verdict缺字段exit1保留，RECOVERY1只接图片层
+  PASS及明确source/media坐标声明，exit0；没有新数学/像素审查。
+- q07/428作图与原箭头到点集推断损失仅披露，未声称恢复；
+  431端点UNKNOWN、原fig37墨斑/未准cleanCrop继续保留。
+  原源、文字、八图、434(c)答案及选择实质PASS未重跑。
+- 现在只跑资源边界检查、当前远端同步及N21窄暂存/普通
+  commit/push原分支；其它技能/7a/N21工作模板等脏改不进入。
+  成功后才续8a N1六源/六选择/21选项的缺失真正独审。
+  未做整工单机械防线、APP/DB验收或正式handoff；finish=review，
+  无DB/Plane写、force、合并、部署、关单、新聊天或新树。
+
+### 182-6 2026-11-22 06:21Z 本聊天持续监督检查点：同树推进，无审批等待
+
+- 当前仅原3129显式绝对workdir，未回旧bootstrap或重试attach/create。
+  本轮所有有限父命令已结束；两视口临时显示浏览器/contexts/server
+  已真实关闭。接续未卡在旧attach错误，旧失败/消息不删。
+- N21文字52图及选择前三批24图已真实观察并绑定，共76/86所选图；
+  仅剩选择batch4八图及batch5两图。新观察者Copernicus
+  01a201ea-bd54-7021-8dcc-c4a4796b1cd2仅本批，不是旧暂停审者；
+  所有先前本轮观察者completed后关闭，旧暂停任务/聊天不动。
+- 父0重看图，未重source/文字/八图/答案/选择实质PASS；
+  q07真实修复披露损失与原REVISE保留，431端点HOLD保留。
+  425原手机截断BLOCKED不改，已由真正右端见证与原生滚动覆盖
+  另存联合解决记录，不改HTML/数学，不当成恢复原未知字节。
+- 当前无需人类普通修复审批；最后观察后续最终绑定和窄普通
+  commit/push原codex/STEMROBIN-182-textbooks，再续N1缺失独审。
+  本检查点不计完整课、未commit/push，无DB/Plane/force/合并/
+  部署/正式handoff，finish=review；旧树、锁、备份与UNKNOWN费用全留。
+
+### 182-6 2026-11-22 06:14Z N21文字52图已绑定，选择续首次显示
+
+- 正文/习题七批52所选图全部真实观察、completed后close并绑定；
+  原batch2 BLOCKED和两处右端联合解决记录均保留，无图重开、
+  无新renderer/browser/validator，不把单裁窗当整图批准。
+- 选择batch1八图实际PASS后close并绑定；当前Anscombe
+  01a201e3-f1ef-7530-bd64-4e7e86c09d34只观察batch2。
+  选择尚余26未观图与最终绑定/窄commit/push，不计整课完成。
+- 已只读确认8a N9在不同文件名evidence/display.json有
+  OFFLINE_DISPLAY_PASS（0书面题/0图）；不因为没有同名
+  offline-display.json重复生产/审查或强造答案/选择题。
+  7a N19的399/404/405a源缺式有旧两源页独立诊断，直接复用HOLD。
+- 下一有源候选8a N1原选择review标self_review，不满足本单AC3，
+  不是可继承的独审PASS。N21完整课窄普通push后只补此真实缺口，
+  不重作者、不借父已有键代新盲解、不在N21未完前启动新课生产。
+- 保留所有技能/未完模板/其它课脏改，N21暂存脚本仅认最终验证
+  文件及对应新源页/八图/显示证据。未commit/push/新聊天/新树/
+  attach/DB/Plane写/合并/部署/正式handoff，finish=review。
+
+### 182-6 2026-11-22 05:59Z N21选择PASS已收取，正文显示续缺口
+
+- 原Singer已实际completed后关闭；q07五字段修复实质PASS与单次
+  native validate exit0（05:47:36.002Z--05:47:36.045Z）已收取。
+  affected-result SHA bf003424ccde051019d5c20144262e975868baaffb963ea436199ba23d76b1bb；
+  review SHA 449f0ac18b89547cbf87610b0a3d386eaa9b4c2d873ac9db3ec536bef436c520。
+  原FIRST REVISE、两次累计validate、1局部修改与UNKNOWN费用保留；
+  不重跑23view/93选项/11源解/2图。原生retain exit0已保留改后包。
+- 选择HTML首次单独render exit0，未渲染旧正文/习题；首次离线显示
+  两视口runtime exit0、484检查PASS/0FAIL，0外网/0页面错误，
+  browser/context/server已关闭。145保存图中选34，缺失目标0；
+  五批选择实看尚未开始，不能计选择显示PASS。
+- 正文/习题batch1--4共32图已实际观察并绑定。batch2原BLOCKED
+  结果不改：两个425长公式在初始水平窗口右端不可见。
+  native DOM明确两容器maximum/right=20、无internalClips；
+  batch4只首次看已选0070右端图，实际终端(5, 50)}与5→50完整。
+  联合原窗口、真实右端观察和测得覆盖解决显示缺口；原图不重开，
+  HTML/数学字节不改，不把裁窗单图包装为整式/整图批准。
+- Confucius、Franklin、Erdos、Noether均由真实completed后close，
+  仅当前已完成观察者释放资源，旧暂停审者保持。当前Hegel
+  01a201d5-fbe5-70d0-ae2f-2c609189df18仅看batch5；父0图，
+  全部新批每8图/0重开，UNKNOWN费用不清零。剩余文字5--7批、
+  选择五批和最终绑定/窄commit/push未决。
+- 远端fetch已结束，HEAD/FETCH_HEAD仍
+  4d8d02830a11b400fdf68e01534a82d9261c270e；无switch/force。
+  本轮几次未生成观察目录rg exit2、错误render.py路径rg exit2、
+  只读过滤无匹配exit1、小范围输出截断及一次apply_patch上下文失败
+  保留；仅恢复缺失读/字段适配，不当内容失败或批准。
+  batch1生命周期暂加记账字段后发现会漂移，已恢复本人刚加字段前
+  实际字节，SHA ec9796b49a8b4003b3e3bee643f70de371964aa7ce459ae70535ce28e4b0ab79；
+  原已绑定记录与已审观察均不改，不声称未知字节恢复。
+- 后续只完成当前N21再窄普通commit/push原分支，然后续同范围有源课；
+  7a N19/N20已有源和独审现代文字模板，仅只读确认未续生产。
+  所有旧树/锁/备份/6106暂停工作/技能与未完资源脏改原地保留，
+  仅6a/7a/8a、finish=review，0DB/Plane写、合并、部署、正式handoff。
+
+### 182-6 2026-11-22 原3129接续：N21答案已收口，仅补未观显示
+
+- 本次按最新接续摘要及顶部纠偏，只在原3129显式绝对workdir生产，
+  不重试attach/create、不回旧N13 bootstrap。实际HEAD仍
+  4d8d02830a11b400fdf68e01534a82d9261c270e，dirty与index原状保留。
+- 实际收取答案native finalize回执：2026-11-22T04:58:07.103Z
+  至04:58:07.409Z，exit0；11答案/2auto/9ungraded已ready。
+  不再把答案finalize写成未决，不重跑源/现代文字/八图/答案PASS。
+- Singer原任务已保存q07/428五字段披露修复实质PASS；校验及最终
+  approved仍待其真实完成回执。23view/93选项及数学不变直接复用；
+  作图与原箭头到点集推断能力损失已披露，不声称恢复。431端点HOLD保留。
+- 已实际收到6106 Dirac/Euclid暂停回执：前者3图、validate0/
+  render FIRST2/repair0，无所属进程/浏览器；后者32任务未冻结、
+  67未决、9命令已结束/0图，无所属进程/浏览器。原地保留所有工作，
+  不关闭、唤醒、迁移或继续这两暂停任务。
+- N21显示batch1原Confucius实际completed后close成功；8图/0重开
+  PASS仅限已见区域。batch2首次spawn失败agent thread limit reached
+  保留，释放这位已完成观察者后第二次spawn成功：
+  Franklin 01a201cb-54c4-7270-9005-51c552b6636b。旧暂停审者未动。
+  只补未看2--7批，父不重开batch1；未观/未绑定不计整课。
+- 本次错误查询从3129找6106 scratch返回rg exit2（不存在），保留；
+  不为路径查询失败重跑任何生产。先前超大result全文读取截断、
+  attach错误、6106误建、计数和未知费用均保留。仅6a/7a/8a，
+  finish=review，无DB/Plane写、force、合并、部署、关单或正式handoff。
+
+### 182-6 2026-11-22 最新路由纠偏3129，6106新增工作暂停保留
+
+- 最新直接用户纠偏已说明：11月20日旧heartbeat中的create/
+  只迁N13/新树生产，不是11月22日新授权。当前只续原3129
+  的N21未完阶段，今后压缩不读回旧bootstrap；N13已完整交付，
+  不重复190引用/17报告/74图接收门槛，不再create或换树。
+- 本次先前错误路径实际创建6106成功并又核N13全齐，
+  0文件/0字节迁移，但属于重复检查，不能包装为新增批准。
+  6106生成alg8-c1-ex三份draft（33题/123公式外标号），
+  native adapt-prepare/答案prepare/图context各一次；标号FIRST
+  第71题断言失败在产品写入前，改公式外同行识别后成功。
+  6106的未执行答案作者脚本及所有draft、失败/计数/未知费用原地保留，
+  不删除、不迁移、不包装为恢复原N21。
+- Dirac 01a201c2-6001-73a2-8b84-de901ea81bef 与
+  Euclid 01a201c2-dc72-71e0-9e7e-ec49ed060fc1 已发送interrupt
+  安全暂停；尚待实际暂停回执，不能把发送指令当全部已停。
+  没有唤醒、关闭或替换旧暂停审者。
+- 按最新限定仅一次官方attach_worktree(path=原3129)，实际返回
+  {"type":"error","message":"Server overloaded; retry later."}。
+  保留错误，不重复attach、不再create、不等待普通授权；
+  应用cwd是否校正未确认，全部后续生产命令显式workdir：
+  /Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck。
+  当前ticket.worktree已是此路径，HEAD仍4d8d02830；
+  本次不switch、不迁移、不重装技能/依赖、不重hash旧整包。
+- N21八图/文本/434(c)批准直接复用，原Singer首次审查结果
+  已在原scratch。只消费原结果，真实q07/428 REVISE仅修受影响
+  题面与审查，未决内容不称PASS。仅续未完成答案native、
+  选择未决项、缺失显示，再约四完整课窄普通commit/push原分支。
+  仅6a/7a/8a、finish=review，不写DB/Plane，不force/合并/部署。
+  所有6106/7262/其它原树、ignored/未提交、锁/refs/备份、
+  失败/费用/未决消息均保留，本行不是新课交付。
+
+### 182-6 2026-11-22 原3129即时纠偏，收取N21原结果并续缺口
+
+- 最新人类经监督直接明确：仅原3129生产，HEAD实际仍
+  4d8d02830a11b400fdf68e01534a82d9261c270e，不再create/attach/
+  初始化/迁移/换树，不读回N13，不等待失效bootstrap门槛。
+  前次7262创建及询问属于实际偏离，现停止该路径；7262与全部
+  旧树/refs/锁/备份/失败及未知字节原地保留，不删除或包装成恢复。
+- N21八图首次实质独审和现代finalize已有有效结果，直接复用，
+  不重复源/文字/图/renderer或旧截图PASS。图41归428，不是435。
+  434(c)唯一常数修正原Mill5受影响独审PASS实际收取，
+  32未变PASS+1局部PASS，共33响应单元/11题；原REVISE不改。
+- 原Kierkegaard选择作者交付已收：11源425--435，23题，
+  19single/4multiple；首次native结构检查exit0，不当语义PASS。
+  原作者实际completed后关闭，原四暂停审者未动。新Singer
+  01a2019d-5ec6-7d70-8eda-4ccc26825b41只做N21选择首次盲审，
+  源解冻结后才看view，再冻结全部选项判断，最后比作者键。
+  431直径端点窄HOLD保留，不猜约定或阻断其它有源课。
+- 父仅同树提升已批准434(c)答案并续首次native finalize/离线显示。
+  本次答案prepare路径名probe失败exit1保留，正确回执为
+  answers-prepare-N21-20261122-FIRST；未重跑已成功prepare。
+  所有命令显式3129绝对workdir，沿用当前已接入技能；无重装、
+  DB/Plane写、主动同伴消息、force/合并/部署/关单或正式handoff。
+  仅6a/7a/8a、finish=review，约四完整课窄commit/push后继续。
+
 ### 182-6 2026-11-22 04:15Z 原3129恢复，只续N21未完阶段
 
 - 最新直接人类经监督明确恢复本会话，覆盖此前生产暂停；唯一生产

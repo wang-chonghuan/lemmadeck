@@ -1,0 +1,74 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/choices-N21-review-20261122-FIRST');
+const author = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/choices-N21-author-20261122-FIRST');
+if (process.cwd() !== repo) throw new Error('Wrong cwd');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const inputs = [
+  path.join(author, 'seed.json'),
+  path.join(author, 'draft.json'),
+  path.join(root, 'review.json'),
+  path.join(repo, '.agents/skills/ld-s10y-choice/scripts/validate.py'),
+  path.join(repo, '.agents/skills/ld-s10y-choice/SKILL.md'),
+  path.join(repo, '.agents/skills/ld-s10y-choice/references/review.md'),
+  path.join(repo, '.agents/skills/ld-s10y-choice/references/contract.md'),
+  path.join(repo, '.agents/skills/ld-s10y-image/SKILL.md'),
+  path.join(repo, '.claude/skills/ld-s10y-lesson/references/production-resume.md')
+];
+const bindings = () => inputs.map(file => ({path: file, sha256: sha(file)}));
+const before = bindings();
+const argv = [
+  'python3',
+  path.join(repo, '.agents/skills/ld-s10y-choice/scripts/validate.py'),
+  '--repo', repo,
+  '--seed', path.join(author, 'seed.json'),
+  '--draft', path.join(author, 'draft.json'),
+  '--review', path.join(root, 'review.json')
+];
+const startedAt = new Date().toISOString();
+const startNs = process.hrtime.bigint();
+fs.writeFileSync(path.join(root, 'validation-first-start.json'), `${JSON.stringify({
+  invocation: 1, cwd: repo, argv, started_at: startedAt,
+  environment_overrides: {PYTHONDONTWRITEBYTECODE: '1'},
+  input_hashes_before: before,
+  no_previous_native_validation_in_this_review: true
+}, null, 2)}\n`, {flag: 'wx'});
+const run = spawnSync(argv[0], argv.slice(1), {
+  cwd: repo, env: {...process.env, PYTHONDONTWRITEBYTECODE: '1'},
+  encoding: 'utf8', maxBuffer: 16 * 1024 * 1024
+});
+const endedAt = new Date().toISOString();
+const stdout = path.join(root, 'validation-first.stdout');
+const stderr = path.join(root, 'validation-first.stderr');
+fs.writeFileSync(stdout, run.stdout ?? '', {flag: 'wx'});
+fs.writeFileSync(stderr, run.stderr ?? '', {flag: 'wx'});
+const receipt = {
+  invocation: 1, cwd: repo, workdir: repo, argv,
+  started_at: startedAt, ended_at: endedAt,
+  duration_seconds: Number(process.hrtime.bigint() - startNs) / 1e9,
+  exit_code: run.status, signal: run.signal, execution_error: run.error?.message ?? null,
+  streams: {
+    stdout: {path: stdout, sha256: sha(stdout), bytes: fs.statSync(stdout).size},
+    stderr: {path: stderr, sha256: sha(stderr), bytes: fs.statSync(stderr).size}
+  },
+  input_hashes_before: before,
+  input_hashes_after: bindings(),
+  seed_canonical_sha256: 'abcc3e4a8d0763763966890f56e7c22c9a4578553297a2b450bb410523da1a46',
+  draft_canonical_sha256: '23c0b49d15fdb812f7f869b3e2d859e2cfd124bf517fa7b38ae9c6ea17f4c0f1',
+  review_bytes_sha256: sha(path.join(root, 'review.json')),
+  review_outcome: 'revise',
+  native_validator_invocations: 1,
+  retries: 0
+};
+receipt.input_hashes_unchanged = JSON.stringify(receipt.input_hashes_before) === JSON.stringify(receipt.input_hashes_after);
+fs.writeFileSync(path.join(root, 'validation-first.json'), `${JSON.stringify(receipt, null, 2)}\n`, {flag: 'wx'});
+console.log(JSON.stringify(receipt, null, 2));
+console.log('NATIVE STDOUT');
+console.log(run.stdout ?? '');
+console.log('NATIVE STDERR');
+console.log(run.stderr ?? '');
+process.exitCode = run.status ?? 1;

@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [assignmentPath, resultPath, agentId, outputPath, lifecyclePath, resolutionPath] = process.argv.slice(2);
+assert.ok(lifecyclePath);
+const absolute = path.resolve(lifecyclePath);
+assert.ok(absolute.startsWith(`${repo}/.tmp/`));
+const bytes = fs.readFileSync(absolute);
+const lifecycle = JSON.parse(bytes);
+assert.equal(lifecycle.agentId, agentId);
+assert.equal(lifecycle.observedCompleted, true);
+assert.equal(lifecycle.observedClosed, true);
+assert.ok(lifecycle.completionEvidence && lifecycle.closeEvidence);
+const reference = {
+  path: absolute,
+  sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+  bytes: bytes.length,
+};
+let code = fs.readFileSync(
+  '.tmp/ld-s10y-lesson/resume182-6-3129/bind-observation-FIRST.mjs', 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once('const images = result.images ?? result.observations;',
+  'const images = result.images ?? result.observations ?? result.entries;');
+once("['PASS', 'DISPLAY_PASS', 'OFFLINE_DISPLAY_PASS'].includes(result.status)",
+  "['PASS', 'DISPLAY_PASS', 'OFFLINE_DISPLAY_PASS', 'PASS_VISIBLE_REGIONS_ONLY'].includes(result.status)");
+once("['PASS', 'DISPLAY_PASS', 'pass'].includes(verdict)",
+  "['PASS', 'DISPLAY_PASS', 'pass', 'PASS_VISIBLE_REGIONS_ONLY'].includes(verdict)");
+once("if (observed.visualObservation !== 'PASS') {",
+  "if (!['PASS', 'DISPLAY_PASS', 'PASS_VISIBLE_REGIONS_ONLY'].includes(observed.status ?? observed.verdict ?? observed.visualObservation)) {");
+once("assert.equal(observed.visualObservation, 'BLOCKED');",
+  "assert.equal(observed.status ?? observed.verdict ?? observed.visualObservation, 'BLOCKED');");
+once("method: 'Existing N18 immutable assignment/result/image binding; no repeated visual review',",
+  "method: 'N21 existing immutable assignment/result/image binding; actual completed-and-closed lifecycle; no repeated visual review',");
+once('agentCompletedAndClosed: true,',
+  `agentCompletedAndClosed: true, observerLifecycle: ${JSON.stringify(reference)},
+    inheritedObservation: ${lifecycle.inheritedObservationFromSuppliedCheckpoint === true},`);
+process.argv = [...process.argv.slice(0, 2), assignmentPath, resultPath, agentId, outputPath,
+  ...(resolutionPath ? [resolutionPath] : [])];
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

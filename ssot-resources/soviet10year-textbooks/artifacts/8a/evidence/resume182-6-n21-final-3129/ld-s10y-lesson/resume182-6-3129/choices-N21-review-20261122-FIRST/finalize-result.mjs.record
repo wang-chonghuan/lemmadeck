@@ -1,0 +1,70 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129/choices-N21-review-20261122-FIRST');
+if (process.cwd() !== repo) throw new Error('Wrong cwd');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const review = read('review.json');
+const receipt = read('validation-first.json');
+const agreement = read('key-rationale-agreement.json');
+const usage = read('usage.json');
+if (review.outcome !== 'revise' || receipt.exit_code !== 3 || !receipt.input_hashes_unchanged) throw new Error('Unexpected validation state');
+if (sha(path.join(root, 'review.json')) !== receipt.review_bytes_sha256) throw new Error('Validated review changed');
+if (agreement.question_count !== 23 || agreement.option_count !== 93) throw new Error('Incomplete option review');
+const evidenceNames = [
+  'review.json','review.md','usage.json','source-solutions.json','visible-review.json',
+  'review-comparison.json','key-rationale-agreement.json','freeze-receipt.json',
+  'validation-first-start.json','validation-first.json','validation-first.stdout',
+  'validation-first.stderr','assemble-review.mjs','run-first-validation.mjs',
+  'finalize-result.mjs'
+];
+const result = {
+  schema: 'independent-choice-review-result-v1',
+  completed_at: new Date().toISOString(),
+  cwd: repo,
+  write_directory: root,
+  scope: usage.scope,
+  reviewer: review.reviewer,
+  outcome: review.outcome,
+  approved: false,
+  mechanical_checks: 'pass',
+  native_first_exit_code: receipt.exit_code,
+  seed_canonical_sha256: review.seed_sha256,
+  draft_canonical_sha256: review.draft_sha256,
+  review_bytes_sha256: receipt.review_bytes_sha256,
+  source_count: review.source_reviews.length,
+  question_count: review.question_reviews.length,
+  option_count: agreement.option_count,
+  mathematics_pass_questions: review.question_reviews.filter(q => q.mathematics.verdict === 'pass').length,
+  revision_sources: ['428'],
+  revision_questions: ['q07'],
+  blocking_sources: [],
+  findings: [{
+    source_number: '428', question_id: 'q07', verdict: 'revise',
+    type: 'undeclared_source_task_assessment_loss',
+    evidence: 'Every option supplies the same correct original f graph, so arrow-to-point inference is unassessed. Intent still claims all five actual arrows are read; limitations/coverage only disclose loss of plotting.',
+    resolution_scope: 'Explicitly declare the supplied original-graph inference loss and narrow intent/coverage, or make original-graph interpretation discriminate candidates. No figure rerender or full figure review needed.',
+    mathematics_defect: false
+  }],
+  endpoint_uncertainty: {
+    source_number: '431',
+    endpoint_membership: 'UNKNOWN',
+    full_endpoint_specified_graph: 'DEFERRED',
+    narrow_question_id: 'q10',
+    narrow_question_verdict: 'pass',
+    evidence: 'Stem excludes diameter endpoints. Right arc interior is fixed; inverse x=1 has y=+sqrt8 and -sqrt8 regardless of endpoint membership.',
+    blocks_unrelated_sources: false
+  },
+  counters: usage.counters,
+  costs: usage.costs,
+  original_native_failure_retained: true,
+  draft_edited: false,
+  evidence: evidenceNames.map(name => ({path: path.join(root, name), sha256: sha(path.join(root, name))})),
+  summary: 'REVISE for one scoped q07/428 disclosure loss; all 23 mathematical checks and 93 option truths match author. Native mechanical checks passed, first exit 3. Source 431 endpoints remain UNKNOWN without blocking the explicitly restricted q10.',
+  handoff: 'Text/evidence paths and hashes only; no image-bearing history or claim of source endpoint resolution.'
+};
+fs.writeFileSync(path.join(root, 'result.json'), `${JSON.stringify(result, null, 2)}\n`, {flag: 'wx'});
+console.log(JSON.stringify({outcome: result.outcome, first_validation_exit: result.native_first_exit_code, result_path: path.join(root, 'result.json'), result_sha256: sha(path.join(root, 'result.json')), review_path: path.join(root, 'review.json'), review_sha256: receipt.review_bytes_sha256, sources: result.source_count, questions: result.question_count, options: result.option_count}, null, 2));

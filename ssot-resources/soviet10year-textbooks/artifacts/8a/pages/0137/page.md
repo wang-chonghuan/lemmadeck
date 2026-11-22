@@ -1,0 +1,94 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 137,
+  "printed_page": 130,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 137
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "b7257bbed3995abb6a302f603a1f7817dcd3fd08c949c6b4ccff1ff21d6cf5d9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription from one page.grid.png opening; independent source approval pending.",
+    "Printed page 130 was observed in pixels; footer dots and emphasis underlines are decoration.",
+    "Caption 40 shares the last row of its preceding prose block.",
+    "The final prose paragraph is open onto physical page 138.",
+    "All printed mathematical statements are copied, not independently solved or corrected."
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [
+    {
+      "id": "fig-40",
+      "label": "图 40",
+      "box": [
+        1228,
+        333,
+        852,
+        879
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+这个方程给出了变量 $x$ 
+的值和变量 $y$ 的值之间的某
+个关系. 我们用字母 $f$ 表示
+这个关系.
+
+<!-- p open -->
+图40中作出了关系 $f$ 
+的图象和它的相反关系 $g$ 的
+图象. 关系 $g$ 的图象是过坐
+标原点和坐标为 $(4,2)$ 这一
+点的直线. 于是，关系 $g$ 的图
+
+<!-- fig 图 40 box 1228,333,852,879 -->
+![图 40](figures/fig-40.png)
+
+<!-- cap 图 40 samerow -->
+图 40
+
+<!-- p cont -->
+象可能由方程 $y=\frac{1}{2}x$ 或者由和它同解的方程 
+$2y-x=0$ （2）
+给出.
+
+<!-- p -->
+比较给出关系 $f$ 的方程（1）和给出它的相反关系 $g$ 的方
+程（2）后，我们发现，在方程（1）中用 $y$ 替换 $x$ 并用 $x$ 替换 $y$，
+便可得出方程（2）.
+
+<!-- p -->
+一般地，如果某个关系 $f$ 由含两个变量 $x$ 和 $y$ 的方程给
+出，那么为了用方程给出 $f$ 的相反关系，只要在已知方程中用 
+$y$ 替换 $x$ 并用 $x$ 替换 $y$ 就行了.
+
+<!-- p open -->
+我们看到，由同一个二元方程可以给出两个互为相反的关系. 例
+如，由方程 $x+2y=12$ 可以给出由 $(x,y)$ 这种形式的数对的集合确定的
+关系 $f$，其中每一个数对都使这个方程变成真等式，由同一个方程还可
+以给出由 $(y,x)$ 这种形式的数对的集合确定的 $f$ 的相反关系 $g$，其中每
+一个数对都使这个方程变成真等式. 在这种情况下，数对中第一个变
+量看成不是 $x$ 而是 $y$，而第二个变量看成不是 $y$ 而是 $x$. 但是，如果遵
+循表示数对中变量的通常的顺序（第一个变量看成 $x$，第二个变量看成 
+
+<!-- foot -->
+130

@@ -1,0 +1,73 @@
+"""Retain actual scope receipts and check only the newly added evidence."""
+
+import hashlib
+import importlib.util
+import json
+import subprocess
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+assert Path.cwd() == REPO
+BASE = REPO / ".tmp/ld-s10y-lesson/resume182-6-3129"
+EVIDENCE = REPO / "ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n21-final-3129/resource-boundary-recovery"
+spec = importlib.util.spec_from_file_location("resource_audit", REPO / "ssot-resources/audit.py")
+audit = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(audit)
+added = []
+
+
+def keep(name, data):
+    target = EVIDENCE / name
+    with target.open("xb") as output:
+        output.write(data)
+    target.chmod(0o444)
+    added.append(target)
+
+
+for name, expected in [
+    ("N21-narrow-stage-execution-FIRST", 1),
+    ("N21-staged-resource-rules-execution-FIRST", 0),
+]:
+    data = (BASE / name / "execution.json").read_bytes()
+    receipt = json.loads(data)
+    assert receipt["exitCode"] == expected
+    assert receipt["cwd"] == str(REPO)
+    keep(f"{name}.execution.record", data)
+    for stream, reference in receipt["streams"].items():
+        content = Path(reference["path"]).read_bytes()
+        assert hashlib.sha256(content).hexdigest() == reference["sha256"]
+        assert len(content) == reference["bytes"]
+        keep(f"{name}.{stream}.record", content)
+
+scope = json.loads((BASE / "N21-staged-resource-rules-execution-FIRST/stdout").read_text())
+assert scope["status"] == "N21_STAGED_RESOURCE_RULES_PASS"
+assert scope["stagedFiles"] == 454
+assert scope["globalAcceptanceClaimed"] is False
+keep("scope-audit-method.py.record", (BASE / "audit-N21-staged-scope-FIRST.py").read_bytes())
+keep("stage-method-FIRST.mjs.record", (BASE / "stage-N21-20261122-FIRST.mjs").read_bytes())
+keep("scope-retention-method.py.record", (BASE / "retain-N21-scope-checks-FIRST.py").read_bytes())
+
+for target in added:
+    assert target.name not in audit.TRANSIENT_NAMES and ".template." not in target.name
+    assert not ("pages" in target.parts and "figures" in target.parts)
+    text = target.read_text()
+    for pattern, legacy in audit.LEGACY_REFERENCE_PATTERNS:
+        assert not pattern.search(text), (target, legacy)
+    assert target.suffix == ".record"
+
+progress = ".intentfold/tickets/STEMROBIN-182/progress.md"
+subprocess.run(["git", "add", "--", progress, *(str(path.relative_to(REPO)) for path in added)],
+               cwd=REPO, check=True)
+check = subprocess.run([
+    "git", "diff", "--cached", "--check", "--", ".",
+    ":(exclude)ssot-resources/soviet10year-textbooks/artifacts/8a/pages/*/page.md",
+], cwd=REPO, check=True, capture_output=True)
+print(json.dumps({
+    "status": "N21_NEW_EVIDENCE_RESOURCE_RULES_PASS",
+    "newRecords": len(added),
+    "globalAuditPassClaimed": False,
+    "sourceBytesUnchanged": True,
+    "preservedSourceWhitespaceWarnings": 18,
+    "otherStagedWhitespaceErrors": 0,
+    "newRendererBrowserOrContentReviewCalls": 0,
+}))
