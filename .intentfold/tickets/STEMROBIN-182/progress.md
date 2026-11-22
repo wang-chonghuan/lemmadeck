@@ -1,5 +1,148 @@
 # 当前开发状态
 
+### 182-6 2026-11-22 04:15Z 原3129恢复，只续N21未完阶段
+
+- 最新直接人类经监督明确恢复本会话，覆盖此前生产暂停；唯一生产
+  cwd=/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck。
+  HEAD/FETCH_HEAD同3de678ebc7c76799c2f73f2293cec42f534c16fb，原
+  codex/STEMROBIN-182-textbooks不变；不切旧SHA、不create/attach/
+  初始化/重装，不在3384/8157或其它旧树生产。
+- N21源/文字/fig34--37有效PASS直接复用。仅恢复原Copernicus5的
+  fig38--41最终报告、原Mill5的答案盲解冻结及候选比较；不唤醒旧四
+  暂停审者、不派替代、不重复已看8/2图片或已过renderer。
+  当前两审查均未返回最终结论，不能计完整课。
+- 6a N8题188及8a N20 p0114#4监督独立内容PASS已实际补入原
+  binding.record；仅更新显示记录的当前哈希/有效状态，旧PENDING、
+  spawn失败、暂停和改前字节保留。N8仍只认证受影响部分，
+  不补造全课显示；N20沿用既有整课和受影响6图实看证据，不重跑。
+- 所有原树、未提交/ignored、Git锁、备份、历史失败/计数/UNKNOWN
+  费用保留。8a N10 section_breaks及未绑定数学修改仍为独立局部
+  缺陷，未改未批。仅6a/7a/8a、finish=review，不写DB/Plane、
+  合并/部署/关单或主动同伴消息；没有把监督入库44课算本轮新课。
+
+### 2026-11-22 监督接收入库：两项局部独立内容复核 PASS，生产仍暂停
+
+- 监督只复核6a N8题188及其标准答案、8a N20 p0114#4的改后内容，
+  结论补入两本原binding.record的independentContentReviewResolution。
+  原独审spawn失败/PENDING记录、改前字节、失败次数均保留。
+- 整圆对应不全定义；限制到射线与AB相交的圆周点后有唯一像，多对一合法。
+  幂差恒等式用展开抵消证明，无除法，覆盖零底数和相等底数。
+- 原图、266有效选择题及既有受影响桌面/手机显示证据复用；
+  未生成、迁移、重建、开图、重审整课或恢复生产。入库由监督单写者执行。
+
+### 182-6 2026-11-21 23:33:03Z 两项局部修复已保存，独审未决，继续暂停
+
+- 按最新接续摘要仅处理6a N8题188、8a N20 p0114#4；全部命令显式
+  cwd=/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck。
+  未恢复N21或其它课、未create/attach/switch/初始化/迁移/安装；
+  旧8157/9208及其它树、锁、备份、旧消息、旧暂停审者均未触碰。
+- 188现代题面改为判断整圆映射，再问限制到确有AB内交点的输入集合；
+  标准答案明确整圆失败、限制集合上存在唯一交点、P/Q/K对应D/C/A，
+  P/T同像合法。原断言保留source_text/source.data，旧错误答案和
+  原审查的实际字节保留原Git HEAD及修复前快照；OA/OB仍割线，图未改。
+  本次只改这一书面题及答案，不声称修正原源图/恢复未知字节。
+- N20仅补p0114#4：展开左边积，中间同项抵消，无除法，覆盖底数为零
+  或相等；“现代版补充”可见。原source_text/source快照及恒等式(1)
+  原式不变，不把已核实的原书证明缺口归为OCR问题。
+- 现有edition来源/公式/布局校验23:25:07.677Z exit0，未要求其它
+  规范化；答案结构及当前choice投影/哈希绑定23:26:58.132Z exit0。
+  仅更新必要哈希和受影响说明，原seed ASCII/审查紧凑格式已保留。
+  266有效选择题的questions/coverage/new_figures完整对象未变，正确D
+  不变；已核第二章书面题实际233，不把266误称书面题数量。
+- 新离线显示23:28:30.771Z exit0：1440x960/390x844两视口，六截图
+  均实际查看PASS，6新图/0重开；一次390题面开图路径重复失败保留，
+  纠正后只成功加载一次。0外网请求/0页面错误，浏览器finally关闭。
+  N20只替换原离线HTML中受影响的一个旧段为四段，其余段落DOM相等；
+  未重跑旧source/图/答案MathLive/选择实质PASS或已看截图。
+- 新独审spawn实际失败：agent thread limit reached。未唤醒、关闭或
+  复用旧暂停审者。父仅如实self_review，不能替代新独立内容审查；
+  当前两绑定明确独审PENDING，不冒称整课重新批准、整工单验收或交付。
+  N8当前choice审查标明受影响父自审及原不变独审继承，原审查原字节
+  保留；新增限制域证明留在书面题，不冒称现有选择题覆盖新增证明。
+- 必要新证据位于两本各自evidence/resume182-6-local-repairs-3129/
+  binding.record：6a SHA fce9b37383bddaaefde60268e8ca0c79b6f1afc74c30fddc431ac0937fa79eb6；
+  8a SHA cfe08a669a26daae994c05d6b7e1994f53725e5fde62040c1b490628615a5f83。
+  仅共享实际回执一次、六新截图、受影响HTML/说明；未复制旧整包。
+  保存23:32:41.611Z exit0，execution SHA
+  3b34ddfeae758864337c7e0d1597dce8da3e92c1045d471f0e243157e7c0102e。
+- 首备份入口rg ENOBUFS、第一次恢复把233书面题错比266、局部校验
+  import dump错误、只读rg缺失6a/evidence路径、开图路径错误及spawn
+  失败全部保留。仅恢复相应入口，不把技术恢复当科学批准。
+  受影响git diff --check exit0；定向所属进程查询无匹配。
+  HEAD仍3de678ebc7c76799c2f73f2293cec42f534c16fb、index空，未commit/push。
+- 当前重新暂停；N21 grid/答案原PENDING、fig34--37及其它有效PASS
+  检查点保持，40分钟监督仍暂停。无DB/Plane写、付费服务调用、
+  合并/部署/关单/替代聊天/主动同伴消息，finish=review。
+  本次父新图6另计，保留此前N21预览1及全部历史计数/费用；
+  宿主token和总费用仍UNKNOWN，不据0新外部调用推断0总费用。
+
+### 182-6 2026-11-21 20:36:31Z 最近安全检查点已暂停，所属在途全部停
+
+- 最新直接人类“你先让他们在最近的可以停的地方停下”覆盖继续N21、
+  四课批次及定时接续。监督40分钟巡检已PAUSED；本聊天立即停，
+  不等整课/整批完成，不再启动源页/图/作者/审查/浏览器/验证/
+  commit/push，仅保存当前检查点，等人类另行明确恢复。
+- 暂停前fig34--37首次独立实质PASS已收取，result SHA
+  41e9a4433a874f88e72419cea75fb14a390071a1d7fa251804b15948e9bf0aad，
+  8图/0重开。20:34:34.303Z同字节spec/SVG提升及四原生
+  record_review均已安全结束，外层execution SHA
+  d4f1df9a5b209dbc7aacdc09b5ecf7f1f1006539dc7c703db71afaab687b310c。
+  仅现代图16文件未追踪和scratch模板/原模板备份保留；
+  原fig37墨斑UNKNOWN/cleanCrop未批准/未源恢复保持。
+- fig38--41兼容预览20:27:32.742Z已生成并关闭Chromium，
+  result SHA7e4d89867055bb59d113ddf0c8520941d58a2888e61cc9d98fbe5b3ac1ee4002；
+  未改native SVG、未重原生renderer，旧resvg BLOCKED与全部失败保留。
+  当前Copernicus5所属独审收到interrupt暂停后已全停：
+  figure-8a-N21-grid-review-FIRST/pause-checkpoint.json；
+  已有review.md/usage.json保留，result.json未制作，四图最终判断
+  PENDING，不把历史局部PASS措辞当整组批准。实际8图/0重开。
+- 父N21标准答案候选11题已保存于
+  .tmp/ld-s10y-lesson/resume182-6-3129/answers-N21-parent-FIRST/answer-keys.json，
+  SHA41100f619f61cec4429a0f62aa0d014c23f0f77c1fb54f2982f5d901f62c4b91；
+  9ungraded/2auto只是候选，没有native prepare/finalize或ready批准。
+  Mill5答案独审收到interrupt暂停后已全停：
+  answers-N21-review-FIRST/pause-checkpoint.md。2图/0重开；
+  独立解尚未冻结，未打开或比较候选，三最终报告全部pending。
+- 两本轮在途独审均已返回PAUSED且所属进程/浏览器为空；
+  父有限exec均已返回，兼容浏览器已finally关闭；
+  本轮生产入口定向进程查询无匹配，不触碰无关/全机进程。
+  两图作者与set独审此前自然completed后关闭；旧四暂停审者未动。
+- 下一缺失阶段是grid独审最终报告，其后才可绑定fig38--41及
+  N21现代收口；答案独审冻结/比较/native收口、选择和离线显示
+  均未完成。禁止为补完整继续制作，不把半课或本暂停计作交付。
+  N15/N20/N4/N19等已交付、266有效题、全部未提交/ignored、
+  3129/8157/9208及其它旧树/锁/备份/refs/失败/HOLD/费用均保留。
+  父本接续新图1（答案作者必要fig41预览），不清零此前源图1
+  或两作者/独审图计数；宿主token/cost UNKNOWN，无新付费、
+  DB/Plane写入、合并/部署/关单/替代聊天/主动同伴消息。
+
+### 182-6 2026-11-21 20:26:44Z 监督纠正旧bootstrap，3129直接续N21
+
+- 最新人类恢复授权经本轮监督明确：3129仍是唯一授权生产root，
+  不再以旧只迁n13、attach失败或app的8157 cwd作为接续门槛。
+  8157及其全部字节/失败/元数据原地保留，本轮不在8157生产，
+  不再create/attach/switch初始化，也不迁移N21或重装技能。
+  监督已核四个受影响入口/edition工具匹配189安装记录db613601；
+  本轮沿用当前已安装技能，不再重hash整包。
+- N21现代文字独审TEXT_PASS已实际收取，SHA
+  d2986c2b9dad61cd5d0d8db681e6d2a5e404eff6ab2d1e7156b5c2ce2e72c637；
+  fig34--37作者result SHA
+  1f11081d4c0902fecb33cf43d124478cbc7861ba8f48f5496b3bc4f74d6bf3df。
+  fig38--41作者result SHA
+  ae9603090cf44da990ba5cf4cdbf17cd35ee7971d36a2a0f5d5ce621fab63d07，
+  状态BLOCKED：native4/4 PASS不等于预览或图实质批准。
+  原预览丢网格/轴干、fig41黑填充来自resvg未解析paint变量；
+  原失败/8图0重开/7renderer调用等历史计数均保留。
+  两新图作者自然completed后关闭，不触碰旧暂停四审者。
+- 当前仅fig34--37首次独审在途；父负责fig38--41未改native SVG
+  的兼容预览恢复，随后该组首次实质独审。源/文字PASS不重跑，
+  不重native renderer/validator，不把作者结构结果当内容批准。
+  本聊天/既有检查点记录，旧迁移询问已被最新指令覆盖。
+- 20:09:50Z监督锚点未在本会话执行，实际接续20:26:44Z，
+  不补造按时检查；下一原锚点20:49:50Z保持。仅6a/7a/8a、
+  finish=review，约四完整课一批普通commit/push后立即下一批；
+  无新付费/共享DB/合并/部署/关单/替代聊天/主动消息同伴。
+
 ### 182-6 2026-11-21 19:41:48Z N15原分支已推、工作模板跟踪局部修正
 
 - 窄stage19:40:43.924Z及diffcheck19:41:00.593Z均exit0；
