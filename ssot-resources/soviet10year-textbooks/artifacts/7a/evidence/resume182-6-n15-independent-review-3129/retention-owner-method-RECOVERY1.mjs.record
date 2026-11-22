@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+let code = fs.readFileSync(`${base}/retain-N15-independent-review-FIRST.mjs`, 'utf8');
+for (const [before, after] of [
+  ['reviewer/review-FIRST.json', 'reviewer/review-RECOVERY1.json'],
+  ['N15-native-independent-validation-execution-FIRST', 'N15-native-independent-validation-execution-RECOVERY1'],
+  ['phase3-comparison-FIRST.record', 'phase3-comparison-RECOVERY1.record'],
+  ['approved-independent-review-FIRST.json.record', 'approved-independent-review-RECOVERY1.json.record'],
+  ['native-validation-FIRST.', 'native-validation-RECOVERY1.'],
+]) {
+  assert.ok(code.includes(before), before);
+  code = code.replaceAll(before, after);
+}
+const before = "keep(`${base}/retain-N15-independent-review-FIRST.mjs`, 'retention-owner-method-FIRST.mjs.record');";
+assert.equal(code.split(before).length, 2);
+code = code.replace(before,
+  "keep(`${base}/retain-N15-independent-review-FIRST.mjs`, 'retention-base-method-FIRST.mjs.record');\n"
+  + "keep(`${base}/retain-N15-independent-review-RECOVERY1.mjs`, 'retention-owner-method-RECOVERY1.mjs.record');\n"
+  + "keep(`${working}/reviewer/phase2-source332-qualification-RECOVERY1.record`, 'phase2-source332-qualification-RECOVERY1.record');\n"
+  + "keep(`${working}/source332-qualification-RECOVERY1/source332-only.json`, 'source332-only-RECOVERY1.json.record');\n"
+  + "keep(`${base}/project-N15-source332-qualification-RECOVERY1.mjs`, 'source332-projection-method-RECOVERY1.mjs.record');");
+code = code.replace("sources: 14, questions: 19, options: 78, sourceFigures: 1, newFigures: 0,",
+  "sources: 14, questions: 19, options: 78, sourceFigures: 1, newFigures: 0,\n"
+  + "  originalSourceSummaryAndFirstRevisePreserved: true,\n"
+  + "  source332TaskQualification: 'Actual source requests all-value inequality proof; optional equality result was not an explicit extra source command',\n"
+  + "  newContentRevisions: 0, initialOptionChecks: 78, affectedOnlyMathematicsRechecks: 0,");
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

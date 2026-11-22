@@ -1,0 +1,118 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const working = `${base}/N15-independent-review-20261122-FIRST`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c2-s1-n15';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-n15-independent-review-3129';
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file));
+const freeze = read(`${working}/freeze-FIRST.record`);
+for (const name of ['seed.json', 'draft.json'])
+  assert.ok(fs.readFileSync(`${target}/choice-set/${name}`).equals(fs.readFileSync(`${working}/author/${name}`)));
+const previous = fs.readFileSync(`${working}/author/prior-self-review.json.record`);
+assert.equal(hash(previous), 'ee4acc4c73fbdd4dee1e8a3f6510b273fda3501e8ccbb456d1c8cf1797c12375');
+assert.ok(fs.readFileSync(`${target}/choice-set/review.json`).equals(previous));
+const reviewBytes = fs.readFileSync(`${working}/reviewer/review-FIRST.json`);
+const review = JSON.parse(reviewBytes);
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.equal(review.outcome, 'pass');
+assert.equal(review.seed_sha256, freeze.seed_sha256);
+assert.equal(review.draft_sha256, freeze.draft_sha256);
+assert.equal(review.source_reviews.length, 14);
+assert.equal(review.question_reviews.length, 19);
+assert.equal(review.question_reviews.reduce((sum, item) => sum + item.mathematics.option_checks.length, 0), 78);
+assert.equal(review.figure_checks.length, 1);
+assert.equal(review.new_figure_reviews.length, 0);
+const executionFile = `${base}/N15-native-independent-validation-execution-FIRST/execution.json`;
+const execution = read(executionFile);
+assert.equal(execution.cwd, repo);
+assert.equal(execution.exitCode, 0);
+assert.deepEqual(execution.argv, [
+  'python3', '.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', repo,
+  '--seed', `${working}/author/seed.json`, '--draft', `${working}/author/draft.json`,
+  '--review', `${working}/reviewer/review-FIRST.json`,
+]);
+const displayPath = `${target}/offline-display.json`;
+const displayBytes = fs.readFileSync(displayPath);
+const display = JSON.parse(displayBytes);
+assert.equal(display.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(hash(displayBytes), '5da9bb22791f43e3c6e81b60a609dacdad21b2eb84656edd91935c059b78213b');
+const priorRetentionBytes = fs.readFileSync(`${target}/choice-set/retention.json`);
+const priorRetention = JSON.parse(priorRetentionBytes);
+assert.equal(priorRetention.current_draft.sha256, hash(fs.readFileSync(`${target}/choice-set/draft.json`)));
+assert.equal(priorRetention.current_review.sha256, hash(previous));
+assert.ok(!fs.existsSync(evidence));
+fs.mkdirSync(evidence, { recursive: true });
+const retained = [];
+const keep = (input, name) => {
+  const bytes = fs.readFileSync(input);
+  const output = `${evidence}/${name}`;
+  fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o444 });
+  const item = { path: output, sha256: hash(bytes), bytes: bytes.length };
+  retained.push(item);
+  return item;
+};
+keep(`${working}/author/prior-self-review.json.record`, 'prior-self-review-FIRST.json.record');
+const priorRetentionBinding = keep(`${target}/choice-set/retention.json`, 'prior-retention-FIRST.json.record');
+keep(`${working}/freeze-FIRST.record`, 'freeze-FIRST.record');
+keep(`${working}/view-only-FIRST.json`, 'view-only-FIRST.json.record');
+keep(`${base}/n15-independent-source-FIRST/solutions.json`, 'pre-author-parent-source-solutions-FIRST.json.record');
+keep(`${base}/n15-independent-source-FIRST/freeze.record`, 'pre-author-parent-source-freeze-FIRST.record');
+for (const name of ['phase1-source-reuse-FIRST.record', 'phase2-visible-review-FIRST.record', 'phase3-comparison-FIRST.record'])
+  keep(`${working}/reviewer/${name}`, name);
+keep(`${working}/reviewer/review-FIRST.json`, 'approved-independent-review-FIRST.json.record');
+const nativeBinding = keep(executionFile, 'native-validation-FIRST.execution.record');
+for (const [stream, item] of Object.entries(execution.streams)) {
+  const bytes = fs.readFileSync(item.path);
+  assert.equal(hash(bytes), item.sha256);
+  assert.equal(bytes.length, item.bytes);
+  keep(item.path, `native-validation-FIRST.${stream}.record`);
+}
+keep(`${base}/freeze-N1-existing-snapshot-FIRST.mjs`, 'freeze-base-method-FIRST.mjs.record');
+keep(`${base}/freeze-N15-existing-snapshot-FIRST.mjs`, 'freeze-owner-method-FIRST.mjs.record');
+keep(`${base}/retain-N15-independent-review-FIRST.mjs`, 'retention-owner-method-FIRST.mjs.record');
+const binding = {
+  schema: 'stemrobin-182/independent-choice-review-binding@1',
+  ticket: 'STEMROBIN-182', book: '7a', lesson: 'alg7-c2-s1-n15',
+  status: 'INDEPENDENT_CHOICE_REVIEW_PASS', date: new Date().toISOString(),
+  seed: { path: `${target}/choice-set/seed.json`, canonicalSha256: freeze.seed_sha256, unchanged: true },
+  draft: { path: `${target}/choice-set/draft.json`, canonicalSha256: freeze.draft_sha256, unchanged: true },
+  review: { path: `${target}/choice-set/review.json`, sha256: hash(reviewBytes), bytes: reviewBytes.length, reviewer: review.reviewer },
+  sources: 14, questions: 19, options: 78, sourceFigures: 1, newFigures: 0,
+  actualNativeValidation: nativeBinding, evidence: retained,
+  sourceProvenance: 'Reuse actual pre-author parent blind source solving and two original/current fig09 observations; new independent reviewer did not repeat these passed stages.',
+  preAuthorSourceFrozenReferencesChecked: 12, preAuthorSourceMismatches: 0,
+  priorSelfReviewAndRetentionPreserved: priorRetentionBinding,
+  historicalDisplay: {
+    path: displayPath, sha256: hash(displayBytes), unchanged: true,
+    currentDraftMatchesOriginalDisplay: true,
+    originalUniqueScreenshots: 52, originalFailedRegionReopens: 5,
+    originalActualImageViews: 57, newPixelObservationClaimed: false,
+  },
+  sourceAnswerFigureRendererBrowserRechecks: 0,
+  newImagesOpened: 0, passedImageReopens: 0,
+  unknownHistoricalHtmlBytesRestored: false, fullLessonCountIncremented: false,
+  appOrWholeTicketAcceptanceClaimed: false,
+  fees: 'UNKNOWN', tokens: 'UNKNOWN', finish: 'review',
+  databaseWrites: 0, merges: 0, deployments: 0,
+};
+const bindingBytes = Buffer.from(`${JSON.stringify(binding, null, 2)}\n`);
+fs.writeFileSync(`${evidence}/binding.record`, bindingBytes, { flag: 'wx', mode: 0o444 });
+fs.writeFileSync(`${target}/choice-set/independent-review-binding.json`, bindingBytes, { flag: 'wx', mode: 0o444 });
+fs.writeFileSync(`${target}/choice-set/review.json`, reviewBytes);
+const currentRetention = {
+  ...priorRetention,
+  role: 'Unchanged reviewed recognition snapshot with genuine independent-agent choice review; original self_review retained separately',
+  current_review: binding.review,
+  independent_review_binding: { path: `${target}/choice-set/independent-review-binding.json`, sha256: hash(bindingBytes) },
+  prior_self_review_and_retention: priorRetentionBinding,
+};
+fs.writeFileSync(`${target}/choice-set/retention.json`, `${JSON.stringify(currentRetention, null, 2)}\n`);
+console.log(JSON.stringify({
+  status: binding.status, review: binding.review, sources: 14, questions: 19, options: 78,
+  newImageReads: 0, fullLessonCountIncremented: false,
+}));
