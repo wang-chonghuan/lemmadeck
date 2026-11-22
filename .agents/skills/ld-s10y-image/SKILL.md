@@ -9,8 +9,12 @@ Create modern textbook figures without asking an image model to preserve exact
 mathematics.
 
 For batch continuation and execution faults, follow the lesson pipeline's
-[technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+[per-lesson delivery SOP and recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
 A tool retry does not reset paid/image usage or approve a failed figure.
+The lesson owner retains approved figures, specs and indispensable bound evidence
+before that lesson's commit/push and authorized serialized publication. Figure
+handoff does not authorize this child to commit other lessons or write the DB.
+Do not add packaging/full-intake gates; report a concrete rule conflict to the caller.
 
 ## Ownership
 
@@ -179,6 +183,10 @@ python .agents/skills/ld-s10y-image/scripts/record_review.py \
 Use `--generation` instead of `--render` for `generated` mode. Preview under
 `.tmp/`. Do not overwrite edition assets or write the database before
 approval. Promoted metadata may depend only on durable edition files.
+An approved figure and its bound source/spec/render/generation/review evidence
+must be retained with the owning lesson before its immediate commit/push, not
+left only in an ignored preview or held for a four-lesson batch. Reuse existing
+durable assets and valid reviews; do not duplicate them for each lesson.
 
 For a corpus migration or audit, derive the target set from lesson prose,
 exercise display objects, and `figure_refs`:

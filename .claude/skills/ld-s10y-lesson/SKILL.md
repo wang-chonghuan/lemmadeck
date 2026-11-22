@@ -14,8 +14,11 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
 [图片批次规则](../../../.agents/skills/ld-s10y-image/SKILL.md#image-batches)；
 本流程及其子代理共用该规则，完成一批并返回文字结果后再处理新批次。
 
-批量生产、接续检查点或处理执行故障时，先读
-[小批次与技术恢复](references/production-resume.md)。
+生产、接续检查点或处理执行故障时，先读
+[逐课交付 SOP 与技术恢复](references/production-resume.md)。
+严格按「一课完成实质复核 → 必要产物和证据持久保留 → 本分支 commit / 普通 push →
+获准单一写入方串行入库该课 → 该课读回与产品检查」执行，不等四课或整章才保存。
+不得自行增设全量验收、交接包装、重复审查或全书重建步骤；规则缺口或冲突先反馈调用方。
 调用方的暂停及离线授权优先于下文的默认发布流程。
 接收子任务只核一次实际状态、范围、必要文件/哈希和实质审查，不逐标量通读、
 不全文读工具源码或重审整包。局部修复只续受影响阶段；未变且已有有效审查的图和
@@ -38,11 +41,12 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
   章节右边界是下一章或下一同级条目的起始印刷页。为闭合对象临时多取的边界页，如果只含
   下一章内容，不进入本章提交、索引或发布集合
 
-## 抽一批页的标准流程
+## 备料与逐课交付
 
 用户通常只会给一句话：**「抽 5m 第 21–31 页」**或**「抽完 5、6、7 单元」**。
 这句话同时授权把指定且已完整的单元 upsert 到生产内容库。默认按下面整套走到底，
-直到产品中实际可见，不要停在中间：
+直到产品中实际可见；离线或暂停指令优先，多工人共用数据库仍由调用方指定单一写入方。
+共享源页可一次备料，已通过且未变化的阶段不重跑：
 
 ```bash
 set -e
@@ -56,20 +60,36 @@ for n in $(seq 21 31); do $P $S finalize --book 5m --page $n; done  # ③ 收口
 $P $S assemble  --book 5m --toc ssot-resources/soviet10year-textbooks/toc/5m/zh.json
 $P $S vectorize --book 5m
 $P $S assemble  --book 5m --toc ssot-resources/soviet10year-textbooks/toc/5m/zh.json
+```
+
+下面每次只交付一个已完整单元，不把多个 `--lesson` 组成延迟保存的批次：
+
+```bash
+set -e
+P=.claude/skills/ld-s10y-lesson/.venv/bin/python
+S=.claude/skills/ld-s10y-lesson/tools/p2c.py
+L=math5-c1-s1-n5
 $P $S adapt-prepare --book 5m --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+  --lesson "$L"
 # ④ 只编辑 editions/modern-us-neutral 下的模板，改写主题；
 #    所有现代图委托 ld-s10y-image，按 deterministic / hybrid / generated 路由
 $P $S adapt-finalize --book 5m --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+  --lesson "$L"
+# 按本次授权完成并 finalize 同课答案、交互及选择题；取得必要独立实质复核
 $P $S render --book 5m --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+  --lesson "$L"
+# 检查该完整课程的桌面/手机离线显示，按逐课 SOP 保留必需证据
+# 只提交本课及必要来源/索引/图等路径，保留其它未提交改动和已有暂存
+git add -- <本课及必要依赖的明确路径>
+git commit --only -m "Complete $L" -- <本课及必要依赖的明确路径>
+git push origin HEAD:<本工人的现有授权分支>
+# 确认远端保存后，由获准单一写入方在其授权绝对 workdir 执行以下发布
 node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
   ssot-resources/soviet10year-textbooks/artifacts/5m \
-  --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
-# ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一批 lesson 依次发布答案键和交互规格
-cd app && npm run dev
+  --edition modern-us-neutral --lesson "$L"
+# ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一课发布答案键、交互；需要时再发布已保留选择题
+# 只对该课读回、执行 cap7；新必需回执补一次仅证据 commit / 普通 push
+# 随即接续下一授权单元，不能等定时巡检催工
 ```
 
 - `assemble` 的 `--toc` **不能省**：课的 id 是从教材目录认领的，没有它产品里就没有地址
@@ -100,8 +120,8 @@ cd app && npm run dev
 - 边界页常会带出下一节开头；它必须完整转写以通过页级对账，但**不得发布未完成的下一节**。
   用可重复的 `--lesson <cardId>` 只发布本次已完成的单元
 - **不允许以 `--dry` 作为交付终点**。dry-run 只能用于发布前检查，之后必须真实写库
-- 写库后查询 `sr_lessons` 核对目标 id 的正文块数和题数，再启动 app，用浏览器逐节确认
-  目录可点、正文准确（原书无正文时允许为空）、插图清晰、习题数量正确、控制台无错误
+- 写库后只查询本课 `sr_lessons`，按 cap7 检查产品实际显示和题数；正常通过无需再人工
+  全量重查或复看已通过的离线截图。不要重复启动已有的授权服务
 
 ## 交付的是对象，不是页
 
@@ -173,8 +193,10 @@ ssot-resources/soviet10year-textbooks/artifacts/5m/
 
 **book id = 书名首段**（`5m`、`8a`、`9-10g`）。默认跨
 `ssot-resources/soviet10year-textbooks/sources/` 下的书系列查找，撞名用 `--series`。
-`.tmp/` 中的页面渲染、模板、页级裁图和离线 HTML 可随时删除；重新 `prepare`、`finalize`、
-`vectorize`、`assemble` 即可恢复。持久 JSON 不得引用 `.tmp/`。
+`.tmp/` 中可重建的页面渲染、模板、页级裁图和离线 HTML 是缓存，不是备份。
+不可重建的作者稿、独立审查、首失败回执及唯一的有效显示证据必须先按逐课 SOP 保留到
+持久路径并提交、push，不能只留 ignored `tmp/` 或靠 Git 锁保护工作树。
+持久 JSON 不得引用 `.tmp/`；本 SOP 不授权删除现有缓存、备份或未提交改动。
 
 工具入口：`.claude/skills/ld-s10y-lesson/.venv/bin/python .claude/skills/ld-s10y-lesson/tools/p2c.py`
 
@@ -428,6 +450,8 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
 
 `--lesson` 可重复，用于只写本次已经完整闭合的单元。跨页抽取为了完成上一单元而读到了
 下一单元开头时，必须指定它，禁止把只有标题或一道题的半个单元写进生产。
+逐课生产 SOP 每次恰好指定一个 `--lesson`；工具支持多课不是积攒批量交付的授权。
+本课必须已保留、commit 并普通 push；获准单一写入方收到该课后串行发布，工人不自行抢写库。
 
 发布器只读取 `editions/<edition>/lessons/`，要求 adaptation audit 为 `pass`，并验证
 现代图、FigureSpec 与生成/渲染元数据。写入 DB 时只保留现代正文、现代题目、现代图片、edition 名和原始
@@ -440,9 +464,10 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 按任意顺序生成而不会撞 `(subject, stage, lesson_order)` 唯一约束。edition `book.json`
 仍按原始索引重建，禁止手工修排序。
 
-一批可作答课程的发布顺序固定为：`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 →
-`ld-s10y-answer` 交互规格。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
-交互规格。
+一课所需产物先在离线阶段全部完成复核、保留并 push，再按固定顺序发布：
+`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 → `ld-s10y-answer` 交互规格 →
+本次要求的已保留选择题。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
+交互规格。后一阶段失败只续该阶段，不重新发布已成功基础课或重做已通过内容。
 
 发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`
 替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。
@@ -474,10 +499,14 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
 新候选图必须先按图技能保留到本课 `choice-set/figures/`，配同名
 `*.spec.json`、`*.render.json`、`*.review.json`，并取得独立图审查。
 发布入口核验当前图稿与证据哈希，不得发布 scratch 路径。
+保留与提交是该课完成前的步骤，不能等四课或下一次集中入库；新候选图的持久路径应在
+最终题稿审查前确定，避免路径交接再造一次语义审查。已批准快照必须按合同绑定实际保留文件。
 离线 `intent`、完整题源、作者键及审查文件不作为客户端载荷；应用只投影题面，
 单选点击提交，多选明确提交且由服务端按完整集合判分。
 
 生产写入不是完成；孩子在产品里能读到才是完成。
+以下是同一次本课产品检查的断言，不要求人工逐项全查后再跑一遍脚本。
+保留已通过的离线语义/显示复核；新内容做一次产品检查，故障修复只补受影响证据。
 
 1. 用 node + `app/node_modules/postgres` 查询目标 `sr_lessons` 行，核对
    `content.edition`、`exercises.edition`、`content.prose` 和 `exercises.count`；
@@ -494,7 +523,7 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
    匿名提交不得写学习记录。
 5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
 
-对本次全部课程执行可失败的浏览器检查，不能只抽一课或只数 SVG：
+逐课对本课执行一次可失败的浏览器检查，不能用另一课或只数 SVG 代替：
 
 ```bash
 node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
@@ -504,7 +533,8 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
   --output .tmp/s10y-product-check
 ```
 
-`--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
+工具支持重复 `--lesson` 和 `--all`，但逐课交付或局部修复不使用 `--all`。
+脚本使用 app 已安装的 Playwright，
 在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取
 `display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查
 横向滚动末端与宽表末列可达及每个输入框的键盘实际输入归属；
@@ -518,6 +548,7 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
 制造 React 水合告警。
 
 任一项失败都要修到通过。只生成文件、只 dry-run、只写库但没在产品验证，都不算完成。
+新增入库/显示回执按逐课 SOP 持久保留，必要时补仅证据提交；已有通过阶段不重跑。
 
 ## 实测（5m 印刷页 1–11，PDF 10–20）
 

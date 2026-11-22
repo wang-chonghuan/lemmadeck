@@ -61,3 +61,65 @@ No throughput multiplier is claimed. The verified gains are avoided unchanged
 writes, one source reconstruction per invocation and eliminated redundant
 handoff/review instructions; production wall-time has not been benchmarked
 because production remains paused.
+
+## 2026-11-22 Per-Lesson SOP Follow-Up
+
+The user's follow-up makes immediate per-lesson preservation and publication a
+strict skill SOP. The existing continuation reference owns the sequence; lesson,
+image, choice and answer entrypoints route to it. No publisher or application
+runtime was changed.
+
+- Complete required substantive source/math/option and desktop/mobile checks,
+  retain the actual artifacts and indispensable evidence, commit and ordinary
+  push the worker's existing branch, then submit exactly that pushed lesson to
+  the authorized single DB writer. Do not accumulate four completed lessons.
+- Only the caller-designated writer serializes the named publishers for one
+  lesson, then performs its single cap7 readback/product check. Failed later
+  stages retain successful earlier results and resume only missing work.
+- Keep review snapshots and referenced receipts/streams out of scratch-only
+  storage. New indispensable publication evidence is saved with an evidence-only
+  follow-up push, not another generation/review pass. Preserve unrelated dirty
+  and staged work; no force push, merging, deployment or automatic resume.
+- Valid unchanged image and question evidence is reusable. Retained image paths
+  should be settled before final question review; path-only handoff does not
+  justify another semantic review or permit stale snapshot digests.
+
+Focused checks:
+
+| Check | Result |
+| --- | --- |
+| Choice tool tests | 40 distinct tests passed; see initial invocation failure below |
+| Throughput/receipt tests | 12 passed |
+| Recovery tests | 5 passed |
+| Choice republish preservation test | 1 passed |
+| Skill Creator `quick_validate` | Four affected skills passed |
+| `git diff --check` | Passed |
+
+The new choice integration test executes the real retention CLI/checker, scoped
+Git commit, ordinary push to a temporary local bare remote, remote revision
+readback and fresh clone. Retained source dependencies, seed, draft and review
+remain byte-identical and validate after the original scratch is deleted.
+Unrelated staged bytes remain staged and do not enter the commit or clone.
+This is real offline tool/Git behavior, not a claim of mathematical approval or
+a production DB test.
+
+Retained initial diagnostics:
+
+- The first choice-suite invocation used unittest discovery's default macOS
+  temporary directory. An existing whitelist test compared `/var/...` paths
+  against their resolved `/private/var/...` aliases and failed; the other 39
+  tests, including the new push/recovery case, passed. Only the affected test was
+  rerun using the skill's documented `--scratch` location and passed. No
+  production checker or content rule was weakened.
+- The shell Python lacks PyYAML, and the guessed Homebrew Azure CLI paths do not
+  exist on this host. The installed Azure CLI Python at
+  `/Users/yong/.local/share/uv/tools/azure-cli/bin/python` supplied PyYAML 6.0.3
+  for all four skill validations. No dependency was installed.
+
+No app rebuild, whole-corpus validation, production review, shared DB connection,
+paid call or image reopening was needed for this instruction/test-only follow-up.
+The earlier full ticket checks above remain historical, not rerun claims.
+Both existing automations were read back as `PAUSED`. Cursor-aware snapshots
+remain unchanged: 181/182/184/187/188 are idle; 180 is `notLoaded`, not a fresh
+pause acknowledgment. No resume message was sent, no worker was replaced, and
+production/monitoring pause records remain effective.

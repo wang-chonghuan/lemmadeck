@@ -9,8 +9,11 @@ description: Load when the user asks to extract Soviet ten-year-school textbook 
 生成一本书一份的结构化答案文件。
 
 批量接续或目录、权限、输出读取故障按课文流程的
-[技术恢复约定](../ld-s10y-lesson/references/production-resume.md)处理；
+[逐课交付 SOP 与技术恢复](../ld-s10y-lesson/references/production-resume.md)处理；
 复用已通过答案与审查，不把执行失败当内容失败，也不扩大调用方的发布授权。
+逐课生产时先离线完成该课所需答案、交互及实质数学复核，持久保留并随该课 commit /
+普通 push，再由获准单一写入方串行发布；不等四课，不先写库后补来源/审查。
+工具支持多课不授权积攒交付、重复全书重建或自造验收门槛；规则缺口或冲突先反馈调用方。
 
 ## 术语
 
@@ -97,23 +100,21 @@ manifest 不存在时才按文件名前缀查找。特殊情况可用 `--pdf`。
 
 > 给 5m 的 math5-c1-s1-n5、math5-c1-s1-n6、math5-c1-s1-n7 加答案
 
-从仓库根执行：
+从授权仓库根执行；下面示例每次完成一课：
 
 ```bash
 K=.claude/skills/ld-s10y-answer/tools/lesson_answers.py
 
-python3 $K prepare --book 5m \
-  --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+L=math5-c1-s1-n5
+python3 $K prepare --book 5m --edition modern-us-neutral --lesson "$L"
 # 模型逐题完成 editions/modern-us-neutral/lessons/<id>/answer-keys.json
-python3 $K finalize --book 5m \
-  --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+python3 $K finalize --book 5m --edition modern-us-neutral --lesson "$L"
 
+# 先完成同课所需其它离线组件和复核，按逐课 SOP 保留、commit / 普通 push
+# 以下仅由获准单一写入方执行；基础课程已成功发布后再发布答案
 node .claude/skills/ld-s10y-answer/tools/publish.mjs \
   ssot-resources/soviet10year-textbooks/artifacts/5m \
-  --edition modern-us-neutral \
-  --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+  --edition modern-us-neutral --lesson "$L"
 ```
 
 ### 生成规则
@@ -187,7 +188,8 @@ ssot-resources/soviet10year-textbooks/artifacts/<book>/editions/<edition>/lesson
 此机械检查不代替逐题数学验算。
 
 cap2 产物必须通过 [gate-2-lesson-answers](references/gate-2-lesson-answers/gate.md)，再
-`finalize` 和真实 `publish`。发布器会验证答案审计和数据库课程的 edition 完全一致；
+`finalize`，保留审查和真实编辑检查证据，随该课 commit / push 后再获准真实 `publish`。
+离线任务到其授权交付为止，不写库。发布器会验证答案审计和数据库课程的 edition 完全一致；
 原始 lesson 或不同 edition 均拒绝写入。`finalize` 会把所有 `exact` expected 放入真实
 MathLive 元素，执行一次保持数学内容不变的真实键盘编辑，再读取编辑器重新序列化后的
 `.value` 并调用产品共享规范化器；未触发输入事件、编辑后数学内容变化、判分不一致都会失败。
@@ -210,6 +212,7 @@ I=.claude/skills/ld-s10y-answer/tools/lesson_interactions.py
 python3 $I prepare  --book 5m --edition modern-us-neutral --lesson math5-c1-s2-n16
 python3 $I finalize --book 5m --edition modern-us-neutral --lesson math5-c1-s2-n16
 
+# 随完整同课及必要证据 commit / 普通 push 后，由获准单一写入方在答案成功后发布
 node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
   ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral --lesson math5-c1-s2-n16
@@ -268,3 +271,5 @@ FigureSpec 是**渲染**规格不是**几何**规格：网格是一堆独立线�
 并进 `sr_lessons.exercises` 里每道题的对象，与 `answerKey` 同级，**不改表结构**。
 发布器逐题保留已有的 `answerKey`、题面与图——它只加一个 `interaction` 键。
 规格只带作答形态与参数，不带 `expected`、不带 `displayAnswer`：判分仍然只在服务端做。
+只对当前一个 `--lesson` 写入；后一发布阶段失败只续失败阶段，并对该课读回、执行课文
+cap7 的一次产品检查。已通过且未变的求解、MathLive 检查及显示审查不因入库或交接重跑。

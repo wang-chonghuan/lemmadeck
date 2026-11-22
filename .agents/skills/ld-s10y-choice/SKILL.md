@@ -13,8 +13,12 @@ shared [image batch rules](../ld-s10y-image/SKILL.md#image-batches).
 They also apply to delegated authors and reviewers.
 
 For batch continuation or a directory, permission or output-reading failure, use
-the lesson pipeline's [technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+the lesson pipeline's [per-lesson delivery SOP and recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
 Do not redo a passed content review to repair execution; offline authoring stays offline.
+The lesson owner retains approved choices and their evidence before that lesson's
+commit/push and authorized serialized publication. Scratch-only handoff is not
+durable delivery; do not wait for a multi-lesson batch. Do not invent extra intake
+gates or review packages; report a concrete rule conflict to the caller.
 
 ## Boundary
 
@@ -87,3 +91,9 @@ draft. A failed gate is useful evidence, not an approval.
 Return seed, draft, review and the exact validation command/results. State any
 capacity loss or deferred source task. Stop at offline handoff: no publisher,
 website integration, DB payload or claim of automatic semantic proof.
+The authorized lesson owner uses `retain_choices.py` to retain the approved
+snapshots in that lesson's `choice-set/` before committing and pushing it.
+Do not rewrite approved snapshots or ask for a second mathematical/image review
+solely to package a handoff. For new figures, settle retained paths before the
+final question review when integration is authorized; preserve the offline
+author's boundary and the existing snapshot-binding contract.
