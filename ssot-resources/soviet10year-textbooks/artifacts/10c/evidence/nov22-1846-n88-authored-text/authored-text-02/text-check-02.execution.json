@@ -1,0 +1,243 @@
+{
+  "schema": "stemrobin-184/n88-text-command@1",
+  "stage": "text-check-02",
+  "authorization": "ONE changed-input text check; parent repaired only p2 clause",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import copy, hashlib, json, sys\nfrom pathlib import Path\nr=Path.cwd()\nown=r/\".tmp/stemrobin-184-six/n88-raw-assembly\"\nold=own/\"authored-text-01\"\nd=own/\"authored-text-02\"\nt=own/\"work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88\"\nsys.path.insert(0,str(r/\".claude/skills/ld-s10y-lesson/tools\"))\nimport edition\ndef load(p): return json.loads(p.read_text(encoding=\"utf-8\"))\ndef bind(p):\n    raw=p.read_bytes()\n    return {\"path\":str(p),\"bytes\":len(raw),\"sha256\":hashlib.sha256(raw).hexdigest()}\nerrors=[]\nchecks=[]\ndef require(ok,label):\n    checks.append({\"check\":label,\"passed\":bool(ok)})\n    if not ok: errors.append(label)\nlesson=load(t/\"lesson.template.json\")\nexercises=load(t/\"exercises.template.json\")\nfailed_l=load(old/\"failed-candidate/lesson.template.json\")\nfailed_e=load(old/\"failed-candidate/exercises.template.json\")\nfirst=load(old/\"text-check-01.stdout.txt\")\nfirst_receipt=load(old/\"text-check-01.execution.json\")\nprevious_manifest=load(old/\"manifest.json\")\nexpected_files={x[\"path\"]:x for x in previous_manifest[\"files\"]}\nprior_preservation=[]\nfor name in [\"report.md\",\"ledger.json\",\"failed-candidate/lesson.template.json\",\"failed-candidate/exercises.template.json\",\"text-check-01.execution.json\",\"text-check-01.stdout.txt\",\"text-check-01.stderr.txt\",\"prose-flow-03.execution.json\",\"prose-flow-03.stdout.txt\",\"prose-flow-03.stderr.txt\"]:\n    actual=bind(old/name)\n    expected=expected_files.get(actual[\"path\"])\n    matched=actual==expected\n    prior_preservation.append({\"expected\":expected,\"actual\":actual,\"matches\":matched})\n    require(matched,\"exact prior evidence unchanged: \"+name)\nactual=bind(old/\"manifest.json\")\nrequire(actual[\"sha256\"]==\"8605b54cd1da3551406634ede98ea335cf39cd4f6b4d887346d71a84d4f284fb\" and actual[\"bytes\"]==6719,\"first manifest unchanged\")\nrequire(first_receipt[\"exitCode\"]==2,\"first failure remains actual exit 2\")\nrequire([x[\"check\"] for x in first[\"checks\"] if not x[\"passed\"]]==[\"lesson[2] exact math spans\",\"lesson[2] existing edition.validate_text\"],\"inherit first checks only outside known p2 defect\")\nfor expected in first_receipt[\"tools\"]:\n    require(bind(Path(expected[\"path\"]))==expected,\"existing text validator/profile unchanged: \"+expected[\"path\"])\nbefore=failed_l[\"prose\"][2][\"text\"]\nneedle=\"这些没有定义的输入\"\nreplacement=\"这些$x$值\"\nrequire(before.count(needle)==1,\"authorized first-clause span occurs once\")\nexpected=copy.deepcopy(failed_l)\nexpected[\"prose\"][2][\"text\"]=before.replace(needle,replacement,1)\nrequire(lesson==expected,\"only parent-authorized prose[2].text delta; all other fields unchanged\")\nrequire(exercises==failed_e and bind(t/\"exercises.template.json\")[\"sha256\"]==\"c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917\",\"exercises bytes/identities/source bindings inherited unchanged\")\nrequire(lesson[\"section_breaks\"]==failed_l[\"section_breaks\"] and len(lesson[\"section_breaks\"])==5,\"five prior valid concept anchors unchanged; no prose_flow replay\")\nrequire(all(needle not in x[\"before\"] and needle not in x[\"after\"] for x in lesson[\"section_breaks\"]),\"parent delta is outside inherited concept anchors\")\nrequire(lesson.get(\"errata\")==[],\"source/math-science freeze: no errata or math correction applied\")\nrequire(lesson[\"id\"]==\"ana10-c6-s3-n88\" and exercises[\"lesson\"]==\"ana10-c6-s3-n88\",\"N88 identity unchanged\")\nrequire([x[\"number\"] for x in exercises[\"exercises\"]]==[str(x) for x in range(204,238)],\"tasks 204-237 unchanged\")\ncurrent_bindings=[bind(t/\"lesson.template.json\"),bind(t/\"exercises.template.json\")]\nsnapshot_bindings=[bind(d/\"snapshots/lesson.template.json\"),bind(d/\"snapshots/exercises.template.json\")]\nfor current,snapshot in zip(current_bindings,snapshot_bindings):\n    require(current[\"sha256\"]==snapshot[\"sha256\"] and current[\"bytes\"]==snapshot[\"bytes\"],\"current input equals retained snapshot: \"+current[\"path\"])\nprofile=load(r/\".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\")\nforbidden=profile.get(\"forbidden_terms\",[])+profile.get(\"forbidden_person_names\",[])\ntext_validation=[]\nfor name,items in [(\"lesson\",lesson[\"prose\"]),(\"exercises\",exercises[\"exercises\"])]:\n    for index,item in enumerate(items):\n        label=name+\"[\"+str(index)+\"]\"\n        found=edition.validate_text(item.get(\"source_text\",\"\"),item.get(\"text\"),item.get(\"changes\"),item.get(\"numeric_changes\"),label,forbidden,item.get(\"historical_entities\"),[])\n        text_validation.append({\"target\":label,\"errors\":found})\n        errors.extend(found)\nblock=lesson[\"prose\"][2]\nmath=lambda text:[m.group(0) for m in edition.MATH.finditer(text)]\nsource_math=math(block[\"source_text\"])\nfailed_math=math(before)\ncurrent_math=math(block[\"text\"])\nrequire(source_math==current_math,\"restored p2 exact source math array\")\nrequire(edition.number_signature(block[\"source_text\"])==edition.number_signature(block[\"text\"]),\"p2 nonformula numeric signature unchanged\")\nprint(json.dumps({\"schema\":\"stemrobin-184/n88-changed-input-text-check@1\",\"errors\":errors,\"checks\":checks,\"text_validation\":text_validation,\"current_bindings\":current_bindings,\"snapshot_bindings\":snapshot_bindings,\"delta\":{\"owner\":\"parent\",\"target\":\"lesson.prose[2].text\",\"source_refs\":block[\"source_refs\"],\"allowed_fields\":[\"prose[2].text\"],\"from\":needle,\"to\":replacement,\"before\":before,\"current\":block[\"text\"],\"source_math\":source_math,\"first_failed_math\":failed_math,\"current_math\":current_math,\"numeric_changes_applied\":0,\"errata_applied\":0},\"counts\":{\"validator_text_objects\":len(text_validation),\"validator_passed_objects\":sum(not x[\"errors\"] for x in text_validation),\"lesson_prose_objects\":len(lesson[\"prose\"]),\"tasks\":len(exercises[\"exercises\"]),\"concept_anchors_inherited\":5,\"p2_source_math_spans\":len(source_math),\"p2_failed_math_spans\":len(failed_math),\"p2_current_math_spans\":len(current_math),\"inherited_total_source_math_spans\":first[\"counts\"][\"exact_math_spans\"],\"inherited_nonformula_numeric_tokens\":first[\"counts\"][\"nonformula_numeric_tokens\"],\"baseline63_recensus_runs\":0,\"prose_flow_runs\":0},\"prior_evidence_preservation\":prior_preservation,\"first_failure_status\":2,\"inherited_source_bindings\":[lesson[\"source\"][\"path\"],lesson[\"source\"][\"sha256\"],exercises[\"source\"][\"path\"],exercises[\"source\"][\"sha256\"]],\"scope\":\"TEXT_CHECK_ONLY_CHANGED_PARENT_INPUT\",\"sourceMathScienceFreeze\":\"raw D and rounding limitations held; no correction/errata applied\",\"approvals\":{\"source\":\"NOTRUN\",\"modernText\":\"NOTRUN\",\"figure\":\"NOTRUN\",\"math\":\"NOTRUN\",\"science\":\"NOTRUN\",\"display\":\"NOTRUN\"},\"completeLessons\":0,\"permanentCount\":\"24/24 supplied unchanged\",\"charges\":74,\"chargesProvenance\":\"parent supplied unchanged, not newly measured\",\"fees\":\"UNKNOWN\",\"operations\":{\"image_opens\":0,\"headers\":0,\"decodes\":0,\"native_image_ops\":0,\"model_images\":0,\"renders\":0,\"figure_validator\":0,\"finalize\":0,\"normalize_writes\":0,\"network\":0,\"DB\":0,\"Git\":0,\"installs\":0,\"agents\":0,\"promotion\":0}},ensure_ascii=False,indent=2))\nsys.exit(0 if not errors else 2)\n"
+  ],
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/lesson.template.json",
+      "bytes": 35944,
+      "sha256": "c1712632a4ca668a7c450dd7ecf4a51315a4f8a87cdb62164a184687210a58b4"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/exercises.template.json",
+      "bytes": 45245,
+      "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-02/snapshots/lesson.template.json",
+      "bytes": 35944,
+      "sha256": "c1712632a4ca668a7c450dd7ecf4a51315a4f8a87cdb62164a184687210a58b4"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-02/snapshots/exercises.template.json",
+      "bytes": 45245,
+      "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.execution.json",
+      "bytes": 10619,
+      "sha256": "f8c94864b8b740e1cb4cd015fb47e6a754f785817b0510f32030162c3137f774"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stdout.txt",
+      "bytes": 99126,
+      "sha256": "df0dfc7327a19c61e8df2b15657edc3da914d148a765c7417954295ed7146064"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/manifest.json",
+      "bytes": 6719,
+      "sha256": "8605b54cd1da3551406634ede98ea335cf39cd4f6b4d887346d71a84d4f284fb"
+    }
+  ],
+  "tools": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "bytes": 81541,
+      "sha256": "7f8eaeff512ba198f380abbf11fc9b2b42af1558e7e12ee8a31fdd227ec14515"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json",
+      "bytes": 3511,
+      "sha256": "f03840602a5de0c22b7eea096fe24db758c6d66b6532c75cda26c6766a1573f1"
+    }
+  ],
+  "startedAt": "2026-11-22T07:34:04.230Z",
+  "finishedAt": "2026-11-22T07:34:04.301Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-02/text-check-02.stdout.txt",
+      "bytes": 18339,
+      "sha256": "f2df7c01dacb322afa3e3243f8b1b09b46e4ddb517a04e2c80f00ca8c741ccad"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-02/text-check-02.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "snapshots": [
+    {
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/lesson.template.json",
+        "bytes": 35944,
+        "sha256": "c1712632a4ca668a7c450dd7ecf4a51315a4f8a87cdb62164a184687210a58b4"
+      },
+      "snapshot": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-02/snapshots/lesson.template.json",
+        "bytes": 35944,
+        "sha256": "c1712632a4ca668a7c450dd7ecf4a51315a4f8a87cdb62164a184687210a58b4"
+      }
+    },
+    {
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/exercises.template.json",
+        "bytes": 45245,
+        "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+      },
+      "snapshot": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-02/snapshots/exercises.template.json",
+        "bytes": 45245,
+        "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+      }
+    }
+  ],
+  "inheritedEvidenceBindings": [
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/report.md",
+        "bytes": 5035,
+        "sha256": "8de3533d23c0cf43c15d9b85a087ce366dd3f22b0e1e24f99effe3e1999c0f47"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/report.md",
+        "bytes": 5035,
+        "sha256": "8de3533d23c0cf43c15d9b85a087ce366dd3f22b0e1e24f99effe3e1999c0f47"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/ledger.json",
+        "bytes": 27095,
+        "sha256": "661e9edefd95f0abb2d7054753c2fcb1d4a4b78d23f88793964ac91dcf8793c2"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/ledger.json",
+        "bytes": 27095,
+        "sha256": "661e9edefd95f0abb2d7054753c2fcb1d4a4b78d23f88793964ac91dcf8793c2"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/failed-candidate/lesson.template.json",
+        "bytes": 35959,
+        "sha256": "4dff3ab6438da5428c313fc7afef87c5c8ef6d2a28e5d4e84a8091e799e53f1d"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/failed-candidate/lesson.template.json",
+        "bytes": 35959,
+        "sha256": "4dff3ab6438da5428c313fc7afef87c5c8ef6d2a28e5d4e84a8091e799e53f1d"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/failed-candidate/exercises.template.json",
+        "bytes": 45245,
+        "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/failed-candidate/exercises.template.json",
+        "bytes": 45245,
+        "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.execution.json",
+        "bytes": 10619,
+        "sha256": "f8c94864b8b740e1cb4cd015fb47e6a754f785817b0510f32030162c3137f774"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.execution.json",
+        "bytes": 10619,
+        "sha256": "f8c94864b8b740e1cb4cd015fb47e6a754f785817b0510f32030162c3137f774"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stdout.txt",
+        "bytes": 99126,
+        "sha256": "df0dfc7327a19c61e8df2b15657edc3da914d148a765c7417954295ed7146064"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stdout.txt",
+        "bytes": 99126,
+        "sha256": "df0dfc7327a19c61e8df2b15657edc3da914d148a765c7417954295ed7146064"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.execution.json",
+        "bytes": 1819,
+        "sha256": "cca2d9862dfe73b27f070e8cdb5ebc8aba727926f03ff028867e8796dcb166cc"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.execution.json",
+        "bytes": 1819,
+        "sha256": "cca2d9862dfe73b27f070e8cdb5ebc8aba727926f03ff028867e8796dcb166cc"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.stdout.txt",
+        "bytes": 11232,
+        "sha256": "f395c5f7fe553335fd50ef1db00a281fb8608c2bb8e93bd8ef6444fb7b044e0a"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.stdout.txt",
+        "bytes": 11232,
+        "sha256": "f395c5f7fe553335fd50ef1db00a281fb8608c2bb8e93bd8ef6444fb7b044e0a"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.stderr.txt",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "expected": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/manifest.json",
+        "bytes": 6719,
+        "sha256": "8605b54cd1da3551406634ede98ea335cf39cd4f6b4d887346d71a84d4f284fb"
+      },
+      "actual": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/manifest.json",
+        "bytes": 6719,
+        "sha256": "8605b54cd1da3551406634ede98ea335cf39cd4f6b4d887346d71a84d4f284fb"
+      }
+    }
+  ],
+  "bytecodeWritesDisabled": true,
+  "normalizeWrites": 0,
+  "imageOperations": 0,
+  "approval": "NOTRUN",
+  "completeLessons": 0
+}

@@ -1,0 +1,84 @@
+{
+  "schema": "stemrobin-184/n88-text-command@1",
+  "stage": "text-check03",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import copy,hashlib,json,sys\nfrom pathlib import Path\nr=Path.cwd()\no=r/\".tmp/stemrobin-184-six/n88-raw-assembly\"\nd=o/\"science-errata-03\"\nb=o/\"artifacts/10c\"\nt=o/\"work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88\"\nsys.path.insert(0,str(r/\".claude/skills/ld-s10y-lesson/tools\"))\nimport edition\nanchors=json.load(sys.stdin)\ndef load(p): return json.loads(p.read_text(encoding=\"utf-8\"))\ndef bind(p):\n    raw=p.read_bytes()\n    return {\"path\":str(p),\"bytes\":len(raw),\"sha256\":hashlib.sha256(raw).hexdigest()}\nerrors=[]\nchecks=[]\ndef require(ok,label):\n    checks.append({\"check\":label,\"passed\":bool(ok)})\n    if not ok: errors.append(label)\nlesson=load(t/\"lesson.template.json\")\nexercises=load(t/\"exercises.template.json\")\nold_l=load(d/\"before/templates/lesson.template.json\")\nold_e=load(d/\"before/templates/exercises.template.json\")\nrefresh=load(d/\"source-bindings-03.stdout.txt\")\nbefore=load(d/\"before-ledger.json\")\nsource_refresh=load(d/\"source-refresh-ledger.json\")\nrequire(not refresh[\"errors\"] and not source_refresh[\"errors\"],\"actual source/binding dependencies passed\")\nrequire(lesson[\"source\"]==refresh[\"lesson_source\"]==old_l[\"source\"],\"official raw lesson source_ref unchanged\")\nrequire(exercises[\"source\"]==refresh[\"exercise_source\"]==old_e[\"source\"],\"official raw exercise source_ref unchanged\")\ncontext=edition.SourceBook(b)\ncorrections,errata_errors=edition.validate_errata(b,lesson[\"source\"][\"data\"],exercises[\"source\"][\"data\"],lesson,exercises,context)\nerrors.extend(errata_errors)\nrequire(not errata_errors,\"official source-bound errata validation\")\nexpected_corrections={\"lesson.prose[15]\":[{\"original\":r\"$\\operatorname{arcctg}3.078\\approx0.3142$\",\"corrected\":r\"$\\operatorname{arcctg}3.078\\approx0.3141$\"}],\"lesson.prose[28]\":[{\"original\":r\"$x\\in(\\operatorname{ctg})$\",\"corrected\":r\"$x\\in D(\\operatorname{ctg})$\"}]}\nrequire(corrections==expected_corrections,\"exact two authorized math corrections only\")\nraw_expected=copy.deepcopy(refresh[\"source_errata\"])\nfor record in raw_expected: record[\"corrected\"]=expected_corrections[record[\"target\"]][0][\"corrected\"]\nrequire(lesson[\"errata\"]==raw_expected,\"derived current page/PDF/target/original/reason bindings unchanged\")\nleft=copy.deepcopy(lesson)\nright=copy.deepcopy(old_l)\nfor key in [\"prose\",\"errata\",\"section_breaks\"]:\n    left.pop(key)\n    right.pop(key)\nrequire(left==right,\"all lesson top-level identities/source fields preserved\")\nrequire(len(lesson[\"prose\"])==len(old_l[\"prose\"])==34,\"prose object count unchanged\")\nallowed={8:{\"text\"},15:{\"text\",\"changes\"},17:{\"text\",\"changes\"},28:{\"text\",\"changes\"}}\ndeltas=[]\nfor index,(item,old) in enumerate(zip(lesson[\"prose\"],old_l[\"prose\"])):\n    fields={k for k in set(item)|set(old) if item.get(k)!=old.get(k)}\n    require(fields<=allowed.get(index,set()),\"allowed fields at prose[\"+str(index)+\"]\")\n    if fields: deltas.append({\"target\":\"lesson.prose[\"+str(index)+\"]\",\"source_refs\":item[\"source_refs\"],\"fields\":sorted(fields),\"before\":old[\"text\"],\"current\":item[\"text\"]})\nrequire([int(x[\"target\"].split(\"[\")[1].split(\"]\")[0]) for x in deltas]==[8,15,17,28],\"only four authorized affected prose blocks\")\nrequire(exercises==old_e and bind(t/\"exercises.template.json\")[\"sha256\"]==\"c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917\",\"all exercise bytes/identities/refs/groups/math unchanged\")\nrequire([x[\"number\"] for x in exercises[\"exercises\"]]==[str(x) for x in range(204,238)],\"34 tasks 204-237 unchanged\")\nrequire(lesson[\"figures\"]==old_l[\"figures\"],\"figures 38-41 identity/placeholders preserved\")\nold_breaks=copy.deepcopy(old_l[\"section_breaks\"])\nnew_breaks=lesson[\"section_breaks\"]\nold_breaks[3][\"before\"]=new_breaks[3][\"before\"]\nrequire(new_breaks==old_breaks and len(new_breaks)==5,\"only affected example-1 before-anchor text refreshed\")\nrequire(new_breaks[3][\"before\"]==lesson[\"prose\"][15][\"text\"].split(\"\\n\\n\")[-1],\"refreshed existing boundary anchor equals corrected final paragraph\")\nrequire(not anchors.get(\"errors\"),\"existing in-memory sectionBreakIndices accepts changed anchors\")\nerrors.extend(anchors.get(\"errors\",[]))\nrequire(anchors.get(\"resolvedBreaks\")==[7,12,16,21,28] and anchors.get(\"paragraphs\")==38,\"original five concept-boundary positions preserved without CLI replay\")\nrequire(\"在前面指定的开区间内那一支图像\" in lesson[\"prose\"][8][\"text\"],\"inverse reflection explicitly limited to restricted open branch\")\nrequire(\"闭区间中仍要排除余切没有定义的点\" in lesson[\"prose\"][17][\"text\"] and \"不能重复列出这一类\" in lesson[\"prose\"][17][\"text\"],\"closed interval excludes poles and endpoint-family duplication\")\nrequire(r\"$18^\\circ\\approx0.3142$\" in lesson[\"prose\"][15][\"text\"] and \"保留原书的查表近似\" in lesson[\"prose\"][15][\"text\"] and \"输入看作精确数\" in lesson[\"prose\"][15][\"text\"],\"printed/table approximation retained and exact input distinguished\")\nprofile=load(r/\".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\")\nforbidden=profile.get(\"forbidden_terms\",[])+profile.get(\"forbidden_person_names\",[])\nvalidation=[]\nmath_arrays=[]\nmath_count=0\nnumber_count=0\nfor name,items in [(\"lesson.prose\",lesson[\"prose\"]),(\"exercises\",exercises[\"exercises\"])]:\n    for index,item in enumerate(items):\n        label=name+\"[\"+str(index)+\"]\"\n        source=item.get(\"source_text\",\"\")\n        found=edition.validate_text(source,item.get(\"text\"),item.get(\"changes\"),item.get(\"numeric_changes\"),label,forbidden,item.get(\"historical_entities\"),corrections.get(label,[]))\n        errors.extend(found)\n        validation.append({\"target\":label,\"errors\":found})\n        expected=source\n        for correction in corrections.get(label,[]): expected=expected.replace(correction[\"original\"],correction[\"corrected\"],1)\n        math=lambda text:[m.group(0) for m in edition.MATH.finditer(text)]\n        source_math=math(source)\n        expected_math=math(expected)\n        modern_math=math(item[\"text\"])\n        require(expected_math==modern_math,label+\" exact corrected math spans\")\n        require(edition.number_signature(source)==edition.number_signature(item[\"text\"]),label+\" nonformula numeric tokens unchanged\")\n        math_count+=len(source_math)\n        number_count+=len(edition.number_signature(source))\n        if label in expected_corrections: math_arrays.append({\"target\":label,\"source\":source_math,\"expected_corrected\":expected_math,\"current\":modern_math})\n        if name==\"exercises\": require(item[\"lines\"]==item[\"text\"].splitlines(),label+\" lines synchronized\")\nrequire(math_count==127 and number_count==63,\"127 source math spans and 63 nonformula numeric tokens preserved except two bound substitutions\")\npreservation=[]\nfor record in before[\"inputs\"]:\n    actual=bind(Path(record[\"snapshot\"][\"path\"]))\n    preservation.append({\"expected\":record[\"snapshot\"],\"actual\":actual,\"matches\":actual==record[\"snapshot\"]})\n    require(actual==record[\"snapshot\"],\"first before snapshot unchanged: \"+actual[\"path\"])\nfor record in before[\"rawBefore\"]+before[\"refs\"]:\n    actual=bind(Path(record[\"path\"]))\n    preservation.append({\"expected\":record,\"actual\":actual,\"matches\":actual==record})\n    require(actual==record,\"raw/science/prior evidence/tool binding unchanged: \"+record[\"path\"])\ncurrent_bindings=[bind(t/\"lesson.template.json\"),bind(t/\"exercises.template.json\")]\ncandidate=bind(d/\"candidate/lesson.template.json\")\nrequire(candidate[\"sha256\"]==current_bindings[0][\"sha256\"] and candidate[\"bytes\"]==current_bindings[0][\"bytes\"],\"exact changed candidate snapshot retained\")\nprint(json.dumps({\"schema\":\"stemrobin-184/n88-science-errata-text-check03@1\",\"errors\":errors,\"checks\":checks,\"validator_results\":validation,\"current_bindings\":current_bindings,\"candidate_snapshot\":candidate,\"exercise_snapshot_reused\":bind(d/\"before/templates/exercises.template.json\"),\"deltas\":deltas,\"derived_errata\":lesson[\"errata\"],\"official_corrections\":corrections,\"affected_math_arrays\":math_arrays,\"counts\":{\"validator_text_objects\":len(validation),\"passed_text_objects\":sum(not x[\"errors\"] for x in validation),\"source_math_spans\":math_count,\"nonformula_numeric_tokens\":number_count,\"tasks\":34,\"lesson_prose_objects\":34,\"corrected_math_substitutions\":2,\"concept_anchors\":5},\"anchor_contract\":anchors,\"preservation_verified_once\":preservation,\"assemble\":\"NOT_NEEDED_NOTRUN\",\"adaptPrepare\":\"NOT_NEEDED_NOTRUN\",\"editionFinalize\":\"NOTRUN\",\"render\":\"NOTRUN\",\"figureValidation\":\"NOTRUN\",\"proseFlowCliReplay\":0,\"baseline63Recensus\":0,\"completeLessons\":0,\"permanent\":\"24/24 supplied unchanged\",\"charges\":74,\"fees\":\"UNKNOWN\",\"imageOperations\":0,\"sourceApproval\":\"NOTRUN\",\"figureApproval\":\"NOTRUN\",\"modernTextApproval\":\"NOTRUN\",\"scienceDisplayApproval\":\"NOTRUN\"},ensure_ascii=False,indent=2))\nsys.exit(0 if not errors else 2)\n"
+  ],
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/lesson.template.json",
+      "bytes": 37978,
+      "sha256": "f25f3d3c67a2fd900d0d36e06a2ca7f73cc86da3902bb08621de536ef434adb4"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/exercises.template.json",
+      "bytes": 45245,
+      "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/source-bindings-03.stdout.txt",
+      "bytes": 35353,
+      "sha256": "f2a743a963f1e87d4764457cb7bdaf71c8a8a64619e63a464ea0f620126687f2"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/source-refresh-ledger.json",
+      "bytes": 16252,
+      "sha256": "8cc7e8f5849617267c9f5209af1473fa2244adfa30208d5a61e6978515577a9c"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/before-ledger.json",
+      "bytes": 11243,
+      "sha256": "3f4de9331ec1c4e0e675571e872cf488b24669672f7e70b4ea9e763516280f20"
+    }
+  ],
+  "tools": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "bytes": 81541,
+      "sha256": "7f8eaeff512ba198f380abbf11fc9b2b42af1558e7e12ee8a31fdd227ec14515"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+      "bytes": 5155,
+      "sha256": "c2f0301c5ba7811336a5268a404f795ace7873b75eb93c42c10186f3d9c3f9f6"
+    }
+  ],
+  "anchorContract": {
+    "proseFlowCliRuns": 0,
+    "inMemoryExistingContract": true,
+    "resolvedBreaks": [
+      7,
+      12,
+      16,
+      21,
+      28
+    ],
+    "paragraphs": 38,
+    "errors": []
+  },
+  "startedAt": "2026-11-22T07:44:55.103Z",
+  "finishedAt": "2026-11-22T07:44:55.183Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/text-check03.stdout.txt",
+      "bytes": 52274,
+      "sha256": "4341dada10c846633f4c5087d4bc62329311d8296ade13d67bbc7455f812235e"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/text-check03.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "bytecodeWritesDisabled": true,
+  "normalizeWrites": 0,
+  "imageOperations": 0,
+  "completeLessons": 0
+}

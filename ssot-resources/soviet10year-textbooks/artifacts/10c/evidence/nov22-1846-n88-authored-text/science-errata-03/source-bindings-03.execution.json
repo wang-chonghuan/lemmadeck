@@ -1,0 +1,78 @@
+{
+  "schema": "stemrobin-184/n88-text-command@1",
+  "stage": "source-bindings-03",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import json,sys\nfrom pathlib import Path\nr=Path.cwd()\no=r/\".tmp/stemrobin-184-six/n88-raw-assembly\"\nb=o/\"artifacts/10c\"\nt=o/\"work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88\"\nsys.path.insert(0,str(r/\".claude/skills/ld-s10y-lesson/tools\"))\nimport edition\ncontext=edition.SourceBook(b)\nlesson_source=edition.source_ref(b,b/\"lessons/ana10-c6-s3-n88/lesson.json\")\nexercise_source=edition.source_ref(b,b/\"lessons/ana10-c6-s3-n88/exercises.json\")\nrecords=edition.source_errata(b,lesson_source[\"data\"],exercise_source[\"data\"],context)\ncurrent_l=edition.load(t/\"lesson.template.json\")\ncurrent_e=edition.load(t/\"exercises.template.json\")\nexpected={\"p0069-math-rounding-1\":(\"p0069#6\",r\"$\\operatorname{arcctg}3.078\\approx0.3142$\"),\"p0071-math-domain-1\":(\"p0071#2\",r\"$x\\in(\\operatorname{ctg})$\")}\nerrors=[]\nif len(records)!=2 or {x[\"id\"] for x in records}!=set(expected): errors.append(\"unexpected derived source errata\")\nfor record in records:\n    if record[\"id\"] not in expected: continue\n    block,original=expected[record[\"id\"]]\n    if record[\"source\"][\"block\"]!=block or record[\"original\"]!=original: errors.append(\"exact source erratum mismatch: \"+record[\"id\"])\nif lesson_source!=current_l[\"source\"] or exercise_source!=current_e[\"source\"]: errors.append(\"unexpected faithful raw source snapshot drift\")\nprint(json.dumps({\"schema\":\"stemrobin-184/n88-official-source-bindings@1\",\"errors\":errors,\"lesson_source\":lesson_source,\"exercise_source\":exercise_source,\"source_errata\":records,\"authoritative_pages\":[{\"path\":str(p),\"page\":data[\"meta\"][\"page\"]} for p,data in context.pages()],\"sourceRefsAndSnapshotsUnchanged\":lesson_source==current_l[\"source\"] and exercise_source==current_e[\"source\"],\"assembleRequired\":False,\"adaptPrepareRequired\":False,\"imageOperations\":0,\"approval\":\"NOTRUN\",\"completeLessons\":0},ensure_ascii=False,indent=2))\nsys.exit(0 if not errors else 2)\n"
+  ],
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/source-refresh-ledger.json",
+      "bytes": 16252,
+      "sha256": "8cc7e8f5849617267c9f5209af1473fa2244adfa30208d5a61e6978515577a9c"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0067/page.json",
+      "bytes": 4380,
+      "sha256": "0a2bc79bd8079f47df8f504d6c6c0515ed38bc08409422395ced0ac6ac9992d8"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0068/page.json",
+      "bytes": 3881,
+      "sha256": "3eba7552e57ad95e4b42f10cef562054530b164c816c5145bc4bce80b0677192"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0069/page.json",
+      "bytes": 5004,
+      "sha256": "972c9d0bf34e231b7795627c335370f6065cd0d047ee2397b07b0f87f07df9d4"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0070/page.json",
+      "bytes": 6683,
+      "sha256": "47b4f01f3644e33b5d1e75b7163c9252d823e69100a82a0926cb7f7522903317"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0071/page.json",
+      "bytes": 7844,
+      "sha256": "7cdd1db96f4542bccbc7b60934bd5c9d7d69489933827685a2a8070c34acc73b"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0072/page.json",
+      "bytes": 7989,
+      "sha256": "214c7689b54983ef0e458a42f558a3f0016f102317e8c8cb922e47c9553e49be"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/artifacts/10c/pages/0073/page.json",
+      "bytes": 6108,
+      "sha256": "c95aa3544b8f719d1af1c1f6e7f2bd7d72256d365e3a424403241a8b8a65fd48"
+    }
+  ],
+  "tool": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+    "bytes": 81541,
+    "sha256": "7f8eaeff512ba198f380abbf11fc9b2b42af1558e7e12ee8a31fdd227ec14515"
+  },
+  "startedAt": "2026-11-22T07:42:28.710Z",
+  "finishedAt": "2026-11-22T07:42:28.772Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/source-bindings-03.stdout.txt",
+      "bytes": 35353,
+      "sha256": "f2a743a963f1e87d4764457cb7bdaf71c8a8a64619e63a464ea0f620126687f2"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/science-errata-03/source-bindings-03.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "imageOperations": 0,
+  "approval": "NOTRUN",
+  "completeLessons": 0
+}

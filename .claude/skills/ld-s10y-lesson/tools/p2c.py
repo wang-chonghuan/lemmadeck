@@ -495,15 +495,31 @@ def cmd_reindex(a) -> int:
         raise SystemExit("ERROR: no retained source lessons to index")
     toc = json.loads(Path(a.toc).read_text(encoding="utf-8"))
     import assemble
-    order = {card["id"]: index for index, card in enumerate(assemble._toc_cards(toc))}
-    if any(row["id"] not in order for row in rows):
+    cards = assemble._toc_cards(toc)
+    order = {card["id"]: index for index, card in enumerate(cards)}
+    unclaimed = [row for row in rows if row["id"] not in order]
+    if any(row["card_id"] or row["number"] is not None or
+           not isinstance(row["start_printed"], int) for row in unclaimed):
         raise SystemExit("ERROR: retained lesson is absent from TOC")
-    rows.sort(key=lambda row: order[row["id"]])
+
+    def position(row):
+        if row["id"] in order:
+            return (order[row["id"]], 1)
+        # Partial extraction can retain an unclaimed continuation fragment.
+        following = next((index for index, card in enumerate(cards)
+                          if card["page"] >= row["start_printed"]), len(cards))
+        return (following, 0)
+
+    rows.sort(key=position)
     _dump(book / "book.json", {
         "book": a.book, "pages": len(list((book / "pages").glob("*/page.json"))),
         "exercise_numbering": _catalog_config(a).get("exerciseNumbering", "book"),
         "lessons": rows,
-        "audit": {"warnings": ["Index rebuilt from retained source snapshots; no new source approval."]},
+        "audit": {"warnings": [
+            "Index rebuilt from retained source snapshots; no new source approval.",
+            *[f"Unclaimed continuation retained without TOC approval: {row['id']}"
+              for row in unclaimed],
+        ]},
     })
     print(f"[reindex] {a.book}: {len(rows)} retained lessons")
     return 0

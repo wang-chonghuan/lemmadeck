@@ -1,0 +1,74 @@
+{
+  "schema": "stemrobin-184/n88-text-command@1",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import copy, hashlib, json, sys\nfrom pathlib import Path\nr=Path.cwd()\nown=r/\".tmp/stemrobin-184-six/n88-raw-assembly\"\nd=own/\"authored-text-01\"\nt=own/\"work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88\"\nsys.path.insert(0,str(r/\".claude/skills/ld-s10y-lesson/tools\"))\nimport edition\nerrors=[]\nchecks=[]\ndef require(ok,label):\n    checks.append({\"check\":label,\"passed\":bool(ok)})\n    if not ok: errors.append(label)\ndef load(p): return json.loads(p.read_text(encoding=\"utf-8\"))\ndef bind(p):\n    b=p.read_bytes()\n    return {\"path\":str(p),\"bytes\":len(b),\"sha256\":hashlib.sha256(b).hexdigest()}\nbase=load(d/\"baseline-ledger.json\")\nprofile=load(r/\".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\")\nforbidden=profile.get(\"forbidden_terms\",[])+profile.get(\"forbidden_person_names\",[])\nlesson=load(t/\"lesson.template.json\")\nexercise=load(t/\"exercises.template.json\")\nold_l=load(d/\"before/lesson.template.json\")\nold_e=load(d/\"before/exercises.template.json\")\nrequire(lesson.get(\"id\")==\"ana10-c6-s3-n88\" and exercise.get(\"lesson\")==\"ana10-c6-s3-n88\",\"N88-only identity\")\nrequire(lesson.get(\"status\")==\"draft\" and exercise.get(\"status\")==\"draft\",\"draft status preserved\")\nrequire(lesson.get(\"errata\")==[],\"no registered errata or correction invented\")\nchange_rows=[]\nexact_math=0\nnumeric=0\nvalidated=0\nfor name,current,before,key,fields in [(\"lesson\",lesson,old_l,\"prose\",{\"text\",\"changes\"}),(\"exercises\",exercise,old_e,\"exercises\",{\"text\",\"lines\",\"changes\"})]:\n    left=copy.deepcopy(current)\n    right=copy.deepcopy(before)\n    left.pop(key,None)\n    right.pop(key,None)\n    if name==\"lesson\":\n        left.pop(\"section_breaks\",None)\n        right.pop(\"section_breaks\",None)\n    require(left==right,name+\" immutable top-level fields/source snapshot\")\n    items=current[key]\n    prior=before[key]\n    require(len(items)==len(prior),name+\" item count/order\")\n    for i,(item,old) in enumerate(zip(items,prior)):\n        label=name+\"[\"+str(i)+\"]\"\n        require({k:v for k,v in item.items() if k not in fields}=={k:v for k,v in old.items() if k not in fields},label+\" immutable identity/refs/group/pages/figures/source fields\")\n        if item.get(\"kind\") in {\"fig\",\"cap\"}: require(item==old,label+\" figure placeholder/caption unchanged\")\n        source=item.get(\"source_text\",\"\")\n        text=item.get(\"text\",\"\")\n        raw_math=[m.group(0) for m in edition.MATH.finditer(source)]\n        modern_math=[m.group(0) for m in edition.MATH.finditer(text)]\n        require(raw_math==modern_math,label+\" exact math spans\")\n        exact_math+=len(raw_math)\n        require(edition.number_signature(source)==edition.number_signature(text),label+\" nonformula numeric signature\")\n        numeric+=len(edition.number_signature(source))\n        found=edition.validate_text(source,text,item.get(\"changes\"),item.get(\"numeric_changes\"),label,forbidden,item.get(\"historical_entities\"),[])\n        require(not found,label+\" existing edition.validate_text\")\n        errors.extend(found)\n        validated+=1\n        if name==\"exercises\": require(item.get(\"lines\")==text.splitlines(),label+\" lines/text synchronization\")\n        changed=[k for k in sorted(set(item)|set(old)) if item.get(k)!=old.get(k)]\n        if changed: change_rows.append({\"target\":label,\"source_refs\":item.get(\"source_refs\",item.get(\"pages\",[])),\"number\":item.get(\"number\"),\"fields\":changed,\"text_changed\":text!=old.get(\"text\",\"\")})\nrequire([x[\"number\"] for x in exercise[\"exercises\"]]==[str(x) for x in range(204,238)],\"all 34 tasks 204-237 in original order\")\nrequire(exercise[\"count\"]==len(exercise[\"exercises\"])==lesson[\"exercise_count\"]==34,\"task counts consistent\")\nrequire([x[\"id\"] for x in lesson[\"figures\"]]==[\"fig-38\",\"fig-39\",\"fig-40\",\"fig-41\"],\"four original figure identities/placeholders\")\nrequire([x[\"id\"] for x in lesson[\"prose\"] if x.get(\"kind\")==\"fig\"]==[x[\"id\"] for x in lesson[\"figures\"]],\"placeholder order matches original figures\")\nfor refs in [[\"p0070#1\",\"p0070#4\"],[\"p0071#2\"]]:\n    now=[x for x in lesson[\"prose\"] if x.get(\"source_refs\")==refs]\n    before=[x for x in old_l[\"prose\"] if x.get(\"source_refs\")==refs]\n    require(len(now)==len(before)==1 and now==before,\"source anomaly block unchanged: \"+\",\".join(refs))\nflow=load(d/\"prose-flow-03.stdout.txt\")\nrequire(len(lesson[\"section_breaks\"])==len(flow[\"resolvedBreaks\"])==5,\"five concept boundaries resolved by existing prose_flow\")\nrequire(lesson[\"section_breaks\"]==[{\"before\":x[\"before\"],\"after\":x[\"after\"]} for x in flow[\"boundaries\"]],\"authored anchors equal actual adjacent paragraphs\")\nrequire(len(flow[\"paragraphs\"])==38,\"actual prose_flow paragraphs\")\nverification=[]\nallowed=set(base[\"mutablePaths\"])\nfor item in base[\"baseline\"]:\n    if item[\"path\"] in allowed: continue\n    path=Path(item[\"path\"])\n    try:\n        actual=bind(path)\n        matched=actual[\"sha256\"]==item[\"sha256\"] and actual[\"bytes\"]==item[\"bytes\"]\n    except OSError as e:\n        actual={\"path\":str(path),\"error\":str(e)}\n        matched=False\n    verification.append({\"expected\":item,\"actual\":actual,\"matches\":matched})\n    require(matched,\"preexisting immutable bytes: \"+str(path))\nfor snap in base[\"snapshots\"]:\n    actual=bind(Path(snap[\"snapshot\"][\"path\"]))\n    require(actual==snap[\"snapshot\"],\"prepared snapshot intact: \"+actual[\"path\"])\nfor doc in [lesson,exercise]:\n    source=doc[\"source\"]\n    path=str(own/\"artifacts/10c\"/source[\"path\"])\n    matches=[x for x in verification if x[\"actual\"][\"path\"]==path]\n    require(len(matches)==1 and matches[0][\"matches\"] and matches[0][\"actual\"][\"sha256\"]==source[\"sha256\"],\"raw source binding: \"+source[\"path\"])\nprint(json.dumps({\"schema\":\"stemrobin-184/n88-authored-text-check@1\",\"errors\":errors,\"checks\":checks,\"templates\":[bind(t/\"lesson.template.json\"),bind(t/\"exercises.template.json\")],\"counts\":{\"lesson_prose_objects\":len(lesson[\"prose\"]),\"actual_flow_paragraphs\":len(flow[\"paragraphs\"]),\"section_breaks\":len(flow[\"resolvedBreaks\"]),\"tasks\":len(exercise[\"exercises\"]),\"figure_placeholders\":len(lesson[\"figures\"]),\"validated_text_objects\":validated,\"exact_math_spans\":exact_math,\"nonformula_numeric_tokens\":numeric,\"lesson_text_edits\":sum(x[\"text_changed\"] for x in change_rows if x[\"target\"].startswith(\"lesson\")),\"exercise_text_edits\":sum(x[\"text_changed\"] for x in change_rows if x[\"target\"].startswith(\"exercises\")),\"immutable_baseline_files_verified_once\":len(verification)},\"changes\":change_rows,\"immutable_verification\":verification,\"sourceApproval\":\"NOTRUN\",\"mathApproval\":\"NOTRUN\",\"figureApproval\":\"NOTRUN\",\"scienceApproval\":\"NOTRUN\",\"displayApproval\":\"NOTRUN\",\"modernTextApproval\":\"NOTRUN\",\"completeLessons\":0,\"operations\":{\"image_opens\":0,\"image_decodes\":0,\"model_images\":0,\"renders\":0,\"OCR\":0,\"ROI\":0,\"network\":0},\"fees\":\"UNKNOWN\"},ensure_ascii=False,indent=2))\nsys.exit(0 if not errors else 2)\n"
+  ],
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/baseline-ledger.json",
+      "bytes": 19832,
+      "sha256": "f6c133d0df0b1e2d4361aebae2849c97f10f191fd507466d6160f9b8acba6c23"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/before/lesson.template.json",
+      "bytes": 32878,
+      "sha256": "906f8de728ef81e368918d0d6b409a2992c09f119e598c0bd3ba4c6bed5bee86"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/before/exercises.template.json",
+      "bytes": 43627,
+      "sha256": "2bf9bf04715c7a7c511b520dd451fad62c79afec5c39083461d07d3cb27ebb71"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/lesson.template.json",
+      "bytes": 35959,
+      "sha256": "4dff3ab6438da5428c313fc7afef87c5c8ef6d2a28e5d4e84a8091e799e53f1d"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/work/adapt/10c/modern-us-neutral/lessons/ana10-c6-s3-n88/exercises.template.json",
+      "bytes": 45245,
+      "sha256": "c415dabb6e8145256181b508970807808618a1856e9f994e7adfe9eea326a917"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/prose-flow-03.stdout.txt",
+      "bytes": 11232,
+      "sha256": "f395c5f7fe553335fd50ef1db00a281fb8608c2bb8e93bd8ef6444fb7b044e0a"
+    }
+  ],
+  "tools": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "bytes": 81541,
+      "sha256": "7f8eaeff512ba198f380abbf11fc9b2b42af1558e7e12ee8a31fdd227ec14515"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json",
+      "bytes": 3511,
+      "sha256": "f03840602a5de0c22b7eea096fe24db758c6d66b6532c75cda26c6766a1573f1"
+    }
+  ],
+  "startedAt": "2026-11-22T07:28:04.293Z",
+  "finishedAt": "2026-11-22T07:28:04.366Z",
+  "exitCode": 2,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stdout.txt",
+      "bytes": 99126,
+      "sha256": "df0dfc7327a19c61e8df2b15657edc3da914d148a765c7417954295ed7146064"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-184-six/lemmadeck/.tmp/stemrobin-184-six/n88-raw-assembly/authored-text-01/text-check-01.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "bytecodeWritesDisabled": true,
+  "imageOperations": 0,
+  "approval": "NOTRUN"
+}

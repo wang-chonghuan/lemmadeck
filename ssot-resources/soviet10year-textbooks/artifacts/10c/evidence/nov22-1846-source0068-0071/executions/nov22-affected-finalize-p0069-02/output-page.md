@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 69,
+  "printed_page": 63,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 69
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "ed84595a0b59f28814a852323f73ac2ee504b5eae8a167a78c88d2f147ad4ea5"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "SOURCE AUTHOR only; N88中段，未装订、未独立审核。首段cont承接0068末段关于直线y=x的句子。",
+    "例1为正文中的完整求值例，不是练习栏目题。末段引出编号方程(1)，本页可见句子及公式完整，无outgoing prose open。",
+    "本页无插图、无图题、无教学脚注；页脚63。未登记计数排除。",
+    "Historical author notes above precede independent original-first comparison. Only the colon after the inverse-function definition is restored to the observed comma category. All other prose, formulas, source rows, open/cont flags and unrelated source/typography HOLDs remain unchanged."
+  ],
+  "errata": [],
+  "printed_lines": 23,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+是对称的。由反函数的定义得出，$D(\operatorname{arcctg})=]-\infty,\infty[$，
+$E(\operatorname{arcctg})=]0,\pi[$，而且反余切函数是减函数。
+
+<!-- p -->
+我们来计算几个反余切函数的值：
+
+<!-- p -->
+$\operatorname{arcctg}\sqrt{3}=\frac{\pi}{6}$，因为 $\operatorname{ctg}\frac{\pi}{6}=\sqrt{3}$，而且 $\frac{\pi}{6}\in]0,\pi[$；
+$\operatorname{arcctg}\frac{\sqrt{3}}{3}=\frac{\pi}{3}$，因为 $\operatorname{ctg}\frac{\pi}{3}=\frac{\sqrt{3}}{3}$，而且 $\frac{\pi}{3}\in]0,\pi[$；
+$\operatorname{arcctg}(-1)=\frac{3\pi}{4}$，因为 $\operatorname{ctg}\frac{3\pi}{4}=-1$，而且 $\frac{3\pi}{4}\in]0,\pi[$。
+
+<!-- p -->
+$\operatorname{arcctg}$ 函数值可利用用度表示的角度的余切表和把角度
+的度数换算成弧度的表求出。
+
+<!-- p -->
+为了求出带有四位小数的 $\operatorname{arcctg}x$，在 $0^\circ<\alpha^\circ<180^\circ$ 范
+围内求出角度 $\alpha^\circ$，使得
+$\operatorname{ctg}\alpha^\circ=x$；
+把 $\alpha^\circ$ 表示成弧度：
+$\alpha^\circ=y$ 弧度。
+得到
+$\operatorname{ctg}y=x$，
+$\operatorname{arcctg}x=y$。
+
+<!-- p -->
+例1 求 $\operatorname{arcctg}3.078$。
+$3.078\approx\operatorname{ctg}18^\circ$，
+$18^\circ\approx0.3142$ 弧度，
+$\operatorname{arcctg}3.078\approx0.3142$。
+
+<!-- p -->
+现在说明怎样借助引入的反余切函数解方程
+$\operatorname{ctg}x=a$。 （1）
+
+<!-- foot -->
+63

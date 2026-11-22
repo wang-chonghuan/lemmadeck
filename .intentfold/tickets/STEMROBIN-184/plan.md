@@ -1,5 +1,72 @@
 # 开发路线
 
+## 184-6 N88 review-ready delivery (2026-11-22)
+
+N88 crop gap review now received, scoped PASS38-41, report74d99e9d/
+freezea78deb83/execution0cbf1f7a. Wegener CLOSED after intake;7original/crop
+opens/decodes,8views including1necessaryROI; encoding/faint/offscaleUNKNOWN
+not upgraded. Promotion5b6fcf actual0:48copiedfiles,4metadata-rebound figures,
+promotion71b258ba. First reindexd9c4b2 actual1 on pre-existing unclaimed
+x1-continuation; no source/content failure or deleted fragment. Narrow native
+reindex handling preserves unclaimed unnumbered fragments and still rejects
+wrong claimed/numbered lessons:3focused testsbdf667 actual0; recovery946308
+actual0,23retained rows. Canonical N88-only firstfinalizec3a0e9 actual0.
+All4canonical ready JSONs BYTE-EXACT rawready; no render/content replay.
+Current choice representation refresh8fa880 actual0: native normalization
+only conceptblocks0/8/17/26;34exercises/group prefixes/18views/72options/all
+solutions/coverage/reviews EXACT. Retain75dd64 actual0 with internal gate,
+no extra checker/semantic review. Current seedc9477cd8/draftc6d6e7d6.
+Base new evidence7becee retained42files125159bytes,receipt534873e2.
+Sole affected prose/display reviewer Socrates01a202bf-a110 freshforkfalse
+RUNNING;5boundaries/8normalizedblocks andmetadata-only transfer,<=8new
+views, no source/modernfigure/written/choice replay. Complete0 until this
+missingstage returns. Remote fetch934f13/60323 exited0;da98d2 confirms
+HEAD=FETCH_HEAD390147aa. Ordinary narrow completed delivery remains
+authorized; unrelated dirt/holds and parent24/24/charges74/paid0 preserved.
+This is ACTIVE continuation, not a production pause or final handoff.
+
+Socrates firstfinal received HOLD960c1831/manifest458dfdc8/seal83a098df:
+both headedviewports PASS21affectedparagraphs/5boundaries/zeroindent/
+font16.96px/noChineseclipping/nooverflow;4canonical+metadata transfers PASS.
+50flowitems means42paragraphs+4figures+4captions, not50paragraphs.
+Actual intake1->mapping0;desktop1->capture-only0;mobile0;seal0.
+Onlymissing desktopblock5/block8firstparagraph/boundary1 screenshotcoverage
+andmobileboundary2maskedrule; NOTcontent/sciencefailure. First8views and
+9attempts remain frozen. Retained360c66:45files1306766bytes,d5abbf6b,
+noimagepixelsreturnedto/openedbyparent. SAMEreviewer affectedcapture-only
+release01a202c8-c9c6, NEWbatchmax2views/context<=10/24; no passed
+DOM/metadata/renderer/fullviewportstage replays oroldimage reinspection.
+Firstreports/scripts/streams/screenshots unchanged;complete0 while recovery.
+Usage42b0ff preserves other523compactd60934a3 andall524keys.
+Nextsourcegap prepared3de7f4 only: p82finalformulaline andp82-84lowerink
+ownership, releaseae3c5164; NOTdispatched/approved,0newnative/images.
+
+Recovery02 received PASS6625668e/manifest48451cbf/seal47dd5473:
+desktop5+8paragraph7+boundary1 fullyvisible;mobileboundary2rule visible,
+precedinganchor fullview remains reused, not newlyclaimed. Both captures
+actual0;new2screenshots/2views/0failures,context10/24; first8views/9attempts
+and all21paragraph/5boundary/4transferPASS unchanged. Socrates CLOSED.
+Newretentiond21248:23files141624bytes,6e4e28a2;6firstbindings reused,
+notrecopied. Completiond12327/99780f27 records N88OFFLINE_REVIEW_READY:
+34tasks/34answers/34interactions/4figures/18choices/72options. Newcomplete1,
+NOTpublication/runtimegrading/tickethandoff. Usagef974a6 retains all524keys/
+other523d60934a3. Ordinary scoped commit/push next, production continues.
+Fresh source-only Aquinas01a202ce-66b7 nowRUNNING on ONLYp82finalformula
+physicalrow andp82-84footer/lowerink geometry; originalfreeze before any
+candidate/nativecounts,3originals+max4necessaryROIs,<=8batch/24context.
+No repeated source-math/figure review, no native producer/counttarget/
+exclusion applied; sourceownership stillUNKNOWN until actual intake.
+
+Deliveryselection090c53 staged868files (N88resources and its alreadyretained
+source/science/figure/answer/choice/display evidence; no otherlesson/tool dirt).
+Planindex contains ONLYcurrent N88entry;usageindex ONLYnov22key, other
+workingrecorddifferences remain unstaged. Firstwhitespacee76568 actual2 on
+byte-bound rawpage73MDline84's retained trailing space. Exceptione3481d
+actual0 excludes immutableevidence streams and ONLYthat archivalMDfile;
+rawsource/hash bytes unchanged, no trim/re-finalization orreview replay.
+3eb350 confirmed actual/index pagefiles both84 (historicalbook71wasstale),
+so nativeindex84 is not dependent on untracked omittedpagefiles.
+
 ## 184-6 repaired cap3 delivered; remaining empty manifests ready (2026-11-21)
 
 Repair commit4bb249b317a3e61cf415037c3039782a942c8cda actually ordinary-pushed
