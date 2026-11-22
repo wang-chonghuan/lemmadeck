@@ -1,0 +1,119 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-3129');
+const output = path.join(base, 'N34-affected-display-604-RECOVERY1');
+assert.ok(!fs.existsSync(output), 'Preserve earlier captures');
+fs.mkdirSync(output, { recursive: true });
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const appRequire = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = appRequire('playwright');
+const { PNG } = appRequire(path.join(repo, 'app/node_modules/playwright-core/lib/utilsBundle.js'));
+const target = 'parameter-quotients-including-possible-zero-input';
+const draftPath = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/6a/editions/modern-us-neutral/lessons/alg6-c4-s1-n34/choice-set/draft.json');
+const draftBytes = fs.readFileSync(draftPath);
+const draft = JSON.parse(draftBytes);
+const index = draft.questions.findIndex(question => question.id === target);
+assert.ok(index >= 0);
+assert.deepEqual(draft.questions[index].view.options.map(option => option.id), ['A', 'B', 'C']);
+const htmlPath = path.join(base, 'N34-choices-render-RECOVERY1/alg6-c4-s1-n34/choices.html');
+const htmlBytes = fs.readFileSync(htmlPath);
+const report = {
+  schema: 'stemrobin-182/affected-choice-display-capture@1',
+  startedAt: new Date().toISOString(), status: 'RUNNING',
+  workdir: repo, book: '6a', lesson: 'alg6-c4-s1-n34',
+  question: target, sourceNumber: '604', questionIndex: index,
+  inputs: [
+    { role: 'draft', path: draftPath, sha256: hash(draftBytes), bytes: draftBytes.length },
+    { role: 'renderedHtml', path: htmlPath, sha256: hash(htmlBytes), bytes: htmlBytes.length },
+  ],
+  screenshots: [], remoteRequests: [], pageErrors: [],
+  unchangedQuestionsObserved: 0, oldPassScreenshotsOpened: 0,
+  ownedBrowsersClosed: false, actualPixelObservation: 'PENDING',
+};
+let browser;
+try {
+  browser = await chromium.launch({ headless: true });
+  report.browser = { headless: true, isolated: true, version: browser.version() };
+  const context = await browser.newContext();
+  await context.route(/^https?:/, route => route.abort());
+  const page = await context.newPage();
+  page.on('request', request => {
+    if (/^https?:/.test(request.url())) report.remoteRequests.push(request.url());
+  });
+  page.on('pageerror', error => report.pageErrors.push(error.message));
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    await page.goto(pathToFileURL(htmlPath).href);
+    await page.evaluate(() => document.fonts.ready);
+    const section = page.locator('.choice').nth(index);
+    const documentWidth = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth, width: innerWidth,
+    }));
+    assert.ok(documentWidth.scroll <= documentWidth.width + 1);
+    assert.equal(await section.locator('.err,.katex-error').count(), 0);
+    const regions = [
+      { name: 'stem', locator: section.locator('.choice-stem') },
+      ...['A', 'B', 'C'].map((name, at) => ({
+        name, locator: section.locator('.choice-options>li').nth(at),
+      })),
+    ];
+    for (const region of regions) {
+      const locator = region.locator;
+      assert.equal(await locator.count(), 1);
+      const geometry = await locator.evaluate(element => {
+        const rect = element.getBoundingClientRect();
+        const units = Array.from(element.querySelectorAll('.nb,.sr-nb,.choice-option-body')).map(item => {
+          const box = item.getBoundingClientRect();
+          return { client: item.clientWidth, scroll: item.scrollWidth, height: box.height };
+        });
+        return {
+          left: rect.left, right: rect.right, width: rect.width, height: rect.height,
+          client: element.clientWidth, scroll: element.scrollWidth, units,
+        };
+      });
+      assert.ok(geometry.left >= -1 && geometry.right <= viewport.width + 1);
+      assert.ok(geometry.width > 100 && geometry.height > 15);
+      assert.ok(geometry.scroll <= geometry.client + 1, JSON.stringify(geometry));
+      for (const unit of geometry.units)
+        assert.ok(unit.scroll <= unit.client + 1 && unit.height > 0, JSON.stringify(unit));
+      await locator.scrollIntoViewIfNeeded();
+      const screenshot = path.join(output, `${viewport.width}-${region.name}.png`);
+      await locator.screenshot({ path: screenshot });
+      const bytes = fs.readFileSync(screenshot);
+      const image = PNG.sync.read(bytes);
+      let nonWhite = 0;
+      for (let at = 0; at < image.data.length; at += 4)
+        if (Math.min(image.data[at], image.data[at + 1], image.data[at + 2]) < 220) nonWhite++;
+      assert.ok(nonWhite > 150);
+      report.screenshots.push({
+        path: screenshot, sha256: hash(bytes), bytes: bytes.length,
+        viewport, region: region.name, geometry, nonWhitePixels: nonWhite,
+        renderedText: await locator.innerText(), status: 'RUNTIME_PASS_VISUAL_PENDING',
+      });
+    }
+  }
+  assert.deepEqual(report.remoteRequests, []);
+  assert.deepEqual(report.pageErrors, []);
+  assert.equal(report.screenshots.length, 8);
+  report.status = 'RUNTIME_PASS_VISUAL_PENDING';
+} catch (error) {
+  report.status = 'FAILED';
+  report.error = { message: error.message, stack: error.stack };
+  process.exitCode = 1;
+} finally {
+  if (browser) await browser.close();
+  report.ownedBrowsersClosed = true;
+  report.endedAt = new Date().toISOString();
+  fs.writeFileSync(path.join(output, 'capture.record'), `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({
+    status: report.status, screenshots: report.screenshots.length,
+    ownedBrowsersClosed: report.ownedBrowsersClosed, error: report.error?.message,
+  }));
+}

@@ -1,0 +1,118 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const working = `${base}/N34-independent-review-20261122-FIRST`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/6a/editions/modern-us-neutral/lessons/alg6-c4-s1-n34';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/6a/evidence/resume182-6-n34-independent-review-3129';
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const freeze = JSON.parse(fs.readFileSync(`${working}/freeze-FIRST.record`));
+const previous = fs.readFileSync(`${working}/author/prior-self-review.json.record`);
+assert.equal(hash(previous), '5e14113e5d0eb0d66363f4bafc7d942e25fbbbf14da4d2c2958f68b3ed579e5e');
+assert.ok(fs.readFileSync(`${target}/choice-set/review.json`).equals(previous));
+for (const name of ['seed.json', 'draft.json'])
+  assert.ok(fs.readFileSync(`${target}/choice-set/${name}`).equals(fs.readFileSync(`${working}/author/${name}`)));
+const reviewBytes = fs.readFileSync(`${working}/reviewer/review-FIRST.json`);
+const review = JSON.parse(reviewBytes);
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.equal(review.outcome, 'pass');
+assert.equal(review.seed_sha256, freeze.seed_sha256);
+assert.equal(review.draft_sha256, freeze.draft_sha256);
+assert.equal(review.source_reviews.length, 9);
+assert.equal(review.question_reviews.length, 9);
+assert.equal(review.question_reviews.reduce((sum, item) => sum + item.mathematics.option_checks.length, 0), 31);
+assert.equal(review.figure_checks.length, 0);
+assert.equal(review.new_figure_reviews.length, 0);
+const executionFile = `${base}/N34-native-independent-validation-execution-FIRST/execution.json`;
+const execution = JSON.parse(fs.readFileSync(executionFile));
+assert.equal(execution.cwd, repo);
+assert.equal(execution.exitCode, 0);
+assert.deepEqual(execution.argv, [
+  'python3', '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', repo, '--seed', `${working}/author/seed.json`,
+  '--draft', `${working}/author/draft.json`,
+  '--review', `${working}/reviewer/review-FIRST.json`,
+]);
+const historicalPath = `${target}/choice-set/review-history/batch18-evidence/actual-observations.json`;
+const historicalBytes = fs.readFileSync(historicalPath);
+const historical = JSON.parse(historicalBytes);
+assert.equal(historical.status, 'pass');
+assert.equal(historical.capture_summary.actually_opened_screenshots, 17);
+assert.equal(historical.unique_surface_viewport_combinations, 6);
+for (const reference of historical.inputs)
+  assert.equal(hash(fs.readFileSync(reference.path)), reference.sha256);
+assert.ok(!fs.existsSync(evidence));
+fs.mkdirSync(evidence, { recursive: true });
+const retained = [];
+const keep = (input, name) => {
+  const bytes = fs.readFileSync(input);
+  const output = `${evidence}/${name}`;
+  fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o444 });
+  const entry = { path: output, sha256: hash(bytes), bytes: bytes.length };
+  retained.push(entry);
+  return entry;
+};
+keep(`${working}/author/prior-self-review.json.record`, 'prior-self-review-FIRST.json.record');
+keep(`${working}/freeze-FIRST.record`, 'freeze-FIRST.record');
+keep(`${working}/view-only-FIRST.json`, 'view-only-FIRST.json.record');
+keep(`${working}/reviewer/source-solutions-FIRST.record`, 'source-solutions-FIRST.record');
+keep(`${working}/reviewer/N-convention-source-probe-FIRST.record`, 'N-convention-source-probe-FIRST.record');
+keep(`${working}/reviewer/phase2-visible-review-FIRST.record`, 'phase2-visible-review-FIRST.record');
+keep(`${working}/reviewer/phase3-comparison-FIRST.record`, 'phase3-comparison-FIRST.record');
+keep(`${working}/reviewer/review-FIRST.json`, 'approved-independent-review-FIRST.json.record');
+const nativeReceipt = keep(executionFile, 'native-validation-FIRST.execution.record');
+for (const [stream, reference] of Object.entries(execution.streams)) {
+  const bytes = fs.readFileSync(reference.path);
+  assert.equal(hash(bytes), reference.sha256);
+  assert.equal(bytes.length, reference.bytes);
+  keep(reference.path, `native-validation-FIRST.${stream}.record`);
+}
+for (const name of ['validation.json', 'validation-command.json'])
+  keep(`${target}/choice-set/${name}`, `prior-${name}.record`);
+keep(`${base}/freeze-N1-existing-snapshot-FIRST.mjs`, 'freeze-base-method-FIRST.mjs.record');
+keep(`${base}/freeze-N34-existing-snapshot-FIRST.mjs`, 'freeze-owner-method-FIRST.mjs.record');
+keep(`${base}/retain-N34-independent-review-FIRST.mjs`, 'retention-method-FIRST.mjs.record');
+const binding = {
+  schema: 'stemrobin-182/independent-choice-review-binding@1',
+  ticket: 'STEMROBIN-182', book: '6a', lesson: 'alg6-c4-s1-n34',
+  status: 'INDEPENDENT_CHOICE_REVIEW_PASS', date: new Date().toISOString(),
+  seed: { path: `${target}/choice-set/seed.json`, canonicalSha256: freeze.seed_sha256 },
+  draft: { path: `${target}/choice-set/draft.json`, canonicalSha256: freeze.draft_sha256, unchanged: true },
+  review: { path: `${target}/choice-set/review.json`, sha256: hash(reviewBytes), bytes: reviewBytes.length, reviewer: review.reviewer },
+  actualNativeValidation: nativeReceipt, evidence: retained,
+  sources: 9, sourceSubparts: 38, questions: 9, options: 31,
+  originalSourceConditions: {
+    source604aNaturalNumberZeroMembership: 'UNKNOWN retained; a passing conditional view is not a recovered original convention',
+    source604aNegativePowerNotation: 'Not defined by the original local lesson; any explicit view convention remains scoped to that question',
+    source602VariableZeroDomains: 'Original positive-power domains and valid quotient domains remain separately recorded',
+    source608And609ModelQualifications: 'No-slip rolling and equal-density assumptions remain explicit, not unconditional physical claims',
+  },
+  historicalDisplay: {
+    path: historicalPath, sha256: hash(historicalBytes),
+    scope: historical.scope,
+    inputBytesMatchCurrent: true,
+    previouslyObservedEndpointsAndMathEndingImages: 17,
+    originalBlockedRightEndAndSupplementalResolutionPreserved: true,
+    newPixelObservationOrUnseenIntermediateCoverageClaimed: false,
+    unknownHistoricalHtmlBytesRestored: false,
+    appOrWholeLessonAcceptanceClaimed: false,
+  },
+  originalValidationAndSelfReviewPreserved: true,
+  chapter2Unchanged: true,
+  sourceAuthorAnswerFigureRendererBrowserRechecks: 0,
+  newImageReads: 0, passedImageReopens: 0,
+  fees: 'UNKNOWN', tokens: 'UNKNOWN',
+  finish: 'review', databaseWrites: 0, merges: 0, deployments: 0,
+  boundary: 'Only the missing genuine AC3 independent choice review; no new complete-lesson or whole-ticket claim.',
+};
+const bytes = Buffer.from(`${JSON.stringify(binding, null, 2)}\n`);
+fs.writeFileSync(`${evidence}/binding.record`, bytes, { flag: 'wx', mode: 0o444 });
+fs.writeFileSync(`${target}/choice-set/review.json`, reviewBytes);
+fs.writeFileSync(`${target}/choice-set/independent-review-binding.json`, bytes, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({
+  status: binding.status, review: binding.review, sources: 9, questions: 9, options: 31,
+  newImageReads: 0, oldDisplayScopeExpanded: false, fullLessonCountIncremented: false,
+}));

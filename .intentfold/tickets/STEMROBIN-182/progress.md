@@ -1,5 +1,157 @@
 # 当前开发状态
 
+### 182-6 2026-11-22 07:41Z N34新显示留存/窄资源规则PASS，普通提交待执行
+
+- 新604显示留存07:40:48Z实际exit0；新绑定只认本次8实看截图，
+  原历史显示和NOT_CHECKED_YET独审时点记录保留，新独立显示绑定补足604。
+  未恢复未知HTML字节、未扩称其它题新像素验收。
+- 窄暂存07:40:54Z--07:40:55Z实际exit0；
+  51原暂存文件+1检查回执=52文件，4JSON/42文本文件，
+  未改ssot-resources/audit.py规则，0秘密/0空白错误。
+  源正文/习题/seed/答案/图零变更；draft只604一题，
+  skill/ticket.json/7a图模板/旧树/锁/备份均未暂存。
+- HEAD/FETCH_HEAD仍cc78eaa375f02e57b78724f330f10477f95efd89，
+  现在只普通commit/push原codex/STEMROBIN-182-textbooks；
+  不计新完整课，全局原audit exit1不变，finish=review，
+  无force/DB/Plane/合并/部署/正式handoff。
+
+### 182-6 2026-11-22 07:40Z N34真实独审/一次native及新604显示PASS
+
+- Harvey最终作者比较真实completed；phase3 SHA
+  a470d63aea83041d9238dd356acf3c086a2d4bbf8c3d1f4ad27fcbfc047aec32，
+  native review30356字节SHA
+  580cddbfe7d40c6a60fac99baad55efe060d4b77308796446c71fd23b8a359ed。
+  八旧题28选项快照与FIRST相同，604对应RECOVERY1；
+  九作者intent/key/推导/误区已与盲解逐项比较，原N UNKNOWN/HOLD保留。
+- 单次native 07:39:31.473Z--07:39:31.507Z实际exit0；
+  回执SHA715a089131e5dfda2420f0214ef72bd54be4b5c4cff4333ed2609bdad23eda84。
+  07:39:34Z留存exit0，原draft/self_review/验证/首次BLOCKED均保留，
+  canonical只提升修后draft与真正独立review，不计新完整课。
+- 仅choices-only renderer07:39:39Z exit0，源正文/习题渲染跳过；
+  新HTML550949字节SHA
+  acbbc7f8b4b5faef95e959af5215c6c00f4a7dc87a941d82bce35c55214df9d8。
+  新604 capture07:39:43Z--07:39:44Z exit0，桌面1440x960/
+  手机390x844各题干+A/B/C=8图已全部实际打开，条件/指数/分数/
+  两端完整可读无裁切/重叠，零网络请求/页面错误，owned browser已关。
+  此显示PASS只覆盖604，不重看另八题/旧17图/源答案图。
+- 待留存新显示、窄暂存资源规则及普通commit/push；全局原audit exit1
+  不变不重跑，原树/锁/备份/旧暂停审者/失败/计数/UNKNOWN费用保留，
+  仅3129与6a/7a/8a、finish=review，第二章不动，无DB/Plane/
+  force/合并/部署/正式handoff。
+
+### 182-6 2026-11-22 07:31Z 接收604局部PASS，最终作者比较进行中
+
+- 依本树顶部实际检查点续同3129绝对workdir；未重复create/attach/
+  switch/迁移/安装，旧失败和未决消息保留。
+- 已接收真实phase2-604-RECOVERY1.record，SHA
+  6d50aff3277d1f2cf2d5dce1a185025ae355be5ed679d64e6b8f6713e7c66afc；
+  07:23:28Z--07:25:40Z affected-only PASS，三选项全部实查，
+  B真、A/C假；原N是否含零UNKNOWN/HOLD并未解决或改写。
+  FIRST BLOCKED、源盲解/probe、另八题28选项PASS直接保留。
+- 仅同一新Harvey进入最终作者intent/key/推导比较，待真实native
+  review；父尚未validate/改canonical/渲染/commit/push。
+  新604显示范围仅变更题，不重开旧17图或扩称旧中间内容已看。
+- N21/N1原窄push不变；仅6a/7a/8a、finish=review，第二章不动。
+  原树/锁/备份/失败/计数/UNKNOWN费用与旧暂停聊天审者保留；
+  无DB/Plane写/force/合并/部署/正式handoff。
+
+### 182-6 2026-11-22 07:23Z N34真实604 fidelity HOLD仅局部修复
+
+- 初次view-only实质审查已真实completed，原49408字节record SHA
+  7b2cd7aeb4561beb67352765af12f29ae167e24c46b3b9408d3e36decdacc996，
+  outcome BLOCKED只因604新增u^(-1)课程方法/原N域对齐。
+  九数学/31选项均实查PASS，10真21假；其余八源/题的忠实度PASS。
+  原source/probe UNKNOWN与FIRST BLOCKED原地保留，未改写成PASS。
+- 不等普通审批，实际07:23:04.579Z--07:23:04.654Z单次局部修复exit0：
+  仅604题面/三选项及对应内部推导/coverage，不变另八题28选项。
+  删除额外倒数幂定义；按原课非负整数幂条件记录n>=1的幂与
+  若N含0时的商1/3及不能写成底数3非负整数幂的边界。
+  原N是否含0仍UNKNOWN，不引入新课程定义、不改源/答案。
+- 原draft实际36497字节保留；新draft36990字节：
+  文件SHA a7a45d110960a35e27f4637b76e5adaee9b41f75448ad7ad430e876b4a81fc82，
+  canonical SHA 730b1c731bd4527031786b8a129454be57efddfd849d1e9c82289a7db4dbfd94。
+  新单题view-only1440字节SHA
+  93fc2c3e29d2977aa71979d0fddddf697d7120675a2d77a9b823ba736d514853
+  已只给同一Harvey受影响复核；未给作者intent/key。
+  这不是重新作者整课，不复核另八PASS题/28选项。
+- 受影响review仍待真实结果；未native validate/改canonical/渲染。
+  若实质再HOLD/REVISE则按真实原因保留，不靠结构放行。
+  修后新显示只检查604，不重开旧17图；本轮一次查询不存在render.py
+  的rg/exit2保留，已读实际render_lesson.js与已有命令回执，不重生产。
+- N21/N1普通push不变，所有原树/锁/备份/旧暂停审者/失败/计数/
+  UNKNOWN费用保留，仅3129与6a/7a/8a，finish=review；第二章不动，
+  无DB/Plane/force/merge/deploy/正式handoff。
+
+### 182-6 2026-11-22 07:14Z 本聊天监督检查点：连续推进，无审批等待
+
+- 实际本机UTC 07:14:52Z；持续同3129绝对workdir，无create/attach/
+  switch/迁移/安装，旧失败及排队/未决消息不删除。N21完整离线课和
+  N1独审修复已分别普通push到4843e59d0/cc78eaa37原分支。
+- N34 source probe实际07:10:47Z--07:12:43Z完成；两本课源文件
+  无明确N定义/自然数起点，局部较小指数商例也未引入负幂。
+  604(a)原source UNKNOWN/HOLD不变，n=0数值1/3已条件求出，
+  不把zero-power定义当N包含关系证明。
+- 已只向同一新Harvey开放冻结view-only（SHA
+  e700a1a0029246bb01c8944da8a4bcbc6cac1e0184497b84eb851d8fb903b98b），
+  先忠实/冗余/泄漏，再九题31选项独立数学；未给作者intent/key。
+  由其按实际题面给定评估条件覆盖和602/608/609资格，不预设PASS/
+  BLOCKED或逼其迁就旧键。未返回即未完成，原source/probe都不改。
+- 原分支最新fetch已真实结束，无exec父session遗留；
+  仅新Harvey此有限审查在进行，旧暂停审者/原树/锁/备份不动。
+  后续只收实际结果；技术问题局部续，真实REVISE/HOLD实录。
+  不重全局audit，不动6a第二章/已有源答案图截图PASS，
+  UNKNOWN费用/失败/计数不清零，finish=review，无DB/Plane/force/
+  merge/deploy/正式handoff。
+
+### 182-6 2026-11-22 N34源盲解完成，604(a)仅查已有定义
+
+- Harvey phase1已真实completed，原源解record实际12260字节，
+  SHA b8c1083f7354971842b2efe9c79c1a72c2b4024cba0b2b8f392c1a08ec5451f4；
+  九源38分题全部addressed，07:05:54Z--07:08:31Z，0图/0view/key。
+  604(a)的N是否含零/负指数书写定义未给，保留原source-only BLOCKED；
+  n=0商1/3和n>=1的3^(n-1)已条件求出，不猜N包含关系。
+- 602两变量的零域、608无滑动、609等密度条件均诚实保留。
+  它们是待题面忠实度比较的条件记录，不回写原源，不计已选择PASS。
+  已只向同一审者开放本课当前lesson/exercises，定点查N/指数约定；
+  其它源解直接复用，不新备料/源图/重作者/validator。
+- 父一次误把plaintext.record当JSON读取产生SyntaxError/exit1，
+  原工具记录及原文件保留；改为有限原文本读取，未重跑源解。
+- 父仅看冻结view-only中604题面，其已显式保留“N是否含0未指定”
+  和可能n=0分支，并在本题给u^(-1)=1/u（u非零）的书写约定。
+  这不能证明原源N约定已解决；等源probe实际返回后才向审者给view，
+  由其独立判断是否同时覆盖未知两种定义和新增约定的任务忠实度。
+  未给作者键/内部解，未改现有题面或准计PASS。
+- N21/N1窄push均完成不变；仍3129、仅6a/7a/8a，第二章基线不动，
+  旧暂停任务/原树/锁/备份/费用UNKNOWN保留，无DB/Plane/merge/
+  deploy/正式handoff。
+
+### 182-6 2026-11-22 07:07Z N1窄push完成，续6a N34真正独审
+
+- N1独审修复实际窄commit：
+  cc78eaa375f02e57b78724f330f10477f95efd89，共17文件；
+  普通push 07:05:10.644Z--07:05:15.298Z实际exit0。
+  ls-remote原分支已返回完整同SHA；未force/合并/部署/DB/Plane写。
+  原生数学/意图独审PASS与当前review绑定保存，原self_review不丢。
+- N1窄资源规则实际07:04:59.449Z--07:04:59.922Z exit0，
+  0秘密/0空白错误；全局原audit exit1不变。不计新完整课，
+  不恢复旧HTML未知字节、不重开旧180批准图。
+- 6a N34已启动新Harvey 01a20213-3943-71d2-ab18-1b39fe77c6bf，
+  非继承上下文，只允许九源601--609与必要当前源课文件，
+  先source-only盲解，未给view/key，未当PASS。
+  所有旧暂停审者不唤醒/不close；N1新审者completed后close。
+- N34现有seed/draft/旧self_review实际5289/36497/21639字节已冻结，
+  freeze 07:06:17.241Z--07:06:17.341Z exit0；0备料/重作者/
+  validate/render/browser/图。九题31选项/0源图/0新图未变。
+  canonical seed/draft分别3480bdc98350ba66641c6ff728186279a0e9e00f253831712af884c488f6651c/
+  d28ca626d28320e7cd8d3e06e90df36c6d1b8d97fada690dd0dccdf75deb405d。
+- N34旧显示actual-observations确为pass，但范围仅12端点+5数学
+  ending=17实际截图/6面视口；原初始手机右端BLOCKED及后补结论保留，
+  不回写原批准、不扩称未见中间内容全量PASS、不重截图/浏览器。
+  当前draft哈希与旧显示记录同；新review绑定会保留此窄范围。
+- 本聊天直接解决普通卡点，仍3129显式绝对workdir，仅6a/7a/8a；
+  6a第二章及其基线零编辑，7a源问题HOLD不猜符号。保留原树/
+  锁/备份/计数/失败/UNKNOWN费用，finish=review，无正式handoff。
+
 ### 182-6 2026-11-22 07:04Z N1缺失真正独审已修复，待窄普通push
 
 - Schrodinger phase3实际completed：最终独审PASS，单次native validate

@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+const work = `${base}/N34-affected-display-604-RECOVERY1`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/6a/editions/modern-us-neutral/lessons/alg6-c4-s1-n34';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/6a/evidence/resume182-6-n34-independent-review-3129';
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file));
+const capture = read(`${work}/capture.record`);
+const observed = read(`${work}/visual-observations-RECOVERY1.record`);
+assert.equal(capture.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(capture.ownedBrowsersClosed, true);
+assert.deepEqual(capture.remoteRequests, []);
+assert.deepEqual(capture.pageErrors, []);
+assert.equal(capture.screenshots.length, 8);
+assert.equal(observed.status, 'PASS');
+assert.equal(observed.actualScreenshotsOpened, 8);
+assert.deepEqual(observed.questionsObserved, ['parameter-quotients-including-possible-zero-input']);
+const binding = read(`${target}/choice-set/independent-review-binding.json`);
+assert.equal(binding.status, 'INDEPENDENT_CHOICE_REVIEW_PASS');
+assert.equal(binding.draft.canonicalSha256, '730b1c731bd4527031786b8a129454be57efddfd849d1e9c82289a7db4dbfd94');
+for (const item of capture.inputs)
+  assert.equal(hash(fs.readFileSync(item.path)), item.sha256);
+const retained = [];
+const keep = (file, name) => {
+  const bytes = fs.readFileSync(file);
+  const output = `${evidence}/${name}`;
+  fs.writeFileSync(output, bytes, { flag: 'wx', mode: 0o444 });
+  const item = { path: output, sha256: hash(bytes), bytes: bytes.length };
+  retained.push(item);
+  return item;
+};
+const captureBinding = keep(`${work}/capture.record`, 'affected604-capture-RECOVERY1.record');
+const visualBinding = keep(`${work}/visual-observations-RECOVERY1.record`, 'affected604-visual-observations-RECOVERY1.record');
+keep(`${base}/capture-N34-604-RECOVERY1.mjs`, 'affected604-capture-method-RECOVERY1.mjs.record');
+keep(`${base}/retain-N34-604-display-RECOVERY1.mjs`, 'affected604-display-retention-method-RECOVERY1.mjs.record');
+const images = [];
+for (const item of capture.screenshots) {
+  const bytes = fs.readFileSync(item.path);
+  assert.equal(hash(bytes), item.sha256);
+  assert.equal(bytes.length, item.bytes);
+  images.push({
+    ...keep(item.path, `affected604-${path.basename(item.path)}`),
+    viewport: item.viewport, region: item.region,
+  });
+}
+for (const name of ['N34-choices-render-execution-RECOVERY1', 'N34-affected-capture-execution-RECOVERY1']) {
+  const executionFile = `${base}/${name}/execution.json`;
+  const execution = read(executionFile);
+  assert.equal(execution.cwd, repo);
+  assert.equal(execution.exitCode, 0);
+  keep(executionFile, `${name}.record`);
+  for (const [stream, item] of Object.entries(execution.streams)) {
+    const bytes = fs.readFileSync(item.path);
+    assert.equal(hash(bytes), item.sha256);
+    assert.equal(bytes.length, item.bytes);
+    keep(item.path, `${name}.${stream}.record`);
+  }
+}
+const html = capture.inputs.find(item => item.role === 'renderedHtml');
+const htmlBytes = fs.readFileSync(html.path);
+fs.mkdirSync(`${target}/offline`, { recursive: true });
+const htmlPath = `${target}/offline/choices-display-604-RECOVERY1.html`;
+fs.writeFileSync(htmlPath, htmlBytes, { flag: 'wx', mode: 0o444 });
+const result = {
+  schema: 'stemrobin-182/affected-choice-display-binding@1',
+  status: 'PASS', observedAt: observed.observedAt,
+  book: '6a', lesson: 'alg6-c4-s1-n34',
+  draftCanonicalSha256: binding.draft.canonicalSha256,
+  review: binding.review, questionsObserved: observed.questionsObserved,
+  actualScreenshotsOpened: 8, desktopViewport: { width: 1440, height: 960 },
+  mobileViewport: { width: 390, height: 844 },
+  renderedHtml: { path: htmlPath, sha256: hash(htmlBytes), bytes: htmlBytes.length },
+  htmlScope: 'Native full choice-page bytes; pixel observations cover changed question604 only.',
+  capture: captureBinding, visualObservation: visualBinding, images, evidence: retained,
+  unchangedQuestionsPixelRechecked: 0, oldPassScreenshotsReopened: 0,
+  original604NaturalNumberConvention: 'UNKNOWN/HOLD retained',
+  historicalDisplayRecordPreserved: true,
+  unknownHistoricalHtmlBytesRestored: false, fullLessonCountIncremented: false,
+  appOrWholeTicketAcceptanceClaimed: false,
+  fees: 'UNKNOWN', tokens: 'UNKNOWN', finish: 'review',
+  databaseWrites: 0, merges: 0, deployments: 0,
+};
+fs.writeFileSync(`${target}/choice-set/affected-display-604-RECOVERY1.json`,
+  `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({
+  status: result.status, actualScreenshotsOpened: 8,
+  draftCanonicalSha256: result.draftCanonicalSha256,
+  affectedOnly: true, unknownHistoricalHtmlBytesRestored: false,
+}));

@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/ld-s10y-lesson/resume182-6-3129';
+let code = fs.readFileSync(`${base}/retain-N34-independent-review-FIRST.mjs`, 'utf8');
+const once = (before, after) => {
+  assert.equal(code.split(before).length, 2, before);
+  code = code.replace(before, after);
+};
+once("const freeze = JSON.parse(fs.readFileSync(`${working}/freeze-FIRST.record`));",
+  "const repair = JSON.parse(fs.readFileSync(`${working}/repair604-RECOVERY1/repair.record`));\n"
+  + "const freeze = { ...JSON.parse(fs.readFileSync(`${working}/freeze-FIRST.record`)), draft_sha256: repair.draft_sha256 };");
+code = code.replaceAll('reviewer/review-FIRST.json', 'reviewer/review-RECOVERY1.json');
+code = code.replaceAll('N34-native-independent-validation-execution-FIRST', 'N34-native-independent-validation-execution-RECOVERY1');
+code = code.replaceAll('approved-independent-review-FIRST.json.record', 'approved-independent-review-RECOVERY1.json.record');
+code = code.replaceAll('native-validation-FIRST.', 'native-validation-RECOVERY1.');
+once("'--draft', `${working}/author/draft.json`,", "'--draft', `${working}/repair604-RECOVERY1/draft.json`,");
+once("keep(`${working}/reviewer/phase3-comparison-FIRST.record`, 'phase3-comparison-FIRST.record');",
+  "keep(`${working}/reviewer/phase2-604-RECOVERY1.record`, 'phase2-604-RECOVERY1.record');\n"
+  + "keep(`${working}/reviewer/phase3-comparison-RECOVERY1.record`, 'phase3-comparison-RECOVERY1.record');\n"
+  + "keep(`${working}/author/draft.json`, 'original-draft-FIRST.json.record');\n"
+  + "keep(`${working}/repair604-RECOVERY1/draft.json`, 'revised-draft-604-RECOVERY1.json.record');\n"
+  + "keep(`${working}/repair604-RECOVERY1/view-only-604.json`, 'view-only-604-RECOVERY1.json.record');\n"
+  + "keep(`${working}/repair604-RECOVERY1/repair.record`, 'local-repair-604-RECOVERY1.record');\n"
+  + "keep(`${base}/repair-N34-604-local-power-boundary-RECOVERY1.mjs`, 'local-repair-method-RECOVERY1.mjs.record');");
+once("keep(`${base}/retain-N34-independent-review-FIRST.mjs`, 'retention-method-FIRST.mjs.record');",
+  "keep(`${base}/retain-N34-independent-review-FIRST.mjs`, 'retention-base-method-FIRST.mjs.record');\n"
+  + "keep(`${base}/retain-N34-independent-review-RECOVERY1.mjs`, 'retention-owner-method-RECOVERY1.mjs.record');");
+once("canonicalSha256: freeze.draft_sha256, unchanged: true", "canonicalSha256: freeze.draft_sha256, changedQuestion604Only: true, unchangedQuestions: 8, unchangedOptions: 28");
+once("inputBytesMatchCurrent: true,", "sourceBytesMatchCurrent: true, initialDraftMatchedPriorDisplay: true,\n"
+  + "    changedQuestion604NeedsNewDisplay: true, displayStateAtReviewBinding: 'NOT_CHECKED_YET',");
+once("source604aNegativePowerNotation: 'Not defined by the original local lesson; any explicit view convention remains scoped to that question',",
+  "source604aNegativePowerNotation: 'No reciprocal-power convention added; the repaired question conditionally preserves the original nonnegative-integer-power boundary',");
+once("sourceAuthorAnswerFigureRendererBrowserRechecks: 0,", "sourceAuthorAnswerFigureRendererBrowserRechecks: 0,\n"
+  + "  originalSourceAndFirstFidelityHoldPreserved: true,\n"
+  + "  contentRevisions: 1, initialOptionChecks: 31, affectedOnlyOptionRechecks: 3,");
+once("fs.writeFileSync(`${target}/choice-set/review.json`, reviewBytes);",
+  "fs.writeFileSync(`${target}/choice-set/draft.json`, fs.readFileSync(`${working}/repair604-RECOVERY1/draft.json`));\n"
+  + "fs.writeFileSync(`${target}/choice-set/review.json`, reviewBytes);");
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

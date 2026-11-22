@@ -1,0 +1,46 @@
+"""Stage only the changed N34 snapshot, independent review and affected display."""
+
+from pathlib import Path
+
+repo = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+assert Path.cwd() == repo
+base = repo / ".tmp/ld-s10y-lesson/resume182-6-3129"
+original = base / "stage-and-check-N1-FIRST.py"
+code = original.read_text()
+for before, after in [
+    ("/artifacts/8a/", "/artifacts/6a/"),
+    ("alg8-c1-s1-n1", "alg6-c4-s1-n34"),
+    ("resume182-6-n1-independent-review-3129", "resume182-6-n34-independent-review-3129"),
+    ('assert binding["options"] == 21', 'assert binding["options"] == 31'),
+    ("N1_NARROW_STAGED_RESOURCE_RULES_PASS", "N34_NARROW_STAGED_RESOURCE_RULES_PASS"),
+    ("stage-and-resource-audit-method-FIRST.py.record", "stage-and-resource-audit-method-RECOVERY1.py.record"),
+    ("narrow-staged-resource-rules-FIRST.record", "narrow-staged-resource-rules-RECOVERY1.record"),
+    (
+        'allowed = [f"{TARGET}/review.json", f"{TARGET}/independent-review-binding.json", EVIDENCE, PROGRESS]',
+        'allowed = [f"{TARGET}/draft.json", f"{TARGET}/review.json", '
+        'f"{TARGET}/independent-review-binding.json", '
+        'f"{TARGET}/affected-display-604-RECOVERY1.json", '
+        'f"{TARGET}/../offline/choices-display-604-RECOVERY1.html", EVIDENCE, PROGRESS]\n'
+        'allowed = [str(Path(scope)) if "/../" not in scope else '
+        'str((REPO / scope).resolve().relative_to(REPO)) for scope in allowed]\n'
+        'display = json.loads((REPO / TARGET / "affected-display-604-RECOVERY1.json").read_text())\n'
+        'assert display["status"] == "PASS"\n'
+        'assert display["draftCanonicalSha256"] == binding["draft"]["canonicalSha256"]\n'
+        'assert display["questionsObserved"] == ["parameter-quotients-including-possible-zero-input"]\n'
+        'assert display["actualScreenshotsOpened"] > 0\n',
+    ),
+    ('"sourceLessonDraftSeedAnswerFigureChanges": 0,',
+     '"sourceLessonSeedAnswerFigureChanges": 0,\n    "changedDraftQuestions": 1,'),
+    ('"newImagesOpened": 0,', '"newImagesOpened": display["actualScreenshotsOpened"],'),
+]:
+    assert before in code, before
+    code = code.replace(before, after)
+evidence = repo / "ssot-resources/soviet10year-textbooks/artifacts/6a/evidence/resume182-6-n34-independent-review-3129"
+for source, name in [
+    (original, "stage-base-method-FIRST.py.record"),
+    (Path(__file__), "stage-owner-method-RECOVERY1.py.record"),
+]:
+    with (evidence / name).open("xb") as output:
+        output.write(source.read_bytes())
+    (evidence / name).chmod(0o444)
+exec(compile(code, str(Path(__file__)), "exec"), globals())
