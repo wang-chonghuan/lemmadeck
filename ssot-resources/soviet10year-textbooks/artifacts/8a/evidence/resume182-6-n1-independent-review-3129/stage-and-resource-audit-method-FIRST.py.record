@@ -1,0 +1,97 @@
+"""Narrowly stage the real independent review and enforce unchanged resource rules."""
+
+import importlib.util
+import json
+import re
+import subprocess
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck")
+assert Path.cwd() == REPO
+TARGET = "ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s1-n1/choice-set"
+EVIDENCE = "ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n1-independent-review-3129"
+PROGRESS = ".intentfold/tickets/STEMROBIN-182/progress.md"
+spec = importlib.util.spec_from_file_location("resource_audit", REPO / "ssot-resources/audit.py")
+audit = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(audit)
+
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=REPO)
+
+
+assert not git("diff", "--cached", "--name-only").strip(), "Preserve prior staged changes"
+assert git("rev-parse", "HEAD") == git("rev-parse", "FETCH_HEAD"), "Fetch/sync first"
+review = json.loads((REPO / TARGET / "review.json").read_text())
+assert review["reviewer"]["kind"] == "independent_agent"
+assert review["outcome"] == "pass"
+binding = json.loads((REPO / TARGET / "independent-review-binding.json").read_text())
+assert binding["status"] == "INDEPENDENT_CHOICE_REVIEW_PASS"
+assert binding["options"] == 21
+method = REPO / EVIDENCE / "stage-and-resource-audit-method-FIRST.py.record"
+with method.open("xb") as output:
+    output.write(Path(__file__).read_bytes())
+method.chmod(0o444)
+allowed = [f"{TARGET}/review.json", f"{TARGET}/independent-review-binding.json", EVIDENCE, PROGRESS]
+git("add", "--", *allowed)
+paths = [p.decode() for p in git("diff", "--cached", "--name-only", "-z").split(b"\0") if p]
+assert paths
+secrets = re.compile(
+    r"(?:postgres(?:ql)?://[^\s\"']+:[^\s\"']+@|plane_api_[A-Za-z0-9]{20,}|"
+    r"sk-[A-Za-z0-9_-]{24,}|-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----)"
+)
+json_files = 0
+text_files = 0
+
+
+def check(relative, data):
+    global json_files, text_files
+    assert any(relative == scope or relative.startswith(scope + "/") for scope in allowed), relative
+    assert not any(part == ".env" or part.startswith(".env.") for part in Path(relative).parts)
+    path = REPO / relative
+    if relative.startswith(audit.FROZEN_PREFIXES):
+        return
+    assert relative.startswith("ssot-resources/")
+    assert path.is_relative_to(audit.ARTIFACTS)
+    assert path.name not in audit.TRANSIENT_NAMES and ".template." not in path.name, relative
+    assert not ("pages" in path.parts and "figures" in path.parts), relative
+    if path.suffix == ".json":
+        json_files += 1
+        document = json.loads(data)
+        assert not list(audit.json_tmp_references(document)), relative
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError:
+        return
+    text_files += 1
+    for pattern, legacy in audit.LEGACY_REFERENCE_PATTERNS:
+        assert not pattern.search(text), (relative, legacy)
+    assert not secrets.search(text), f"Potential secret: {relative}"
+
+
+for relative in paths:
+    check(relative, git("show", f":{relative}"))
+git("diff", "--cached", "--check")
+result = {
+    "status": "N1_NARROW_STAGED_RESOURCE_RULES_PASS",
+    "workdir": str(REPO),
+    "ruleSource": "ssot-resources/audit.py unchanged",
+    "auditedStagedFiles": len(paths),
+    "jsonFiles": json_files,
+    "textFiles": text_files,
+    "sourceLessonDraftSeedAnswerFigureChanges": 0,
+    "secretCandidates": 0,
+    "whitespaceErrors": 0,
+    "firstGlobalResourceAuditExit": 1,
+    "globalOrFullTicketAcceptanceClaimed": False,
+    "newImagesOpened": 0,
+    "finish": "review",
+}
+record = f"{EVIDENCE}/narrow-staged-resource-rules-FIRST.record"
+data = (json.dumps(result, indent=2, ensure_ascii=True) + "\n").encode()
+check(record, data)
+with (REPO / record).open("xb") as output:
+    output.write(data)
+(REPO / record).chmod(0o444)
+git("add", "--", record)
+print(json.dumps({**result, "checkedReceiptAdded": True, "finalStagedFiles": len(paths) + 1}))
