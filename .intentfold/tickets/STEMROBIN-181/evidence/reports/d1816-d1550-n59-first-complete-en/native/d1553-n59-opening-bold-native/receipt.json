@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181",
+  "argv": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1553-n59-affected-text/en.before-native.json\"))\nbefore=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1545-n59-first-missing-en/en.lesson.draft.json\"))\nraw=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/ssot-resources/soviet10year-textbooks/artifacts/9p/lessons/phy9-c2-s2-n59/lesson.json\"))\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\nassert edition.math_signature(lesson[\"prose\"][0][\"text\"])==edition.math_signature(before[\"prose\"][0][\"text\"])\ncomparison=json.loads(json.dumps(lesson))\ncomparison[\"prose\"][0][\"text\"]=before[\"prose\"][0][\"text\"]\nassert comparison==before,\"Only opening emphasis markup may change\"\nprofile=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nmodern=lesson[\"prose\"][0]\nerrors.extend(edition.validate_text(raw[\"prose\"][0][\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],\"en.prose[0]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\")))\nassert \"**\" not in modern[\"text\"]\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-23T00:28:17.678Z",
+  "finishedAt": "2026-11-23T00:28:17.787Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1553-n59-opening-bold-native/stdout.txt",
+      "bytes": 37911,
+      "sha256": "af1521db298436c196f634c4d211eddde619f61b9736f552d4345be2fd042ac8"
+    },
+    "stderr": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1553-n59-opening-bold-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
