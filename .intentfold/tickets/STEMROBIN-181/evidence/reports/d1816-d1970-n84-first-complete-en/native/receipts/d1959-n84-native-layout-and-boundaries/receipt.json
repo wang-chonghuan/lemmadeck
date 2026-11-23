@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181",
+  "argv": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import json,sys\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1950-n84-first-en-author/lesson.template.json\"))\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],[])\nboundaries=[]\nfor prefix in [\"In this ideal model, the electric field occupies mainly the volume $Sd$ between the two plates.\",\"For an alternating electric field, under the same dielectric conditions, the instantaneous field strength can be used to calculate the instantaneous stored energy density of the electric-field part.\"]:\n    indices=[i for i,p in enumerate(flow[\"paragraphs\"]) if p[\"text\"].startswith(prefix)]\n    assert len(indices)==1 and indices[0]>0,(prefix,indices)\n    i=indices[0]\n    boundaries.append({\"before\":flow[\"paragraphs\"][i-1][\"text\"],\"after\":flow[\"paragraphs\"][i][\"text\"]})\nlesson[\"section_breaks\"]=boundaries\nflow,flow_errors=edition.prose_flow_contract(lesson[\"prose\"],boundaries)\nerrors.extend(flow_errors)\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-23T07:04:51.809Z",
+  "finishedAt": "2026-11-23T07:04:51.972Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1959-n84-native-layout-and-boundaries/stdout.txt",
+      "bytes": 14714,
+      "sha256": "40422aa8204da5c2979b98e143d1d56d8b6fcd53c9d766925c0c5abe1f8f9e5d"
+    },
+    "stderr": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1959-n84-native-layout-and-boundaries/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
