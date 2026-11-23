@@ -1,5 +1,59 @@
 # 生产检查点
 
+## 2026-11-23 180-7 Third-Chapter Summary Complete Offline; Immediate Save
+
+Hooke FIRST modern-text PASS0 revisions/0 images, reused unchanged source103
+PASS with approved MD SHA060026817a9bc5e11b962fc7156108556ee705146c44efc9a38351eeaea49372.
+Limited103 assembly already PASS2 raw prose objects/0 tasks/figures; source104
+excluded. Incoming103#1 belongs to preceding n21, not this summary.
+Original bold title and null number retained, exact uppercase V=omega r unchanged.
+Adapt-finalize PASS2/2 layout-only changes, empty answers prepare/finalize
+PASSauto0/ungraded0; one render emits2 paragraphs/1 exact adjacent boundary.
+Same reviewer one isolated headless Chrome display invocation exit0:
+desktop1440x960/mobile390x844, both screenshots visually inspected, PASS0
+revisions/0 retries/2 new images. Reviewer collected/closed total2images;
+parent23/24 unchanged. No source/finalize/review or applicable display replay.
+Reviewed read-only templates, reviews, bindings, check and screenshots durable
+with this raw/modern lesson. No exercises/choices/interactions apply.
+Immediate save scope ONLYsummary3 raw/modern and corresponding index rows,
+plus existing checkpoint/usage. Staged raw index HEAD+summary3 only32/88;
+working33/89 and held n37 preserved. Modern index adds ONLYsummary3.
+No page104, source60/65, held source/figures, installer/user bytes or app/schema
+staged. Delivered34/increment6 until actual push; paid69/new0, costs/tokens unknown.
+Next source-backed selection consults actual historical HOLD reasons rather
+than interpreting file absence or one local artwork HOLD as group exhaustion.
+No producer DB writes, deployment/closure or new branch/worktree/chat/timer.
+
+## 2026-11-23 180-7 Intro Pushed; Supervisor-Only Single-Lesson Intake
+
+Ordinary push exit0 saved exact131-file snapshot
+`31977e1d8ce2df6c87f094aba9d6db33b6868dd1`,
+remotef082840e4..31977e1d8. Delivered34 /180-7 increment6.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s2-t1`, 引言,
+  legitimate number null. Use exact pushed snapshot above.
+- Durable modern lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s2-t1/`.
+- Necessary raw intro, source54 and source/modern-text/display evidence retained.
+  Source54 actual21/21 after narrow verified counter and one heading-metadata
+  repair. Intro ends before n11; n11 body/scientific footnote excluded from intro.
+- Actual3 raw prose objects,4 rendered paragraphs,1 boundary,0 figures/exercises/
+  answers/choices/new interactions. Empty answers ready.
+- Source/text/display independently PASS0 content revisions; one desktop/mobile
+  two-surface run and both actual screenshots PASS. Reuse unchanged evidence.
+- Writer serializes existing one-lesson base and empty-answer publishers as
+  required, then one small intro readback. No choices/interactions stage or
+  earlier/all-lesson replay/duplicate display pipeline.
+
+No remote replay, producer DB writes or DB waiting. Working held n37 and prepared
+summary3 rows remain outside this commit, as do all60/65/HOLD/installer/user bytes.
+Herschel collected/closed,total3 images; technical Epicurus closed,total3; Einstein
+closed,total9 with source-author scope incident preserved. Parent23/24,
+paid69/new0, unknown tokens/costs. Source103-approved summary3 template is next,
+not part of intro snapshot or complete-course count. No formal/full-group handoff.
+
 ## 2026-11-23 180-7 Intro Complete Offline; Immediate Save
 
 Herschel FIRST modern-text PASS0 revisions/0 newimages. Adapt-finalize
