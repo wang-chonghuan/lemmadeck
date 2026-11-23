@@ -1,0 +1,257 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { spawnSync } from 'node:child_process'
+
+assert.equal(process.cwd(), '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180')
+const require = createRequire(path.resolve('app/package.json'))
+const { chromium } = require('playwright')
+const hash = filename => crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')
+const binding = filename => ({ path: filename, sha256: hash(filename) })
+const write = (filename, value) => {
+  assert.equal(fs.existsSync(filename), false, `preserve existing evidence: ${filename}`)
+  fs.writeFileSync(filename, `${JSON.stringify(value, null, 2)}\n`)
+}
+const cssPath = 'app/src/styles/app.css'
+const css = fs.readFileSync(cssPath, 'utf8').split('\n')
+  .filter(line => !line.startsWith('@import')).join('\n')
+const executablePath = [
+  chromium.executablePath(),
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].find(filename => fs.existsSync(filename))
+assert.ok(executablePath, 'existing Chromium required; no installation')
+const browser = await chromium.launch({ executablePath, headless: false })
+try {
+  for (const number of [80, 81]) {
+    const directory = `.tmp/s10y-image/8p-n26/fig-${number}`
+    const specPath = `${directory}/spec.json`
+    const svgPath = `${directory}/fig-${number}.svg`
+    const renderPath = `${directory}/fig-${number}.render.json`
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+    const render = JSON.parse(fs.readFileSync(renderPath, 'utf8'))
+    assert.equal(render.status, 'pass')
+    assert.equal(render.spec.sha256, hash(specPath))
+    assert.equal(render.output.svg.sha256, hash(svgPath))
+    const validation = spawnSync('python3', [
+      '.agents/skills/ld-s10y-image/scripts/validate_spec.py',
+      specPath, '--stage', 'rendered', '--json',
+    ], { cwd: process.cwd(), encoding: 'utf8' })
+    const validationResult = JSON.parse(validation.stdout)
+    write(`${directory}/validation.json`, {
+      ...validationResult,
+      exitCode: validation.status,
+      workdir: process.cwd(),
+      specSha256: hash(specPath),
+    })
+    assert.equal(validation.status, 0, validation.stdout || validation.stderr)
+    const prefix = `f${number}`
+    const objects = new Map(spec.objects.map(object => [object.id, object]))
+    const get = suffix => objects.get(`${prefix}-${suffix}`)
+    const checks = []
+    const check = (id, group, body) => {
+      try {
+        body()
+        checks.push({ id, inventoryGroup: `${prefix}-${group}`, status: 'pass' })
+      } catch (error) {
+        checks.push({ id, inventoryGroup: `${prefix}-${group}`, status: 'fail', error: error.message })
+      }
+    }
+    check('source-physical-point-relations', 'source-point-relations', () => {
+      assert.equal(validationResult.status, 'pass')
+      const group = spec.source.inventory.find(item => item.id === `${prefix}-source-point-relations`)
+      assert.deepEqual(group.requires, ['pointRelationships'])
+      for (const suffix of ['P', 'earth-center', 'moon-center']) {
+        assert.notEqual(get(suffix).visible, false)
+        assert.ok(group.objects.includes(`${prefix}-${suffix}`))
+      }
+      assert.equal(get('large-orbit').center, `${prefix}-P`)
+      assert.ok(get('earth-center').at[0] < get('P').at[0])
+      assert.ok(get('earth-center').at[1] < get('P').at[1])
+      assert.ok(get('moon-center').at[0] > get('P').at[0])
+      assert.ok(get('moon-center').at[1] > get('P').at[1])
+    })
+    check('source-solid-dashed-unfilled-no-axes', 'source-orbit-structure', () => {
+      assert.equal(get('large-orbit').type, 'circle')
+      assert.equal(get('large-orbit').fillOpacity, 0)
+      assert.equal(get('large-orbit').dash || 0, 0)
+      assert.equal(get('small-orbit').type, 'svgPath')
+      assert.equal(get('small-orbit').dash, 2)
+      assert.equal(get('small-orbit').fillOpacity, 0)
+      assert.equal(spec.objects.some(object => ['axis', 'grid', 'line', 'measure', 'image'].includes(object.type)), false)
+    })
+    check('source-radii-and-no-force-arrows', 'source-radii-labels', () => {
+      assert.equal(get('rmoon').from, `${prefix}-P`)
+      assert.equal(get('rmoon').to, `${prefix}-rmoon-end`)
+      assert.deepEqual(get('rmoon-end').at, [get('P').at[0] + get('large-orbit').radius, get('P').at[1]])
+      assert.equal(get('rearth').from, `${prefix}-P`)
+      assert.equal(get('rearth').to, `${prefix}-earth-center`)
+      assert.equal(get('rearth').type, 'segment')
+      assert.deepEqual(spec.objects.filter(object => object.type === 'arrow').map(object => object.id).sort(), [
+        `${prefix}-motion-large-head`, `${prefix}-motion-small-head`, `${prefix}-rmoon`,
+      ].sort())
+      assert.equal(get('P-text').text, 'P')
+      assert.equal(get('rearth-text').text, 'r_E')
+      assert.equal(get('rmoon-text').text, 'r_M')
+    })
+    for (const name of ['large', 'small']) {
+      check(`source-${name}-counterclockwise`, `motion-${name}-source-group`, () => {
+        const arc = get(`motion-${name}`)
+        assert.equal(arc.type, 'svgPath')
+        const tokens = arc.d.split(/\s+/)
+        assert.equal(tokens[0], 'M')
+        assert.equal(tokens[3], 'A')
+        assert.deepEqual(tokens.slice(6, 9), ['0', '0', '0'])
+        const p = get('P').at
+        const tip = get(`motion-${name}-tip`).at
+        const tail = get(`motion-${name}-tail`).at
+        const radial = [tip[0] - p[0], tip[1] - p[1]]
+        const tangent = [tip[0] - tail[0], tip[1] - tail[1]]
+        assert.ok(radial[0] * tangent[1] - radial[1] * tangent[0] > 0)
+        assert.ok(tangent[0] < 0 && tangent[1] > 0)
+        assert.equal(get(`motion-${name}-tail`).visible, false)
+        assert.equal(get(`motion-${name}-tip`).visible, false)
+      })
+    }
+    check('source-body-identity-and-labels', number === 80 ? 'source-bodies' : 'source-centers-no-globe', () => {
+      const labels = spec.objects.filter(object => object.type === 'text').map(object => object.text).sort()
+      assert.deepEqual(labels, [
+        'P', 'r_E', 'r_M', 'Not to scale',
+        number === 80 ? 'Earth' : 'Earth center',
+        number === 80 ? 'Moon' : 'Moon center',
+      ].sort())
+      assert.equal(labels.some(label => /[0-9\u0400-\u04ff\u4e00-\u9fff]/u.test(label)), false)
+      if (number === 80) {
+        assert.equal(get('earth').type, 'polygon')
+        assert.ok(get('earth').fillOpacity > 0)
+        assert.ok(get('earth-shade').fillOpacity > 0)
+        assert.equal(get('moon').center, `${prefix}-moon-center`)
+        assert.ok(get('moon').fillOpacity > 0)
+        assert.ok(get('moon').radius < 78)
+      } else {
+        assert.equal(spec.objects.some(object => object.type === 'polygon'), false)
+        assert.equal(spec.objects.filter(object => object.type === 'circle').length, 1)
+        assert.equal(get('earth'), undefined)
+        assert.equal(get('moon'), undefined)
+        assert.equal(spec.objects.some(object => (object.fillOpacity || 0) > 0), false)
+      }
+    })
+    check('modern-scale-contract', 'modern-scale-disclaimer', () => {
+      assert.equal(get('scale-notice').text, 'Not to scale')
+      assert.deepEqual(spec.display, {
+        layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640],
+      })
+      assert.equal(spec.mode, 'deterministic')
+      assert.equal(spec.assets?.length || 0, 0)
+    })
+    const page = await browser.newPage({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 })
+    await page.route('**/*', route => route.abort())
+    const svg = fs.readFileSync(svgPath, 'utf8')
+    const html = `<!doctype html><meta charset="utf-8"><style>${css}
+      body{overflow:auto;background:var(--sr-white);font-size:16px}
+      main{width:min(900px,calc(100vw - 59px));margin:40px auto}
+      .sr-read-fig{font-size:16px}
+      </style><main><div class="sr-read-fig" data-figure-layout="scroll">
+      <div class="sr-figure-media">${svg}</div></div></main>`
+    const displays = []
+    for (const [name, width, height] of [['desktop', 1440, 960], ['mobile', 390, 844]]) {
+      await page.setViewportSize({ width, height })
+      await page.setContent(html)
+      const metrics = await page.evaluate(({ smallD, motionDs, p, radius }) => {
+        const host = document.querySelector('.sr-read-fig')
+        const media = document.querySelector('.sr-figure-media')
+        const svg = media.querySelector('svg')
+        const text = [...svg.querySelectorAll('text')].map(node => {
+          const transform = node.getScreenCTM()
+          return {
+            text: node.textContent,
+            px: parseFloat(node.getAttribute('font-size')) * Math.hypot(transform.a, transform.b),
+            bbox: Object.fromEntries(['x', 'y', 'width', 'height'].map(key => [key, node.getBBox()[key]])),
+          }
+        })
+        const paths = [...svg.querySelectorAll('path')]
+        const small = paths.find(node => node.getAttribute('d') === smallD)
+        const large = svg.querySelector('ellipse')
+        const lengths = small.getTotalLength()
+        const deviations = Array.from({ length: 65 }, (_, index) => {
+          const at = small.getPointAtLength(lengths * index / 64)
+          return Math.abs(Math.hypot(at.x - p[0], at.y - (640 - p[1])) - radius)
+        })
+        const motions = motionDs.map(d => {
+          const node = paths.find(item => item.getAttribute('d') === d)
+          const length = node.getTotalLength()
+          const start = node.getPointAtLength(0)
+          const end = node.getPointAtLength(length)
+          const a = Math.atan2(640 - start.y - p[1], start.x - p[0])
+          const b = Math.atan2(640 - end.y - p[1], end.x - p[0])
+          return { angularChange: b - a, stroke: node.getAttribute('stroke'), fill: node.getAttribute('fill') }
+        })
+        const visibleConstruction = [...svg.querySelectorAll('[id]')]
+          .filter(node => /motion-(large|small)-(tip|tail)$/.test(node.id))
+          .filter(node => getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden')
+        const maxScroll = host.scrollWidth - host.clientWidth
+        host.scrollLeft = maxScroll
+        return {
+          hostWidth: host.clientWidth, mediaWidth: media.getBoundingClientRect().width,
+          minTextPx: Math.min(...text.map(item => item.px)),
+          text, maxScroll, scrollEnd: host.scrollLeft,
+          rightEdgeAtScrollEnd: media.getBoundingClientRect().right <= host.getBoundingClientRect().right + 1,
+          smallOrbitDash: small.getAttribute('stroke-dasharray'),
+          smallOrbitFill: small.getAttribute('fill'),
+          smallOrbitRadiusMaxDeviation: Math.max(...deviations),
+          largeOrbitDash: large.getAttribute('stroke-dasharray'),
+          largeOrbitFillOpacity: Number(large.getAttribute('fill-opacity') || 0),
+          motions, visibleConstructionCount: visibleConstruction.length,
+          arrowheadCount: svg.querySelectorAll('[data-ld-arrowhead]').length,
+          geometryCount: svg.querySelectorAll('path,ellipse,line,polygon').length,
+        }
+      }, {
+        smallD: get('small-orbit').d,
+        motionDs: ['large', 'small'].map(size => get(`motion-${size}`).d),
+        p: get('P').at,
+        radius: Math.hypot(...get('earth-center').at.map((value, index) => value - get('P').at[index])),
+      })
+      assert.equal(metrics.mediaWidth, 640)
+      assert.ok(metrics.minTextPx >= 16)
+      assert.ok(metrics.smallOrbitDash && metrics.smallOrbitDash !== 'none')
+      assert.equal(metrics.smallOrbitFill, 'none')
+      assert.ok(!metrics.largeOrbitDash || metrics.largeOrbitDash === 'none')
+      assert.equal(metrics.largeOrbitFillOpacity, 0)
+      assert.ok(metrics.smallOrbitRadiusMaxDeviation < 0.05)
+      assert.equal(metrics.visibleConstructionCount, 0)
+      assert.ok(metrics.geometryCount > 5)
+      assert.ok(metrics.motions.every(item => item.angularChange > 0 && item.angularChange < Math.PI && item.fill === 'none'))
+      assert.ok(metrics.rightEdgeAtScrollEnd)
+      assert.ok(Math.abs(metrics.scrollEnd - metrics.maxScroll) <= 1)
+      if (name === 'mobile') assert.ok(metrics.maxScroll > 0)
+      const screenshot = `${directory}/${name}-product-width.png`
+      await page.screenshot({ path: screenshot, animations: 'disabled' })
+      displays.push({
+        viewport: { width, height }, name, ...metrics,
+        screenshot: binding(screenshot), status: 'pass',
+      })
+    }
+    await page.close()
+    write(`${directory}/source-assertions.json`, {
+      role: 'AUTHOR executable source-fidelity checks, not independent approval',
+      source: binding(spec.source.image.path), spec: binding(specPath),
+      render: binding(renderPath), svg: binding(svgPath),
+      standardValidator: binding(`${directory}/validation.json`),
+      checks, status: checks.every(item => item.status === 'pass') ? 'pass' : 'fail',
+    })
+    assert.ok(checks.every(item => item.status === 'pass'), JSON.stringify(checks))
+    write(`${directory}/display-evidence.json`, {
+      role: 'AUTHOR offline current-SVG display fixture, not assembled-lesson or independent acceptance',
+      workdir: process.cwd(), browser: { headed: true, executablePath },
+      network: 'All requests aborted; no public pages, DB or paid calls.',
+      css: binding(cssPath),
+      cssNote: 'Current product CSS; only external @import lines removed for offline use. Product scroll media is unchanged at 40em = 640px.',
+      spec: binding(specPath), render: binding(renderPath), svg: binding(svgPath),
+      displays, status: 'pass',
+    })
+    console.log(`PASS author source assertions and headed desktop/mobile 640px media: fig-${number}`)
+  }
+} finally {
+  await browser.close()
+}

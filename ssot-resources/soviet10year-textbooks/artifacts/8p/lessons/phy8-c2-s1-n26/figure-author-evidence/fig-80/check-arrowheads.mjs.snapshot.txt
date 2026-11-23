@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+
+assert.equal(process.cwd(), '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180')
+const require = createRequire(path.resolve('app/package.json'))
+const { chromium } = require('playwright')
+const hash = filename => crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')
+const executablePath = [chromium.executablePath(), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+  .find(filename => fs.existsSync(filename))
+const browser = await chromium.launch({ executablePath, headless: true })
+try {
+  for (const number of [80, 81]) {
+    const directory = `.tmp/s10y-image/8p-n26/fig-${number}`
+    const svgPath = `${directory}/fig-${number}.svg`
+    const page = await browser.newPage()
+    await page.route('**/*', route => route.abort())
+    await page.setContent(fs.readFileSync(svgPath, 'utf8'))
+    const heads = await page.evaluate(() => [...document.querySelectorAll('[data-arrowhead-for]')].map(group => ({
+      for: group.getAttribute('data-arrowhead-for'),
+      paths: group.querySelectorAll('path').length,
+      visible: getComputedStyle(group).display !== 'none',
+    })))
+    const expected = ['rmoon', 'motion-large-head', 'motion-small-head']
+      .map(suffix => `ld-fig-${number}_ld-f${number}-${suffix}`).sort()
+    const status = JSON.stringify(heads.map(head => head.for).sort()) === JSON.stringify(expected) &&
+      heads.every(head => head.paths > 0 && head.visible) ? 'pass' : 'fail'
+    const result = {
+      role: 'AUTHOR affected-only diagnostic correction, no figure change or image load',
+      originalEvidence: `${directory}/display-evidence.json`,
+      originalEvidenceSha256: hash(`${directory}/display-evidence.json`),
+      initialDiagnosticFailure: 'Informational arrowheadCount queried data-ld-arrowhead, which the renderer does not emit; the resulting zero was not an asserted display pass condition.',
+      correction: 'Use the renderer materializer attribute data-arrowhead-for and assert all three visible arrowheads. No display/source/render stage replayed.',
+      svg: { path: svgPath, sha256: hash(svgPath) },
+      expected, heads, count: heads.length, status,
+    }
+    const output = `${directory}/arrowhead-evidence.json`
+    assert.equal(fs.existsSync(output), false)
+    fs.writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`)
+    assert.equal(status, 'pass', JSON.stringify(result))
+    await page.close()
+    console.log(`PASS: fig-${number}, three rendered arrowheads including two CCW heads`)
+  }
+} finally {
+  await browser.close()
+}

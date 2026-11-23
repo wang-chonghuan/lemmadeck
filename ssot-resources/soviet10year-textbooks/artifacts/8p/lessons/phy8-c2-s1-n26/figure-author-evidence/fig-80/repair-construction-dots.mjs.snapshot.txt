@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180')
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+for (const number of [80, 81]) {
+  const prefix = `f${number}`
+  const directory = `.tmp/s10y-image/8p-n26/fig-${number}`
+  const snapshot = `${directory}/first-visual-failure`
+  const names = ['spec.json', `fig-${number}.svg`, `fig-${number}.render.json`, 'preview-640.png']
+  const bindings = names.map(name => {
+    const from = path.join(directory, name)
+    const to = path.join(snapshot, name)
+    fs.copyFileSync(from, to, fs.constants.COPYFILE_EXCL)
+    return { path: to, sha256: hash(fs.readFileSync(to)) }
+  })
+  const failure = {
+    role: 'AUTHOR visual failure, not independent review',
+    status: 'fail',
+    reason: 'Unintended construction dots at curved motion-arrow tips can be mistaken for extra physical points.',
+    machineRenderStatus: 'pass',
+    preservedFirstCandidate: bindings,
+    originalReportPaths: 'Preserved render report is byte-identical; its original output/spec paths refer to the first-candidate bytes retained in this directory.',
+    repairCount: 1,
+    repair: 'Hide the four modern motion construction points. Retain the source arrows and all physical-point relationships. Construction endpoints are not source points and are no longer mapped as visible source objects.',
+  }
+  fs.writeFileSync(`${snapshot}/failure.json`, `${JSON.stringify(failure, null, 2)}\n`)
+  const spec = JSON.parse(fs.readFileSync(`${directory}/spec.json`, 'utf8'))
+  for (const size of ['large', 'small']) {
+    const id = `${prefix}-motion-${size}`
+    for (const part of ['tail', 'tip']) {
+      spec.objects.find(object => object.id === `${id}-${part}`).visible = false
+    }
+    const group = spec.source.inventory.find(item => item.id === `${id}-source-group`)
+    delete group.requires
+    group.objects = [`${prefix}-P`, id, `${id}-head`]
+    group.description += ' The hidden modern tangent construction endpoints are not source points; physical source point relationships remain required in the main group.'
+  }
+  fs.writeFileSync(`${directory}/spec.json`, `${JSON.stringify(spec, null, 2)}\n`)
+  console.log(`one content repair applied to fig-${number}; first candidate preserved`)
+}

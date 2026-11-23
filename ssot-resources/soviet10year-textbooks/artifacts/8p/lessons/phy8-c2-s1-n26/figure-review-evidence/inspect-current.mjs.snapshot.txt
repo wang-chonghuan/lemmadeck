@@ -1,0 +1,190 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+
+assert.equal(process.cwd(), '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180')
+const require = createRequire(path.resolve('app/package.json'))
+const { chromium } = require('playwright')
+const evidence = '.intentfold/tickets/STEMROBIN-180/raw/n26/figure-review-evidence'
+const hash = filename => crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')
+const cssPath = 'app/src/styles/app.css'
+const css = fs.readFileSync(cssPath, 'utf8').split('\n')
+  .filter(line => !line.startsWith('@import')).join('\n')
+const executablePath = [
+  chromium.executablePath(),
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+].find(filename => fs.existsSync(filename))
+assert.ok(executablePath, 'An installed Chromium is required; do not install.')
+const browser = await chromium.launch({ executablePath, headless: true })
+const report = {
+  scope: 'Current collected SVG pixels only; no geometry renderer, source or wholetext replay.',
+  workdir: process.cwd(),
+  browser: { headless: true, executablePath, isolatedContext: true, network: 'all requests aborted' },
+  css: { path: cssPath, sha256: hash(cssPath) },
+  originalInventory: {
+    path: `${evidence}/independent-original-inventory.md`,
+    sha256: hash(`${evidence}/independent-original-inventory.md`),
+  },
+  figures: [],
+}
+
+async function inspect(page, selector, spec) {
+  return page.evaluate(({ selector, spec }) => {
+    const svg = document.querySelector(`${selector} svg`)
+    const objects = new Map(spec.objects.map(object => [object.id, object]))
+    const p = objects.get(`f${spec.id.slice(4)}-P`).at
+    const paths = [...svg.querySelectorAll('path')]
+    const visible = node => {
+      const style = getComputedStyle(node)
+      return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0
+    }
+    const nodeFor = id => [...svg.querySelectorAll('[id]')].find(node => node.id.endsWith(`_ld-${id}`))
+    const smallObject = objects.get(`f${spec.id.slice(4)}-small-orbit`)
+    const small = paths.find(node => node.getAttribute('d') === smallObject.d)
+    const radius = Math.hypot(
+      objects.get(`f${spec.id.slice(4)}-earth-center`).at[0] - p[0],
+      objects.get(`f${spec.id.slice(4)}-earth-center`).at[1] - p[1],
+    )
+    const length = small.getTotalLength()
+    const radiusDeviation = Math.max(...Array.from({ length: 65 }, (_, index) => {
+      const point = small.getPointAtLength(length * index / 64)
+      return Math.abs(Math.hypot(point.x - p[0], spec.canvas.height - point.y - p[1]) - radius)
+    }))
+    const texts = [...svg.querySelectorAll('text')].map(node => {
+      const matrix = node.getScreenCTM()
+      const box = node.getBBox()
+      return {
+        text: node.textContent,
+        px: parseFloat(node.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+        box: { x: box.x, y: box.y, width: box.width, height: box.height },
+        color: getComputedStyle(node).fill,
+      }
+    })
+    const motions = ['large', 'small'].map(name => {
+      const object = objects.get(`f${spec.id.slice(4)}-motion-${name}`)
+      const node = paths.find(item => item.getAttribute('d') === object.d)
+      const length = node.getTotalLength()
+      const start = node.getPointAtLength(0)
+      const end = node.getPointAtLength(length)
+      const angles = [start, end].map(point =>
+        Math.atan2(spec.canvas.height - point.y - p[1], point.x - p[0]))
+      const headId = `f${spec.id.slice(4)}-motion-${name}-head`
+      const arrowhead = [...svg.querySelectorAll('[data-arrowhead-for]')]
+        .find(item => item.getAttribute('data-arrowhead-for').endsWith(`_ld-${headId}`))
+      return {
+        name,
+        angularChange: angles[1] - angles[0],
+        explicitArrowhead: Boolean(arrowhead && visible(arrowhead)),
+        arrowheadFill: arrowhead ? getComputedStyle(arrowhead).fill : null,
+      }
+    })
+    const construction = spec.objects
+      .filter(object => /motion-(large|small)-(tip|tail)$/.test(object.id))
+      .map(object => ({ id: object.id, visible: Boolean(nodeFor(object.id) && visible(nodeFor(object.id))) }))
+    const points = ['P', 'earth-center', 'moon-center', 'rmoon-end'].map(name => {
+      const node = nodeFor(`f${spec.id.slice(4)}-${name}`)
+      return { name, visible: Boolean(node && visible(node)), x: node?.getAttribute('cx'), y: node?.getAttribute('cy') }
+    })
+    const media = document.querySelector(`${selector} .sr-figure-media`)
+    const host = document.querySelector(`${selector} .sr-read-fig`)
+    const maxScroll = host ? host.scrollWidth - host.clientWidth : 0
+    if (host) host.scrollLeft = maxScroll
+    return {
+      svgWidth: svg.getBoundingClientRect().width,
+      svgHeight: svg.getBoundingClientRect().height,
+      mediaWidth: media?.getBoundingClientRect().width ?? null,
+      hostWidth: host?.clientWidth ?? null,
+      maxScroll,
+      scrollEnd: host?.scrollLeft ?? null,
+      rightEdgeAtScrollEnd: host ? media.getBoundingClientRect().right <= host.getBoundingClientRect().right + 1 : null,
+      minTextPx: Math.min(...texts.map(text => text.px)),
+      texts,
+      points,
+      construction,
+      smallOrbit: {
+        dash: small.getAttribute('stroke-dasharray'),
+        fill: small.getAttribute('fill'),
+        maximumRadiusDeviation: radiusDeviation,
+      },
+      motions,
+      arrowheads: svg.querySelectorAll('[data-arrowhead-for]').length,
+    }
+  }, { selector, spec })
+}
+
+function check(metrics) {
+  assert.equal(metrics.svgWidth, 640)
+  assert.equal(metrics.svgHeight, 640)
+  assert.ok(metrics.minTextPx >= 16)
+  assert.ok(metrics.points.every(point => point.visible))
+  assert.ok(metrics.construction.every(point => !point.visible))
+  assert.ok(metrics.smallOrbit.dash)
+  assert.equal(metrics.smallOrbit.fill, 'none')
+  assert.ok(metrics.smallOrbit.maximumRadiusDeviation < 0.02)
+  assert.ok(metrics.motions.every(motion => motion.angularChange > 0 && motion.explicitArrowhead))
+  assert.equal(metrics.arrowheads, 3)
+  if (metrics.mediaWidth !== null) {
+    assert.equal(metrics.mediaWidth, 640)
+    assert.equal(metrics.scrollEnd, metrics.maxScroll)
+    assert.equal(metrics.rightEdgeAtScrollEnd, true)
+  }
+}
+
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 })
+  await context.route('**/*', route => route.abort())
+  const page = await context.newPage()
+  for (const number of [80, 81]) {
+    const directory = `.tmp/s10y-image/8p-n26/fig-${number}`
+    const svgPath = `${directory}/fig-${number}.svg`
+    const spec = JSON.parse(fs.readFileSync(`${directory}/spec.json`, 'utf8'))
+    const svg = fs.readFileSync(svgPath, 'utf8')
+    const style = `<style>${css}
+      body{margin:0!important;background:white;font-size:16px}
+      .pair{display:flex;width:1280px;height:640px}
+      .native,.fixture{width:640px;height:640px;flex:none}
+      .native svg{width:640px!important;height:640px!important}
+      .fixture .sr-read-fig{margin:0!important;font-size:16px}
+      </style>`
+    await page.setViewportSize({ width: 1440, height: 960 })
+    await page.setContent(`<!doctype html><meta charset="utf-8">${style}
+      <div class="pair"><div class="native">${svg}</div>
+      <div class="fixture"><div class="sr-read-fig" data-figure-layout="scroll">
+      <div class="sr-figure-media">${svg}</div></div></div></div>`)
+    const native = await inspect(page, '.native', spec)
+    const desktop = await inspect(page, '.fixture', spec)
+    check(native)
+    check(desktop)
+    const screenshot = `${evidence}/fig-${number}-current-native-and-640-headless.png`
+    assert.equal(fs.existsSync(screenshot), false, 'Preserve prior inspection images.')
+    await page.locator('.pair').screenshot({ path: screenshot })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.setContent(`<!doctype html><meta charset="utf-8">${style}
+      <style>.fixture{width:331px;margin:24px auto}</style>
+      <div class="fixture"><div class="sr-read-fig" data-figure-layout="scroll">
+      <div class="sr-figure-media">${svg}</div></div></div>`)
+    const mobile = await inspect(page, '.fixture', spec)
+    check(mobile)
+    report.figures.push({
+      figure: `fig-${number}`,
+      svg: { path: svgPath, sha256: hash(svgPath) },
+      native,
+      desktop,
+      mobile,
+      screenshot: { path: screenshot, sha256: hash(screenshot) },
+    })
+  }
+  report.status = 'pass'
+} catch (error) {
+  report.status = 'fail'
+  report.error = error.stack
+  process.exitCode = 1
+} finally {
+  await browser.close()
+  const output = `${evidence}/headless-inspection.json.snapshot.txt`
+  assert.equal(fs.existsSync(output), false, 'Preserve the original inspection result.')
+  fs.writeFileSync(output, `${JSON.stringify(report, null, 2)}\n`)
+  console.log(JSON.stringify(report, null, 2))
+}

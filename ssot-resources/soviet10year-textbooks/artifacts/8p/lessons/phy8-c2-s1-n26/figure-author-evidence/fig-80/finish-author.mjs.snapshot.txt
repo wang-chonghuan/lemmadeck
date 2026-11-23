@@ -1,0 +1,131 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+assert.equal(process.cwd(), '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180')
+const bind = filename => ({
+  path: filename,
+  sha256: crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex'),
+})
+const ledger = [
+  '.tmp/ld-s10y-lesson/8p/pages/0121/figures/fig-80.png',
+  '.tmp/ld-s10y-lesson/8p/pages/0121/figures/fig-81.png',
+  '.tmp/s10y-image/8p-n26/fig-80/first-visual-failure/preview-640.png',
+  '.tmp/s10y-image/8p-n26/fig-81/first-visual-failure/preview-640.png',
+  '.tmp/s10y-image/8p-n26/fig-80/desktop-product-width.png',
+  '.tmp/s10y-image/8p-n26/fig-81/desktop-product-width.png',
+  '.tmp/s10y-image/8p-n26/fig-80/mobile-product-width.png',
+  '.tmp/s10y-image/8p-n26/fig-81/mobile-product-width.png',
+]
+for (const number of [80, 81]) {
+  const directory = `.tmp/s10y-image/8p-n26/fig-${number}`
+  const names = [
+    'context.json', 'full-text-context.json', 'original-pixel-inventory.md',
+    'spec.json', `fig-${number}.svg`, `fig-${number}.render.json`,
+    'preview-640.png', 'validation.json', 'source-assertions.json',
+    'display-evidence.json', 'arrowhead-evidence.json',
+    'desktop-product-width.png', 'mobile-product-width.png',
+    'first-visual-failure/failure.json',
+  ]
+  const spec = JSON.parse(fs.readFileSync(`${directory}/spec.json`, 'utf8'))
+  const display = JSON.parse(fs.readFileSync(`${directory}/display-evidence.json`, 'utf8'))
+  const authority = JSON.parse(fs.readFileSync(`${directory}/full-text-context.json`, 'utf8'))
+  const result = {
+    role: 'Bounded ld-s10y-image AUTHOR ONLY',
+    status: 'authorready',
+    ticket: 'STEMROBIN-180',
+    lesson: 'phy8-c2-s1-n26',
+    figure: `fig-${number}`,
+    workdir: process.cwd(),
+    independentApproval: false,
+    reviewFileCreated: false,
+    promotionPerformed: false,
+    source: bind(spec.source.image.path),
+    spec: bind(`${directory}/spec.json`),
+    svg: bind(`${directory}/fig-${number}.svg`),
+    render: bind(`${directory}/fig-${number}.render.json`),
+    artifacts: names.map(name => bind(`${directory}/${name}`)),
+    executableEvidence: [
+      '.agents/skills/ld-s10y-image/scripts/build_context.py',
+      '.agents/skills/ld-s10y-image/scripts/validate_spec.py',
+      '.agents/skills/ld-s10y-image/scripts/render_spec.mjs',
+      '.agents/skills/ld-s10y-image/scripts/materialize_arrowheads.mjs',
+      '.tmp/s10y-image/8p-n26/fig-80/author.mjs',
+      '.tmp/s10y-image/8p-n26/fig-80/repair-construction-dots.mjs',
+      '.tmp/s10y-image/8p-n26/fig-80/verify-author.mjs',
+      '.tmp/s10y-image/8p-n26/fig-80/check-arrowheads.mjs',
+    ].map(bind),
+    authoritativeLessonSnapshot: {
+      path: authority.lessonPath, sha256: authority.lessonSha256,
+      completeProseBoundInSpec: true,
+      parentReportedReviewedEditionSha256: '7729148053ce9efe403c0fc87b51c4129be2ce446eb2693c0d09d2ac7e01c4c4',
+      applicability: 'Parent explicitly confirmed no prose changes; original full-text authority remains applicable. This author does not reapprove the parent text.',
+    },
+    checks: {
+      currentSpecValidation: 'pass',
+      currentRender: 'pass',
+      executableInventoryAndSourceRelations: 'pass',
+      correctedRenderedArrowheadCheck: 'pass',
+      headedOfflineProductCssWidths: 'pass',
+      authorVisualInspection: 'pass',
+      assembledEditionLessonValidation: 'parent-owned, not run',
+      independentFigureReview: 'pending sole independent reviewer',
+    },
+    display: {
+      purpose: 'instructional', layout: 'scroll', actualMediaWidthPx: 640,
+      measuredMinTextPx: Math.min(...display.displays.map(item => item.minTextPx)),
+      viewports: display.displays.map(item => ({
+        ...item.viewport, hostWidth: item.hostWidth,
+        mediaWidth: item.mediaWidth, scrollEnd: item.scrollEnd,
+        maxScroll: item.maxScroll, rightEdgeAtScrollEnd: item.rightEdgeAtScrollEnd,
+      })),
+      surface: 'Current SVG with current app figure CSS, offline headed fixture; not a complete assembled lesson.',
+    },
+    substantiveAuthorObservations: number === 80 ? [
+      'Earth sphere is shaded and P lies inside it, displaced upper-right from Earth center.',
+      'Moon disk is upper-right on the solid large orbit; Earth center is lower-left on the dashed small orbit, both around P.',
+      'Moon-radius marker remains horizontal to the right circumference, not to the Moon disk angular position.',
+      'Earth-radius segment joins P and Earth center; both curved motion arrows are CCW with no construction dots.',
+      'Earth/Moon/P/r_E/r_M are readable. No force arrows, axes, grid, numeric distances, answer annotations or cultural symbols.',
+    ] : [
+      'NO globe or body disks; P is common center of solid large and dashed small unfilled paths.',
+      'Earth center is lower-left on the dashed path; Moon center is upper-right on the solid path.',
+      'Moon-radius marker remains horizontal to the right circumference; Earth-radius segment joins P to Earth center.',
+      'Both curved motion arrows are CCW with no construction dots.',
+      'Earth center/Moon center/P/r_E/r_M are readable. No force arrows, axes, grid, numeric distances, answer annotations or cultural symbols.',
+    ],
+    routing: {
+      mode: 'deterministic', renderer: 'existing JSXGraph script',
+      semanticArtworkRequired: false, artworkCalls: 0,
+      reason: 'Source body identity is expressible with simple geometric sphere shading/disk; all orbit and radius relationships must be deterministic.',
+      finalContractForParent: 'svg + render + spec; independent review is still required before parent promotion',
+    },
+    modernAdditions: authority.modernAdditions,
+    unresolvedFacts: authority.unresolvedSourceFacts,
+    failuresAndRepairs: {
+      initialCanonicalSourceMissing: 'Resolved by parent retaining byte-identical crops. One failed source image open loaded zero images.',
+      firstVisualFailure: bind(`${directory}/first-visual-failure/failure.json`),
+      contentRepairRounds: 1,
+      contentRepair: 'Removed unintended visible motion-arrow construction points from both figures. Physical points, geometry, text and source assertions unchanged.',
+      diagnosticCorrection: bind(`${directory}/arrowhead-evidence.json`),
+      renderExecutionFailures: 0,
+      unresolvedFailures: [],
+    },
+    usage: {
+      actualImagesLoadedTotal: 8, maximum: 8, batches: 1, reopens: 0,
+      images: ledger.map(bind), failedImageOpensLoaded: 0,
+      finalProductWidthPreviewsLoaded: 4,
+      paidCalls: 0, installations: 0, dbCalls: 0, publicWebCalls: 0,
+      gitCommits: 0, pushes: 0, messages: 0, newChats: 0, newWorktrees: 0,
+    },
+    parentHandoff: 'Authorready only. Retain/promote and bind independent review through the parent; no review@1 pass file was created.',
+  }
+  const output = `${directory}/authorready.json`
+  assert.equal(fs.existsSync(output), false)
+  fs.writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`)
+  console.log(JSON.stringify({
+    figure: result.figure, authorready: bind(output),
+    source: result.source, spec: result.spec, svg: result.svg, render: result.render,
+    minTextPx: result.display.measuredMinTextPx,
+  }))
+}

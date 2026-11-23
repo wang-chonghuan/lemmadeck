@@ -1,5 +1,219 @@
 # 生产检查点
 
+## 2026-11-23 n26 Complete Offline; Immediate Narrow Save
+
+FIRST independent Figure80/81 PASS; source/spec/SVG/current geometry unchanged,
+only canonical metadata paths rebound. Exact author history, first visual
+failures and reviewer evidence retained in raw n26/figure-author-evidence/ and
+figure-review-evidence/, with exact resource-owner figure-review.md copy.
+Original ticket/raw evidence unchanged. Author's headed deviation remains
+truthful history; independent new inspection and whole-lesson run were headless.
+
+Adapt-finalize PASS3/8 layout changes,0 exercises,2 figures. Render FIRST PASS:
+10 paragraphs plus2 figures/2 captions =14 display objects,3 exact boundaries.
+One isolated-headless1440x960/390x844 check PASS2 text surfaces,0 retries.
+Harvey FIRST actual screenshot DISPLAY PASS,4 images including2 native crops,
+12/24 cumulative, collected/closed. Empty answers FIRST PASS auto0/ungraded0;
+no choices/interactions fabricated. No wholetext/source/figure replay.
+
+Immediate commit/push scope is ONLY n26 raw/modern,80/81 source+modern assets,
+120–122 necessary source/recovery, exact27-line layout delta and checkpoint/
+usage. Staged raw index34/96; working35/97 and held n37 preserved. n25 new
+117–119 drafts/finalizes and figure79 excluded. Counter runner's66 inherited
+stress failures remain recorded; no global green or full suite is claimed.
+Delivered36/increment8 until actual successful push; parent23/24,paid69/new0.
+
+Next n25 source author collected/closed,8 images. Missing117/118/119 FIRST
+finalize PASS24/24,26/26,25/25,0 normalizations; existing11624/24 reused.
+Figure79 exact crop retained only in book gallery, group练习18/exercise1
+derived on119;120 incoming2–7 SOURCE PASS reused. Margin/typography and119
+inline-v/趋超 glyph HOLDs remain for first independent SOURCE review.
+No n25 assembly/modern/promotion or complete count inferred.
+
+## 2026-11-23 n26 Figure Author Collected; First Independent Figure Review Active
+
+Schrodinger collected/closed, actual8/8 images, deterministic80/81
+authorready,18px labels at640px scroll media,0 paid. First visual failures
+and one construction-dot repair preserved. No independent approval yet.
+Author used a headed fixture contrary this run's background-only scope;
+browser closed, original evidence retained truthfully. This is not owning
+lesson display approval; all subsequent browser work is isolated headless.
+Sole reviewer Harvey now owns FIRST source-first figure comparison and,
+only on PASS, byte-preserving cap4 promotion. Tiny source radius terminal
+shape is an explicit author uncertainty, not an invented force arrow.
+
+Disjoint next n25 preparation116–119 each once exit0. Existing116 candidate
+read-only; existing120 SOURCE PASS reused, no reopening or editing that boundary.
+Hilbert fresh bounded author owns ONLY missing117–119 draft source pages,
+max8 images, no finalize/assembly/review/promotion. Neither n25 nor its
+future files are included in n26's current owned-path staging.
+No new paid/DB requests or complete-course increment; n26 not yet pushed.
+
+## 2026-11-23 n26 Wholetext PASS; Template Sync Recovered; Empty Answers Ready
+
+Harvey FIRST wholetext/science PASS all8 objects, complete source refs and
+cross-page paragraph, scalar/vector reciprocal ratios and all literal
+approximations;0 content revisions/errata/images. Immutable modern snapshot
+SHA `7729148053ce9efe403c0fc87b51c4129be2ce446eb2693c0d09d2ac7e01c4c4`
+and first report retained in raw n26/source-review/. The real synchronization
+HOLD (scratch template had no section breaks) remains in that original report.
+Parent copied the reviewed canonical bytes to editable template; affected
+resolver PASS10 paragraphs, exact boundaries4/6/9. No wholetext replay.
+
+Empty answer prepare/finalize FIRST PASS auto0/ungraded0,0 answers; no forced
+choice or interaction. Necessary executions retained in modern answer-review/.
+Figure80/81 author active; independent figure/display approval still missing.
+Current owned source/layout/checkpoint paths staged, no content commit yet.
+Delivered36/increment8, parent23/24, paid69/new0 and no DB remain unchanged.
+
+## 2026-11-23 n26 Counter Integrated; Selected Raw Lesson Promoted
+
+Volta collected/closed, actual2 images. Exact27-line margin-only candidate02
+integrated, layout SHA
+`c32d832367caed9436b7c2a97f14adf09f2fadd8182366d09f5814bd7d1b36c8`.
+Only1199 isolated-blot pixels removed;30 real-row deletion controls PASS,
+526 component placements with0 new mask losses and48 focused ink controls.
+Unchanged SOURCE60/P54/branch guards PASS reused. Stress runner remains exit1:
+66 inherited failures, not global green. Candidate01 four new losses rejected.
+All candidates, initial failures, streams and controls retained at
+`artifacts/8p/pages/0121/counter-recovery/`; no global suite replay.
+
+Affected121 finalize PASS15/15;122 FIRST finalize PASS24/24,
+both0 normalizations. Prior selected SOURCE PASS reused; outgoing n27 HOLD
+unchanged. Limited120–122 assembly once PASS: n26 is8 prose objects,
+2 figures,0 exercises; incoming6 tasks belong to n25. Only n26 promoted.
+Exact final source crops retained in the book gallery only; no recrop or
+page-level duplicate figures. Historical temporary-path JSON records remain
+byte-identical snapshot text; current source binding uses existing PDF/page/
+render hashes and canonical crops. First binding transform used `source`
+instead of `meta.source` and failed; untouched snapshot recovery corrected
+only that technical field lookup, without SOURCE replay.
+Working raw index35/97 still contains held n37, not a pushed index.
+
+Modern draft10 tool-derived paragraphs/3 exact boundaries; no numerical
+correction or erratum. Schrodinger bounded author80/81 and sole independent
+reviewer Harvey wholetext are active. Parent23/24 images unchanged,
+paid69 historical/new0, delivered36/increment8 until actual lesson push.
+No DB, deployment, closure, replacement tree/chat/branch or peer message.
+
+## 2026-11-23 n26 Selected SOURCE PASS; Counter Recovery Still Pending
+
+Banach independent SOURCE PASS whole120/121 and ONLY122 n26 closing two rows
+plus heading27. Actual121 is15 distinct rows: shared captions1, prose10,
+displayed formulas3,footer1. No n26 text/formula/row correction; retain literal
+384000/380000/4700/81/7x10^22 and printed `因此；`. Figure80/81 original
+inventories independently frozen. Reviewer collected/closed,actual8 images.
+This does not override machine121failure or approve whole122/n27.
+
+Independent original pixels resolve n27 held glyph as unusual printed `自`.
+Parent restored it and only three proven minimum italic omissions; original
+author snapshot/report remain unchanged, wider n27 italic endpoints still HOLD.
+Selected122 n26 and heading hashes verified unchanged without source replay.
+Reviewer's original evidence had landed under ticket/raw/n26; exact evidence
+also retained at the required resource owner:
+`ssot-resources/soviet10year-textbooks/artifacts/8p/lessons/phy8-c2-s1-n26/source-review/`.
+Original frozen records untouched; retained binding only adjusts these paths
+and current outgoing-n27 candidate hash, not semantic decisions.
+
+Volta PRIVATE technical121 candidate remains active. No122finalize, assembly,
+modern figures or delivery started after121failure. No new paid/DB operations;
+delivered36/increment8 and parent23/24 remain unchanged.
+
+## 2026-11-23 n26 Source Draft Retained; First Counter Failure Preserved
+
+Prepare120–122 each once exit0. Darwin source author collected/closed:
+actual8 images (3 grids/5 original-only crops),0 reopens/new paid requests.
+Draft rows/blocks/figures:120 26/12/0,121 15/6/2,122 24/8/0.
+Original drafts and author reports retained. Figures80/81 belong to n26.
+New122 glyph and italic-extent HOLDs are in outgoing n27, after n26's
+two closing rows and heading27; no n27 promotion or approval.
+
+Finalize120 once PASS26/26,0 normalizations. Finalize121 first exit1,
+machine16 versus authored15,2 crops,0 normalizations. Exact page/audit/
+receipt/streams snapshot retained;122 finalize not started after that failure.
+No source, modern, lesson-complete or display approval is inferred.
+
+Banach `01a207d8-1c6f-73c3-a9fd-29bd591b55d0` is sole independent
+SOURCE reviewer, max8 images. Volta `01a207d8-7754-7700-8eeb-347a7c49c697`
+owns PRIVATE counter diagnosis/candidate only, max2 images, no live edits.
+Separate actual-source and classifier evidence must establish the correct row
+inventory; no row insertion or classifier threshold tuned merely to15.
+Delivered36/increment8, parent23/24, paid69 historical/new0; no DB,
+new chat/tree/branch, merger/deployment or full-suite/source replay.
+
+## 2026-11-23 Direct Human Resume; Next Source-Backed n26 Active
+
+Latest direct human "重新启动吧" overrides the all-production pause below.
+Resume same180-7 checkout and installed701fae7e1cd8f889403cf50895951f21a3ff77e6
+per-lesson SOP, without reinstall/new chat/branch/worktree/old180-6 restart.
+n12 exact pushed snapshot and unit-power DISPLAY PASS reused, no replay.
+Delivered36/increment8 remains actual, publication remains supervisor-only.
+
+Next selected8p `phy8-c2-s1-n26`, 月球的质量, printed108–109 from TOC,
+physical120–121 plus122 next-heading boundary. No corresponding canonical
+pages/lesson are present in this tree; this is not proof of historical SOURCE
+approval or a new FIRST claim. Prepare/recover existing usable inputs once,
+preserve any old failures/uncertainty, independently verify actual source.
+Earlier n27 author interruption is retained and not restarted or counted.
+No DB/new paid request, merger/deployment, replacement chat/tree or proactive
+supervisor message. Parent23/24 images and paid69 historical/new0 preserved.
+
+## 2026-11-23 Direct Human Pause; All Production Stopped
+
+Latest direct human pause supersedes every earlier continuation, automatic
+resume and supervisory production instruction. Stopped at the safe boundary
+after completed n12 ordinary push
+`7b44b7cb7de8aaa2c93a1823919e69fb58dc673d`.
+Delivered36/increment8 remains actual; supervisor-only intake is recorded,
+not a DB publication claim.
+
+No new course, review, test, generation, paid request, DB write or commit/push
+was started after this pause. Only this existing checkpoint/usage pause state
+was updated. All180-7 artifacts, original failures, snapshots, backups, costs,
+staging and uncommitted/installer/user changes are preserved. No unrelated
+chat/process was touched; no replacement worker was created or message sent.
+Bacon was already collected/closed; all owned exec sessions had finished.
+Owned active production processes/subtasks:0.
+Do not automatically resume. Wait for the next direct human resume instruction.
+
+## 2026-11-23 180-7 n12 Pushed; Supervisor-Only Single-Lesson Intake
+
+Ordinary push exit0 saved exact220-file snapshot
+`7b44b7cb7de8aaa2c93a1823919e69fb58dc673d`,
+remote89a8ec799..7b44b7cb7 on `codex/STEMROBIN-180-textbooks`.
+Delivered36 /180-7 increment8; full production group remains incomplete.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s2-n12`,
+  加速度　匀加速运动, legitimate printed number12. Use exact pushed snapshot above.
+- Durable lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s2-n12/`.
+  Faithful raw lesson and necessary59–62/65 source/recovery evidence retained;
+  unchanged63/64 SOURCE approval reused. Only65 exercise8/boundary is certified,
+  never the n13 body. n13/n37 are not part of this intake.
+- Actual39 raw prose objects,48 rendered paragraphs,7 exact boundaries,
+  0 figures,8 written exercises/8 ready answers (auto4/ungraded4),
+  7 retained choices/28 options (single6/multiple1),0 new interactions.
+- Source-bound projection/norm erratum is explicit in modern prose; raw wrong
+  wording remains faithful. Literal36 km/s and stopping-interval maximum remain
+  as approved. Original missing-axis choice and every execution/display failure
+  are retained, not retroactive PASS.
+- Independent source/text/key/answer and combined desktop/mobile DISPLAY PASS.
+  Reuse the five approved surfaces plus affected mobile-written PASS and existing
+  reports; no duplicate full display/review pipeline. The exact pushed shared
+  HTML fragment repair keeps written unit/power together;14 focused tests PASS.
+- Writer serializes the existing one-lesson base, answers and retained choices
+  publishers in required order, then one small affected n12 readback for edition,
+  content/answer/choice counts. No producer DB work, earlier/all-lesson replay,
+  invented new interaction stage or duplicate acceptance package.
+
+Raw pushed index33/93; working34/94 and held n37 preserved. All installer/user,
+app/schema and other source/HOLD bytes remain untouched. Bacon collected/closed,
+actual20/24 images; parent23/24, paid69 historical/new0, tokens/costs unknown.
+No deployment/closure/new chat/worktree/branch/timer or proactive supervisor
+message. Intake is retained here, not a publication claim or report-only push.
+
 ## 2026-11-23 180-7 n12 Complete Offline; Immediate Narrow Save
 
 Same Bacon final internal review PASS seven choices/28 option rationales and

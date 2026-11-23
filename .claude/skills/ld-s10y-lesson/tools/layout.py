@@ -445,6 +445,33 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 core_rows = np.flatnonzero(core.any(axis=1))
                 core_height = core_rows[-1] - core_rows[0] + 1
                 compact_shape = True
+        # Sub-core pinholes in a thick isolated margin smear are not glyph counters.
+        if (
+            not solid_core and compact_shape
+            and (columns.stop <= 0.05 * ink.shape[1]
+                 or columns.start >= int(0.95 * ink.shape[1]))
+            and 0.75 * glyph_h <= height <= height_limit
+        ):
+            region = ink[bounds]
+            filled = ndimage.binary_fill_holes(region)
+            holes, _ = ndimage.label(filled & ~region)
+            hole_bounds = [item for item in ndimage.find_objects(holes) if item is not None]
+            core_size = max(2, int(0.2 * glyph_h))
+            if hole_bounds and all(
+                max(r.stop - r.start, c.stop - c.start) < core_size
+                for r, c in hole_bounds
+            ):
+                core = ndimage.binary_opening(
+                    filled, structure=np.ones((core_size, core_size), dtype=bool)
+                )
+                solid_core = (
+                    np.any(core)
+                    and np.count_nonzero(core) >= 0.7 * area
+                    and not np.any(ndimage.binary_fill_holes(core) & ~core)
+                )
+                if solid_core:
+                    core_rows = np.flatnonzero(core.any(axis=1))
+                    core_height = core_rows[-1] - core_rows[0] + 1
         margin_blot = (
             (columns.stop <= 0.05 * ink.shape[1]
              or columns.start >= int(0.95 * ink.shape[1]))
