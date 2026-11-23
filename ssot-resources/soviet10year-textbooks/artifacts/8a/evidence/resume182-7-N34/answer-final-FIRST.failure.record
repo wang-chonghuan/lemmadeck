@@ -1,0 +1,21 @@
+Date: 2026-11-23
+cwd: /Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182
+Command:
+.claude/skills/ld-s10y-lesson/.venv/bin/python .claude/skills/ld-s10y-answer/tools/lesson_answers.py finalize --book 8a --edition modern-us-neutral --lesson alg8-c5-s2-n34 --work .tmp/ld-s10y-lesson/resume182-7-N34/answers-prepared
+Actual exit: 1
+Actual failure:
+  lesson_answers.py, line 564, cmd_finalize: dump(path, document)
+  lesson_answers.py, line 55, dump: path.write_text(...)
+PermissionError: [Errno 13] Permission denied: 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-s2-n34/answer-keys.json'
+
+The actual frozen author draft was copied byte-identically into a separate
+working output, but copyFileSync also retained the 0444 source mode.
+The original finalizer reached dump only after its validation,
+numeric/expression and real MathLive checks returned without failure.
+Their captured stdout did not survive this write exception; no missing result
+or attempt count is invented, and this call did not produce ready artifacts.
+Recovery changes only the distinct working copy's mode to 0644. The frozen
+author draft remains 0444 and unchanged. The same original finalizer is retried;
+its built-in mechanical checks therefore run again as part of the failed-stage
+retry, with no bypass. Source solving, answer comparison and image review are
+not repeated. This execution recovery is not a new content revision.

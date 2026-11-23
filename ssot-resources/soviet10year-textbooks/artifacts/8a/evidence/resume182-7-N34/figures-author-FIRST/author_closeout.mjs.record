@@ -1,0 +1,159 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+if (process.cwd() !== root) throw new Error('Wrong authorized cwd')
+const relativeDir = '.tmp/ld-s10y-lesson/resume182-7-N34/figures-author-FIRST'
+const dir = path.join(root, relativeDir)
+const ids = ['fig-81', 'fig-82', 'tbl-p0217-01', 'tbl-p0218-01', 'tbl-p0219-01']
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const binding = file => ({ path: path.relative(root, file), sha256: sha(file) })
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const figures = []
+for (const id of ids) {
+  const specFile = path.join(dir, `${id}.spec-FIRST.json`)
+  const svgFile = path.join(dir, `${id}.svg-FIRST.svg`)
+  const reportFile = path.join(dir, `${id}.render-FIRST.json`)
+  const spec = read(specFile), report = read(reportFile)
+  assert.equal(report.status, 'pass')
+  assert.equal(report.spec.sha256, sha(specFile))
+  assert.equal(report.output.svg.sha256, sha(svgFile))
+  assert.equal(spec.source.image.sha256, sha(spec.source.image.path))
+  assert.equal(spec.display.purpose, 'instructional')
+  assert.equal(spec.display.layout, 'scroll')
+  assert.deepEqual(spec.display.widths, [640])
+  assert.equal(report.collisions.length, 0)
+  assert(report.displayChecks.every(check => check.status === 'pass' && check.measuredMinPx >= 16))
+  if (id.startsWith('fig-')) {
+    const grids = spec.assertions.filter(item => item.type === 'gridDimensions')
+    assert.deepEqual(grids.map(item => [item.columns, item.rows]), [[23, 23], [1, 23], [23, 1], [1, 1]])
+    assert.equal(grids.reduce((sum, item) => sum + item.columns * item.rows, 0), 24 * 24)
+    const xScale = spec.canvas.width / (spec.canvas.boundingBox[2] - spec.canvas.boundingBox[0])
+    const yScale = spec.canvas.height / (spec.canvas.boundingBox[1] - spec.canvas.boundingBox[3])
+    assert(Math.abs(xScale / yScale - 10) < 1e-10)
+    assert.equal(spec.objects.filter(item => item.type === 'point').length, id === 'fig-81' ? 9 : 0)
+    assert.equal(spec.objects.filter(item => item.type === 'svgPath').length, id === 'fig-81' ? 0 : 1)
+  } else {
+    const interior = spec.assertions.find(item => item.id === 'interior-dimensions')
+    assert.equal(interior.columns + 1 + 1, 6)
+    assert.equal(interior.rows, 2)
+    assert.equal(spec.objects.filter(item => item.id.startsWith('source-horizontal-rule-')).length, 3)
+    const grid = spec.objects.find(item => item.id === 'table-interior-grid')
+    assert.equal((grid.bounds[2] - grid.bounds[0]) / grid.xStep + 1, 5)
+    assert.equal(spec.source.inventory.filter(item => item.id.endsWith('-source-inventory')).length,
+      id === 'tbl-p0218-01' ? 4 : 5)
+    assert.equal(spec.source.inventory.some(item => item.id === 'source-blank-terminal-column'), id === 'tbl-p0218-01')
+  }
+  figures.push({
+    id, source: binding(spec.source.image.path),
+    spec: binding(specFile), svg: binding(svgFile), render: binding(reportFile),
+    preview: binding(path.join(dir, `${id}.preview-FIRST.png`)),
+    sourceInventoryBinding: `${path.relative(root, specFile)}#/source/inventory`,
+    sourceInventoryGroups: spec.source.inventory.map(item => item.id),
+    authorPreviewActuallyOpened: id.startsWith('fig-'),
+    machineValidationAndRender: 'PASS_ONLY_NOT_INDEPENDENT_REVIEW',
+    independentReview: 'NOT_PERFORMED_PENDING_PARENT',
+    promotion: 'NOT_AUTHORIZED_NOT_PERFORMED',
+    measuredMinimumTextPxAt640: report.displayChecks[0].measuredMinPx,
+  })
+}
+const construction = read(path.join(dir, 'fig-82.construction-FIRST.record'))
+assert(construction.tableProximity.every(item => item.matchesSourceHundredths))
+const callFile = path.join(dir, `actualcalls-${ids.join('_')}-FIRST.record`)
+const execution = read(callFile)
+assert.equal(execution.calls.length, 10)
+assert(execution.calls.every(call => call.exitCode === 0 && call.cwd === root))
+for (const call of execution.calls) {
+  assert.equal(call.stdoutSha256, sha(path.join(dir, call.stdout)))
+  assert.equal(call.stderrSha256, sha(path.join(dir, call.stderr)))
+}
+const answerFile = path.join(root, '.tmp/ld-s10y-lesson/resume182-7-N34/answer-author-FIRST/answer-665-FIRST.record')
+const frozenDir = path.join(root, '.tmp/ld-s10y-lesson/resume182-7-N34/source-review-FIRST')
+const record = {
+  schema: 'N34-modern-author-candidate-FIRST',
+  role: 'MODERN_FIGURE_AUTHOR_NOT_INDEPENDENT_REVIEWER',
+  date: '2026-11-23', cwd: root, status: 'AUTHOR_CANDIDATES_COMPLETE_PENDING_INDEPENDENT_REVIEW',
+  selfApproval: false, independentReviewPerformed: false, promoted: false,
+  ownership: {
+    writeRoots: [relativeDir, '.tmp/ld-s10y-lesson/resume182-7-N34/answer-author-FIRST/answer-665-FIRST.record'],
+    ssotAppSkillsGitDatabaseWrites: 0, otherParticipantsReverted: false,
+    installationsOrUpdates: 0, commits: 0, databaseCalls: 0,
+    newAgents: 0, messages: 0, answerFinalizeCalls: 0,
+    answerKeyOrChoicesRead: false,
+  },
+  frozenSourceEvidence: [
+    binding(path.join(frozenDir, 'source-FIRST.record')),
+    binding(path.join(frozenDir, 'source-comparison.record')),
+  ],
+  sourceFactsVersusModernAdditions: {
+    source: [
+      'Five durable source PNGs actually opened; all source hashes match frozen observations.',
+      'Graphs have25 bands per direction,24x24 strips; origin col2 row22, x=.5 col12,x=1 col22,y=10 row2; full step dx=.05/dy=.5.',
+      'Figure81 has exactly nine filled unconnected first-table dots, no curve/function label.',
+      'Figure82 has one smooth solid curve only[0,1], endpoints(0,1),(1,10), no curve arrow or visible point markers.',
+      'Figure82 dashed paired guides correspond to source prose approx.37->2.3,.82->6.6 and endpoint1->10; no guide-value labels.',
+      'Each table has2 rows/6 columns,3 horizontal rules,5 internal separators,open outer sides.218 has a blank terminal column.',
+      '217+218 partition9 source pairs;219 has5 separate refinement pairs; printed fractions,parentheses,decimal trailing zeros retained.',
+    ],
+    modern: [
+      'Straight uniform full strips; short right width.025 and bottom height.3 are deliberate half/three-fifths full-step choices, NOT exact scan fractions.',
+      'Four visible grids explicitly model23x23 full cells plus1x23 right,23x1 bottom,1x1 corner; gridDimensions checks each piece.',
+      'Source x unit10cm/y unit1cm preserved by10:1 screen scale; an English unit legend is added.',
+      'Renderer-owned axis arrowheads,dashes,font/spacing/semantic color roles; scan skew/ink texture not reconstructed.',
+      'Figure82 function-sampled tangent cubic svgPath is modern mathematical regularization, NOT restored original control points.',
+      'Guide endpoints lie on regularized function at source prose x values;2.3/6.6 remain approximate source readings, not imposed exact equalities.',
+      'Open tables use visible4x2 interior grid with gridDimensions plus checked one-column open margins:1+4+1=6. No fake6-column grid claim or added side borders.',
+      'English y=10^x row label adds y= to source10^x while keeping function meaning; numerator/denominator labels and bars remain renderer objects.',
+    ],
+  },
+  unresolvedHolds: [
+    { subject: 'original_terminal_strip_fractions', status: 'HOLD', reason: 'Source pixel bands do not establish exact fractions; modern .5/.6 strip choices require independent review.' },
+    { subject: 'original_scan_skew', status: 'HOLD', reason: 'No exact pixel geometry reconstruction claimed; equal straight full strips are a declared modern choice.' },
+    { subject: 'original_arrow_apex_and_footprint', status: 'HOLD', reason: 'Source exact footprint unknown; renderer arrowheads are modern geometry.' },
+    { subject: 'original_dash_length_and_gap', status: 'HOLD', reason: 'Source exact dash geometry unknown; renderer dash pattern is modern.' },
+    { subject: 'original_curve_control_points', status: 'HOLD', reason: 'Original control points unknown; analytic modern curve is not scan reconstruction.' },
+    { subject: 'modern_source_fidelity_and_table_visual_review', status: 'PENDING_INDEPENDENT_REVIEW', reason: 'Author is not the independent reviewer; table candidates not visually opened by author.' },
+  ],
+  figures, answer665: binding(answerFile),
+  answerStatus: 'EIGHT_GRAPH_ESTIMATES_AUTHOR_CANDIDATE_NOT_FINALIZED',
+  actualcalls: {
+    boundExecution: binding(callFile),
+    calls: execution.calls.map(call => ({ id: call.id, stage: call.stage, command: call.command, argv: call.argv, cwd: call.cwd, exitCode: call.exitCode })),
+    explicitValidateCalls: 5, renderCalls: 5, rendererInternalValidationCalls: 5,
+    builder: { command: 'node', argv: [`${relativeDir}/author_specs.mjs`], cwd: root, exitCode: 0 },
+    renderingWrapper: { command: 'node', argv: [`${relativeDir}/author_render.mjs`], cwd: root, exitCode: 0 },
+    closeout: { command: 'node', argv: [`${relativeDir}/author_closeout.mjs`], cwd: root, checks: 'Executed assertions before writing this record; any mismatch throws.' },
+    sourceFigureOpenCalls: ids.map(id => ({ tool: 'view_image', path: figures.find(item => item.id === id).source.path, count: 1 })),
+    candidateOpenCalls: ['fig-81', 'fig-82'].map(id => ({ tool: 'view_image', path: `${relativeDir}/${id}.preview-FIRST.png`, count: 1 })),
+  },
+  failedStages: [],
+  technicalNonStageFailure: {
+    command: 'ls -ld .tmp/ld-s10y-lesson/resume182-7-N34/figures-author-FIRST .tmp/ld-s10y-lesson/resume182-7-N34/answer-author-FIRST .claude/skills/ld-s10y-lesson/.venv/bin/python ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c5-s2-n34',
+    cwd: root, exitCode: 1,
+    stderr: 'The two authorized new output directories did not exist. apply_patch created the required files/directories. No source or render failure inferred.',
+  },
+  firstFailurePreservation: 'All FIRST specs/reports/stdout/stderr retained without replacement. No figure-stage failure occurred; no second attempt or replay performed.',
+  imageCounts: {
+    batch: 1, sourceOpenings: 5, candidatePreviewOpenings: 2, totalActualOpenings: 7,
+    batchMaximum: 8, contextTotal: 7, contextMaximum: 24,
+    reopens: 0, crops: 0, additionalAnswerImages: 0,
+    parentReceivesImages: false,
+    unviewedTablePreviewFilesAreNotImageOpenings: true,
+  },
+  usage: { paidImageModelAPICalls: 0, externalNetworkAPICalls: 0, hostTokens: 'UNKNOWN', hostCost: 'UNKNOWN' },
+  limitations: [
+    'Machine pass and author observations are not independent review or promotion.',
+    'Display widths are checked on actual640px scroll media; no full lesson/offline/product integration review was performed in this author-only scope.',
+    'Parent is concurrently segmenting prose; text-context binding captures the relevant modern mathematics read here. Changed relevant math needs affected rebind/review.',
+  ],
+  supportingFiles: fs.readdirSync(dir).filter(name => fs.statSync(path.join(dir, name)).isFile()).sort().map(name => binding(path.join(dir, name))),
+}
+fs.writeFileSync(path.join(dir, 'author-FIRST.record'), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' })
+console.log(JSON.stringify({
+  status: record.status, figures: 5, mechanicalStagesExit0: 10,
+  imagesOpened: 7, independentReview: false, paidAPICalls: 0,
+  authorRecord: `${relativeDir}/author-FIRST.record`,
+  answerRecord: record.answer665.path,
+}))
