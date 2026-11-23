@@ -140,6 +140,7 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
         if b.get("owner_lesson") and b["kind"] in ("fig", "cap"):
             continue
         if b["kind"] in ("h1", "h2"):
+            cur = None
             pending[b["kind"]] = B.text_of(b)
             if b["kind"] == "h1":
                 pending["h2"] = None

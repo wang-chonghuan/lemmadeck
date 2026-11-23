@@ -1,5 +1,189 @@
 # 生产检查点
 
+## 2026-11-23 180-7 Summary Complete Offline; Immediate Save
+
+Same Einstein reviewer FIRST modern-text PASS0 revisions/0 new images;
+adapt-finalize PASS4/5 layout-only,0 exercises/figures. Empty answers
+prepare/finalize PASSauto0/ungraded0; no choices/interactions apply.
+One render PASS6 actual prose paragraphs/2 concept anchors. One isolated
+headless Chrome run PASS2 text surfaces1440x960/390x844, both screenshots
+visually inspected using2 new images. Bold title displays without raw asterisks;
+formula/symbol font1.10 scale, final content, no overflow/errors/leaks PASS.
+Reviewer cumulative3 images, parent23/24 unchanged. Prepared reviewed templates
+retained beside modern-text report. No duplicate source/text/display run.
+Immediate save scope: summary raw/modern and53, HEAD+summary raw index30/87
+and only-summary modern index addition. Working31/88 and held n37 preserved.
+Only ancestor closure line staged in assemble.py; exact tested p53 layout staged,
+not unfinished p54 or installer/user edits. Portable test dependencies44/47
+page facts and45/48 original failure snapshots are retained diagnostic inputs,
+NOT independent source approval or n8/n9 index/course/intake rows. Their counter
+first rejections and guard/broad-candidate history remain durable.
+P54 candidate03 remains NO-APPLY:19/21 deletion controls and2 small-speck controls
+fail despite positive glyph/fraction passes. Same technical owner continues
+exact four gaps privately; live p53 bytes unchanged on collection.
+Delivered32/increment4 until push, paid69/new0, unknown tokens/costs retained.
+No producer DB writes, deployment/closure, new tree/branch/chat/timer.
+
+## 2026-11-23 180-7 Summary Source PASS; Ancestor Boundary Repaired
+
+Existing Einstein reviewer independently PASS full53,16/16 rows,1 image,
+0 revisions/reopens; unchanged52 PASS reused. Summary ends53#5, source54
+belongs entirely to next chapter and stays outside this lesson's index/intake.
+Source53 first17/16 failure retained; affected counter finalize PASS16/16,
+0 normalizations after exact narrow layout snapshot
+`9872032f001b8066dc6ce223bd8381fc0d2b50953950a26c5a9aaeae3c44b9f6`.
+Focused53 eleven and guard2 PASS; prior44/47 thirteen PASS. Shared original
+4 failures/2 skips remain, no all-green or full-project check claimed.
+Raw limited52-53 assembly PASS5 prose objects/0 figures/exercises and promoted;
+working raw index31 lessons/88 pages retains held n37, eventual staged index
+HEAD+summary only30/87. Faithful bold title and null number unchanged.
+Adapt preparation first revealed authoritative cutter wrongly attaching54 prose.
+Only ancestor h1/h2 closure changed:cur=None;3 focused tests PASS, affected
+adapt-prepare PASS. Installer/user assemble.py changes remain unstaged.
+Actual prose_flow emits6 paragraphs;2 copied text anchors before uniform
+motion/relativity added. Same sole reviewer owns FIRST modern-text review,
+0 new images; no modern/display/course PASS yet. Epicurus continues private
+p54 refinement, original matching-count candidate rejection retained.
+Parent images23/24, delivered32/increment4, paid69/new0, costs/tokens unknown.
+No replay of delivered lessons, DB writes, deployment/closure or new tree/chat.
+
+## 2026-11-23 180-7 n11 Source55-59 Authored; First57 Counter Failure
+
+Pauli source author collected:all55-59 authored before orderedfirstfinalize,
+44 blocks/119 rows,1 figure37/0 tables/6 exercises in练习7. FIRST55 PASS25/25,
+FIRST56 PASS26/26; FIRST57 FAIL20/19,0 normalization. Initial58/59 not run
+after57failure. Source55's6 平均 Unicode math warnings retained (exit0), not
+silently corrected. Alloriginalauthorpages/report/argv/cwd/streams durable.
+First57 snapshot/crop/diagnostic shows marginink23-78/y755-777; sourcefigure37
+box237,580,1338,456. This is author diagnosis only, no source semantic PASS.
+Exercises5crosses58->59;6 complete;59#3 starts incomplete n12 and is not
+promoted. Source54 and its failure remain untouched. Sourceauthor6/8 images,
+sameauthor now boundedfirst37crop routing only (oneadditionalimage max7/8).
+No source-review, modern/course count, DB or paid increase.
+Summary53 live narrowrepair and54 private separatorcandidate stay active.
+Scratch singleintro helper prepared from existingpattern only, notexecuted.
+
+## 2026-11-23 180-7 Empty-Core Guard PASS; Narrow53 Repair; n11 Missing Source Active
+
+Planck first technical return collected: only nonempty-core guard applied,
+2 guard controls PASS (original baseline1error retained). Current45/48/53
+counts remain17/15,26/25,17/16. Candidate02 matches15/15,25/25,16/16 but
+still10 genuine glyph/fraction/deletion control failures; NOT applied.
+Prior44/47 focused13 PASS; shared4 failures/2 skips unchanged. First report,
+entry/diffs/candidates/results/guard reproducer and original55 traceback retained
+under raw n8/source-author/counter-next. No count/source approval inferred.
+Same technical worker continues53-only conservative fragment repair,0 reopens,
+current6/8 images. Other counter gaps remain precise, not forced into this repair.
+
+Affected55 preparation resumed after verified guard:55-58 actual PASS,
+then first59 PASS,0 parent images. Initial5-page argument failure and55IndexError
+remain preserved. Pauli `01a206e0-498b-74d2-b641-dcd523764562` owns FIRST
+missing55-59 source authoring (5 grids/<=8images), then ordered firstfinalize
+until any firstfailure. Source54 untouched, no assembled n11/modern approval.
+Epicurus `01a206e1-032d-7723-93be-325ee75bfbe6` owns PRIVATE scratch-only
+54 footnote-rule candidate/tests; no livecode/source edit or finalize. It cannot
+conflict with live53 owner, and only a conservative actual tested delta is
+integrated afterward. No reviewer active, DB/paid call or next-course count.
+Parent23/24, saved32/increment4, paid69/new0, costs/tokens unknown.
+
+## 2026-11-23 180-7 Source54 Boundary Authored; Footnote Separator Failure Retained
+
+Pasteur source54 collected/closed:11 blocks/21 actual rows,3 headings,
+7 prose blocks including2 scientific-footnote rows,0 figures/exercises;
+1 new grid/2 cumulative images, no reopens. FIRST54 finalize FAIL22/21,
+0 normalization; extra thin footnote-separator band2095-2101 identified by
+author, not independent source approval. Original artifacts copied to page54
+finalize-first-failure; argv/cwd/streams and separate54 report remain retained.
+Summary ends at53 before54#1 second-chapter heading; introduction54#2,
+n11 starts54#6. Nothing on54 belongs to summary. Same technical owner received
+this precise related gap but must return45/48/53/empty-core results promptly;
+no forced margin-blot workaround, scientific footnote removal or image-budget
+expansion. No reviewer active. New source55 preparation remains actually failed,
+not approved. All earlier PASS/push/artwork HOLDs and counters retained.
+
+## 2026-11-23 180-7 n9 Figure35 Local Artwork HOLD; Figure36 Deterministic
+
+Laplace first actual35/36 routing author collected/closed:2 source crop images,
+0 reopens/paid calls. Figure35 hybrid needs recognizable openboat/seatedobserver/
+oars and swimmer artwork with stage placements; existing approved boat assets
+do not match. Precise local HOLD retained in raw n9/figure-routing/
+first-routing-inventory.md, not a source/science rejection. Figure36 is connected
+vector-triangle deterministic, with no natural-artwork dependency.
+No spec/generation/independent figure PASS/display or source approval inferred.
+Source45/48 first-failure crops retained once alongside original failure records.
+Complete n8/n9 courses wait on essential new artwork; source/modern text and
+other sourced courses can continue. No new paid authorization or request.
+Parent23/24, delivered32/increment4, paid69/new0, unknown costs/tokens unchanged.
+
+## 2026-11-23 180-7 Summary53 First Counter Failure; Source54 Continues
+
+Pasteur source53 first author returned:6 blocks/16 rows,0 figures/exercises,
+1 source image/0 reopens. First finalize FAIL17/16,0 normalization; actual
+isolated far-left band1871-1907 diagnosed as scanner debris by author, not
+independent approval. Original source/audit failure copied once to page53's
+finalize-first-failure; original argv/cwd/streams/report remain at page root.
+Planck's existing bounded technical repair now includes actual53 diagnosis.
+Same source author continues only new54 as the independent closing/next-chapter
+boundary; no53/52 retry or reopening, no incomplete summary promotion.
+
+Next n11 preparation requested55-59 but helper rejected a5-page range before
+any execution (max4); corrected55-58 stopped on first55 with IndexError at
+line_bands emptycore_rows[-1]. Actual traceback/streams retained in prepared
+page55. No later pages prepared or images opened. Existing technical owner
+is fixing that concrete empty-core guard and focused control; parent resumes
+only failed55 preparation after the actual result. No source/science verdict.
+N9 route inventory and p45/p48 diagnosis remain active; original evidence,
+budgets and paid HOLDs unchanged. Delivered32/increment4, parent23/24,
+paid69/new0, unknown costs/tokens, no DB/replay/messaging/deployment.
+
+## 2026-11-23 180-7 Summary Source53-54 Active; n9 Routing Inventory
+
+Pasteur `01a206d3-236c-73c0-b499-bb699e255302` owns first missing53-54
+source transcription/finalize,2-grid baseline/<=8 images; source52's prior PASS
+is reused without reopening or finalize. Limited summary assembly/staging/
+text-only display helpers adapted from the existing n10 pattern, not executed
+against missing source. No next summary source/modern/course PASS yet.
+Laplace `01a206d4-817a-77e1-8691-7faaaded3336` owns only first actual35/36
+source figure routing inventory,<=2 baseline images, no paid request or
+source/modern approval. Planck's p45/p48 actual counter diagnosis continues.
+No independent reviewer active.
+Ampere's original baseline/candidates01-03/report/results/diffs retained under
+raw n8/source-author/counter-repair; source failures and4 shared failures/2 skips
+remain. N10 pushed intake above stays valid. Parent23/24, delivered32/increment4,
+paid69/new0, unknown cost/tokens; no DB writes, replay, message or new chat.
+
+## 2026-11-23 180-7 n10 Pushed; Supervisor-Only Single-Lesson Intake
+
+Ordinary push exit0 saved exact snapshot
+`3d1ec46eb88f77a057dd96b5968443e567e263a5`,48 owned files,
+remote result80155967d..3d1ec46eb. Delivered32 /180-7 increment4.
+No remote-ref replay, DB wait or producer DB writes.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s1-n10`,
+  title 长度和时间的测量单位  单位制的概念.
+- Use exact pushed snapshot above, not later working n8/n9/n37 bytes.
+- Durable lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s1-n10/`.
+- Necessary raw n10 with independent source/modern-text reviews and source49-52.
+  Page49's6 written exercises belong to n9, never n10; no source figure exists.
+- Actual counts:25 raw entries,31 rendered prose paragraphs,4 boundaries,
+  0 figures/exercises/answers/choices/new interactions. Empty answers ready.
+- Source and modern text independently PASS, no revisions. One2-surface
+  desktop/mobile display PASS with both screenshots visually inspected.
+  Reuse these unchanged applicable offline display/shared interaction results.
+- Authorized writer serializes existing single-lesson base and empty-answer
+  publishers as required; no choices/interactions stage. Then one small n10
+  readback, no earlier/all-lesson replay or duplicate display pipeline.
+
+Working held n37 index and all source43-48/counter/installer/user changes
+preserved. Parent images23/24, historical paid69/new0, unknown cost/tokens.
+No producer publication, messaging, deployment/closure, new tree/branch/chat
+or timer. Continue chapter-summary physical52-54 with source52 PASS reused;
+new53-54 only prepared, not authored/reviewed yet. N8/n9 diagnosis stays active,
+n8 and n37 essential paid-artwork HOLDs do not block this sourced next course.
+
 ## 2026-11-23 180-7 n10 Complete Offline; Immediate Save
 
 Same independent reviewer first modern-text PASS,0 revisions/0 new images.

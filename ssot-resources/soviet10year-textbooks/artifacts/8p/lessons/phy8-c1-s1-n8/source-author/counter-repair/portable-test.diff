@@ -1,0 +1,204 @@
+--- /dev/null
++++ .claude/skills/ld-s10y-lesson/tools/test_line_bands_margin_rounding.py
+@@ -0,0 +1,201 @@
++"""PDF-backed row inventory and guards for subpixel margin-blot thresholds."""
++import copy
++import json
++from pathlib import Path
++from tempfile import TemporaryDirectory
++from types import SimpleNamespace
++import unittest
++
++import numpy as np
++from PIL import Image
++
++import blocks
++import layout
++import p2c
++
++
++ROOT = Path(__file__).resolve().parents[4]
++PAGE = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/8p/pages/0044"
++# Source-pixel inventory: caption, continuation, 5 + 7 prose/formula rows, footer.
++REQUIRED_ROWS = (
++    (1034, 1063), (1105, 1149), (1190, 1247), (1269, 1327),
++    (1363, 1466), (1518, 1573), (1596, 1644), (1682, 1739),
++    (1754, 1819), (1844, 1909), (1925, 1967), (2014, 2067),
++    (2103, 2168), (2194, 2235), (2280, 2307),
++)
++MARGIN_REGIONS = ((550, 630, 1640, 1695), (750, 825, 1635, 1695))
++PAGE47_ROWS = (
++    (264, 311), (1008, 1036), (1083, 1136), (1165, 1216), (1250, 1297),
++    (1324, 1377), (1406, 1459), (1488, 1541), (1559, 1619), (1651, 1703),
++    (1744, 1810), (1875, 1927), (1954, 2006), (2032, 2103), (2104, 2174),
++    (2199, 2256), (2289, 2317),
++)
++
++
++def source_page(number, figure_box):
++    page = PAGE.parent / f"{number:04d}"
++    meta, parsed = blocks.parse((page / "page.md").read_text())
++    audit = json.loads((page / "audit.json").read_text())
++    source = p2c._find_pdf(SimpleNamespace(
++        book="8p", pdf=None,
++        books=ROOT / "ssot-resources/soviet10year-textbooks/sources",
++    ))
++    if layout.sha256_file(source) != meta["source"]["pdf_sha256"]:
++        raise AssertionError("The original 8p PDF changed")
++    with TemporaryDirectory(prefix="s10y-rounding-test-") as directory:
++        png = layout.render_page(source, number, Path(directory) / "page.png")
++        if layout.sha256_file(png) != meta["render"]["sha256"]:
++            raise AssertionError(f"Page{number} render no longer matches the source")
++        with Image.open(png) as image:
++            original = layout.ink_mask(image)
++    if [figure["box"] for figure in audit["figures"]] != [figure_box]:
++        raise AssertionError(f"Page{number} figure geometry changed")
++    ink, captions, errors = p2c._counting_mask(original, audit["figures"], parsed)
++    if errors:
++        raise AssertionError(errors)
++    xs = np.flatnonzero(original.any(axis=0))
++    return parsed, ink, captions, int(xs[-1] - xs[0] + 1)
++
++
++def assert_row_inventory(case, bands, required):
++    case.assertEqual(len(bands), len(required))
++    # A band represents a printed row, not the exact extent of every arrow/tail.
++    anchors = [(first + last) // 2 for first, last in required]
++    for (first, last), anchor in zip(bands, anchors):
++        case.assertLessEqual(first, anchor)
++        case.assertLessEqual(anchor, last)
++        case.assertEqual(sum(first <= other <= last for other in anchors), 1)
++
++
++class MarginRoundingSourceTests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.blocks, cls.ink, cls.captions, cls.width = source_page(
++            44, [198, 301, 1302, 672],
++        )
++
++    def assert_inventory(self, bands, required=REQUIRED_ROWS):
++        assert_row_inventory(self, bands, required)
++
++    def test_all_fifteen_source_rows_survive_without_mutating_ink(self):
++        original = self.ink.copy()
++        self.assert_inventory(layout.line_bands(self.ink, self.width))
++        np.testing.assert_array_equal(self.ink, original)
++
++    def test_authored_inventory_includes_caption_fraction_and_footer(self):
++        self.assertEqual(blocks.printed_lines(self.blocks), 15)
++        self.assertEqual(self.captions, [])
++        self.assertEqual(
++            [len(block["lines"]) for block in self.blocks if block["kind"] != "fig"],
++            [1, 1, 5, 7, 1],
++        )
++
++    def test_each_actual_row_pixel_deletion_lowers_count(self):
++        for first, last in REQUIRED_ROWS:
++            with self.subTest(row=(first, last)):
++                control = self.ink.copy()
++                control[first - 8:last + 9] = False
++                bands = layout.line_bands(control, self.width)
++                self.assert_inventory(
++                    bands, [row for row in REQUIRED_ROWS if row != (first, last)],
++                )
++                self.assertFalse(any(a <= last and first <= b for a, b in bands))
++
++    def test_every_authored_row_omission_fails_reconciliation(self):
++        counted = len(layout.line_bands(self.ink, self.width))
++        self.assertEqual(counted, 15)
++        omissions = 0
++        for index, block in enumerate(self.blocks):
++            if block["kind"] == "fig":
++                continue
++            for line_index in range(len(block["lines"])):
++                with self.subTest(block=index, line=line_index):
++                    control = copy.deepcopy(self.blocks)
++                    del control[index]["lines"][line_index]
++                    self.assertEqual(blocks.printed_lines(control), 14)
++                    self.assertNotEqual(blocks.printed_lines(control), counted)
++                    omissions += 1
++        self.assertEqual(omissions, 15)
++
++    def test_removing_either_or_both_margin_specks_keeps_fifteen_rows(self):
++        for regions in ((MARGIN_REGIONS[0],), (MARGIN_REGIONS[1],), MARGIN_REGIONS):
++            with self.subTest(regions=regions):
++                control = self.ink.copy()
++                for first, last, left, right in regions:
++                    control[first:last, left:right] = False
++                self.assert_inventory(layout.line_bands(control, self.width))
++
++    def test_mirrored_actual_margin_specks_are_not_rows(self):
++        self.assert_inventory(layout.line_bands(np.fliplr(self.ink), self.width))
++
++    def test_actual_edge_glyph_footer_and_fraction_are_retained(self):
++        for top, bottom, source_left, source_right in (
++            (1100, 1155, 210, 253),
++            (2275, 2315, 210, 340),
++            (1355, 1475, 765, 915),
++        ):
++            sample = self.ink[top:bottom, source_left:source_right]
++            for left in (24, self.ink.shape[1] - 24 - sample.shape[1]):
++                with self.subTest(top=top, left=left):
++                    control = self.ink.copy()
++                    control[top:bottom, source_left:source_right] = False
++                    control[top:bottom, left:left + sample.shape[1]] |= sample
++                    bands = layout.line_bands(control, self.width)
++                    self.assert_inventory(bands)
++
++    def test_small_interior_stroke_vetoes_border_satellite_exception(self):
++        control = self.ink.copy()
++        control[580:592, 1600:1604] = True
++        bands = layout.line_bands(control, self.width)
++        self.assertEqual(len(bands), 16)
++        self.assertTrue(any(a <= 607 and 585 <= b for a, b in bands))
++        self.assert_inventory([(a, b) for a, b in bands if a >= 1000])
++
++    def test_full_height_margin_glyph_vetoes_satellite_exception(self):
++        control = self.ink.copy()
++        sample = self.ink[1100:1155, 210:253]
++        control[620:675, 1630:1673] = sample
++        bands = layout.line_bands(control, self.width)
++        self.assertTrue(any(a <= 607 and 585 <= b for a, b in bands))
++        self.assertTrue(any(a <= 666 and 625 <= b for a, b in bands))
++
++    def test_large_total_satellite_area_vetoes_exception(self):
++        control = self.ink.copy()
++        control[640:652, 1640:1644] = True
++        bands = layout.line_bands(control, self.width)
++        self.assertTrue(any(a <= 607 and 585 <= b for a, b in bands))
++        self.assert_inventory([(a, b) for a, b in bands if a >= 1000])
++
++
++class MarginRoundingPage47Tests(unittest.TestCase):
++    @classmethod
++    def setUpClass(cls):
++        cls.blocks, cls.ink, cls.captions, cls.width = source_page(
++            47, [225, 352, 1297, 646],
++        )
++
++    def test_all_seventeen_source_rows_and_author_rows_are_preserved(self):
++        original = self.ink.copy()
++        self.assertEqual(blocks.printed_lines(self.blocks), 17)
++        self.assertEqual(self.captions, [])
++        assert_row_inventory(self, layout.line_bands(self.ink, self.width), PAGE47_ROWS)
++        np.testing.assert_array_equal(self.ink, original)
++
++    def test_each_actual_page47_row_pixel_deletion_lowers_count(self):
++        for first, last in PAGE47_ROWS:
++            with self.subTest(row=(first, last)):
++                control = self.ink.copy()
++                control[first - 8:last + 9] = False
++                assert_row_inventory(
++                    self, layout.line_bands(control, self.width),
++                    [row for row in PAGE47_ROWS if row != (first, last)],
++                )
++
++    def test_removing_page47_margin_blot_keeps_seventeen_rows(self):
++        control = self.ink.copy()
++        control[730:840, :120] = False
++        assert_row_inventory(self, layout.line_bands(control, self.width), PAGE47_ROWS)
++
++
++if __name__ == "__main__":
++    unittest.main(verbosity=2)

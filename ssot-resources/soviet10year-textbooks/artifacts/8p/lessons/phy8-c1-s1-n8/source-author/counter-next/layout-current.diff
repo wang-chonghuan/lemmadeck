@@ -1,0 +1,12 @@
+--- entry/layout.py
++++ layout-current/layout.py
+@@ -396,7 +396,8 @@
+                 ink[bounds], structure=np.ones((core_size, core_size), dtype=bool)
+             )
+             solid_core = (
+-                np.count_nonzero(core) >= 0.7 * area
++                np.any(core)
++                and np.count_nonzero(core) >= 0.7 * area
+                 and not np.any(ndimage.binary_fill_holes(core) & ~core)
+             )
+             if solid_core:
