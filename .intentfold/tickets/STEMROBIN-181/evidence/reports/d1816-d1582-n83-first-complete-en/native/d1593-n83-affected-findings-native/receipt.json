@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181",
+  "argv": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1593-n83-affected-text/en.before-native.json\"))\nbaseline=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1584-n83-first-missing-en/en.lesson.draft.json\"))\nprepared=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1576-n83-first-missing-en/prepared.json\"))\nsource_path=Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/ssot-resources/soviet10year-textbooks/artifacts/9p/lessons/phy9-c2-s2-n83/lesson.json\")\nraw=edition.load(source_path)\nbook=source_path.parents[2]\nraw_ex=edition.load(book/\"lessons\"/lesson[\"id\"]/\"exercises.json\")\nfor i in [0,3,6,9,14]:\n    assert edition.math_signature(lesson[\"prose\"][i][\"text\"])==edition.math_signature(baseline[\"prose\"][i][\"text\"]),(i,\"unchanged math\")\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],[])\nboundaries=[]\nfor prefix in [\"We now derive the stored energy\",\"A thundercloud and an area of ground\",\"**Applications of capacitors**\"]:\n    matches=[i for i,p in enumerate(flow[\"paragraphs\"]) if p[\"text\"].startswith(prefix)]\n    assert len(matches)==1 and matches[0]>0,(prefix,matches)\n    i=matches[0]\n    boundaries.append({\"before\":flow[\"paragraphs\"][i-1][\"text\"],\"after\":flow[\"paragraphs\"][i][\"text\"]})\nlesson[\"section_breaks\"]=boundaries\nflow,flow_errors=edition.prose_flow_contract(lesson[\"prose\"],boundaries)\nerrors.extend(flow_errors)\ncorrections,errata_errors=edition.validate_errata(book,raw,raw_ex,lesson,{\"exercises\":[]})\nerrors.extend(errata_errors)\nerrors.extend(edition.validate_lesson_identity(raw,lesson))\nprofile=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nfor i in [0,3,6,9,14]:\n    source=raw[\"prose\"][i]\n    modern=lesson[\"prose\"][i]\n    errors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],f\"en.prose[{i}]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\"),corrections.get(f\"lesson.prose[{i}]\"),modern.get(\"notation_changes\")))\ncomparison=json.loads(json.dumps(lesson))\ncomparison[\"section_breaks\"]=baseline[\"section_breaks\"]\nfor key in [\"chapter\"]:\n    comparison[key]=baseline[key]\nfor i in [0,3,6,9,14]:\n    comparison[\"prose\"][i][\"text\"]=baseline[\"prose\"][i][\"text\"]\nfor i in []:\n    assert comparison[\"prose\"][i][\"changes\"]==baseline[\"prose\"][i][\"changes\"]+[\"layout\"],(i,\"only native layout marker\")\n    comparison[\"prose\"][i][\"changes\"]=baseline[\"prose\"][i][\"changes\"]\nassert comparison==baseline,\"Only named affected text and boundary anchors may change\"\nassert len(boundaries)==len(baseline[\"section_breaks\"]),\"Concept boundary count unchanged\"\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-23T01:05:14.979Z",
+  "finishedAt": "2026-11-23T01:05:15.100Z",
+  "exitCode": 1,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1593-n83-affected-findings-native/stdout.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1593-n83-affected-findings-native/stderr.txt",
+      "bytes": 235,
+      "sha256": "f4f152282d1ba4ebf657ddd3e26259d775d06ee825a1549863167376608bc3cb"
+    }
+  },
+  "outputs": []
+}
