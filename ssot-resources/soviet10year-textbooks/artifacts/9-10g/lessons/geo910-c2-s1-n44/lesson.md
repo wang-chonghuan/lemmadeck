@@ -1,0 +1,37 @@
+# §44. 直角坐标系. 点的坐标
+
+设在空间中已知一点 $O$. 空间的每一个点 $M$ 对应于一个向量 $\overrightarrow{OM}$. 在这时，不同的点对应于不同的向量. 除点 $O$ 之外，还给出直角基底 $(\vec i,\vec j,\vec k)$（图6）. 每一个向量在这个基底中的坐标是：$\overrightarrow{OM}=(x,y,z)$.
+
+如果给定了直角基底 $(\vec i,\vec j,\vec k)$ 和点 $O$，那么就说，建立了空间的直角坐标系. 点 $O$ 叫做坐标原点，而向量 $\vec i,\vec j,\vec k$ 叫做坐标向量. 向量 $\overrightarrow{OM}$ 在直角基底 $(\vec i,\vec j,\vec k)$ 中的坐标，称为在直角坐标系中点 $M$ 的坐标.
+
+如果 $\overrightarrow{OM}=(x,y,z)$，那么点 $M$ 的坐标写成 $M(x,y,z)$. 数$x$ 叫做点 $M$ 的横坐标，$y$ 叫做点 $M$ 的纵坐标，$z$ 叫做点 $M$ 的竖坐标.
+
+![图 6](../../figures/fig-g10-06.svg)
+
+*图 6*
+
+![图 7](../../figures/fig-g10-07.svg)
+
+*图 7*
+
+我们再引入几个常用的术语. 向量 $\overrightarrow{OA}=\vec i$、$\overrightarrow{OB}=\vec j$、$\overrightarrow{OC}=\vec k$ 所确定的轴叫做坐标轴（图7）；通过每两个坐标轴的平面叫做坐标平面；给出了坐标系的空间叫做坐标空间.
+
+问题1. 已知直角坐标系（图8）. 作出坐标为 $(x,y,z)$ 的点 $M$.
+
+解. 根据点的坐标的定义，本题归结为作表示向量 $\overrightarrow{OM}=x\vec i+y\vec j+z\vec k$ 的有向线段 $OM$（图8）. 依次作向量 $\overrightarrow{OA}=x\vec i$、$\overrightarrow{AB}=y\vec j$ 和 $\overrightarrow{BM}=z\vec k$，点 $M$ 即为所求的点. 实际上根据多边形法则 $\overrightarrow{OM}=\overrightarrow{OA}+\overrightarrow{AB}+\overrightarrow{BM}=x\vec i+y\vec j+z\vec k$.
+
+![图 8](../../figures/fig-g10-08.svg)
+
+*图 8*
+
+![图 9](../../figures/fig-g10-09.svg)
+
+*图 9*
+
+问题2. 根据点 $A(x_1,y_1,z_1)$ 和 $B(x_2,y_2,z_2)$ 的坐标求向量 $\overrightarrow{AB}$ 的坐标.
+
+解. 按向量的计算公式（§19），$\overrightarrow{AB}=\overrightarrow{OB}-\overrightarrow{OA}$（图9）. 根据点的坐标的定义，$\overrightarrow{OB}=(x_2,y_2,z_2)$，$\overrightarrow{OA}=(x_1,y_1,z_1)$. 应用用坐标给出的向量减法法则（§42），得到：$\overrightarrow{AB}=(x_2-x_1,\ y_2-y_1,\ z_2-z_1)$.　(1)
+
+问题3. 求点 $A(x_1,y_1,z_1)$ 和 $B(x_2,y_2,z_2)$ 之间的距离.
+
+解. 只需求向量 $\overrightarrow{AB}$ 的长（图9）. 根据公式(1)计算它的坐标. 应用向量长度的公式（§43，习题1）得到$|AB|=\sqrt{(x_2-x_1)^2+(y_2-y_1)^2+(z_2-z_1)^2}$.

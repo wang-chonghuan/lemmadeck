@@ -1,0 +1,103 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 171,
+  "printed_page": 164,
+  "numbering_scope": "g10",
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 171
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "3de4c34fbca5a9738e7e5897075edafc1e72ae4d9bfb1a48e47958864b7a5dbb"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "SOURCE AUTHOR ONLY, STEMROBIN-188 SAME188-6. Not independently approved; no assembly or lesson completion.",
+    "Figures19/20/21 are prose-owned by actual written references. Figure19 also resolves physical170's reference.",
+    "Figures19 and20 have separate captions sharing one printed row. Figure21 contains both original labelled nets and а)/б) markers in its one pixel box, with a separate caption.",
+    "Exact source figure boxes were deterministically snapped, raw crops opened separately and retained before candidate writing. No source figure reconstruction, relabelling or mathematical repair.",
+    "The last paragraph stops literally 这两个展开 and stays p open across figure21/caption/footer to physical172.",
+    "Original detached specks and unidentified marginal ink remain local HOLD, without count_exclusions. Decorated folio164 is retained."
+  ],
+  "errata": [],
+  "printed_lines": 9,
+  "figures": [
+    {
+      "id": "fig-g10-19",
+      "label": "图 19",
+      "box": [
+        192,
+        374,
+        407,
+        347
+      ]
+    },
+    {
+      "id": "fig-g10-20",
+      "label": "图 20",
+      "box": [
+        851,
+        385,
+        337,
+        380
+      ]
+    },
+    {
+      "id": "fig-g10-21",
+      "label": "图 21",
+      "box": [
+        168,
+        1182,
+        1009,
+        677
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+同多边形一样，多面体可以分为凸多面体（图19）和非凸
+多面体（图20）. 以后我们只研究凸多面体.
+
+<!-- fig 图 19 box 192,374,407,347 -->
+![图 19](figures/fig-g10-19.png)
+
+<!-- cap 图 19 -->
+图 19
+
+<!-- fig 图 20 box 851,385,337,380 -->
+![图 20](figures/fig-g10-20.png)
+
+<!-- cap 图 20 samerow -->
+图 20
+
+<!-- p -->
+如果多面体的表面是用柔软但无弹性的材料（纸、薄的硬
+纸板等等）制造的，那么这个模型可以沿着几条棱剪开，并展
+开成为某个多边形. 这个多边形叫做多面体表面的展开图.
+
+<!-- p open -->
+图21是图19中的多面体的表面展开图. 这两个展开
+
+<!-- fig 图 21 box 168,1182,1009,677 -->
+![图 21](figures/fig-g10-21.png)
+
+<!-- cap 图 21 -->
+图 21
+
+<!-- foot -->
+• 164 •

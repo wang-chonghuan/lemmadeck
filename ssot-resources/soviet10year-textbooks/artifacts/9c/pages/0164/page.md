@@ -1,0 +1,65 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 164,
+  "printed_page": 157,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 164
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "08bf30f27431e1b290b7ca19e5de54cdf1f6b9ab9f188427addcccf6ac45807b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+这就证明了所说的命题。
+
+<!-- p -->
+重要注释　由引理得知，如果某一个函数 $f$ 在点 $x_0$ 不连
+续，那么它在该点没有导数。可是逆命题不成立。函数在点
+$x_0$ 连续，然而在该点可以没有导数。例如，函数 $f(x)=|x|$ 在
+点 $0$ 连续，但是在这个点没有导数（参看第 $43$ 小节）。
+
+<!-- p -->
+定理。如果导数 $u'$ 和 $v'$ 存在，那么两个函数的积 $uv$ 的
+导数由公式
+$(uv)'=u'v+uv'$
+给出。
+
+<!-- p -->
+这个公式叫做莱布尼兹公式。
+
+<!-- p open -->
+证明　用 $w(x)$ 表示积 $u(x)\cdot v(x)$，并计算它的导数。首
+先看到，由函数的改变量的定义
+$\Delta u=u(x+\Delta x)-u(x)$
+得出
+$u(x+\Delta x)=u(x)+\Delta u,$
+或者用 $u$ 表示 $u(x)$ 后，化简成：
+$u(x+\Delta x)=u+\Delta u.$
+同样有
+$v(x+\Delta x)=v+\Delta v.$
+于是，
+$\frac{\Delta w(x)}{\Delta x}=\frac{w(x+\Delta x)-w(x)}{\Delta x}↵=\frac{u(x+\Delta x)v(x+\Delta x)-u(x)v(x)}{\Delta x}↵=\frac{(u+\Delta u)(v+\Delta v)-uv}{\Delta x}=\frac{v\Delta u+u\Delta v+\Delta u\Delta v}{\Delta x}↵=v\frac{\Delta u}{\Delta x}+u\frac{\Delta v}{\Delta x}+\Delta u\frac{\Delta v}{\Delta x}.$
+
+<!-- foot -->
+• 157 •

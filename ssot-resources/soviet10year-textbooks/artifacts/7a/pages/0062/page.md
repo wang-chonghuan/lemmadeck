@@ -1,0 +1,81 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 62,
+  "printed_page": 56,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 62
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "93b0fe51aac6936fd8f053057722b61b9d8b57399cd27b03535c8d7113883da7"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "SOURCE-FIRST author only: one full page.grid.png view. Observed 25 physical printed rows, including footer 56; no figures.",
+    "Unit 13 continues from the closed opening paragraphs on physical page 61. This page starts a new paragraph, not a p cont block.",
+    "Four worked examples each occupy two printed rows. Exercises 168 and 169 each close on this page; three-column Cyrillic subpart rows are preserved.",
+    "No OCR, answer keys, downstream finalization or independent review used."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+现在引进负整数指数幂的概念以后，很小的数也可以写
+成标准形式。例如，水分子的直径记作：$3\cdot10^{-8}$ 厘米。
+
+<!-- p -->
+因此，任何正数都可以写成标准形式，也就是积的形式：
+$a\cdot10^n$，其中 $1\leqslant a<10$，且 $n\in Z$。幂的指数 $n$ 叫做数量级。
+我们要注意，如果 $a$ 是分数，那么要把它化成小数，并且必要
+时可以用四舍五入的办法确定最后一位上的数字。
+
+<!-- p -->
+我们举几个标准形式的数作乘法和除法的例子：
+
+<!-- p -->
+1) $(3.1\cdot10^3)\cdot(2.3\cdot10^4)=(3.1\cdot2.3)\cdot10^7$
+$=7.13\cdot10^7$；
+
+<!-- p -->
+2) $(8\cdot10^{-3})\cdot(4.5\cdot10^5)=(8\cdot4.5)\cdot10^2$
+$=36\cdot10^2=3.6\cdot10^3$；
+
+<!-- p -->
+3) $(4.8\cdot10^2):(1.5\cdot10^8)=(4.8:1.5)\cdot10^{-6}$
+$=3.2\cdot10^{-6}$；
+
+<!-- p -->
+4) $(8.9\cdot10^7):(3.4\cdot10^3)=(8.9:3.4)\cdot10^4$
+$\approx2.6\cdot10^4$。
+
+<!-- ex 168 -->
+168. 下列各数是否已经写成了标准形式？
+如果不是，则把它们改写成标准形式。指出各数的数量
+级。
+а) $3.4\cdot10^8$；　　б) $7.51\cdot10^5$；　　в) $10.6\cdot10^9$；
+г) $5.2\cdot10^{-4}$；　　д) $19\cdot10^{-6}$；　　е) $0.4\cdot10^{-8}$。
+
+<!-- ex 169 -->
+169. 把下列各数写成标准形式并指出它们的数量级：
+а) $7000000000$；　　б) $25860000000$；　　в) $307920000000$；
+г) $0.02$；　　д) $0.0013$；　　е) $0.000057$；
+ж) $1\frac{1}{40}\cdot10^{-5}$；　　з) $\frac{1}{6}\cdot10^{-7}$；　　и) $\frac{1}{700000}$。
+
+<!-- foot -->
+56

@@ -1,0 +1,76 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 101,
+  "printed_page": 91,
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "8c9252f6dbf467be6a63bde0bb4c21826ee9663ae8dda880f82399cd8d8b7dc1"
+  },
+  "notes": [
+    "SOURCE candidate from one individual opening of page.grid.png. First p cont joins PDF100 final p open 把它变成直.",
+    "n35 closes after the second prose block ending 苏联的欧洲部分统一电力系统已经使用., immediately before literal 36. 苏联电气化的成就和远景.",
+    "The final n36 paragraph ends 全国电气化计 and is p open into PDF102. Source historical wording, Cyrillic initials, dates and numerical comparisons are retained; no modernization."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 101
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+流电. 在输电线末端电流重新转化为交流，然后再用变压器
+把电压降到需要的大小. 把直流电变为交流，及反之由交流
+变到直流的有关困难正在顺利地被克服.
+
+<!-- p -->
+把国内一系列地区的电站用高压输电线连结起来，形成
+联接各用户的总电网. 这种称为动力系统的联合体提供了缓
+和早晨和晚上使用电能负载“高峰”的可能性. 动力系统保证
+了把能量畅通无阻地输向用户而不受用户分布位置的影响.
+现在差不多全苏境内都由联合动力系统保证供电. 苏联的欧
+洲部分统一电力系统已经使用.
+
+<!-- h3 -->
+36. 苏联电气化的成就和远景
+
+<!-- p -->
+1920 年通过了人类历史上第一个以电气化为基础的发
+展国民经济远景规划——俄罗斯国家电气化规划. В·И·列
+宁是制定这一计划的首创者和号召者. 列宁认为电气化在国
+家经济改造中有决定性的意义.
+
+<!-- p -->
+В·И·列宁说：“只有在国家实现电气化时，只有在把现
+代大规模的工业技术基础引入工业、农业和交通运输业中的
+时候，我们才能取得最后的胜利.”
+
+<!-- p -->
+过去的半个世纪令人信服地证明了列宁思想的伟大力
+量. 俄罗斯国家电气化规划规定了与 1913 年比较，工业生产
+要翻一番，电能的生产要增加到 4 倍. 这个计划在规定的期
+限之前（经过 10 年）全部指标都超额完成了. 电气化的速度年
+复一年的增长，到 1947 年苏联在电能生产上居欧洲第一位，
+居世界第二位.
+
+<!-- p open -->
+现在我国一天生产的电能是 1921 年（实行全国电气化计
+
+<!-- foot -->
+• 91 •

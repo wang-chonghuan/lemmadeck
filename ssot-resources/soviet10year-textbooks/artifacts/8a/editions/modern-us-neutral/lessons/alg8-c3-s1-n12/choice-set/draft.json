@@ -1,0 +1,719 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "ca7855c00159982d5f0f60c2fdc13a39c68bc760779359fb315ed433145e596a",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q-digits",
+      "source_numbers": ["204"],
+      "view": {
+        "mode": "single",
+        "stem": "一个数列由所有只用数字 $1$ 和 $2$ 写成的两位数构成，允许同一个数字重复使用，按递增顺序排列。哪一项列出了这个数列的全部项？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$12$，$21$。", "figure_ids": []},
+          {"id": "B", "text": "$11$，$12$，$21$，$22$。", "figure_ids": []},
+          {"id": "C", "text": "$22$，$21$，$12$，$11$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "穷尽十位、个位均取1或2的两位数，并保持递增次序。",
+        "source_solution": "十位和个位独立取1或2，共得到11、12、21、22；按数值递增恰为这个次序。204的另一独立任务是分母11的正真分数降序表，由q-fractions覆盖。",
+        "unit_reason": "数字位组合与分数的真分数边界、大小次序是独立数学任务，分别判断完整列表，不按一个数值设置一次点击。",
+        "concept_blocks": [0, 4],
+        "limitations": ["识别完整枚举不证明学习者能独立写出并检验穷尽性。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "额外要求两个数字必须不同，就只保留12和21，遗漏允许重复的11和22。", "misconception": "把只允许使用两个指定数字误解成两个数字必须各出现一次。"},
+          {"option_id": "B", "truth": "correct", "derivation": "枚举十位、个位的四种组合并递增排序，得到11、12、21、22。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "枚举四种合法组合后按从大到小排序，得到22、21、12、11，违反递增条件。", "misconception": "把递增排序执行为递减排序。"}
+        ]
+      }
+    },
+    {
+      "id": "q-fractions",
+      "source_numbers": ["204"],
+      "view": {
+        "mode": "single",
+        "stem": "把分母为 $11$ 的所有正真分数按递减顺序排列。哪一项是完整的数列？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\frac{10}{11}$，$\\frac{9}{11}$，$\\frac{8}{11}$，$\\frac{7}{11}$，$\\frac{6}{11}$，$\\frac{5}{11}$，$\\frac{4}{11}$，$\\frac{3}{11}$，$\\frac{2}{11}$，$\\frac{1}{11}$。", "figure_ids": []},
+          {"id": "B", "text": "$\\frac{1}{11}$，$\\frac{2}{11}$，$\\frac{3}{11}$，$\\frac{4}{11}$，$\\frac{5}{11}$，$\\frac{6}{11}$，$\\frac{7}{11}$，$\\frac{8}{11}$，$\\frac{9}{11}$，$\\frac{10}{11}$。", "figure_ids": []},
+          {"id": "C", "text": "$\\frac{11}{11}$，$\\frac{10}{11}$，$\\frac{9}{11}$，$\\frac{8}{11}$，$\\frac{7}{11}$，$\\frac{6}{11}$，$\\frac{5}{11}$，$\\frac{4}{11}$，$\\frac{3}{11}$，$\\frac{2}{11}$，$\\frac{1}{11}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "同时判断正真分数的完整分子范围及同分母分数的递减次序。",
+        "source_solution": "正整数分子须满足1≤m<11，因此恰有m=1至10。分母相同，分子越大分数越大，降序为10/11至1/11。11/11等于1，不是真分数。",
+        "unit_reason": "以完整列表承载穷尽性、真分数端点与排序，而不是把十个分数逐个识别。",
+        "concept_blocks": [0, 4],
+        "limitations": ["完整列表识别不证明独立书写全部分数及排序过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "全部正真分子是1至10，依10至1排列即给出的降序列表。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把分子1至10按升序列出，分数也升序，方向与条件相反。", "misconception": "忽略递减条件，沿自然计数方向排列分子。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "误用1≤m≤11作为真分子范围，倒序排列就额外加入11/11。", "misconception": "将真分数的严格上界放宽为含等号。"}
+        ]
+      }
+    },
+    {
+      "id": "q-divisible",
+      "source_numbers": ["205"],
+      "view": {
+        "mode": "multiple",
+        "stem": "一个数列由所有能被 $4$ 整除的自然数按递增顺序排列而成。下列关于项及次序的判断，哪些成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$10$ 是这个数列的一项。", "figure_ids": []},
+          {"id": "B", "text": "$12$ 和 $16$ 是相邻的两项。", "figure_ids": []},
+          {"id": "C", "text": "每两个相邻项的差都等于 $4$。", "figure_ids": []},
+          {"id": "D", "text": "$8$ 和 $16$ 是相邻的两项。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断整除描述所决定的成员和相邻关系，只保留两种自然数零约定下共同成立的实质结论。",
+        "source_solution": "若自然数不含0，前五项是4、8、12、16、20，z_n=4n；若含0，前五项是0、4、8、12、16，z_n=4(n-1)。选定定义没有决定零约定，完整前几项请求未解决。两者均有相邻差4，12与16相邻，10除以4余2不属于，8与16之间必有12。",
+        "unit_reason": "205a存在真实约定缺口，故采用成员与相邻关系这一不变量单元，不把约定依赖的第一项偷偷固定。余数1和2的完整前缀另由q-residues承担。",
+        "concept_blocks": [4],
+        "limitations": ["205a的唯一完整前几项列表和首项序号无法确定，明确保留为未解决的源任务。", "识别不变量不证明能独立列出整除数列；不能声称完全覆盖205a的原列项任务。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "10=4×2+2，余数不是0，所以在两种零约定下均不属于。", "misconception": "把除以4的商向下取整得2后，丢弃余数2，误判为能整除。"},
+          {"option_id": "B", "truth": "correct", "derivation": "12=4×3、16=4×4，中间没有4的倍数；不论0是否列入，二者都相邻。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "全部非负或正的4的倍数按递增排列时，连续的倍数为4q和4(q+1)，差恒为4。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "8=4×2、16=4×4，但12=4×3也是一项且在二者之间，故不相邻。", "misconception": "把倍数序号从2跳到4，漏掉序号3所对应的中间倍数12。"}
+        ]
+      }
+    },
+    {
+      "id": "q-residues",
+      "source_numbers": ["205"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $u_n$ 由除以 $4$ 余 $1$ 的所有自然数递增排列而成；数列 $v_n$ 由除以 $4$ 余 $2$ 的所有自然数递增排列而成。哪些前五项列表正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$u_n$ 的前五项是 $5$，$9$，$13$，$17$，$21$。", "figure_ids": []},
+          {"id": "B", "text": "$v_n$ 的前五项是 $2$，$6$，$10$，$14$，$18$。", "figure_ids": []},
+          {"id": "C", "text": "$u_n$ 的前五项是 $1$，$5$，$9$，$13$，$17$。", "figure_ids": []},
+          {"id": "D", "text": "$v_n$ 的前五项是 $6$，$10$，$14$，$18$，$22$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整列出两个余数类的前五项，保留最小合法自然数与步长。",
+        "source_solution": "余数1的所有数是4q+1，q为非负整数，前五项1、5、9、13、17；余数2给出4q+2，前五项2、6、10、14、18。序号从1开始时公式分别为u_n=4n-3和v_n=4n-2。0不能属于任一余数类，所以自然数零约定不影响这两个列表。",
+        "unit_reason": "两个任务共享除法余数和最小商0的构造，合为一项多选判断各自完整前缀，而不是逐项点击。",
+        "concept_blocks": [0, 4],
+        "limitations": ["选择完整前缀不证明学习者能自行生成余数类列表。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "令余数表示4q+1中的商q从1而不是0起取1至5，得到5、9、13、17、21，漏掉最小合法数1。", "misconception": "把序列序号从1开始误用于除法商，强令商也从1开始。"},
+          {"option_id": "B", "truth": "correct", "derivation": "取q=0至4，4q+2依次为2、6、10、14、18，均余2且没有漏掉更小合法数。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "取q=0至4，4q+1依次为1、5、9、13、17，均余1且次序递增。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "在4q+2中误取q=1至5，得到6、10、14、18、22，遗漏商0对应的2。", "misconception": "将最小商错误限制为1，整体前缀后移一项。"}
+        ]
+      }
+    },
+    {
+      "id": "q-affine-absolute",
+      "source_numbers": ["206"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $u_n=3n-7$ 和 $v_n=|4-2n|$ 的序号均从 $1$ 开始。哪些前五项列表正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$u_n$ 的前五项是 $-4$，$-1$，$2$，$5$，$8$。", "figure_ids": []},
+          {"id": "B", "text": "$v_n$ 的前五项是 $2$，$0$，$-2$，$-4$，$-6$。", "figure_ids": []},
+          {"id": "C", "text": "$u_n$ 的前五项是 $-7$，$-4$，$-1$，$2$，$5$。", "figure_ids": []},
+          {"id": "D", "text": "$v_n$ 的前五项是 $2$，$0$，$2$，$4$，$6$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "代入全部前五个正整数序号，识别线性符号变化及绝对值对负值的作用。",
+        "source_solution": "206a在n=1至5时3n-7依次为-4、-1、2、5、8。206b括号内依次是2、0、-2、-4、-6，取绝对值得2、0、2、4、6；绝对值不能随原式符号变化而丢弃。",
+        "unit_reason": "将直接线性代入和同类表达式过零后的绝对值处理合为完整列表判断。206其余公式依分式对应、指数、奇偶结构另分组，分式对应与209的重复对应关系合并，不按八个印刷字母机械拆题。",
+        "concept_blocks": [0, 9, 11],
+        "limitations": ["完整前五项识别不证明独立逐项计算和书写。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "将1、2、3、4、5代入3n-7，得到-4、-1、2、5、8。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "只计算4-2n，不应用绝对值，得到2、0、-2、-4、-6；最后三项应改为正值。", "misconception": "计算原式后漏执行绝对值运算。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "将0、1、2、3、4代入3n-7，产生-7、-4、-1、2、5，违反从1开始的序号域。", "misconception": "把数列首项序号误取为0。"},
+          {"option_id": "D", "truth": "correct", "derivation": "4-2n的五个原值是2、0、-2、-4、-6，逐一取绝对值为2、0、2、4、6。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-nonlinear-correspondence",
+      "source_numbers": ["206", "209"],
+      "view": {
+        "mode": "multiple",
+        "stem": "只考察序号 $n$ 从 $1$ 到 $5$ 的有限数列。下列公式与五项列表的对应，哪些在这五个序号上全部成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x_n=\\frac{n+1}{n}$ 对应 $2$，$3$，$4$，$5$，$6$。", "figure_ids": []},
+          {"id": "B", "text": "$x_n=\\frac{1}{n}$ 对应 $1$，$\\frac{1}{2}$，$\\frac{1}{3}$，$\\frac{1}{4}$，$\\frac{1}{5}$。", "figure_ids": []},
+          {"id": "C", "text": "$x_n=\\frac{n+1}{n}$ 对应 $2$，$\\frac{3}{2}$，$\\frac{4}{3}$，$\\frac{5}{4}$，$\\frac{6}{5}$。", "figure_ids": []},
+          {"id": "D", "text": "$x_n=\\frac{1}{n}$ 对应 $1$，$2$，$3$，$4$，$5$。", "figure_ids": []},
+          {"id": "E", "text": "$x_n=n^2$ 对应 $1$，$4$，$9$，$16$，$25$。", "figure_ids": []},
+          {"id": "F", "text": "$x_n=3n-2$ 对应 $1$，$4$，$9$，$16$，$25$。", "figure_ids": []},
+          {"id": "G", "text": "$x_n=\\frac{n}{n+1}$ 对应 $\\frac{1}{2}$，$\\frac{2}{3}$，$\\frac{3}{4}$，$\\frac{4}{5}$，$\\frac{5}{6}$。", "figure_ids": []},
+          {"id": "H", "text": "$x_n=\\frac{n+1}{n}$ 对应 $\\frac{1}{2}$，$\\frac{2}{3}$，$\\frac{3}{4}$，$\\frac{4}{5}$，$\\frac{5}{6}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断非线性公式与完整五项列表的对应，保留206c、d的公式列项关系及209d、e、f的有限通项识别关系。",
+        "source_solution": "206c把n=1至5代入1/n给1、1/2、1/3、1/4、1/5；206d给2、3/2、4/3、5/4、6/5。209d的有限列表1、4、9、16、25可用n²；209e正是206c的同一完整倒数列表，可用1/n；209f的有限列表1/2、2/3、3/4、4/5、5/6可用n/(n+1)，不是其倒数(n+1)/n。以上五项对应均逐点成立。209的公式仅在n=1至5判断，不宣称唯一或任意无限延拓，添加C(n-1)(n-2)(n-3)(n-4)(n-5)不改变五点对应。",
+        "unit_reason": "206c与209e是完全相同的公式列表对应，206d与209f互为倒数关系，209d另检验只拟合两项会失效的非线性对应。合成公式与完整列表的对应判断，两个方向都在同一对关系中验证，避免分题后一个已给公式或已给列表直接泄露另题答案；不把同一关系重复计为两次训练。",
+        "concept_blocks": [0, 9, 11],
+        "limitations": ["对应识别不能证明206c、d的独立逐项书写计算。", "给定公式与列表的对应识别不证明209d、e、f的独立公式构造；原本两个方向的书面生产能力均损失。", "不判断n≥6，不把一个有限域有效公式称为唯一无限延拓。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B", "C", "E", "G"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "只代入并计算分子n+1，漏除以n，得到2、3、4、5、6；除首项外均不符合所列分式。", "misconception": "把整个分式当成仅有分子的表达式。"},
+          {"option_id": "B", "truth": "correct", "derivation": "将n=1至5代入1/n，分母为1至5，结果恰为给出的列表。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "将n=1至5代入(n+1)/n，依次得到2/1、3/2、4/3、5/4、6/5。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把1/n颠倒为n/1，代入后得到1、2、3、4、5；第二项已由1/2变成2。", "misconception": "颠倒分子与分母。"},
+          {"option_id": "E", "truth": "correct", "derivation": "1²至5²恰为1、4、9、16、25，平方公式与完整有限列表逐点对应。", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "只看1、4两项，误拟合固定差3，写成1+3(n-1)=3n-2；其第三至五项为7、10、13，不能匹配9、16、25。", "misconception": "只拟合头两项就把整个非线性有限列表判断为等差。"},
+          {"option_id": "G", "truth": "correct", "derivation": "n/(n+1)在1至5给1/2、2/3、3/4、4/5、5/6，全部五点匹配。", "misconception": null},
+          {"option_id": "H", "truth": "incorrect", "derivation": "由相邻整数比列表识别公式时颠倒分子分母，得到(n+1)/n，其值为2、3/2、4/3、5/4、6/5，不是所列五项。", "misconception": "将列表中较小的分子和较大的分母互换。"}
+        ]
+      }
+    },
+    {
+      "id": "q-powers",
+      "source_numbers": ["206"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $u_n=2^{n-1}$ 和 $v_n=0.5\\times3^n$ 的序号均从 $1$ 开始。哪些前五项列表正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$u_n$ 的前五项是 $2$，$4$，$8$，$16$，$32$。", "figure_ids": []},
+          {"id": "B", "text": "$v_n$ 的前五项是 $\\frac{3}{2}$，$\\frac{9}{2}$，$\\frac{27}{2}$，$\\frac{81}{2}$，$\\frac{243}{2}$。", "figure_ids": []},
+          {"id": "C", "text": "$v_n$ 的前五项是 $3$，$9$，$27$，$81$，$243$。", "figure_ids": []},
+          {"id": "D", "text": "$u_n$ 的前五项是 $1$，$2$，$4$，$8$，$16$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "区分指数的首项偏移与指数式外的系数，完整计算五项。",
+        "source_solution": "206e的指数n-1依次为0、1、2、3、4，结果1、2、4、8、16。206f中3^n依次为3、9、27、81、243，再乘0.5得3/2、9/2、27/2、81/2、243/2。",
+        "unit_reason": "同一指数代入结构中的指数起点与外系数是相关区别，以两条完整列表为判断单元。",
+        "concept_blocks": [0, 9, 11],
+        "limitations": ["识别指数列表不证明能够独立计算和书写指数运算过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把2^(n-1)改算为2^n，代入1至5得2、4、8、16、32，漏掉指数中的减1。", "misconception": "忽略指数偏移n-1。"},
+          {"option_id": "B", "truth": "correct", "derivation": "3^n的前五项乘以1/2，恰为3/2、9/2、27/2、81/2、243/2。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "只计算3^n而不乘0.5，产生3、9、27、81、243，每一项均为应有结果的两倍。", "misconception": "遗漏幂式外的乘法系数。"},
+          {"option_id": "D", "truth": "correct", "derivation": "指数0至4对应2的幂1、2、4、8、16，满足首项n=1。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-parity",
+      "source_numbers": ["206"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $u_n=7(-1)^n$ 和 $v_n=\\frac{1+(-1)^n}{2}$ 的序号均从 $1$ 开始。哪些前五项列表正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$v_n$ 的前五项是 $0$，$1$，$0$，$1$，$0$。", "figure_ids": []},
+          {"id": "B", "text": "$u_n$ 的前五项是 $7$，$-7$，$7$，$-7$，$7$。", "figure_ids": []},
+          {"id": "C", "text": "$v_n$ 的前五项是 $1$，$0$，$1$，$0$，$1$。", "figure_ids": []},
+          {"id": "D", "text": "$u_n$ 的前五项是 $-7$，$7$，$-7$，$7$，$-7$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断奇偶序号的负一幂及其在两种表达式中的作用，保留从1开始的完整相位。",
+        "source_solution": "206g中(-1)^n在奇数序号为-1，偶数为1，乘7得到-7、7、-7、7、-7。206h奇数时(1-1)/2=0，偶数时(1+1)/2=1，得到0、1、0、1、0。",
+        "unit_reason": "两种表达式共享奇偶驱动，完整列表同时检验起始相位与映射后的值，不按每一个正负或0、1位置拆题。",
+        "concept_blocks": [0, 9, 11],
+        "limitations": ["完整奇偶列表识别不证明能独立推导并写出每个代入步骤。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "奇数序号给0，偶数给1，从1至5排列为0、1、0、1、0。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "误判(-1)^n在奇数为1、偶数为-1，再乘7，得到7、-7、7、-7、7；首项实际为-7。", "misconception": "将负一幂的奇偶符号颠倒。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "将(-1)^n的奇偶符号颠倒后代入(1+符号)/2，奇数变1、偶数变0，得到1、0、1、0、1。", "misconception": "将同一负一幂的符号颠倒，进而颠倒0、1相位。"},
+          {"option_id": "D", "truth": "correct", "derivation": "奇数序号的(-1)^n为-1，偶数为1，乘7后五项为-7、7、-7、7、-7。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-linear-subscripts",
+      "source_numbers": ["207"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $b_n=3n+2$，其中 $n$ 和 $k$ 均为正整数。哪一行依次给出了 $b_5$、$b_{10}$、$b_k$、$b_{k+1}$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$17$；$32$；$3k+2$；$3k+3$。", "figure_ids": []},
+          {"id": "B", "text": "$21$；$36$；$3k+6$；$3k+9$。", "figure_ids": []},
+          {"id": "C", "text": "$17$；$32$；$3k+2$；$3k+5$。", "figure_ids": []},
+          {"id": "D", "text": "$15$；$30$；$3k$；$3k+3$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由序号求项，完整处理两个具体序号及k、k+1两个符号序号。",
+        "source_solution": "b_5=3×5+2=17，b_10=3×10+2=32，b_k=3k+2，b_(k+1)=3(k+1)+2=3k+5。k为正整数，整个k+1须代入n的位置。",
+        "unit_reason": "四个请求值共同检验同一线性公式在具体、一般和复合下标上的代入，以完整结果行作为单选单位。",
+        "concept_blocks": [9, 11],
+        "limitations": ["识别完整结果行不证明能独立写出四次代入与化简。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "前三项正确，但把b_(k+1)算成b_k+1=(3k+2)+1=3k+3，而不是代入k+1得3k+5。", "misconception": "将下标增加1错误理解为项值增加1。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把3n+2误写成3(n+2)，分别代入5、10、k、k+1，得到21、36、3k+6、3k+9。", "misconception": "错误地让外部系数3同时乘以常数2。"},
+          {"option_id": "C", "truth": "correct", "derivation": "依次代入5、10、k、k+1，最后一式为3k+3+2，整行恰为17、32、3k+2、3k+5。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "漏掉公式中的常数2，按3n分别计算四个下标，得到15、30、3k、3k+3。", "misconception": "计算时遗漏加法常数。"}
+        ]
+      }
+    },
+    {
+      "id": "q-square-subscripts",
+      "source_numbers": ["208"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $a_n=n^2+5$，其中 $n$ 和 $k$ 均为正整数。哪些计算结果成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$a_{20}=405$，$a_{100}=10005$。", "figure_ids": []},
+          {"id": "B", "text": "$a_k=k^2+5$，$a_{k+7}=k^2+54$。", "figure_ids": []},
+          {"id": "C", "text": "$a_{2k}=4k^2+5$。", "figure_ids": []},
+          {"id": "D", "text": "$a_{20}=45$，$a_{100}=205$。", "figure_ids": []},
+          {"id": "E", "text": "$a_k=k^2+5$，$a_{k+7}=k^2+14k+54$。", "figure_ids": []},
+          {"id": "F", "text": "$a_{2k}=2k^2+5$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整覆盖两个具体下标与三个符号下标，区分平方、平方的交叉项和系数的平方。",
+        "source_solution": "a_20=20²+5=405，a_100=100²+5=10005，a_k=k²+5，a_(k+7)=(k+7)²+5=k²+14k+54，a_(2k)=(2k)²+5=4k²+5。全部k属于正整数，所以漏交叉项或漏系数平方均不可能成为等价公式。",
+        "unit_reason": "把具体平方值合为一组、k及k+7的平方合为一组、2k的平方作一个断言，在同一多选题中保留全部五个下标和三类平方区别。",
+        "concept_blocks": [9, 11],
+        "limitations": ["识别公式结果不证明能独立展开平方及完成原题书面计算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "20²=400、100²=10000，各加5得到405和10005。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "a_k正确，但把(k+7)²展开成k²+49，漏掉2×k×7，故得到错误的k²+54；真实结果还多14k。", "misconception": "把和的平方错误分配成两个平方之和。"},
+          {"option_id": "C", "truth": "correct", "derivation": "(2k)²+5=2²k²+5=4k²+5。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把n²误读为2n，算20时得40+5=45，算100时得200+5=205。", "misconception": "把平方指数2误作乘法系数2。"},
+          {"option_id": "E", "truth": "correct", "derivation": "a_k=k²+5，(k+7)²+5=k²+14k+49+5=k²+14k+54。", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "把(2k)²误化为2k²，只对k平方而不对系数2平方，得到2k²+5；对正整数k与正确值相差2k²。", "misconception": "平方乘积时遗漏系数的平方。"}
+        ]
+      }
+    },
+    {
+      "id": "q-finite-linear",
+      "source_numbers": ["209"],
+      "view": {
+        "mode": "multiple",
+        "stem": "三个有限数列依次为：\n\n$u_n$：$2$，$4$，$6$，$8$，$10$。\n\n$v_n$：$1$，$3$，$5$，$7$，$9$。\n\n$w_n$：$3$，$6$，$9$，$12$，$15$。\n\n序号 $n$ 只取 $1$ 到 $5$。哪些公式在这五个序号上给出对应数列的每一项？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$v_n=2n-1$。", "figure_ids": []},
+          {"id": "B", "text": "$u_n=2(n-1)$。", "figure_ids": []},
+          {"id": "C", "text": "$w_n=3n$。", "figure_ids": []},
+          {"id": "D", "text": "$v_n=2n+1$。", "figure_ids": []},
+          {"id": "E", "text": "$u_n=2n$。", "figure_ids": []},
+          {"id": "F", "text": "$w_n=3(n-1)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从三条完整有限列表辨认在指定五点域上成立的通项公式，检验首项和步长。",
+        "source_solution": "209a至c可用u_n=2n、v_n=2n-1、w_n=3n，n仅为1至5，代入五个序号分别还原三个完整列表。有限域外没有源条件；这些公式不是唯一无限延拓，例如任意添加C(n-1)(n-2)(n-3)(n-4)(n-5)都不改变这五项。",
+        "unit_reason": "三个等差式共享首项与步长的结构，合为逐公式真值判断；另三条非线性有限列表由q-nonlinear-correspondence覆盖，并与206重合的公式列表关系合并，不把六个印刷槽机械复制为六题。",
+        "concept_blocks": [0, 9, 11],
+        "limitations": ["判断给定候选公式不证明能独立构造公式。", "不证明公式在n≥6成立，也不主张有限数据能唯一确定无限数列。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "2n-1在1至5给1、3、5、7、9，与v的全部项一致。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "错误地用从0开始的倍数模板2(n-1)，在1至5给0、2、4、6、8，与u的首项2及末项10均不符。", "misconception": "将正整数序号对应到从零倍开始的模板。"},
+          {"option_id": "C", "truth": "correct", "derivation": "3n在1至5给3、6、9、12、15，与w的全部项一致。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "从2n生成奇数时加1而不是减1，得到3、5、7、9、11，整体错移一项。", "misconception": "忽略给定首项1，选择了首项3的奇数模板。"},
+          {"option_id": "E", "truth": "correct", "derivation": "2n在1至5给2、4、6、8、10，与u的全部项一致。", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "错误地用3(n-1)从零倍开始，在1至5给0、3、6、9、12，不能还原w。", "misconception": "下标减1但未补偿原首项3。"}
+        ]
+      }
+    },
+    {
+      "id": "q-inverse-linear",
+      "source_numbers": ["210"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $c_n=4n-1$ 的序号 $n$ 是正整数。值等于 $91$ 和 $399$ 的项，其序号依次是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$22$；$99$。", "figure_ids": []},
+          {"id": "B", "text": "$24$；$101$。", "figure_ids": []},
+          {"id": "C", "text": "$23$；$100$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由两个指定项值反求正整数序号，保持最终现代公式4n-1。",
+        "source_solution": "4n-1=v给n=(v+1)/4，v=91时n=23，v=399时n=100。代回4×23-1=91和4×100-1=399，两者都符合正整数域。",
+        "unit_reason": "两个指定值检验同一反求公式，以完整序号对承载原题两个请求，不重复设置同型单值算术题。",
+        "concept_blocks": [9, 11],
+        "limitations": ["完整序号对识别不证明独立解方程及代回检验。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "漏掉移项补偿1，先算91/4=22.75和399/4=99.75，再丢弃小数部分得22、99；代回分别87、395。", "misconception": "忽略常数项后以截断代替解整数方程。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "先正确解出23、100，却误当成零起点的下标再各加1，得到24、101；代回分别95、403。", "misconception": "把已经从1计数的方程序号错误再作零起点补偿。"},
+          {"option_id": "C", "truth": "correct", "derivation": "分别由4n=92和4n=400得到n=23、100，并代回验证两个指定值。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-linear-membership",
+      "source_numbers": ["211"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $x_n=6-4n$ 的序号 $n$ 是正整数。关于 $-102$、$-132$ 和 $100$，哪些判断成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$-132$ 不是这个数列的一项。", "figure_ids": []},
+          {"id": "B", "text": "$100$ 是第 $25$ 项。", "figure_ids": []},
+          {"id": "C", "text": "$-102$ 是第 $27$ 项。", "figure_ids": []},
+          {"id": "D", "text": "$-132$ 是第 $34$ 项。", "figure_ids": []},
+          {"id": "E", "text": "$100$ 不是这个数列的一项。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "对三种指定值检查反求的序号是否为正整数，并对唯一成员给出序号。",
+        "source_solution": "令6-4n=v，得n=(6-v)/4。v=-102给27，是正整数；v=-132给69/2，不是整数；v=100给-47/2，既非整数也非正数。故仅-102属于，序号27；其余两个不属于。",
+        "unit_reason": "将同一线性反求中的正整数、非整数与非正序号三种域判断合为多选，保留全部指定值与成员的具体序号。",
+        "concept_blocks": [9, 11],
+        "limitations": ["不证明能独立写出每个反求方程与域排除理由。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "6-4n=-132要求n=138/4=69/2，不是正整数，故不属于。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "真实解为-47/2；若漏常数6又把负斜率改为正，误用4n=100得25，但x_25=6-100=-94。", "misconception": "把6-4n粗略替换为4n再反求，丢失常数和符号。"},
+          {"option_id": "C", "truth": "correct", "derivation": "n=(6+102)/4=27且x_27=6-108=-102。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把真实反求值69/2=34.5向下截断为34，代回x_34=6-136=-130，不是-132。", "misconception": "非整数反求结果靠截断强行变成成员序号。"},
+          {"option_id": "E", "truth": "correct", "derivation": "6-4n=100要求n=-47/2，不在正整数序号域；所有n≥1还有x_n≤2，不能等于100。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-square-membership",
+      "source_numbers": ["212"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $b_n=n^2+2n+1$ 的序号 $n$ 是正整数。关于 $289$ 和 $1000$，哪一项判断正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$289$ 是第 $17$ 项；$1000$ 不是数列的一项。", "figure_ids": []},
+          {"id": "B", "text": "$289$ 是第 $16$ 项；$1000$ 是第 $30$ 项。", "figure_ids": []},
+          {"id": "C", "text": "$289$ 分别是第 $16$ 项和第 $-18$ 项；$1000$ 不是数列的一项。", "figure_ids": []},
+          {"id": "D", "text": "$289$ 是第 $16$ 项；$1000$ 不是数列的一项。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "将平方值识别与正整数序号域共同用于两次数列成员判断。",
+        "source_solution": "b_n=(n+1)²。等于289时完整实根是16、-18，仅16是正整数。等于1000时完整实根是-1±10√10，均非整数；31²=961<1000<1024=32²。故289仅是第16项，1000不是项。",
+        "unit_reason": "两个值共同区分平方根、序号偏移与整数域，以一条完整成员判断承载全部请求，而非两次孤立是非。",
+        "concept_blocks": [9, 11],
+        "limitations": ["选择判断不证明能独立配方、列出全部实根并按序号域筛选。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "由289开方得17，却直接把n+1的值当作n；实际b_17=18²=324。1000非平方数的判断仍正确。", "misconception": "求出n+1后漏掉减1恢复序号。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "289的序号16正确，但把1000的正实根-1+√1000约30.62向下取整为30；b_30=31²=961，不是1000。", "misconception": "用实根取整代替精确的正整数解检验。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "方程等于289确有实根16、-18，却把负根-18也称为序号，违反n为正整数。1000确实不是项。", "misconception": "把方程全部实根不经域筛选直接认作数列序号。"},
+          {"option_id": "D", "truth": "correct", "derivation": "289对应n+1=±17，筛选得n=16；1000不在整数平方集合中，无正整数序号。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-quadratic-membership",
+      "source_numbers": ["213"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $a_n=n^2-17n$ 的序号 $n$ 是正整数。关于 $-30$、$-72$ 和 $-100$，哪些判断完整且正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "等于 $-30$ 的项仅有第 $2$ 项。", "figure_ids": []},
+          {"id": "B", "text": "等于 $-72$ 的项恰为第 $8$ 项和第 $9$ 项。", "figure_ids": []},
+          {"id": "C", "text": "$-100$ 不是这个数列的一项。", "figure_ids": []},
+          {"id": "D", "text": "等于 $-30$ 的项恰为第 $2$ 项和第 $15$ 项。", "figure_ids": []},
+          {"id": "E", "text": "等于 $-72$ 的项仅有第 $8$ 项。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "检查二次公式的成员及全部正整数根，保留同一项值在两个不同序号重复出现的区别。",
+        "source_solution": "等于-30时(n-2)(n-15)=0，完整序号集为2、15。等于-72时(n-8)(n-9)=0，完整序号集为8、9。等于-100时判别式17²-4×100=-111，无实根，当然无正整数根。实数最小值-289/4，正整数最小项-72，均排除-100。",
+        "unit_reason": "三种候选值共同检验全部根和无根情形；多选断言必须声称完整序号集，不能用找到一个根冒充原题全部结果。",
+        "concept_blocks": [9, 11],
+        "limitations": ["不证明能自行分解二次式、求判别式或书写完整根集。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B", "C", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "分解得到(n-2)(n-15)=0后只取第一个因子为0，报n=2而遗漏合法正整数根15。", "misconception": "零乘积方程只解一个因子，造成完整根集缺失。"},
+          {"option_id": "B", "truth": "correct", "derivation": "n²-17n+72=(n-8)(n-9)，两根8、9均为正整数，二次方程无其他根。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "n²-17n+100的判别式为-111，无实数解，故无正整数序号。", "misconception": null},
+          {"option_id": "D", "truth": "correct", "derivation": "(n-2)(n-15)=0的两根2、15均合法，代回都为-30，且无其他根。", "misconception": null},
+          {"option_id": "E", "truth": "incorrect", "derivation": "只由(n-8)=0取8，忽略(n-9)=0给出的9；a_9=81-153=-72直接反驳仅有8。", "misconception": "求得一个正整数根即停止，不检验另一因子。"}
+        ]
+      }
+    },
+    {
+      "id": "q-index-ranges",
+      "source_numbers": ["214"],
+      "view": {
+        "mode": "multiple",
+        "stem": "数列 $x_n=3n+2$ 的序号 $n$ 是正整数。下列断言中，哪些给出了相应不等式成立的全部序号？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x_n\\leq47$ 的全部序号为 $1\\leq n\\leq15$。", "figure_ids": []},
+          {"id": "B", "text": "$x_n\\geq29$ 的全部序号为 $n\\geq10$。", "figure_ids": []},
+          {"id": "C", "text": "$80\\leq x_n\\leq180$ 的全部序号为 $26\\leq n\\leq59$。", "figure_ids": []},
+          {"id": "D", "text": "$x_n>100$ 的全部序号为 $n\\geq33$。", "figure_ids": []},
+          {"id": "E", "text": "$x_n\\geq29$ 的全部序号为 $n\\geq9$。", "figure_ids": []},
+          {"id": "F", "text": "$80\\leq x_n\\leq180$ 的全部序号为 $26\\leq n\\leq60$。", "figure_ids": []},
+          {"id": "G", "text": "$x_n>100$ 的全部序号为 $n\\geq34$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "反求全部正整数序号范围，完整覆盖两个含等号单边条件、严格下界和闭值区间。",
+        "source_solution": "3n+2≥29给n≥9；3n+2≤47给1≤n≤15；3n+2>100给n>98/3，所以n≥33；80≤3n+2≤180给26≤n≤178/3，所以26≤n≤59。边界x_9=29、x_15=47、x_32=98、x_33=101、x_26=80、x_59=179、x_60=182，保证含等号与整数化均正确。",
+        "unit_reason": "四种条件都要求同一项值到序号域的反求，以一项多选完整区间判断保留全部端点区别，避免把每个端点或每个序号变成算术点击。",
+        "concept_blocks": [9, 11],
+        "limitations": ["完整区间识别不证明能独立解四个不等式并与正整数域取交集。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "D", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "3n≤45给n≤15，与正整数域取交集为1至15，x_15=47恰好可取。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "本应3n≥27给n≥9，若把≥误换成>，再整数化就得到n≥10，漏掉x_9=29。", "misconception": "将含等号下界变成严格下界，漏掉等号端点。"},
+          {"option_id": "C", "truth": "correct", "derivation": "减2再除3得到26≤n≤178/3，整数域上恰为26至59，60给182超过上界。", "misconception": null},
+          {"option_id": "D", "truth": "correct", "derivation": "n>98/3，最小整数33，且3n+2递增，全部序号为n≥33。", "misconception": null},
+          {"option_id": "E", "truth": "correct", "derivation": "减2、除3得到n≥9，9给29被含等号条件包含。", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "正确实上界178/3约59.33，被错误向上取整为60；x_60=182违反≤180。", "misconception": "处理整数上界时向上取整而非向下取整。"},
+          {"option_id": "G", "truth": "incorrect", "derivation": "漏掉移项减2，误从3n>100得到n>100/3，再取最小整数34，遗漏实际满足条件的33。", "misconception": "反求阈值时遗漏公式常数2。"}
+        ]
+      }
+    },
+    {
+      "id": "q-square-thresholds",
+      "source_numbers": ["215"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $y_n=n^2$ 的序号 $n$ 是正整数。分别从第几项起，后面的每一项都严格大于 $100$ 和严格大于 $1000$？哪一项依次给出了两个最早的起始序号？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$10$；$32$。", "figure_ids": []},
+          {"id": "B", "text": "$11$；$31$。", "figure_ids": []},
+          {"id": "C", "text": "$10$；$31$。", "figure_ids": []},
+          {"id": "D", "text": "$11$；$32$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "确定两个严格阈值的最早永久起始序号，同时检验紧邻前项和单调增长。",
+        "source_solution": "正整数域上n²>100等价n>10，因此最早11，n=10恰等于100不合格。31²=961<1000<1024=32²，所以第二个最早32。n²在正整数域严格递增，之后各项永久满足。",
+        "unit_reason": "平方阈值在整数平方和非整数平方根两种边界下的区别构成一个完整起始序号对，保留两个阈值和严格性。",
+        "concept_blocks": [9, 11],
+        "limitations": ["选择起始序号对不证明能够独立书写阈值推导及永久性的单调论证。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "第二个阈值正确，首阈值却按n²≥100算得10；y_10=100不满足严格大于。", "misconception": "对恰为平方数的阈值错误包含等号。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "第一个阈值正确，但将√1000约31.62向下取整31作为起点；31²=961尚未超过1000。", "misconception": "将严格下界的非整数平方根向下取整。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "同时把√100=10直接作为可取起点，把√1000向下取整31，得到10、31，两次都未检验起始项是否严格超过。", "misconception": "统一用平方根的整数部分替代严格阈值的最小整数解。"},
+          {"option_id": "D", "truth": "correct", "derivation": "10²=100、11²=121，以及31²=961、32²=1024，首个超阈值序号依次11、32，后续平方严格增大。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-sign-tails",
+      "source_numbers": ["216"],
+      "view": {
+        "mode": "single",
+        "stem": "两个数列为 $a_n=n^2-n-6$ 和 $b_n=-n^2+8n$，序号 $n$ 是正整数。分别从第几项起，$a_n$ 的后续各项都为正，$b_n$ 的后续各项都为负？哪一项依次给出了两个最早的起始序号？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$4$；$9$。", "figure_ids": []},
+          {"id": "B", "text": "$3$；$8$。", "figure_ids": []},
+          {"id": "C", "text": "$4$；$8$。", "figure_ids": []},
+          {"id": "D", "text": "$3$；$9$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "确定两个二次式在正整数域上的永久严格正、负尾部，排除零值边界。",
+        "source_solution": "a_n=(n-3)(n+2)>0的完整实解域n<-2或n>3，与正整数域交集为n≥4，a_3=0。b_n=n(8-n)<0的完整实解域n<0或n>8，与正整数域交集为n≥9，b_8=0。故最早永久尾部起点4和9，负实根区域不提供合法序号。",
+        "unit_reason": "两种二次符号尾部共同检验求根、符号区间、正整数域和严格性，用完整起点对判断而不是只识别两个零点。",
+        "concept_blocks": [9, 11],
+        "limitations": ["不能证明学习者能独立分解、画符号区间或写出永久尾部的论证。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "正整数n时n+2恒正，所以a_n>0恰从n=4开始；n恒正，所以b_n<0恰从n=9开始。两个前项3、8均给0。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "求出正零点3和8后直接将零点用作正、负起点，实际a_3=b_8=0，二者均不符合严格符号。", "misconception": "把二次式的零点直接当作严格正负尾部起点。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "a的起点4正确，b却按b_n≤0取8作为起点；b_8=0不是负数。", "misconception": "第二个严格负条件被放宽为非正条件。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "b的起点9正确，a却按a_n≥0取3作为起点；a_3=0不是正数。", "misconception": "第一个严格正条件被放宽为非负条件。"}
+        ]
+      }
+    },
+    {
+      "id": "q-triangle-existence",
+      "source_numbers": ["217"],
+      "view": {
+        "mode": "single",
+        "stem": "直角三角形的两条直角边都是正实数长度，和为 $60\\,\\mathrm{dm}$。分别要求面积为 $500\\,\\mathrm{dm}^2$ 和 $400\\,\\mathrm{dm}^2$，哪一项给出了正确的存在性判断及存在时的边长？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "两种面积要求下都不存在这样的直角三角形。", "figure_ids": []},
+          {"id": "B", "text": "面积为 $500\\,\\mathrm{dm}^2$ 时不存在；面积为 $400\\,\\mathrm{dm}^2$ 时存在，两条直角边为 $20\\,\\mathrm{dm}$ 和 $40\\,\\mathrm{dm}$。", "figure_ids": []},
+          {"id": "C", "text": "两种面积要求下都存在。面积为 $500\\,\\mathrm{dm}^2$ 时，两条直角边为 $10\\,\\mathrm{dm}$ 和 $50\\,\\mathrm{dm}$；面积为 $400\\,\\mathrm{dm}^2$ 时，两条直角边为 $(30-10\\sqrt{5})\\,\\mathrm{dm}$ 和 $(30+10\\sqrt{5})\\,\\mathrm{dm}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "保留两个面积请求、直角边和、实数正长度及单位，用面积关系证明存在或不存在。",
+        "source_solution": "设直角边u、v为正实数，u+v=60，uv=2S，边长根方程t²-60t+2S=0。固定和的最大面积是60²/8=450 dm²。S=500时判别式3600-4000=-400，无实根，故不存在。S=400时uv=800、判别式400，根20和40 dm，正、和60、面积20×40/2=400 dm²。交换边长不改变结果，不附加整数边长限制。",
+        "unit_reason": "一个存在性判断同时比较两个参数实例，必须带存在实例的具体边长以验证面积和正性，不能把方程有根与真正的三角形混同。",
+        "concept_blocks": [],
+        "limitations": ["识别存在性结果和见证边长不证明能独立建立方程、求判别式及书写不存在证明。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "若错误地把固定边长和理解为强制两边相等，则只检查u=v=30，面积450，两种指定面积均不等于450，就宣称都不存在。实际20与40提供400的见证。", "misconception": "将最大面积时的等边条件误作所有固定和三角形的必要条件。"},
+          {"option_id": "B", "truth": "correct", "derivation": "最大面积450排除500；20与40都是正实数，和60，面积400，构成第二种要求的有效见证。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "漏掉直角三角形面积中的1/2，误设uv=S。S=500时t²-60t+500=0得10、50；S=400时t²-60t+400=0得30±10√5。两组均正且和60，但真实面积分别250和200 dm²，均非要求。", "misconception": "把直角三角形面积误当作两直角边的乘积。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "204",
+      "question_ids": ["q-digits", "q-fractions"],
+      "omitted_tasks": ["不能据列表识别推定能独立书写完整枚举及次序证明。"],
+      "reason": "完整覆盖四个数字组合与十个正真分数、两种排列方向和真分数边界；两个数学独立任务分开，原书写生产能力作为格式损失保留。"
+    },
+    {
+      "source_number": "205",
+      "question_ids": ["q-divisible", "q-residues"],
+      "omitted_tasks": ["205a的唯一完整前几项列表未解决：自然数是否包含0的约定未明确。", "不能证明能独立生成三类数列的原书面列表；205a只取得双约定不变量，不是完整原任务覆盖。"],
+      "reason": "明确保留205a原条件，在两种约定下判断成员、相邻项和步长；不隐藏首项歧义。205b、c各覆盖完整前五项，它们不受零约定影响。"
+    },
+    {
+      "source_number": "206",
+      "question_ids": ["q-affine-absolute", "q-nonlinear-correspondence", "q-powers", "q-parity"],
+      "omitted_tasks": ["四组完整列表识别不能证明八条公式共四十个项的独立书写计算能力。"],
+      "reason": "全部八条公式和各自前五项均覆盖；按线性及绝对值、非线性公式列表对应、指数、奇偶四种运算结构分组，分式对应与209相同和倒数关系合并，保留首项、负值转正、分母、外系数、零指数与奇偶相位。"
+    },
+    {
+      "source_number": "207",
+      "question_ids": ["q-linear-subscripts"],
+      "omitted_tasks": ["不能证明独立完成四次代入、复合下标展开与书面化简。"],
+      "reason": "一个完整结果行覆盖序号5、10、k、k+1，保持由序号求项的方向及正整数域。"
+    },
+    {
+      "source_number": "208",
+      "question_ids": ["q-square-subscripts"],
+      "omitted_tasks": ["不能证明独立平方展开和五个请求项的书面推导。"],
+      "reason": "保留20、100、k、k+7、2k五个下标，检验数值平方、和的交叉项与乘积系数平方，全部域与原式不变。"
+    },
+    {
+      "source_number": "209",
+      "question_ids": ["q-nonlinear-correspondence", "q-finite-linear"],
+      "omitted_tasks": ["候选公式判断不能证明独立构造六条通项公式。"],
+      "reason": "六条完整有限列表及n=1至5的全部域均保留；前三条等差列表到公式保持方向，后三条改为公式与完整列表的双向对应识别并与206重合任务合并，原公式构造能力损失明确记录。只判断有限域有效公式，不主张唯一公式或无限延拓，后者不是源题请求。"
+    },
+    {
+      "source_number": "210",
+      "question_ids": ["q-inverse-linear"],
+      "omitted_tasks": ["不能证明独立反求两个序号及书面代回检验。"],
+      "reason": "严格使用当前现代公式4n-1，保留91、399与其完整正整数序号对，方向是由值反求序号。"
+    },
+    {
+      "source_number": "211",
+      "question_ids": ["q-linear-membership"],
+      "omitted_tasks": ["不能证明书面完成三个反求方程并解释域排除。"],
+      "reason": "保留-102、-132、100的全部成员判断和唯一成员的序号，区分正整数、非整数及非正反求值。"
+    },
+    {
+      "source_number": "212",
+      "question_ids": ["q-square-membership"],
+      "omitted_tasks": ["不能证明独立配方、求完整实根并筛选正整数域。"],
+      "reason": "保留289、1000的成员判断和合法成员唯一序号；完整根集在内部解答保留，负根不能充当序号，非平方数不能靠取整成为成员。"
+    },
+    {
+      "source_number": "213",
+      "question_ids": ["q-quadratic-membership"],
+      "omitted_tasks": ["不能证明独立求根、列完整根集及无根证明。"],
+      "reason": "覆盖-30对应2和15、-72对应8和9的全部正整数序号，及-100无实根。明确要求完整判断，不能以一个根冒充全部。"
+    },
+    {
+      "source_number": "214",
+      "question_ids": ["q-index-ranges"],
+      "omitted_tasks": ["不能证明独立反解四个不等式并完成正整数域取交。"],
+      "reason": "四个原不等式及全部序号范围、闭端点、严格阈值与不被取到的值上界均覆盖。"
+    },
+    {
+      "source_number": "215",
+      "question_ids": ["q-square-thresholds"],
+      "omitted_tasks": ["不能证明独立书写最早阈值及其后永久成立的论证。"],
+      "reason": "两个原阈值100和1000保持严格大于，判断最早永久起点11与32，不把等号或平方根向下取整作为合格起点。"
+    },
+    {
+      "source_number": "216",
+      "question_ids": ["q-sign-tails"],
+      "omitted_tasks": ["不能证明独立分解二次式、建立完整符号区间并筛选整数域。"],
+      "reason": "两个原式、正尾部与负尾部方向、正整数域及严格边界均保留；起点4和9均排除相邻零项。"
+    },
+    {
+      "source_number": "217",
+      "question_ids": ["q-triangle-existence"],
+      "omitted_tasks": ["不能证明独立建立边长方程、证明最大面积或求判别式及书写存在性证明。"],
+      "reason": "保留正实数直角边、和60 dm、两种面积500和400 dm²、存在判断与存在实例见证；未添加整数边长限制。"
+    }
+  ]
+}

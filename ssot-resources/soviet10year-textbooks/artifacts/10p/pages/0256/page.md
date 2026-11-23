@@ -1,0 +1,106 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 256,
+  "printed_page": 246,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 256
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "649c5e14e61be23994191d77c5fb69099af5d808eefe0eb63d37e1863a2a1c9d"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "source_emphasis": [
+    {
+      "block": "p0256#5",
+      "line": 1,
+      "text": "96. 时间间隔的相对性",
+      "style": "bold",
+      "representation": "h3",
+      "reason": "Source heading visibly uses heavier sans-serif type."
+    },
+    {
+      "block": "p0256#6",
+      "line": 1,
+      "text": "根据相对论，时间间隔不是绝对的.",
+      "style": "bold",
+      "representation": "markdown-strong",
+      "reason": "Only this opening sentence visibly uses heavier sans-serif type."
+    },
+    {
+      "block": "p0256#9",
+      "line": 1,
+      "text": "246",
+      "style": "bold-italic",
+      "representation": "markdown-strong-em",
+      "reason": "Printed page-number digits are visibly bold and slanted; the flanking dots are not character-under-dot emphasis."
+    }
+  ],
+  "notes": [
+    "SOURCE256 first author; independent page and crop observations were recorded before reading the unapproved predecessor candidate.",
+    "No character-under-dot emphasis is visible; source_emphasis records only the directly observed heading, opening-sentence bold and page-number bold-italic spans, with no invented under-dot or bold range.",
+    "The single displayed equation is one printed line, not a figure. 图222а is a textual reference only; no actual figure or caption occurs on this page.",
+    "Incoming p cont contains only SOURCE256 wording. Outgoing light-clock paragraph ends at 会 and remains open; no SOURCE257 wording is supplied.",
+    "Authoring and native outputs are unapproved candidates, not SOURCEPASS and not authorized for consumption.",
+    "SOURCE256 FIRST independent review found 15 source halfwidth sentence periods transcribed as fullwidth stops; only those 15 body marks and the matching bold-sentence metadata are corrected in this affected repair. Original notes and FIRST outputs are retained."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+原因是，正如我们所见到的，信号传播速度的有限性.
+
+<!-- p -->
+正是在同时性的相对性中蕴有解决第94节中提到的关
+于光的球面信号的矛盾的办法，只是从位于相对于系统$K$静
+止的观察者的角度来看，光同时到达以$O$为圆心的球形表面
+的各点.从与系统$K_1$相关的观察者的角度来看，光是在不
+同的时刻到达这些点上的.
+
+<!-- p -->
+可见，反过来说也是正确的：在系统$K$里光是在不同的时
+刻到达以$O_1$为中心的球的表面的各点，而不是同时到达的.
+这就正象在系统$K_1$里的观察者所看到的一样.
+
+<!-- p -->
+由此可见，现实中任何不合常情的说法都是没有的.
+
+<!-- h3 -->
+96. 时间间隔的相对性
+
+<!-- p -->
+**根据相对论，时间间隔不是绝对的.**设在相对于系统$K$
+运动的系统$K_1$的同一个点上发生了前后相隔时间为$\tau_0$的两
+个事件.例如，这可以是每秒钟敲一下的节拍器的先后两次
+敲击.对于这些事件，系统$K_1$是“静止系统”，即相对于该系
+统这些敲击始终是在一个点上.这些敲击对于系统$K$是运动
+的，即敲击发生在不同的点上.用系统$K$的表测量出来的这两
+次敲击之间的时间间隔$\tau$，根据相对论，$\tau$大于$\tau_0$：
+
+<!-- p -->
+$\tau=\frac{\tau_0}{\sqrt{1-\frac{v^2}{c^2}}}$　(8.1)
+
+<!-- p open -->
+这个结果的正确性可以用下列方式装置起来的简单的“光学钟”来
+说明.在长度为$l$的棒的两端固定好两个平行的平面镜.光脉冲在两
+镜之间向上和向下运动着（图222а）.利用特殊的装置，使下面镜子的
+每一次反射，都引起钟的一次“滴答”声.相对于钟是静止的观察者会
+
+<!-- foot -->
+• ***246*** •

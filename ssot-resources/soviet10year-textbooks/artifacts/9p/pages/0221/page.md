@@ -1,0 +1,77 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 221,
+  "printed_page": 212,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 221
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "b8066e62f80acaec116ff0d5798281e02e5f2dafefb6991fab82848867df8439"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Author-only D023 preparation candidate, authored once from physical221 page.grid.png at original resolution. No independent SCI/SOURCE gate, finalization, crop, modern edition or delivery.",
+    "First p cont joins physical220 literal 接 to 在电路中. No figures on this page.",
+    "Preserve equation (9-4), alpha approximately 1/273 degree^-1 for pure metals, alpha>0 for metals, alpha<0 for electrolytes, 10% saline example alpha=-0.02 degree^-1, and original R_0=rho_0 l/S. Chinese 度 remains outside math delimiters. The inline and displayed fractions each occupy one printed row.",
+    "Visually authored 24 printed rows including the displayed equation and footer. Printed dot emphasis under 电阻温度系数 and its definition is recorded here; it is not an extra text row.",
+    "Last p open ends literal 下结果： and awaits the formula at physical222; no complete-unit claim."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+在电路中的安培计指明：电流强度随着电阻丝的温度升高而
+减小.
+
+<!-- p -->
+象研究物体的线膨胀那样，不用所研究的量的绝对变化
+量，而用相对变化量，是方便的. 如果当$0^\circ\mathrm{C}$时导体的电阻等
+于$R_0$，而当温度为$t$时，电阻等于$R$，则电阻的相对变化量为
+$\frac{R-R_0}{R_0}$. 正如实验所指出的，电阻的相对变化量与温度的变化
+量$t$成正比：
+
+<!-- p -->
+$\frac{R-R_0}{R_0}=\alpha t$.　　　　　　　　　(9-4)
+
+<!-- p -->
+比例系数$\alpha$叫做电阻温度系数. 它表征物质的电阻与温度的
+关系. 电阻温度系数等于导体温度升高$1$度时电阻的相对变
+化量.
+
+<!-- p -->
+根据公式(9-4)来测定系数$\alpha$的实验指出：对于纯金属，
+$\alpha\approx\frac{1}{273}$度$^{-1}$，即与气体膨胀的温度系数近似一致. 一般说来，
+对于金属导体，$\alpha>0$，并且随着温度的改变$\alpha$的值变化不大.
+如果温度改变的范围不大，则可以认为$\alpha$是不变的，在数值上
+等于在这个温度范围内的平均值.
+
+<!-- p -->
+电解液的电阻随着温度的升高不是增大，而是减小. 对
+于电解液，$\alpha<0$. 例如，浓度为$10\%$的食盐溶液，$\alpha=-$
+$0.02$度$^{-1}$.
+
+<!-- p open -->
+加热时，导体的几何大小的变化是不明显的. 由于电阻
+率改变，它的电阻将改变. 如果把$R=\rho\frac{l}{S}$和$R_0=\rho_0\frac{l}{S}$代到
+公式(9-4)中，则可以求出电阻率与温度的关系. 计算得出如
+下结果：
+
+<!-- foot -->
+· 212 ·

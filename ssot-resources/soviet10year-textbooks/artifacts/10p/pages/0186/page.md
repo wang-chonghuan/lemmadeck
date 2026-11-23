@@ -1,0 +1,99 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 186,
+  "printed_page": 176,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 186
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "dc65c303259bd1558137333e913bc22704f10a084bedfb501e8b79e020ef4f3c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE186 first author only. The original source page and grid were each opened once; the independent printed-row, text, typography and figure inventory was frozen before this page.md.",
+    "The first visibly indented paragraph is new. SOURCE185 is only a preceding text hint, not source truth for this page; no previous or following page pixels were opened.",
+    "The four numbered rays are prose, not exercises. Figure148 is one complete drawing; its separate caption shares the final printed row of ray1.",
+    "Preserve the printed wording 用从镜子有镜表 followed by 面的部分; do not substitute a scientific or grammatical rewrite.",
+    "CJK body emphasis remains HOLD, especially 任意两条 in p0186#9. Only the full page and grid were authorized; no detail image can be opened. Plain candidate text here is not an asserted SOURCE typography PASS.",
+    "The italic mathematical letters, printed subscript1 and italic footer176 are retained. The last visible body sentence is complete, but n71 is not claimed closed or publishable.",
+    "All native RAW/SVG outputs and saved first SVG previews remain visually uninspected HOLD. Image capacity is permanently exhausted at24/24."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-148",
+      "label": "图 148",
+      "box": [
+        843,
+        711,
+        483,
+        273
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+很容易说明这个作图法的根据. 平行于副光轴的一束光，
+反射后在焦平面的一点上会聚（见图 144）. 既然所有的反射
+线都通过这个点，那么为了找到它，只要研究其中的一条
+就行了. 可以取通过光心 $O$ 的光线，也就是与副光轴重合的
+光线. 反射以后，这条光线仍沿着该光轴进行，并经过未知点
+$D$. 因此，点 $D$ 同时位于焦平面和光轴上，即位于它们的交
+点上.
+
+<!-- p -->
+为作出物体的任何点 $A$ 的
+像，以下列光线为宜(图 148)：
+
+<!-- p -->
+1. 通过镜子光心的光线
+$AOC$，其反射光线 $COA$ 也沿着
+同一条直线；
+
+<!-- fig 图 148 box 843,711,483,273 -->
+![图 148](figures/fig-148.png)
+
+<!-- cap 图 148 samerow -->
+图 148
+
+<!-- p -->
+2. 通过镜子焦点的光线 $AFK$ 其反射线平行于主光轴；
+
+<!-- p -->
+3. 入射到镜子顶点的光线 $AP$，其反射线与入射线以主
+光轴对称；
+
+<!-- p -->
+4. 平行于主光轴的光线 $AE$，其反射线 $EFA_1$ 通过镜子
+的焦点.
+
+<!-- p -->
+如图所示，所有的反射线都经过点 $A$ 的像点 $A_1$，为了作
+出点 $A_1$，取上面列举的光线中的**任意两条**就行了. 入射到镜
+子的其余所有的光线，反射以后都通过 $A_1$ 点. 而且某些光线
+还可以不存在，例如，医生用的凹面镜，中间有一小孔，所以没
+有从镜子中间反射的光线. 在这种情况下，用从镜子有镜表
+面的部分反射的光线来成像.
+
+<!-- p -->
+为了作出物体的像，作出这个物体**边缘**点的像就足够了.
+
+<!-- foot -->
+• *176* •

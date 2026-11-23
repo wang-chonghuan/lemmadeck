@@ -1,0 +1,64 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 249,
+  "printed_page": 243,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 249
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "32dd1ee73986ac9d18cb9d670b39488828e097d103b8ea8c0fcc779198086eed"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "左页边 x约20、y约1780 有孤立的扫描残字“1”, 不属本页习题行, 未并入题干."
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 835 cont -->
+г) $\sqrt{80}+\frac{1}{2}\sqrt{20}+3\sqrt{45}$;
+д) $\sqrt{75}-0.1\sqrt{300}-\sqrt{27}$;
+е) $\sqrt{98}-\sqrt{72}+\frac{1}{2}\sqrt{8}$.
+
+<!-- ex 836 -->
+836. 化简:
+а) $(3\sqrt{5}-2\sqrt{3})\cdot\sqrt{5}+\sqrt{60}$;
+б) $(\sqrt{28}-2\sqrt{3}+\sqrt{7})\cdot\sqrt{7}+\sqrt{84}$;
+в) $(\sqrt{12}+2\sqrt{18})\cdot\frac{1}{2}\sqrt{2}-\sqrt{96}$;
+г) $(4\sqrt{3}-2\sqrt{6}-1)2\sqrt{3}$;
+д) $(\sqrt{6}+\sqrt{5})^2-\sqrt{120}$;
+е) $(\sqrt{14}-3\sqrt{2})^2+6\sqrt{28}$.
+
+<!-- ex 837 -->
+837. 分解因式:
+а) $\sqrt{14}-\sqrt{7}$; б) $\sqrt{33}+\sqrt{22}$;
+в) $\sqrt{15}-\sqrt{6}$; г) $3+\sqrt{3}$;
+д) $10-2\sqrt{10}$; е) $a-5\sqrt{a}$;
+ж) $b-3\sqrt{b}$; з) $b-\sqrt{3b}$.
+
+<!-- ex 838 open -->
+838. 约分:
+а) $\frac{\sqrt{2}+2}{\sqrt{2}}$; б) $\frac{5+\sqrt{10}}{\sqrt{10}}$;
+в) $\frac{2\sqrt{3}-3}{5\sqrt{3}}$; г) $\frac{a\sqrt{b}+b\sqrt{a}}{\sqrt{ab}}$;
+д) $\frac{x-\sqrt{ax}}{a\sqrt{x}}$; е) $\frac{y+b\sqrt{y}}{b\sqrt{y}}$;
+ж) $\frac{2+\sqrt{2}}{1+\sqrt{2}}$; з) $\frac{\sqrt{15}-\sqrt{5}}{1-\sqrt{3}}$;
+
+<!-- foot -->
+243

@@ -1,0 +1,474 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "96fbc8d7a2f6936723f7ccb8b86f0f53ab12a30b706e7531fa717af5dce00f6f",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "n60-bounds",
+      "source_numbers": ["1009"],
+      "view": {
+        "mode": "single",
+        "stem": "For each of 5.38, 82.71 and 121.3, find the two adjacent natural numbers between which it lies and the nearer natural number. Which complete table is correct?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "| Decimal | Lower bound | Upper bound | Nearer number |\n| --- | --- | --- | --- |\n| 5.38 | 5 | 6 | 5 |\n| 82.71 | 82 | 83 | 82 |\n| 121.3 | 121 | 122 | 121 |", "figure_ids": []},
+          {"id": "b", "text": "| Decimal | Lower bound | Upper bound | Nearer number |\n| --- | --- | --- | --- |\n| 5.38 | 5 | 6 | 6 |\n| 82.71 | 82 | 83 | 83 |\n| 121.3 | 121 | 122 | 122 |", "figure_ids": []},
+          {"id": "c", "text": "| Decimal | Lower bound | Upper bound | Nearer number |\n| --- | --- | --- | --- |\n| 5.38 | 5 | 6 | 5 |\n| 82.71 | 82 | 83 | 83 |\n| 121.3 | 121 | 122 | 121 |", "figure_ids": []},
+          {"id": "d", "text": "| Decimal | Lower bound | Upper bound | Nearer number |\n| --- | --- | --- | --- |\n| 5.38 | 5 | 6 | 5 |\n| 82.71 | 83 | 84 | 83 |\n| 121.3 | 121 | 122 | 121 |", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find both adjacent bounds and the nearest natural number for all three source decimals.",
+        "source_solution": "5 < 5.38 < 6 with distances 0.38 and 0.62, so nearest 5; 82 < 82.71 < 83 with distances 0.71 and 0.29, so nearest 83; 121 < 121.3 < 122 with distances 0.3 and 0.7, so nearest 121.",
+        "unit_reason": "A complete bounds-and-nearness table keeps the two linked decisions for all three inputs together; neither nine isolated clicks nor a nearest-only question preserves that relationship.",
+        "concept_blocks": [10],
+        "limitations": ["Recognition of a complete table does not demonstrate independently writing all six bounds and all three nearest numbers."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Take the integer part to obtain bounds 5/6, 82/83, 121/122, then always choose the lower bound. This yields nearest numbers 5, 82, 121; 82 is false because 82.71 is only 0.29 from 83.", "misconception": "Equate nearest-number rounding with truncation, selecting the lower bound even when the fractional part exceeds 0.5."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Find the enclosing bounds correctly, then always select the upper one: 6, 83, 122. The first and third inputs are closer to their lower bounds.", "misconception": "Treat every nonzero fractional part as requiring upward rounding."},
+          {"option_id": "c", "truth": "correct", "derivation": "The integer parts give lower bounds 5, 82, 121 and the next integers give upper bounds 6, 83, 122. Comparing distances or fractional parts 0.38, 0.71, 0.3 gives nearer numbers 5, 83, 121.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Round each input first to 5, 83, 121, then use that rounded number as the lower endpoint and add one for the upper endpoint. This produces 83/84 for 82.71, although 82.71 < 83.", "misconception": "Confuse the nearest integer with the lower enclosing integer when constructing the bound pair."}
+        ]
+      }
+    },
+    {
+      "id": "n60-units-series",
+      "source_numbers": ["1010"],
+      "view": {
+        "mode": "single",
+        "stem": "Round 7.265, 11.638, 0.23, 8.5, 300.499 and 6.5108 directly to the units place, in that order. A first discarded digit of 5 rounds up. Which row gives all six results?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "7, 12, 0, 9, 300, 7", "figure_ids": []},
+          {"id": "b", "text": "7, 11, 0, 8, 300, 6", "figure_ids": []},
+          {"id": "c", "text": "7, 12, 0, 9, 301, 7", "figure_ids": []},
+          {"id": "d", "text": "8, 12, 1, 9, 301, 7", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Round all six decimals directly to units, preserving the below-half, exact-half and above-half cases.",
+        "source_solution": "The tenths digits 2, 6, 2, 5, 4, 5 yield 7, 12, 0, 9, 300, 7. In particular 300.499 must remain 300 despite its later 9s.",
+        "unit_reason": "One ordered result row applies one rounding precision to the entire source series, including the exact tie and the double-rounding trap, instead of a question per decimal.",
+        "concept_blocks": [10],
+        "limitations": ["Selecting a result series replaces independently producing each rounded numeral."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Inspect the first discarded digit, the tenths digit, in each original input: 2/6/2/5/4/5. Leave or increase the integer accordingly, giving 7/12/0/9/300/7.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Discard all decimal digits without increasing the integer: 7, 11, 0, 8, 300, 6. The inputs with tenths digits 6 or 5 require increases, so three entries fail.", "misconception": "Replace rounding by truncation for every input."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "First round to tenths: 7.3, 11.6, 0.2, 8.5, 300.5, 6.5. Then round those intermediate values to units: 7, 12, 0, 9, 301, 7. The changed 300.499 result is false for direct units rounding.", "misconception": "Round through an intermediate precision, allowing a later discarded digit to manufacture a new halfway case."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Replace each noninteger input with its next higher integer, giving 8, 12, 1, 9, 301, 7. This raises 7.265, 0.23 and 300.499 although each fractional part is below 0.5.", "misconception": "Use the ceiling operation rather than nearest-integer rounding."}
+        ]
+      }
+    },
+    {
+      "id": "n60-crate-precision",
+      "source_numbers": ["1011"],
+      "view": {
+        "mode": "single",
+        "stem": "One crate weighs 16.38 kg. Round this weight to units and to tenths. Which pair gives the two approximate weights?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "To units: 16 kg; to tenths: 16.3 kg.", "figure_ids": []},
+          {"id": "b", "text": "To units: 17 kg; to tenths: 16.4 kg.", "figure_ids": []},
+          {"id": "c", "text": "To units: 16 kg; to tenths: 16.0 kg.", "figure_ids": []},
+          {"id": "d", "text": "To units: 16 kg; to tenths: 16.4 kg.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Approximate the same 16.38 kg weight at both requested precisions and retain units.",
+        "source_solution": "The tenths digit 3 leaves the units result at 16 kg; the hundredths digit 8 raises 16.3 to 16.4 kg for tenths rounding.",
+        "unit_reason": "The response is a precision-labelled pair for one physical quantity; splitting the two approximations would hide the contrast between inspected digit positions.",
+        "concept_blocks": [10],
+        "limitations": ["The pair is recognized rather than independently recorded in writing."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Round the integer correctly from tenths digit 3, but discard the hundredths without increasing 16.3. This gives 16 kg and 16.3 kg, while digit 8 requires 16.4 kg.", "misconception": "Use truncation for the tenths approximation even when its first discarded digit is 8."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Choose the next whole kilogram for any fractional weight, yielding 17 kg; independently round tenths correctly to 16.4 kg. Since 16.38 < 16.5, the units entry is false.", "misconception": "Round the units estimate upward merely because the weight is nonintegral."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Round 16.38 to units first, obtaining 16, then add a decimal zero to report 16.0 for tenths. This loses the original hundredths digit 8 before the tenths decision.", "misconception": "Use an already coarsened units result as the input to the finer-precision approximation."},
+          {"option_id": "d", "truth": "correct", "derivation": "Round directly from 16.38 at each requested place: tenths digit 3 gives 16 kg; hundredths digit 8 gives 16.4 kg.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n60-tenths-five",
+      "source_numbers": ["1012"],
+      "view": {
+        "mode": "single",
+        "stem": "Round 2.781, 3.1423, 203.962, 62.35 and 80.45 directly to tenths, in that order. A first discarded digit of 5 rounds up. Which row gives the complete results?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "2.7, 3.1, 203.9, 62.3, 80.4", "figure_ids": []},
+          {"id": "b", "text": "2.8, 3.1, 204.0, 62.4, 80.5", "figure_ids": []},
+          {"id": "c", "text": "2.8, 3.1, 204.0, 62.4, 80.4", "figure_ids": []},
+          {"id": "d", "text": "2.8, 3.1, 204.0, 62.3, 80.4", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Preserve and round all five tenths-series inputs, including the carry through 203.9 and both exact ties.",
+        "source_solution": "Hundredths digits 8, 4, 6, 5, 5 give 2.8, 3.1, 204.0, 62.4, 80.5. Increasing 203.9 by a tenth carries to 204.0.",
+        "unit_reason": "One complete series uses a shared retained digit position; the separate hundredths and tens series require different positions, so they are different precision units, not per-input questions.",
+        "concept_blocks": [10],
+        "limitations": ["A complete-series choice does not demonstrate writing each approximation independently."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Keep one decimal digit and simply delete all later digits, producing 2.7, 3.1, 203.9, 62.3, 80.4. Four discarded digits require increasing the retained tenth.", "misconception": "Truncate the tenths series without applying the increase rule or carry."},
+          {"option_id": "b", "truth": "correct", "derivation": "Use hundredths digits 8/4/6/5/5. Increase 2.7, 203.9, 62.3 and 80.4 by one tenth, leaving 3.1 unchanged; 203.9 + 0.1 = 204.0.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Use nearest rounding but resolve exact ties by keeping an even tenths digit. This gives 62.35 -> 62.4 and 80.45 -> 80.4; the other three give 2.8, 3.1, 204.0. The supplied rule instead raises 80.45 to 80.5.", "misconception": "Substitute ties-to-even rounding for the selected lesson's rule that every first discarded 5 rounds upward."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Inspect the retained tenths digit instead of the discarded hundredths digit, and increase the truncated value only when that retained digit is at least 5. Retained digits 7/1/9/3/4 yield 2.8, 3.1, 204.0, 62.3, 80.4; the last two are false.", "misconception": "Test the digit being retained, rather than its immediate successor, to decide whether to increase it."}
+        ]
+      }
+    },
+    {
+      "id": "n60-hundredths-five",
+      "source_numbers": ["1012"],
+      "view": {
+        "mode": "single",
+        "stem": "Round 0.07268, 1.35506, 10.081, 76.544 and 4.455 directly to hundredths, in that order. A first discarded digit of 5 rounds up. Which row gives the complete results?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "0.07, 1.35, 10.08, 76.54, 4.45", "figure_ids": []},
+          {"id": "b", "text": "0.08, 1.36, 10.08, 76.54, 4.46", "figure_ids": []},
+          {"id": "c", "text": "0.07, 1.36, 10.08, 76.54, 4.46", "figure_ids": []},
+          {"id": "d", "text": "0.10, 1.40, 10.10, 76.50, 4.50", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Round every hundredths-series input at its requested precision, distinguishing the immediate discarded digit from later ones.",
+        "source_solution": "Thousandths digits 2, 5, 1, 4, 5 yield 0.07, 1.36, 10.08, 76.54, 4.46. Later 6 and 8 do not increase 0.07268 when rounding to hundredths.",
+        "unit_reason": "The complete five-result series is one application of the hundredths rule, separate from the same source's tenths and tens tasks because the retained and discarded positions differ.",
+        "concept_blocks": [10],
+        "limitations": ["Recognition replaces independent written production of the five rounded results."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Delete all digits beyond hundredths, obtaining 0.07, 1.35, 10.08, 76.54, 4.45. The thousandths digit 5 requires increases for 1.35506 and 4.455.", "misconception": "Truncate rather than round the hundredths values."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Start with each truncated hundredths value and add 0.01 if any discarded digit is at least 5. The discarded tails 268/506/1/4/5 produce 0.08, 1.36, 10.08, 76.54, 4.46. The first is false because its immediate discarded digit is 2.", "misconception": "Let any later large digit trigger an increase, instead of looking only at the first discarded digit."},
+          {"option_id": "c", "truth": "correct", "derivation": "Inspect thousandths digits 2/5/1/4/5 directly in the originals. Leave 0.07, 10.08 and 76.54; increase 1.35 to 1.36 and 4.45 to 4.46.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Round the originals to tenths instead: 0.1, 1.4, 10.1, 76.5, 4.5, then append zeros to look like hundredths: 0.10, 1.40, 10.10, 76.50, 4.50. Appending zeros cannot restore the requested precision.", "misconception": "Confuse the tenths and hundredths digit positions, padding a coarser approximation rather than rounding to hundredths."}
+        ]
+      }
+    },
+    {
+      "id": "n60-tens-four",
+      "source_numbers": ["1012"],
+      "view": {
+        "mode": "single",
+        "stem": "Round 167.1, 2085.04, 444.4 and 300.7 directly to the tens place, in that order. A first discarded digit of 5 rounds up. Which row gives the complete results?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "170, 2090, 440, 300", "figure_ids": []},
+          {"id": "b", "text": "160, 2080, 440, 300", "figure_ids": []},
+          {"id": "c", "text": "160, 2080, 440, 310", "figure_ids": []},
+          {"id": "d", "text": "200, 2100, 400, 300", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Round all four original inputs to tens, inspecting units digits and retaining zero placeholders.",
+        "source_solution": "The units digits 7, 5, 4, 0 give 170, 2090, 440, 300. Discarded units positions become zero; the fractional digits do not control this rounding.",
+        "unit_reason": "The four-result tens series is a coherent integer-place rounding task distinct from decimal-place rounding; all four inputs remain in one unit rather than isolated clicks.",
+        "concept_blocks": [10],
+        "limitations": ["The learner selects an integer-place result series rather than writing all four values."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Keep the tens place, use units digits 7/5/4/0 to raise or leave it, and replace the units by zero: 170, 2090, 440, 300.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Replace all digits below tens by zeros without increasing: 160, 2080, 440, 300. Units digits 7 and 5 require the first two to be 170 and 2090.", "misconception": "Truncate to multiples of ten rather than round to the nearest multiple."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Truncate to 160/2080/440/300 but decide whether to add 10 using tenths digits 1/0/4/7. Only the last triggers an increase, giving 160/2080/440/310. This tests the wrong discarded position.", "misconception": "Carry over the tenths-digit decision used for units rounding into a tens-place problem."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Round to hundreds instead, inspecting tens digits 6/8/4/0: 200, 2100, 400, 300. Three entries differ from their requested tens approximations.", "misconception": "Retain the hundreds place rather than the requested tens place."}
+        ]
+      }
+    },
+    {
+      "id": "n60-reception-regions",
+      "source_numbers": ["1013"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Station A covers the area of the large circle and station B covers the area of the small circle shown. Identify the regions receiving A only, B only, and both stations, and identify the intersection of the two coverage areas. Select all true statements.",
+        "figure_ids": ["fig-225"],
+        "options": [
+          {"id": "a", "text": "Region I receives A only.", "figure_ids": []},
+          {"id": "b", "text": "Region II receives A only.", "figure_ids": []},
+          {"id": "c", "text": "Region III receives B only.", "figure_ids": []},
+          {"id": "d", "text": "Region I receives both stations.", "figure_ids": []},
+          {"id": "e", "text": "Region II receives both stations and is the intersection of the coverage areas.", "figure_ids": []},
+          {"id": "f", "text": "Region IV receives both stations and is the intersection of the coverage areas.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Identify both exclusive coverage regions and the common reception region, explicitly linking common reception to intersection.",
+        "source_solution": "From the sole actual full approved preview, I lies inside the large circle but outside the small, III inside the small but outside the large, II inside both, IV outside both. Thus A only is I, B only III, both II, and the intersection II.",
+        "unit_reason": "The task judges regions by one shared two-set diagram, so native multiple selection of individually testable region assertions retains the mathematical classification; the overlap reception and intersection requests are linked in one assertion rather than duplicated questions.",
+        "concept_blocks": [],
+        "limitations": ["Choice recognition does not demonstrate independently describing or shading the three regions.", "The caller-approved full preview is reused as evidence for the unchanged seed SVG; no original scan, rerender, new figure review or product display check was performed.", "Only named regions are classified; the written source supplies no separate convention for individual circumference points."],
+        "figure_observations": [
+          {"figure_id": "fig-225", "observation": "Opened exactly once the complete fig-225.repair1.preview.png (SHA-256 df64653c2246703fa39173034c3ba562c482a88af975b9cc88b57f326a6593f2), authorized by the caller as the retained full rendering of the byte-identical seed SVG f83ab314a783706359555dc7483ed70532415ea5e560b1a2fdcd2aff61486f68. Larger upper circle: A and I; smaller lower circle: B and III; overlap lens II; IV to the right outside both. Both centers, all region labels, complete large-circle boundary, rightmost IV and bottommost small-circle arc are visible. No crop or second opening."}
+        ]
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Region I is inside A's large coverage area and outside B's small coverage area, so precisely A can be received there.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Assign every region inside the large circle to A only without testing membership of the small circle. This assigns II to A only, although the overlap is inside B as well.", "misconception": "Use large-circle membership alone to decide exclusive reception, ignoring the second set."},
+          {"option_id": "c", "truth": "correct", "derivation": "Region III is inside B's small circle and below the large circle's boundary, hence outside A's coverage and inside B's only.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Replace the condition 'inside both' by 'inside at least one'. Since I lies in the union, this mistaken test labels it as receiving both, although it is outside B.", "misconception": "Confuse union with intersection when deciding common reception."},
+          {"option_id": "e", "truth": "correct", "derivation": "The lens labelled II is inside each coverage circle. Membership in both gives reception of both stations and exactly the intersection of the coverage areas.", "misconception": null},
+          {"option_id": "f", "truth": "incorrect", "derivation": "Choose the region outside both circles as the common region, using not-in-A and not-in-B in place of in-A and in-B. This selects IV, which actually receives neither station.", "misconception": "Intersect the two coverage complements instead of intersecting the two coverage areas."}
+        ]
+      }
+    },
+    {
+      "id": "n60-product-sum",
+      "source_numbers": ["1014"],
+      "view": {
+        "mode": "single",
+        "stem": "Rewrite the product 2.75 x 3 as a sum of equal addends and calculate its value. Which equality correctly represents and evaluates this product?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "2.75 x 3 = 2.75 + 2.75 + 2.75 = 6.225", "figure_ids": []},
+          {"id": "b", "text": "2.75 x 3 = 2.75 + 2.75 + 2.75 = 8.25", "figure_ids": []},
+          {"id": "c", "text": "2.75 x 3 = 2 + 2 + 2 = 6", "figure_ids": []},
+          {"id": "d", "text": "2.75 x 3 = 275 + 275 + 275 = 825", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Represent multiplication by three as repeated addition of 2.75 and calculate the same quantity.",
+        "source_solution": "2.75 x 3 = 2.75 + 2.75 + 2.75 = 5.50 + 2.75 = 8.25.",
+        "unit_reason": "One equality includes both the requested sum representation and its evaluated value; a result-only item would silently omit the representation.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of a complete equality replaces independently producing the repeated-addition expression and calculation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Use the right three addends, but add integer parts to 6 and the strings of hundredths to 225, then append '.225' to 6. This manufactures 6.225 rather than carrying 225 hundredths as 2.25 to obtain 8.25.", "misconception": "Add integer and fractional digit strings independently without preserving place value or carrying across the decimal point."},
+          {"option_id": "b", "truth": "correct", "derivation": "Three copies of 2.75 give 2.75 + 2.75 = 5.50 and 5.50 + 2.75 = 8.25, retaining both required sum form and value.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Discard the decimal part of the factor 2.75 before expanding it three times, producing 2 + 2 + 2 = 6. Asserting that the original product equals this changed sum is false because 2.75 x 3 = 8.25, not 6.", "misconception": "Truncate the repeated addend to its integer part before forming the sum, falsely equating a product with its changed-factor version."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Remove the decimal point from each 2.75 and add three 275s, giving 825, without dividing by 100. The assertion that 2.75 x 3 equals 825 is false: the original product is 8.25.", "misconception": "Treat hundredths as whole units and fail to rescale after removing the decimal point."}
+        ]
+      }
+    },
+    {
+      "id": "n60-fabric-fractions",
+      "source_numbers": ["1015"],
+      "view": {
+        "mode": "single",
+        "stem": "A piece of fabric is cut into equal parts. Three parts are used for dresses and the remaining five for blouses. What fraction of the original piece is used for each?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Dresses: 3/5; blouses: 5/3.", "figure_ids": []},
+          {"id": "b", "text": "Dresses: 5/8; blouses: 3/8.", "figure_ids": []},
+          {"id": "c", "text": "Dresses: 3/8; blouses: 5/8.", "figure_ids": []},
+          {"id": "d", "text": "Dresses: 3/3; blouses: 5/5.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find the two allocation fractions using the same original whole of eight equal parts.",
+        "source_solution": "The whole contains 3 + 5 = 8 equal parts; dresses take 3/8 and blouses 5/8. Their sum is 1.",
+        "unit_reason": "The response is one labelled allocation pair with a common denominator, not two independent clicks that conceal the relationship to the same whole.",
+        "concept_blocks": [],
+        "limitations": ["The allocation fractions are recognized rather than independently written and justified."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Divide each allocation count by the other count rather than their total: dresses 3/5, blouses 5/3. These compare the groups to each other, and 5/3 cannot describe this part of the original whole.", "misconception": "Use a part-to-part ratio where a part-to-whole fraction is requested."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Find the denominator 3 + 5 = 8 correctly but attach the remaining five parts to dresses and the three used parts to blouses, giving 5/8 and 3/8.", "misconception": "Reverse which allocation the given and remaining parts belong to."},
+          {"option_id": "c", "truth": "correct", "derivation": "All eight parts are equal, so each contributes 1/8 of the original fabric. Three give 3/8 for dresses and five give 5/8 for blouses.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Treat the dresses allocation as its own whole and divide 3 by 3, and treat the blouses allocation as its own whole and divide 5 by 5. Both become 1, although neither group is the original piece.", "misconception": "Change the reference whole separately for each allocation instead of keeping the original eight-part whole."}
+        ]
+      }
+    },
+    {
+      "id": "n60-pool-model",
+      "source_numbers": ["1016"],
+      "view": {
+        "mode": "single",
+        "stem": "An initially empty swimming pool fills at a constant rate, with no water leaving or being lost. It becomes full after 6 hours. After 1 hour 25 minutes, what fraction of the pool's capacity is filled?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "5/24", "figure_ids": []},
+          {"id": "b", "text": "55/72", "figure_ids": []},
+          {"id": "c", "text": "72/17", "figure_ids": []},
+          {"id": "d", "text": "17/72", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compute elapsed-time divided by full-fill-time under explicitly stated empty-pool, uniform-flow and no-loss conditions, retaining the original two time inputs.",
+        "source_solution": "The printed task does not explicitly state uniform inflow or an initially empty pool, so it has no unique numerical answer as written. Even an empty pool with filled fraction (t/6)^2 reaches capacity in six hours but gives 289/5184 at 17/12 hours. With the added visible constant-rate, initially-empty and no-loss conditions, 1 hour 25 minutes = 85 minutes and six hours = 360 minutes; 85/360 reduces to 17/72.",
+        "unit_reason": "One fraction-of-capacity response tests the unit conversion and proportional time model together; separately asking for converted minutes would not retain the modelling inference.",
+        "concept_blocks": [],
+        "limitations": ["Uniform inflow, an initially empty pool, and no losses are added visible modelling conditions, not explicitly printed source facts.", "The unconditioned printed problem's numerical answer is nonidentifiable; the candidate assesses a specified proportional model instead.", "Fraction recognition does not demonstrate independently writing the time conversion, ratio or reduction."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Read 1 hour 25 minutes as 1.25 hours, then divide by 6: 1.25/6 = 125/600 = 5/24. The real elapsed time is 1 + 25/60 hours, not 1 + 25/100.", "misconception": "Treat the minutes field of a time as hundredths of an hour."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Compute the filled fraction 85/360 = 17/72 correctly, then report the unfilled complement 1 - 17/72 = 55/72 rather than the filled amount.", "misconception": "Answer the fraction still empty instead of the fraction occupied by water."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Convert both times to 360 and 85 minutes, but divide total time by elapsed time: 360/85 = 72/17. This is the reciprocal of the filled proportion and exceeds 1 before the pool is full.", "misconception": "Reverse the part-to-whole ratio in the uniform-filling model."},
+          {"option_id": "d", "truth": "correct", "derivation": "The explicitly constant rate fills 1/360 of capacity per minute from an empty start. After 85 minutes, the filled fraction is 85/360 = 17/72 under the stated no-loss conditions.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n60-units-five",
+      "source_numbers": ["1017"],
+      "view": {
+        "mode": "single",
+        "stem": "Round 1.69, 1.198, 37.444, 37.5444 and 802.3032 directly to units, in that order. A first discarded digit of 5 rounds up. Which row gives the complete results?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "1, 1, 37, 37, 802", "figure_ids": []},
+          {"id": "b", "text": "2, 1, 37, 38, 802", "figure_ids": []},
+          {"id": "c", "text": "2, 2, 37, 38, 802", "figure_ids": []},
+          {"id": "d", "text": "1, 1, 38, 38, 802", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Round all five source inputs to units, including the contrasting 37.444/37.5444 pair and the later large digits of 1.198.",
+        "source_solution": "Tenths digits 6, 1, 4, 5, 3 give 2, 1, 37, 38, 802. Only the first discarded digit governs each decision.",
+        "unit_reason": "An ordered five-result units series retains the direct-rounding distinction across the complete input set; its companion tenths series uses a different precision and includes carry, so is a separate coherent unit.",
+        "concept_blocks": [10],
+        "limitations": ["Series recognition replaces independently writing every units approximation.", "This source and 1010 both exercise units rounding; both full input sets are retained rather than omitting printed work as redundant."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Truncate to integer parts 1/1/37/37/802. This fails to increase 1.69 and 37.5444 despite their tenths digits 6 and 5.", "misconception": "Delete fractional digits without rounding."},
+          {"option_id": "b", "truth": "correct", "derivation": "Inspect tenths digits 6/1/4/5/3, raising only 1.69 and 37.5444. The full ordered result is 2/1/37/38/802.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Raise each integer part if any fractional digit is at least 5. The fractional strings 69/198/444/5444/3032 trigger the first, second and fourth increases, giving 2/2/37/38/802. The second is false because the tenths digit is 1.", "misconception": "Scan all discarded digits for a large digit instead of inspecting only the tenths digit."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Inspect the retained units digit 1/1/7/7/2 and increase the integer only when that digit is at least 5. This produces 1/1/38/38/802, incorrectly leaving 1.69 and increasing 37.444.", "misconception": "Apply the increase threshold to the retained units digit rather than the first discarded tenths digit."}
+        ]
+      }
+    },
+    {
+      "id": "n60-tenths-four",
+      "source_numbers": ["1017"],
+      "view": {
+        "mode": "single",
+        "stem": "Round 0.3691, 0.8218, 0.9702 and 61.3501 directly to tenths, in that order. A first discarded digit of 5 rounds up. Which row gives the complete results?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "0.3, 0.8, 0.9, 61.3", "figure_ids": []},
+          {"id": "b", "text": "0.4, 0.9, 1.0, 61.4", "figure_ids": []},
+          {"id": "c", "text": "0.4, 0.8, 1.0, 61.4", "figure_ids": []},
+          {"id": "d", "text": "0.0, 1.0, 1.0, 61.0", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Round all four tenths inputs directly, preserving the 0.9702 carry and the full input 61.3501.",
+        "source_solution": "Hundredths digits 6, 2, 7, 5 give 0.4, 0.8, 1.0, 61.4. Increasing 0.9 by a tenth produces 1.0; 61.3501 retains its first discarded 5.",
+        "unit_reason": "The full tenths row keeps the precision and carry cases together instead of splitting per number; it is distinct from the same source's units task.",
+        "concept_blocks": [10],
+        "limitations": ["Recognition does not demonstrate independently writing the four approximations, including the carry to 1.0.", "The earlier tenths series is retained as well because dropping either source's inputs would be a coverage loss, not a format simplification."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Keep just the integer and tenths digits: 0.3, 0.8, 0.9, 61.3. Three hundredths digits are at least 5, so this truncation misses three increases and the carry.", "misconception": "Truncate the series without increasing the retained tenths digit."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Choose the next greater multiple of 0.1 for every nonexact-tenth input, giving 0.4/0.9/1.0/61.4. This wrongly raises 0.8218 even though its hundredths digit is 2.", "misconception": "Round upward to the next tenth whenever any discarded digits are nonzero."},
+          {"option_id": "c", "truth": "correct", "derivation": "Use hundredths digits 6/2/7/5: increase 0.3 to 0.4, keep 0.8, carry 0.9 to 1.0, and increase 61.3 to 61.4.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Round each original to units first, using tenths digits 3/8/9/3, to get 0/1/1/61. Append a zero decimal digit, obtaining 0.0/1.0/1.0/61.0, instead of rounding to tenths.", "misconception": "Perform coarser units rounding and use decimal padding as a substitute for the requested tenths calculation."}
+        ]
+      }
+    },
+    {
+      "id": "n60-lines-angle-record",
+      "source_numbers": ["1018"],
+      "view": {
+        "mode": "single",
+        "stem": "Two complete straight lines AC and BD are to intersect at O, with OC opposite OA and angle AOB = 155 degrees. Choose the valid construction plan and record of the other three angles, listed in the order BOC, COD, DOA.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Draw line AC through O and ray OB so that angle AOB is 155 degrees. Extend OB through O to the opposite ray OD, making line BD. Other angles: (25 degrees, 155 degrees, 25 degrees).", "figure_ids": []},
+          {"id": "b", "text": "Draw line AC through O and ray OB so that angle AOB is 155 degrees. Extend OB through O to the opposite ray OD, making line BD. Other angles: (155 degrees, 25 degrees, 155 degrees).", "figure_ids": []},
+          {"id": "c", "text": "Draw line AC through O and ray OB so that angle AOB is 155 degrees. Place D on the same ray as B from O, taking rays OB and OD as line BD. Other angles: (25 degrees, 25 degrees, 155 degrees).", "figure_ids": []},
+          {"id": "d", "text": "Draw line AC through O and ray OB so that angle AOB is 155 degrees. Extend OB through O to the opposite ray OD, making line BD. Other angles: (68 1/3 degrees, 68 1/3 degrees, 68 1/3 degrees).", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recognize a two-line construction using opposite rays and derive all three remaining, position-labelled intersection angles.",
+        "source_solution": "Draw AC through O; choose OB at 155 degrees to OA and extend it through O to the opposite ray OD. OA/OC and OB/OD are opposite pairs. BOC = 180 - 155 = 25 degrees, COD = 155 degrees by vertical angles, and DOA = 25 degrees. The full cyclic record is 155/25/155/25 and sums to 360.",
+        "unit_reason": "One construction-plus-angle record preserves straight-line extension, vertical-angle equality and both supplementary angles together. Text suffices to distinguish opposite from same rays, so no unauthorized new diagram is essential to this recognition unit.",
+        "concept_blocks": [],
+        "limitations": ["The written task asks the learner to draw two intersecting lines. This text-only recognition unit cannot demonstrate actual drawing, protractor use or accurate construction; those production capabilities are explicitly lost.", "AC, BD and O are added visible labels to specify rays and angle positions, not labels claimed to appear in a source diagram.", "No new figure, renderer, drawing observation or production evidence was created."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Opposite OA/OC make BOC supplementary to AOB: 180 - 155 = 25. Opposite OB/OD make COD vertical to AOB, hence 155, and DOA supplementary to AOB, hence 25. The plan creates both complete straight lines.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "With the correct line construction, assign the known 155 degrees to both adjacent angles and assign 180 - 155 = 25 to the vertical angle. This gives 155/25/155 but reverses which positions are equal and supplementary.", "misconception": "Exchange the adjacent-angle and vertical-angle relationships."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Put D on the same ray as B, not the opposite ray. Then BOC = 25, COD equals COB = 25, and DOA equals BOA = 155. That triple follows the mistaken ray placement, but OB and OD do not form the required complete second line through O.", "misconception": "Treat coincident same-direction rays as opposite rays that form a straight line; the resulting angle record is for the wrong construction."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Subtract the given angle from the full turn and distribute the remainder equally: (360 - 155)/3 = 205/3 = 68 1/3 degrees each. Although the four numbers sum to 360, adjacent linear pairs must sum to 180 and the vertical angle must be 155.", "misconception": "Use only the full-turn sum and assume the other three angles are equal, ignoring straight-line and opposite-ray constraints."}
+        ]
+      }
+    },
+    {
+      "id": "n60-nested-calculation",
+      "source_numbers": ["1019"],
+      "view": {
+        "mode": "single",
+        "stem": "Calculate $[(37.3+21.7)\\cdot13+8688]:31-196$, where ':' means division.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "501", "figure_ids": []},
+          {"id": "b", "text": "305", "figure_ids": []},
+          {"id": "c", "text": "-109", "figure_ids": []},
+          {"id": "d", "text": "109", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Evaluate the entire nested decimal expression in its written operation order.",
+        "source_solution": "37.3 + 21.7 = 59; 59 x 13 = 767; 767 + 8688 = 9455; 9455 / 31 = 305; 305 - 196 = 109.",
+        "unit_reason": "A single full-expression value requires the parentheses, bracketed multiplication/addition, division and final subtraction; no intermediate-value clicks replace the written calculation.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the final value cannot demonstrate independently recording all intermediate calculations or the full written evaluation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Calculate the bracketed sum 9455 and quotient 305 correctly, then replace the final subtraction by addition: 305 + 196 = 501.", "misconception": "Apply the wrong operation at the final written minus sign after correctly evaluating the nested prefix."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Evaluate the parentheses to 59, multiply to 767, add to 9455, and divide by 31 to 305, then stop before the final '-196'.", "misconception": "Treat the quotient of the bracket as the entire expression and omit the final subtraction."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Reach the quotient 305 correctly but subtract in the reverse order: 196 - 305 = -109 rather than 305 - 196.", "misconception": "Treat subtraction as reversible or commutative by swapping the minuend and subtrahend."},
+          {"option_id": "d", "truth": "correct", "derivation": "Evaluate in order: 59, 767, 9455, 305, then 305 - 196 = 109. The division is exact because 31 x 305 = 9455.", "misconception": null}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1009", "question_ids": ["n60-bounds"], "omitted_tasks": ["Independent written production of all bound pairs and nearest integers is replaced by table recognition."], "reason": "All three original decimals, both adjacent natural-number bounds for each, and every nearest-number request are retained in one linked table."},
+    {"source_number": "1010", "question_ids": ["n60-units-series"], "omitted_tasks": ["Independent writing of the six rounded numerals is not demonstrated by series recognition."], "reason": "All six original decimals and units precision are retained, including 0.23, the exact tie 8.5, and the direct-rounding distinction at 300.499."},
+    {"source_number": "1011", "question_ids": ["n60-crate-precision"], "omitted_tasks": ["Independent written approximation at both precisions is replaced by recognition."], "reason": "The same 16.38 kg quantity is retained with both requested units and tenths approximations, labelled with kg units."},
+    {"source_number": "1012", "question_ids": ["n60-tenths-five", "n60-hundredths-five", "n60-tens-four"], "omitted_tasks": ["Independent written production of all fourteen rounded values is replaced by three complete precision-series recognitions."], "reason": "All five tenths inputs, all five hundredths inputs and all four tens inputs are retained exactly. Three units are justified by the three retained/discarded digit positions, not by the fourteen individual answers."},
+    {"source_number": "1013", "question_ids": ["n60-reception-regions"], "omitted_tasks": ["Independent description or shading of the exclusive and shared regions is not demonstrated."], "reason": "All A-only, B-only and both-station region requests are retained, and region II is explicitly identified as both common reception and the intersection. The sole approved full figure is reused unchanged."},
+    {"source_number": "1014", "question_ids": ["n60-product-sum"], "omitted_tasks": ["Independent creation of the sum and its evaluation is replaced by equality recognition."], "reason": "Both the three-addend sum form for 2.75 x 3 and its numerical value remain required parts of the response."},
+    {"source_number": "1015", "question_ids": ["n60-fabric-fractions"], "omitted_tasks": ["Independent written production of the two allocation fractions is replaced by pair recognition."], "reason": "The equal-part premise, three dresses parts, remaining five blouses parts, original whole and both requested fractions are preserved."},
+    {"source_number": "1016", "question_ids": ["n60-pool-model"], "omitted_tasks": ["A unique numerical fraction cannot be obtained from the unconditioned printed task: uniform inflow and an initially empty pool are not explicitly stated.", "The candidate replaces the underspecified printed model with visible constant-rate, initially-empty and no-loss conditions.", "Independent written time conversion, ratio formation and fraction reduction are not demonstrated."], "reason": "The original six-hour fill time and one-hour-twenty-five-minute elapsed time are retained. The frozen solving stage records nonidentifiability and a nonuniform counterexample; the conditioned candidate honestly tests the proportional model instead of pretending the added premises were printed."},
+    {"source_number": "1017", "question_ids": ["n60-units-five", "n60-tenths-four"], "omitted_tasks": ["Independent written production of all nine approximations is replaced by complete-series recognition."], "reason": "All five units inputs and all four tenths inputs are retained exactly, including the 0.9702 carry to 1.0 and the full 61.3501. The precision distinction justifies two units; no individual input was dropped as redundant."},
+    {"source_number": "1018", "question_ids": ["n60-lines-angle-record"], "omitted_tasks": ["Actual drawing of the two intersecting straight lines and demonstrating protractor/straight-line construction ability are not assessed by the text recognition unit."], "reason": "The valid construction plan explicitly forms complete lines from opposite rays at the original 155-degree angle and records all three remaining angle positions and values. Added labels are visible scaffolding only. The actual drawing capability is lost; no new figure or fictitious drawing evidence is claimed."},
+    {"source_number": "1019", "question_ids": ["n60-nested-calculation"], "omitted_tasks": ["Independent written production of the nested calculation and its intermediate work is not demonstrated."], "reason": "The entire original expression, all numbers, parentheses, bracket, multiplication, division and final subtraction remain visible and unchanged."}
+  ]
+}

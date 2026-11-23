@@ -1,0 +1,96 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 105,
+  "printed_page": 96,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 105
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "ebb8dc2efd5adc091977fba659a35981a69a368fc6bbc4d09ee4e3c30c3b1fc9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Continues104. Figure63 interrupts a paragraph; caption shares the preceding beside-figure row. Complete original relative-humidity and dewpoint notation retained.",
+    "Original p0105#8 final dewpoint-definition sentence uses emphasis dots; Markdown bold preserves this exact emphasis span without adding literal dots to the prose."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-63",
+      "label": "图 63",
+      "box": [
+        719,
+        685,
+        529,
+        351
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+器官水分的损失，却正是与水汽离饱和的程度有关. 因此需
+要引入一个指示在一定温度下水汽离饱和程度的量——相对
+湿度.
+
+<!-- p -->
+**一定温度下空气中水汽压 $p$ 与该温度时饱和水汽压 $p_0$
+的比值，叫做空气的相对湿度 $\gamma$，用百分数表示为**
+
+<!-- p -->
+$\gamma=\frac{p}{p_0}\cdot100\%.$　$(4-4)$
+
+<!-- p -->
+**露点**　在一定压强下，降
+低未饱和汽的温度，迟早会使
+它转变为饱和汽. 如果看一看
+饱和水汽压与温度的关系图线
+（图 $63$），可以证实这一点.
+
+<!-- p open -->
+设在温度 $t_1$ 时水汽压等
+
+<!-- fig 图 63 box 719,685,529,351 -->
+![图 63](figures/fig-63.png)
+
+<!-- cap 图 63 samerow -->
+图 63
+
+<!-- p cont -->
+于 $p_1$. 此时用点 $A$ 表示蒸汽的状态. 在压强 $p_1=$ 常量的情
+况下，温度降低到 $t_p$ 时蒸汽转变为饱和汽，用点 $B$ 表示它的
+状态. **水汽转变为饱和汽时的温度叫做露点.**
+
+<!-- p -->
+当空气的温度降到露点时，水汽开始凝结：出现了雾、
+露水.
+
+<!-- p -->
+露点可以表征空气的湿度，因为根据它可以确定水汽压
+和相对湿度. 事实上，如果露点是已知的，则水汽压 $p_1$ 也是
+已知的，利用不同温度的饱和水汽压表，可以求得它. 利用
+表也可以确定相当于温度 $t_1$ 时的饱和水汽压 $p_0$. 知道 $p_1$ 和
+$p_0$，则可求得相对湿度 $\gamma=\frac{p_1}{p_0}\cdot100\%$.
+
+<!-- p -->
+**湿度计**　利用特殊的仪器——湿度计和干湿泡湿度计可
+以测定空气的湿度.
+
+<!-- foot -->
+· 96 ·

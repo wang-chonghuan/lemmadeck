@@ -1,0 +1,106 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 222,
+  "printed_page": 215,
+  "numbering_scope": "g10",
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 222
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "a56ef3f5ccb37d2021a3bac6a3ccce12c09215f339b4c3a9a76319a5cc8291a6"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "SOURCE AUTHOR ONLY. FIRST222 immutable before supplied predecessor/namespace/TOC/templates. Native success is not independent source approval.",
+    "Printed §62 is a true numbered topic, h3, locator geo910-c2-s3-n62. No parent-section heading is printed here; no synthetic h2. Definitions and local markers 1/2 are p, not headings.",
+    "Bound p0221#7 is closed ex215. This page begins a fresh printed heading, not ex215 cont. End p is open after 利用两点间距离公式; fig91 reference belongs to this paragraph, pixels on physical223.",
+    "Fig89 and fig90 are prose figures. Each whole semantic figure has one box; fig90 includes both а/б. Captions share one printed row; second cap samerow.",
+    "Source emphasis: entire heading and entire two-row definitions definitely bold, preserved. Definite emphasized prose objects 球心、半径、弦、直径、球面的方程、球体内部的点 recorded, but exact adjoining boundaries HOLD and no uncertain bold markup asserted.",
+    "Cross-line emphasis object 球体中不属于它的表面的所有的点叫做球体内部的点 spans 不属/于它的. Exact bold boundaries HOLD. No replacement wording or definition heading inferred.",
+    "Footer side decorations inventoried in FIRST, not semantic body. No count exclusions, expected-row override, artificial line breaks, or lesson-completion claim."
+  ],
+  "errata": [],
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-g10-89",
+      "label": "图 89",
+      "box": [
+        157,
+        801,
+        394,
+        394
+      ]
+    },
+    {
+      "id": "fig-g10-90",
+      "label": "图 90",
+      "box": [
+        695,
+        757,
+        550,
+        462
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+§62. 球面和球体
+
+<!-- p -->
+**1. 定义1. 到已知点的距离等于已知正数$R$的空间所有**
+**的点的集合叫做球面.**
+
+<!-- p -->
+已知点$O$就是球心(图89). 线段$OM$($M$是球面上的点)
+叫做球面的半径($|OM|=R$).
+
+<!-- p -->
+连结球面上任意两点的线段叫做球面的弦. 通过中心$O$
+的弦叫做球面的直径. 直径的长等于半径的二倍(图89).
+
+<!-- fig 图 89 box 157,801,394,394 -->
+![图 89](figures/fig-g10-89.png)
+
+<!-- fig 图 90 box 695,757,550,462 -->
+![图 90](figures/fig-g10-90.png)
+
+<!-- cap 图 89 -->
+图 89
+
+<!-- cap 图 90 samerow -->
+图 90
+
+<!-- p -->
+**定义2. 到已知点的距离不大于已知正数$R$的空间所**
+**有的点的集合叫做球体.**
+
+<!-- p -->
+半圆绕半圆所含的直径为轴旋转可以得到球体(图90).
+半圆周旋转得到的图形是球面, 即球体的表面. 这个球面的
+中心、半径和弦分别叫做球体的中心、半径和弦. 球体中不属
+于它的表面的所有的点叫做球体内部的点.
+
+<!-- p open -->
+2. 给定一个直角坐标系, 我们来建立以$S(a,b,c)$为中
+心、$R$为半径的球面的方程(图91). 因为球面上的任一点$M$
+$(x,y,z)$都满足等式$|SM|=R$, 所以, 利用两点间距离公式
+
+<!-- foot -->
+215

@@ -1,0 +1,118 @@
+{
+  "schema": "s10y-choice-review-v1",
+  "seed_sha256": "6c973ae2b14ffa33c58cc6df92f8af945368567753b2864b7ab533a86f7e42f1",
+  "draft_sha256": "fbe0d46b0c34ae68b4b35c335bfe7a40db9608d3e575364e23d6c4c9e8ecf710",
+  "reviewer": {"kind": "self_review", "identity": "Codex184-6; honest inline independent-stance review, not a separate agent"},
+  "source_reviews": [
+    {
+      "source_number": "363",
+      "independent_solution": "由增量商h/h=1与(2xh+h^2)/h=2x+h，得到f'=1和g'=2x，定义域均为实数。该种子解在选择题构造前已写入seed-first-solution.md。",
+      "coverage": {"verdict": "pass", "evidence": "linear-quadratic要求同时选出两个完整导数，保留两类函数和常数加数；独立计算书写能力的损失明确列出。"}
+    },
+    {
+      "source_number": "364",
+      "independent_solution": "h和u的增量均为2xh+h^2+h，加数7在u的增量中抵消；两者导数均为2x+1。",
+      "coverage": {"verdict": "pass", "evidence": "constant-shift的A/C分别对应h/u，两条函数都判断，不把遗漏一个函数记为覆盖；B检查线性项遗漏，D检查常数未消失。"}
+    },
+    {
+      "source_number": "365",
+      "independent_solution": "x不等于0时倒数增量商为-1/[x(x+h)]，故v'=2x-1/x^2。x>0时根式商为1/[sqrt(x+h)+sqrt(x)]，故y'=2x-1/x^2+1/(2sqrt(x))。零不在原函数定义域。",
+      "coverage": {"verdict": "pass", "evidence": "两个问题分别包含v的全部三项与y的全部三项，并把各自实际定义域放入题干；根式求导不能靠复制倒数题的完整答案完成。"}
+    },
+    {
+      "source_number": "366",
+      "independent_solution": "w=u-v给出Delta w=Delta u-Delta v；除以同一个非零Delta x后，使用两项增量商有限极限的差，得w'=u'-v'。",
+      "coverage": {"verdict": "pass", "evidence": "difference-proof同时检验增量拆分和取有限极限后的结论，保留可导及同一区间条件；明确承认不验证独立证明写作。"}
+    }
+  ],
+  "figure_checks": [],
+  "new_figure_reviews": [],
+  "question_reviews": [
+    {
+      "question_id": "linear-quadratic",
+      "task_fidelity": {"verdict": "pass", "evidence": "必须同时判断f和g，不能只靠一个函数的正确导数选择A；原题两个函数均保留。"},
+      "redundancy": {"verdict": "pass", "evidence": "本题建立线性项、二次项的不同求导结果；下一题新增线性加数且比较常数平移，没有重复相同的完整结果。"},
+      "answer_leakage": {"verdict": "pass", "evidence": "四个选项都给出同样两个函数的导数，A/B共享g结果、A/C共享f结果，选项没有正确性措辞或额外解释。"},
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "增量商极限给f'=1、g'=2x；只有A的两条同时正确。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "f'=1，g'=2x，和两个增量商极限一致。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "任意x处f'均为1而非0；把x当常数的误算确实产生0。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "x=0时g'=0而非3；保留常数3可重现该错误。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "x=0时f'=1而非5；逐项照抄原函数正好产生此选项。"}
+        ]
+      }
+    },
+    {
+      "question_id": "constant-shift",
+      "task_fidelity": {"verdict": "pass", "evidence": "h/u都在同一题中判断，保留7引起的函数值平移与导数不变的关键区别。"},
+      "redundancy": {"verdict": "pass", "evidence": "四个选项是针对两个函数的数学等式，不是按原题字母机械拆成两次是非点击；原生多选无需组合编码。"},
+      "answer_leakage": {"verdict": "pass", "evidence": "选项均为简短等式；前一题未给出2x+1，不能从前一题直接复制这两条答案。"},
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "两个函数的增量商均为2x+h+1，所以真集为A/C。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "x^2与x的导数相加为2x+1。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "遗漏x的导数1，任何x处都与正确结果差1。"},
+          {"option_id": "C", "truth": "correct", "evidence": "常数7的增量为0，导数仍为2x+1。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "正确结果与2x+8相差7，正好是把常数7原样保留的错误。"}
+        ]
+      }
+    },
+    {
+      "question_id": "reciprocal-term",
+      "task_fidelity": {"verdict": "pass", "evidence": "二次项、倒数项与常数5均保留；x不等于0为原函数定义域而不是额外限制。"},
+      "redundancy": {"verdict": "pass", "evidence": "倒数负指数的符号和指数变化在前两题未出现，任务不是同一数值结果的变体。"},
+      "answer_leakage": {"verdict": "pass", "evidence": "每个选项都给完整表达式；其他题中的二次项求导不足以决定倒数项的符号和分母。"},
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "倒数项贡献-1/x^2、常数贡献0，完整导数为B。",
+        "correct": ["B"],
+        "option_checks": [
+          {"option_id": "A", "truth": "incorrect", "evidence": "x=1时A给3而真实导数为1，遗漏负号的误算可重现。"},
+          {"option_id": "B", "truth": "correct", "evidence": "2x-1/x^2等于三个原函数项的导数之和。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "x=2时C为3.5而真实值为3.75；只乘指数、不降低指数产生此式。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "任何定义域点都多出5；把常数不作求导正好产生该差值。"}
+        ]
+      }
+    },
+    {
+      "question_id": "square-root-term",
+      "task_fidelity": {"verdict": "pass", "evidence": "完整保留原函数三个加项与正实数定义域，不把上一小问结果替代含根式的整个任务。"},
+      "redundancy": {"verdict": "pass", "evidence": "本题新增半次幂或有理化操作；即使已掌握倒数项，仍须区分根式导数的系数与幂。"},
+      "answer_leakage": {"verdict": "pass", "evidence": "四式结构可比；掌握前题最多排除倒数项符号错误的D，A/B/C仍需计算根式导数。"},
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "有理化后的根式增量商极限为1/(2sqrt(x))；真集仅A。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "2x、-1/x^2与1/(2sqrt(x))逐项正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "x=1时B为2而正确值为1.5；根式原样照抄是实际错误步骤。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "x=1时C为2而正确值为1.5；遗漏半次幂的系数1/2可重现。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "x=1时D为3.5而正确值为1.5；倒数求导遗漏负号导致差2。"}
+        ]
+      }
+    },
+    {
+      "question_id": "difference-proof",
+      "task_fidelity": {"verdict": "pass", "evidence": "A为共同增量分母下的拆分，B为有限极限后的差；两条共同保留原证明关键步骤，证明写作能力损失明确记录。"},
+      "redundancy": {"verdict": "pass", "evidence": "前四题计算具体函数，本题检验适用于任意可导u/v的一般证明，不是重复求导数值。"},
+      "answer_leakage": {"verdict": "pass", "evidence": "B/C/D使用相同的有限极限前提、相近长度的结论；题干未直接声明差的导数结论，A也未用正确性措辞。"},
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "Delta(u-v)=Delta u-Delta v，取两个有限极限的差得到u'-v'；真集为A/B。",
+        "correct": ["A", "B"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "展开w(x+h)-w(x)后分别整理u和v的增量，等式恒成立。"},
+          {"option_id": "B", "truth": "correct", "evidence": "可导保证有限极限存在，差的极限定理给出u'-v'。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "取u=v=x，w'=0而u'+v'=2；把减号换加号确实导致此结论。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "取u=v=x，w'=0而u'v'=1；把增量商的差换成乘积正好产生此错式。"}
+        ]
+      }
+    }
+  ],
+  "outcome": "pass"
+}

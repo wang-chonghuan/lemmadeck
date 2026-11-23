@@ -1,0 +1,104 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 227,
+  "printed_page": 220,
+  "numbering_scope": "g10",
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "d621170fb48d6b7fcb1e1dbf52312c9fdda86c7fa58962b4f8be953728b2deb8"
+  },
+  "notes": [
+    "FIRST227 sealed original-only, immutable0444. Author observed25 actual horizontal source rows, including shared caption/prose row; never a native expected override.",
+    "Incoming p cont 切面 closes bold definition p open of own226. Definition is ordinary prose, no fabricated topic heading. No heading printed on227.",
+    "Definite source emphasis: incoming 切面 and entire TWO-row theorem37 statement bold. Source-named terms 切点/切线 retained; exact emphasis of terms and 充分性/必要性 labels fine-boundary HOLD.",
+    "Necessity proof actually ends with [AB] on one printed row and perpendicular alpha on next: preserve AB, not OA. Only this genuine math split receives arrow marker.",
+    "Figure96 source body illustration: sphere circular outline/dashed back arc, oblique tangent plane alpha, A/B/O dashed diameter, solid line a at A. Precise label/connectivity/crop fidelity HOLD, author observations not source approval.",
+    "图96 caption shares final source prose row; cap samerow avoids a false extra source row.",
+    "Source exercise229/230/231 number suffixes are raised circles preserved as math superscripts. Exercises229 and230 complete;231 open ends 已知点. No next page or external completion read.",
+    "Fine emphasis/glyph/source-row-boundary HOLD survives native outcomes. Independent reviewer must approve; author cannot."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 227
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-g10-96",
+      "label": "图 96",
+      "box": [
+        776,
+        966,
+        381,
+        370
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+**切面。**
+
+<!-- p -->
+这个点(图$96$中的点$A$)叫做球面与平面的切点。我们
+证明一个同圆周与直线相切的性质类似的定理。
+
+<!-- p -->
+**定理37. 平面与球面相切的充分必要条件是这个平面
+经过球面直径的端点并且垂直于这条直径。**
+
+<!-- p -->
+证明. 充分性. 假设$[AB]$是已知球面的直径(图$96$)，
+$A\in\alpha$，$[AB]\perp\alpha$。那么球心$O$到平面$\alpha$的距离等于半径。根据
+定理36，点$A$是球面与平面唯一的公共点，即$\alpha$是切面。
+
+<!-- p -->
+必要性. 设$A$是球面与平面$\alpha$的切点(图$96$)。我们证明
+$[OA]\perp\alpha$。假设$[OA]$与$\alpha$不垂直，那么点$O$到平面$\alpha$的距离
+应该小于$|OA|$，即小于球面的半径。根据定理36，在这种情
+况下，球面与平面不相切。这
+与已知条件矛盾。因此，$[AB]↵\perp\alpha$。
+
+<!-- fig 图 96 box 776,966,381,370 -->
+![图 96](figures/fig-g10-96.png)
+
+<!-- p -->
+在切面内，通过切点引直
+线(图$96$)，显然，这条直线与
+球面只有一个公共点。这样的
+直线叫做球面(球体)的切线。
+
+<!-- cap 图 96 samerow -->
+图96
+
+<!-- exhead -->
+习题
+
+<!-- ex 229 -->
+$^\circ$. 经过一个点能够作多少个与球面相切的平面：1)
+点在球面上；2) 点在球面外？
+
+<!-- ex 230 -->
+$^\circ$. 经过一个点能够作多少条球面的切线：1) 点在这
+个球面上；2) 点在球面外？
+
+<!-- ex 231 open -->
+$^\circ$. 求球心的集合：1) 球面与已知平面相切于已知点
+
+<!-- foot -->
+·220·

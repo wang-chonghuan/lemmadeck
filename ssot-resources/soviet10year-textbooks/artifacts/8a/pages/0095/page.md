@@ -1,0 +1,81 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 95,
+  "printed_page": 88,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 95
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "438e85177b120adcca07ab4c5d199865859392e081c86c92e117d49e29a1ac3c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "SOURCE_AUTHOR only; not independently reviewed or approved. One grid-image view; no reopen or crop.",
+    "p0095#1 continues exercise 239 from p0094#8. p0095#9 opens exercise 246 after subquestion а; further subquestions continue on the next page.",
+    "No figures or tables. Exercise 242 has four two-equation systems in two side-by-side pairs, not an illustration. In each pair the two labels share an offset printed row between the equation rows. Separate open/cont ex blocks each carry labelrow once.",
+    "Layout has 26 bands. Pixel-based accounting is 27 content rows plus one footer: add two independently visible offset label rows near y1640 and y1860 that the layout bands merge with equation ink. For each side-by-side pair, only the left system carries WRAP; the right system shares the same two equation rows and is not counted again.",
+    "Exercise 245 relation is transcribed with the observed slanted lower stroke as geqslant, not a strict greater-than sign; independent glyph confirmation remains pending."
+  ],
+  "errata": [],
+  "printed_lines": 28,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 239 cont -->
+а) $c_5=27$，$c_{27}=60$；б) $c_{47}=74$，$c_{74}=47$；
+в) $c_{20}=0$，$c_{66}=-92$；г) $c_8=1$，$c_{25}=9.5$.
+
+<!-- ex 240 -->
+240. а) 在7和35中间插入6个数，使它们和这两个数成等
+差数列.
+б) 在1和16中间插入8个数，使它们和这两个数成等
+差数列.
+
+<!-- ex 241 -->
+241. а) 等差数列的第31项等于17，公差等于2.5.
+求第41项和第47项.
+б) 在等差数列$(a_n)$里，$a_7=-100$，$a_8=-70$.
+求$a_5$和$a_{15}$.
+
+<!-- ex 242 open labelrow -->
+242. 求下列等差数列$(a_n)$的第1项和公差，设：
+а) $\left\{\begin{aligned}a_1+a_7&=42,\\↵a_{10}-a_3&=21;\end{aligned}\right.$ б) $\left\{\begin{aligned}a_5+a_{11}&=-0.2,\\a_4+a_{10}&=2.6;\end{aligned}\right.$
+
+<!-- ex 242 cont labelrow -->
+в) $\left\{\begin{aligned}a_1+a_5&=24,\\↵a_2\cdot a_3&=60;\end{aligned}\right.$ г) $\left\{\begin{aligned}a_2+a_3+a_4&=3,\\a_2\cdot a_4&=-8.\end{aligned}\right.$
+
+<!-- ex 243 -->
+243. 写出$x_1=1.7$和$d=0.3$的等差数列$(x_n)$的通项公式. 求
+等于下列各数的项的序号：
+а) 32；б) 46.7.
+证明：62.7不是这个数列的项.
+
+<!-- ex 244 -->
+244. 查明下列各数是否属于等差数列$3,10,\cdots$：
+а) 143；б) 551.
+
+<!-- ex 245 -->
+245. 等差数列$(y_n)$的第1项等于$-19.5$，公差等于1.5. $n$是
+什么数时，不等式$y_n\geqslant 0$成立？这个数列的负项的序号
+是哪些？
+
+<!-- ex 246 open -->
+246. а) 求等差数列$5.3,5.12,\cdots$的第1个负项.
+
+<!-- foot -->
+88

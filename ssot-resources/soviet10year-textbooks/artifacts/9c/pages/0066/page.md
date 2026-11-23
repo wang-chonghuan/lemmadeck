@@ -1,0 +1,93 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 66,
+  "printed_page": 59,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 66
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "b9d836a2deabeea4e3ab7b8ef2dc946617c35e846bdaa7e896f41bbaf9a7e748"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "Page-local faithful typed blocks only; no canonical or assembly contract is claimed.",
+    "The opening four subparts have no visible question number or stem on this page. Their identity remains UNKNOWN; the ex header deliberately has no invented number, cont, or open.",
+    "The later visible h3 is 17. 数直线和数平面. No ancestor heading, TOC identity, or cross-page owner is inferred.",
+    "One body line equals one visible print row; 24 rows including heading, note, and decorated footer.",
+    "Printed solid prose full stops are represented by U+FF0E ．; source numbered prefixes use ASCII periods. No punctuation modernization to hollow Chinese full stops.",
+    "Both lower-formula inequalities have the slanted equality stroke and are transcribed as leqslant; R is bold upright, not substituted with blackboard-bold.",
+    "A wavy underline is visible beneath the closed-interval definition phrase on row r21. It is recorded in page.json, not redrawn.",
+    "The footnote marker after 数直线 is followed by a comma, not the period tentatively recorded in the frozen first inventory.",
+    "An isolated elevated ink mark beside the final 90-degree value on row r04 is retained in raw pixels; its provenance and semantic significance remain UNKNOWN.",
+    "Source speckles, edge blotches, damaged glyph strokes, and the footnote separator remain in the source/crops. No enhancements, image cleanup, or mathematical correction were made.",
+    "No figures, figure captions, exercise-group heading, h1, or h2 are visible.",
+    "Parent text-only boundary binding: source65 ex131 open plus source66 first four trig subparts. Only first block header adds131 cont; every FIRST body byte otherwise unchanged.",
+    "Exercise132/133 close before actual h3 17; n16 local object boundary supported, not source/math/whole-lesson approval. Incoming/source65 UNKNOWN blind record remains immutable.",
+    "Source67 and n17 outgoing continuation UNKNOWN; no additional source inferred or opened.",
+    "Original PNG SHA-256:b9d836a2deabeea4e3ab7b8ef2dc946617c35e846bdaa7e896f41bbaf9a7e748; source66 images4/4 exhausted; parent permanent24/24 zero opens/payloads."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 131 cont -->
+а) $\sin\alpha$，当 $\alpha=0^\circ,30^\circ,45^\circ,60^\circ$；
+б) $\cos\alpha$，当 $\alpha=0^\circ,30^\circ,45^\circ,60^\circ$；
+в) $\operatorname{tg}\alpha$，当 $\alpha=0^\circ,30^\circ,45^\circ,60^\circ$；
+г) $\operatorname{ctg}\alpha$，当 $\alpha=30^\circ,45^\circ,60^\circ,90^\circ$．
+
+<!-- ex 132 -->
+132. а) 对于有理数集合，整数集合的余集是什么集合？
+б) 对于实数集合，无理数集合的余集是什么集合？
+
+<!-- ex 133 -->
+133. 求有理数集合与无理数集合的并集与交集？
+
+<!-- h3 -->
+17. 数直线和数平面
+
+<!-- p -->
+1. 实数 $x$ 和坐标轴上表示这个数的点 $M(x)$ 之间建立一
+一对应关系后，可以用几何的语言来谈论数．
+
+<!-- p -->
+假设坐标轴是水平放置的，取从左到右的方向作它的正
+方向．这时，不等式 $x<y$ 表示点 $M(x)$ 位于点 $M(y)$ 的左边．
+为方便起见，也可以说，数 $x$ 在数 $y$ 的“左边”．如果 $x<z<y$，
+或者 $y<z<x$，就说（在两种情况下）数 $z$ 位于数 $x$ 和 $y$ “之
+间”．表示点 $M(x)$ 和点 $M(y)$ 之间的距离的数
+$|y-x|$
+简称为“数 $x$ 和 $y$ 之间的距离”．
+
+<!-- p -->
+全体实数的集合本身叫做“数直线”*，它的元素，即实数，
+叫做“数直线的点”．我们已经熟悉称为“区间”的数集合．下
+面列举出区间的几个例子：
+
+<!-- p -->
+以 $a$ 为起点，$b$ 为终点的闭区间：
+
+<!-- p -->
+$[a,b]=\{x\in\mathbf{R}\mid a\leqslant x\leqslant b\}$．
+
+<!-- foot note -->
+* 注意“坐标轴”有很多，但是“数直线”只有一个，就是实数集合．
+
+<!-- foot -->
+• 59 •

@@ -1,0 +1,64 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 250,
+  "printed_page": 244,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 250
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "5df8b23d23a8e7d06b4f89addba9b14e9cc819e65f329afc83914ecdc93b9ebb"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 838 cont -->
+и) $\frac{2\sqrt{3}-\sqrt{6}}{\sqrt{8}-2}$.
+
+<!-- ex 839 -->
+839. 化简:
+а) $\frac{x+\sqrt{xy}}{\sqrt{x}+\sqrt{y}}$; б) $\frac{x-\sqrt{x}}{\sqrt{x}-1}$;
+в) $\frac{a+\sqrt{6a}}{6+\sqrt{6a}}$; г) $\frac{p-2\sqrt{p}}{2\sqrt{p}-4}$;
+д) $\frac{a-4}{\sqrt{a}-2}$; е) $\frac{b-9}{\sqrt{b}+3}$.
+
+<!-- ex 840 -->
+840. 比较下列各题里两式的大小:
+а) $\sqrt{2.5}$和$\frac{\sqrt{2}+\sqrt{3}}{2}$;
+б) $\sqrt{11}-1$和$\sqrt{5}+\sqrt{7}$;
+в) $\sqrt{2}+\sqrt{7}$和$2\sqrt{2}+1$;
+г) $\sqrt{5}+\sqrt{7}$和$3+\sqrt{3}$.
+
+<!-- ex 841 -->
+841. 利用公式$(a-b)(a+b)=a^2-b^2$化简下列各式:
+а) $(\sqrt{3}-1)(\sqrt{3}+1)$;
+б) $(\sqrt{11}-3)(\sqrt{11}+3)$;
+в) $(\sqrt{10}+7)(7-\sqrt{10})$;
+г) $(2\sqrt{5}+\sqrt{19})(2\sqrt{5}-\sqrt{19})$;
+д) $(5\sqrt{7}-13)(5\sqrt{7}+13)$;
+е) $(\frac{1}{2}\sqrt{14}+\sqrt{3})(\sqrt{3}-\frac{1}{2}\sqrt{14})$.
+
+<!-- ex 842 -->
+842. 证明下列各式的值是有理数:
+а) $\frac{1}{3\sqrt{2}-4}-\frac{1}{3\sqrt{2}+4}$;
+б) $\frac{1}{5+2\sqrt{6}}+\frac{1}{5-2\sqrt{6}}$.
+
+<!-- foot -->
+244

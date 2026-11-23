@@ -1,0 +1,84 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 44,
+  "printed_page": 37,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 44
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "34cd0bdc00ed4b63df4f92bd321ef9f618f8f67fe68b1165946ad9a8e1385616"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "原图首次阅读后转写；例3正文完整，四列表格作为一个原图对象，含表头和点数2至7六行。原始16/15失败已保存；裁出表格后计数副本左侧空白页边独立墨点构成多余行，只排除此非教学墨迹，不动表格或正文像素。"
+  ],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        1790,
+        60,
+        80
+      ],
+      "reason": "Isolated left scan-margin spot at y1806-1841, outside the table beginning x206 and all prose. Independent source-first.md p44 identifies left-margin spots as non-content. Original SHA34cd0bdc00ed4b63df4f92bd321ef9f618f8f67fe68b1165946ad9a8e1385616. Counting copy only; source and table pixels unchanged."
+    }
+  ],
+  "errata": [],
+  "printed_lines": 15,
+  "figures": [
+    {
+      "id": "tbl-p0044-01",
+      "label": "表",
+      "box": [
+        206,
+        1378,
+        1235,
+        717
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+例3. 投掷两颗骰子，将可能出现的36种结果视为等概
+率的. 求掷出的两个点数的和是2，3，4，5，6，7，8，9，
+10，11，12的概率
+
+<!-- p -->
+第一个骰子可以掷出6种可能的结果：1，2，3，4，5
+和6点. 对应于每个结果，第二个骰子也有1到6点，6种可
+能的结果. 这样一来，一共有$6\times6=36$种不同的结果. 根据
+题设，这些结果是等概率的. 我们来统计对某一事件（例如，
+和等于8点）有利的结果的数目.
+
+<!-- p -->
+可以得到8点的结果有下面几种情况：第一个骰子得6
+点，第二个得2点；第一个5点，第二个3点；第一个4点，第
+二个4点；第一个3点，第二个5点；第一个2点，第二个6
+点. 也就是说，有5种有利的结果. 这样一来，两个骰子能掷
+出8点的概率等于$\frac5{36}$.
+
+<!-- p -->
+其他事件的概率可以从下表中看出：
+
+<!-- fig 表 box 206,1378,1235,717 -->
+![表](figures/tbl-p0044-01.png)
+
+<!-- foot -->
+• 37 •

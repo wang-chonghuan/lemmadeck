@@ -79,19 +79,28 @@ def text_files(root: Path):
 
 
 def is_disposable_reference(value: str) -> bool:
-    return (
-        value.startswith(".tmp/")
-        or "/.tmp/" in value
-        or (
-            value.startswith(".intentfold/tickets/")
-            and "/tmp/" in value
-        )
-    )
+    if value.startswith(".tmp/"):
+        return True
+    if value.startswith(".intentfold/tickets/"):
+        return re.match(r"\.intentfold/tickets/[^/]+/tmp/", value) is not None
+    if not value.startswith("/"):
+        return False
+    durable = [value.find(marker) for marker in
+               ("/ssot-resources/", "/.intentfold/tickets/") if marker in value]
+    scratch = value.find("/.tmp/")
+    return scratch >= 0 and not (durable and min(durable) < scratch)
 
 
 def json_tmp_references(value, pointer: str = "$"):
     if isinstance(value, dict):
         for key, child in value.items():
+            # Origin locators in paid receipts and explicitly historical records
+            # describe past execution, not the current distribution's assets.
+            if key == "historicalPath":
+                continue
+            if (value.get("schema") == "n-azure/image-generation@1"
+                    and key == "output" and isinstance(child, dict)):
+                child = {name: item for name, item in child.items() if name != "path"}
             yield from json_tmp_references(child, f"{pointer}.{key}")
     elif isinstance(value, list):
         for index, child in enumerate(value):

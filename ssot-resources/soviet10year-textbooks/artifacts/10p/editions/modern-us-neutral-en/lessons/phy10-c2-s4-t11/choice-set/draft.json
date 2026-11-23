@@ -1,0 +1,231 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "2daa3f1caa86d54454d91a2ac5e3661abe32ec2a1fbc6ae76b959ec7da70d573",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "t11-event-order",
+      "source_numbers": [
+        "1"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "A train moves from the rear point $B$ toward the front point $A$. In the train frame, lightning strikes at $A$ and $B$ have the same event time on synchronized local clocks at the two locations. These are strike times, not the times at which flashes reach an observer. What order do synchronized local clocks in the ground frame assign to the two strikes?",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "The front point $A$ is struck first, and the rear point $B$ is struck later.",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "The rear point $B$ is struck first, and the front point $A$ is struck later.",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "The front point $A$ and the rear point $B$ are still struck at the same time.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine ground-frame lightning event order from simultaneous train-frame local-clock event times.",
+        "source_solution": "FIRST source t11:1 sets v>0 from B toward A, Delta t'=0, and Delta x'=x'_A-x'_B>0. Independently using t=gamma*(t'+v*x'/c^2) gives t_A-t_B=gamma*v*Delta x'/c^2>0, so B is earlier on ground clocks. No flash-arrival calculation is involved. Definitions of local-clock simultaneity and frame-specific simultaneous measurement are separately bound in supplementary-definitions.json (canonical SHA-256 029e838a68c1f02c34dcfea7a59cc09909619a97310b363f6a15cd70d1f6326e), using canonical n95 prose[2] and approved n97 zh/en prose[19,21]. They are definitions only, not answer authority, and are absent from the t11 seed.",
+        "unit_reason": "One event-order relation is the full source task. A single response compares complete ground-clock chronologies, rather than separate yes/no judgments or optical-reception guesses.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selecting event order does not demonstrate independently deriving the Lorentz time transformation."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "b"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "The inverse transformation has +v*x'/c^2 and gives t_A-t_B>0, not <0.",
+            "misconception": "Use the spatial minus sign from the forward transform while inserting train-frame coordinates into an inverse calculation: t=gamma*(t'-v*x'/c^2). With Delta t'=0 and Delta x'>0 this erroneous equation gives t_A-t_B<0 and A first."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "Subtract the inverse time transformations: t_A-t_B=gamma*v*(x'_A-x'_B)/c^2>0. B therefore has the earlier ground-frame event time.",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "The nonzero spatial term survives even though Delta t'=0. Since the events are separated along a nonzero train velocity, their ground event times differ.",
+            "misconception": "Treat simultaneity as absolute or apply only t=gamma*t' to spatially separated events, omitting v*x'/c^2 and inferring Delta t=0 from Delta t'=0."
+          }
+        ]
+      }
+    },
+    {
+      "id": "t11-electron-speed",
+      "source_numbers": [
+        "2"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "An electron's historical relativistic mass $m$ in the chosen frame is $40000$ times its invariant rest mass $m_0$. With $c$ denoting the speed of light, which expression gives the electron's speed $v$?",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$v=c\\sqrt{1-\\dfrac{1}{40000^2}}$",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$v=c\\sqrt{1-\\dfrac{1}{40000}}$",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$v=c\\left(1-\\dfrac{1}{40000^2}\\right)$",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Solve the historical relativistic mass-speed equation for a Lorentz factor of 40000 without losing the tiny subluminal difference.",
+        "source_solution": "FIRST source t11:2 independently rearranges gamma=m/m0=40000=1/sqrt(1-beta^2), obtaining beta=sqrt(1-gamma^-2) and v=c*sqrt(1-1/40000^2). Exactly gamma^-2=6.25e-10. The stable gap is (c-v)/c=gamma^-2/(1+sqrt(1-gamma^-2))=3.1250000004882812501525878906846046448014676571014570072353308205e-10. Hence beta=0.99999999968749999995117187498474121093153953551985323428985429928<1; rounding it to 1 is not an exact speed. No numerical c or electron rest-mass constant is introduced. The historical definition is separately bound from canonical n101 prose[1,7] in supplementary-definitions.json (canonical SHA-256 029e838a68c1f02c34dcfea7a59cc09909619a97310b363f6a15cd70d1f6326e), outside the seed.",
+        "unit_reason": "One exact speed expression retains the inverse problem. Separate questions for gamma, beta, and the small gap would fragment one algebraic inference; the stable gap remains internal evidence.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selecting an exact expression does not demonstrate independently rearranging or numerically evaluating the equation."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "a"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "From sqrt(1-beta^2)=1/40000, square both sides and take the nonnegative speed root: beta=sqrt(1-1/40000^2).",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "This expression makes 1-beta^2=1/40000 and thus gamma=sqrt(40000)=200, not 40000.",
+            "misconception": "Invert gamma correctly but omit squaring its reciprocal when removing the radical, writing 1-beta^2=1/gamma instead of 1/gamma^2."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "The expression equates beta to the correctly derived beta^2. Its actual gamma is 1/sqrt(2/gamma_target^2-1/gamma_target^4), not gamma_target=40000.",
+            "misconception": "After deriving beta^2=1-1/40000^2, multiply the right-hand side by c as though it were beta, forgetting the final square root."
+          }
+        ]
+      }
+    },
+    {
+      "id": "t11-water-mass",
+      "source_numbers": [
+        "3"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "A quantity of water with mass $1\\,\\mathrm{kg}$ is heated through $50^{\\circ}\\mathrm{C}$. Add these conditions for the mass-energy comparison: the water is at rest before and after heating; no matter is lost and no phase change occurs; all supplied heat is retained; and mechanical work is negligible. Let $\\bar c_w>0$ be the water's mean specific heat capacity over this temperature interval, in $\\mathrm{J/(kg\\cdot K)}$; its numerical value is not given. With $c$ denoting the speed of light, which general expression gives the mass increase $\\Delta m_0$?",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$\\Delta m_0=\\dfrac{(1\\,\\mathrm{kg})\\bar c_w(323.15\\,\\mathrm{K})}{c^2}$",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$\\Delta m_0=\\dfrac{(1\\,\\mathrm{kg})\\bar c_w(50\\,\\mathrm{K})}{2c^2}$",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$\\Delta m_0=\\dfrac{(1\\,\\mathrm{kg})\\bar c_w(50\\,\\mathrm{K})}{c^2}$",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Express the retained-energy mass gain for the full 1 kg, 50-degree heating task without fabricating an unspecified heat capacity.",
+        "source_solution": "FIRST source t11:3 gives Delta m0=Delta U/c^2. Under the added visible no-loss, rest-state, no-phase-change, retained-heat, negligible-work conditions, Delta U=(1 kg)*integral[T0,T0+50 K] c_w(T)dT. Define the interval-mean specific heat capacity cbar_w=(1/(50 K))*integral c_w(T)dT; this is not an assumption that c_w is constant. Thus Delta m0=(1 kg)*cbar_w*(50 K)/c^2>0. A 50-degree Celsius rise is a 50 K interval; no 273.15 offset is added. Since cbar_w is not numerically supplied, no unique numerical answer in kg is available. Canonical n101 prose[1,9,10] supplies separately bound definitions of retained internal energy and invariant system mass at rest in supplementary-definitions.json (canonical SHA-256 029e838a68c1f02c34dcfea7a59cc09909619a97310b363f6a15cd70d1f6326e), never seed additions or answer authority.",
+        "unit_reason": "A complete symbolic mass increase preserves both heat-to-energy and energy-to-mass steps. An interval-mean heat capacity keeps the general result accessible without an invented standard constant or separate arithmetic clicks.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selecting the expression does not demonstrate independently constructing the heat-to-mass calculation.",
+          "The source omits heat-capacity data, so a unique numerical mass increase is unavailable.",
+          "No matter loss or phase change, resting initial/final states, full heat retention, and negligible mechanical work are added visible conditions, not original source data."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "c"
+        ],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "A temperature rise of 50 degrees Celsius is 50 K. The displayed result overstates the heat and mass increase by 323.15/50=6.463 for the same interval-mean capacity.",
+            "misconception": "Convert the temperature difference as if it were an absolute temperature: replace Delta T=50 degrees Celsius by 50+273.15=323.15 K before applying Q=M*cbar_w*Delta T."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "The definition of interval-mean capacity gives Q=M*cbar_w*Delta T, with no factor 1/2. The option gives half that retained energy divided by c^2.",
+            "misconception": "Insert the factor 1/2 from the kinetic-energy formula into calorimetry, calculating Q=(1/2)*M*cbar_w*Delta T and then Delta m0=Q/c^2."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "Use Delta T=50 K and the mean-capacity definition: Q=(1 kg)*cbar_w*(50 K)=Delta U. Divide retained rest-energy gain by c^2 to obtain Delta m0. Its units are kg and it is positive.",
+            "misconception": null
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "1",
+      "question_ids": [
+        "t11-event-order"
+      ],
+      "omitted_tasks": [
+        "Independent derivation of the time transformation is not demonstrated."
+      ],
+      "reason": "The complete front/rear ground-clock chronology is retained, with train local-clock simultaneity and event-versus-flash-arrival conditions explicit."
+    },
+    {
+      "source_number": "2",
+      "question_ids": [
+        "t11-electron-speed"
+      ],
+      "omitted_tasks": [
+        "Unaided algebra and numerical evaluation are not demonstrated."
+      ],
+      "reason": "The exact subluminal speed answers the full source task. Stable high-precision deficit reasoning is frozen internally; no rounding to v=c or speed-dependent invariant rest mass is introduced."
+    },
+    {
+      "source_number": "3",
+      "question_ids": [
+        "t11-water-mass"
+      ],
+      "omitted_tasks": [
+        "Independent construction of the energy and mass calculation is not demonstrated.",
+        "A unique numerical answer cannot be given without heat-capacity data absent from the source."
+      ],
+      "reason": "The full 1 kg and 50-degree data are preserved in a general mean-capacity expression. No standard heat-capacity constant is fabricated. Physical closure conditions are explicitly added in the visible stem."
+    }
+  ]
+}

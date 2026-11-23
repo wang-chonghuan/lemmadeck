@@ -1,0 +1,460 @@
+{
+  "schema": "s10y-choice-review-v1",
+  "seed_sha256": "3c66bcb016d5afec8a98624b1f2a2cf722a9f8a7165767e3e333adc11aed88f9",
+  "draft_sha256": "19c13a70bae86e94a22c99f2d4c9adfafb50fa96c8eeaf73a23506218f834fc0",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "Codex, first independent CHOICE semantic reviewer r159; not the r157 author"
+  },
+  "source_reviews": [
+    {
+      "source_number": "1",
+      "independent_solution": "For a stationary homogeneous liquid, its hydrostatic pressure increment at the bottom is p=rho*g*h, depending on density rho, vertical depth h below its free surface and gravitational acceleration g. At fixed local g the requested variables are rho and h. Bottom area and container shape are not independent determinants. Total absolute pressure would also include free-surface pressure; the seed asks for the liquid's contribution.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bottom-dependencies tests rho and h dependence at fixed local g and explicitly rejects bottom-area dependence. The author's coverage records loss of unaided dependency listing; the comparison unit retains the physical relationships."
+      }
+    },
+    {
+      "source_number": "2",
+      "independent_solution": "For fixed rho and g, p=rho*g*h is directly proportional to vertical liquid-column height h: doubling h doubles the hydrostatic increment; halving it halves the increment. This concerns depth, not tube path length.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bottom-dependencies b rejects the quadratic prediction d and e checks compensation: doubling height alone doubles pressure. The author's coverage explicitly records lost written proportionality formulation."
+      }
+    },
+    {
+      "source_number": "3",
+      "independent_solution": "At fixed h and g, p=rho*g*h is directly proportional to liquid density rho: a density ratio k produces pressure ratio k. Comparing two liquids requires keeping the same vertical depth.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bottom-dependencies c rejects inverse-density f and e combines density with depth. The author's coverage records lost written density-proportionality formulation; no key relationship is omitted."
+      }
+    },
+    {
+      "source_number": "4",
+      "independent_solution": "For a wall point one needs rho, the point's vertical depth h below the free surface, and local g. Pressure is a local scalar; the wall's area or tilt is not needed. Absolute pressure requires the surface pressure as well. Force on a whole wall is a different problem and requires area and integration where depth varies.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bottom-wall-law requires local wall-point depth h with rho and g, distinguishes it from H and H-h, and records that selecting expressions does not prove unaided listing of variables."
+      }
+    },
+    {
+      "source_number": "5",
+      "independent_solution": "The liquid-generated bottom and wall pressure is p=rho*g*h. At one depth the pressure is equal in all directions. Use rho in kg/m^3, h in m and g=9.8 N/kg to obtain Pa=N/m^2. p=F/S defines uniform average pressure but computing from density/depth requires rho*g*h.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bottom-wall-law d applies rho*g*depth to both bottom and wall; the authored upper-half instance prevents an accidentally equivalent floor-depth option. Formula recall and derivation loss is recorded."
+      }
+    },
+    {
+      "source_number": "g2-1",
+      "independent_solution": "At h=0.6 m and g=9.8 N/kg, p=5.88*rho Pa with rho in kg/m^3. The seed provides no numerical densities for water, kerosene or mercury, so a unique numerical triple is not fixed by these inputs alone. If visibly supplied rho_water=1000, rho_kerosene=800 and rho_mercury=13600 kg/m^3 are adopted, the triple is 5880, 4704, 79968 Pa. Kerosene density varies with composition and conditions; 800 is a reasonable explicitly scoped classroom value, not an exact universal constant.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-three-liquid-pressures retains all three liquids, 0.6 m and ordered Pa results under expressly added 1000/800/13600 kg/m^3 densities. Source numerical insufficiency remains acknowledged rather than solved by undisclosed data. Recognition/lookup/calculation losses are declared; this conditional extension is scientifically justified."
+      }
+    },
+    {
+      "source_number": "g2-2",
+      "independent_solution": "Using the seed's ideal constant seawater density rho=1030 kg/m^3 and g=9.8 N/kg, p=1030*9.8*10900=110024600 Pa=1.100246e8 Pa, about 110 MPa. This is seawater's hydrostatic contribution, not absolute pressure; atmospheric pressure is not included. Constant rho and g are the classroom model, not a precision deep-ocean calculation.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-seawater-pressure retains 1030 kg/m^3 and 10900 m with the seed definition's g=9.8, obtaining 110024600 Pa. Constant-density and liquid-only pressure are visible; lost independent calculation is recorded without a deep-ocean precision claim."
+      }
+    },
+    {
+      "source_number": "g2-3",
+      "independent_solution": "At an effective vertical head h=1 m above the board/bladder contact, p=rho_water*g*h and the load force is m*g with m=5 kg. Equating p*S=m*g gives S=m/(rho_water*h), hence S=0.005 m^2=50 cm^2 if rho_water=1000 kg/m^3. The seed does not explicitly give water density or exclude board weight and membrane forces. The calculation is conditional on the usual idealizations: negligible board weight and bladder tension, static equilibrium, atmospheric reference and the stated head measured to the loaded contact. The figure supplies a 5 kg load, board, bladder and vertical connected tube; its schematic distances must not be measured as data.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bladder-contact retains unknown contact area from a 5 kg load and 1 m head, with pressure as a linked intermediate. Density, head reference and negligible board/membrane forces are explicitly supplemented, matching the independently identified conditions. The author records source insufficiency and lost derivation/measurement, not recovery of unprovided facts."
+      }
+    },
+    {
+      "source_number": "g3-1",
+      "independent_solution": "Water exits because interior pressure at a submerged hole exceeds outside atmospheric pressure by rho*g*d. Near a vertical side wall, the jets initially travel horizontally, normal to the wall, illustrating pressure action perpendicular to the wall. Gravity then accelerates each jet downward, bending its path. Greater hole depth d increases pressure and ideal exit speed v=sqrt(2*g*d). Distance to a common landing level also depends on fall time: for hole height y above that level, R=v*sqrt(2*y/g)=2*sqrt(d*y), so deeper does not universally mean farther. The displayed upper, middle and lower streams all curve downward and meet the receiving basin at different horizontal positions; the upper displayed endpoint is rightmost, lower leftmost. This is an observed schematic ordering, not a general speed or range law. Performing the experiment also involves making/sealing holes, filling, opening and observing changes as the water level falls.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-three-hole-explanation covers emergence/initial wall-normal direction (a), curvature (c), depth-to-speed relation (d) and both speed/fall height in range (e), rather than adopting deeper-always-farther. Actual preparation, opening, observation and experimental records are explicitly READ_ONLY losses. They do not destroy the retained explanatory task."
+      }
+    },
+    {
+      "source_number": "g3-2",
+      "independent_solution": "The bulb raises air pressure above the bottle water; that additional pressure is transmitted through the liquid in all directions (Pascal's law). Three open water tubes, including two curved ones, reach equal free-surface elevation at equilibrium regardless of tube path and mouth orientation. Let mouth depth below bottle level be d and added air pressure be Delta p. Exterior pressure at the mouth is p_atm+Delta p+rho*g*d; interior pressure is p_atm+rho*g*(d+H), giving H=Delta p/(rho*g), independent of d. Thus changing submerged mouth depths does not change the common rise, provided each mouth remains submerged, outlets remain open, static equilibrium is reached and capillarity is neglected. The seed explicitly states equal levels in b, so merely selecting 'same height' would copy supplied data rather than explain it. A meaningful choice unit must require the pressure-balance explanation and distinguish pressure increments from different absolute mouth pressures. Construction and actual experimentation cannot be demonstrated by selecting propositions.",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "q-bottle-mechanism covers transmitted pressure/Pascal's law (a), mouth equilibrium/depth cancellation (c) and unchanged head after submerged-depth change (e). Bent-path and sealed-top misconceptions preserve the apparatus distinctions. Fabrication, bulb/weight/alternate pressurization, observation, measurement and repeat experiments are explicitly recorded as READ_ONLY; selection is not claimed to experimentally verify the law."
+      }
+    }
+  ],
+  "figure_checks": [
+    {
+      "figure_id": "fig-115",
+      "asset_path": "ssot-resources/soviet10year-textbooks/artifacts/6p/editions/modern-us-neutral/figures/fig-115.svg",
+      "asset_sha256": "5a6287437c7dd111b9a7f95a085f87b45e3a4cb5497a18312cf25d34e1a6fb42",
+      "observation": "Opened the authorized 640 px saved raster once. Entire load/board/bladder assembly, its side connection, tall vertical glass tube, rightmost support and bottom platform/Football bladder label are visible. The mass is labelled 5 kg and the head label is Water column: 1 m. No contact area value is shown; derive it from force and hydrostatic head rather than schematic pixel dimensions."
+    },
+    {
+      "figure_id": "fig-116",
+      "asset_path": "ssot-resources/soviet10year-textbooks/artifacts/6p/editions/modern-us-neutral/figures/fig-116.svg",
+      "asset_sha256": "9e0be926a9693d8cff14f5faf63282877ff61b8df9a0ff6f2ba9ec80c4ce48a9",
+      "observation": "Opened the authorized 640 px saved raster once. Full water-filled vertical container, three vertically aligned right-wall holes, three rightward launch arrows, downward-curving streams, support and full receiving basin are visible. Upper jet terminates farthest right, middle between, lower nearest; all bottom/right endpoints are included. There is no numerical scale. Distinguish depth-driven exit speed from range, which also depends on drop height."
+    },
+    {
+      "figure_id": "fig-117",
+      "asset_path": "ssot-resources/soviet10year-textbooks/artifacts/6p/editions/modern-us-neutral/figures/fig-117.svg",
+      "asset_sha256": "a84b8c50f62e0de5871755f5f7da0138502911226c0c3eda146fd294594ad16a",
+      "observation": "Opened the authorized 640 px neutral saved raster once. Both complete bottles a and b, lower labels/bottoms, stoppers, three open vertical risers and fourth air connection with rightmost bulb are visible. Two submerged tubes curve with differently directed mouths; the straight tube is also submerged, while the air-tube mouth is above the water. In a the riser water levels coincide with bottle level; in b all three riser levels share the same elevated horizontal line. The flattened bulb and downward applied-force arrow, air-space arrows and differently oriented submerged-mouth arrows are legible. Equal terminal levels are supplied observations, not proof of identical pressure at mouths of different depth."
+    }
+  ],
+  "new_figure_reviews": [],
+  "question_reviews": [
+    {
+      "question_id": "q-bottom-dependencies",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "The source's dependence on rho and vertical height is retained in b/c, area independence is tested in a, and e requires multiplying competing changes rather than merely naming quantities. Same location fixes g. Replaces free explanation with claim recognition."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "Six claims test area independence, linear versus quadratic height, linear versus reciprocal density, and compensation. b and d share a scenario but make distinct competing predictions; c and f likewise. q-bottom-wall-law adds point-depth selection rather than repeating these transformations."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "No formula or output ratio is supplied as a fact in the stem. Opposed predictions narrow alternatives but the learner must identify linear rho*h dependence, including the mixed change e; no package question labels this true set."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "With g fixed, p'/p=(rho'/rho)*(h'/h). Area does not enter. The six ratios are 1, 2, 2, 2, 1 and 2 respectively, so b,c,e are true.",
+        "correct": [
+          "b",
+          "c",
+          "e"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "evidence": "Doubling area at unchanged rho,h leaves p=rho*g*h unchanged, not doubled; force doubles instead."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "evidence": "At fixed rho,g, p(2h)/p(h)=2."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "evidence": "At fixed h,g, p(2rho)/p(rho)=2."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "evidence": "The height factor is 2, not 2^2=4."
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "evidence": "The combined factor is 2*(1/2)=1."
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "evidence": "Doubling rho doubles pressure; it does not produce factor 1/2."
+          }
+        ]
+      }
+    },
+    {
+      "question_id": "q-bottom-wall-law",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "Tests the bottom formula and the wall point's required vertical depth below the free surface; known rho,g,H,h preserve source 4/5. The inequality only makes the alternative depth coordinates unambiguously different."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "a applies total depth everywhere, b divides by g, c measures wall depth from the bottom, d uses the free surface. Because 0<h<H/2, a,c,d predict distinct positive wall pressures."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "Stem defines H and h but never states a pressure formula. q-bottom-dependencies tests ratios rather than identifying these wall-coordinate alternatives; no disclosed calculation selects d."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "Hydrostatic pressure increments are rho*g times local vertical depth, yielding p_bottom=rho*g*H and p_wall=rho*g*h. Only d gives both.",
+        "correct": [
+          "d"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "evidence": "Since h<H/2, the wall depth is not H and its pressure is smaller than the bottom pressure."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "evidence": "Dividing by g neither has pressure dimensions nor represents weight per unit area; rho*g*depth is required."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "evidence": "H-h is height above bottom, not depth below surface. H-h>H/2>h, so the wall value is definitely wrong here."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "evidence": "Each expression uses its own depth below the free surface and has units Pa."
+          }
+        ]
+      }
+    },
+    {
+      "question_id": "q-three-liquid-pressures",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "Preserves all three liquids, 0.6 m depth and pressure units. Missing densities are expressly added as this question's data, rather than attributed to the source. A complete tuple is a legitimate recognition unit; it does not certify independent calculation of all three entries."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "a swaps kerosene/mercury; c changes g; d changes the length-unit multiplier. Every triple is distinct. Water alone cannot distinguish a from b."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "1000/800/13600 and 9.8 are inputs, not pressure outputs. Reasonable elimination by checking one or two entries still involves computation or density-order reasoning; no other question supplies the tuple."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "The shared factor g*h is 9.8*0.6=5.88. Multiplying the supplied densities yields 5880,4704,79968 Pa in the required order, so b alone.",
+        "correct": [
+          "b"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "evidence": "79968 belongs to mercury and 4704 to kerosene; the last two values are interchanged."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "evidence": "1000*5.88=5880; 800*5.88=4704; 13600*5.88=79968 Pa."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "evidence": "The triple uses g=10, not the given 9.8; it is not the exact result requested."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "evidence": "Every entry is 100 times too large, consistent with using 60 cm numerically as 60 m."
+          }
+        ]
+      }
+    },
+    {
+      "question_id": "q-seawater-pressure",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "Preserves rho=1030 and h=10900 and explicitly scopes constant-density hydrostatics and exclusion of air pressure. Exact supplied-number calculation is distinguished from a real deep-ocean precision claim."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "The four values separately expose using freshwater density, dropping g, the exact product, and a factor-100 depth error. Unlike the preceding tuple this requires the specified seawater density and large depth."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "The stem contains no worked multiplication or result. Law recall from another unit does not eliminate density/depth arithmetic and no displayed pressure elsewhere equals this value."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "1030*9.8*10900=110024600 Pa. This liquid contribution excludes p_atm. Only c is the specified-number product.",
+        "correct": [
+          "c"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "evidence": "1000*9.8*10900=106820000; this substitutes freshwater density for 1030."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "evidence": "1030*10900=11227000 drops the required factor g=9.8."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "evidence": "1030*106820=110024600 Pa."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "evidence": "1100246 is the pressure at 109 m, a depth 100 times smaller than 10900 m."
+          }
+        ]
+      }
+    },
+    {
+      "question_id": "q-bladder-contact",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "Retains the 5 kg mass, 1 m water head and unknown contact area, and adds an intermediate pressure rather than dropping area. Explicit contact-plane head and negligible board/membrane forces make the intended equilibrium calculation justified."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "b and c predict reciprocal area changes with erroneous doubled/halved pressure; d keeps the correct pressure but tests area conversion. Pair recognition checks two linked quantities, distinct from the pure hydrostatic calculations."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "The figure labels only given mass/head and not area. The stem gives idealizations, not p or S, so selecting a requires p=rho*g*h and F/p plus units."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "p=1000*9.8*1=9800 Pa; load F=5*9.8=49 N. S=49/9800=0.005 m^2=50 cm^2, so a alone.",
+        "correct": [
+          "a"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "evidence": "9800*(50/10000)=49 N, equal to the 5 kg load's weight."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "evidence": "19600 Pa uses 2 m head; its paired 25 cm^2 preserves F=49 N but violates the specified 1 m."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "evidence": "4900 Pa uses 0.5 m head; paired 100 cm^2 gives the load force but the wrong head."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "evidence": "0.005 m^2 must be multiplied by 10000 to become 50 cm^2, not 0.5 cm^2; this area supports only 0.49 N at 9800 Pa."
+          }
+        ]
+      }
+    },
+    {
+      "question_id": "q-three-hole-explanation",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "a covers why water exits and its initial wall-normal direction; c covers gravity-induced curvature; d/e address unequal pressure, exit speed and fall height in range. The source experiment's explanation is preserved without demanding hands-on production from selection; actual construction/observation remains a capacity loss."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "a,b distinguish launch direction from gravity; c is the later trajectory mechanism; d is exit speed; e,f compete on range determinants. These are separate causal stages, not repeated observations or six copies of 'deeper'."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "The image shows curved paths but does not state pressure difference or acceleration. The upper jet drawn farthest does not key d (a speed claim), and e/f require rejecting a universal depth-only range rule. No requested true set is given."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "At depth d, Delta p=rho*g*d and ideal exit speed v=sqrt(2*g*d); launch is approximately horizontal from a thin vertical wall. After exit gravity curves the jet. Range to a common plane R=2*sqrt(d*y) also depends on drop height y. Thus a,c,d,e are true; b,f are false.",
+        "correct": [
+          "a",
+          "c",
+          "d",
+          "e"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "evidence": "A submerged hole has interior pressure excess rho*g*d>0 and initial flow normal to the vertical wall, approximately horizontal."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "evidence": "Downward curvature after launch is caused by gravity, not by a vertically downward wall-pressure force; fluid force on the vertical wall is normal to it."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "evidence": "With initially horizontal velocity and negligible air resistance, vertical displacement is g*t^2/2 downward."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "evidence": "Under the supplied ideal common conditions, larger d gives larger rho*g*d and sqrt(2*g*d)."
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "evidence": "R=v*sqrt(2*y/g), so both exit speed and drop height enter even for the same receiving plane."
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "evidence": "Depth alone does not determine range. For fixed surface height L above a plane, R=2*sqrt(d*(L-d)); d=0.5L gives R=L while deeper d=0.9L gives only 0.6L."
+          }
+        ]
+      }
+    },
+    {
+      "question_id": "q-bottle-mechanism",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "a identifies air pressurization/Pascal transmission, c gives the mouth-equilibrium cancellation, and e explains unchanged head when mouth depth changes. The curved-path and closed-top alternatives test meaningful apparatus distinctions. Does not merely select the equal-level observation already present in the seed/figure."
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "a concerns transmission; b vertical versus path length; c local equilibrium; d/e depth change; f atmospheric boundary conditions. c and e are related derivation/result but differ in what is asserted and are not textually or logically identical."
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "Equal drawn levels are seed observations, not the requested complete explanation. c/e require the same-depth pressure comparison; f is a conditional change to the given open-top boundary, not an omitted source fact. Neither image nor another question supplies the full a,c,e set."
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "At each submerged mouth p_atm+Delta p+rho*g*d=p_atm+rho*g*(d+H), so H=Delta p/(rho*g). Added pressure transmits throughout the liquid; tube path does not enter; fixed Delta p makes H independent of d. Sealing a top changes its pressure boundary in general. True set a,c,e.",
+        "correct": [
+          "a",
+          "c",
+          "e"
+        ],
+        "option_checks": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "evidence": "Bulb compression increases air pressure over water and the added pressure is transmitted in all directions, the Pascal-law mechanism."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "evidence": "Hydrostatic pressure depends on vertical height, not the length of a curved tube; pressure balance involves d+H only."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "evidence": "Pressure continuity at a static open mouth equates the two sides; both contain rho*g*d, which cancels."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "evidence": "At fixed Delta p,rho,g, H=Delta p/(rho*g) contains no mouth-depth variable."
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "evidence": "Increasing depth by delta d adds rho*g*delta d on both sides; cancellation leaves the rise unchanged."
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "evidence": "A sealed top can trap/compress gas and does not necessarily remain at outside pressure. 'Necessarily the same boundary' is false; a coincident special case would not prove it."
+          }
+        ]
+      }
+    }
+  ],
+  "outcome": "pass"
+}
