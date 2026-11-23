@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181",
+  "argv": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import json,sys,re\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1996-n77-first-en-author/lesson.template.json\"))\nfor block in lesson[\"prose\"]:\n    match=re.fullmatch(r\"\\u56fe\\s*([0-9]+)\",block[\"text\"].strip()) if block[\"kind\"]==\"cap\" else None\n    if match:\n        block[\"text\"]=\"Figure \"+match.group(1)\n        block[\"changes\"]=list(dict.fromkeys(block[\"changes\"]+[\"translation\"]))\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],[])\nboundaries=[]\nfor prefix in [\"**Lens Magnification**\"]:\n    indices=[i for i,p in enumerate(flow[\"paragraphs\"]) if p[\"text\"].startswith(prefix)]\n    assert len(indices)==1 and indices[0]>0,(prefix,indices)\n    i=indices[0]\n    boundaries.append({\"before\":flow[\"paragraphs\"][i-1][\"text\"],\"after\":flow[\"paragraphs\"][i][\"text\"]})\nlesson[\"section_breaks\"]=boundaries\nflow,flow_errors=edition.prose_flow_contract(lesson[\"prose\"],boundaries)\nerrors.extend(flow_errors)\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-23T07:59:15.005Z",
+  "finishedAt": "2026-11-23T07:59:15.160Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d2054-n77-native-layout-and-boundaries/stdout.txt",
+      "bytes": 21017,
+      "sha256": "138a94df74ef4028ad24e5d6880ff76e41c8a672e9a181be81ee385a0ce0699b"
+    },
+    "stderr": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d2054-n77-native-layout-and-boundaries/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
