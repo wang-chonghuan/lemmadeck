@@ -1,0 +1,93 @@
+N19 author structural validation evidence
+CWD: /Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-184
+
+Scope:
+Use the installed official validate.check_draft against the authorized seed
+snapshot. The CLI's full validate/check_seed refresh reads original textbook
+JSON and therefore is not permitted under this key-blind seed-only boundary.
+No validator code, source data, draft content or seed content is modified to
+simulate source freshness. A pass here is not a full source-refresh pass and
+is not an independent semantic approval.
+
+Attempt 1: command parsing failure, official checker never entered.
+Command:
+python3 -B -c 'from pathlib import Path
+import sys
+repo = Path.cwd()
+assert str(repo) == "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-184"
+sys.path.insert(0, str(repo / ".agents/skills/ld-s10y-choice/scripts"))
+from validate import check_draft, keyed
+from prepare import digest, load_json, require
+root = repo / ".tmp/stemrobin-184-six/n19-nov23-source7274/choices"
+seed = load_json(root / "seed.json")
+draft = load_json(root / "draft.json")
+require(digest(seed) == "f509542a201c44b67e77c391e9ed17248b19b32abb2e21c1d365c02afc13e2df", "authorized seed snapshot mismatch")
+exercises = keyed(seed["exercises"], "number", "number text figure_ids", "seed.exercises")
+source_figures = keyed(seed["figures"], "id", "id label assets", "seed.figures")
+blocks = {concept["block"] for concept in seed["concepts"]}
+questions, figures = check_draft(seed, draft, repo, exercises, source_figures, blocks)
+print("official check_draft mechanical checks passed against the authorized seed snapshot")
+print("full check_seed/source refresh NOT RUN: only seed.json is authorized source input")
+print("semantic review still required; no self-review or approval declared")
+print(f"questions={len(questions)}; single={sum(q[\"view\"][\"mode\"] == \"single\" for q in questions.values())}; multiple={sum(q[\"view\"][\"mode\"] == \"multiple\" for q in questions.values())}")
+print(f"options={sum(len(q[\"view\"][\"options\"]) for q in questions.values())}; coverage_sources={len(draft[\"coverage\"])}; figures={len(figures)}")'
+
+Exit status: 1
+Actual output:
+  File "<string>", line 19
+    print(f"questions={len(questions)}; single={sum(q[\"view\"][\"mode\"] == \"single\" for q in questions.values())}; multiple={sum(q[\"view\"][\"mode\"] == \"multiple\" for q in questions.values())}")
+                                                       ^
+SyntaxError: unexpected character after line continuation character
+
+Affected repair: replace only the command's two malformed f-string statistics
+lines with separate counts and percent-format output. No artifact repair and
+no independent review restart are warranted by this execution failure.
+
+Attempt 2: corrected command; the only actual official check_draft execution.
+Command:
+python3 -B -c 'from pathlib import Path
+import sys
+repo = Path.cwd()
+assert str(repo) == "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-184"
+sys.path.insert(0, str(repo / ".agents/skills/ld-s10y-choice/scripts"))
+from validate import check_draft, keyed
+from prepare import digest, load_json, require
+root = repo / ".tmp/stemrobin-184-six/n19-nov23-source7274/choices"
+seed = load_json(root / "seed.json")
+draft = load_json(root / "draft.json")
+require(digest(seed) == "f509542a201c44b67e77c391e9ed17248b19b32abb2e21c1d365c02afc13e2df", "authorized seed snapshot mismatch")
+exercises = keyed(seed["exercises"], "number", "number text figure_ids", "seed.exercises")
+source_figures = keyed(seed["figures"], "id", "id label assets", "seed.figures")
+blocks = {concept["block"] for concept in seed["concepts"]}
+questions, figures = check_draft(seed, draft, repo, exercises, source_figures, blocks)
+print("official check_draft mechanical checks passed against the authorized seed snapshot")
+print("full check_seed/source refresh NOT RUN: only seed.json is authorized source input")
+print("semantic review still required; no self-review or approval declared")
+single = sum(q["view"]["mode"] == "single" for q in questions.values())
+multiple = sum(q["view"]["mode"] == "multiple" for q in questions.values())
+options = sum(len(q["view"]["options"]) for q in questions.values())
+print("questions=%d; single=%d; multiple=%d" % (len(questions), single, multiple))
+print("options=%d; coverage_sources=%d; figures=%d" % (options, len(draft["coverage"]), len(figures)))'
+
+Exit status: 0
+Actual output:
+official check_draft mechanical checks passed against the authorized seed snapshot
+full check_seed/source refresh NOT RUN: only seed.json is authorized source input
+semantic review still required; no self-review or approval declared
+questions=10; single=10; multiple=0
+options=40; coverage_sources=5; figures=0
+
+Summary:
+- Official check_draft calls that actually executed: 1.
+- Command parsing failures before checker entry: 1, preserved above.
+- Official structural failures: 0.
+- Seed/draft/source-solving repairs: 0.
+- Source refresh or full CLI validate pass: not claimed.
+- Independent semantic gate: pending parent-provided reviewer.
+
+Validated seed canonical SHA-256:
+f509542a201c44b67e77c391e9ed17248b19b32abb2e21c1d365c02afc13e2df
+Validated draft canonical SHA-256:
+072aed17a0ac39fc5a961456a5178236dd4cf5c0d3983afe1ba3843c745454cd
+Validated draft byte SHA-256:
+c751e28e2bfd3a544f8efe79bd95ba1568b8005edc5b61e125b856f3738e5565
