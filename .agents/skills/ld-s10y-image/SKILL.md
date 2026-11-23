@@ -9,8 +9,12 @@ Create modern textbook figures without asking an image model to preserve exact
 mathematics.
 
 For batch continuation and execution faults, follow the lesson pipeline's
-[technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+[per-lesson delivery SOP and recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
 A tool retry does not reset paid/image usage or approve a failed figure.
+The lesson owner retains approved figures, specs and indispensable bound evidence
+before that lesson's commit/push and authorized serialized publication. Figure
+handoff does not authorize this child to commit other lessons or write the DB.
+Do not add packaging/full-intake gates; report a concrete rule conflict to the caller.
 
 ## Ownership
 
@@ -53,11 +57,11 @@ mode, and write a draft FigureSpec. Read
 [routing.md](references/routing.md) and
 [figure-spec.md](references/figure-spec.md).
 
-Before drawing or reusing any existing modern figure, reopen the original PNG
+Before drawing a new figure or using an unreviewed existing figure, open the original PNG
 named by `source.image` and record `source.inventory` from those pixels:
 independently describe every source subfigure, point, relationship, label,
 row/column and given value, then map those requirements to object and
-assertion IDs. Treat a reused FigureSpec as an unverified draft until this
+assertion IDs. Treat an unreviewed FigureSpec as an unverified draft until this
 comparison is complete. Use stable IDs derived from the source inventory.
 Record justified modern additions separately from source facts; do not relabel
 axes, ticks, regularization, or other additions as source content. A
@@ -69,6 +73,17 @@ validator enforces that distinction. A point-relationship group must map every
 source point to at least one mapped relationship assertion wholly inside that
 group; a relation among other points, or one that escapes to an unmapped point,
 does not cover the missing source point.
+
+Reuse an unchanged figure with valid source-fidelity review directly: its source
+inventory, applicable edition text/given data, FigureSpec, render/generation
+evidence, outputs and display contract must still match the approved scope.
+Check existing bindings once; do not reopen the original, rerender, recreate a
+review or repeat the image batch solely because another lesson, handoff or
+checkpoint uses it. Byte equality alone is not approval. Missing, stale or failed
+review blocks only the affected figure. A real source, geometry, semantic or
+display change requires affected-only independent review; preserve the original
+failure and reuse unrelated PASS evidence. New mathematical tasks still require
+their own source solving and option review even when their figure is reused.
 
 Classify `display.purpose` independently of rendering mode. Use
 `instructional` for anything whose detail, geometry, relationship, apparatus,
@@ -131,7 +146,7 @@ alone miss clipped table borders and blank answer cells. The renderer fails
 when labels overlap, leave the canvas, or render below `display.minTextPx` at
 any declared product width. For hybrid mode, also pass `--artwork` for the
 transparent artwork layer; `--svg` remains the independent mathematical
-overlay. Repair the spec once; do not hand-edit generated SVG paths.
+overlay. Repair the identified spec defect; do not hand-edit generated SVG paths.
 
 ### cap3 — Generate semantic artwork
 
@@ -142,7 +157,9 @@ answer-bearing annotations. Request a transparent background when practical.
 
 ### cap4 — Review and promote
 
-Read [quality-gate.md](references/quality-gate.md). A figure is promotable only
+Read [quality-gate.md](references/quality-gate.md). Reuse existing valid checks
+and review for unchanged figures; do not repeat cap1-cap4 as a handoff gate.
+A new or changed figure is promotable only
 when:
 
 1. FigureSpec validation passes.
@@ -166,6 +183,10 @@ python .agents/skills/ld-s10y-image/scripts/record_review.py \
 Use `--generation` instead of `--render` for `generated` mode. Preview under
 `.tmp/`. Do not overwrite edition assets or write the database before
 approval. Promoted metadata may depend only on durable edition files.
+An approved figure and its bound source/spec/render/generation/review evidence
+must be retained with the owning lesson before its immediate commit/push, not
+left only in an ignored preview or held for a four-lesson batch. Reuse existing
+durable assets and valid reviews; do not duplicate them for each lesson.
 
 For a corpus migration or audit, derive the target set from lesson prose,
 exercise display objects, and `figure_refs`:

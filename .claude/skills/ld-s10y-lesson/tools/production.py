@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
@@ -96,6 +97,80 @@ def read_json_documents(text: str) -> list:
     if not documents:
         raise ValueError("no complete JSON documents found")
     return documents
+
+
+def _receipt_field(record: dict, names: tuple[str, ...]):
+    values = [record[name] for name in names if name in record]
+    if not values:
+        raise ValueError(f"receipt is missing {names[0]}")
+    if any(value != values[0] for value in values[1:]):
+        raise ValueError(f"receipt has conflicting aliases for {names[0]}")
+    return values[0]
+
+
+def normalize_receipt(record: dict, base: Path) -> dict:
+    """Read execution facts, not a package's incidental nesting or bookkeeping."""
+    if not isinstance(record, dict):
+        raise ValueError("execution receipt must be an object")
+    if record.get("error") or record.get("signal") or record.get("ok") is False:
+        raise ValueError("execution receipt records a failure or interruption")
+    cwd = _receipt_field(record, ("cwd", "workdir"))
+    if not isinstance(cwd, str) or not Path(cwd).is_absolute():
+        raise ValueError("receipt cwd must be an absolute path")
+    code = _receipt_field(record, ("exitCode", "exit_code", "returncode"))
+    if type(code) is not int or code != 0:
+        raise ValueError(f"execution did not complete successfully: {code!r}")
+    arguments = {name: record[name] for name in ("argv", "child_argv") if name in record}
+    command = record.get("command")
+    if isinstance(command, list):
+        arguments["command"] = command
+    argv = _receipt_field(arguments, ("argv", "child_argv", "command"))
+    if not isinstance(argv, list) or not argv or any(not isinstance(arg, str) for arg in argv):
+        raise ValueError("receipt argv must be a nonempty string array")
+    if isinstance(command, str):
+        if not command.strip() or any(char.isspace() for char in command):
+            raise ValueError("receipt command must be one executable, not a shell string")
+        if argv[0] != command:
+            argv = [command, *argv]
+    elif command is not None and not isinstance(command, list):
+        raise ValueError("receipt command must be an executable or argv array")
+    streams = record.get("streams", {})
+    if not isinstance(streams, dict):
+        raise ValueError("receipt streams must be an object")
+
+    def stream_binding(value) -> dict:
+        binding = {"path": value} if isinstance(value, str) else value
+        if not isinstance(binding, dict) or not isinstance(binding.get("path"), str) or not binding["path"]:
+            raise ValueError("receipt stream must name a saved file")
+        path = Path(binding["path"])
+        path = path if path.is_absolute() else base / path
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        if "sha256" in binding and binding["sha256"] != digest:
+            raise ValueError(f"receipt stream hash mismatch: {path}")
+        if "bytes" in binding and binding["bytes"] != len(data):
+            raise ValueError(f"receipt stream size mismatch: {path}")
+        return {"path": str(path.resolve()), "sha256": digest}
+
+    result = {"cwd": cwd, "argv": argv, "exitCode": code}
+    for name in ("stdout", "stderr"):
+        bindings = [stream_binding(container[name]) for container in (record, streams) if name in container]
+        if not bindings or any(binding != bindings[0] for binding in bindings[1:]):
+            raise ValueError(f"receipt missing or conflicting {name} stream")
+        result[name] = bindings[0]
+    return result
+
+
+def read_receipt(path: Path, expected: Path | None = None) -> dict:
+    record = json.loads(path.read_text(encoding="utf-8"))
+    result = normalize_receipt(record, path.parent)
+    if expected is not None:
+        comparison = normalize_receipt(
+            json.loads(expected.read_text(encoding="utf-8")), expected.parent,
+        )
+        if comparison != result:
+            raise ValueError("receipt execution facts differ from expected receipt")
+    return {"ok": True, "execution": result}
 
 
 def validate_prepared_page(page_dir: Path, book: str, page: int, source: dict) -> None:
@@ -200,10 +275,15 @@ def main(argv: list[str] | None = None) -> int:
     prepare.add_argument("--work", required=True)
     read = commands.add_parser("read-json")
     read.add_argument("--input", type=Path, required=True)
+    receipt = commands.add_parser("read-receipt")
+    receipt.add_argument("--input", type=Path, required=True)
+    receipt.add_argument("--expected", type=Path)
     args = parser.parse_args(argv)
     try:
         if args.command == "read-json":
             result = {"docs": read_json_documents(args.input.read_text(encoding="utf-8"))}
+        elif args.command == "read-receipt":
+            result = read_receipt(args.input, args.expected)
         else:
             result = prepare_range(args.repo, args.book, args.first, args.last, args.work)
     except (OSError, ValueError) as error:

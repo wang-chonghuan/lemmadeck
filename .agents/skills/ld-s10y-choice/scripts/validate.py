@@ -8,7 +8,7 @@ import re
 import sys
 
 from prepare import (ARTIFACTS, ContractError, digest, file_hash, inside, load_json,
-                     prepare_seed, require, scratch_path, text, unique)
+                     prepare_seed, require, scratch_path, source_files, text, unique)
 
 DRAFT_SCHEMA = "s10y-choice-draft-v1"
 REVIEW_SCHEMA = "s10y-choice-review-v1"
@@ -62,7 +62,12 @@ def visible_text(value, where):
 def check_seed(seed, repo):
     fields(seed, "schema source exercises concepts figures trace", "seed")
     require(seed["schema"] == "s10y-choice-seed-v1", "seed schema mismatch")
-    fields(seed["source"], "book lesson concept_figure_ids", "seed.source")
+    source_fields = "book lesson concept_figure_ids"
+    if "include_group_instructions" in seed["source"]:
+        source_fields += " include_group_instructions"
+        require(seed["source"]["include_group_instructions"] is True,
+                "seed group instruction policy mismatch")
+    fields(seed["source"], source_fields, "seed.source")
     exercises = keyed(seed["exercises"], "number", "number text figure_ids", "seed.exercises")
     require(bool(exercises), "empty seed")
     blocks = []
@@ -78,11 +83,24 @@ def check_seed(seed, repo):
             "seed trace is incomplete")
     # The index is only used to establish membership, not as question content.
     # Preserve the reviewed seed's trace when an unrelated lesson changes it.
-    comparable = {**seed, "trace": [
+    comparable = {**seed, "source": {
+        key: value for key, value in source.items()
+        if key != "include_group_instructions"
+    }, "trace": [
         {**seed["trace"][0], "sha256": refreshed["trace"][0]["sha256"]},
         *seed["trace"][1:],
     ]}
-    require(comparable == refreshed, "seed projection/source/asset changed; prepare again")
+    if comparable != refreshed:
+        require("include_group_instructions" not in source,
+                "seed projection/source/asset changed; prepare again")
+        _, _, _, _, raw_data = source_files(repo, source["book"], source["lesson"])
+        raw_items = {item["number"]: item for item in raw_data[2]["exercises"]}
+        legacy = {**refreshed, "exercises": [
+            {**item, "text": raw_items[item["number"]]["text"]}
+            for item in refreshed["exercises"]
+        ]}
+        # Only the old group-text projection differs; all source hashes still bind.
+        require(comparable == legacy, "seed projection/source/asset changed; prepare again")
     return exercises, {figure["id"]: figure for figure in seed["figures"]}, set(blocks)
 
 

@@ -53,9 +53,15 @@ creation and an independent reviewer for the actual image; no new drawing engine
 
 The checker also accepts retained handoff images inside the selected lesson's
 `choice-set/figures/` directory. A separately authorized integration may relocate
-approved assets there without changing their bytes or mathematical basis, rebind
-paths and obtain a review for that retained snapshot. This does not authorize
-this offline skill to promote assets, publish, or write outside scratch.
+approved assets there without changing their bytes or mathematical basis.
+Prefer settling these paths before the final question review. On continuation,
+preserve the original snapshots and bind the retained snapshot to the existing
+valid evidence; a path-only relocation does not require repeating the
+mathematical/image review, but stale draft/review digests must not be presented
+as a bound pass. Real image, task or option changes need affected review.
+This does not authorize this offline skill to promote assets, publish, or write
+outside scratch. The lesson owner follows the
+[per-lesson delivery SOP](../../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
 
 Each question:
 

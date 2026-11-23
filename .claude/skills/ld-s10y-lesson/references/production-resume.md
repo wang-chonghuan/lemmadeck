@@ -1,8 +1,90 @@
-# Small-batch production and recovery
+# Per-lesson delivery SOP and recovery
 
 Use the active ticket's authorization, not the skill's usual publish default.
 An offline repair or a paused production assignment does not authorize DB writes,
-deployment or starting other workers.
+deployment or starting other workers. This is the binding delivery sequence for
+the lesson, image, choice and answer skills. Workers must follow this lean
+workflow; "strict" does not authorize additional checks, paperwork or waiting gates.
+
+## Required worker workflow
+
+Source pages and shared inputs may be prepared together, and multi-lesson tools
+may reuse their invocation-local source stream. Delivery is different: finish and
+save each complete authorized lesson immediately. Do not wait for four lessons,
+a chapter, a context checkpoint or the next scheduled inspection.
+
+1. Complete the selected lesson and every component required by the assignment:
+   prose, exercises, figures, answers/interactions and choices where requested.
+   Keep the existing substantive source, mathematics and option review. Check
+   the complete new/changed lesson's desktop/mobile display once, using offline
+   or product evidence applicable to its current files and display contract;
+   do not require both surfaces to repeat the same display review. Reuse valid,
+   unchanged bound evidence. Stable keyboards, judging and other shared app
+   behavior do not need a full functional retest for every new lesson.
+2. Retain the reviewed lesson and its necessary dependencies under
+   `ssot-resources/soviet10year-textbooks/artifacts/<book>/`. Use the existing
+   page, edition, figure, answer and choice paths, preserving indispensable
+   source/review evidence and original failures. Do not leave the only copy in
+   an auto-cleanable worker tree or ignored `tmp/`. Use the existing checkpoint;
+   do not manufacture per-command receipts, new evidence packages or duplicate
+   shared assets. Never commit secrets or runtime dependencies.
+3. Promptly commit this lesson's owned artifacts and required
+   source/index/asset changes, then ordinary push to the worker's recorded
+   existing branch. Use the exact authorized absolute workdir. Do not stage
+   unrelated dirty or already staged work, use `git add -A`, create a replacement
+   branch, merge, deploy or force push. For a detached checkout, push
+   `HEAD:<recorded-existing-branch>`. A normal successful push result is enough;
+   inspect remote refs only if the outcome is uncertain. Do not add file-by-file
+   rehashing or another review before saving. A local commit or Git lock alone
+   is not remote preservation. Failed push blocks that lesson's publication,
+   not unrelated source work.
+4. Submit that pushed lesson immediately to the already authorized DB writer
+   using the existing checkpoint and its lesson ID, branch/commit and retained
+   paths. Multi-session production uses one caller-designated writer; producers
+   do not acquire DB authorization from this SOP. Publish the pushed lesson
+   snapshot and its dependencies, not later uncommitted worker edits; use the
+   existing retention/intake contract without merging worker branches.
+   The writer serializes writes, uses the existing named publishers with exactly
+   one `--lesson <id>`, and runs
+   only the required stages in order: base lesson, answers, interactions, then
+   retained choices where requested. Do not use `--all` or publish unchanged
+   earlier lessons. Do not turn single-lesson submission into a four-lesson queue
+   gate, periodic full intake or a new service. A busy writer does not prevent
+   source work on the next authorized lesson.
+5. After the required writes succeed, perform one small affected-lesson DB
+   readback for edition, content presence/counts and the requested components.
+   Use the publishers' existing validation; do not prepend an identical checker.
+   Reuse applicable display evidence from step 1. Only an uncovered display or
+   integration change, an actual failure, or an explicit functional-test request
+   needs the affected cap7 check; do not run the full product suite per lesson.
+   Record the actual push and publication results in the existing checkpoint.
+   Publication notes alone do not require a second commit/push; retain them at
+   the existing durable location or include them in the next normal commit.
+   Changed course/review bytes still need affected review and prompt preservation.
+   A DB row is not a backup of source/review artifacts.
+
+After saving/pushing and recording the single-lesson submission, continue the
+next authorized lesson without waiting for the DB writer, a batch report or
+inspection. This SOP does not create a background writer. Offline-only
+assignments stop at their authorized handoff; they do not call publishers. Explicitly paused
+assignments remain paused even after this SOP is repaired or installed.
+If a rule is missing or conflicts with the assignment, report the concrete
+conflict to the caller before that stage; do not invent an extra gate or bypass
+a required review.
+
+## Failure and stop boundaries
+
+Keep successful commits, pushes and publisher results when a later stage fails.
+Diagnose the concrete cause, then resume only the missing/failed stage for that
+lesson. If a write's outcome is uncertain, read back that lesson before retrying;
+do not blindly republish the base or regenerate the lesson. Existing answers,
+interactions and valid choices must survive a permitted base republish.
+
+On a direct pause or shutdown request, do not start the next lesson. Finish only
+the nearest safe in-flight step, retain completed work and an honest incomplete
+checkpoint, and stop owned tasks. Preserve unfinished files and existing staging.
+Save/push in-scope checkpoint bytes when authorized, clearly marked incomplete;
+do not publish an incomplete lesson or infer a resume from saving it.
 
 ## Continue from facts
 
@@ -13,9 +95,8 @@ deployment or starting other workers.
 - Collect already completed child results before dispatching replacements.
   Bind the returned paths to the actual files and reuse passed stages. A
   checkpoint, batch report or context compression is not a completion condition.
-  When batch delivery and further production are authorized, commit/push the
-  completed small batch (normally about four lessons), then continue within that
-  scope. An offline four-lesson experiment does not authorize a fifth lesson.
+  Follow the single-lesson delivery sequence above within the authorized scope.
+  A bounded offline experiment does not authorize another lesson or DB writes.
 - Distinguish tool execution failure, content review failure, missing/ambiguous
   source, and human approval. A bad cwd, missing output directory, read-only
   working file or output-parser error is not a scientific verdict or a permanent
@@ -41,6 +122,8 @@ $P .claude/skills/ld-s10y-lesson/tools/production.py prepare-range \
   --work .tmp/ld-s10y-lesson
 $P .claude/skills/ld-s10y-lesson/tools/production.py read-json \
   --input <saved-stdout>
+$P .claude/skills/ld-s10y-lesson/tools/production.py read-receipt \
+  --input <saved-execution.json> --expected <handoff-execution.json>
 $P .claude/skills/ld-s10y-lesson/tools/retain_choices.py \
   --repo . --book <book> --lesson <card-id> --source <approved-choice-directory>
 ```
@@ -50,6 +133,31 @@ when a command fails. It is preparation only, never source/content approval.
 Use the returned machine result for control; human logs are not one JSON document.
 For historical mixed stdout, read all complete top-level documents without
 rerunning the successful producer. Do not turn candidate presence into approval.
+
+Receive a handoff once using its status, scope, referenced files/hashes, actual
+execution receipts and required substantive review. Do not add a parent gate
+that reads every JSON scalar, the entire checker source, or every package file
+before releasing the next stage. Only expand a specific missing or conflicting
+fact. The parent does not redo the child's content or image review.
+
+`read-receipt` compares execution facts across the known `cwd`/`workdir`,
+`exitCode`/`exit_code`/`returncode`, `argv`/`child_argv` and flat/nested `streams`
+wrappers. A string `command` is one executable, with `argv` supplying its
+arguments; shell strings are not parsed. Optional timestamps, counters and extra
+package metadata are not equality gates. Conflicting aliases, nonzero or missing
+exit status, interrupted calls, missing streams and recorded hash drift fail.
+Resolve relative stream paths against each receipt's directory. This read-only
+helper does not execute commands or establish content approval; retain the
+original receipt and its source/review bindings. Do not invent missing evidence
+or compare a whole child record against a handoff's partial metadata object.
+
+For local repairs, run only the affected downstream lesson stages. `assemble`
+still reconciles the authoritative book structure, but replaces only changed
+outputs; it does not delete other lesson directories or attached evidence.
+The current book index, not leftover directories, defines the active set.
+Multi-lesson edition commands share one invocation-local source page stream and
+source reconstruction. A later invocation rereads source; there is no persistent
+cache that can conceal changed pages or errata.
 
 Choice retention verifies the existing choice checker against the current lesson,
 its projection and assets. It refuses a wrong owner or a different existing
@@ -73,5 +181,6 @@ Keep the first failure receipt and changed candidate snapshot once. Do not copy
 Node, Python, whole PDFs or a whole earlier evidence package into each new batch.
 Only a genuinely required changed input or output needs new bytes.
 Follow the image skill's bounded contexts; return text and evidence paths/hashes,
-not image-bearing history. Verify a completed batch once, then only affected
-changes after a real defect.
+not image-bearing history. Keep one applicable desktop/mobile display review of
+new/changed content, then only affected checks after a real defect. A new handoff,
+commit, push or checkpoint alone does not invalidate a passed review.

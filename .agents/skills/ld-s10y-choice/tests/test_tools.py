@@ -5,6 +5,7 @@ import argparse
 from copy import deepcopy
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -122,6 +123,75 @@ class ToolTests(unittest.TestCase):
 
     def check(self, review=False):
         return validate(self.repo, self.seed, self.draft, self.review if review else None)
+
+    def test_retained_choices_survive_branch_push_without_scratch(self):
+        project = SCRIPTS.parents[3]
+        source = self.repo / ".tmp/approved"
+        for name, value in [
+            ("seed", self.seed), ("draft", self.draft), ("review", self.review),
+        ]:
+            store(source / f"{name}.json", value)
+        store(self.repo / ".intentfold/project.json", {"project": "lemmadeck"})
+        (self.repo / ".intentfold/readme.md").write_text("Synthetic checkout.\n")
+        store(self.repo / "ssot-resources/soviet10year-textbooks/sources/manifest.json",
+              {"catalogs": [{"book": "sample"}]})
+        marker = self.repo / ".claude/skills/ld-s10y-lesson/tools/p2c.py"
+        marker.parent.mkdir(parents=True)
+        marker.write_text("# Synthetic checkout marker; never executed.\n")
+        scripts = self.repo / ".agents/skills/ld-s10y-choice/scripts"
+        scripts.mkdir(parents=True)
+        for name in ("prepare.py", "validate.py"):
+            shutil.copy2(SCRIPTS / name, scripts / name)
+
+        def run(*args, cwd=self.repo):
+            result = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            return result.stdout.strip()
+
+        branch = "codex/sop-test"
+        run("git", "init", "-b", branch)
+        retainer = project / ".claude/skills/ld-s10y-lesson/tools/retain_choices.py"
+        args = (sys.executable, str(retainer), "--repo", str(self.repo),
+                "--book", "sample", "--lesson", "unit-a", "--source", str(source))
+        self.assertEqual(run(*args), "retained: sample/unit-a")
+        target = self.lesson / "choice-set"
+        expected = {}
+        for path in self.book.rglob("*"):
+            if path.is_file():
+                expected[path.relative_to(self.repo)] = path.read_bytes()
+        self.assertEqual(run(*args), "reused: sample/unit-a")
+        for name in ("seed.json", "draft.json", "review.json"):
+            self.assertEqual((target / name).read_bytes(), (source / name).read_bytes())
+
+        # Commit only the lesson dependencies, preserving unrelated staging.
+        (self.repo / "unrelated.txt").write_text("Keep the user's staging.\n")
+        run("git", "add", "--", "unrelated.txt")
+        artifact = str(self.book.relative_to(self.repo))
+        run("git", "add", "--", artifact)
+        run("git", "-c", "user.name=SOP test", "-c", "user.email=sop@example.invalid",
+            "-c", "commit.gpgsign=false", "commit", "--only",
+            "-m", "Retain one synthetic lesson", "--", artifact)
+        self.assertEqual(run("git", "diff", "--cached", "--name-only"), "unrelated.txt")
+        commit = run("git", "rev-parse", "HEAD")
+        with tempfile.TemporaryDirectory(dir=SCRATCH) as remote_directory:
+            remote = Path(remote_directory) / "remote.git"
+            run("git", "init", "--bare", str(remote))
+            run("git", "remote", "add", "origin", str(remote))
+            run("git", "push", "origin", f"HEAD:refs/heads/{branch}")
+            self.assertEqual(run("git", "ls-remote", "origin", f"refs/heads/{branch}").split()[0],
+                             commit)
+            recovered = Path(remote_directory) / "recovered"
+            run("git", "clone", "--branch", branch, str(remote), str(recovered))
+            shutil.rmtree(source)
+            self.assertFalse((recovered / ".tmp").exists())
+            self.assertFalse((recovered / "unrelated.txt").exists())
+            for relative, original in expected.items():
+                self.assertEqual((recovered / relative).read_bytes(), original)
+            retained = recovered / target.relative_to(self.repo)
+            run(sys.executable, str(SCRIPTS / "validate.py"),
+                "--repo", str(recovered), "--seed", str(retained / "seed.json"),
+                "--draft", str(retained / "draft.json"),
+                "--review", str(retained / "review.json"), cwd=recovered)
 
     def test_whitelist_drops_nested_metadata_and_unselected_prose(self):
         self.assertNotIn("DO-NOT-PROJECT", json.dumps(self.seed))

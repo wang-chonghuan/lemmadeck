@@ -23,6 +23,7 @@ import path from 'node:path'
 import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { svgResourceScan } from './svg_resource_scan.mjs'
 
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
@@ -115,7 +116,8 @@ function figureAssetStrict(id, manifest) {
     const svgPath = path.join(edition, relativePath)
     if (!fs.existsSync(svgPath)) throw new Error(`现代版缺少图片: ${id}`)
     const svg = fs.readFileSync(svgPath, 'utf8').replace(/<\?xml[^>]*\?>/, '').trim()
-    const linkScan = svg.replace(/\sxmlns(?::\w+)?="[^"]+"/g, '')
+    const fontPath = path.resolve(toolDir, '../node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2')
+    const linkScan = svgResourceScan(svg, fs.existsSync(fontPath) ? fs.readFileSync(fontPath) : null)
     if (/<(?:image|foreignObject|script)\b/i.test(svg) || /(?:data:|https?:\/\/)/i.test(linkScan)) {
       throw new Error(`${svgPath} 含位图、脚本、data URI 或外链`)
     }
