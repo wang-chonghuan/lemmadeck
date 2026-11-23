@@ -1,0 +1,12 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188",
+  "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "argv": [
+    "-B",
+    "-c",
+    "\nimport json,sys\nfrom pathlib import Path\nsys.path.insert(0,sys.argv[1])\nimport edition\napproval=json.loads(Path(sys.argv[2]).read_text())\nfield=approval[\"approved_fields\"][0]\nsource=json.loads(Path(field[\"candidate_path\"]).read_text())[\"prose\"][7][\"source_text\"]\nerrors=edition.validate_text(source,field[\"replacement_value\"],[\"layout\",\"mathematical-definition-clarification\"],[],\"lesson.prose[7]\",[])\nassert len(errors)==1 and \"got=['449']\" in errors[0],errors\nprint(json.dumps({\"originalC1NativeTextErrors\":errors,\"formulasChanged\":False,\"sourceChanges\":0,\"finalizerCalls\":0},ensure_ascii=False))\n",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.claude/skills/ld-s10y-lesson/tools",
+    ".intentfold/tickets/STEMROBIN-188/tmp/n34-content-independent7/approval.json"
+  ],
+  "exitCode": 0
+}

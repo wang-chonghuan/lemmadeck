@@ -1,0 +1,12 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188",
+  "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "argv": [
+    "-B",
+    "-c",
+    "\nimport json,sys\nfrom pathlib import Path\nsys.path.insert(0,sys.argv[1])\nimport blocks\nroot=Path(sys.argv[2])\nfor number in [149,159,160,161]:\n    directory=root/\"pages\"/f\"{number:04d}\"\n    data=json.loads((directory/\"page.json\").read_text())\n    serialized=[{key:value for key,value in item.items() if key!=\"id\"} for item in data[\"blocks\"]]\n    if (directory/\"page.md\").exists():\n        meta,items=blocks.parse((directory/\"page.md\").read_text())\n        assert items==serialized,number\n    else:\n        md=blocks.dump(data[\"meta\"],data[\"blocks\"],number)\n        meta,items=blocks.parse(md)\n        assert meta==data[\"meta\"] and items==serialized,number\n        (directory/\"page.md\").write_text(md)\nprint(json.dumps({\"faithfulBlocksUnchanged\":True,\"pages\":4,\"sourceFinalizerReplays\":0}))\n",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.claude/skills/ld-s10y-lesson/tools",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/ssot-resources/soviet10year-textbooks/artifacts/6-8g"
+  ],
+  "exitCode": 0
+}

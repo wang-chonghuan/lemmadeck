@@ -1,0 +1,25 @@
+{
+  "kind": "actual-supplemental-affected161-markdown-and-audit-diff",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "command": "node",
+  "argv": [
+    "-e",
+    "const fs=require(\"node:fs\"), assert=require(\"node:assert/strict\"); const t=\".intentfold/tickets/STEMROBIN-188/tmp/\"; const b=t+\"source6g161162-author-first-10/artifacts/6-8g/pages/0161/\", a=t+\"source161-two-affected-repairs-11/artifacts/6-8g/pages/0161/\"; const parse=(p)=>{const s=fs.readFileSync(p,\"utf8\"), close=s.indexOf(\"\\n---\",4); return {meta:JSON.parse(s.slice(4,close)),body:s.slice(close+4)}}; const before=parse(b+\"page.md\"), after=parse(a+\"page.md\"); assert.equal(after.body,before.body.replace(\"概念，但是\",\"概念。但是\")); const expected=structuredClone(before.meta); expected.notes[2]=after.meta.notes[2]; expected.count_exclusions=after.meta.count_exclusions; assert.deepEqual(after.meta,expected); const ba=JSON.parse(fs.readFileSync(b+\"audit.json\",\"utf8\")), aa=JSON.parse(fs.readFileSync(a+\"audit.json\",\"utf8\")); const allowed=new Set([\"lines_printed\",\"count_exclusions\",\"errors\"]); const otherBefore=Object.fromEntries(Object.entries(ba).filter(([k])=>!allowed.has(k))), otherAfter=Object.fromEntries(Object.entries(aa).filter(([k])=>!allowed.has(k))); assert.deepEqual(otherAfter,otherBefore); console.log(JSON.stringify({status:\"PASS_AFFECTED161_MARKDOWN_AND_AUDIT_DIFF_ONLY\",markdownBodyOnlyChange:\"概念，但是 -> 概念。但是\",markdownMetaOnlyChanges:[\"notes[2]\",\"count_exclusions\"],auditOnlyChangedKeys:Object.keys({...ba,...aa}).filter(k=>JSON.stringify(ba[k])!==JSON.stringify(aa[k])),removedNativeError:ba.errors.filter(e=>!aa.errors.includes(e)),allOtherMarkdownAndAuditUnchanged:true,imageOpens:0,activeExecSessions:[]},null,2));"
+  ],
+  "toolOutputId": "3fb4d9",
+  "exitCode": 0,
+  "processExited": true,
+  "sessionIdReturned": false,
+  "stdout": {
+    "status": "PASS_AFFECTED161_MARKDOWN_AND_AUDIT_DIFF_ONLY",
+    "markdownBodyOnlyChange": "概念，但是 -> 概念。但是",
+    "markdownMetaOnlyChanges": ["notes[2]", "count_exclusions"],
+    "auditOnlyChangedKeys": ["lines_printed", "count_exclusions", "errors"],
+    "removedNativeError": ["行数对不上：印刷 25 行，块体 24 行（块体一行 = 印刷一行；公式跨行用 ↵ 标断点）"],
+    "allOtherMarkdownAndAuditUnchanged": true,
+    "imageOpens": 0,
+    "activeExecSessions": []
+  },
+  "stderr": "",
+  "activeExecSessions": []
+}
