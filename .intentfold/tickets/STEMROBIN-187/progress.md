@@ -1,5 +1,62 @@
 # 当前检查点
 
+### 2026-11-23 N59完整单课保存及writer提交
+
+- N59《小数的减法》`math4-c2-s2-n59`离线全部收口，物理216–221/
+  印刷207–212，976–1008共33题（15主练习/10复习/8家庭）、6源正文/
+  7显示段、一原书图223及一新增选择题量角图。217–221页finalize实际
+  25/25、25/25、23/23、20/20、23/23 PASS；216及装订215边界只读。
+  首六页assemble因974表owner缺题文失败保留，增215边界后通过，
+  只保留N59；N60 `p0221#10 open`是下课边界，不计入本课。
+- literal补证确定980 д)=`96.3+0.081`、1004 б)开头为分组整数
+  `146\,325`、1005“把一长…”、223四尺寸箭头朝外。0220旧源md/json/audit
+  留`evidence/literal-before/0220/`；原作者和独审的旧误读/HOLD报告不改。
+  x/X原字形历史限定仍在，现代小写x明确接受归一化。
+  raw exercisesSHA `de4324600035b29baa42e9fbf48ec4fb5ade66ae534e7fa13c858495b7679998`，
+  literalSHA `9ad0d15afcb3681704d288e712f39b5db592e4aaee842796883b30ae8088ad27`。
+- 现代adapt-finalize实际PASS：4/6正文、18/33题变化，一图；
+  美元/Latin分题标签与三行单列竖式，规则边界来自工具prose flow。
+  223原vectorize一次mismatch0.004%；现代确定性双管/双全跨度尺寸、
+  3左/2右示意人物，无度量比例/答案标签，24图父预算不重开。
+  正式图审PASS；specSHA `58e8f9f6e028203d5b730d98ba83223471da6815d8673ed0813d7412f293ad31`，
+  SVG `e6cadbce72140f56b9ea5075409f845b3bfa4b004ac25373ed4a0b41f8a60ffd`。
+  首断言格式失败和八候选/失败输入保留，不重渲染223。
+- 官方answer prepare/finalize实际PASS，33答案、29auto/4ungraded、
+  97numeric+8expression parts。两受影响独立计算/比较PASS，980 e)=96.381、
+  1004 b)=201000，103其余parts复用原独审；
+  affected-reviewSHA `8997344e0b13c18d2e96656cc86aec5563e3cec59b0f3ae995f211dbdb2fb114`。
+  976仅六差值自动评分，六加法验算完整展示但notes不冒称已验证学生验算；
+  982/992/993作图及997不计算说理保留完整ungraded标准答案。
+  原候选在`evidence/answer-first-review/`，没有旧键盘interactions重跑。
+- 选择题41题（40single/1multiple）/152options、33源全覆盖，仅concept5规则。
+  作者先源解、独审先源/visible冻后看键。FIRST正式review exit3的984
+  方向提示泄露及992角和筛选保真失败保留`choice-set/review-history/FIRST/`；
+  只修两题，39其它题/31coverage/原图证据不变复用。
+  新992图`fig-choice-4m-992-measure`为authoredBasis所选ABCD量角图，
+  640x600、横纵100px/unit、24px字，无坐标/角值/提示；四选项均和360度，
+  需看具体内角，作图/实际量角器操作证明及任意精度损失明确记录。
+  FIRST局部check locator失败保留，修定位器后PASS，spec/SVG/render不重做。
+- 新图正式review PASS SHA `efaaf0c60315726b9ad27b98b162821dd06a00c7c02db8e57157292b18548af9`；
+  final choice reviewSHA `ddc5d40f4959124ee36a9c09c2a4a3d41470e9ede9d72cf23f35206a946b27ea`，
+  canonical draft `8d2762996b09de36444ad2bbf78b2c13a2e60a7b7aa9dd6722d64c4991c368c0`，
+  官方带review validator实际exit0，retain_choices实际成功。
+  作者/初审/affected源解、visible、审查八文件及FIRST均已保留，不只在tmp。
+- 完整离线render及display check实际PASS：1440x960、390x844四views，
+  共8观察；7正文段/33习题/41choices/33answers逐项投影、引用图、
+  实际字号、页面无溢出、横向末端及末尾可达，无KaTeX/pageerror。
+  独立视觉采样八图PASS，完整DOM证据复用、采样范围/限制诚实记录；
+  visual-reviewSHA `c829fe27d6b5e06bf0309d75662334bda1a04b5af9af4519865ab249cc84de3d`。
+  使用isolated headless Chromium离线内容证据，不声称线上/DB功能验收；
+  稳定键盘未重测。实跑driver、report、完整screenshots和inspection保留。
+- 当前仅准备窄commit/普通push；真实SHA与push结果随后回写本节。
+  未提交writer，未以离线PASS冒称入库。待保存后以本课pushed commit为输入，
+  指定raw/现代lesson、图223及choice-set量角图、答案和选择题既有路径；
+  不提供未完成N57/N60，也不要求writer积攒多课。
+- N58真实push/writer提交保留且将随本次窄进度保存；N57未完及946/
+  218/219 HOLD不变。父永久24/24零新图，所有FIRST及其它dirty/staged保持。
+  无DB/env、其它chat消息、付费、新树/分支/定时器、合并部署关闭。
+  本节不是整组完成或暂停；本课保存并提交后继续N60，不等待writer。
+
 ### 2026-11-23 N58完整单课保存及writer提交
 
 - N58《小数的加法》`math4-c2-s2-n58`，物理213–216/印刷204–207，
@@ -26,14 +83,26 @@
 - 最后依赖核发现HEAD缺angleRegion支持：仅合成schema/校验器角域增量及
   六focused tests，排除source_image_path迁移辅助、renderer与其它dirty。
   edition仅三行竖式数学签名布局及十focused tests；索引仅HEAD+N58，
-  依赖页213–216，新增四页78→82。选中版本验证及本课commit/普通push
-  正在执行，实际SHA和writer提交在成功后填写，当前不冒称push或DB发布。
+  依赖页213–216，新增四页78→82。选中版本十布局/六角域tests及N58两份
+  approved规格验证实际PASS，cached diff-check与凭据扫描PASS，112个限定文件。
+  本课commit `04ec2cc89c7e1cc2787d78d02c9344db7fa1e01a`，普通push exit0，
+  `1ffca7518..04ec2cc89`到既有`codex/STEMROBIN-187-textbooks`。
+  **提交唯一串行DB写入方：`math4-c2-s2-n58`，以上pushed commit为输入**，
+  root=`ssot-resources/soviet10year-textbooks/artifacts/4m`，
+  原课=`lessons/math4-c2-s2-n58/`（含evidence），
+  edition=`editions/modern-us-neutral/lessons/math4-c2-s2-n58/`
+  （含answer-keys及choice-set），依赖源页213–216及原/现代222、tbl-p0216-01。
+  writer按既有publisher串行写本课；worker未DB/env操作，发布待实际回执，
+  不以push冒称入库。校验器路径迁移、renderer及其它dirty保持原字节；
+  本记录为实际push后的正常回执，不强制第二次receipt-only commit。
 - N56已普通push实际commit `1ffca7518d19e9a28b6f80daf75b9f5a03c5e9a2`，
   其唯一writer提交保留，不以push冒称入库。N57未完，946/218/219 HOLD
   及纠正210/212后的现代旧绑定待刷新，未提交不完整课给writer。
   父永久24/24、零新图；无DB/env、其它chat消息、新树/分支/定时器、
   合并部署关闭。保存后接续N59，216只读边界及217–221缓存已备料，
   不重跑备料、不等待writer，本检查点不是暂停或整组完成。
+  本轮Plane读取HTTP200，首jq误读paginate顶层造成exit5，改为递归objects读取后
+  成功实收live STEMROBIN-187及finish=review；不是API失败、不重试写操作。
 
 ### 2026-11-23 N56十一题完整审查及单课保存
 
