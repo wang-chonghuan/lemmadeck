@@ -11020,3 +11020,210 @@ choices 显示首次裁剪执行exit1，两partial图及原脚本/错误记录�
 本课 raw/modern/四图/八只读答案/十一choices及必要源、失败、审查、显示均完整离线，
 准备本分支窄commit/普通push；未写DB或称已发布。两index只暂存N30及实际必要pages，
 其余未完课、其它技能/代码/9-10g dirty与既有暂存不混入。
+
+### 2026-11-23 单课入库队列提交：N30
+
+- lessonId: `geo68-c2-s4-n30`
+- book/edition: `6-8g` / `modern-us-neutral`
+- branch: `codex/STEMROBIN-188-textbooks`
+- pushed commit: `c3edb8a1473b04d4b8209c999373eaadf71e774a`
+- sole production root: `/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188`
+- retained lesson: `ssot-resources/soviet10year-textbooks/artifacts/6-8g/editions/modern-us-neutral/lessons/geo68-c2-s4-n30/`
+- retained raw lesson: `ssot-resources/soviet10year-textbooks/artifacts/6-8g/lessons/geo68-c2-s4-n30/`
+- assets: 同 book 的 raw figures190–193 / modern figures190–193，源pages0138–0142。
+- necessary evidence: 同 book 的 `evidence/stemrobin188-6g-n30/`；来源137138/139140/141142限定源/审查路径随该commit保留。
+- scope: 28正文blocks/8题/4现代图/8ungraded只读答案/11choices共53选项；完整中文离线课。
+- save/push: commit exit0，普通push exit0，`0852fe5fb..c3edb8a14 HEAD -> codex/STEMROBIN-188-textbooks`；未追加远端重复检查。
+- staging: 470 owned/necessary路径；两书索引仅新增N30，raw实际pages70；其它工作字节不还原，旧ANSWER338独立baseline未提交。
+- publication: 待监督已授权的单一串行写入方从此 pushed snapshot intake；本聊天DB writes=0，未声称published。
+- interactions: 不新增证明/作图键盘交互；八题答案ungraded/read-only，保留已有有效行为；choice-set为已独审的原生single/multiple快照。
+- display: 已有一次正文/答案及choice桌面/手机PASS可复用，不因提交/入库重做完整功能测试。
+
+本条是现有检查点的即时单课提交，不发监督/同伴消息，不新建writer或四课等待门。
+保存后立即继续N33；Russell为当前唯一独审，在tmp/n33-content-independent7先盲源解锁定，
+未给作者正文、提案或答案键。当前不是188全组完成，也不启动E。
+
+### 2026-11-23 N33 源解收取与原文安装
+
+Russell SOURCE-FIRST 已一次收取，actual0444/SHA
+`3b5a57a7a1795dfe0dfe32a918173a02bd33ce3dc65136e20b6164dbd7711a9c`；
+20 entries/12 text/五题独立推导、0图。独解确认 p0155#7 的 A/B–P/Q
+未绑定，以及 p0156#8 把全称双平行替代直接叫作全称唯一性的逻辑否定；
+目前仅披露保留作者正文、精确提案与五答案供受影响比较，未注册/应用或称PASS。
+中性445→444/双垂线，441双向与442平行公理依赖均由盲源解明确，
+source glyph/历史/现代物理未被本段冒称确证；唯一在途独审仍Russell。
+
+raw N33、canonical pages0149/0155–0159 与 fig209–212原PNG已安装；
+source metadata/text未改，原失败、候选、审查及历史UNKNOWN全保留。
+安装第一条MD比较因native JSON的派生figure id不在Markdown中而exit1，
+只投影该不可序列化字段后恢复exit0；原记录在同N33 `resume7/`。
+恢复证明六页其余所有块字段一致；缺失MD由native blocks.dump/parse生成，
+未重跑source finalize。raw reindex一次exit0、27 retained lessons，
+其它工作index字节保持为未提交变化，尚无N33现代finalize/choice/整课显示或push。
+父实际图片仍8/24；离线显示脚本仅准备，不冒称执行。
+
+Russell 受影响正文/五答案比较已一次收取关闭；approval actual0444/SHA
+`2367df111a70419c4f90dfb1d6d341a344bcc82a9fca10a6ae607283c3de767c`。
+三项精确数学修正式获批准：p0155#7记号、p0156#8否定量词、
+p0157#1相邻反证依赖；五答案原字节PASS，不扩改O1–O4历史/语境。
+native metadata-only errata登记exit0、受影响adapt-prepare exit0，
+只更改三页errata metadata、现代text及math-correction分类，原文块/快照不改。
+四图只绑定当前批准文本、持久source与output元数据，几何/SVG未重绘；
+Leibniz为唯一图独审，209210 source-first→final六图批，其后再派211212。
+
+Averroes下一N34仅备料已一次收取关闭，manifest SHA
+`3362e2d0580b215416dbebd0572c36a3dd7b5cdb4cd21cce889a70f9440ad16b`，
+同book `evidence/stemrobin188-6g-n34/preparation7/`。
+native assemble/adapt-prepare均exit0，15 blocks/12 text/446–449四题/2原图，
+范围[p0159#5,p0161#7)、不含N35，0图片。source160字形/printing HOLD
+及source161受影响审查未完成继续保留；不计N34完成，不混入N33提交。
+
+### 2026-11-23 N33 原生收口与受影响显示恢复
+
+Leibniz209210与Nash211212图独审均一次收取、关闭并持久保留于
+同N33 `fig209210-independent7/` / `fig211212-independent7/`，各实际6/8图、6/24；
+四图 native review@1 PASS后仅提升路径，不重绘geometry/SVG。
+209的M关联/严格角不等式、210延长侧、211有限trace在P交会且P离a、
+212在K交会及基线处垂直切向均受审；illustrative arcs不冒称精确metric/model，
+glyph/script/dash/markers UNKNOWN与作者失败/修订完整保留。
+
+modern首次finalize因native长勘误段落换行匹配失败；第一独立字符串恢复也在写前失败，
+原脚本及候选保留于 `resume7/`。最终恢复只从完整native-normalized目标取得
+同词/同公式、仅空白变化的exact span；`errata-layout-recovery7.json`保留诊断。
+候选SHA `ade0d921ebb1904b1f3831104aa462a08d6ee93af98db9388d656cc78b3ffcf4`。
+modern recovery1 exit0，answers finalize exit0（auto0/ungraded5/derived/parts=[]），
+offline render exit0（flow24/五题/四图）；不因包装重跑通过阶段，不新增键盘。
+
+Newton唯一完整页显示独审已收取关闭：五图各开一次、0裁切，5/8与5/24。
+正文12段/全部公式、四图和过渡、五题/五只读答案及三处修正段落显示PASS；
+唯一FAIL是441全角点未被离线renderer识别，蓝色编号后正文再显示441。
+初始 `surfaces.json`仍是mechanical-pass-visual-review-pending，不冒称PASS。
+父只改renderer匹配全角点/句点且不当作degree/star标记；源/课程/答案/seed字节未改。
+定向before测试exit1、after测试exit0及原FAIL均保留于 `display7/number-*7.*`；
+受影响render exit0，441桌面/手机新两图已捕获，交Noether限定恢复复核；
+不重开原完整五图/源图，不重跑现代或答案finalize。
+
+Feynman仅choice作者，五源441–445/concept0/0图官方seed digest
+`3054db83f5626520746f912236dd975a731c6b70ef48faed34ef6d5753c34e7d`；
+Gibbs当前唯一choice独审，先seed-only独解封存，尚未披露作者draft/keys。
+父实际图片仍8/24，历史24/24不改，不加子批计数。
+N33尚未choices独审/完整离线交付/commit/push；DB writes=0。
+
+N34 Laplace正文草稿已收取关闭、持久保留于同N34 `text-author7/`：
+lesson SHA `d4de26329f1fe2b28ca5c63c477319078d773866f2469a17ace9944910ba4303`，
+exercises SHA `3f269c0542abfcc7dfbd3f4535a20d0ef714c0fff1df744db83eda9efefb670e`。
+仅三处非公式合同→全等及446、447共问分离、两个native过渡锚点；
+尚无内容独审/答案/现代图/choices/安装收口，仍不计完成。
+source161限定比较确认N34 blocks#1–#6与已审来源相同，
+修复body#8属N35范围外，meta仅notes/count_exclusions，不为范围外标点重审全页；
+source160历史printing/glyph失败UNKNOWN仍保留，继续必要的N34实质审查。
+
+Noether受影响441显示/renderer代码复核已一次收取关闭，PASS；
+两新图各开一次、无裁切，2/8与2/24，原五图不重开。
+fullwidth-dot/句点仅在印刷编号相等时消费；degree/star、错配/null编号行为保留；
+未改source/modern/answer/choice-seed，未重跑测试。
+原完整页FAIL及原定向before测试FAIL均保留，不回填为首次成功。
+
+Feynman选择题作者已一次收取关闭：4题/17项，single3/multiple1、每题4/5/4/4项，
+draft canonical digest `463fed162c00b78aa0244e1e52ff8249c95b00d46fc28d8af8b89a2697f2c022`；
+SOURCE-SOLVING actual0444/byte SHA
+`c18d60da29bdf4b879311d5d5960cca7a7b8524ffa80262ffaab267303b549e8`，
+一次structural validate exit0，0图。五源覆盖，442/443合并为依赖分类，
+独立书写/开放举例/辅助作图/严格射线位置证明的production losses明确保留。
+Gibbs SOURCE-FIRST actual0444/byte SHA
+`f18ea75f77d4bc0d64dcd32821a67c5d858b233fa2d059890a3f77240633608c`已收取，
+五源盲解无数学source blocker；仅披露view-only SHA
+`9d6c3ae3f3d6e9101a99b0231b21f120f9b3cbf404f8c325a1b8c22221b3c912`，
+当前独解全部17项及fidelity/redundancy/leakage，未披露author keys，未称semantic PASS。
+
+Rawls N34四答案作者已收取关闭并持久保留 `answers-author7/`，
+candidate SHA `0c68160e262a40d1ca141e6cd0f1d77696795677e1a9e31f1449e2af113305cb`；
+all derived/ungraded/parts=[]，无bookRaw可用，0图/无interaction。
+447(3)至少一/恰好一公共点两种条件结论明确保留，尚无独审/native finalize。
+Goodall当前唯一N34内容独审，只收到raw source与两原图，
+先独立源解封存，尚未给modern作者稿或答案。没有为旧source-page失败重跑全部源审。
+
+### 2026-11-23 N33 选择题真缺陷与 N34 限定说明应用
+
+Gibbs VIEWS-FIRST已一次收取、actual0444/SHA
+`38875b31f682390169b2f1e64c052e463f3c773076f80bfa5158f7ae2d86cc5e`；
+17项全部独解，equivalence真集为空，其它三题真集为[a,b,d]/[b]/[b]。
+真实FAIL：等价option c的B⇒A把n=c遗漏，重合不满足B的不同直线相交前提，
+原作者c键及原SOURCE-SOLVING的缺口均不冒称通过。
+当前仅披露原作者内部推导/键，正式原稿revise审查及其native失败待收取。
+原draft另存actual0444 `draft.before-equivalence-recovery7.json`，byte SHA
+`d03489d167d5f9a9e89a69c21ad1b25ad6b2dd2b9bdc72f29153d830385ec0ec`，
+原draft.json保持不动供原审比较。parent一次数学修订仅生成 `draft.recovery7.json`：
+c可见论证分n=c直接与l相交与n≠c才应用B；相应source_solution/rationale c、
+及a错误的“第二方向成立”声明修正，其可见a/b/d、其它三题13项与模式/键/损失不改。
+恢复结构检查exit0，new view-only SHA
+`d21b175ec38add94f7a082a1dc55143e0c5b62c14765848a3c55dbd2b0c35976`；
+尚未独审批准/正式retention或推送。选择题数学首败1/parent修订1如实保留。
+
+Goodall N34 SOURCE-FIRST actual0444/SHA
+`631f6f8f3c90513632da6db1fa07392aa72e29ab2ad3966c72eeefcbf61dfc2f`已收取；
+两原图实际2/8、2/24，不重审已过源页。COMPARISON与approval已收取，
+approval SHA `122d4b6ab276f104fc52e4a5e9a45eec2d6b6f9181cd7e83c2fde32ea21fd3ac`：
+四原题/四只读答案数学PASS，447(3)条件双读足够，不为UNKNOWN强改源题；
+正文仅需在p0160#2明确同平面、含重合的平行关系与后面学生strict定义区分。
+原C1新加cross-reference449触发受影响native数字检查（want=[]/got449），
+并未运行或冒称modern-finalize失败，不改共享checker。
+只把“习题 449 中学生给出的定义”换为“后面习题中学生给出的定义”，
+Goodall限定指代恢复 exact string审批SHA
+`1506511dcf383871b88efbfe3a0feb6f472de428133ec710240e8cef10b96524`已收取，
+0新图、旧2/24不清零；原approval/所有seals保留。已应用到editable template，
+tag为layout/mathematical-definition-clarification，不误称layout-only或新增数值/公式勘误；
+native affected text check exit0，无source/formula改动。Goodall已关闭。
+当前approved template SHA
+`b5d59fd5138f20eb015e380a0e5e378b5ba1833b003aba0604967fa543a59269`，
+审批与原始失败持久保留 `content-independent7/` / `resume7/`。
+
+N34 raw lesson、原图与四来源页已faithful安装，projection比较exit0，
+原文块不改、source-finalizer replays0；raw reindex exit0、28 retained lessons。
+旧source160白名单失败/printing/glyph UNKNOWN保持，不把安装比较当清除原finalize。
+工作索引新增未完N34，N33暂存仍必须仅HEAD+N33；160/161及N34产物不混入N33提交。
+N34未modern-finalize/现代图/原生answers-finalize/choices/显示/完整交付；DB writes=0。
+父实际图片仍8/24，未开任何新图片。
+
+### N33 完整离线单课保存
+
+Gibbs 原稿正式review outcome=revise，actual0444/SHA
+`bdd36361958f517f17fcee2a1681ea3e745bc5cf7277984991510d79def20a26`，
+native校验一次exit3（mechanical passed / semantic revise），原streams/回执保留。
+同一审者受影响新view先封存后比新内部推导：n=c直接相交及其它n才应用B使F1关闭，
+16未改选项判定与五源解直接复用；final review outcome=pass、actual0444/SHA
+`8491c29e63ec94bfec6310854cc28f3e8cdcbd99b2af66fa4648a0f1b214b1ee`，
+final native validation一次exit0，不冒称自动数学证明。
+新draft canonical digest `938e308508a04a868be3baa78ca6831e9b843855d5386d9a1168f74f6834041e`。
+已提升修复稿，retain_choices原生exit0，4题17项/0图，作者、盲源解/盲view、
+原稿FAIL/exit3、修订及final PASS均持久留在N33 choice-set及choices-author7/choices-independent7。
+Gibbs已关闭，不替换独审或回填原稿PASS。
+
+因该真实选择题缺陷，parent仅定向查看只读441答案的反向论证：
+该答案先假设n与l平行，c垂直l已排除n=c；与选择题原来的任意n范围不同。
+441答案原字节/已有Russell审批直接复用，其余四答案不重审，不重复answers-finalize。
+
+Plato完整choice桌面/手机显示一次PASS，actual0444 DISPLAY-REVIEW SHA
+`d2734714de7dbfc360e12fcf10a6525f1aa529cadab0cff5c223b904615c49bf`；
+完整4 stems/17 options、single3/multiple1、数学/字体清晰，无裁切/重叠/横向溢出。
+实际2/8图、2/24上下文，0重开/crop，Plato已关闭，父仍8/24。
+`display7/`保留原完整页FAIL及441受影响恢复PASS、choice显示PASS；
+原status snapshot保留，当前surface/choices状态仅依据实际独审升PASS。
+最终三个模板和七脚本已一次持久留存；四图批准词/公式与原生输出只差空白，
+绑定assert通过，不重绘/review/rebind。未source replay/全包重验/DB writes。
+
+本课raw/modern/四图/五ungraded只读答案/四choices及必要源/失败/实质审查/
+桌面手机证据已完整离线，开始既有分支窄commit/普通push。
+只stage HEAD+N33两索引和已独审SEC_NUM单行、renderer全角点两行及其三定向fixture；
+N34、canonical160/161、其它6-8g/9-10g dirty、技能变更及runtime依赖仍排除。
+
+N33暂存首次最终路径assert exit1，已经完成的owned staging和HEAD+N33索引不回滚。
+具体原因是Git默认quoted六个历史fallback中文目录名，使文本startswith误报；
+NUL-delimited读取实际572 paths，unexpected=[]，不是混入其它课。
+保留原stage脚本与staging-first7.failure.json，仅补NUL验证，
+不重跑现代/答案/choices/显示/源审或逐文件hash，不重新stage已完成索引。
+N34两图作者Kant已收取关闭，manifest SHA
+`3ee0d2d1fc44e2bedd98dae599c74b524f06c27480bb916ae19889a891aa5e90`，
+23 owned files actual0444；7/8图片、7/24上下文，一次capture-only恢复、
+零图内容修订，source inventory为6×4表/15signs与两束各四无标号直线。
+仅作者/native render PASS，现代图独审尚未完成，不混入本次N33提交。

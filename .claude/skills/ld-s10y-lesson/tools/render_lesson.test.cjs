@@ -23,6 +23,9 @@ test("offline exercise numbers consume the whole matching circle prefix", () => 
       { number: 175, text: "175* BODY_I", circle: false, body: "BODY_I" },
       { number: 176, text: "$176^{\\circ}$. BODY_J", circle: true, body: "BODY_J" },
       { number: 177, text: "177$^{\\bullet}$. BODY_K", circle: false, body: "BODY_K" },
+      { number: 441, text: "441\uFF0E BODY_L", circle: false, body: "BODY_L" },
+      { number: 442, text: "442\u3002 BODY_M", circle: false, body: "BODY_M" },
+      { number: 443, text: "444\uFF0E BODY_N", circle: false, body: "444\uFF0E BODY_N" },
     ];
     fs.writeFileSync(path.join(lesson, "lesson.json"), JSON.stringify({
       title: "Fixture", prose: [], section_breaks: [],
@@ -56,6 +59,9 @@ test("offline exercise numbers consume the whole matching circle prefix", () => 
     assert.equal(rows[7][1], "174.");
     assert.equal(rows[8][1], "175.*");
     assert(rows[10][1].includes("\\bullet"));
+    assert.equal(rows[11][1], "441.");
+    assert.equal(rows[12][1], "442.");
+    assert.equal(rows[13][1], "443.");
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }

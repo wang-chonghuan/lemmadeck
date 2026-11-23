@@ -258,9 +258,9 @@ for (const lid of lessonDirs) {
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
     const printedNumber = sourceNumberForArtifact(e);
     const sourceNumber = printedNumber == null ? "" : `${esc(String(printedNumber))}.`;
-    const prefix = printedNumber == null ? null : e.text.match(/^\s*(\d+)([.°*])\s*/);
+    const prefix = printedNumber == null ? null : e.text.match(/^\s*(\d+)([.\uFF0E\u3002°*])\s*/);
     const hasPrintedPrefix = prefix && prefix[1] === String(printedNumber);
-    const marker = hasPrintedPrefix && prefix[2] !== "." ? esc(prefix[2]) : "";
+    const marker = hasPrintedPrefix && ["°", "*"].includes(prefix[2]) ? esc(prefix[2]) : "";
     const annotatedPrefix = printedNumber == null ? null
       : (e.text.match(/^\s*\$(\d+)\^\{(\\circ|\\bullet|\*)\}\$(\*)?[.．。]\s*/)
         || e.text.match(/^\s*(\d+)\$\^\{(\\circ|\\bullet|\*)\}\$(\*)?[.．。]\s*/));

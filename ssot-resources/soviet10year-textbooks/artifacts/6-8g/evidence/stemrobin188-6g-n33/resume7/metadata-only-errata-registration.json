@@ -1,0 +1,13 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188",
+  "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "argv": [
+    "-B",
+    "-c",
+    "\nimport json,sys,copy\nfrom pathlib import Path\nsys.path.insert(0,sys.argv[1])\nimport blocks,p2c\nroot,approval_file=map(Path,sys.argv[2:])\napproval=json.loads(approval_file.read_text())\nchanged=[]\nfor correction in approval[\"approvedCorrections\"]:\n    number=int(correction[\"block\"].split(\"#\")[0][1:])\n    directory=root/\"pages\"/f\"{number:04d}\"\n    page_file=directory/\"page.json\"\n    original=json.loads(page_file.read_text())\n    source=json.loads(Path(correction[\"sourcePage\"][\"path\"]).read_text())\n    assert original==source,number\n    old_meta,old_blocks=blocks.parse((directory/\"page.md\").read_text())\n    candidate=copy.deepcopy(original)\n    assert not candidate[\"meta\"].get(\"errata\"),number\n    candidate[\"meta\"][\"errata\"]=[{\n        \"id\":correction[\"id\"],\"block\":correction[\"block\"],\"original\":correction[\"original\"],\n        \"reason\":correction[\"rationale\"]\n    }]\n    restored=copy.deepcopy(candidate)\n    restored[\"meta\"][\"errata\"]=original[\"meta\"].get(\"errata\",[])\n    if \"errata\" not in original[\"meta\"]:\n        del restored[\"meta\"][\"errata\"]\n    assert restored==original,number\n    errors=p2c._validate_page_errata(candidate[\"meta\"],candidate[\"blocks\"],number)\n    assert not errors,errors\n    md=blocks.dump(candidate[\"meta\"],candidate[\"blocks\"],number)\n    new_meta,new_blocks=blocks.parse(md)\n    assert new_meta==candidate[\"meta\"] and new_blocks==old_blocks,number\n    page_file.write_text(json.dumps(candidate,ensure_ascii=False,indent=2)+\"\\n\")\n    (directory/\"page.md\").write_text(md)\n    changed.append(correction[\"block\"])\nprint(json.dumps({\"nativeErrataValidation\":\"PASS\",\"unchangedFaithfulBlocks\":True,\n \"registered\":changed,\"sourceFinalizerReplays\":0}))\n",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.claude/skills/ld-s10y-lesson/tools",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/ssot-resources/soviet10year-textbooks/artifacts/6-8g",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/ssot-resources/soviet10year-textbooks/artifacts/6-8g/evidence/stemrobin188-6g-n33/content-independent7/approval.json"
+  ],
+  "exitCode": 0
+}
