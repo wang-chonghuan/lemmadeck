@@ -1,5 +1,36 @@
 # 当前检查点
 
+### 2026-11-23 N55十一题源解及三图复核收口
+
+- 206–208页持久finalize通过，207的短独立印刷行“一；”保留为22/22；
+  208的214题注与934首行用已有samerow处理为23/23。原稿、首次失败保留。
+  layout仅新增短字形加双标点识别；三个新测试PASS。完整套件248通过、
+  10跳过、2失败；去除本修复的内存基线也出现6a page75与sparse shallow rules
+  同两失败，未改6a、未削弱测试、未提交混在同文件的既有stacked-addition改动。
+- Socrates独立SOURCE/十一题解及比较实收；934确认原印543，作者误读643
+  首稿保留，修正源/装订/模板，不以整数结果推源。三处数位加粗及929/933
+  names元数据补核PASS。212/213限定图审PASS直接复用；214蜘蛛上腿断身
+  REVISE快照留figure-leg-gap-failure，只修附着几何并补八条圆周断言后
+  render和独审均PASS，三正式record_review已生成。审者累计17/24；
+  父本上下文已有11图，未重复加载。
+- adapt-finalize首次exit2因925残留西里尔小问标签，失败audit已保留；
+  仅现代模板改Latin a)/b)并记subpart-labels，零图补核及后续finalize均PASS。
+- choice官方全11源seed、11题41选项已生成。首盲审930几何任务损失及
+  925c误区说明REVISE保留，FIRST正式checker exit3；只修930完整候选折线
+  多选及925c内部推导，独立盲/合同审查和最终checker均PASS，正式retain成功。
+  标准答案11题、40numeric parts已独立转写比较并finalize PASS：
+  9auto、930/932两ungraded，未生成旧键盘interactions。
+- 正文/书写题及选择题离线render PASS；本课隔离headless桌面1440x960、
+  手机390x844四视图八张全页截图及可失败显示检查PASS，父逐张目视PASS；
+  exact text/数量/图归属/字号/无整页溢出/横向末端及正文末尾可达均覆盖。
+  evidence/display/保留脚本、report、截图和visual-review。父累计21/24，
+  Socrates17/24，没有重跑未变公共键盘/判分/SPA或产品在线验收。
+- 本课已达到离线完整保存条件，接下来只暂存N55、205–208源页、212–214
+  原/现代图、必要索引增量及本计数修复，然后普通commit/push到既有分支。
+  暂未写DB。N52/53/54的源HOLD不变；N56的209/210已备料并转写finalize，
+  210首次23/22保留后只修217题注共享行至22/22，原215–217已矢量化，
+  尚无独立内容批准，未将这些N56资源纳入本课提交。
+
 2026-11-19：187-6重建。官方create_worktree operation
 71d3ecbf-8f24-45ab-9d14-54c5ee1ee575已completed并合法注册。
 指定基线及分支记录于ticket.json；main未制作、pull或写入。

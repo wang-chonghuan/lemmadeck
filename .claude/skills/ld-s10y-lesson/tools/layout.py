@@ -381,6 +381,38 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         if rows.stop - rows.start >= 0.6 * glyph_h
         and columns.stop - columns.start >= 0.2 * glyph_h
     ]
+    # A shallow one-stroke glyph plus a semicolon can be a complete short row.
+    # Require both aligned punctuation marks so isolated scan streaks stay noise.
+    punctuated_rows = []
+    for bounds in bounds_list:
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if not (height <= 0.25 * glyph_h and 0.7 * glyph_h <= width <= 1.5 * glyph_h):
+            continue
+        marks = [
+            other for other in bounds_list if other is not None
+            for other_rows, other_columns in [other]
+            if 0.1 * glyph_h <= other_columns.stop - other_columns.start <= 0.3 * glyph_h
+            and 0.1 * glyph_h <= other_rows.stop - other_rows.start <= 0.4 * glyph_h
+            and 0 <= other_columns.start - columns.stop <= 0.6 * glyph_h
+            and abs((other_rows.start + other_rows.stop) - (rows.start + rows.stop)) <= glyph_h
+        ]
+        if len(marks) != 2:
+            continue
+        top, bottom = sorted(marks, key=lambda item: item[0].start)
+        if (
+            top[0].stop <= bottom[0].start
+            and abs(top[1].start - bottom[1].start) <= 0.15 * glyph_h
+            and 0.5 * glyph_h <= bottom[0].stop - top[0].start <= glyph_h
+        ):
+            short_box = (
+                slice(min(rows.start, top[0].start), max(rows.stop, bottom[0].stop)),
+                slice(columns.start, max(top[1].stop, bottom[1].stop)),
+            )
+            glyph_boxes.append(short_box)
+            punctuated_rows.append((short_box[0].start, short_box[0].stop - 1))
     short_rows = [
         (a, b) for a, b in _merge_close(raw, 0.4 * glyph_h)
         if 0.3 * glyph_h <= b - a + 1 < 0.65 * glyph_h
@@ -534,6 +566,12 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             and not any(a <= rows.start and rows.stop - 1 <= b for a, b in raw)
         ):
             raw.append((rows.start, rows.stop - 1))
+    supported_short_rows = [(a, b) for a, b in punctuated_rows if ink[a:b + 1].any()]
+    raw = [
+        (a, b) for a, b in raw
+        if not any(c <= a <= b <= d for c, d in supported_short_rows)
+    ]
+    raw.extend(supported_short_rows)
     raw.sort()
     stacked_centres = []
     stacked_rules = []
