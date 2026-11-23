@@ -53,6 +53,20 @@ original four failures are retained in the existing N9 evidence directory.
 The sole reviewer's affected-only confirmation closes all four prose errors;
 five original image opens total, no extra images, all other valid evidence reused.
 Godel actually closed. N9 remains incomplete and unqueued.
+Incomplete N9 source checkpoint ordinary pushed as `d56ff96df`; current commit
+and push are recorded in existing usage.json, without a metadata-only commit.
+
+N9 affected count continuation: p39 independent top inspection (2 images)
+remains indeterminate between annotation and scan artifact; no exclusion or
+native replay. P41 local fraction-bar support repaired for its connected
+less-than sign and2px numerator overhang, with terminal-arrow veto retained.
+First focused native case exposed lookahead clipping a complete fraction;
+complete fractions now bypass that lookahead. All9 focused tests PASS;
+88 related fraction tests have no failures and5 missing-source skips.
+One affected finalize PASS21/21,9 blocks,0 normalizations; reviewed Markdown/
+JSON unchanged. Original23/21 and preceding22/21 audits both retained.
+N9 remains incomplete at p39 count and p38/p40 source/math HOLDs, unqueued.
+Continue new N10 source43-45, reusing passed source42; no N9 lesson credit.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 

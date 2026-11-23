@@ -183,9 +183,7 @@ def _bar_local_fraction_support(
     components: np.ndarray, original_bounds, original_ids, rows, columns,
     line_h: float,
 ) -> bool:
-    """Require detached, aligned fraction glyphs around a short body-connected bar."""
-    if columns.stop - columns.start >= 2 * line_h:
-        return False
+    """Require detached, aligned fraction glyphs around a body-connected bar."""
     upper, lower = [], []
     for component_id, bounds in enumerate(original_bounds, 1):
         if bounds is None or component_id in original_ids:
@@ -195,7 +193,8 @@ def _bar_local_fraction_support(
         if not (
             0.6 * line_h <= height <= 1.8 * line_h
             and glyph_columns.stop - glyph_columns.start >= 0.2 * line_h
-            and columns.start <= glyph_columns.start < glyph_columns.stop <= columns.stop
+            and columns.start - 0.15 * line_h <= glyph_columns.start
+            < glyph_columns.stop <= columns.stop + 0.15 * line_h
         ):
             continue
         if 0 <= rows.start - glyph_rows.stop <= 0.75 * line_h:
@@ -1433,6 +1432,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 b - a + 1 >= 1.8 * glyph_h
                 and next_a - b <= 0.75 * glyph_h
                 and next_b - a + 1 <= 6 * glyph_h
+                and not _single_fraction_row(ink, a, b, glyph_h, components)
             ):
                 cut = _fraction_tail_split(ink, a, next_b, content_w, glyph_h, components)
                 if cut is not None:
