@@ -1,0 +1,86 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 41,
+  "printed_page": 34,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 41
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "76077ffcb03831e262d28cbec2f22595fec27b124fdc7aefb43af213ad6205ca"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "原图首次阅读后转写，首块承接例4，保留Tk比式、带分数8又92/101、k≤8和k≥9的分界。",
+    "习题71完整十个西里尔小问按印刷四横行保存；72幂为31且二项式首项为a³；73仅有题干，标记open。",
+    "本页无图、表、脚注或已见题73公式；不猜下一页。首次23/21失败已保留，仅登记经独立源审查确认的底边计数排除。单独的T比式是一个物理行，735至827的公式墨迹不作排除，不添加↵凑数。"
+  ],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        2356,
+        1695,
+        25
+      ],
+      "reason": "Independent source comparison identifies bottom boundary dirt below folio34 only. Evidence: artifacts/9c/evidence/nov23-1847-n9/reviewer/source-comparison.md, page0041 band2356-2380; original render SHA76077ffcb03831e262d28cbec2f22595fec27b124fdc7aefb43af213ad6205ca. Count copy only; instructional fraction bands735-827 stay intact and are not excluded."
+    }
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$=\frac{1000-k}{100(k+1)}$.
+
+<!-- p -->
+我们来考查一下，当$k$是多大的数时，$\frac{T_{k+1}}{T_k}\geqslant1$：
+$\frac{1000-k}{100(k+1)}\geqslant1\Longleftrightarrow k\leqslant8\frac{92}{101}$.
+因此，当$k\leqslant8$时，$\frac{T_{k+1}}{T_k}>1$，对于其他的$k$，即对于$k\geqslant9$，
+$\frac{T_{k+1}}{T_k}<1$.
+
+<!-- p -->
+因此，$(1+0.01)^{1000}$的展开式的项随着项的序号的增大
+而逐步增大，一直到$T_9$，然后逐步减小. 因此，$T_9$是展开式的
+最大项.
+
+<!-- p -->
+注 应当注意展开式各项的系数和展开式各项的二项式系数之间
+是有区别的. 例如，展开式
+$(2a-3b)^4=16a^4-96a^3b+216a^2b^2-216ab^3+81b^4$
+的第三项的系数等于216，但是它的二项式系数等于$C_4^2=6$.
+
+<!-- exhead -->
+习 题
+
+<!-- ex 71 -->
+71. 求二项展开式：
+а) $(a+b)^6$；　б) $(x+y)^5$；　в) $(x-y)^5$；
+г) $(\sqrt{x}-\sqrt{y})^4$；　д) $(x^{\frac13}+y^{\frac13})^5$；　е) $(x-2y)^6$；
+ж) $(3x-1)^7$；　з) $(1+y^2)^4$；　и) $(p^{-2}-1)^6$；
+к) $(\frac1y+2)^5$.
+
+<!-- ex 72 -->
+72. 求$(a^3-ab)^{31}$的展开式的中间两项.
+
+<!-- ex 73 open -->
+73. 利用牛顿公式证明：
+
+<!-- foot -->
+• 34 •

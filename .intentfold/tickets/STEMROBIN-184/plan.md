@@ -2,7 +2,9 @@
 
 ## 184-7 N4 Review Delivery (2026-11-23)
 
-N4 `ana9-c2-s1-n4` is complete offline and review-ready; scoped save/push pending.
+N4 `ana9-c2-s1-n4` is complete offline at finish=review, committed and ordinary
+pushed as `ef54470f8` to `codex/STEMROBIN-184-textbooks`. One lesson submission
+is recorded in existing usage.json writerQueue; complete lessons this run=3.
 Native p24 repair is authorized by the latest delegation, superseding the old
 only-p53 limit. Four full-glyph-supported groups replace the inflated five-row
 estimate without source/pixel changes, exclusions or count overrides. Its first
@@ -30,8 +32,27 @@ reachable. Pixel sampling/tool-resize/offscreen-tail limits are explicit in
 closed after8 image opens; author Erdos already closed. No DB/new keyboard/
 app/dependency changes. Retain only N4 and necessary source/index/counter bytes;
 unrelated pages104/122/135, profile-path churn and initial dirt remain unstaged.
-After ordinary push, record one lesson in existing usage.json writerQueue,
-then immediately continue the next sourced9c/10c lesson without writer waiting.
+Immediately continuing the next sourced9c/10c lesson without writer waiting.
+
+N9 `ana9-c2-s3-n9` selected after reusing N5 completion and discovering existing
+N6 E58b/E59 and N7 E64/E69 semantic HOLDs; those stages were not replayed.
+Source37 is retained; missing38-42 were prepared and transcribed in a scoped
+scratch root. Initial five-page prepare failed before writes at the helper's
+four-page limit; corrected38-41 and42 calls passed. First native page42 passes
+24/24;38-41 fail only counts27/26,28/26,25/24,23/21. Original failures are
+retained under `9c/evidence/nov23-1847-n9/first-count-failures/`.
+Source-first review and independent mathematical derivations are retained.
+First candidate comparison identified four prose errors; corrected exactly,
+with four source-supported bottom-edge count-copy exclusions. Affected native
+38/40/42 pass26/26,24/24,24/24;39 and41 still fail27/26 and22/21.
+Page39 top50-57 remains UNKNOWN; page41 one-line fraction remains intact.
+The worn p38 exponent and worked-example fourth/fifth-term conflicts remain HOLDs.
+No count override, fake wrap, tool repair, dependent course stage, publication,
+partial N10 promotion or complete-lesson credit. Current five source triples and
+original four failures are retained in the existing N9 evidence directory.
+The sole reviewer's affected-only confirmation closes all four prose errors;
+five original image opens total, no extra images, all other valid evidence reused.
+Godel actually closed. N9 remains incomplete and unqueued.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
