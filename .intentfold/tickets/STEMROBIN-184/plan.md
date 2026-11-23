@@ -102,8 +102,56 @@ Fresh independent complete-display review PASS with no concrete display faults.
 Pauli opened exactly8 captures once each, verified input/HTML/capture bindings,
 documented full-frame scaling limits and reused table endpoint evidence, and
 actually closed. No display or content stage was replayed for delivery.
-N10 is complete offline and ready for scoped commit/push, not yet queued;
-new delivered-lesson credit remains0 and run total remains3 until successful push.
+N10 is complete offline, scoped committed and ordinary pushed as `400a5779d`
+to `codex/STEMROBIN-184-textbooks`. Exactly one entry is recorded in the
+existing usage.json writerQueue; new delivered-lesson credit1, run total4.
+No metadata-only second commit, producer DB write or supervisor/peer message.
+Continue missing N11 from the reviewed p45 fragment and its TOC-derived range.
+N11 `ana9-c2-s3-n11` has no raw or modern lesson. Initial selection used
+next numbered lesson12 as the boundary, overlooking the chapter supplement.
+Independent source49 establishes N11 closes with87-89 before the printed
+第二章补充习题 heading. Correct N11 target is physical45-49;49 is shared with
+separate `ana9-c2-ex` (printed42-44, physical49-51). Reuse passed45/52 without
+image/native replay; prepare missing46-49 and50-51 PASS once each.
+Independent source author Arendt and source-first/math reviewer Halley each
+own one bounded four-original batch46-49 with disjoint output paths. No
+N11 promotion, complete-lesson credit, publication or new parent image opens.
+Lagrange authors50-51 and Harvey independently freezes/solves those two
+originals with disjoint paths. Those shared supplement pages finalized once
+PASS25/25 and23/23; Lagrange used4 images and actually closed. Harvey's initial
+two-original independent freeze/math was received before candidate comparison.
+Supplement109 decimal-dot HOLD,106 object identity and112 accuracy convention
+are retained; they are not N11 dependencies.
+Harvey's two-local-crop comparison resolves109 decimal2.8 from low dot position
+and finds sole0051 F1 omission of 该 in 每次应该取. Prior0051 triple/PASS23/23
+retained, one-character restoration only, affected finalize51 PASS23/23 with
+12blocks/0normalizations;50 unchanged PASS not replayed. Text-only affected
+review PASS, prior reports unchanged, Harvey actually closed at4 cumulative
+images.106/112 answer-convention notes remain, no shared supplement credit.
+Halley's four-original source/math freeze identifies p46 printed0.48 versus
+exact0.491403876 and rounded0.49. Source-bound p0046-paired-dice-rounding
+erratum registered at p0046#2, JSON /blocks/1/lines/11; raw0.48 is unchanged,
+modern correction not authored. Independent crop resolves E84 total-count r;
+comparison crops confirm original 普遍 and 戴, final crop confirms 比赛 comma.
+Original freezes remain unchanged. Arendt completes count diagnosis at8 images
+and actually closes. Four eligible count-copy boxes only:46 thin separator,
+47 bottom edge,48 far-left blotch and49 far-right blotch. P48 underline origin
+remains UNKNOWN, with unsupported printed attribution removed from notes only.
+One affected finalize each:46 PASS24/24,47 PASS24/24,48 PASS25/25,
+49 FAIL21/20; zero body/pixel changes or normalizations. P49's single printed
+91a/b formula row is split by internal handwriting overlapping27 printed
+semicolon pixels. No internal exclusion, fake wrap, source edit or count override.
+Read-only trace confirms correct next-formula cut1649 but residual handwriting
+prevents single-fraction recognition; no shared tool change or native replay.
+Halley's final text-only affected review PASS for unchanged body/erratum/boxes,
+explicit49 count/provenance HOLD and no whole-N11 approval. It is collected once;
+Halley actually closed at8 cumulative images, no extra source opens.
+Current46-51 triples retained in existing N11 evidence/current-source-pages,
+alongside unchanged original failures and reviews. Source-only checkpoint:
+N11/supplement unassembled, unpromoted, unqueued; zero whole-lesson credit.
+The existing complete-display script is reused
+with N11 title and counts derived from its future canonical objects; syntax PASS,
+not executed and not display acceptance.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
