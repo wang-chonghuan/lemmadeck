@@ -1521,6 +1521,30 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 count = len(glyph_rows)
             if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
                 count = 2
+            # A sparse connecting mark can lengthen a multirow envelope by a
+            # pitch fraction without supplying another independently supported row.
+            if (
+                count >= 4 and len(strong_rows) == count - 1
+                and len(glyph_rows) < count
+                and len(_supported_glyph_rows(
+                    ink[a:b + 1],
+                    [(x - a, y - a) for x, y in strong_rows],
+                    glyph_h,
+                )) == len(strong_rows)
+                and all(
+                    any(
+                        x - 0.5 * glyph_h <= rows.start + 0.25 * (rows.stop - rows.start)
+                        and rows.stop - 0.25 * (rows.stop - rows.start) <= y + 1 + 0.5 * glyph_h
+                        for x, y in strong_rows
+                    )
+                    for box in bounds_list if box is not None
+                    for rows, columns in [box]
+                    if a <= rows.start and rows.stop - 1 <= b
+                    and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
+                    and columns.stop - columns.start >= 0.2 * glyph_h
+                )
+            ):
+                count = len(strong_rows)
             if (
                 count == 2 and _single_fraction_row(ink, a, b, typical_h, components)
                 or _single_fraction_row(ink, a, b, min(typical_h, glyph_h), components)

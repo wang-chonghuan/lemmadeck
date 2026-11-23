@@ -1,0 +1,739 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "86765d0a31800ee80c4be273f383dd6b7106c319bdb833066fd4384e8de48efc",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q01",
+      "source_numbers": ["32"],
+      "view": {
+        "mode": "single",
+        "stem": "每个排列必须把给定集合的每个元素恰好用一次。依次考虑 $\\{1\\}$、$\\{7,8\\}$、$\\{a,b,c\\}$。以下哪一组分别列出了这三个集合的全部排列，既没有遗漏，也没有多列？字母串表示从左到右的排列。",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$\\{1\\}$：$(1)$。\n\n$\\{7,8\\}$：$(7,8)$。\n\n$\\{a,b,c\\}$：$abc,acb,bac,bca,cab,cba$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$\\{1\\}$：$(1)$。\n\n$\\{7,8\\}$：$(7,8),(8,7)$。\n\n$\\{a,b,c\\}$：$abc,bca,cab$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$\\{1\\}$：$(1)$。\n\n$\\{7,8\\}$：$(7,8),(8,7)$。\n\n$\\{a,b,c\\}$：$abc,acb,bac,bca,cab,cba$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$\\{1\\}$：$(1)$。\n\n$\\{7,8\\}$：$(7,8),(8,7)$。\n\n$\\{a,b,c\\}$：$abc,acb,bac,bca,cab,cab$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "识别前三个集合各自的完整排列清单，检查顺序、遗漏与重复，而不只认出阶乘的数值。",
+        "source_solution": "{1} 只有 (1)；{7,8} 有 (7,8),(8,7)；{a,b,c} 按首字母分组为 abc,acb；bac,bca；cab,cba。固定首元素后穷尽其余元素的次序，分别得到 1、2、6 个不同排列。四元素的完整解已经先写入 author/source-first.md，并由 q02 承接。",
+        "unit_reason": "三个小集合放在一个完整清单对照单位中，保留每一个集合而避免把单元素的唯一排列拆成无意义的单独计数题；四元素清单需要另一个足够完整的视图。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": ["识别已有完整排列清单，不能证明学生能够独立构造并书写全部排列；没有把这项生产能力冒充为已测得。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "把二元素集合只按给定的 7,8 顺序写一次，相当于将 (7,8) 与 (8,7) 视为相同；因此二元素清单漏掉 (8,7)。另两个清单完整也不能补足这一遗漏。",
+            "misconception": "对二元素排列忽略顺序，把一个无序二元素集合当成一个排列。"
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "从 abc 出发仅作循环移位，产生 abc,bca,cab 后停止；没有交换任何一对元素，因而遗漏 acb,bac,cba。",
+            "misconception": "把穷尽循环移位误当成穷尽所有排列。"
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "单元素的一个次序、二元素的两个次序均完整；三元素按首字母 a,b,c 各列余下两字母的两种次序，既互不重复又穷尽全部 3×2 个次序。",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "第三个首字母组本应列 cab,cba，却把末尾 cab 再抄一遍；清单虽有六个条目，只有五个不同排列，缺少 cba。",
+            "misconception": "只检查条目数达到 3!，不检查最后两元素的两种不同次序是否都已列出。"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q02",
+      "source_numbers": ["32"],
+      "view": {
+        "mode": "single",
+        "stem": "用 $\\{m,n,p,q\\}$ 的四个元素组成全部排列，每个元素在一个排列中恰好出现一次。以下哪份清单完整且没有重复或不合条件的条目？每个四字母串表示一个从左到右的排列。",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$mnpq,mnqp,mpnq,mpqn,mqnp,mqpn$；\n\n$nmpq,nmqp,npmq,npqm,nqmp,nqpm$；\n\n$pmnq,pmqn,pnmq,pnqm,pqmn,pqnm$；\n\n$qmnp,qmpn,qnmp,qnpm,qpmq,qpnq$。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$mnpq,mnqp,mpnq,mpqn,mqnp,mqpn$；\n\n$nmpq,nmqp,npmq,npqm,nqmp,nqpm$；\n\n$pmnq,pmqn,pnmq,pnqm,pqmn,pqnm$；\n\n$qmnp,qmpn,qnmp,qnpm,qpmn,qpnm$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$mnpq,mnqp,mpnq,mpqn,mqnp,mqpn$；\n\n$nmpq,nmqp,npmq,npqm,nqmp,nqpm$；\n\n$pmnq,pmqn,pnmq,pnqm,pqmn,pqmn$；\n\n$qmnp,qmpn,qnmp,qnpm,qpmn,qpnm$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$mnpq,mnqp,mpnq,mpqn,mqnp,mqpn$；\n\n$nmpq,nmqp,npmq,npqm,qnmp,qnpm$；\n\n$pmnq,pmqn,pnmq,pnqm,pqmn,pqnm$；\n\n$qmnp,qmpn,qnmp,qnpm,qpmn,qpnm$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "判断四元素完整排列集合是否满足每个元素恰用一次、无重复且无遗漏；候选清单都给出 24 个条目，不能只凭条目数作答。",
+        "source_solution": "按首元素 m,n,p,q 分成四组，每组再按第二元素分为三对。完整清单为 mnpq,mnqp,mpnq,mpqn,mqnp,mqpn；nmpq,nmqp,npmq,npqm,nqmp,nqpm；pmnq,pmqn,pnmq,pnqm,pqmn,pqnm；qmnp,qmpn,qnmp,qnpm,qpmn,qpnm。每个第一、第二元素的选择后，剩下两元素的两种次序都出现，故共 4×3×2=24 个不同合法排列。",
+        "unit_reason": "四元素的穷举任务用完整集合判断，不改成只认出 4! 或 24。四个候选具有相同条目数和分组版式，保留检查元素、分支与完整性的实质判断。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": ["完整集合的识别不能证明学生独立设计穷举过程并书写 24 个排列；构造和书写能力明确未测。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "最后一个首二元素为 qp 的分支，第三元素先取 m 后取 n，却都把已经用过的 q 放在末位，生成 qpmq,qpnq。它们重复 q，分别漏用 n,m；真正的 qpmn,qpnm 都缺失。",
+            "misconception": "填写最后一个位置时仍从未删去已用元素的集合取值，而不是放入唯一剩下的元素。"
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "四个首元素的每组都含三个不同第二元素，每个分支列尽余下两元素的两个顺序。各组不相交，每个条目使用四元素各一次，因此清单穷尽全部合法排列。",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "在首二元素 pq 的最后分支，把 pqmn 的末两元素交换后没有更新书写结果，仍写 pqmn。出现同一排列两次并遗漏 pqnm；24 个条目不等于 24 个不同排列。",
+            "misconception": "穷举中重复记录原排列，误以为交换分支的条目数本身已保证产生新排列。"
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "处理原应固定为 nq 的分支时，先把 nq 交换成 qn，再排列余下的 m,p，写成 qnmp,qnpm。这两个条目在首 q 的组中又出现，原需的 nqmp,nqpm 却没有出现。",
+            "misconception": "枚举后两个位置时连已固定的前两个位置也交换，破坏首元素分组并导致跨组重复。"
+          }
+        ]
+      }
+    },
+    {
+      "id": "q03",
+      "source_numbers": ["33"],
+      "view": {
+        "mode": "single",
+        "stem": "用红、蓝、白三种颜色的横布条各一条拼成三色旗，三条布条分别处于上、中、下三个位置。共有多少种不同的三色旗？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$3$ 种。", "figure_ids": []},
+          {"id": "b", "text": "$9$ 种。", "figure_ids": []},
+          {"id": "c", "text": "$27$ 种。", "figure_ids": []},
+          {"id": "d", "text": "$6$ 种。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "将三个不同颜色对应到三个有顺序的位置，确定全排列数。",
+        "source_solution": "上方有 3 色可选，中间剩 2 色，下方剩 1 色，乘积为 6。全部六种顺序为红蓝白、红白蓝、蓝红白、蓝白红、白红蓝、白蓝红，位置颠倒通常得到不同旗。",
+        "unit_reason": "这是一个独立排列情境，直接选择完整数量而不是逐位置设问。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "得到 3!=6 后把上下颠倒的两面旗合并为一类，算 6/2=3；上、中、下位置明确有别，不能合并。", "misconception": "把垂直反转视为同一面旗的排列。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "先选上方颜色 3 种，再错误地仍允许中间从全部 3 色中取，随后把下方视为已确定，算 3×3=9；中间应只余 2 种。", "misconception": "第二步未排除已用颜色，却把第三步仍当成唯一剩色。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "对上、中、下各给 3 种独立颜色，算 3^3=27，这包括重色旗，并非三种颜色各用一次。", "misconception": "把无重复排列当成允许重复的三个独立位置选择。"},
+          {"option_id": "d", "truth": "correct", "derivation": "每选一色后可选颜色减一，故 3×2×1=6；三个位置有顺序且三色各出现一次。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q04",
+      "source_numbers": ["34"],
+      "view": {
+        "mode": "multiple",
+        "stem": "设 $n,m$ 为非负整数，$n>m$，$0!=1$。考虑两个等式：\n\n$\\frac{(m+3)!}{m!}=(m+1)(m+2)(m+3)$；\n\n$\\frac{n!}{(n-m)!}=n(n-1)\\cdots(n-m+2)(n-m+1)$。\n\n第二个等式右侧表示 $m$ 个降序因子的连乘；$m=0$ 时为空乘积 $1$。以下哪些展开与约分推导成立，并能证明其中一个等式？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "a",
+            "text": "$(m+3)!=(m+3)(m+2)(m+1)m!$。由于 $m!>0$，除以 $m!$ 后余下这三个因子的乘积，再调整乘法次序即可。",
+            "figure_ids": []
+          },
+          {
+            "id": "b",
+            "text": "$n!=[n(n-1)\\cdots(n-m)](n-m-1)!$。除以 $(n-m)!$ 时把两个末尾阶乘直接约去，所得商为 $n(n-1)\\cdots(n-m)$。",
+            "figure_ids": []
+          },
+          {
+            "id": "c",
+            "text": "$n!=[n(n-1)\\cdots(n-m+1)](n-m)!$。由于 $(n-m)!>0$，除以它后余下恰好 $m$ 个因子；$m=0$ 时商及空乘积均为 $1$。",
+            "figure_ids": []
+          },
+          {
+            "id": "d",
+            "text": "$(m+3)!=(m+3)(m+2)(m+1)!$。除以 $m!$ 时把 $(m+1)!$ 与 $m!$ 直接约去，所得商为 $(m+3)(m+2)$。",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "识别能证明两个原印等式的有效阶乘展开及整块因子约分论证，检查停止端点与被消去因子是否相同。",
+        "source_solution": "(m+3)!=(m+3)(m+2)(m+1)m!，消去正因子 m! 得三个连续因子。n! 展开至 (n-m)! 后等于 n(n-1)...(n-m+1)(n-m)!，消去相同正因子后余下 m 项。m=0 时 n!/n!=1 与空乘积一致；m=1 时仅余 n。原印公式没有改变，空乘积解释只是把零边界写明。",
+        "unit_reason": "两项同属阶乘展开证明，用原生多选独立判断四段论证，其中两段分别证明两个公式；不是选择已经印在题干中的最终等式，也不是组合代码。",
+        "concept_blocks": [10, 11, 12],
+        "limitations": ["只能识别有意义的有效因子消去证明，不能证明学生能够独立构思、组织并书写两个证明；这两项独立书面证明能力均明确损失。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "c"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "按照阶乘定义逐次拆出 m+3、m+2、m+1 后，末尾恰为 m!；分母等于这个末尾正因子，故可完整约去。乘法交换律给出印出的递增次序，m=0 亦成立。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "展开本身正确且 n>m 保证 (n-m-1)! 定义。但 (n-m)!=(n-m)(n-m-1)!，约去 (n-m-1)! 后分母仍有 n-m；它还应消去方括号末项 n-m，不能留下 m+1 个因子。", "misconception": "把相邻但不相等的两个阶乘直接相消，漏掉分母中剩余的一个因子。"},
+          {"option_id": "c", "truth": "correct", "derivation": "按阶乘乘积定义，在 n-m+1 处停止抽取因子，剩余整块正是分母 (n-m)!。相同正因子消去后恰有 m 项，零项情况是 1，证明覆盖边界。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "展开到 (m+1)! 正确，但 (m+1)!/m!=m+1，不是 1。正确相消只能去掉其内的 m!，仍须保留 m+1；所写商漏掉一个因子，不能证明原式。", "misconception": "把带有不同自变量的阶乘视为可直接整体约去的同一因子。"}
+        ]
+      }
+    },
+    {
+      "id": "q05",
+      "source_numbers": ["35"],
+      "view": {
+        "mode": "single",
+        "stem": "求 $8!+9!$ 的值。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$403200$", "figure_ids": []},
+          {"id": "b", "text": "$362880$", "figure_ids": []},
+          {"id": "c", "text": "$2943360$", "figure_ids": []},
+          {"id": "d", "text": "$355687428096000$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "计算两个相邻阶乘之和，提取共同阶乘而保留加法。",
+        "source_solution": "9!=9×8!，故 8!+9!=8!(1+9)=40320×10=403200。",
+        "unit_reason": "阶乘求和是独立运算，单独给出一个完整数值结果，不与不相关数值合成代码。",
+        "concept_blocks": [10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "由 9!=9×8! 得公共因子 8!，括号是 1+9=10；8!=40320，乘积 403200。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把 8!+9! 错写为 8!×9，仅留下来自 9! 的因子 9，算 40320×9=362880；提取 8! 后第一项应贡献 1。", "misconception": "提取公因子时丢失独立的第一加数。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把 9! 的递推错误写成 9! = 9×8×8!，然后相加，得到 8!(1+72)=40320×73=2943360；已经包含在 8! 中的因子 8 被多乘一次。", "misconception": "展开相邻阶乘时把末尾阶乘内已有的首因子再次抽出并重复相乘。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "误用加法与阶乘交换，把 8!+9! 写成 (8+9)!=17!，依次相乘得到 355687428096000。", "misconception": "把两个阶乘的和当成两个自变量之和的阶乘。"}
+        ]
+      }
+    },
+    {
+      "id": "q06",
+      "source_numbers": ["35"],
+      "view": {
+        "mode": "single",
+        "stem": "求 $10!-11!$ 的值。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$-39916800$", "figure_ids": []},
+          {"id": "b", "text": "$36288000$", "figure_ids": []},
+          {"id": "c", "text": "$-36288000$", "figure_ids": []},
+          {"id": "d", "text": "$-3628800$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "计算相邻阶乘之差，确定减法方向及共同因子的系数。",
+        "source_solution": "11!=11×10!，故 10!-11!=10!(1-11)=-10×3628800=-36288000。",
+        "unit_reason": "减法和符号判断具有独立的算术要求，与求和题分别作答。",
+        "concept_blocks": [10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "提取 10! 后把 1-11 错成 -11，计算 -11×3628800=-39916800，等价于忽略被减前的 10!。", "misconception": "提取公因子时漏写第一项的系数 1。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "将减法次序颠倒为 11!-10!，得到 (11-1)10!=36288000。", "misconception": "以较大阶乘减较小阶乘，改变原印减法方向。"},
+          {"option_id": "c", "truth": "correct", "derivation": "共同因子为 10!=3628800，剩余 1-11=-10；结果 -36288000。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "把 11! 的增长误当成加上一个 10!，即写成 11!=2×10!，于是差为 -10!=-3628800。", "misconception": "用添加一个前项代替阶乘递推中乘以自变量 11。"}
+        ]
+      }
+    },
+    {
+      "id": "q07",
+      "source_numbers": ["35"],
+      "view": {
+        "mode": "single",
+        "stem": "求 $\\frac{102!}{100!}$ 的值。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$102$", "figure_ids": []},
+          {"id": "b", "text": "$10302$", "figure_ids": []},
+          {"id": "c", "text": "$2$", "figure_ids": []},
+          {"id": "d", "text": "$10404$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "利用阶乘共同因子算出两个相邻剩余因子的乘积。",
+        "source_solution": "102!=102×101×100!，约去 100! 后为 102×101=10302。",
+        "unit_reason": "大阶乘的商是独立精确计算，不要求展开或输入庞大的阶乘数值。",
+        "concept_blocks": [10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把 102! 误写为 102×100!，跳过中间的 101，约分只剩 102。", "misconception": "跨两个自变量展开时只抽取最外层的一个因子。"},
+          {"option_id": "b", "truth": "correct", "derivation": "102! 的剩余因子恰是 102 与 101；乘积为 10200+102=10302。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把阶乘商误当成自变量差的阶乘，计算 (102-100)!=2!=2。", "misconception": "将阶乘商改为差的阶乘。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "展开两个未约去的因子时，错误地把它们都取成 102，写 102!=102×102×100!，约分得到 102^2=10404；第二因子实际应递减为 101。", "misconception": "连续展开阶乘时不递减自变量，重复使用最外层因子。"}
+        ]
+      }
+    },
+    {
+      "id": "q08",
+      "source_numbers": ["35"],
+      "view": {
+        "mode": "single",
+        "stem": "求 $\\frac{6!-5!}{120}$ 的值。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$6$", "figure_ids": []},
+          {"id": "b", "text": "$\\frac{1}{120}$", "figure_ids": []},
+          {"id": "c", "text": "$7$", "figure_ids": []},
+          {"id": "d", "text": "$5$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "对阶乘之差整体除以给定数，保留分子减法。",
+        "source_solution": "5!=120，6!=6×120，原商等于 (6×120-120)/120=6-1=5。",
+        "unit_reason": "这是带公共数值分母的独立计算，完整结果作为一个响应单位。",
+        "concept_blocks": [10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把分子中的 5! 当成可与分母消掉的整个加减项，丢掉 -5! 后只算 6!/120=720/120=6。", "misconception": "跨减法约去一个项，而不是约去整个分子的共同乘法因子。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把 6!-5! 改写成 (6-5)!=1，再除以 120，得 1/120。", "misconception": "认为阶乘对减法可分配。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把原分子减法改为加法，计算 (720+120)/120=7。", "misconception": "在提取共同因子时把 6-1 改成 6+1。"},
+          {"option_id": "d", "truth": "correct", "derivation": "分子为 (6-1)5!=5×120，除以 120 得 5。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q09",
+      "source_numbers": ["36"],
+      "view": {
+        "mode": "single",
+        "stem": "分别化简 $\\frac{n!}{(n-1)!}$、$\\frac{(n-2)!}{n!}$、$\\frac{(n-1)!}{(n-3)!}$。$n$ 为整数，三个原式的定义域依次为 $n\\ge1$、$n\\ge2$、$n\\ge3$，并取 $0!=1$。以下哪一组依次是它们各自在定义域内的结果？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$n$；$n(n-1)$；$(n-1)(n-2)$。", "figure_ids": []},
+          {"id": "b", "text": "$n$；$\\frac{1}{n(n-1)}$；$n(n-1)(n-2)$。", "figure_ids": []},
+          {"id": "c", "text": "$n$；$\\frac{1}{n(n-1)}$；$(n-1)(n-2)$。", "figure_ids": []},
+          {"id": "d", "text": "$1$；$\\frac12$；$2$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "化简三个阶乘商，区分商的方向以及正确展开起点和停止端点，保留各自定义域。",
+        "source_solution": "n!=n(n-1)!，第一商为 n，n≥1。n!=n(n-1)(n-2)!，第二商为 1/[n(n-1)]，n≥2。(n-1)!=(n-1)(n-2)(n-3)!，第三商为 (n-1)(n-2)，n≥3。边界分别用到 0!=1。第四个带 k 的原式及零域问题由 q10 完整承接。",
+        "unit_reason": "三个同变量的商共同检验展开方向和端点，用一组完整对应结果而不逐因子点击；不同定义域逐一列明，没有把第一项的 n 限制擅自缩到 n≥3。",
+        "concept_blocks": [10, 11, 12],
+        "limitations": ["选择正确化简结果不等于独立书写三个展开及约分过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "第二商约去 (n-2)! 后分母剩 n(n-1)，错误地将分母中剩余因子写到分子，得到 n(n-1)。其他两项没有补救倒数方向错误。", "misconception": "约分后忽略较大阶乘位于分母，丢失倒数。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "第三商错误地从 n 而非 n-1 开始展开，等同于算 n!/(n-3)!，得到 n(n-1)(n-2)。", "misconception": "把分子 (n-1)! 偷换为 n!，多留一个因子 n。"},
+          {"option_id": "c", "truth": "correct", "derivation": "三个共同阶乘块依次为 (n-1)!、(n-2)!、(n-3)!；约去后分别剩 n、1/[n(n-1)]、(n-1)(n-2)，在明确的全部定义域内成立。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "把每个阶乘商错误地写成自变量差的阶乘，依次得 1!=1、1/2!=1/2、2!=2，省掉本来随 n 变化的连续因子。", "misconception": "用阶乘自变量的差替代真实的乘积约分。"}
+        ]
+      }
+    },
+    {
+      "id": "q10",
+      "source_numbers": ["36"],
+      "view": {
+        "mode": "single",
+        "stem": "考虑 $\\frac{2k(2k-1)}{(2k)!}$（$k\\in N$），取 $0!=1$，阶乘只对非负整数定义。以下哪一项完整说明了化简结果？若 $0\\notin N$，只采用 $k\\ge1$ 的分支；若 $0\\in N$，还须采用 $k=0$ 的分支。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$k\\ge1$ 时为 $\\frac{1}{(2k-2)!}$；$k=0$ 时为 $0$。", "figure_ids": []},
+          {"id": "b", "text": "$k\\ge1$ 时为 $\\frac{1}{(2k-2)!}$；$k=0$ 时为 $1$。", "figure_ids": []},
+          {"id": "c", "text": "$k\\ge1$ 时为 $\\frac{1}{(2k-1)!}$；$k=0$ 时为 $0$。", "figure_ids": []},
+          {"id": "d", "text": "$k\\ge1$ 时为 $(2k-2)!$；$k=0$ 时为 $0$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "化简印出的 2k(2k-1)/(2k)!，识别约去非零因子的范围，并条件性覆盖 N 是否含零的未定约定。",
+        "source_solution": "对于 k≥1，(2k)!=(2k)(2k-1)(2k-2)!，两个相同非零因子约去，结果是 1/(2k-2)!，包括 k=1 的 1/0!=1。若 0∈N，原式 k=0 时为 0×(-1)/0!=0，而 1/(2k-2)! 在该点无定义。若 0∉N，该点不属于原题域。没有假定 N 的零约定，也没有改动分子。",
+        "unit_reason": "零点的无效消去与正整数化简不可分开或隐藏，故一个完整条件结果同时表示二者。条件措辞在两种 N 约定下都成立，不强行决定缺失约定。",
+        "concept_blocks": [10, 11, 12],
+        "limitations": ["不能据此确定原投影没有定义的 N 是否含零；问题仅作条件判断，不声称解决该约定。", "识别结果与零点例外不能证明学生独立书写合法约分步骤。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "正 k 时分子正好是分母的头两个因子，剩余阶乘在分母；零 k 直接代入原式，分子为 0 而分母为 1。两种 N 约定均由可采用的分支覆盖。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "正整数化简正确，但在 k=0 时误把分子两个已约去因子的乘积当成空乘积 1，再用 0!=1 得 1。原分子印为 2k(2k-1)，该点仍是 0×(-1)，不是空乘积。", "misconception": "把含零因子的实际乘积当成没有因子的空乘积，错误推广约分到零点。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "仅约去 (2k)! 的第一个因子 2k，剩余应为 (2k-1)/(2k-1)!；又漏掉分子 2k-1，写成 1/(2k-1)!。", "misconception": "抽去一个因子后直接丢掉另一个分子因子，改变了剩余阶乘端点。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "正确识别剩余阶乘 (2k-2)!，却把约分后位于分母的它移到分子，得到 (2k-2)!；如 k=2，原式为 12/24=1/2 而非 2。", "misconception": "取消共同因子后颠倒剩余阶乘的位置。"}
+        ]
+      }
+    },
+    {
+      "id": "q11",
+      "source_numbers": ["37"],
+      "view": {
+        "mode": "multiple",
+        "stem": "取 $0!=1$。以下哪些等式在标明的全部整数范围内成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$\\frac1{n!}-\\frac1{(n+1)!}=\\frac1{(n+1)!}$，其中 $n\\ge0$。", "figure_ids": []},
+          {"id": "b", "text": "$\\frac1{n!}-\\frac1{(n+1)!}=\\frac{n}{(n+1)!}$，其中 $n\\ge0$。", "figure_ids": []},
+          {"id": "c", "text": "$\\frac1{(k-1)!}-\\frac1{k!}=\\frac{k-1}{k!}$，其中 $k\\ge1$。", "figure_ids": []},
+          {"id": "d", "text": "$\\frac1{(k-1)!}-\\frac1{k!}=\\frac{k+1}{k!}$，其中 $k\\ge1$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "通分计算两个相邻阶乘倒数之差，检查分子系数与零结果边界。",
+        "source_solution": "1/n!=(n+1)/(n+1)!，故第一差为 [(n+1)-1]/(n+1)!=n/(n+1)!，n≥0。1/(k-1)!=k/k!，故第二差为 (k-1)/k!，k≥1。n=0 和 k=1 时原差均为 0。含 p 的完整乘积和含 m,k 的降序乘积已独立求解，并分别由 q12、q13 承接。",
+        "unit_reason": "两项有同一通分结构，用原生多选逐项判断恒等式，仍保留两种印出形式及各自端点；另外两项的乘积结构不同，另设完整问题。",
+        "concept_blocks": [10, 11, 12],
+        "limitations": ["选择恒等式不能证明独立书写通分及相减过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b", "c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "选定共同分母 (n+1)! 后，错误地把两个阶乘的自变量之差 (n+1)-n=1 当作通分后的分子差，写出 1/(n+1)!；实际第一项通分分子为 n+1，第二项为 1，差应为 n。", "misconception": "把阶乘自变量相差 1 当作通分后的分子差，得到常数 1。"},
+          {"option_id": "b", "truth": "correct", "derivation": "共同分母为 (n+1)!，第一项分子 n+1，第二项分子 1，差为 n；n=0 时结果也为 0。", "misconception": null},
+          {"option_id": "c", "truth": "correct", "derivation": "共同分母为 k!，第一项变为 k/k!，减去 1/k! 后得 (k-1)/k!；k=1 时仍成立。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "正确通分后把减去 1 错写为加上 1，得到 (k+1)/k!；如 k=1，原差为 0 而选项为 2。", "misconception": "通分相减时将分子 k-1 改为 k+1。"}
+        ]
+      }
+    },
+    {
+      "id": "q12",
+      "source_numbers": ["37"],
+      "view": {
+        "mode": "single",
+        "stem": "设 $p$ 为整数，$p\\ge4$，取 $0!=1$。计算 $\\frac{p(p-1)(p-2)(p-3)(p-4)!}{(p-2)!}$，以下哪一项在整个定义域内等于原式？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$p(p-1)(p-2)$", "figure_ids": []},
+          {"id": "b", "text": "$p(p-1)(p-3)$", "figure_ids": []},
+          {"id": "c", "text": "$p(p-1)$", "figure_ids": []},
+          {"id": "d", "text": "$\\frac{p(p-1)(p-2)(p-3)}{2}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "保持印出的全部四个线性因子和 (p-4)!，找到分母内部相同的完整因子块后计算。",
+        "source_solution": "完整分子是 p!；(p-2)!=(p-2)(p-3)(p-4)!，约去后三个因子的整块后只余 p(p-1)。p≥4 使 (p-4)! 定义，p=4 时数值为 12。",
+        "unit_reason": "一个完整乘积商对应一个恒等结果，不能拆成只问其中某个因子的点击。",
+        "concept_blocks": [10, 11, 12],
+        "limitations": ["识别恒等结果不能证明独立组织完整展开与约分。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "误把 (p-2)! 展开成 (p-3)(p-4)!，少写最外层 p-2；用这个错误分母约分便多留 p-2，得到 p(p-1)(p-2)。", "misconception": "展开分母时从错误的前一整数开始，遗漏首因子。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "误把 (p-2)! 展开成 (p-2)(p-4)!，跳过 p-3；约分后多留 p-3，得 p(p-1)(p-3)。p=4 的偶然相等不构成全域恒等。", "misconception": "展开阶乘时越过一个中间因子。"},
+          {"option_id": "c", "truth": "correct", "derivation": "分母完整等于 (p-2)(p-3)(p-4)!，与分子的相同整块约去后得到 p(p-1)，包括 p=4。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "错误地把 (p-4)!/(p-2)! 换成 1/[(p-2)-(p-4)]!=1/2，保留外面四个因子，得所写结果；真实倒数为 1/[(p-2)(p-3)]。", "misconception": "把阶乘商当成自变量差的阶乘，遗漏随 p 变化的因子。"}
+        ]
+      }
+    },
+    {
+      "id": "q13",
+      "source_numbers": ["37"],
+      "view": {
+        "mode": "single",
+        "stem": "设 $m,k$ 为非负整数且 $m\\ge k$，取 $0!=1$。计算 $\\frac{m(m-1)(m-2)\\cdots(m-(k-1))}{m!}$。分子的降序连乘恰有 $k$ 个因子，$k=0$ 时为 $1$。以下哪一项在全部这些条件下成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$\\frac{1}{(m-k)!}$", "figure_ids": []},
+          {"id": "b", "text": "$(m-k)!$", "figure_ids": []},
+          {"id": "c", "text": "$\\frac{1}{(m-k+1)!}$", "figure_ids": []},
+          {"id": "d", "text": "$\\frac{k!}{m!}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "确定恰 k 项的下降乘积在 m! 中消去哪一段，并覆盖 m=k 与 k=0。",
+        "source_solution": "m! 等于原分子乘以 (m-k)!。消去原分子所含的 k 个正因子后为 1/(m-k)!；m=k 时余下 0!，结果为 1；k=0 时原分子为空乘积，结果为 1/m!。公式中 m-(k-1) 保持原印端点。",
+        "unit_reason": "下降乘积的长度和结束端点决定一个完整结果，不逐项拆开。空乘积在题干明示，避免由省略号猜测零域。",
+        "concept_blocks": [10, 11, 12],
+        "limitations": ["结果识别不能证明独立书写降序乘积的分块推导。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "分母中从 m 到 m-k+1 的 k 个因子与分子相同，末尾未消去的整块为 (m-k)!，它仍在分母。零边界分别给 1 与 1/m!。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "找到未消去的 (m-k)! 后把分母余项当成商本身，颠倒为 (m-k)!；m=5,k=2 时原式 20/120=1/6 而非 6。", "misconception": "将剩余分母因子移到分子，丢掉倒数。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "将分子末项 m-(k-1)=m-k+1 当成已经属于未消去阶乘的首项，少消掉该因子，错误留下 (m-k+1)!。", "misconception": "下降连乘的停止端点少约去一项，产生差一的阶乘下标。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "只因分子有 k 个因子便将它改成 1×2×...×k=k!，再除以 m!；原因子实际从 m 向下数，除 m=k 的特殊情况外不是 k!。", "misconception": "把乘积的因子个数当作因子的实际数值。"}
+        ]
+      }
+    },
+    {
+      "id": "q14",
+      "source_numbers": ["38"],
+      "view": {
+        "mode": "single",
+        "stem": "一个有限集合有 $t$ 个元素，$t$ 是非负整数。空集只有一种排列。分别求：全排列总数不大于 $1000$ 时 $t$ 的所有可能值；全排列总数不小于 $500$ 时 $t$ 的所有可能值。以下哪项依次给出这两个完整范围？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$t\\in\\{0,1,2,3,4,5\\}$；$t\\ge7$。", "figure_ids": []},
+          {"id": "b", "text": "$t\\in\\{0,1,2,3,4,5,6\\}$；$t\\ge6$。", "figure_ids": []},
+          {"id": "c", "text": "$t\\in\\{0,1,2,3,4,5,6,7\\}$；$t\\ge5$。", "figure_ids": []},
+          {"id": "d", "text": "$t=6$；$t=6$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "解两条阶乘不等式，给出所有元素个数而不只说最大值或最小值，包含空集定义。",
+        "source_solution": "排列总数为 t!，0!=1、1!=1、5!=120、6!=720、7!=5040。阶乘自 t≥1 起严格递增。故 t!≤1000 的全解是 0≤t≤6 的整数，t!≥500 的全解是 t≥6 的整数。t=6 同时满足两条约束。",
+        "unit_reason": "两条阈值共用单调性及相邻阶乘，选择一对完整范围能保留双向不等式、边界与无限上界，而不化成两次只猜 6。",
+        "concept_blocks": [6, 10, 11, 12],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "将 6!=720 误归为两个范围之间的禁用值，第一条在 6 前停下，第二条从 7 才开始；实际上 720≤1000 且 720≥500，6 必须属于两边。", "misconception": "误以为两个阈值条件互斥，丢掉满足双方的边界元素个数。"},
+          {"option_id": "b", "truth": "correct", "derivation": "6!=720 满足上限且 7!=5040 已超上限；5!=120 未达下限但 6! 已达下限，随后递增。空集及一元素集合总数为 1，属于第一范围。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "从正确的最大 6、最小 6 向外各多纳入一个整数，第一范围加入 7，第二范围加入 5；直接检查 5040≤1000 与 120≥500 均不成立。", "misconception": "在阶乘阈值的最大和最小元素个数上发生向外的差一错误。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "只报告上限问题的最大值 6 和下限问题的最小值 6，把这两个极值当成各自唯一解；遗漏第一条的 0 到 5 以及第二条的所有大于 6 的整数。", "misconception": "将求所有满足不等式的值误改成只求一个极值。"}
+        ]
+      }
+    },
+    {
+      "id": "q15",
+      "source_numbers": ["39"],
+      "view": {
+        "mode": "single",
+        "stem": "九个不同学生的名字各出现一次，排成一份从第一名到第九名的名单。共有多少种排法？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$9^9=387420489$ 种。", "figure_ids": []},
+          {"id": "b", "text": "$9\\times8=72$ 种。", "figure_ids": []},
+          {"id": "c", "text": "$8!=40320$ 种。", "figure_ids": []},
+          {"id": "d", "text": "$9!=362880$ 种。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "数九个互异元素的有序完整名单。",
+        "source_solution": "九个位置依次有 9,8,7,6,5,4,3,2,1 个可选学生，乘积 9!=362880。",
+        "unit_reason": "名单是一个独立全排列情境，完整数量作为单选响应。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "对九个位置每次仍给全部九个名字选择，算 9^9=387420489；这会重复名字并漏掉别的学生。", "misconception": "忽略排过的名字必须从后续可选集合移除。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "只安排前两个位置，计 9×8=72，并把剩下七人的多种次序都当成唯一补全；漏乘 7!。", "misconception": "仅数开头两项而忽略完整名单其余位置的排列。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "先把某个指定学生固定为第一名，只排列其余八人，得到 8!=40320；题干没有固定任何学生。", "misconception": "擅自固定一个位置，漏掉第一名的九种选择。"},
+          {"option_id": "d", "truth": "correct", "derivation": "每填一个位置就少一个未使用名字，因此九个因子的乘积是 9!=362880。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q16",
+      "source_numbers": ["40"],
+      "view": {
+        "mode": "single",
+        "stem": "一列客车有 $14$ 节位置不同的车厢，$14$ 位不同乘务员分配到这些车厢，每节车厢恰好一位乘务员。共有多少种分配方法？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$13!=6227020800$ 种。", "figure_ids": []},
+          {"id": "b", "text": "$14!=87178291200$ 种。", "figure_ids": []},
+          {"id": "c", "text": "$14^{14}=11112006825558016$ 种。", "figure_ids": []},
+          {"id": "d", "text": "$\\frac{14!}{(2!)^7}=681080400$ 种。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "把不同人员与不同车厢一一对应，计算所有双射分配。",
+        "source_solution": "依次给每节车厢选一位尚未分配的乘务员，可选数为 14,13,...,1，乘积 14!=87178291200。",
+        "unit_reason": "车厢分配是完整双射情境，与名单题各有不同对象和独立结果，直接选择全部分配数。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "未经条件允许先把一位指定乘务员固定到第一节车厢，再排列其余 13 人，得到 13!=6227020800，漏掉第一节的 14 种选择。", "misconception": "擅自固定一个人员与车厢的对应，少乘第一步的选择数。"},
+          {"option_id": "b", "truth": "correct", "derivation": "每位乘务员用一次，每节车厢用一次；顺次选择 14×13×...×1=87178291200。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "让每节车厢独立从全部 14 人中取一人，算 14^14；同一人可能被多次取出，违背一一分配。", "misconception": "将不重复双射当作允许重复的独立选择。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "把相邻车厢配成七对，错误地将每对内交换两名乘务员视为相同方案，于是把 14! 除以 2^7=128，得 681080400；两节车厢位置有别，交换应产生新方案。", "misconception": "对不同车厢人为引入成对交换的等价关系。"}
+        ]
+      }
+    },
+    {
+      "id": "q17",
+      "source_numbers": ["41"],
+      "view": {
+        "mode": "single",
+        "stem": "用数字 $0,1,2,3$ 组成没有重复数字的四位数，共有多少个？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$18$ 个。", "figure_ids": []},
+          {"id": "b", "text": "$24$ 个。", "figure_ids": []},
+          {"id": "c", "text": "$23$ 个。", "figure_ids": []},
+          {"id": "d", "text": "$6$ 个。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "区分四数字字符串和真正四位数，正确排除以零开头的排列。",
+        "source_solution": "首位有 1,2,3 三种选择，随后剩三、二、一种选择，故为 3×3×2×1=18。亦可由 4!-3!=24-6=18，减去全部六个零开头字符串。",
+        "unit_reason": "首位限制是这个完整计数的核心，一题保留原有四位数条件而不另加干扰限制。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "首位不能是 0，所以只有 3 种，选定后其余三个数字任排，共 3×3!=18。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把四个数字无条件全排列，算 4!=24，没有剔除以 0 开头的六个字符串。", "misconception": "把前导零的四字符序列也当成四位数。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "先算 4!=24，再只减去一个零开头字符串，算 24-1=23；固定首位 0 后其余三位仍有 3!=6 个排列。", "misconception": "把一个被禁止的首位值误当成只有一个被禁止的完整排列。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "固定首位为 0，排列其余三个数字，得到 3!=6，却把这个被排除集合的数量作为合法四位数的数量。", "misconception": "只数被禁止的前导零情况，颠倒有效集合与补集。"}
+        ]
+      }
+    },
+    {
+      "id": "q18",
+      "source_numbers": ["42"],
+      "view": {
+        "mode": "single",
+        "stem": "用数字 $1,2,3,4,5$ 组成所有没有重复数字的五位数。依次求其中以 $3$ 开头、不以 $5$ 开头、以 $54$ 开头、不以 $543$ 开头的数各有多少个。以下哪组依次给出四个数量？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$24$；$96$；$6$；$114$。", "figure_ids": []},
+          {"id": "b", "text": "$24$；$24$；$6$；$2$。", "figure_ids": []},
+          {"id": "c", "text": "$24$；$96$；$6$；$118$。", "figure_ids": []},
+          {"id": "d", "text": "$24$；$96$；$12$；$108$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在同一五数字全排列宇宙中，求固定一位、固定两位、排除一位前缀和排除三位有序前缀的四个计数。",
+        "source_solution": "所有数共 5!=120。首位 3 留四位自由，得 4!=24。不以 5 开头为 120-4!=96。固定 54 后剩 1,2,3，得 3!=6。不以 543 开头需排除固定前三位后 1,2 的两种次序，得 120-2!=118。四个原子任务都已独立求解。",
+        "unit_reason": "四个条件共享同一 120 个数的宇宙，固定前缀的长度与补集操作构成一个完整对应组；完整四数量响应保留每个任务，不拆成重复的固定位置计数点击。",
+        "concept_blocks": [6, 10, 11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "前三个计数分别按剩余位排列及补集得到正确值；最后一项把禁止的三位前缀 543 错按两位前缀 54 处理，减去 3!=6，得到 120-6=114。", "misconception": "排除前缀时少固定一位，多算了被排除集合。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "两个肯定前缀分别数 4! 与 3!；两个否定条件也只数被禁止的集合，写 4!=24 与 2!=2，没有从总数 120 中减去它们。", "misconception": "把不以指定前缀开头的数量误报为以该前缀开头的数量。"},
+          {"option_id": "c", "truth": "correct", "derivation": "固定 3 后余四位，24；排除首位 5，120-24=96；固定 54 后余三位，6；排除准确有序前缀 543，120-2=118。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "对两位前缀 54 错误允许其内部交换，按 2!×3!=12 计；对被禁止的 543 错误允许三位内部任排，按 3!×2!=12 排除，得 108。前三位或前两位必须是题中给出的准确顺序。", "misconception": "把固定的有序前缀当作可内部任意排列的前缀数字集合。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "32",
+      "question_ids": ["q01", "q02"],
+      "omitted_tasks": ["独立构造并书写四个集合的全部排列，尤其是四元素的 24 项清单，无法由选择反应证明。"],
+      "reason": "四个原集合均有完整清单识别覆盖；q01 覆盖前三个，q02 给出同为 24 条目的完整候选集合，检查合法性、重复及遗漏，不退化成只认出计数。原任务的独立穷举生产能力明确损失，未作无遗漏能力的虚假声称。"
+    },
+    {
+      "source_number": "33",
+      "question_ids": ["q03"],
+      "omitted_tasks": [],
+      "reason": "覆盖三种不同颜色横布条在上、中、下位置的全排列总数；明示各色一条，保留原三色旗任务。"
+    },
+    {
+      "source_number": "34",
+      "question_ids": ["q04"],
+      "omitted_tasks": ["独立构思、组织并书写第一条阶乘等式的证明。", "独立构思、组织并书写第二条阶乘等式的证明。"],
+      "reason": "两个印出公式均原样保留，用原生多选检查真正的因子展开与相同正因子消去论证。推导的起止端点和零项解释均覆盖；识别有效论证不冒充独立书写证明。"
+    },
+    {
+      "source_number": "35",
+      "question_ids": ["q05", "q06", "q07", "q08"],
+      "omitted_tasks": [],
+      "reason": "四个独立原式分别覆盖精确求和、带负号的差、大阶乘商、差的整体除法；未改动任何原式。"
+    },
+    {
+      "source_number": "36",
+      "question_ids": ["q09", "q10"],
+      "omitted_tasks": ["独立书写四项阶乘展开及约分过程不能由结果选择证明。"],
+      "reason": "前三项在各自全部阶乘定义域内由完整对应结果覆盖；第四项保留 k∈N，覆盖 k≥1 的化简及若 0∈N 时的原式零值。投影未定义 N 是否含零，因此用条件分支而非擅自定约定；没有遗漏任一可能域上的原式值。"
+    },
+    {
+      "source_number": "37",
+      "question_ids": ["q11", "q12", "q13"],
+      "omitted_tasks": ["独立书写四项的通分、因子展开及约分计算过程不能由选择结果证明。"],
+      "reason": "q11 覆盖两项倒数之差及 n=0、k=1 的边界；q12 保留完整印出的 p 分子并覆盖 p=4；q13 保留下降乘积端点，覆盖 m=k 和空乘积。四项计算结果全覆盖。"
+    },
+    {
+      "source_number": "38",
+      "question_ids": ["q14"],
+      "omitted_tasks": [],
+      "reason": "同时给出两条阶乘不等式的所有整数解，不仅给最大或最小的 6；包含选定定义中的空集排列。"
+    },
+    {
+      "source_number": "39",
+      "question_ids": ["q15"],
+      "omitted_tasks": [],
+      "reason": "完整覆盖九位不同学生名单的无重复全排列数。"
+    },
+    {
+      "source_number": "40",
+      "question_ids": ["q16"],
+      "omitted_tasks": [],
+      "reason": "完整覆盖十四位乘务员与十四节不同车厢的一一分配数，保持每厢一人的限制。"
+    },
+    {
+      "source_number": "41",
+      "question_ids": ["q17"],
+      "omitted_tasks": [],
+      "reason": "覆盖四数字无重复四位数的完整计数，保留不能以前导零形成四位数的必要限制。"
+    },
+    {
+      "source_number": "42",
+      "question_ids": ["q18"],
+      "omitted_tasks": [],
+      "reason": "完整对应组覆盖固定 3、排除 5、固定有序 54、排除有序 543 的四个原任务，每个前缀长度及补集操作均保留。"
+    }
+  ]
+}

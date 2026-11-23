@@ -1,5 +1,38 @@
 # 开发路线
 
+## 184-7 N4 Review Delivery (2026-11-23)
+
+N4 `ana9-c2-s1-n4` is complete offline and review-ready; scoped save/push pending.
+Native p24 repair is authorized by the latest delegation, superseding the old
+only-p53 limit. Four full-glyph-supported groups replace the inflated five-row
+estimate without source/pixel changes, exclusions or count overrides. Its first
+strict real-fixture failure remains recorded; final staged algorithm passes
+five focused cases plus15 existing layout cases. One affected finalize passes
+24/24; original25/24 audit and independent source/text review remain unchanged.
+
+Scoped source22-26 assembly completes14 prose blocks/11 exercises32-42/0 figures.
+Only N4 was promoted, never the partial N5. Modern text retains33 symbols and
+the37-digit permutation count, recurrence/factorial identities and P0=1.
+First Cyrillic-marker finalizer failure is retained; corrected modern stage PASS.
+Independent source-first answer comparison passes11 displays/20 parts;
+official answers/interactions are ready:8 auto/3 ungraded,6 number/2 math/3 free.
+
+Choices complete18 questions/72 options over11 sources/28 tasks. Original
+semantic REVISE is preserved: q10 scope, q18 first-count leakage and q13(d)
+internal zero-case exception. One affected revision passes, retaining15 full
+question reviews and16 unchanged learner views; all keys are unchanged.
+Enumeration/proof/tuple-recognition production losses are explicit.
+
+Complete desktop/mobile offline display passes once:8 full-page captures,
+168 control/navigation clicks, no page/formula/control faults, all math ports
+reachable. Pixel sampling/tool-resize/offscreen-tail limits are explicit in
+`9c/evidence/nov23-1847-n4/reviewer/display-review.md`. Reviewer Fermat actually
+closed after8 image opens; author Erdos already closed. No DB/new keyboard/
+app/dependency changes. Retain only N4 and necessary source/index/counter bytes;
+unrelated pages104/122/135, profile-path churn and initial dirt remain unstaged.
+After ordinary push, record one lesson in existing usage.json writerQueue,
+then immediately continue the next sourced9c/10c lesson without writer waiting.
+
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
 N88 crop gap review now received, scoped PASS38-41, report74d99e9d/
