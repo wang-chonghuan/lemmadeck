@@ -1,0 +1,27 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181",
+  "argv": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/tools\")\nimport edition\nlesson=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1670-n7-first-missing-en/en.before-native.json\"))\nprepared=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d1669-n7-first-missing-en/prepared.json\"))\nraw=edition.load(Path(prepared[\"source\"][\"path\"]))\nzh=edition.load(Path(prepared[\"approvedZh\"][\"path\"]))\nbook=Path(prepared[\"source\"][\"path\"]).parents[2]\nraw_ex=edition.load(book/\"lessons\"/lesson[\"id\"]/\"exercises.json\")\nedition.normalize_lesson_layout(lesson)\nflow,errors=edition.prose_flow_contract(lesson[\"prose\"],[])\nboundaries=[]\nfor prefix in [\"We can make this projection visible\",\"Hang a weight from a spring\"]:\n    indices=[i for i,p in enumerate(flow[\"paragraphs\"]) if p[\"text\"].startswith(prefix)]\n    assert len(indices)==1 and indices[0]>0,(prefix,indices)\n    i=indices[0]\n    boundaries.append({\"before\":flow[\"paragraphs\"][i-1][\"text\"],\"after\":flow[\"paragraphs\"][i][\"text\"]})\nlesson[\"section_breaks\"]=boundaries\nflow,flow_errors=edition.prose_flow_contract(lesson[\"prose\"],boundaries)\nerrors.extend(flow_errors)\nerrors.extend(edition.validate_lesson_identity(raw,lesson))\ncorrections,errata_errors=edition.validate_errata(book,raw,raw_ex,lesson,{\"exercises\":[]})\nerrors.extend(errata_errors)\nprofile=edition.load(Path(\"/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nfor i,(modern,approved,source) in enumerate(zip(lesson[\"prose\"],zh[\"prose\"],raw[\"prose\"])):\n    modern[\"changes\"]=[] if modern[\"text\"]==source[\"text\"] else list(dict.fromkeys(modern[\"changes\"]+[\"translation\"]))\n    assert edition.math_signature(modern[\"text\"])==edition.math_signature(approved[\"text\"]),(i,\"math signature\")\n    errors.extend(edition.validate_identity_fields(source,modern,[\"kind\",\"id\",\"printed_page\",\"source_refs\"],f\"en.prose[{i}]\"))\n    errors.extend(edition.validate_text(source[\"text\"],modern[\"text\"],modern[\"changes\"],modern[\"numeric_changes\"],f\"en.prose[{i}]\",profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"],modern.get(\"historical_entities\"),corrections.get(f\"lesson.prose[{i}]\"),modern.get(\"notation_changes\")))\nprint(json.dumps({\"lesson\":lesson,\"flow\":flow,\"errors\":errors},ensure_ascii=False))\nassert not errors,errors"
+  ],
+  "startedAt": "2026-11-23T02:28:57.295Z",
+  "finishedAt": "2026-11-23T02:28:57.519Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1670-n7-first-missing-en-author-native/stdout.txt",
+      "bytes": 18717,
+      "sha256": "d0b9f6cc6f7dccf10750e778b54a2a975a63d06b7fbb9a2d9e11d8b6d3424afc"
+    },
+    "stderr": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/native/d1670-n7-first-missing-en-author-native/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "outputs": []
+}
