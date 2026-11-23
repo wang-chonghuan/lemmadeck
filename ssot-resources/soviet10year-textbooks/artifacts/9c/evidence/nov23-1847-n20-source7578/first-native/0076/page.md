@@ -1,0 +1,119 @@
+---
+{
+  "printed_page": 69,
+  "notes": [
+    "STEMROBIN-184 SessionB author-only transcription; OPEN pending parent full intake, not source approval.",
+    "Incoming75 is parent-agent TEXTONLY, not human pixel approval: paragraph ends 接近零的（图10，а，б）. 在此情况也有, after |y_n|=|(-1)^n/n|=1/n. Page75 was not opened. First display continues this paragraph.",
+    "Top formula: recognisable limit transcribed; an additional short irregular horizontal ink cluster lies between the fraction and the clear equals sign. Original and preregistered native ROI do not establish whether it is another math sign, damage, or scan/print artifact. This ink remains UNKNOWN; no mathematical correction or approval.",
+    "Figure boxes are semantic rough estimates from the single original, not pixel-tight/snapped. All original figure ink is inventoried below; no figure asset was rebuilt or modernized.",
+    "Dot-shaped Chinese full stops are represented by ．. Footer ornaments are preserved as bullets. Marginal black blotches and scattered whitespace specks are visible source nontext marks; no count exclusions.",
+    "Example3 explanation is interrupted by figure11 and ends this page in 因, open to0077. Outer80 remains UNKNOWN."
+  ],
+  "figure_inventory": [
+    {
+      "label": "图 10",
+      "owner": "continued page75 prose/example, parent-agent TEXTONLY reference; visible figure supplied by0076",
+      "subfigures": [
+        {
+          "label": "а)",
+          "ink": "Solid upward-arrow y axis extends below solid right-arrow x axis; y above/left, x below right end, 0 below/left of crossing. Horizontal positions labelled1,2,3,4,5 have ticks/short strokes and five black dots alternating below,above,below,above,below; first is farthest below and later dots approach axis. Dashed vertical projections join numbered axis positions to dots, with irregular original dash lengths. а) beneath graph. Small unlabelled axis-edge marks remain unassigned."
+        },
+        {
+          "label": "б)",
+          "ink": "Solid horizontal right-arrow number line, with black dots and a short upright zero tick. Point labels left-to-right below line: y_1,y_3,y_5,0,y_4,y_2. y_1,y_3,y_5 left of zero; y_4,y_2 right. y_3 and y_5 crowded together, y_1 much farther left. б) beneath. No printed absolute numeric point values."
+        }
+      ],
+      "caption": "图 10"
+    },
+    {
+      "label": "图 11",
+      "owner": "example3 prose",
+      "subfigures": [
+        {
+          "label": "а)",
+          "ink": "Solid upward-arrow y axis crosses long solid right-arrow x axis near left end; y above/left, 0 below/left crossing, x below far right. Horizontal long dashed reference line above x axis labelled1/3 on left. Positions1,2,3,4 labelled below x axis; black dot1 on axis, dots2,3,4 above axis and below dashed reference with increasing heights. Vertical broken projections from axis to elevated dots. а) beneath middle."
+        },
+        {
+          "label": "б)",
+          "ink": "Long solid horizontal right-arrow number line. First black point has0 above and y_1 below. Black points y_2,y_3,y_4 farther right; y_3,y_4 closely spaced. Farther-right short vertical tick labelled1/3 below; y_2–y_4 precede it. б) below center. No added ticks/values."
+        }
+      ],
+      "caption": "图 11"
+    }
+  ],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 76,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 76
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "6e7977e9721d5d9a40ef423fbdd06e9028c9a398538355b271651688616bf4ae"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "printed_lines": 9,
+  "figures": [
+    {
+      "id": "fig-10",
+      "label": "图 10",
+      "box": [
+        535,
+        333,
+        620,
+        505
+      ]
+    },
+    {
+      "id": "fig-11",
+      "label": "图 11",
+      "box": [
+        245,
+        1489,
+        1211,
+        460
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\lim_{n\to\infty}\frac{(-1)^n}{n}=0.$
+
+<!-- fig 图 10 box 535,333,620,505 -->
+![图 10](figures/fig-10.png)
+
+<!-- cap 图 10 -->
+图 10
+
+<!-- p -->
+例3．$y_n=\frac{n-1}{3n}$；$n\in N$．
+
+<!-- p open -->
+从图11的а和б可以看出，当$n$增大时，该数列的项“趋
+向”于$\frac{1}{3}$．如果将第$n$项改写成
+$y_n=\frac{1}{3}-\frac{1}{3n}$，
+
+<!-- fig 图 11 box 245,1489,1211,460 -->
+![图 11](figures/fig-11.png)
+
+<!-- cap 图 11 -->
+图 11
+
+<!-- p cont open -->
+这一点就更明显了．当序号$n$增大时，第二项“趋向于零”，因
+
+<!-- foot -->
+• 69 •
