@@ -476,6 +476,71 @@ N21page82closingboundarydependency withoutchangingN21contentoritsreviews.
 N21source-closure repairready:onlycanonical82triple/index69to70/bound evidence,
 N22raw/modernlesson andcanonical83 notpromotedbyrepair. Count8 unchanged;
 writerretryonlyafternewnarrowcommit/ordinarypush, originalfailurepreserved.
+N21boundaryrepairscopedcommitted/ordinarypushed5b8807734,15files/stagedwhitespace
+PASS; canonical82/index69to70/working73 preservesunrelated3pages. NoN21lesson/
+answer/choice/figure/display/tool byteschanged. Replacementexistingqueueentry
+submittedafterpush, failed9eae85ac5entrypreserved/superseded. Solewriter only
+retriesfailedbase then unrun dependent stages. Completedcount8 unchanged,
+no producerDB/peer message/reviewreplay. ContinueN22scopedassembly.
+N22one scopedassemblePASS12prose/1exercise163fourparts/0figures; partialN23
+1proseopen remainsscratch/notpromoted. Firstmodernprepare/finalizePASS
+1/12prosechanged1/1exercisechanged0newfigures; a-dlabels and2tool-derivedanchors
+only, allmathematicsunchanged. Oneanswerprepare andcompleteungradedproofdraft
+163a-d/4tasks0auto0parts, witnessesfromfrozenmath. Helmholtzsame2imagecontext
+modern/keyTEXTreviewactive, no source/images/solvingreplay. Canonicalbase/answers/
+choices/render/display/finalization/promotion/wholelessoncredit/queue unrun.
+N22stagehelperadjustedbeforeexecution:currentHEAD5b8807734, real1exercise,
+source83onlynewdependency/index70to71. No newkeyboard/DB/peer messages.
+Helmholtzmodern/sourcePASS_WITH_U1 andderivedanswer163a-dPASS,5currentfilesbound;
+12prose/1exercise4proofs/2anchors/0figures/0auto0parts, same2imagecontext,
+no source/images/solvingreplay. Reviewedanswerpre-finalizerSHAd2695b50;
+retainexactpreimagebeforeofficialfinalize, then canonicalbase/answers.
+Exactreviewedanswerpreimage retainedbeforenativefinalize; officialanswer
+finalizerPASSauto0/ungraded1, no exactcandidate/keyboardtest. Canonicalbase10/
+answer2files retained; neededsource83carryout/ex163/nextheading dependency
+included, N23bodycandidate isnotN23approval/lessonpromotion. OnlyN22indexrow,
+workingpages74 preservesunrelated3; expectedstagedsourceincrement70to71.
+OnecanonicalrenderPASS1exercise/12prose. FreshPasteur key-blindchoiceauthor
+activefromoriginalwritten163/actualdefinitions, nofixedquota/figures/history.
+Completeheadlessdisplayhelperbeingprepared, notrun; wholelessoncredit0/queueNONE.
+Pasteurcompleted3questions/13options2single1multiple, all163fourtaskscovered
+withproof-production losses explicit; concepts1/5,0figures, solvebeforeoptions.
+Inspect/prepare/structuralvalidatoronceeachPASS, no failure/retry/history.
+Authorreport/source-solve intakenonce. Seed/draftbyte21bbcb58/8af771c3,
+canonicalf713b6f8/f743ed7e; immutable source-solve147b3fba.
+View-onlyprojection releasedtoHelmholtz forindependent13optiontruth/fidelity/
+leakage freeze before keys, same2sourceimages/0newimages/0mathreplay.
+OnecompleteheadlessdisplaymechanicalPASS8captures/44choice-navclicks,
+2matchedanchors eachwidth/0figures/0page-formula-controlfaults; browserclosed.
+Semanticandindependentpixelreviews pending; wholelessoncredit0/queueNONE.
+Helmholtzvisible-onlyPASS consumedonce:13options/4true9false, complete
+sets{d},{b,e},{c}; immutablefreeze05dffd48 retainedbeforeauthor disclosure.
+Full-draftintent/key/rationale/coveragecomparison nowauthorized in same
+2imagecontext, reusingfrozenmath/truth; no newsolving/images/checker.
+U1separatorUNKNOWN retained. Freshfinal8imagepixelreview stillunrun.
+IndependentN23preparationstarted whileN22semanticcomparison pending:
+TOCprinted76-78 impliesphysical83-85 includingactualN24closingheading.
+OnlyhistoricalMarkdown84/85 exists; oneprepare-range84-85PASS,83native
+PASS21/21 tobereusedunchanged. Recoveryhelperprepared/notrun; no source
+approval/native/assembly/partialN24promotion or lessoncredit.
+N22StageCindependentPASS exactprojection/13keys-rationales/coverage,
+setsunchanged{d},{b,e},{c};0sourcecasesomitted/proof-productionlossesexplicit.
+Oneofficialretain_choices.pyPASS withboundreview8c4ee653, no standalone
+duplicatevalidator. Helmholtz/Pasteuractuallyclosed; freshHubble sole
+finaldisplayreviewer activeeightfinalPNGsonceonly, no semanticreplay.
+N23recoveryPASS2historicalMarkdown84/85+unchanged83triple. Firstnative
+84FAIL22/21,11blocks;85FAIL21/20,8blocks;0figures/normalizations.
+BothFIRSTfailures preservedbeforechanges; no sourceapproval/assembly.
+KeplerN23source-authoronly active3originalsonce, disjointoutputs, no native
+replay/count-fitting or independentapproval; Hubble remainssole reviewer.
+N22ready/queuedcheckpointhelper prepared/notrun; no completionflag or
+queueentry beforefinaldisplayapproval andsuccessful ordinarypush.
+HubblefinaldisplayPASS consumedonce,8distinctPNGsonce/19bindingsMATCH,
+0concretefaults; full-frame scaling/mobilelongformula endpoint183px
+limitsdocumented usingexisting tail/reachabilitychecks. Revieweractually
+closed, no source/answer/choice/browserreplay. N22complete12prose/1exercise
+163fourparts/2anchors/1derivedungradedanswer/3choices13options/0figures;
+readyforscopedcommit withsource83closingdependency, sourceindex70to71.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
