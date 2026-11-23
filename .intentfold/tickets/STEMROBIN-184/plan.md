@@ -67,6 +67,43 @@ One affected finalize PASS21/21,9 blocks,0 normalizations; reviewed Markdown/
 JSON unchanged. Original23/21 and preceding22/21 audits both retained.
 N9 remains incomplete at p39 count and p38/p40 source/math HOLDs, unqueued.
 Continue new N10 source43-45, reusing passed source42; no N9 lesson credit.
+N9 scoped repair ordinary pushed as `d85a0bc94`; no dependent source HOLD released.
+
+N10 `ana9-c2-s3-n10` prepared43-45 once and reused reviewed42. Native first
+43/44 count failures26/25 and16/15 are retained; source-supported bottom43 and
+isolated left-margin44 exclusions recover25/25 and15/15. P45 first24/24 PASS
+is reused. Strict scratch assembly completes18 prose blocks,6 exercises74-79
+and one table, without promoting orphan x1 or open N11. Source-first freeze
+and independent mathematics are retained; first candidate comparison remains
+in progress. Modern drafts qualify equiprobability and nonreplacement,
+retain the four-ball zero case and use six distinct PLANET letters and dollars.
+First source comparison's sole Exercise78 punctuation discrepancy was corrected;
+only45 finalized again24/24 and the corrected N10 snapshot rebound. Independent
+modern/answer reviews PASS. Exact16 raw files promoted, raw index reindexed.
+Bounded table author and separate source-first reviewer PASS4x7 table/21 pairs,
+640px media/min16px with all mobile ends; both used4 images and actually closed.
+Exact figure assets promoted with metadata-path-only rebinding and official review.
+First modern numeric-repetition and subsequent normalized-anchor failures remain
+retained; one counting sentence restores all source10 occurrences and same
+proseFlow breaks1/4/8/16. Affected-only review and final modern stage PASS.
+Six derived numeric answer keys finalized; six interactions ready5 math/1 number.
+Offline base render PASS. Independent choice author returns6 single questions/
+19 options with first structural PASS and no figure. Reviewer's retained source
+solutions are frozen against the official six-seed/definition2 selection before
+key-free learner view review. All19 choice derivations and coverage declarations
+PASS; original semantic PASS retained. Four stem number-list wrappers moved
+Chinese separators outside math, with exact words/values/options/keys unchanged;
+affected presentation review and bound official checker PASS. Choices retained.
+Source/choice reviewer actually closed with5 cumulative images; author closed.
+One headed desktop/mobile offline display run PASS8 captures/46 control-navigation
+clicks,4 actual anchor pairs, zero overflow/formula/control faults, reachable640px
+table tail/min16px labels, zero indent and matching prose math fonts.
+Fresh independent complete-display review PASS with no concrete display faults.
+Pauli opened exactly8 captures once each, verified input/HTML/capture bindings,
+documented full-frame scaling limits and reused table endpoint evidence, and
+actually closed. No display or content stage was replayed for delivery.
+N10 is complete offline and ready for scoped commit/push, not yet queued;
+new delivered-lesson credit remains0 and run total remains3 until successful push.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
