@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N37`;
+const target = `${root}/ssot-resources/soviet10year-textbooks/artifacts/8a`;
+const evidence = `${target}/evidence/resume182-7-N37`;
+function keep(source, destination) {
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  if (fs.existsSync(destination)) {
+    assert.ok(fs.readFileSync(source).equals(fs.readFileSync(destination)), destination);
+  } else {
+    fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+  }
+}
+for (const page of [235, 236, 237]) {
+  const directory = `pages/${String(page).padStart(4, '0')}`;
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    keep(`${base}/raw-FIRST/8a/${directory}/${name}`, `${target}/${directory}/${name}`);
+  }
+}
+for (const name of ['lesson.json', 'exercises.json', 'lesson.md']) {
+  const file = `lessons/alg8-c6-s1-n37/${name}`;
+  keep(`${base}/assembly-FIRST/artifacts/8a/${file}`, `${target}/${file}`);
+}
+function retainTree(relative) {
+  const source = `${base}/${relative}`;
+  if (fs.statSync(source).isDirectory()) {
+    for (const name of fs.readdirSync(source)) retainTree(`${relative}/${name}`);
+  } else {
+    keep(source, `${evidence}/${relative.endsWith('.json') ? `${relative}.record` : relative}`);
+  }
+}
+for (const directory of ['source-author-235-237-FIRST', 'source-review-FIRST']) {
+  retainTree(directory);
+}
+keep(`${base}/assembly-FIRST/assembly.record`, `${evidence}/assembly-FIRST/assembly.record`);
+keep(`${base}/assemble-source.py`, `${evidence}/assemble-source.py.record`);
+console.log(JSON.stringify({
+  lesson: 'alg8-c6-s1-n37', sourceRetained: true,
+  retained: evidence, completeModernLesson: false, databaseWrites: 0,
+}));

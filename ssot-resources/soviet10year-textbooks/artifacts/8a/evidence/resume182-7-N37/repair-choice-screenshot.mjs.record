@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-N37';
+const source = `${base}/display-RECOVERY1/report.json`;
+const output = `${base}/display-RECOVERY2`;
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const report = JSON.parse(fs.readFileSync(source, 'utf8'));
+assert.equal(report.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(report.cleanup, true);
+const view = report.views.find(item => item.width === 390 && item.surface === 'choices');
+assert.equal(view.sha256, sha(view.path));
+const oldScreenshot = `${base}/display-RECOVERY1/390-choices-last.png`;
+assert.ok(report.screenshots.some(item => item.path === oldScreenshot));
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const { chromium } = createRequire(path.join(root, 'app/package.json'))('playwright');
+const browser = await chromium.launch({ headless: true });
+report.cleanup = false;
+try {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await context.route('**/*', route =>
+    /^(file:|data:)/.test(route.request().url()) ? route.continue() : route.abort());
+  const page = await context.newPage();
+  await page.goto(pathToFileURL(path.join(root, view.path)).href);
+  await page.evaluate(() => document.fonts.ready);
+  const last = page.locator('section.choice:last-of-type');
+  await last.scrollIntoViewIfNeeded();
+  await last.evaluate(element => {
+    for (const child of [element, ...element.querySelectorAll('*')]) {
+      if (child.scrollWidth > child.clientWidth + 1) {
+        child.scrollTo({ left: 0, behavior: 'instant' });
+      }
+    }
+  });
+  const scrollPositions = await last.evaluate(element =>
+    [element, ...element.querySelectorAll('*')]
+      .filter(child => child.scrollWidth > child.clientWidth + 1)
+      .map(child => ({ left: child.scrollLeft, width: child.clientWidth,
+        contentWidth: child.scrollWidth })));
+  assert.ok(scrollPositions.every(item => Math.abs(item.left) <= 1));
+  const screenshot = `${output}/390-choices-last.png`;
+  await last.screenshot({ path: screenshot, animations: 'disabled' });
+  report.screenshots = report.screenshots.map(item => item.path === oldScreenshot
+    ? { ...item, path: screenshot, sha256: sha(screenshot) } : item);
+  report.captureRecovery = {
+    previousReport: { path: source, sha256: sha(source) },
+    failedScreenshot: { path: oldScreenshot, sha256: sha(oldScreenshot) },
+    replacedScreenshot: { path: screenshot, sha256: sha(screenshot) },
+    reason: 'Reset descendant horizontal scroll positions before the section screenshot.',
+    originalDomChecksReused: true, sourceOrMathematicsRepeated: false,
+    screenshotCount: 1, scrollPositions, contentChanged: false,
+  };
+  await context.close();
+} catch (error) {
+  report.status = 'FAIL';
+  report.failures.push({ message: error.message, stack: error.stack });
+  process.exitCode = 1;
+} finally {
+  await browser.close();
+  report.cleanup = !browser.isConnected();
+  fs.writeFileSync(`${output}/report.json`, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify({ status: report.status, report: `${output}/report.json`,
+    captured: report.captureRecovery?.screenshotCount, cleanup: report.cleanup }));
+}

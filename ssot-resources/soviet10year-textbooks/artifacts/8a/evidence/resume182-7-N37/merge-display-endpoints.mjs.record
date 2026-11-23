@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-N37';
+const previous = `${base}/display-RECOVERY2/report.json`;
+const rightReportPath = `${base}/display-RECOVERY1/report.json`;
+const output = `${base}/display-RECOVERY3`;
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const report = load(previous);
+const rightReport = load(rightReportPath);
+assert.equal(report.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(report.cleanup, true);
+const right = rightReport.screenshots.find(item =>
+  item.path === `${base}/display-RECOVERY1/390-choices-last.png`);
+assert.equal(right.sha256, sha(right.path));
+const left = report.screenshots.find(item =>
+  item.path === `${base}/display-RECOVERY2/390-choices-last.png`);
+assert.equal(left.sha256, sha(left.path));
+left.end = 'left';
+report.screenshots.push({ ...right, end: 'right' });
+report.endpointEvidence = {
+  left: { path: left.path, sha256: left.sha256 },
+  right: { path: right.path, sha256: right.sha256 },
+  previousReport: { path: previous, sha256: sha(previous) },
+  rightReport: { path: rightReportPath, sha256: sha(rightReportPath) },
+  viewportWidth: 358, formulaScrollWidth: 386, scrollDistance: 28,
+  source: 'Existing DOM scroll reachability and already observed endpoint photographs.',
+  newScreenshots: 0, repeatedDomChecks: false, repeatedMathematics: false,
+};
+assert.equal(report.views.length, 6);
+assert.equal(report.screenshots.length, 13);
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+fs.writeFileSync(`${output}/report.json`, `${JSON.stringify(report, null, 2)}\n`,
+  { flag: 'wx' });
+console.log(JSON.stringify({ output: `${output}/report.json`,
+  views: report.views.length, screenshots: report.screenshots.length, newScreenshots: 0 }));

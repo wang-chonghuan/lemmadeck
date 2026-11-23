@@ -1,5 +1,133 @@
 # 当前开发状态
 
+### 182-7 2026-11-23 N37完整离线PASS，立即窄保存
+
+- `alg8-c6-s1-n37`完整：4正文对象、732–742共11原题、0新课图；
+  11ready答案（7auto/4ungraded、64部件），9题54项选择
+  （4single/5multiple），0候选图。来源/文本/数学/作者键/选项与误区/
+  11源coverage独审PASS，最终choice review SHA
+  `aba2e5b1aef3826eb722115cc75d6ca488141d80c3e97c5d6fdbe2394e951903`。
+  原retain内置with-review checker实际exit0，未加重复validator。
+- 六视面13截图有实际观察与原DOM检查；原8基础图直接复用，
+  只新选择4图及1张手机末题左端补拍。原右端检查和补拍左端
+  覆盖358px窗口/386px全式（位移28px、重叠330px）；
+  端点范围独审PASS SHA
+  `8f15a5f84312bfdb172552e499035532190a743f546f0b133d819474eb8a6abc`。
+  原FIRST/CAPTURE1按单图全式要求的FAIL保持，实际源/数学未失败；
+  范围修正未重开图或重审数学，不要求一張手机截图容纳整条长公式。
+  headless/isolated、cleanup=true；非线上判分/分页/保存交互验收。
+- 原finish-display及retain-final实际exit0；必要原235–237页、
+  原/现代课程、choice-set与证据已保留于`8a/evidence/resume182-7-N37/`。
+  立即只保存本课及两必要索引/拥有的progress前缀，旧dirty尾部/
+  技能/6a/7a/后续课数据不混入；commit/push尚未执行，不预记成功。
+- N38唯一SOURCE独审Hume并行处理238–243六新页，
+  237已PASS边界复用；N38答案作者仍离线draft，不提升未审课。
+  本聊天DB写入0/付费生成0，宿主费用UNKNOWN；整组仍未完成。
+
+### 182-7 2026-11-23 N37纯view PASS，N38图作者已完成
+
+- N37全部9题54项纯view独审PASS，完整真集合先于作者键冻结；
+  `choice-review-FIRST/visible-review-FIRST.record` SHA
+  `763ce83e6e4e2db32393a871599d25aaf1f4ebde9c22c48ff3384f46d7eb879c`。
+  同一Descartes现在首次比较作者key/54项误区推导/11源coverage，
+  canonical review仍在途；不重解旧source或重做纯view。
+  `choices-final/`保存同字节seed/draft/view，0候选图或路径内容变化。
+- N38图84/85作者draft validate及最终render exit0。
+  图84FIRST因O标签碰撞exit2，唯一一次label offset修复通过，
+  首spec/SVG/preview与失败保持；几何/数学没有重造。
+  两作者handoff SHA分别
+  `c83172d7e7c64f7c9deda1b58754d0b599d94fef4793f3539bec50c855ad6393`、
+  `5a0b510abdb287d44c268c122f81feb1c40db64bc4244f91a639e70755080fe4`。
+  图作者实际4图；图及SOURCE独审尚缺，未提升或批准整课。
+- N38现代LAYOUT1只去除定义句不支持的literal **，并将四条性质的
+  数字编号接回语句；全部数学/源字段不变，FIRST不覆盖。
+  同一图作者复用已看过的图准备16题答案draft，不重开原图，
+  不finalize、不声称已独审。N37仍优先收口。
+- Live STEMROBIN-182只读核对HTTP200，授权范围仍以本聊天
+  最新直接恢复消息为准，不采用工单旧四课/暂停/三至五年级范围。
+  本聊天共享DB写入0、付费生成调用0、宿主费用UNKNOWN，
+  未添加新交互、依赖或运行正式handoff机械防线。
+
+### 182-7 2026-11-23 N37选择作者完成，唯一纯view独审接续
+
+- N37基础8张截图独立观察PASS，记录SHA
+  `97e650ced4ea52d73f5ce60c781bde6c336568c0c0510f205d367c63b6700543`；
+  source seed接入冻结独解PASS，记录SHA
+  `3cb797cf0fb56770f8cca09587d5b54b7a190d4d9ab321d526d02f3386587495`。
+  只批准实际拍摄区域；移动正文底部按钮部分入镜限制保持，
+  不作为线上交互验收。基础显示不重跑。
+- 选择作者完成9题54项（4single/5multiple），0新增图；
+  FIRST draft字节SHA
+  `52587f09fb5e964a0ceee7a45dd8fc8c416026c3ed372f9802ade7e4739e280d`，
+  规范SHA`3cc910771e4c159fda5852f992a1003702f8043373782afb349ca2829f584055`。
+  原结构检查一次exit0；两次作图能力损失登记，不等于实质批准。
+  原Descartes复用已冻结源解，只接纯view检查9题54项，
+  未向其披露作者解/key；canonical review、选择显示及完整保存尚缺。
+- N38仅图84/85离线作者侧任务；源页独审仍缺，
+  不生成独审批准、不持久提升、不入库。所有旧dirty保持，
+  本聊天DB0，新增外部付费API0，宿主用量费用UNKNOWN。
+
+### 182-7 2026-11-23 N37基础内容收口，选择/显示观察接续
+
+- N37全11原题及4正文盲源解/现代text与lines/全部作者键独审PASS，
+  source-solutions SHA
+  `347707a0171fda3ad6cab5022b46ac586ffe5d73364b532ff807dafda34b1446`，
+  text SHA`a4caa160008cfd3b583b5f2e6ed96f5aae0ad055cf270e5e02d3f6953728a467`，
+  answer comparison SHA
+  `1fb93b29eb3857a3b86137e75d35f4d27f52272e2d4f2394fc7a1b2b516600fe`。
+  原modern finalizer实际exit0：4正文/11题/0新图；
+  原answer prepare及FIRST finalizer实际exit0：
+  11ready（7auto/4ungraded），64部件，0恢复、0内容变更。
+- 原renderer及headless离线正文/书写DOM检查实际exit0：
+  4组合8截图、0failure、cleanup=true；独审显示观察在途，
+  不是显示PASS或线上交互批准。Descartes原4图后接新的8图批次，
+  上下文累计12≤24，原历史不reset、不重开。
+- 原choice prepare为全部11源题、concept1/3，无已解例式定义；
+  seed规范SHA`63d7da1f76e07d389819d28c9d714e237f919badb6f994001efd9530ef44b0e2`。
+  fresh作者Cicero只从干净seed独解创作，未接触父作者答案；
+  draft/选项独审/选择显示/完整提交尚缺。
+- N38仅复用既有238–243作者原稿和刚PASS237边界做隔离原装订，
+  原assembler实际exit0：13正文、743–758十六题、图84/85，
+  745/749/754已闭合，N39从p0243#1起排除；
+  `.tmp/ld-s10y-lesson/resume182-7-N38/assembly-FIRST/`，
+  仍SOURCE_REVIEW_PENDING，不提升现代课/全书索引/入库队列。
+- 本父当前0图，旧历史24保留，外部API0、宿主费用UNKNOWN；
+  不DB/新交互/依赖/合并/部署，旧dirty与N36队列回执完整保持。
+
+### 182-7 2026-11-23 N37来源已保留，数学/文字/答案独审接续
+
+- 235–237首次实质SOURCE独审PASS，66/66行。
+  734i初观察误读根指数为6，唯一必要原尺寸裁图确认实印8；
+  首观察和具体分歧完整保留，作者原稿/公式不改，非数学勘误。
+  独审实际4图（3完整源页+1裁图）、0重开；234已PASS边界复用。
+- 原`retain-source.mjs`实际exit0：235–237三文件及N37原课/
+  SOURCE证据已保留到`8a/evidence/resume182-7-N37/`，
+  `reindex`实际exit0：30 retained lessons，仅原索引，无N38课程提升。
+- 现代作者4正文/11原题/77Latin标号已0444冻结，
+  text及lines同时整理，原source/math/numbers/group不变，
+  原normalizer实际exit0；0图/0勘误。
+  11答案作者draft已冻结，未经独审/finalizer，不写入现代稳定目录。
+  唯一Descartes先完成盲源解再比较文本和作者键；不重复SOURCE，
+  选择题及显示尚未运行，整课未完成，不提交入库队列。
+- N36已普通push及提交快照保持，下方队列回执仅在现有checkpoint；
+  本聊天0DB/外部API/依赖变更/合并/部署，宿主费用UNKNOWN。
+  本父新上下文0图，旧历史24保持，单一独审尚在途。
+
+### 182-7 2026-11-23 N36已普通推送，接续N37
+
+- `alg8-c6-s1-n36`已提交并普通推送：
+  `94185bce7fe955b42f954f03312eaa7824cfa733`，
+  `18cde340f..94185bce7`到原`codex/STEMROBIN-182-textbooks`，
+  push实际exit0；198明确路径，未force/换分支/rebase/merge。
+  原课/现代课、231–234页三文件、图83、选择题图及必要索引/证据已保存；
+  本课已PASS来源/数学/选项/14截图不重复检查。
+- 本提交立即登记到下方既有单一入库队列。本聊天不写共享DB，
+  不等待写入方、不主动发消息；DB结果仍待指定写入方。
+  推送回执随下一次正常课程提交保存，不为队列记录另做commit/push。
+- 下一课`alg8-c6-s1-n37`已有隔离装订：732–742共11题、4正文、
+  0源图，733/742跨页已闭合。仅补235–237尚缺源页独审，
+  234页已PASS边界直接复用；未开始现代课、答案或选择题批准。
+
 ### 182-7 2026-11-23 N36完整离线PASS，立即窄保存
 
 - `alg8-c6-s1-n36`完整：19现代正文源对象、7原题725–731、图83，
@@ -510,7 +638,31 @@
 - 父累计图片24，不再开图；仅fresh有界子代理负责新图与显示观察。
   外部付费API=0，宿主用量/费用UNKNOWN；0DB/部署/关单/主动监督消息。
 
-### 182-7 单一入库队列：8a C5Ex/N35/N34/N33完整推送快照
+### 182-7 单一入库队列：8a N36/C5Ex/N35/N34/N33完整推送快照
+
+#### N36
+
+- lessonId：`alg8-c6-s1-n36`，edition：`modern-us-neutral`。
+  已推送commit：`94185bce7fe955b42f954f03312eaa7824cfa733`，
+  原分支：`codex/STEMROBIN-182-textbooks`；
+  普通push实际exit0，`18cde340f..94185bce7`，未force/merge/换分支。
+- 保留根：`ssot-resources/soviet10year-textbooks/artifacts/8a/`；
+  现代课：`editions/modern-us-neutral/lessons/alg8-c6-s1-n36/`，
+  19正文源对象、7原题725–731、图83；
+  7ready答案（6auto/1ungraded、42部件）。
+  `choice-set/`为7题29项（4single/3multiple），
+  一张四候选射线图含spec/SVG/render/review四文件。
+- 来源、文本、全部数学/答案/选项、新图独审及六视面14截图：
+  `8a/evidence/resume182-7-N36/`（位于artifacts根），
+  最终选择审查SHA
+  `ecc75c42bb9ea8bb62c63ec14955a1926fac4f38db3c281d58a566331a1feede`。
+  定义勘误`a≠0`到`a≠1`与首次失败完整保留；
+  识别替代书写及两次作图的能力损失明示，不冒充原书生产能力。
+- 仅198明确路径；N37后续课程数据、旧dirty尾部/技能/6a/7a未混入。
+  指定单一写入方team-leader只接此推送快照，按既有base/answers/choices
+  单课流程，不生产废弃键盘交互，不`--all`或重发旧课。
+  本聊天0DB/部署/关单/主动消息；DB结果待写入方。
+  此队列回执随下一次正常课程提交保存，不另做发布记录提交。
 
 #### C5Ex
 

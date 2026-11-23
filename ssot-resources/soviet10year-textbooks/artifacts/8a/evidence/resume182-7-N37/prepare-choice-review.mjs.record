@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N37`;
+const author = `${base}/choices-author-FIRST`;
+const output = `${base}/choices-final`;
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+assert.equal(sha(`${author}/draft.json`),
+  '52587f09fb5e964a0ceee7a45dd8fc8c416026c3ed372f9802ade7e4739e280d');
+assert.equal(sha(`${author}/learner-view-FIRST.json`),
+  'e3b3348a609d7c93d21989ed0c51c02d009b9a6b2f8b20dfbf75b0facc28c098');
+const draft = JSON.parse(fs.readFileSync(`${author}/draft.json`, 'utf8'));
+const view = JSON.parse(fs.readFileSync(`${author}/learner-view-FIRST.json`, 'utf8'));
+assert.equal(draft.questions.length, 9);
+assert.equal(draft.questions.reduce((n, q) => n + q.view.options.length, 0), 54);
+assert.deepEqual(draft.new_figures, []);
+assert.deepEqual(draft.questions.map(q => q.view), view);
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+for (const [source, target] of [
+  ['seed.json', 'seed.json'], ['draft.json', 'draft.json'],
+  ['learner-view-FIRST.json', 'view.json'],
+]) {
+  fs.copyFileSync(`${author}/${source}`, `${output}/${target}`, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(`${output}/${target}`, 0o444);
+}
+fs.writeFileSync(`${output}/path-binding.record`, `${JSON.stringify({
+  status: 'CANDIDATE_FROZEN_REVIEW_PENDING',
+  originalDraft: { path: `${author}/draft.json`, sha256: sha(`${author}/draft.json`) },
+  finalDraft: { path: `${output}/draft.json`, sha256: sha(`${output}/draft.json`),
+    canonicalSha256: '3cc910771e4c159fda5852f992a1003702f8043373782afb349ca2829f584055' },
+  view: { path: `${output}/view.json`, sha256: sha(`${output}/view.json`) },
+  optionsChanged: false, newFigures: 0, independentReview: 'PENDING',
+}, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ output, questions: 9, options: 54, newFigures: 0 }));

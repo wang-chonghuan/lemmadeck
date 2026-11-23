@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-N37';
+const reportPath = process.argv[2];
+assert.ok(reportPath?.startsWith(`${base}/display-`));
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const binding = file => ({
+  path: file, sha256: createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+});
+const report = load(reportPath);
+assert.equal(report.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(report.cleanup, true);
+assert.equal(report.views.length, 6);
+assert.equal(report.failures.length, 0);
+for (const width of [1440, 390]) {
+  for (const surface of ['text', 'exercises', 'choices']) {
+    assert.equal(report.views.filter(view => view.width === width
+      && view.surface === surface && view.status === 'PASS').length, 1);
+  }
+}
+const visualPaths = [
+  `${base}/display-review-base-FIRST.record`,
+  process.argv[3] || `${base}/display-review-choices-FIRST.record`,
+];
+assert.ok(visualPaths.every(file => file.startsWith(`${base}/display-review-`)));
+const observed = new Map();
+for (const file of visualPaths) {
+  const review = load(file);
+  assert.equal(review.status, 'PASS');
+  assert.ok(review.screenshots.length > 0);
+  for (const image of review.screenshots) {
+    assert.equal(image.status, 'PASS');
+    observed.set(path.resolve(root, image.path), image.sha256);
+  }
+}
+for (const screenshot of report.screenshots) {
+  assert.equal(observed.get(path.resolve(root, screenshot.path)), screenshot.sha256,
+    `Missing bound visual observation: ${screenshot.path}`);
+}
+const output = `${base}/display-review.record`;
+assert.ok(!fs.existsSync(output));
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'PASS', lesson: 'alg8-c6-s1-n37', edition: 'modern-us-neutral',
+  report: binding(reportPath),
+  reusedTextExercises: binding(`${base}/display-FIRST/report.json`),
+  independentVisualReviews: visualPaths.map(binding),
+  headless: true, isolatedOffline: true, viewCount: 6,
+  screenshotCount: report.screenshots.length,
+  sourceOrMathematicsReReview: false, unchangedDisplayRepeated: false,
+  interactiveAcceptance: false, privateKeysInView: false,
+  limitations: [
+    'Only the stated photographed regions receive static visual approval; content projection, formula ink and clipping use the existing DOM checks.',
+    'This is offline view-only evidence, not DB publication or live-product interaction acceptance.',
+  ],
+}, null, 2)}\n`, { flag: 'wx' });
+const finalizationPath = `${base}/finalization.record`;
+const finalization = load(finalizationPath);
+finalization.status = 'OFFLINE_COMPLETE';
+finalization.display = {
+  status: 'PASS', report: binding(reportPath), review: binding(output),
+  views: 6, screenshots: report.screenshots.length,
+  reusedBaseScreenshots: 8, addedChoiceScreenshots: report.screenshots.length - 8,
+  headless: true, interactiveAcceptance: false,
+};
+fs.writeFileSync(finalizationPath, `${JSON.stringify(finalization, null, 2)}\n`);
+console.log(JSON.stringify({ status: 'PASS', views: 6,
+  screenshots: report.screenshots.length, output }));

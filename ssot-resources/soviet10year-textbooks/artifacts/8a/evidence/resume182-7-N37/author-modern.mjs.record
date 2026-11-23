@@ -1,0 +1,88 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N37`;
+const id = 'alg8-c6-s1-n37';
+const prepared = `${base}/modern-prepared/adapt/8a/modern-us-neutral/lessons/${id}`;
+const evidence = `${base}/modern-author-FIRST`;
+assert.ok(!fs.existsSync(evidence));
+fs.mkdirSync(evidence);
+const names = ['lesson.template.json', 'exercises.template.json'];
+const documents = names.map(name => JSON.parse(fs.readFileSync(`${prepared}/${name}`)));
+const labels = new Map([...'\u0430\u0431\u0432\u0433\u0434\u0435\u0436\u0437\u0438\u043a\u043b\u043c']
+  .map((letter, index) => [letter, 'abcdefghijkl'[index]]));
+let changedLabels = 0;
+function layout(text, count = false) {
+  return text.split(/(\$[^$]*\$)/gu).map((part, index) => index % 2 ? part
+    : part.replace(/\.(?!\d)/gu, '\u3002')
+      .replace(/;/gu, '\uFF1B').replace(/:/gu, '\uFF1A')
+      .replace(/\?/gu, '\uFF1F').replace(/,\s/gu, '\uFF0C')
+      .replace(/([\u0430-\u044f])\)/gu, (_, letter) => {
+        assert.ok(labels.has(letter), letter);
+        if (count) changedLabels++;
+        return `${labels.get(letter)})`;
+      })).join('');
+}
+for (const block of documents[0].prose) {
+  const text = layout(block.text);
+  if (text !== block.text) block.changes.push('layout');
+  block.text = text;
+}
+for (const exercise of documents[1].exercises) {
+  const text = layout(exercise.text, true);
+  const lines = exercise.lines.map(line => layout(line));
+  if (text !== exercise.text || JSON.stringify(lines) !== JSON.stringify(exercise.lines)) {
+    exercise.changes.push('layout');
+  }
+  exercise.text = text;
+  exercise.lines = lines;
+}
+assert.equal(changedLabels, 77);
+const command = [
+  'import json,sys',
+  'sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")',
+  'import edition',
+  'documents=json.load(sys.stdin)',
+  'edition.normalize_lesson_layout(documents[0])',
+  'edition.normalize_exercise_layout(documents[1])',
+  'json.dump(documents,sys.stdout,ensure_ascii=False)',
+].join('\n');
+const normalized = JSON.parse(execFileSync(
+  '.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c', command],
+  { cwd: root, input: JSON.stringify(documents), encoding: 'utf8' },
+));
+assert.equal(normalized[0].prose.length, 4);
+assert.equal(normalized[1].exercises.length, 11);
+assert.equal(normalized[0].errata.length, 0);
+for (let index = 0; index < names.length; index++) {
+  assert.deepEqual(normalized[index].source, documents[index].source);
+  const name = names[index];
+  fs.copyFileSync(`${prepared}/${name}`, `${evidence}/${name}.before.record`,
+    fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(`${evidence}/${name}.before.record`, 0o444);
+  const bytes = `${JSON.stringify(normalized[index], null, 2)}\n`;
+  fs.writeFileSync(`${prepared}/${name}`, bytes);
+  fs.writeFileSync(`${evidence}/${name}.record`, bytes, { flag: 'wx', mode: 0o444 });
+}
+const flow = execFileSync(process.execPath,
+  ['.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs', '--json', `${prepared}/${names[0]}`],
+  { cwd: root, encoding: 'utf8' });
+fs.writeFileSync(`${evidence}/prose-flow-FIRST.record`, flow,
+  { flag: 'wx', mode: 0o444 });
+const record = {
+  lesson: id, status: 'AUTHOR_FROZEN_NOT_INDEPENDENT_APPROVAL',
+  proseObjects: 4, exercises: 11, changedLabels, sourceFieldsPreserved: true,
+  allMathematicsUnchanged: true, originalNormalizersUsed: true,
+  bindings: names.map(name => ({
+    path: `${evidence}/${name}.record`,
+    sha256: createHash('sha256').update(fs.readFileSync(`${evidence}/${name}.record`)).digest('hex'),
+  })),
+  parentImageLoads: 0, databaseWrites: 0,
+};
+fs.writeFileSync(`${evidence}/author-FIRST.record`, `${JSON.stringify(record, null, 2)}\n`,
+  { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify(record));

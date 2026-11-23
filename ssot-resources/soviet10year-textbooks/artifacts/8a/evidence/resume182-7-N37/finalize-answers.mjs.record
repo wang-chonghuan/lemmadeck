@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N37`;
+const id = 'alg8-c6-s1-n37';
+const directory = `${base}/answer-runtime-FIRST`;
+const target = `${root}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}/answer-keys.json`;
+assert.ok(!fs.existsSync(directory));
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(directory);
+fs.copyFileSync(`${base}/answer-keys-author-FIRST.json`, target, fs.constants.COPYFILE_EXCL);
+fs.chmodSync(target, 0o644);
+fs.copyFileSync(target, `${directory}/candidate.record`, fs.constants.COPYFILE_EXCL);
+fs.chmodSync(`${directory}/candidate.record`, 0o444);
+const command = `${root}/.claude/skills/ld-s10y-lesson/.venv/bin/python`;
+const argv = [
+  `${root}/.claude/skills/ld-s10y-answer/tools/lesson_answers.py`, 'finalize',
+  '--book', '8a', '--edition', 'modern-us-neutral', '--lesson', id,
+  '--work', `${base}/answer-prepared`,
+];
+const result = spawnSync(command, argv, {
+  cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
+  maxBuffer: 16 * 1024 * 1024,
+});
+fs.writeFileSync(`${directory}/stdout.record`, result.stdout || '', { flag: 'wx' });
+fs.writeFileSync(`${directory}/stderr.record`, result.stderr || '', { flag: 'wx' });
+fs.writeFileSync(`${directory}/execution.record`, `${JSON.stringify({
+  cwd: root, command, argv, exitCode: result.status,
+  signal: result.signal, error: result.error?.message || null,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  lesson: id, exitCode: result.status, directory,
+  stdout: result.stdout?.trim(), headless: true,
+}));
+process.exitCode = result.status ?? 1;

@@ -1,0 +1,319 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const id = 'alg8-c6-s1-n37';
+const base = '.tmp/ld-s10y-lesson/resume182-7-N37';
+const edition = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral';
+const lessonPath = `${edition}/lessons/${id}`;
+const renderPath = `${base}/display-render/render/8a/modern-us-neutral/${id}`;
+const attempt = process.argv[2] || 'FIRST';
+assert.match(attempt, /^(FIRST|RECOVERY[1-3])$/);
+const mode = process.argv[3] || 'all';
+assert.ok(['all', 'text-exercises', 'choices'].includes(mode));
+const surfaces = mode === 'all' ? ['text', 'exercises', 'choices']
+  : mode === 'text-exercises' ? ['text', 'exercises'] : ['choices'];
+const previous = process.argv[4] ? loadReport(process.argv[4]) : null;
+function loadReport(file) {
+  assert.ok(file.startsWith(`${base}/display-`));
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+const output = `${base}/display-${attempt}`;
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output, { recursive: true });
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const lesson = load(`${lessonPath}/lesson.json`);
+const exercises = load(`${lessonPath}/exercises.json`).exercises;
+const draft = surfaces.includes('choices') ? load(`${lessonPath}/choice-set/draft.json`) : { questions: [] };
+const figures = load(`${lessonPath}/figures.json`).figures;
+const choiceFigureIds = draft.questions.flatMap(q => [
+  ...q.view.figure_ids, ...q.view.options.flatMap(o => o.figure_ids),
+]);
+const choiceSpecs = new Map(draft.new_figures?.map(f => [
+  f.id, load(`${lessonPath}/choice-set/figures/${f.id}.spec.json`),
+]) || []);
+for (const figure of figures) {
+  choiceSpecs.set(figure.id, load(`${edition}/${figure.spec}`));
+}
+const requireApp = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = requireApp('playwright');
+const { proseFlow, proseInline, inline } = createRequire(
+  path.join(root, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'))('./htmlfrag.js');
+const { choiceHtml } = await import(pathToFileURL(path.join(root,
+  '.claude/skills/ld-s10y-lesson/tools/choice_html.mjs')));
+const flow = proseFlow(lesson.prose, lesson.section_breaks);
+const report = {
+  lesson: id, edition: 'modern-us-neutral', status: 'RUNNING',
+  headless: true, isolated: true, sourceReviewRepeated: false,
+  inputs: ['lesson.json', 'exercises.json', 'figures.json',
+    ...(surfaces.includes('choices') ? ['choice-set/draft.json'] : [])]
+    .map(name => ({ path: `${lessonPath}/${name}`, sha256: sha(`${lessonPath}/${name}`) })),
+  surfaces, views: previous?.views || [], screenshots: previous?.screenshots || [],
+  failures: [], cleanup: false, supplementalChecks: [],
+  previous: process.argv[4] ? { path: process.argv[4], sha256: sha(process.argv[4]) } : null,
+};
+const expected = {
+  text: flow.filter(b => b.kind === 'p').map(b => proseInline(b.text)),
+  exercises: exercises.map(e => inline(e.text.replace(
+    new RegExp(`^${e.number}[.\\uFF0E\\u3002]\\s*`), ''))),
+  choices: draft.questions.flatMap(q => [choiceHtml(q.view.stem),
+    ...q.view.options.map(o => choiceHtml(o.text))]),
+};
+const errors = [];
+for (const view of report.views) {
+  assert.equal(view.sha256, sha(view.path), 'Prior display input changed');
+}
+const browser = await chromium.launch({ headless: true });
+let activePage;
+try {
+  for (const width of [1440, 390]) {
+    const context = await browser.newContext({ viewport: {
+      width, height: width === 1440 ? 960 : 844,
+    } });
+    await context.route('**/*', route => {
+      const url = route.request().url();
+      return /^(file:|data:)/.test(url) ? route.continue() : route.abort();
+    });
+    try {
+      for (const surface of surfaces) {
+        const file = `${renderPath}/${surface}.html`;
+        const passed = report.views.find(v => v.width === width && v.surface === surface && v.status === 'PASS');
+        if (passed) {
+          assert.equal(passed.sha256, sha(file), 'Changed bytes cannot reuse display evidence');
+          continue;
+        }
+        const page = await context.newPage();
+        activePage = page;
+        page.on('pageerror', error => errors.push(error.message));
+        page.on('console', message => {
+          if (message.type() === 'error') errors.push(message.text());
+        });
+        const html = fs.readFileSync(file, 'utf8');
+        assert.ok(!/\b(?:source_solution|rationales|correct_index|seed_sha256|answerKey|expected)\b/.test(html));
+        await page.goto(pathToFileURL(path.join(root, file)).href);
+        await page.evaluate(() => document.fonts.ready);
+        const selector = {
+          text: 'p.para', exercises: 'li.ex > .body',
+          choices: '.choice-stem,.choice-option-body',
+        }[surface];
+        const comparison = await page.evaluate(({ selector, expected }) => {
+          const normalize = s => s.replace(/\s+/gu, ' ').trim();
+          const serialize = element => {
+            const clone = element.cloneNode(true);
+            for (const figure of clone.querySelectorAll('figure')) figure.remove();
+            for (const formula of clone.querySelectorAll('.katex')) {
+              formula.replaceWith(document.createTextNode(
+                `$${formula.querySelector('annotation')?.textContent || ''}$`));
+            }
+            return normalize(clone.textContent);
+          };
+          const actual = [...document.querySelectorAll(selector)].map(serialize);
+          const wanted = expected.map(html => {
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            return serialize(template.content);
+          });
+          const sectionBreakIndices = [...document.querySelectorAll('p.para')]
+            .flatMap((paragraph, index) => paragraph.classList.contains('section') ? [index] : []);
+          return { actual, wanted, sectionBreakIndices };
+        }, { selector, expected: expected[surface] });
+        if (JSON.stringify(comparison.actual) !== JSON.stringify(comparison.wanted)) {
+          report.failedProjection = { width, surface, ...comparison };
+        }
+        assert.deepEqual(comparison.actual, comparison.wanted, `${width}:${surface}: content projection`);
+        if (surface === 'text') {
+          assert.deepEqual(comparison.sectionBreakIndices,
+            flow.filter(b => b.kind === 'p').flatMap((b, index) => b.sectionBreak ? [index] : []),
+            `${width}: rendered concept boundaries`);
+          const typography = await page.locator('p.para').evaluateAll(paragraphs =>
+            paragraphs.map(paragraph => {
+              const style = getComputedStyle(paragraph);
+              return {
+                indent: style.textIndent,
+                sectionBorder: paragraph.classList.contains('section')
+                  ? parseFloat(style.borderTopWidth) : null,
+                math: [...paragraph.querySelectorAll('.prose-math,.katex')].map(math => ({
+                  px: parseFloat(getComputedStyle(math).fontSize),
+                  bodyPx: parseFloat(style.fontSize),
+                  latinFamily: math.classList.contains('prose-math')
+                    ? getComputedStyle(math).fontFamily : null,
+                })),
+              };
+            }));
+          assert.ok(typography.every(p => p.indent === '0px'
+            && (p.sectionBorder === null || p.sectionBorder > 0)
+            && p.math.every(m => m.px >= m.bodyPx * 1.10 - 0.1
+              && (!m.latinFamily || m.latinFamily.includes('KaTeX_Main')))));
+        }
+        const dom = await page.evaluate(() => {
+          const box = element => {
+            const b = element.getBoundingClientRect();
+            return { x: b.x, y: b.y, width: b.width, height: b.height, right: b.right };
+          };
+          const formulas = [...document.querySelectorAll('.katex')].map(element => ({
+            ...box(element), tex: element.querySelector('annotation')?.textContent,
+            ink: !!element.querySelector('.katex-html')?.textContent.trim(),
+          }));
+          const scrollers = [...document.querySelectorAll('.nb,.sr-nb,.choice-stem,.choice-option-body,.fig')]
+            .filter(e => e.scrollWidth > e.clientWidth + 1);
+          const ends = scrollers.map(element => {
+            element.scrollTo({ left: element.scrollWidth, behavior: 'instant' });
+            return { maximum: element.scrollWidth - element.clientWidth, actual: element.scrollLeft };
+          });
+          const media = [...document.querySelectorAll('figure')].map(element => ({
+            id: element.id,
+            ...box(element.querySelector('.figure-media')),
+            svg: !!element.querySelector('svg'),
+            curves: [...element.querySelectorAll('svg path')].map(curve => ({
+              length: curve.getTotalLength(), box: box(curve),
+            })),
+            labels: [...element.querySelectorAll('svg text')].map(label => {
+              const matrix = label.getScreenCTM();
+              return { text: label.textContent,
+                px: parseFloat(getComputedStyle(label).fontSize) * Math.hypot(matrix.c, matrix.d) };
+            }),
+          }));
+          const clips = [...document.querySelectorAll('.katex-html .mord,.katex-html .mop,.katex-html .delimsizing')]
+            .flatMap(glyph => {
+              const container = glyph.closest('.nb,.sr-nb,.choice-stem,.choice-option-body');
+              if (!container || getComputedStyle(container).overflowY === 'visible') return [];
+              const inner = glyph.getBoundingClientRect(), outer = container.getBoundingClientRect();
+              return inner.height > 0 && (inner.top < outer.top - 1 || inner.bottom > outer.bottom + 1)
+                ? [{ text: glyph.textContent, top: inner.top, bottom: inner.bottom,
+                  outerTop: outer.top, outerBottom: outer.bottom }] : [];
+            });
+          const sections = [...document.querySelectorAll('li.ex,section.choice')].map(box);
+          return {
+            documentWidth: document.documentElement.scrollWidth,
+            bodyWidth: document.body.scrollWidth,
+            katexErrors: document.querySelectorAll('.katex-error').length,
+            inputs: document.querySelectorAll('input,textarea,button,math-field').length,
+            formulas, ends, media, sections, clips,
+            choices: document.querySelectorAll('section.choice').length,
+            options: document.querySelectorAll('.choice-options > li').length,
+            exercises: document.querySelectorAll('li.ex').length,
+            fonts: [...document.fonts].map(f => ({ family: f.family, status: f.status })),
+          };
+        });
+        assert.ok(dom.documentWidth <= width + 1 && dom.bodyWidth <= width + 1,
+          `${width}:${surface}: document overflow`);
+        assert.equal(dom.katexErrors, 0);
+        assert.equal(dom.inputs, 0);
+        assert.ok(dom.formulas.every(f => f.ink && f.width > 0 && f.height > 0 && f.tex));
+        assert.deepEqual(dom.clips, [], `${width}:${surface}: formula clipping`);
+        assert.ok(dom.ends.every(e => Math.abs(e.maximum - e.actual) <= 1));
+        assert.ok(dom.sections.every((s, i, all) => s.width > 0 && s.height > 0
+          && s.x >= 0 && s.right <= width + 1
+          && (!i || s.y >= all[i - 1].y + all[i - 1].height - 1)));
+        assert.ok(!dom.fonts.some(f => f.status === 'error'));
+        assert.equal(dom.exercises, surface === 'exercises' ? exercises.length : 0);
+        assert.equal(dom.choices, surface === 'choices' ? draft.questions.length : 0);
+        assert.equal(dom.options, surface === 'choices'
+          ? draft.questions.reduce((n, q) => n + q.view.options.length, 0) : 0);
+        if (surface === 'text') {
+          assert.equal(dom.media.length, figures.length);
+          assert.ok(dom.media.every(m => m.svg && m.width > 0 && m.height > 0
+            && Math.abs(m.width - 640) <= 1
+            && m.labels.length > 0 && m.labels.every(label => label.px >= 16)));
+        }
+        if (surface === 'exercises') {
+          assert.deepEqual(dom.media.map(m => m.id), exercises.flatMap(e => e.figures || []));
+          assert.ok(dom.media.every(m => Math.abs(m.width - 640) <= 1
+            && m.labels.every(label => label.px >= 16)));
+        }
+        if (surface === 'choices') {
+          assert.deepEqual(dom.media.map(m => m.id), choiceFigureIds);
+          for (const media of dom.media) {
+            const spec = choiceSpecs.get(media.id);
+            assert.ok(spec, `${media.id}: missing authored display contract`);
+            assert.ok(media.svg && media.width > 0 && media.height > 0);
+            assert.ok(spec.display.widths.some(w => Math.abs(w - media.width) <= 1),
+              `${media.id}: actual width ${media.width} not tested by renderer`);
+            assert.ok(media.labels.length > 0
+              && media.labels.every(label => label.px >= spec.display.minTextPx));
+            if (spec.objects.some(object => object.type === 'svgPath')) {
+              assert.ok(media.curves.some(c => c.length > 0
+                && c.box.width > 0 && c.box.height > 0),
+                `${media.id}: graph curve must render`);
+            }
+          }
+        }
+        report.views.push({ width, surface, status: 'PASS', path: file, sha256: sha(file), dom });
+        const focus = surface === 'text' ? 'p.para:first-of-type'
+          : surface === 'exercises' ? '#ex-732' : 'section.choice:nth-of-type(1)';
+        await page.locator(focus).scrollIntoViewIfNeeded();
+        const screenshot = `${output}/${width}-${surface}.png`;
+        await page.screenshot({ path: screenshot, animations: 'disabled' });
+        report.screenshots.push({ path: screenshot, sha256: sha(screenshot), width, surface, focus });
+        if (surface === 'text') {
+          await page.locator('p.para:last-of-type').scrollIntoViewIfNeeded();
+          const lastText = `${output}/${width}-text-last.png`;
+          await page.screenshot({ path: lastText, animations: 'disabled' });
+          report.screenshots.push({ path: lastText, sha256: sha(lastText), width,
+            surface, focus: 'p.para:last-of-type' });
+        }
+        if (surface === 'exercises') {
+          await page.locator('#ex-742').scrollIntoViewIfNeeded();
+          const lastExercise = `${output}/${width}-exercises-last.png`;
+          await page.screenshot({ path: lastExercise, animations: 'disabled' });
+          report.screenshots.push({ path: lastExercise, sha256: sha(lastExercise), width,
+            surface, focus: '#ex-742' });
+        }
+        if (surface === 'choices') {
+          const last = page.locator('section.choice:last-of-type');
+          await last.locator('figure').evaluateAll(elements => {
+            for (const element of elements) element.scrollLeft = 0;
+          });
+          await last.scrollIntoViewIfNeeded();
+          const screenshot = `${output}/${width}-choices-last.png`;
+          await last.screenshot({ path: screenshot, animations: 'disabled' });
+          report.screenshots.push({ path: screenshot, sha256: sha(screenshot), width, surface,
+            focus: 'section.choice:last-of-type' });
+          if (width === 390) {
+            for (const authored of draft.new_figures || []) {
+              const figure = page.locator(`figure#${authored.id}`);
+              await figure.scrollIntoViewIfNeeded();
+              await figure.evaluate(element => element.scrollTo({
+                left: element.scrollWidth, behavior: 'instant',
+              }));
+              const right = `${output}/${width}-${authored.id}-right.png`;
+              await figure.screenshot({ path: right, animations: 'disabled' });
+              report.screenshots.push({ path: right, sha256: sha(right), width, surface,
+                focus: `figure#${authored.id}`, end: 'right' });
+            }
+          }
+        }
+        await page.close();
+        activePage = null;
+      }
+    } finally {
+      await context.close();
+    }
+  }
+  assert.deepEqual(errors, []);
+  assert.ok([1440, 390].every(width => surfaces.every(surface =>
+    report.views.some(v => v.width === width && v.surface === surface && v.status === 'PASS'))));
+  report.status = 'RUNTIME_PASS_VISUAL_PENDING';
+} catch (error) {
+  report.status = 'FAIL';
+  report.failures.push({ message: error.message, stack: error.stack });
+  if (activePage && !activePage.isClosed()) {
+    const screenshot = `${output}/FAILURE.png`;
+    await activePage.screenshot({ path: screenshot, animations: 'disabled' });
+    report.screenshots.push({ path: screenshot, sha256: sha(screenshot), failure: true });
+  }
+  process.exitCode = 1;
+} finally {
+  await browser.close();
+  report.cleanup = !browser.isConnected();
+  fs.writeFileSync(`${output}/report.json`, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify({ status: report.status, report: `${output}/report.json`,
+    views: report.views.length, screenshots: report.screenshots.length,
+    failures: report.failures.map(f => f.message), cleanup: report.cleanup }));
+}

@@ -1,0 +1,89 @@
+"""Assemble the existing N37 source draft without granting source approval."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sys
+
+REPO = Path("/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import assemble as A
+
+BASE = REPO / ".tmp/ld-s10y-lesson/resume182-7-N37"
+ARTIFACTS = REPO / "ssot-resources/soviet10year-textbooks/artifacts/8a"
+STAGE = BASE / "assembly-FIRST"
+BOOK = STAGE / "artifacts/8a"
+ID = "alg8-c6-s1-n37"
+assert not BOOK.exists(), "Preserve prior assembly attempts"
+
+
+def binding(file):
+    return {
+        "path": str(file.relative_to(REPO)),
+        "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+    }
+
+
+documents = []
+for page in [231, 234, 235, 236, 237]:
+    directory = (
+        ARTIFACTS if page in (231, 234) else BASE / "raw-FIRST/8a"
+    ) / f"pages/{page:04d}"
+    audit = json.loads((directory / "audit.json").read_bytes())
+    assert not audit["errors"]
+    assert audit["lines_md"] == audit["lines_printed"]
+    file = directory / "page.json"
+    documents.append((file, json.loads(file.read_bytes())))
+
+stream = A.load_stream(BOOK, documents)
+ancestors = [block for block in stream
+             if block["ref"] in ("p0231#1", "p0231#2")]
+assert [block["kind"] for block in ancestors] == ["h1", "h2"]
+start = next(i for i, block in enumerate(stream) if block["ref"] == "p0234#3")
+end = next(i for i in range(start + 1, len(stream))
+           if stream[i]["kind"] in ("h1", "h2", "h3"))
+assert stream[end]["ref"] == "p0237#2"
+selected = ancestors + stream[start:end]
+merged, warnings = A.merge_across_pages(copy.deepcopy(selected))
+assert not warnings, warnings
+assert not any(block.get("open") for block in merged)
+numbers = [int(block["label"]) for block in merged if block["kind"] == "ex"]
+assert numbers == list(range(732, 743)), numbers
+
+for file, document in documents:
+    destination = BOOK / f"pages/{document['meta']['page']:04d}/page.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(file, destination)
+loader = A.load_stream
+A.load_stream = lambda book: copy.deepcopy(selected) if book == BOOK else loader(book)
+try:
+    result = A.run(
+        BOOK, REPO / "ssot-resources/soviet10year-textbooks/toc/8a/zh.json",
+        TOOLS.parent / "profiles/soviet-cn.json",
+        strict=True, work=None, exercise_numbering="book",
+    )
+finally:
+    A.load_stream = loader
+assert result == 0
+index = json.loads((BOOK / "book.json").read_bytes())
+assert not index["audit"]["errors"]
+assert [lesson["id"] for lesson in index["lessons"]] == [ID]
+record = {
+    "status": "RAW_CLOSED_SOURCE_REVIEW_PENDING",
+    "lesson": ID,
+    "sources": [binding(file) for file, _ in documents],
+    "source_author": binding(BASE / "source-author-235-237-FIRST/source-author-FIRST.json"),
+    "selected_refs": [block["ref"] for block in selected],
+    "boundary": {"start": "p0234#3", "excluded_next": "p0237#2"},
+    "exercise_numbers": numbers,
+    "existing_assembler_used": True,
+    "source_approval": False,
+    "complete_modern_lesson": False,
+}
+output = STAGE / "assembly.record"
+output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({**binding(output), "exercises": len(numbers)}))
