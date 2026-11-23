@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const file = '.intentfold/tickets/STEMROBIN-182/progress.md';
+const start = '### 182-7 2026-11-23 N32现代组件接续，真实HOLD保留；N33四页已备料';
+const end = '### 182-7 2026-11-23 同一182分支历史对齐已普通push，接续现代生产';
+const current = fs.readFileSync(file, 'utf8');
+const indexed = execFileSync('git', ['show', `:${file}`], { cwd: root, encoding: 'utf8' });
+assert.ok(current.startsWith('# 当前开发状态\n\n'));
+assert.ok(indexed.startsWith('# 当前开发状态\n\n'));
+assert.ok(!indexed.includes(start));
+const sectionStart = current.indexOf(start);
+const sectionEnd = current.indexOf(end, sectionStart);
+assert.ok(sectionStart > 0 && sectionEnd > sectionStart);
+const section = current.slice(sectionStart, sectionEnd);
+const header = '# 当前开发状态\n\n';
+const next = header + section + indexed.slice(header.length);
+const scratch = '.tmp/ld-s10y-lesson/resume182-7-N32/owned-progress-stage-FIRST';
+assert.ok(!fs.existsSync(scratch));
+fs.mkdirSync(scratch);
+fs.writeFileSync(`${scratch}/indexed.md`, indexed);
+fs.writeFileSync(`${scratch}/next.md`, next);
+const diff = spawnSync('git', [
+  'diff', '--no-index', '--', `${scratch}/indexed.md`, `${scratch}/next.md`,
+], { cwd: root, encoding: 'utf8' });
+assert.equal(diff.status, 1);
+const patch = diff.stdout.split('\n').map(line => {
+  if (line.startsWith('diff --git ')) return `diff --git a/${file} b/${file}`;
+  if (line.startsWith('--- ')) return `--- a/${file}`;
+  if (line.startsWith('+++ ')) return `+++ b/${file}`;
+  return line;
+}).join('\n');
+fs.writeFileSync(`${scratch}/owned.patch`, patch);
+execFileSync('git', ['apply', '--cached', '--whitespace=nowarn', `${scratch}/owned.patch`], { cwd: root });
+console.log('Staged only the new N32 modern/N33 source checkpoint; pre-existing working-tree progress remains unstaged.');

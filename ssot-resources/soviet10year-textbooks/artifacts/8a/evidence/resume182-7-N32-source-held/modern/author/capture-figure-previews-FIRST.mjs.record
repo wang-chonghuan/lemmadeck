@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const require = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = require('playwright');
+const input = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures';
+const output = process.argv[2] ?? '.tmp/ld-s10y-lesson/resume182-7-N32/figures-preview-FIRST';
+assert.ok(output.startsWith('.tmp/ld-s10y-lesson/resume182-7-N32/figures-preview-'));
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+delete process.env.PWDEBUG;
+const browser = await chromium.launch({ headless: true });
+try {
+  for (const number of [74, 75, 76]) {
+    const spec = JSON.parse(fs.readFileSync(`${input}/fig-${number}.spec.json`));
+    const page = await browser.newPage({
+      viewport: { width: spec.canvas.width, height: spec.canvas.height },
+      deviceScaleFactor: 1,
+    });
+    const svg = fs.readFileSync(`${input}/fig-${number}.svg`, 'utf8');
+    await page.setContent(`<!doctype html><style>
+      :root {
+        --ld-figure-ink: #15201f;
+        --ld-figure-muted: #4c5a58;
+        --ld-figure-accent: #15201f;
+        --ld-figure-accent-soft: #8a9795;
+        --ld-figure-grid: #e3eae9;
+        --ld-figure-paper: #ffffff;
+      }
+      html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#ffffff; }
+      svg { display:block; }
+      </style>${svg}`);
+    await page.screenshot({ path: `${output}/fig-${number}.png`, animations: 'disabled' });
+    await page.close();
+  }
+} finally {
+  await browser.close();
+}
+console.log(`Saved three 640px previews from existing SVGs under ${output}.`);

@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const source = '.tmp/ld-s10y-lesson/resume182-7-N32/modern-author-FIRST';
+const failed = '.tmp/ld-s10y-lesson/resume182-7-N32/modern-text-failure-FIRST';
+const output = '.tmp/ld-s10y-lesson/resume182-7-N32/modern-author-RECOVERY1';
+assert.ok(!fs.existsSync(failed) && !fs.existsSync(output));
+fs.mkdirSync(failed);
+fs.mkdirSync(output);
+for (const name of fs.readdirSync(source)) {
+  fs.copyFileSync(path.join(source, name), path.join(failed, name), fs.constants.COPYFILE_EXCL);
+}
+const lesson = JSON.parse(fs.readFileSync(path.join(source, 'lesson.template.json')));
+const exercises = JSON.parse(fs.readFileSync(path.join(source, 'exercises.template.json')));
+lesson.prose[10].text = '我们将不作证明而承认性质1和性质2.';
+lesson.prose[30].text = lesson.prose[30].text.replace('这个元素就是1。', '这个元素就是1.');
+lesson.prose[34].text = '$f(x_1)\\cdot f(x_2)=f(x_1+x_2).$';
+lesson.prose[36].text = '$f(x_1)\\cdot f(x_2)=a^{x_1}\\cdot a^{x_2}=a^{x_1+x_2}=f(x_1+x_2).$';
+const oldAfter = lesson.section_breaks[2].after;
+lesson.section_breaks[2].after = oldAfter.replace('这个元素就是1。', '这个元素就是1.');
+
+const program = `
+import json, sys, re
+sys.path.insert(0, '.claude/skills/ld-s10y-lesson/tools')
+import edition
+data = json.load(sys.stdin)
+for item in data['exercises']['exercises']:
+    text = re.sub(r'^(\\d+)。', r'\\1.', item['text'])
+    masked = edition.masked_math(text)
+    depths = edition.nesting_depths(masked)
+    markers = [m for m in edition.PART_MARKER.finditer(masked)
+        if depths[m.start()] == 0 and m.group('label') in edition.CYRILLIC_PARTS]
+    if markers:
+        order = edition.marker_order(markers)
+        assert order is not None, item['number']
+        for m in reversed(markers):
+            index = order[m.group('label')]
+            text = text[:m.start('label')] + edition.LATIN_PARTS[index] + text[m.end('label'):]
+    item['text'] = text
+    item['changes'] = ['layout'] if text != item['source_text'] else []
+edition.normalize_lesson_layout(data['lesson'])
+edition.normalize_exercise_layout(data['exercises'])
+for item in data['lesson']['prose']:
+    item['changes'] = ['layout'] if item['text'] != item['source_text'] else []
+errors = []
+for i, item in enumerate(data['lesson']['prose']):
+    errors += edition.validate_text(item['source_text'], item['text'],
+        item['changes'], item['numeric_changes'], f'prose[{i}]', [], item['historical_entities'])
+for item in data['exercises']['exercises']:
+    errors += edition.validate_text(item['source_text'], item['text'],
+        item['changes'], item['numeric_changes'], f"exercise[{item['number']}]",
+        [], item['historical_entities'])
+flow, flow_errors = edition.prose_flow_contract(
+    data['lesson']['prose'], data['lesson']['section_breaks'])
+errors += flow_errors
+data['technical'] = {'status': 'TEXT_TECHNICAL_PASS' if not errors else 'FAIL',
+    'errors': errors, 'canonicalParagraphs': len(flow.get('paragraphs', [])),
+    'boundaries': flow.get('boundaries', []), 'fullMathOrFigureApproval': False}
+print(json.dumps(data, ensure_ascii=False))
+`;
+const result = JSON.parse(execFileSync(
+  '.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c', program],
+  { cwd: root, input: JSON.stringify({ lesson, exercises }), maxBuffer: 8 * 1024 * 1024 },
+));
+for (const [name, data] of [
+  ['lesson.template.json', result.lesson],
+  ['exercises.template.json', result.exercises],
+  ['technical.record', result.technical],
+]) {
+  fs.writeFileSync(path.join(output, name), JSON.stringify(data, null, 2) + '\n', { flag: 'wx' });
+}
+fs.copyFileSync(path.join(source, 'figures.template.json'),
+  path.join(output, 'figures.template.json'), fs.constants.COPYFILE_EXCL);
+console.log(JSON.stringify(result.technical));
+assert.equal(result.technical.status, 'TEXT_TECHNICAL_PASS');

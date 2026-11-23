@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures';
+const failed = '.tmp/ld-s10y-lesson/resume182-7-N32/figures-render-failure-FIRST';
+assert.ok(!fs.existsSync(failed));
+fs.mkdirSync(failed);
+for (const number of [74, 75, 76]) {
+  for (const extension of ['spec.json', 'svg', 'render.json']) {
+    const name = `fig-${number}.${extension}`;
+    fs.copyFileSync(path.join(target, name), path.join(failed, name), fs.constants.COPYFILE_EXCL);
+  }
+  const filename = `${target}/fig-${number}.spec.json`;
+  const spec = JSON.parse(fs.readFileSync(filename));
+  const axis = spec.objects.find(object => object.id === `f${number}-y-axis`);
+  axis.ticks[0].labelPlacement = number === 74
+    ? { position: 'W', gap: 12, offset: [0, -24] }
+    : number === 75
+      ? { position: 'W', gap: 40 }
+      : { position: 'W', gap: 12, offset: [0, 24] };
+  if (number === 74) {
+    spec.objects.find(object => object.id === 'f74-curve-3-label').at = [3, 3.1];
+  }
+  fs.writeFileSync(filename, JSON.stringify(spec, null, 2) + '\n');
+  execFileSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', [
+    '.agents/skills/ld-s10y-image/scripts/validate_spec.py', filename, '--stage', 'draft',
+  ], { cwd: root });
+  const render = execFileSync('node', [
+    '.agents/skills/ld-s10y-image/scripts/render_spec.mjs', '--spec', filename,
+    '--svg', `${target}/fig-${number}.svg`, '--report', `${target}/fig-${number}.render.json`,
+  ], { cwd: root, maxBuffer: 8 * 1024 * 1024 });
+  console.log(render.toString());
+}

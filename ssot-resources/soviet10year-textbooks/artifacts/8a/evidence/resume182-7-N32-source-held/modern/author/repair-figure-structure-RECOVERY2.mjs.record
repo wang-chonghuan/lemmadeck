@@ -1,0 +1,102 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-N32';
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures';
+const failed = `${base}/figures-source-review-failure-FIRST`;
+assert.ok(!fs.existsSync(failed));
+fs.mkdirSync(failed);
+for (const number of [74, 75, 76]) {
+  const prefix = `f${number}`;
+  for (const extension of ['spec.json', 'svg', 'render.json']) {
+    const name = `fig-${number}.${extension}`;
+    fs.copyFileSync(`${target}/${name}`, `${failed}/${name}`, fs.constants.COPYFILE_EXCL);
+  }
+  const filename = `${target}/fig-${number}.spec.json`;
+  const spec = JSON.parse(fs.readFileSync(filename));
+  spec.source.authoritativeText[0].text = spec.source.authoritativeText[0].text.replace(
+    '函数 $y=a^x$ 具有什么样的形状',
+    '函数 $y=a^x$ 的图象具有什么样的形状',
+  );
+  const get = id => spec.objects.find(object => object.id === id);
+  const grid = get(`${prefix}-grid`);
+  const border = get(`${prefix}-border`);
+  if (number === 74) {
+    grid.bounds[0] = -1;
+    border.points[0][0] = -1.4;
+    border.points[3][0] = -1.4;
+    get(`${prefix}-x-axis`).from[0] = -1.4;
+    spec.assertions.find(item => item.id === 'f74-grid-dimensions').columns = 10;
+    spec.assertions.find(item => item.id === 'f74-perpendicular-axes').a[0] = -1.4;
+    spec.source.inventory.find(item => item.id === 'f74-source-grid').description =
+      'The source supplies 10 complete half-unit columns from x=-1 through x=4, 19 half-unit rows from y=-0.5 through y=9, and a cropped partial strip to the left. The modern left border is regularized to x=-1.4; it is not an exact printed coordinate or an additional complete source column. All horizontal ruling continues through that partial strip. Original tick values, bases and curve order are retained.';
+    for (const [index, baseValue] of [4.5, 3, 1.3].entries()) {
+      const curve = `${prefix}-curve-${index + 1}`;
+      const points = spec.objects.filter(object =>
+        object.type === 'point' && object.id.startsWith(`${curve}-sample-`));
+      const endpoint = points[0];
+      assert.equal(endpoint.at[0], -1.5);
+      const removed = new Set(points.slice(1).filter(point => point.at[0] < -1.4).map(point => point.id));
+      endpoint.at = [-1.4, baseValue ** -1.4];
+      const coordinate = spec.assertions.find(item => item.id === `${endpoint.id}-coordinate`);
+      coordinate.dx = -1.4;
+      coordinate.dy = endpoint.at[1] - 1;
+      const removedObjects = new Set(removed);
+      for (const object of spec.objects) {
+        if (object.type !== 'segment' || !object.id.startsWith(`${curve}-stroke-`)) continue;
+        if (removed.has(object.to)) removedObjects.add(object.id);
+        else if (removed.has(object.from)) object.from = endpoint.id;
+      }
+      const removedAssertions = new Set([...removed].map(id => `${id}-coordinate`));
+      spec.objects = spec.objects.filter(object => !removedObjects.has(object.id));
+      spec.assertions = spec.assertions.filter(item => !removedAssertions.has(item.id));
+      const inventory = spec.source.inventory.find(item => item.id === `${curve}-source`);
+      inventory.objects = inventory.objects.filter(id => !removedObjects.has(id));
+      inventory.assertions = inventory.assertions.filter(id => !removedAssertions.has(id));
+      inventory.description =
+        `The printed label fixes the ideal exponential with base ${baseValue}. Visible strokes and its equation label map to the source curve; hidden sampled vertices are construction facts. The complete lattice ends at x=-1 on the left. The partial edge is regularized to modern x=-1.4, not a printed exact endpoint; only this clipped edge changes, with y=base^x retained.`;
+    }
+  }
+  const [left, top, right, bottom] = [
+    border.points[0][0], border.points[2][1], border.points[1][0], border.points[0][1],
+  ];
+  const gridInventory = spec.source.inventory.find(item => item.id === `${prefix}-source-grid`);
+  for (let y = bottom + 0.5; y < top; y += 0.5) {
+    if (y === 0) continue;
+    for (const [side, from, to] of [
+      ['left', [left, y], [grid.bounds[0], y]],
+      ['right', [grid.bounds[2], y], [right, y]],
+    ]) {
+      if (from[0] === to[0]) continue;
+      const id = `${prefix}-partial-${side}-${String(y).replace('.', '-')}`;
+      spec.objects.push({ id, type: 'segment', from, to, stroke: 'grid', strokeWidth: 1 });
+      gridInventory.objects.push(id);
+    }
+  }
+  gridInventory.description += ' Horizontal lattice strokes continue to the disclosed outer borders across partial strips; these continuations add no full source column.';
+  const axesInventory = spec.source.inventory.find(item => item.id === `${prefix}-source-axes`);
+  for (const [axis, from, to] of [
+    ['x', [right - 0.18, 0], [right, 0]],
+    ['y', [0, top - 0.18], [0, top]],
+  ]) {
+    const id = `${prefix}-${axis}-positive-arrow`;
+    const assertion = `${id}-connects`;
+    spec.objects.push({ id, type: 'arrow', from, to, stroke: 'ink', strokeWidth: 2 });
+    spec.assertions.push({ id: assertion, type: 'connects', arrow: id, from, to });
+    axesInventory.objects.push(id);
+    axesInventory.assertions.push(assertion);
+  }
+  axesInventory.description += ' Deterministic positive-axis arrowheads retain the original x/y direction indicators at the frame ends.';
+  fs.writeFileSync(filename, `${JSON.stringify(spec, null, 2)}\n`);
+  console.log(execFileSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', [
+    '.agents/skills/ld-s10y-image/scripts/validate_spec.py', filename, '--stage', 'draft',
+  ], { cwd: root, maxBuffer: 8 * 1024 * 1024 }).toString().trim());
+  console.log(execFileSync('node', [
+    '.agents/skills/ld-s10y-image/scripts/render_spec.mjs', '--spec', filename,
+    '--svg', `${target}/fig-${number}.svg`, '--report', `${target}/fig-${number}.render.json`,
+  ], { cwd: root, maxBuffer: 8 * 1024 * 1024 }).toString());
+}

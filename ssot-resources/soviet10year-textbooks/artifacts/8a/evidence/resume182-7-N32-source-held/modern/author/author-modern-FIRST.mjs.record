@@ -1,0 +1,106 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const prepared = '.tmp/ld-s10y-lesson/resume182-7-N32/modern-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c5-s1-n32';
+const output = '.tmp/ld-s10y-lesson/resume182-7-N32/modern-author-FIRST';
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const read = name => JSON.parse(fs.readFileSync(path.join(prepared, name)));
+const lesson = read('lesson.template.json');
+const exercises = read('exercises.template.json');
+const figures = read('figures.template.json');
+
+const prose = new Map([
+  [0, '许多自然过程，例如放射性物质的衰变，细菌个数的增长，气压随海面以上高度的变化而变化以及其他过程，都可以用 $y=a^x$ 这种形式的公式描述，这里 $a$ 是大于零的某一个数。'],
+  [1, '利用 $y=a^x$（$a$ 是某一个正数）这种形式的公式给出的函数，叫做指数函数。'],
+  [3, '在前一小节里，我们讨论了在实数集合上给出的指数函数 $y=2^x$ 的性质。\n在实数集合上给出的任何一个函数 $y=a^x$（$a$ 是大于1的某一个数）都具有类似的性质*。'],
+  [4, '图74中作出了 $y=a^x$ 这种形式的函数在几个大于1的 $a$ 值下（$y=3^x$，$y=1.3^x$，$y=4.5^x$）的图象。\n其中每一个函数的图象和函数 $y=2^x$ 的图象都是类似的。'],
+  [6, '我们来简单说明当 $a>1$ 时函数 $y=a^x$（$x\\in R$）的性质。'],
+  [7, '1. 函数的值域是正数集合，也就是函数只取正值，并且任何一个正数都是函数的值。\n在几何上，这表示当 $a>1$ 时函数 $y=a^x$ 的图象位于 $x$ 轴的上方，而且任何一条平行于 $x$ 轴并且在 $x$ 轴上方的直线，都和这个图象相交。'],
+  [8, '2. 这种函数是增函数。'],
+  [9, '对于图象上的两个点来说，横坐标较大的点比横坐标较小的点的位置更高。'],
+  [10, '我们将不作证明而承认性质1和性质2。'],
+  [11, '3. 如果 $x=0$，那么函数的值等于1；\n如果 $x>0$，那么 $a^x>1$；\n如果 $x<0$，那么 $0<a^x<1$（这一点可由性质1和2得出）。'],
+  [12, '函数 $y=a^x$ 的图象，当 $a>1$ 时经过坐标为 $(0,1)$ 的点；\n当 $x>0$ 时，它位于直线 $y=1$ 的上方；\n当 $x<0$ 时，它位于这条直线的下方。'],
+  [13, '现在我们来说明，当 $0<a<1$ 时，函数 $y=a^x$ 具有什么样的性质。'],
+  [14, '为此，我们首先证明函数 $y=(\\frac{1}{2})^x$ 的图象和函数 $y=2^x$ 的图象关于 $y$ 轴是对称的。'],
+  [15, '因为 $(\\frac{1}{2})^x=2^{-x}$，所以方程 $y=(\\frac{1}{2})^x$ 可以写成 $y=2^{-x}$。\n不难理解，如果点 $A(k,m)$ 属于函数 $y=2^x$ 的图象，那么关于 $y$ 轴和它对称的点 $B(-k,m)$ 属于函数 $y=2^{-x}$ 的图象。\n实际上，如果等式 $m=2^k$ 是真等式，那么等式 $m=2^{-(-k)}$ 也是真等式。'],
+  [16, '这就是说，函数 $y=2^x$ 的图象上每一点都和函数 $y=2^{-x}$ 的图象上它的关于 $y$ 轴的对称点相对应。'],
+  [17, '反过来也成立：函数 $y=2^{-x}$ 的图象上任何一点都是函数 $y=2^x$ 的图象上关于 $y$ 轴的某一对称点。'],
+  [18, '于是，函数 $y=2^{-x}$ 的图象和函数 $y=2^x$ 的图象关于 $y$ 轴是对称的（图75）。'],
+  [19, '总之，函数 $y=a^x$ 和 $y=(\\frac{1}{a})^x$（$a$ 是正数，$x\\in R$）的图象关于 $y$ 轴是对称的。'],
+  [20, '由此可以看出，当 $0<a<1$ 时，函数 $y=a^x$ 具有什么样的形状。\n图象位于横坐标轴的上方，而且任何一条平行于 $x$ 轴并且在 $x$ 轴上方的直线，都和这个图象相交。\n对于图象上的两个点来说，横坐标较大的点比横坐标较小的点的位置更低。\n\n图象经过坐标为 $(0,1)$ 的点；\n当 $x>0$ 时，图象位于直线 $y=1$ 的下方；\n当 $x<0$ 时，图象位于这条直线的上方。'],
+  [25, '图76中作出了函数 $y=a^x$ 在几个 $a$ 值（$0<a<1$）下的图象。'],
+  [26, '我们来简单说明，当 $0<a<1$ 时，函数 $y=a^x$（$x\\in R$）的性质。'],
+  [27, '1. 函数的值域是正数集合，也就是说，函数只取正值，并且任何一个正数都是函数的值。'],
+  [28, '2. 这种函数是减函数。'],
+  [29, '3. 如果 $x=0$，那么函数的值等于1；\n如果 $x>0$，那么 $0<a^x<1$；\n如果 $x<0$，那么 $a^x>1$。'],
+  [30, '现在我们讨论 $a=1$ 的情形。\n当 $a=1$ 时，函数值的集合由一个元素构成，这个元素就是1。\n当 $a=1$ 时，函数 $y=a^x$ 的图象是经过坐标为 $(0,1)$ 的点并且平行于 $x$ 轴的直线。'],
+  [31, '我们讨论了当 $a>1$、$0<a<1$ 和 $a=1$ 时函数 $y=a^x$ 的某些性质。'],
+  [32, '我们发现任何指数函数还具有一个重要的性质。'],
+  [33, '如果 $f(x)=a^x$（$a>0$），那么对于自变量的任何实数值 $x_1$ 和 $x_2$，下列等式成立：'],
+  [34, '$f(x_1)\\cdot f(x_2)=f(x_1+x_2)$。'],
+  [35, '实际上，$f(x_1)=a^{x_1}$，$f(x_2)=a^{x_2}$。\n因此'],
+  [36, '$f(x_1)\\cdot f(x_2)=a^{x_1}\\cdot a^{x_2}=a^{x_1+x_2}=f(x_1+x_2)$。'],
+]);
+assert.equal(prose.size, lesson.prose.filter(block => block.kind === 'p').length);
+for (const [index, text] of prose) {
+  assert.equal(lesson.prose[index].kind, 'p');
+  lesson.prose[index].text = text;
+  lesson.prose[index].changes = ['layout'];
+}
+for (const item of lesson.prose.filter(block => block.kind === 'cap')) {
+  item.text = item.text.replace('图', '图 ');
+  item.changes = ['layout'];
+}
+
+// The pipeline's math scanner protects decimal points and nested TeX.
+const normalizeProgram = `
+import json, sys
+sys.path.insert(0, '.claude/skills/ld-s10y-lesson/tools')
+import edition
+data = json.load(sys.stdin)
+for item in data['exercises']['exercises']:
+    text = item['text']
+    spans = list(edition.MATH.finditer(text))
+    for span in reversed(spans):
+        inner = span.group(0)
+        if inner.endswith('.$'):
+            text = text[:span.start()] + inner[:-2] + '$。' + text[span.end():]
+    spans = list(edition.MATH.finditer(text))
+    protected = set()
+    for span in spans:
+        protected.update(range(span.start(), span.end()))
+    text = ''.join('。' if c == '.' and i not in protected
+        and not (i > 0 and i + 1 < len(text) and text[i-1].isdigit() and text[i+1].isdigit())
+        else c for i, c in enumerate(text))
+    item['text'] = text
+    item['changes'] = ['layout'] if text != item['source_text'] else []
+edition.normalize_lesson_layout(data['lesson'])
+edition.normalize_exercise_layout(data['exercises'])
+print(json.dumps(data, ensure_ascii=False))
+`;
+const normalized = JSON.parse(execFileSync(
+  '.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  ['-c', normalizeProgram],
+  { cwd: root, input: JSON.stringify({ lesson, exercises }), maxBuffer: 8 * 1024 * 1024 },
+));
+for (const [name, data] of [
+  ['lesson.template.json', normalized.lesson],
+  ['exercises.template.json', normalized.exercises],
+  ['figures.template.json', figures],
+]) {
+  fs.writeFileSync(path.join(output, name), JSON.stringify(data, null, 2) + '\n', { flag: 'wx' });
+}
+const flow = execFileSync('node', [
+  '.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs',
+  path.join(output, 'lesson.template.json'),
+], { cwd: root, maxBuffer: 8 * 1024 * 1024 });
+fs.writeFileSync(path.join(output, 'prose-flow-FIRST.record'), flow, { flag: 'wx' });
+console.log(JSON.stringify({ output, prose: lesson.prose.length, exercises: exercises.count,
+  figures: figures.figures.length, sourceHolds: ['640(b)', '646'],
+  status: 'MODERN_TEXT_DRAFT_FIGURES_AND_REVIEW_PENDING' }));

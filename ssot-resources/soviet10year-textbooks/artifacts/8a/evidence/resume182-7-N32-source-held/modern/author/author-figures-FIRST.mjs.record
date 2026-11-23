@@ -1,0 +1,171 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const target = `${book}/editions/modern-us-neutral/figures`;
+const scratch = '.tmp/ld-s10y-lesson/resume182-7-N32/figures-author-FIRST';
+assert.ok(!fs.existsSync(scratch));
+fs.mkdirSync(scratch);
+fs.mkdirSync(target, { recursive: true });
+const lesson = JSON.parse(fs.readFileSync('.tmp/ld-s10y-lesson/resume182-7-N32/modern-author-RECOVERY1/lesson.template.json'));
+const exercises = JSON.parse(fs.readFileSync('.tmp/ld-s10y-lesson/resume182-7-N32/modern-author-RECOVERY1/exercises.template.json'));
+const context = [
+  ...lesson.prose.filter(block => block.kind === 'p').map(block => block.text),
+  ...exercises.exercises.filter(item => ['628', '630', '633'].includes(item.number)).map(item => item.text),
+].join('\n\n');
+const definitions = [
+  {
+    number: 74, grid: [-1.5, 9, 4, -0.5], frame: [-1.5, 9, 4, -0.5],
+    xLabels: [-1, 1, 2, 3], columns: 11, rows: 19,
+    canvas: [-1.9, 9.5, 4.4, -0.9],
+    bases: [4.5, 3, 1.3],
+    labels: [
+      { text: 'y = 4.5ˣ', at: [0.64, 7.55] },
+      { text: 'y = 3ˣ', at: [2.45, 7.35] },
+      { text: 'y = 1.3ˣ', at: [3.20, 2.70] },
+    ],
+    inventory: 'The source has 11 complete half-unit columns from x=-1.5 through x=4 and 19 half-unit rows from y=-0.5 through y=9. x tick labels are -1,1,2,3, with O at zero; y tick labels are 1 through 8. Three solid curves are labelled y=4.5^x, y=3^x, y=1.3^x and meet at (0,1). The increasing 4.5 curve lies above the 3 curve for x>0, and both lie above the 1.3 curve; order reverses for x<0.',
+    regularization: 'Uniform lattice and clean semantic strokes replace scan noise. Curve labels are horizontal rather than slanted. The plotted domains end at the same complete source-frame bounds or the top-frame intersection; no source-domain extension.',
+    samples: [
+      { base: 3, x: [-1, 0, 0.5, 1, 1.5], purpose: 'Exercise 628(a) reads these abscissae from the labelled y=3^x curve.' },
+      { base: 3, y: [1, 3, 6, 7.1, 0.5, 5], purpose: 'Exercise 628(b,c) reads these ordinates/crossing thresholds. Formula evaluation checks the ideal labelled curve; rendered figure remains a graph-reading task.' },
+    ],
+  },
+  {
+    number: 75, grid: [-2.5, 9, 2.5, -0.5], frame: [-2.75, 9, 2.75, -0.5],
+    xLabels: [-2, -1, 1, 2], columns: 10, rows: 19,
+    canvas: [-3.10, 9.5, 3.10, -0.9],
+    bases: [0.5, 2],
+    labels: [
+      { text: 'y = (1/2)ˣ', at: [-1.70, 5.75] },
+      { text: 'y = 2ˣ', at: [1.95, 5.75] },
+    ],
+    inventory: 'One shared half-unit grid has 10 complete columns between x=-2.5 and x=2.5 and 19 rows between y=-0.5 and y=9. The outer vertical borders are beyond the last complete lattice lines, leaving partial edge cells. x labels are -2,-1,1,2; y labels are 1 through 8; axes are named x,y and their crossing O. Two solid curves y=(1/2)^x and y=2^x intersect at (0,1), with the decreasing and increasing branches reflected about the y axis.',
+    regularization: 'The partial side strips are symmetrically regularized to 0.25 units; this frame coordinate is a modern margin choice, not a printed endpoint value. Full source lattice lines remain at half-unit positions. Analytic curves continue only to that chosen frame; the margin is not an additional question datum.',
+    samples: [
+      { base: 0.5, x: [-2, 1.5, 0, 1], purpose: 'Exercise 633(a) reads these abscissae from the labelled decreasing curve.' },
+      { base: 0.5, y: [4, 3, 0.25, 0.8, 1, 2], purpose: 'Exercise 633(b,c) asks these ordinate readings and solution thresholds.' },
+    ],
+  },
+  {
+    number: 76, grid: [-3, 9, 2, -0.5], frame: [-3.4, 9, 2, -0.5],
+    xLabels: [-3, -2, -1, 1], columns: 10, rows: 19,
+    canvas: [-3.75, 9.5, 2.4, -0.9],
+    bases: [1 / 3, 0.25, 0.8],
+    labels: [
+      { text: 'y = (1/3)ˣ', at: [-2.65, 6.85] },
+      { text: 'y = 0.25ˣ', at: [-0.90, 7.60] },
+      { text: 'y = 0.8ˣ', at: [-2.12, 2.18] },
+    ],
+    inventory: 'One shared half-unit grid has 10 complete columns between x=-3 and x=2 and 19 rows from y=-0.5 to y=9. A partial left strip lies before the first complete vertical lattice line; the right border is on the x=2 line. x labels are -3,-2,-1,1; y labels are 1 through 8; axes are x,y and O. Three solid curves y=(1/3)^x, y=0.25^x and y=0.8^x meet at (0,1). For x<0 the smaller positive base has the higher ordinate; for x>0 it has the lower ordinate.',
+    regularization: 'The partial left border strip is regularized to 0.4 units, a modern frame choice rather than an asserted printed abscissa. All complete half-unit grid lines and named bases are retained. Three ideal labelled exponentials replace rough printed strokes without adding markers or answers.',
+    samples: [],
+  },
+];
+
+const receipts = [];
+for (const definition of definitions) {
+  const id = `fig-${definition.number}`;
+  const prefix = `f${definition.number}`;
+  const specPath = `${target}/${id}.spec.json`;
+  assert.ok(!fs.existsSync(specPath), `Preserve existing ${specPath}`);
+  const image = `${book}/evidence/resume182-7-N32-source-held/current/figures/${id}.png`;
+  const hash = crypto.createHash('sha256').update(fs.readFileSync(image)).digest('hex');
+  const objects = [];
+  const assertions = [];
+  const inventory = [];
+  const [gx0, gy1, gx1, gy0] = definition.grid;
+  const [fx0, fy1, fx1, fy0] = definition.frame;
+  const origin = `${prefix}-common-point`;
+  objects.push({ id: `${prefix}-grid`, type: 'grid', bounds: definition.grid,
+    xStep: 0.5, yStep: 0.5, xOffset: 0, yOffset: 0, stroke: 'grid', strokeWidth: 1 });
+  objects.push({ id: `${prefix}-border`, type: 'polygon', points: [[fx0, fy0], [fx1, fy0], [fx1, fy1], [fx0, fy1]],
+    stroke: 'muted', strokeWidth: 1.5, fill: 'paper', fillOpacity: 0 });
+  objects.push({ id: origin, type: 'point', at: [0, 1], visible: false });
+  objects.push({ id: `${prefix}-x-axis`, type: 'axis', from: [fx0, 0], to: [fx1, 0],
+    stroke: 'ink', strokeWidth: 2, fontSize: 22, tickSize: 0.04,
+    ticks: definition.xLabels.map(x => ({ at: [x, 0], label: String(x), labelPlacement: { position: 'S', gap: 22 } })) });
+  objects.push({ id: `${prefix}-y-axis`, type: 'axis', from: [0, fy0], to: [0, fy1],
+    stroke: 'ink', strokeWidth: 2, fontSize: 22, tickSize: 0.04,
+    ticks: [1, 2, 3, 4, 5, 6, 7, 8].map(y => ({ at: [0, y], label: String(y), labelPlacement: { position: 'W', gap: 12 } })) });
+  for (const item of [
+    { suffix: 'origin', text: 'O', at: [-0.16, -0.24] },
+    { suffix: 'x-name', text: 'x', at: [fx1 - 0.14, -0.23] },
+    { suffix: 'y-name', text: 'y', at: [-0.16, 8.70] },
+  ]) {
+    objects.push({ id: `${prefix}-${item.suffix}`, type: 'text', at: item.at,
+      text: item.text, fontSize: 24, labelPlacement: { position: 'CENTER', gap: 0 } });
+  }
+  assertions.push({ id: `${prefix}-grid-dimensions`, type: 'gridDimensions',
+    grid: `${prefix}-grid`, columns: definition.columns, rows: definition.rows });
+  assertions.push({ id: `${prefix}-perpendicular-axes`, type: 'perpendicular',
+    a: [fx0, 0], b: [fx1, 0], c: [0, fy0], d: [0, fy1] });
+  inventory.push({ id: `${prefix}-source-grid`, description: definition.inventory,
+    objects: [`${prefix}-grid`], assertions: [`${prefix}-grid-dimensions`],
+    requires: ['gridDimensions'] });
+  inventory.push({ id: `${prefix}-source-axes`, description: 'The source tick numerals, origin name and axis letters are retained. Extra explicit tick stubs are clean modern typesetting, not new coordinate values.',
+    objects: [`${prefix}-x-axis`, `${prefix}-y-axis`, `${prefix}-origin`, `${prefix}-x-name`, `${prefix}-y-name`],
+    assertions: [`${prefix}-perpendicular-axes`] });
+  for (const [curveIndex, base] of definition.bases.entries()) {
+    const curve = `${prefix}-curve-${curveIndex + 1}`;
+    const left = base < 1 ? Math.max(fx0, Math.log(fy1) / Math.log(base)) : fx0;
+    const right = base > 1 ? Math.min(fx1, Math.log(fy1) / Math.log(base)) : fx1;
+    const xs = new Set([left, right, 0]);
+    for (let index = 1; index < 180; index += 1) xs.add(left + (right - left) * index / 180);
+    for (let x = Math.ceil(left * 2) / 2; x <= right; x += 0.5) xs.add(x);
+    const curveObjects = [origin];
+    const curveAssertions = [];
+    let previous;
+    for (const [index, x] of [...xs].sort((a, b) => a - b).entries()) {
+      const point = `${curve}-sample-${String(index).padStart(3, '0')}`;
+      const y = base ** x;
+      objects.push({ id: point, type: 'point', at: [x, y], visible: false });
+      curveObjects.push(point);
+      const assertion = `${point}-coordinate`;
+      assertions.push({ id: assertion, type: 'displacement', from: origin, to: point, dx: x, dy: y - 1, tolerance: 1e-9 });
+      curveAssertions.push(assertion);
+      if (previous) {
+        const segment = `${curve}-stroke-${String(index).padStart(3, '0')}`;
+        objects.push({ id: segment, type: 'segment', from: previous, to: point,
+          stroke: curveIndex === 0 ? 'ink' : curveIndex === 1 ? 'accent' : 'muted',
+          strokeWidth: 3.5 });
+        curveObjects.push(segment);
+      }
+      previous = point;
+    }
+    objects.push({ id: `${curve}-label`, type: 'text', ...definition.labels[curveIndex],
+      fontSize: 24, labelPlacement: { position: 'CENTER', gap: 0 } });
+    curveObjects.push(`${curve}-label`);
+    inventory.push({ id: `${curve}-source`, description: `The printed label fixes the ideal exponential with base ${base}. Every sampled vertex is computed as y=base^x; the shared (0,1) point is hidden, so no answer-bearing marker is added. Source-to-modern limitations: ${definition.regularization}`,
+      objects: curveObjects, assertions: curveAssertions, requires: ['pointRelationships'] });
+  }
+  const querySamples = definition.samples.map(item => ({
+    ...item,
+    ordinates: item.x?.map(x => ({ x, y: item.base ** x })),
+    abscissae: item.y?.map(y => ({ y, x: Math.log(y) / Math.log(item.base) })),
+    provenance: 'Derived from the function explicitly named in the source, not a claim of exact handwritten curve digitization or printed read precision.',
+  }));
+  const spec = { schema: 'ld-s10y-image/figure-spec@2', id, mode: 'deterministic',
+    description: 'Shared-coordinate exponential graphs retaining the source lattice, bases, axis labels and relative positions.',
+    source: { image: { path: image, sha256: hash }, authoritativeText: context, inventory,
+      readFromGraph: querySamples },
+    canvas: { width: 640, height: Math.round(640 * (definition.canvas[1] - definition.canvas[3]) / (definition.canvas[2] - definition.canvas[0])),
+      boundingBox: definition.canvas, keepAspectRatio: true, background: 'paper' },
+    display: { purpose: 'instructional', layout: 'scroll', widths: [640], minTextPx: 16 },
+    layout: { minLabelGap: 4, avoidRegions: [] }, objects, assertions };
+  fs.writeFileSync(specPath, JSON.stringify(spec, null, 2) + '\n', { flag: 'wx' });
+  receipts.push({ id, spec: specPath, source: image, sourceHash: hash,
+    objects: objects.length, assertions: assertions.length, querySamples, approval: false });
+}
+fs.writeFileSync(`${scratch}/inventory-FIRST.record`, JSON.stringify({
+  scope: ['fig-74', 'fig-75', 'fig-76'], imageLoads: 4,
+  sourceImagesSeen: ['fig-74', 'fig-75', 'fig-76', 'fig-77'],
+  parentImageLoadsCumulative: 12, receipts,
+  fig77: { status: 'SOURCE_READING_HOLD', reason: 'The first source observation does not certify precise unlabeled bases; no curve is guessed or redrawn for this figure.' },
+  modernApproval: false,
+}, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify(receipts.map(({ id, spec, objects, assertions }) => ({ id, spec, objects, assertions }))));
