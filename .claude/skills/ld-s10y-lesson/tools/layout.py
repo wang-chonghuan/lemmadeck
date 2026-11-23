@@ -229,7 +229,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             region[components[bounds] == component_id] = False
     counts = band.sum(axis=1)
     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
-    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h + 1
 
 
 def _fraction_across_split(
@@ -273,7 +273,7 @@ def _fraction_across_split(
         if not any(
             rule_columns.start - 0.15 * glyph_h <= centre_x
             <= rule_columns.stop + 0.15 * glyph_h
-            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= glyph_h
+            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= 0.5 * glyph_h
             for rule_rows, rule_columns in supported
         ):
             return False
@@ -621,7 +621,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 min(prev_b - prev_a + 1, b - a + 1) >= 0.6 * glyph_h
                 and min(row_widths) >= 2 * glyph_h
                 and not any(
-                    prev_a <= c <= d <= b
+                    prev_b < c <= d < a
                     and d - c + 1 <= 0.25 * glyph_h
                     and np.ptp(np.flatnonzero(ink[c:d + 1].any(axis=0))) >= 0.7 * glyph_h
                     for c, d in raw
