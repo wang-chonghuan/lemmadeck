@@ -1,0 +1,122 @@
+"""Author-only analytic checks, not an independent visual review."""
+
+import hashlib
+import json
+import math
+import re
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+
+ROOT = Path("/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182")
+OUT = ROOT / ".tmp/ld-s10y-lesson/resume182-7-N36/figure-author-FIRST"
+assert Path.cwd() == ROOT
+
+
+def load(name):
+    return json.loads((OUT / name).read_text(encoding="utf-8"))
+
+
+def sha(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+spec = load("spec.json")
+construction = load("construction.author-FIRST.json")
+report = load("fig-83.render.json")
+first = load("spec.author-FIRST.json")
+frozen = load("source.inventory.frozen.json")
+objects = {obj["id"]: obj for obj in spec["objects"]}
+checks = []
+
+
+def check(name, condition):
+    assert condition, name
+    checks.append({"name": name, "status": "pass"})
+
+
+check("frozen inventory bytes unchanged", sha(OUT / "source.inventory.frozen.json") == construction["sourceInventoryFreeze"]["sha256"])
+check("scratch source bytes unchanged", sha(Path(spec["source"]["image"]["path"])) == spec["source"]["image"]["sha256"])
+check("original Chinese lesson bytes unchanged", sha(Path(frozen["context"]["path"])) == frozen["context"]["sha256"])
+lesson = json.loads(Path(frozen["context"]["path"]).read_text(encoding="utf-8"))
+source_text = [item["text"] for item in lesson["prose"] if item["kind"] == "p" and any(re.fullmatch(r"p0231#[4-7]", ref) for ref in item["source_refs"])]
+check("four complete source paragraphs unchanged", [item["text"] for item in spec["source"]["authoritativeText"]] == source_text)
+check("source inventory groups and all mappings unchanged", all(
+    now["id"] == prior["id"] and now["objects"] == prior["objects"]
+    and now["assertions"] == prior["assertions"] and now.get("requires") == prior.get("requires")
+    for now, prior in zip(spec["source"]["inventory"], frozen["inventory"], strict=True)
+))
+check("only declared author objects moved", {
+    obj["id"] for obj in spec["objects"] if obj != next(old for old in first["objects"] if old["id"] == obj["id"])
+} == {"src-x-axis-label", "modern-base-condition"})
+
+a = construction["base"]
+b = construction["positiveB"]
+root_x = math.log(b) / math.log(a)
+check("modern schematic constants satisfy intended signs", a > 1 and b > 1 and construction["negativeB"] < 0)
+check("positive root is analytic, not read from scan", abs(root_x - objects["src-positive-foot"]["at"][0]) < 1e-12)
+check("positive crossing solves a^x=b", abs(a ** root_x - b) < 1e-12 and objects["src-positive-crossing"]["at"] == [construction["rootX"], b])
+check("foot lies on x axis and vertically below crossing", objects["src-positive-foot"]["at"] == [construction["rootX"], 0])
+check("curve includes (0,1) and the positive crossing as exact knots", 0 in construction["knots"] and construction["rootX"] in construction["knots"])
+
+box = spec["canvas"]["boundingBox"]
+path_tokens = re.findall(r"[MC]|[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?", objects["src-exponential"]["d"])
+check("analytic curve uses only M/C geometry, no labels or ticks", re.sub(r"[MC]|[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?|[\s,]", "", objects["src-exponential"]["d"]) == "")
+check("one initial move then cubic segments", path_tokens[0] == "M" and len(path_tokens) == 3 + 7 * len(construction["bezierUserSpace"]))
+max_error = 0.0
+for index, points in enumerate(construction["bezierUserSpace"]):
+    x0, y0 = points[0]
+    x1, y1 = points[3]
+    h = x1 - x0
+    expected = [
+        [x0, a ** x0],
+        [x0 + h / 3, a ** x0 * (1 + h * math.log(a) / 3)],
+        [x1 - h / 3, a ** x1 * (1 - h * math.log(a) / 3)],
+        [x1, a ** x1],
+    ]
+    check(f"segment {index} analytic controls", all(abs(value - wanted) < 1e-12 for point, correct in zip(points, expected) for value, wanted in zip(point, correct)))
+    check(f"segment {index} positive and strictly increasing", all(point[1] > 0 for point in points) and all(points[j + 1][0] > points[j][0] and points[j + 1][1] > points[j][1] for j in range(3)))
+    check(f"segment {index} convex", all(points[j + 2][1] - 2 * points[j + 1][1] + points[j][1] > 0 for j in range(2)))
+    chunk = path_tokens[3 + index * 7: 3 + (index + 1) * 7]
+    check(f"segment {index} serialized geometry matches controls", chunk[0] == "C" and all(
+        abs(actual - desired) < 1e-9
+        for actual, desired in zip(
+            map(float, chunk[1:]),
+            [coordinate for x, y in points[1:] for coordinate in (x - box[0], box[1] - y)],
+        )
+    ))
+    for sample in range(21):
+        t = sample / 20
+        weights = [(1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t ** 2, t ** 3]
+        x = sum(weight * point[0] for weight, point in zip(weights, points))
+        y = sum(weight * point[1] for weight, point in zip(weights, points))
+        max_error = max(max_error, abs(y - a ** x))
+check("curve approximation bounded below 0.001 px at 640", max_error * 64 < 0.001)
+check("positive level crosses strictly increasing curve once", a ** construction["knots"][0] < b < a ** construction["knots"][-1])
+check("zero and negative levels cannot cross positive Bezier curve", all(point[1] > 0 for segment in construction["bezierUserSpace"] for point in segment))
+check("solid curve and cases; dashed vertical projection", all(objects[key].get("dash", 0) == 0 for key in ("src-exponential", "src-positive-level", "src-zero-level", "src-negative-level")) and objects["src-positive-guide"]["dash"] == 2)
+
+svg = ET.parse(OUT / "fig-83.svg").getroot()
+ns = {"s": "http://www.w3.org/2000/svg"}
+raw = svg.find(".//s:g[@id='ld-fig-83-raw-path-layer']/s:path", ns)
+check("renderer SVG contains the exact checked curve", raw is not None and raw.attrib["d"] == objects["src-exponential"]["d"])
+check("all eleven English/math labels rendered exactly", sorted(text.text for text in svg.findall(".//s:text", ns)) == sorted(obj["text"] for obj in spec["objects"] if obj["type"] == "text"))
+check("native SVG is 640 by 960", svg.attrib["viewBox"] == "0 0 640 960")
+check("renderer hash binding and collision gate", report["status"] == "pass" and not report["collisions"] and report["spec"]["sha256"] == sha(OUT / "spec.json") and report["output"]["svg"]["sha256"] == sha(OUT / "fig-83.svg"))
+check("640px fixed instructional media; 390px viewport scrolls rather than shrinks", spec["display"] == {"layout": "scroll", "purpose": "instructional", "minTextPx": 16, "widths": [640]} and report["displayChecks"][0]["measuredMinPx"] >= 16)
+check("minimum actual text is 22px", report["displayChecks"][0]["measuredMinPx"] == 22)
+result = {
+    "recordType": "author-math-check",
+    "status": "pass",
+    "independentReview": False,
+    "scope": str(OUT),
+    "checks": checks,
+    "maxCurveErrorUserUnits": max_error,
+    "maxCurveErrorPxAt640": max_error * 64,
+    "bindings": {name: {"path": str(OUT / name), "sha256": sha(OUT / name)} for name in ("spec.json", "fig-83.svg", "fig-83.render.json", "source.inventory.frozen.json")},
+    "displayLimitation": "Fixed 640px media contract and renderer evidence only; no headed product/app/mobile browser run was authorized.",
+}
+with (OUT / "author-mathcheck.json").open("x", encoding="utf-8") as handle:
+    json.dump(result, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+print(json.dumps({"status": "pass", "checks": len(checks), "maxCurveErrorPxAt640": max_error * 64, "independentReview": False}))

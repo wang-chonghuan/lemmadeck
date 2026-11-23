@@ -1,0 +1,99 @@
+"""Select the closed N36 source card and run the existing assembler."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sys
+
+REPO = Path("/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import assemble as A
+
+BASE = REPO / ".tmp/ld-s10y-lesson/resume182-7-N36"
+PREVIOUS = REPO / ".tmp/ld-s10y-lesson/resume182-7-C5Ex"
+STAGE = BASE / "assembly-FIRST"
+BOOK = STAGE / "artifacts/8a"
+ID = "alg8-c6-s1-n36"
+assert not BOOK.exists(), "Preserve prior assembly attempts"
+RESOLUTION = Path(sys.argv[1]) if len(sys.argv) > 1 else (
+    BASE / "source-punctuation-review-FIRST/resolution.record"
+)
+assert json.loads(RESOLUTION.read_bytes())["status"] == "PASS"
+
+
+def binding(file):
+    return {
+        "path": str(file.relative_to(REPO)),
+        "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+    }
+
+
+documents = []
+for page in range(231, 235):
+    owner = PREVIOUS if page == 231 else BASE
+    directory = owner / f"raw-FIRST/8a/pages/{page:04d}"
+    audit = json.loads((directory / "audit.json").read_bytes())
+    assert not audit["errors"]
+    assert audit["lines_md"] == audit["lines_printed"]
+    file = directory / "page.json"
+    documents.append((file, json.loads(file.read_bytes())))
+
+stream = A.load_stream(BOOK, documents)
+start = next(i for i, block in enumerate(stream)
+             if block["page"] == 231 and block["kind"] == "h3")
+end = next(i for i in range(start + 1, len(stream))
+           if stream[i]["kind"] in ("h1", "h2", "h3"))
+selected = stream[:end]
+assert selected[start]["ref"] == "p0231#3"
+merged, warnings = A.merge_across_pages(copy.deepcopy(selected))
+assert not warnings, warnings
+assert not any(block.get("open") for block in merged)
+numbers = [int(block["label"]) for block in merged if block["kind"] == "ex"]
+assert numbers == list(range(725, 732)), numbers
+assert stream[end]["ref"] == "p0234#3"
+
+for file, document in documents:
+    destination = BOOK / f"pages/{document['meta']['page']:04d}/page.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(file, destination)
+figure = PREVIOUS / "prepared-FIRST/8a/pages/0231/figures/fig-83.png"
+destination = BOOK / "figures/fig-83.png"
+destination.parent.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(figure, destination)
+
+loader = A.load_stream
+A.load_stream = lambda book: copy.deepcopy(selected) if book == BOOK else loader(book)
+try:
+    result = A.run(
+        BOOK, REPO / "ssot-resources/soviet10year-textbooks/toc/8a/zh.json",
+        TOOLS.parent / "profiles/soviet-cn.json",
+        strict=True, work=None, exercise_numbering="book",
+    )
+finally:
+    A.load_stream = loader
+assert result == 0
+index = json.loads((BOOK / "book.json").read_bytes())
+assert not index["audit"]["errors"]
+assert [lesson["id"] for lesson in index["lessons"]] == [ID]
+record = {
+    "status": "RAW_CLOSED_NOT_MODERN_APPROVAL",
+    "lesson": ID,
+    "sources": [binding(file) for file, _ in documents] + [binding(figure)],
+    "punctuation_resolution": binding(RESOLUTION),
+    "source_reviews_reused": [
+        binding(PREVIOUS / "source-review-229-231-FIRST/source-comparison-FIRST.record"),
+        binding(BASE / "source-review-232-234-FIRST/source-comparison-FIRST.record"),
+    ],
+    "selected_refs": [block["ref"] for block in selected],
+    "boundary": {"start": "p0231#3", "excluded_next": "p0234#3"},
+    "exercise_numbers": numbers,
+    "existing_assembler_used": True,
+    "complete_modern_lesson": False,
+}
+output = STAGE / "assembly.record"
+output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({**binding(output), "exercises": len(numbers)}))

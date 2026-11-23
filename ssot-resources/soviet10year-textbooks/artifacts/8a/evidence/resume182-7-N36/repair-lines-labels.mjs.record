@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N36`;
+const prepared = `${base}/modern-prepared/adapt/8a/modern-us-neutral/lessons/alg8-c6-s1-n36/exercises.template.json`;
+const originalFile = `${base}/modern-author-FIRST/exercises.template.json.record`;
+const output = `${base}/modern-author-LABEL1`;
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+assert.ok(fs.readFileSync(prepared).equals(fs.readFileSync(originalFile)));
+const original = JSON.parse(fs.readFileSync(originalFile));
+const corrected = structuredClone(original);
+const labels = new Map([...'\u0430\u0431\u0432\u0433\u0434\u0435\u0436\u0437']
+  .map((letter, index) => [letter, 'abcdefgh'[index]]));
+let changed = 0;
+for (const exercise of corrected.exercises) {
+  exercise.lines = exercise.lines.map(line => line.replace(/([\u0430-\u044f])\)/gu,
+    (_, letter) => {
+      assert.ok(labels.has(letter), letter);
+      changed++;
+      return `${labels.get(letter)})`;
+    }));
+}
+assert.equal(changed, 34);
+const unchanged = structuredClone(corrected);
+for (let index = 0; index < unchanged.exercises.length; index++) {
+  unchanged.exercises[index].lines = original.exercises[index].lines;
+}
+assert.deepEqual(unchanged, original);
+const bytes = `${JSON.stringify(corrected, null, 2)}\n`;
+fs.writeFileSync(`${output}/exercises.template.json.record`, bytes,
+  { flag: 'wx', mode: 0o444 });
+fs.writeFileSync(prepared, bytes);
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const record = {
+  status: 'AFFECTED_REVIEW_PENDING',
+  original: { path: originalFile, sha256: sha(originalFile) },
+  corrected: {
+    path: `${output}/exercises.template.json.record`,
+    sha256: sha(`${output}/exercises.template.json.record`),
+  },
+  changedFields: 'Only the 34 Cyrillic labels within exercises[0..5].lines',
+  changedLabels: changed,
+  allTextSourceFieldsMathematicsAndOtherFieldsUnchanged: true,
+  parentImageLoads: 0,
+};
+fs.writeFileSync(`${output}/delta.record`, `${JSON.stringify(record, null, 2)}\n`,
+  { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify(record));

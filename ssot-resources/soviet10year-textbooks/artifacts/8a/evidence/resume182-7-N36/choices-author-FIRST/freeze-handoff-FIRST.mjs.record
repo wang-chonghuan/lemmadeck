@@ -1,0 +1,191 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+const out = path.join(root, '.tmp/ld-s10y-lesson/resume182-7-N36/choices-author-FIRST')
+const file = (name) => path.join(out, name)
+const hashBytes = (absolute) => crypto.createHash('sha256').update(fs.readFileSync(absolute)).digest('hex')
+const readJson = (absolute) => JSON.parse(fs.readFileSync(absolute, 'utf8'))
+const writeJsonOnce = (absolute, value) => fs.writeFileSync(
+  absolute, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+)
+
+// Match the skill's Python canonical-JSON snapshot convention, including ASCII escaping.
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`
+  if (value && typeof value === 'object') {
+    return `{${Object.keys(value).sort().map((key) => `${canonical(key)}:${canonical(value[key])}`).join(',')}}`
+  }
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (char) => (
+    `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
+  ))
+}
+const hashJson = (value) => crypto.createHash('sha256').update(canonical(value), 'utf8').digest('hex')
+const seedPath = file('seed-FIRST.json')
+const draftPath = file('draft-FIRST.json')
+const solutionPath = file('author-source-solutions-FIRST.record0444')
+const learnerPath = file('learner-view-FIRST.json')
+const validatorRecordPath = file('original-structural-validator-FIRST.json')
+const handoffPath = file('author-artifacts-FIRST.record0444.json')
+for (const absolute of [learnerPath, validatorRecordPath, handoffPath]) {
+  assert(!fs.existsSync(absolute), `Refusing to overwrite a frozen output: ${absolute}`)
+}
+
+const seed = readJson(seedPath)
+const draft = readJson(draftPath)
+assert.equal(hashJson(seed), '30ad44e309bb93a03d0ae2b62e5d2318a09d89206ba3ec2b52276ef940cfd88c')
+assert.equal(hashBytes(solutionPath), 'a444c10ecb2d6cd7b7dd4ac52ba5bbd18805b447f6398e4a2d696dd75caae76d')
+const initialDraftHash = hashBytes(draftPath)
+const views = draft.questions.map((question) => question.view)
+for (const view of views) {
+  assert.deepEqual(Object.keys(view).sort(), ['figure_ids', 'mode', 'options', 'stem'])
+  for (const option of view.options) {
+    assert.deepEqual(Object.keys(option).sort(), ['figure_ids', 'id', 'text'])
+  }
+}
+writeJsonOnce(learnerPath, views)
+assert.deepEqual(readJson(learnerPath), views)
+
+const validator = path.join(root, '.agents/skills/ld-s10y-choice/scripts/validate.py')
+const args = [validator, '--repo', root, '--seed', seedPath, '--draft', draftPath]
+const result = spawnSync('python3', args, {
+  cwd: root,
+  encoding: 'utf8',
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+})
+const validatorRecord = {
+  schema: 'author-original-structural-validator-evidence-v1',
+  cwd: root,
+  executable: 'python3',
+  arguments: args,
+  invocations: 1,
+  review_argument_present: false,
+  exit_code: result.status,
+  signal: result.signal,
+  stdout: result.stdout,
+  stderr: result.stderr,
+  spawn_error: result.error ? String(result.error) : null,
+  seed_canonical_sha256: hashJson(seed),
+  draft_canonical_sha256: hashJson(draft),
+  draft_byte_sha256: initialDraftHash,
+  semantic_status: 'not_reviewed; structural validation is not semantic approval',
+}
+writeJsonOnce(validatorRecordPath, validatorRecord)
+assert.equal(hashBytes(draftPath), initialDraftHash, 'Draft changed during structural validation')
+
+const finalRenderPath = file('new_figures/fig-choice-n36-rays-FIRST.render.json')
+const finalRender = readJson(finalRenderPath)
+const previewPath = path.join(
+  root, '.tmp/ld-s10y-lesson/resume182-7-N36/figure-author-FIRST/fig-83.author-preview.png',
+)
+const assetPath = path.join(root, seed.figures[0].assets[0].path)
+const filesToBind = [
+  seedPath, draftPath, learnerPath, solutionPath, validatorRecordPath,
+  file('new_figures/fig-choice-n36-rays-FIRST.spec.json'),
+  file('new_figures/fig-choice-n36-rays-FIRST.svg'),
+  finalRenderPath,
+  file('new_figures/fig-choice-n36-rays-FIRST.author-preview.png'),
+  file('new_figures/fig-choice-n36-rays-FIRST.first-validation-failed.spec.json'),
+  file('new_figures/fig-choice-n36-rays-FIRST.first-validation-failed.json'),
+  file('new_figures/fig-choice-n36-rays-FIRST.first-render-failed.spec.json'),
+  file('new_figures/fig-choice-n36-rays-FIRST.first-render-failed.svg'),
+  file('new_figures/fig-choice-n36-rays-FIRST.first-render-failed.preview.png'),
+  file('new_figures/fig-choice-n36-rays-FIRST.first-render-failed.render.json'),
+  path.join(out, 'freeze-handoff-FIRST.mjs'),
+]
+const handoff = {
+  record: 'author-artifacts-FIRST.record0444',
+  cwd: root,
+  author_output_directory: out,
+  input_policy: {
+    mathematical_input: seedPath,
+    selected_exercises: seed.exercises.map((exercise) => exercise.number),
+    selected_definition_blocks: seed.concepts.map((concept) => concept.block),
+    original_prepare_reused: true,
+    no_reinstallation: true,
+    other_answers_or_drafts_consulted: false,
+    structural_validator_input_refresh_only: 'The original checker internally refreshes the prepare whitelist; no source answer/judging fields were used for authoring.',
+  },
+  counts: {
+    selected_source_exercises: seed.exercises.length,
+    definition_blocks: seed.concepts.length,
+    questions: views.length,
+    single: views.filter((view) => view.mode === 'single').length,
+    multiple: views.filter((view) => view.mode === 'multiple').length,
+    options: views.reduce((total, view) => total + view.options.length, 0),
+    registered_new_images: draft.new_figures.length,
+    structural_validator_invocations: 1,
+    explicit_image_spec_validations: 2,
+    deterministic_render_invocations: 2,
+    render_internal_spec_validations: 2,
+    first_spec_validation_failures: 1,
+    first_render_failures: 1,
+    actual_images_loaded: 3,
+    permitted_images_maximum: 8,
+    crops: 0,
+    original_scan_reopens: 0,
+    gui_browser_sessions: 0,
+    isolated_headless_render_sessions: 2,
+    review_files_authored: 0,
+    database_or_git_or_push_operations: 0,
+    model_or_network_api_calls: 0,
+  },
+  scientific_hold: false,
+  structural_status: result.status === 0 ? 'mechanical_checks_succeeded' : 'failed',
+  final_deterministic_render_status: finalRender.status,
+  final_display: finalRender.displayChecks,
+  semantic_status: 'not_reviewed; parent must obtain the sole independent mathematical and new-figure review',
+  no_semantic_pass_claim: true,
+  learner_export: 'JSON array containing exactly the question view objects. No key, rationale, truth set, intent, source_solution, mapping, new-figure basis or review appears in this export.',
+  full_task_coverage: draft.coverage,
+  first_failure_preservation: 'The first failed spec and first failed render spec/SVG/preview/report remain byte-frozen. Repairs affected inventory references, collinear field syntax and three label placements only; no generated SVG was hand-edited.',
+  flow: [
+    'Read this tree choice/image SOP, authoring and contract.',
+    'Confirmed seed canonical digest; read only permitted mathematical seed.',
+    'Loaded approved fig-83 preview: image 1.',
+    'Independently solved 725-731 and froze author-source-solutions-FIRST.record0444 before alternatives.',
+    'Authored deterministic four-candidate schematic FigureSpec from complete written 731; no source.image or scratch dependency in spec.',
+    'First explicit spec validation exited 2; preserved first spec and all error lines.',
+    'Repaired schema/inventory mappings; second explicit spec validation exited 0.',
+    'First deterministic render exited 2 with three collisions; preserved its spec/SVG/preview/report; inspected preview as image 2.',
+    'Repaired three label placements in spec only; second deterministic render exited 0.',
+    'Loaded final entire 640px preview: image 3; recorded actual author observations, not a review.',
+    'Manually authored seven coherent questions and all private option derivations using apply_patch.',
+    'Projected only view objects into learner-view-FIRST.json.',
+    'Invoked original choice structural validator exactly once, without --review; captured exact output.',
+    'Froze this path/hash/count/flow record; no semantic or new-figure review was authored.',
+  ],
+  observed_source_figure: {
+    asset_path: assetPath,
+    asset_sha256: hashBytes(assetPath),
+    preview_path: previewPath,
+    preview_sha256: hashBytes(previewPath),
+    unchanged_approved_figure_reused: true,
+    regenerated: false,
+  },
+  images_loaded: [
+    { ordinal: 1, path: previewPath, sha256: hashBytes(previewPath), purpose: 'approved seed figure actual observation' },
+    { ordinal: 2, path: file('new_figures/fig-choice-n36-rays-FIRST.first-render-failed.preview.png'), sha256: hashBytes(file('new_figures/fig-choice-n36-rays-FIRST.first-render-failed.preview.png')), purpose: 'observed first render failure before repair' },
+    { ordinal: 3, path: file('new_figures/fig-choice-n36-rays-FIRST.author-preview.png'), sha256: hashBytes(file('new_figures/fig-choice-n36-rays-FIRST.author-preview.png')), purpose: 'final author observation at product 640px; not independent review' },
+  ],
+  snapshots: {
+    seed_canonical_sha256: hashJson(seed),
+    draft_canonical_sha256: hashJson(draft),
+    learner_view_canonical_sha256: hashJson(views),
+  },
+  files: filesToBind.map((absolute) => ({ path: absolute, byte_sha256: hashBytes(absolute) })),
+}
+writeJsonOnce(handoffPath, handoff)
+console.log(JSON.stringify({
+  counts: handoff.counts,
+  structural_status: handoff.structural_status,
+  scientific_hold: handoff.scientific_hold,
+  semantic_status: handoff.semantic_status,
+  snapshots: handoff.snapshots,
+  files: handoff.files.slice(0, 9),
+  handoff_record: { path: handoffPath, byte_sha256: hashBytes(handoffPath) },
+}, null, 2))
+process.exitCode = result.status === 0 ? 0 : 2

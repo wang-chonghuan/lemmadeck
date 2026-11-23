@@ -1,5 +1,158 @@
 # 当前开发状态
 
+### 182-7 2026-11-23 N36完整离线PASS，立即窄保存
+
+- `alg8-c6-s1-n36`完整：19现代正文源对象、7原题725–731、图83，
+  7ready答案（6auto/1ungraded、42部件），7题29项选择
+  （4single/3multiple）及一张四候选射线图。
+  来源/文本/全部数学/答案/全部选项及误区推导/新图独审PASS；
+  最终选择审查SHA
+  `ecc75c42bb9ea8bb62c63ec14955a1926fac4f38db3c281d58a566331a1feede`，
+  现有retain内置with-review checker及独立图审记录工具实际exit0。
+- 六桌面/手机视面、14截图全部有一次实际观察和现有DOM合同检查，
+  `finish-display.mjs`实际exit0；选择显示五图审查SHA
+  `a55a9822864b55afd5cce36030ed1354152ca74fba16a8530d139f7ff71bbe2b`。
+  原9图直接复用；headless/isolated、0错误、cleanup=true，
+  不冒充线上交互/触屏/提交判分/分页/保存恢复验收。
+- 原文本34标号REVISE、答案单字符下标首次失败、图83绑定Node
+  ENOENT/路径处理失败、新选择图spec/render首次失败、父误写
+  两子图的显示FIRST REVISE均保留。只补各受影响字段或检查scope，
+  全部已PASS来源/数学/图/显示未因接续、保留或路径交接重做。
+  识别替代书写/两次作图的能力损失明示；731端点/两射线/域值域完整。
+- 原保留脚本实际exit0，证据在`8a/evidence/resume182-7-N36/`；
+  只提交本课原课/现代课/choice-set、原231–234三文件、图83、
+  两必要索引及拥有的progress前缀，N37以后课/旧dirty尾部/技能/
+  6a/7a不混入；不添加依赖或废弃键盘交互。
+  当前是保存前状态，commit/push及DB尚未执行，不提前记成功。
+  父本轮0图、历史24；全部独审已关闭，新增外部API0，宿主费用UNKNOWN。
+
+### 182-7 2026-11-23 N36九张基础显示PASS，选择纯view独审在途
+
+- EXACT1受影响独审PASS，SHA
+  `79ff6a756e2b67ee0aad88caff47460b8a50b702b8d85cd3ec2c5820d680a8a5`；
+  原答案finalizer RECOVERY1实际exit0保持，未重跑已通过42部件数学。
+- 基础显示批1六张PASS，SHA
+  `43655b4610ff3297d1ced996e9e70fc42e29b8bf2495b78b305b3a58cde8d1ca`；
+  批2原FIRST REVISE仅父误写“两个子图”，实际权威图83仅一个面板，
+  三张实际像素检查均PASS。仅纠正检查scope后CHECK1 PASS，SHA
+  `80fcf352e8da8c4681020690b1f286cf70b50ece7eabf8b0c231793f204b7c2a`，
+  新图0、无重开/重渲染/资产变化；原REVISE保留。
+- 新选择作者7题29项、4single/3multiple及一张四候选射线图完成，
+  原结构validator仅一次exit0，无科学HOLD。原spec首失败及一次
+  标签布局修正的render首失败/最终PASS均保留，外部API0。
+  新图路径已固定到本课`choice-set/figures/`，spec/SVG/题面/数学未变；
+  当前最终draft规范SHA
+  `8a4520e84b17d0adc638aac4c829304211eff5ae14ab56911b3205ccfe431c58`。
+  Godel先冻结完整盲源解，现仅看纯view及一张候选图；尚未披露作者键，
+  选项/新图最终独审、选择显示/完整保留/commit/push未完成。
+- N37仅复用现有235–237作者稿及已PASS234边界做隔离原装订，
+  原工具实际exit0：732–742十一题、0图、733/742闭合，N38明确排除。
+  原祖先绑定来自p0231#1/#2，不重做来源或全书索引；
+  scratch`resume182-7-N37/assembly-FIRST/`，仍SOURCE_REVIEW_PENDING，
+  不作为现代完整课/入库提交。父本轮0图，历史24，不DB/合并/部署。
+
+### 182-7 2026-11-23 N36现代及答案收口，选择/显示接续
+
+- N36现代finalizer实际exit0，图83独立PASS保持；原文本FIRST REVISE
+  仅34个顶层`lines`标号，LABEL1受影响独审PASS，全部源/数学/其它字段未变。
+  7题显示答案及42部件FIRST独审PASS，源解先冻结后比较作者键。
+- 答案finalizer FIRST真实exit2，30exact中仅726a/b/f单字符下标花括号
+  与MathLive编辑后序列化不一致。仅3expected改为编辑器原生单字符下标，
+  完整底数/真数/指数/展示答案未变，不枚举aliases、不改app。
+  RECOVERY1原finalizer实际exit0：7ready、6auto/1ungraded、42部件。
+  首失败及恢复候选/执行记录保留；EXACT1仅表示变更的受影响独审在途。
+- 原renderer与headless隔离显示检查各实际exit0：1440/390正文及书写题
+  四组合、9截图、0错误、cleanup=true；视觉审查尚待，不宣称显示PASS。
+  Feynman只接本代理最后6张首末正文/书写截图，已有2图累计限8；
+  另3张图83整图/手机两端留下一fresh批。父历史24图、本轮0，不重开。
+- Beauvoir已接N36独立选择作者任务，7原题及9定义块已原prepare；
+  已冻结独立作者源解，draft/新候选图/独审/保留尚未完成。
+  所有旧失败/暂停/费用不覆盖。当前无本课commit/push或DB写入，
+  不生产废弃键盘交互，不合并/部署/关单/主动消息/定时器。
+
+### 182-7 2026-11-23 已恢复原工作树，接续N36未完成阶段
+
+- 已实际执行N36图83 BINDING1，仅修改持久`source.image.path`及四段
+  现代`source.authoritativeText`的标点/换行；geometry/inventory/labels/数学
+  scope断言未变，原validator实际exit0。
+  首render-BINDING1因误用不存在的Node路径而spawn ENOENT，未启动renderer，
+  原null exit/error/空流已保留，不视为科学FAIL；仅修运行时路径后原
+  render-BINDING1-RUNTIME1实际exit0：30objects/11labels。
+  新旧SVG实际cmp exit0，既有3/8作者观察适用，不重开预览或原图。
+- N36答案作者稿已0444冻结：7draft、6auto/1ungraded、42部件，SHA
+  `47257c2ac5e013a177a5f5a341ffbf3fb98911d5e4763cec0a912b3df32d6a26`。
+  8a无保留书后answers.json，全部按完整题面推导；不是prepare/finalize或
+  独审PASS，不披露给未冻结源解的审者。
+  Feynman已开始唯一缺失独审，先冻结独立源解再独立像素清单；
+  文本、图及最终作者键比较尚未收到完成回执，不提升完整课。
+- 新N36离线显示脚本仅沿用既有N35检查器并局部换课号、focus及
+  授权headless模式，准备包含图83桌面整图/手机左右端和正文末段截图；
+  尚未运行，不将脚本存在当显示PASS。后续choices仍未prepare/创作。
+
+- 最新直接人类“重新启动吧”已通过当前协调输入送达，明确覆盖下方全部暂停。
+  仅恢复原182-7工作树/分支，不重启旧会话，不新建替代聊天/分支/工作树。
+  本树已安装最新lesson/answer/image/choice SOP直接使用，不重装/通读历史。
+- C5Ex实际推送`18cde340faaa3f5ace9f3ee0339bf637c1734776`及完整离线PASS
+  保持，不重做审查或push。N36 SOURCE、727b句末点单点恢复、原装订/
+  29课reindex和现代作者稿直接复用，不重跑已PASS阶段。
+- 当前仅收口图83持久源路径及现代正文上下文元数据；几何/标签/源清单及
+  原3/8作者观察保持。原paused-incomplete作者记录和首失败原样留存。
+  随后补缺失的独立源解、文本/图/答案/选项及桌面手机显示，不将机械PASS
+  当作独审或整课批准。每完整课立即窄commit/普通push并登记既有队列。
+- 父累计24图，本次仍0；fresh每批≤8，最多一个在途独立子审者；
+  外部付费API0，宿主用量/费用UNKNOWN。266道6a第二章有效题不动，
+  旧dirty/暂存/备份/失败/费用全部保留；不DB/force/合并/部署/主动消息。
+  本次浏览器仅后台/隔离headless，不启动抢窗口的headed实例。
+
+### 182-7 2026-11-23 全部暂停，覆盖此前继续
+
+- 最新直接人类指令已通过当前协调输入送达：全部暂停，覆盖全部旧继续/
+  自动接续/巡检催工。此条起不再开始课程、审查、测试、生成、付费调用、
+  入库或commit/push；不自动恢复，等待下一条直接人类恢复。
+- 指令到达前C5Ex实际普通commit/push已成功：
+  `18cde340faaa3f5ace9f3ee0339bf637c1734776`，363明确路径，
+  `de9b06ce4..18cde340f`到原`codex/STEMROBIN-182-textbooks`。
+  来源/文本/独立数学/43答案/54题240项选择/六新图/六组合33显示PASS，
+  已登记既有入库队列。本聊天没有写库；暂停后不执行该队列。
+- 指令到达前N36来源保留实际exit0，231–234原页/原课/图83及必要
+  SOURCE恢复证据在`ssot-resources/soviet10year-textbooks/artifacts/8a/`；
+  原reindex实际exit0，29 retained lessons。现代作者稿仍仅scratch冻结，
+  19正文对象/18段/7题/34Latin标号/一边界/仅登记`a≠0`→`a≠1`修正；
+  未执行现代finalizer，答案/选择/显示未完成，不入库或称完整课。
+- 图83作者Popper及N36独审Kuhn均已实际暂停并关闭，不启动替代任务。
+  Popper状态`paused-incomplete`，累计3/8图，新增外部费用0；
+  已有源图清单、spec/SVG/render/预览、首失败和执行历史原样保留，
+  最新持久源路径及现代正文上下文重绑未完成，没有独立图审PASS。
+  其会话3238（退出2）和41190（退出0）均已结束，无已知所属执行进程。
+  作者检查点：`.tmp/ld-s10y-lesson/resume182-7-N36/figure-author-FIRST/author-FIRST.record`。
+  Kuhn只完成原源读取和题目计数，完整解答未写入/冻结，现代文本比较未开始；
+  图片0，无所属运行PID或exec会话。暂停记录0444：
+  `.tmp/ld-s10y-lesson/resume182-7-N36/math-independent-FIRST/stop-checkpoint-FIRST.record`。
+  所有图稿、原失败、作者快照、未完成证据和计数留在
+  `.tmp/ld-s10y-lesson/resume182-7-N36/`，不删除或回滚。
+  数学/文本独审未收到完成记录，不宣称PASS。
+- 暂停时本父无在途exec/browser/生产进程，`git diff --cached --name-only`
+  实际为空；全部旧dirty、未提交来源/索引/进度、备份和费用记录保留。
+  父累计24图、本轮0；外部付费API0，宿主用量/费用UNKNOWN。
+  N37–N41未独审，N31/N32/7a真HOLD及6a第二章266有效题原样保持。
+  不向监督或同伴发消息，不合并/部署/关单/创建聊天或工作树/分支/定时器。
+  名下全部子任务已关闭，父及子均无已知仍在执行的生产进程。
+  此暂停记录保持未提交；暂停指令到达后没有新增commit/push或生产调用。
+
+### 182-7 2026-11-23 C5Ex完整离线已普通push，继续N36
+
+- 实际commit `18cde340faaa3f5ace9f3ee0339bf637c1734776`，
+  普通push实际exit0，`de9b06ce4..18cde340f`到原
+  `codex/STEMROBIN-182-textbooks`；363明确路径，未force/rebase/merge。
+  既有index普通commit仅保存C5Ex及必要依赖，本轮progress前缀与N35回执；
+  旧dirty尾部、技能、6a/7a和未完后续课均未混入课程数据。
+- 来源/文本/独立数学/43答案/54选择240项/六新图及六组合33显示全部PASS。
+  已登记下方既有单一入库队列；DB结果待指定写入方，不等待或主动发消息，
+  队列回执随下一次普通课程提交保存，不造单独发布记录提交。
+- N36接续来源保留/reindex及现代阶段；其SOURCE PASS和scratch作者稿有效，
+  图83作者仍在途，后续N37–N41未独审。N31/N32/7a真HOLD仍保持，
+  6a第二章266有效题不动；本聊天0DB/合并/部署/关单。
+
 ### 182-7 2026-11-23 C5Ex完整离线PASS，立即窄保存
 
 - `alg8-c5-ex`完整：0正文、43原题682–724、图76，43ready答案
@@ -357,7 +510,31 @@
 - 父累计图片24，不再开图；仅fresh有界子代理负责新图与显示观察。
   外部付费API=0，宿主用量/费用UNKNOWN；0DB/部署/关单/主动监督消息。
 
-### 182-7 单一入库队列：8a N35/N34/N33完整推送快照
+### 182-7 单一入库队列：8a C5Ex/N35/N34/N33完整推送快照
+
+#### C5Ex
+
+- lessonId：`alg8-c5-ex`，edition：`modern-us-neutral`。
+  已推送commit：`18cde340faaa3f5ace9f3ee0339bf637c1734776`，
+  原分支：`codex/STEMROBIN-182-textbooks`；
+  普通push实际exit0，`de9b06ce4..18cde340f`，未force/merge/换分支。
+- 保留根：`ssot-resources/soviet10year-textbooks/artifacts/8a/`；
+  现代课：`editions/modern-us-neutral/lessons/alg8-c5-ex/`，
+  0正文、43原题682–724、图76；43ready答案（26auto/17ungraded、
+  135部件）。`choice-set/`为54题240项（24single/30multiple），
+  六张新图各有spec/SVG/render/review四文件，最终稿SHA
+  `ef0db44af0794401f4e94aa088dd3eaf8617add695076f76ee045bb2a484279f`。
+- 必要206及225–230源页、原课、图76/两索引、来源/文本/独立数学/答案/
+  盲view/最终键与误区推导/FIRST失败和六组合33显示证据：
+  `8a/evidence/resume182-7-C5Ex/`（位于artifacts根）。
+  707a实印缺指数勘误及全部首失败保持；18作图和9开放/证明生产能力损失
+  明示，不把识别替代称为原书完整生产能力。N31/N32/7a真HOLD未解除。
+- 仅363明确路径及拥有的progress前缀，N35既有回执一并保存；
+  N36及231以后课程数据、旧dirty尾部/技能/6a/7a未混入。
+  指定单一写入方team-leader只接本推送快照，按既有base/answers/choices
+  单课流程，不生产废弃键盘交互，不`--all`或重发旧课。
+  本聊天0DB/部署/关单/主动消息；DB结果待写入方。
+  此队列回执随下一次正常课程提交保存，不另做发布记录提交。
 
 #### N35
 

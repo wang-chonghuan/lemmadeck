@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N36`;
+const author = `${base}/figure-author-FIRST`;
+const output = `${base}/figure-BINDING1`;
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const original = JSON.parse(fs.readFileSync(`${author}/spec.json`));
+const spec = structuredClone(original);
+const lesson = JSON.parse(fs.readFileSync(
+  `${base}/modern-author-FIRST/lesson.template.json.record`));
+const source = 'ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-83.png';
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+assert.equal(sha(`${root}/${source}`), spec.source.image.sha256);
+spec.source.image.path = source;
+assert.equal(spec.source.authoritativeText.length, 4);
+for (let index = 0; index < 4; index++) {
+  const oldText = spec.source.authoritativeText[index].text;
+  const newText = lesson.prose[index].text;
+  assert.deepEqual(oldText.match(/\$[^$]*\$/gu), newText.match(/\$[^$]*\$/gu));
+  spec.source.authoritativeText[index].text = newText;
+}
+const scope = structuredClone(spec);
+scope.source.image.path = original.source.image.path;
+scope.source.authoritativeText = original.source.authoritativeText;
+assert.deepEqual(scope, original);
+fs.writeFileSync(`${output}/spec.json`, `${JSON.stringify(spec, null, 2)}\n`,
+  { flag: 'wx' });
+fs.writeFileSync(`${output}/binding.record`, `${JSON.stringify({
+  status: 'METADATA_ONLY_NOT_INDEPENDENT_APPROVAL',
+  before: { path: `${author}/spec.json`, sha256: sha(`${author}/spec.json`) },
+  after: { path: `${output}/spec.json`, sha256: sha(`${output}/spec.json`) },
+  sourceImage: { path: source, sha256: spec.source.image.sha256 },
+  modernDraft: {
+    path: `${base}/modern-author-FIRST/lesson.template.json.record`,
+    sha256: sha(`${base}/modern-author-FIRST/lesson.template.json.record`),
+  },
+  changedFields: ['source.image.path', 'source.authoritativeText[0..3].text'],
+  geometryInventoryAndLabelsUnchanged: true,
+  mathematicalContextUnchanged: true,
+  parentImageLoads: 0,
+}, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ output, metadataOnly: true, parentImageLoads: 0 }));

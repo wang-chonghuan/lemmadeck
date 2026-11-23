@@ -1,0 +1,190 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+const output = path.join(root, '.tmp/ld-s10y-lesson/resume182-7-N36/figure-author-FIRST')
+assert.equal(process.cwd(), root)
+const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const freezePath = path.join(output, 'source.inventory.frozen.json')
+assert.equal(digest(freezePath), '677b1c01defadb129d5b1431263cf5edbf81dd184a576b8369b7dde7414bceaa')
+const frozen = JSON.parse(fs.readFileSync(freezePath, 'utf8'))
+assert.equal(digest(frozen.source.path), frozen.source.sha256)
+assert.equal(digest(frozen.context.path), frozen.context.sha256)
+const lesson = JSON.parse(fs.readFileSync(frozen.context.path, 'utf8'))
+const authoritativeText = lesson.prose
+  .filter(item => item.kind === 'p' && item.source_refs.some(ref => /^p0231#[4-7]$/.test(ref)))
+  .map(item => ({ lesson: lesson.id, text: item.text }))
+assert.equal(authoritativeText.length, 4)
+
+const a = frozen.modernConstruction.notSourceGivenValues.representativeBase
+const b = frozen.modernConstruction.notSourceGivenValues.positiveLevel
+const negativeB = frozen.modernConstruction.notSourceGivenValues.negativeLevel
+const logA = Math.log(a)
+const rootX = Math.log(b) / logA
+const boundingBox = [-4.2, 10.25, 5.8, -4.75]
+const toPath = (x, y) => [x - boundingBox[0], boundingBox[1] - y]
+const number = value => Number(value.toFixed(10))
+const pair = values => values.map(number).join(' ')
+const knots = [...new Set([
+  ...Array.from({ length: 35 }, (_, index) => -3.5 + index * 0.25),
+  0,
+  rootX,
+])].sort((left, right) => left - right)
+
+// Analytic derivatives make exact source-critical knots, with a smooth bounded curve.
+const segments = []
+let curve = `M ${pair(toPath(knots[0], a ** knots[0]))}`
+for (let index = 1; index < knots.length; index += 1) {
+  const x0 = knots[index - 1]
+  const x1 = knots[index]
+  const h = x1 - x0
+  const y0 = a ** x0
+  const y1 = a ** x1
+  const controls = [
+    [x0, y0],
+    [x0 + h / 3, y0 + h * logA * y0 / 3],
+    [x1 - h / 3, y1 - h * logA * y1 / 3],
+    [x1, y1],
+  ]
+  segments.push(controls)
+  curve += ` C ${controls.slice(1).map(point => pair(toPath(...point))).join(' ')}`
+}
+
+const point = (id, at, role = 'ink') => ({
+  id, type: 'point', at, visible: true, size: 2,
+  stroke: role, fill: role, strokeWidth: 1,
+})
+const text = (id, at, value, fontSize = 22, placement = { position: 'CENTER' }) => ({
+  id, type: 'text', at, text: value, fontSize, fontWeight: 500,
+  labelPlacement: placement,
+})
+const segment = (id, from, to, role = 'muted', strokeWidth = 3, dash = 0) => ({
+  id, type: 'segment', from, to, stroke: role, strokeWidth, dash,
+})
+const displacement = (id, from, to, dx, dy) => ({
+  id, type: 'displacement', from, to, dx, dy, tolerance: 1e-9,
+})
+const count = (id, objectType, countValue) => ({
+  id, type: 'objectCount', objectType, count: countValue,
+})
+const objects = [
+  {
+    id: 'src-grid', type: 'grid', bounds: [-3.5, 9.5, 5.5, -4],
+    xStep: 0.5, yStep: 0.5, xOffset: 0, yOffset: 0,
+    stroke: 'grid', strokeWidth: 1,
+  },
+  point('src-origin', [0, 0]),
+  point('src-x-unit', [1, 0]),
+  point('src-y-unit', [0, 1]),
+  point('src-positive-left', [-3.5, b], 'muted'),
+  point('src-positive-right', [5.5, b], 'muted'),
+  point('src-positive-crossing', [rootX, b]),
+  point('src-positive-foot', [rootX, 0]),
+  point('src-zero-left', [-3.5, 0]),
+  point('src-zero-right', [5.35, 0]),
+  point('src-negative-left', [-3.5, negativeB], 'muted'),
+  point('src-negative-right', [5.5, negativeB], 'muted'),
+  segment('src-zero-level', 'src-zero-left', 'src-zero-right', 'ink', 3),
+  segment('src-positive-level', 'src-positive-left', 'src-positive-right'),
+  segment('src-negative-level', 'src-negative-left', 'src-negative-right'),
+  segment('src-positive-guide', 'src-positive-crossing', 'src-positive-foot', 'muted', 3, 2),
+  {
+    id: 'src-x-axis', type: 'arrow', from: 'src-zero-left',
+    to: 'src-zero-right', stroke: 'ink', strokeWidth: 3,
+  },
+  {
+    id: 'src-y-axis', type: 'arrow', from: [0, -4],
+    to: [0, 9.2], stroke: 'ink', strokeWidth: 3,
+  },
+  {
+    id: 'src-exponential', type: 'svgPath', d: curve,
+    stroke: 'accent', strokeWidth: 4, dash: 0,
+  },
+  text('src-origin-label', [-0.32, -0.43], 'O'),
+  text('src-x-unit-label', [1, -0.43], '1'),
+  text('src-y-unit-label', [0, 1], '1', 22, { position: 'NW', gap: 22 }),
+  text('src-x-axis-label', [5.35, -0.43], 'x', 26),
+  text('src-y-axis-label', [0, 9.2], 'y', 26, { position: 'W', gap: 23 }),
+  text('src-exponential-label', [2.8, 7.4], 'y = a\u02e3', 26),
+  text('modern-base-condition', [2.8, 6.9], 'a > 1', 22),
+  text('src-positive-level-label', [-3.5, b], 'y = b (b > 0)', 22, { position: 'NE', gap: 24 }),
+  text('src-zero-level-label', [-3.5, 0], 'y = b (b = 0)', 22, { position: 'SE', gap: 24 }),
+  text('src-negative-level-label', [-3.5, negativeB], 'y = b (b < 0)', 22, { position: 'SE', gap: 24 }),
+  text('src-log-label', [rootX, -0.43], 'log\u2090 b', 24),
+]
+const assertions = [
+  { id: 'src-grid-dimensions', type: 'gridDimensions', grid: 'src-grid', columns: 18, rows: 27 },
+  displacement('src-x-unit-displacement', 'src-origin', 'src-x-unit', 1, 0),
+  displacement('src-y-unit-displacement', 'src-origin', 'src-y-unit', 0, 1),
+  {
+    id: 'src-axes-perpendicular', type: 'perpendicular',
+    a: 'src-origin', b: 'src-x-unit', c: 'src-origin', d: 'src-y-unit',
+  },
+  count('src-axis-point-count', 'point', 11),
+  count('src-exponential-count', 'svgPath', 1),
+  displacement('src-positive-line-horizontal', 'src-positive-left', 'src-positive-right', 9, 0),
+  {
+    id: 'src-positive-crossing-on-level', type: 'pointOnLine',
+    point: 'src-positive-crossing', a: 'src-positive-left', b: 'src-positive-right',
+  },
+  {
+    id: 'src-positive-foot-on-axis', type: 'pointOnLine',
+    point: 'src-positive-foot', a: 'src-origin', b: 'src-positive-foot',
+  },
+  displacement('src-positive-vertical-displacement', 'src-positive-foot', 'src-positive-crossing', 0, b),
+  displacement('src-positive-height-from-origin', 'src-origin', 'src-positive-left', -3.5, b),
+  displacement('src-positive-height-from-unit', 'src-y-unit', 'src-positive-left', -3.5, b - 1),
+  count('src-projection-point-count', 'point', 11),
+  {
+    id: 'src-zero-level-on-axis', type: 'collinear',
+    a: 'src-zero-left', b: 'src-zero-right', c: 'src-x-unit',
+  },
+  {
+    id: 'src-zero-origin-on-level', type: 'pointOnLine',
+    point: 'src-origin', a: 'src-zero-left', b: 'src-zero-right',
+  },
+  {
+    id: 'src-zero-unit-on-level', type: 'pointOnLine',
+    point: 'src-x-unit', a: 'src-zero-left', b: 'src-zero-right',
+  },
+  displacement('src-negative-line-horizontal', 'src-negative-left', 'src-negative-right', 9, 0),
+  displacement('src-negative-height-from-origin', 'src-origin', 'src-negative-left', -3.5, negativeB),
+]
+const inventory = structuredClone(frozen.inventory)
+inventory.find(group => group.id === 'src-axis-unit-structure').description =
+  'Rightward x and upward y axes, rounded origin glyph normalized O, and positive unit labels 1 on both axes; exponential at y=1 when x=0. Small anchor markers are modern additions, not source dots or named givens.'
+const spec = {
+  schema: 'ld-s10y-image/figure-spec@2',
+  id: 'fig-83',
+  mode: 'deterministic',
+  description: 'Graphical roots of a^x=b for a>1: one increasing positive exponential, positive/zero/negative horizontal cases, and a dashed projection to log_a b. Counted source grid is regularized. Modern schematic a=1.55, positive b=4.5, negative b=-2 and drawing domain [-3.5,5] are not printed givens or scan-precise measurements. Small relationship anchor dots, typographic math labels and the explicit a>1 condition are declared modern additions.',
+  source: {
+    image: { path: frozen.source.path, sha256: frozen.source.sha256 },
+    authoritativeText,
+    inventory,
+  },
+  canvas: { width: 640, height: 960, boundingBox, background: 'paper', keepAspectRatio: true },
+  display: { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] },
+  objects,
+  assertions,
+  layout: { minLabelGap: 4 },
+}
+const writeOnce = (name, value) => fs.writeFileSync(
+  path.join(output, name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+)
+writeOnce('spec.author-FIRST.json', spec)
+writeOnce('spec.json', spec)
+writeOnce('construction.author-FIRST.json', {
+  figure: 'fig-83', base: a, positiveB: b, negativeB, rootX,
+  boundingBox, knots, bezierUserSpace: segments,
+  sourceInventoryFreeze: { path: freezePath, sha256: digest(freezePath) },
+  inventoryAdaptation: 'Frozen source facts, groups, object IDs and assertion IDs unchanged. Only the axis group description acknowledges visible modern anchor dots instead of the pre-authoring hidden-point plan: existing validator requires mapped objects to be visible. No source dots are claimed.',
+  promotion: 'Scratch authoring only. Parent must rebind identical source PNG to durable path and rerun bound renderer/checks; this is not an independent review.',
+})
+console.log(JSON.stringify({
+  status: 'authored', spec: path.join(output, 'spec.json'),
+  sha256: digest(path.join(output, 'spec.json')), rootX, objects: objects.length,
+  assertions: assertions.length, imageReads: 1,
+}, null, 2))

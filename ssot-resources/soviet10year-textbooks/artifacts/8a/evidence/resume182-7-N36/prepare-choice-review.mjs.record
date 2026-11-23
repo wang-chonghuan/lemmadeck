@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N36`;
+const author = `${base}/choices-author-FIRST`;
+const output = `${base}/choices-final`;
+const figures = `${root}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c6-s1-n36/choice-set/figures`;
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const record = load(`${author}/author-artifacts-FIRST.record0444.json`);
+assert.equal(record.structural_status, 'mechanical_checks_succeeded');
+assert.equal(record.counts.structural_validator_invocations, 1);
+assert.equal(record.final_deterministic_render_status, 'pass');
+const draft = load(`${author}/draft-FIRST.json`);
+assert.equal(draft.questions.length, 7);
+assert.equal(draft.questions.reduce((n, q) => n + q.view.options.length, 0), 29);
+for (const figure of draft.new_figures) {
+  const source = path.resolve(root, figure.path);
+  assert.ok(source.startsWith(`${author}/new_figures/`));
+  assert.equal(sha(source), figure.sha256);
+  const specFile = `${author}/new_figures/${figure.id}.spec.json`;
+  const render = load(`${author}/new_figures/${figure.id}.render.json`);
+  assert.equal(render.status, 'pass');
+  assert.ok(!fs.readFileSync(specFile, 'utf8').includes('.tmp/'));
+  const target = `${figures}/${figure.id}.svg`;
+  assert.ok(!fs.existsSync(target));
+  fs.mkdirSync(figures, { recursive: true });
+  fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL);
+  fs.copyFileSync(specFile, `${figures}/${figure.id}.spec.json`, fs.constants.COPYFILE_EXCL);
+  render.spec.path = path.relative(root, `${figures}/${figure.id}.spec.json`);
+  render.output.svg.path = path.relative(root, target);
+  fs.writeFileSync(`${figures}/${figure.id}.render.json`,
+    `${JSON.stringify(render, null, 2)}\n`, { flag: 'wx' });
+  figure.path = path.relative(root, target);
+}
+fs.copyFileSync(`${author}/seed-FIRST.json`, `${output}/seed.json`, fs.constants.COPYFILE_EXCL);
+fs.writeFileSync(`${output}/draft.json`, `${JSON.stringify(draft, null, 2)}\n`, { flag: 'wx' });
+const view = draft.questions.map(question => question.view);
+assert.deepEqual(view, load(`${author}/learner-view-FIRST.json`));
+fs.writeFileSync(`${output}/view.json`, `${JSON.stringify(view, null, 2)}\n`, { flag: 'wx' });
+for (const name of ['seed.json', 'draft.json', 'view.json']) {
+  fs.chmodSync(`${output}/${name}`, 0o444);
+}
+const digest = spawnSync('python3', [
+  `${root}/.agents/skills/ld-s10y-choice/scripts/prepare.py`, 'digest', `${output}/draft.json`,
+], { cwd: root, encoding: 'utf8' });
+assert.equal(digest.status, 0, digest.stderr);
+fs.writeFileSync(`${output}/path-binding.record`, `${JSON.stringify({
+  status: 'CANDIDATE_PATHS_SETTLED_REVIEW_PENDING',
+  originalDraft: { path: `${author}/draft-FIRST.json`, sha256: sha(`${author}/draft-FIRST.json`) },
+  finalDraft: { path: `${output}/draft.json`, sha256: sha(`${output}/draft.json`),
+    canonicalSha256: digest.stdout.trim() },
+  view: { path: `${output}/view.json`, sha256: sha(`${output}/view.json`) },
+  geometryOrOptionsChanged: false, specAndSvgChanged: false,
+  newFigureReviewPending: true,
+}, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ draft: `${output}/draft.json`,
+  canonicalSha256: digest.stdout.trim(), view: `${output}/view.json`,
+  viewSha256: sha(`${output}/view.json`), figures: draft.new_figures }));

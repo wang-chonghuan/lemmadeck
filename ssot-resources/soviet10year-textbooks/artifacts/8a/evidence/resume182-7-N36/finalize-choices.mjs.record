@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = `${root}/.tmp/ld-s10y-lesson/resume182-7-N36`;
+const directory = `${base}/choices-final`;
+const evidence = `${root}/ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-7-N36`;
+const lesson = `${root}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c6-s1-n36`;
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const binding = file => ({ path: file,
+  sha256: createHash('sha256').update(fs.readFileSync(file)).digest('hex') });
+const reviewPath = `${base}/choice-review-FIRST/review.json`;
+const review = load(reviewPath);
+assert.equal(review.outcome, 'pass');
+assert.equal(review.reviewer.kind, 'independent_agent');
+const draft = load(`${directory}/draft.json`);
+const settled = load(`${directory}/path-binding.record`);
+assert.equal(binding(`${directory}/draft.json`).sha256, settled.finalDraft.sha256);
+assert.equal(review.draft_sha256, settled.finalDraft.canonicalSha256);
+assert.equal(review.seed_sha256, draft.seed_sha256);
+assert.ok(!fs.existsSync(`${directory}/review.json`));
+fs.copyFileSync(reviewPath, `${directory}/review.json`, fs.constants.COPYFILE_EXCL);
+fs.chmodSync(`${directory}/review.json`, 0o444);
+fs.mkdirSync(`${evidence}/choice-review-FIRST`, { recursive: true });
+fs.copyFileSync(reviewPath, `${evidence}/choice-review-FIRST/review.json.record`,
+  fs.constants.COPYFILE_EXCL);
+const commands = [];
+for (const figure of draft.new_figures) {
+  const check = review.new_figure_reviews.find(item => item.figure_id === figure.id);
+  assert.equal(check.verdict, 'pass');
+  assert.equal(check.reviewer.kind, 'independent_agent');
+  assert.equal(check.asset_sha256, figure.sha256);
+  assert.equal(binding(path.resolve(root, figure.path)).sha256, figure.sha256);
+  const figures = `${lesson}/choice-set/figures`;
+  const argv = [
+    `${root}/.agents/skills/ld-s10y-image/scripts/record_review.py`,
+    '--spec', `${figures}/${figure.id}.spec.json`,
+    '--render', `${figures}/${figure.id}.render.json`,
+    '--output', `${figures}/${figure.id}.review.json`,
+    '--status', 'pass', '--notes',
+    `Independent authored-figure review retained at ${path.relative(root, evidence)}/choice-review-FIRST/review.json.record SHA ${binding(reviewPath).sha256}. ${check.evidence}`,
+  ];
+  const result = spawnSync('python3', argv, { cwd: root, encoding: 'utf8' });
+  commands.push({ command: 'python3', argv, exitCode: result.status,
+    stdout: result.stdout, stderr: result.stderr });
+  assert.equal(result.status, 0, result.stderr);
+}
+const command = `${root}/.claude/skills/ld-s10y-lesson/.venv/bin/python`;
+const argv = [
+  `${root}/.claude/skills/ld-s10y-lesson/tools/retain_choices.py`,
+  '--repo', root, '--book', '8a', '--lesson', 'alg8-c6-s1-n36',
+  '--source', directory,
+];
+const result = spawnSync(command, argv, { cwd: root, encoding: 'utf8' });
+commands.push({ command, argv, exitCode: result.status,
+  stdout: result.stdout, stderr: result.stderr });
+const record = {
+  status: result.status === 0 ? 'PASS' : 'FAIL',
+  lesson: 'alg8-c6-s1-n36', edition: 'modern-us-neutral',
+  questions: draft.questions.length,
+  options: draft.questions.reduce((n, question) => n + question.view.options.length, 0),
+  newFigures: draft.new_figures.length,
+  review: binding(reviewPath), commands,
+  originalCheckerWithReviewExecutedByRetention: true,
+  duplicatePreliminaryValidation: false,
+  sourceOrMathematicalReviewRepeated: false,
+  databaseWrites: 0,
+};
+fs.writeFileSync(`${base}/finalization.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+assert.equal(result.status, 0, result.stderr || result.stdout);
+console.log(JSON.stringify({ status: 'PASS', questions: record.questions,
+  options: record.options, retained: `${lesson}/choice-set`, stdout: result.stdout.trim() }));
