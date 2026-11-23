@@ -1,0 +1,33 @@
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+
+const cwd = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+if (process.cwd() !== cwd) throw new Error('wrong cwd')
+const own = '.tmp/ld-s10y-lesson/resume182-7-C5Ex/choices-author-FIRST'
+const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const paths = ['seed-FIRST.json', 'draft-FIRST.json', 'learner-view-FIRST.json', 'author-source-solutions-FIRST.record0444']
+for (const p of paths) {
+  if ((fs.statSync(`${own}/${p}`).mode & 0o777) !== 0o444) throw new Error(`${p} must be frozen`)
+}
+const argv = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', `${own}/seed-FIRST.json`, '--draft', `${own}/draft-FIRST.json`,
+]
+const r = spawnSync('python3', argv, { cwd, encoding: 'utf8' })
+for (const [stream, data] of [['stdout', r.stdout || ''], ['stderr', r.stderr || '']]) {
+  fs.writeFileSync(`${own}/structural-check-FIRST.${stream}.txt`, data, { flag:'wx' })
+}
+const receipt = {
+  cwd, command:'python3', argv, exitCode:r.status, signal:r.signal, spawn_error:r.error?.message || null,
+  streams:{
+    stdout:{ path:`structural-check-FIRST.stdout.txt`, sha256:sha(`${own}/structural-check-FIRST.stdout.txt`) },
+    stderr:{ path:`structural-check-FIRST.stderr.txt`, sha256:sha(`${own}/structural-check-FIRST.stderr.txt`) },
+  },
+  bound_inputs:paths.map(p=>({path:p,file_sha256:sha(`${own}/${p}`)})),
+  outcome:r.status === 0 ? 'mechanical structural/input checks passed; semantic review pending' : 'actual structural/input failure, not semantic approval',
+  review:'not invoked; sole independent parent reviewer pending',
+}
+fs.writeFileSync(`${own}/structural-check-FIRST.execution.json`, JSON.stringify(receipt,null,2)+'\n', {flag:'wx'})
+console.log(JSON.stringify({exitCode:r.status,stdout:r.stdout,stderr:r.stderr,receipt:`${own}/structural-check-FIRST.execution.json`},null,2))
+process.exitCode = r.status ?? 2

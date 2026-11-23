@@ -1,0 +1,597 @@
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+if (process.cwd() !== root) throw new Error('wrong cwd')
+const own = '.tmp/ld-s10y-lesson/resume182-7-C5Ex/choices-author-FIRST'
+const R = String.raw
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const canonicalHash = v => {
+  const stable = x => Array.isArray(x) ? x.map(stable) : x && typeof x === 'object'
+    ? Object.fromEntries(Object.keys(x).sort().map(k => [k, stable(x[k])])) : x
+  // Python's ensure_ascii=True is the authoritative canonical digest.
+  const r = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py', 'digest', v], { cwd: root, encoding: 'utf8' })
+  if (r.status) throw new Error(r.stderr)
+  return r.stdout.trim()
+}
+const seed = JSON.parse(fs.readFileSync(`${own}/seed-FIRST.json`, 'utf8'))
+const recordPath = `${own}/author-source-solutions-FIRST.record0444`
+if ((fs.statSync(recordPath).mode & 0o777) !== 0o444) throw new Error('solve record not frozen')
+const solving = fs.readFileSync(recordPath, 'utf8')
+const solutions = Object.fromEntries([...solving.matchAll(/^(\d{3})\. ([\s\S]*?)(?=^\d{3}\. |^Freeze boundary:|$(?![\s\S]))/gm)].map(m => [m[1], m[2].trim()]))
+if (Object.keys(solutions).length !== 43) throw new Error('need all 43 independently solved sources')
+const seedHash = canonicalHash(`${own}/seed-FIRST.json`)
+const observed = JSON.parse(fs.readFileSync(`${own}/actual-image-count-FIRST.json`, 'utf8'))
+if (observed.actual_payload_count !== 8) throw new Error('expected one source, one modern, six new previews')
+const observations = Object.fromEntries(observed.loads.filter(x => x.figure_id).map(x => [x.figure_id, x.observation]))
+const G = 'fig-choice-growth-FIRST'
+const D = 'fig-choice-decay-FIRST'
+const X = 'fig-choice-intersections-FIRST'
+const F = 'fig-choice-floor-functions-FIRST'
+const P = 'fig-choice-floor-regions-FIRST'
+const T = 'fig-choice-decimal-graph-FIRST'
+const floor = R`约定 $[t]$ 是不大于实数 $t$ 的最大整数，$\{t\}=t-[t]$。`
+const recognition = '选择只能显示识别与判断，不能证明学习者能独立写出推导或结果。'
+const plotting = '以可见完成图的识别代替亲自绘图；不能检验取点、描线、阴影及端点标记的生产能力。'
+const floorCondition = '本课正文为空；地板/小数部分定义是显式新增条件，不冒充已给出的原课定义。'
+const C = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+const I = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+const questions = [], questionUnits = []
+function q(id, numbers, mode, stem, opts, reason, figures = [], losses = [], units = null) {
+  const nums = numbers.map(String)
+  const allFigures = [...new Set([...figures, ...nums.flatMap(n => seed.exercises.find(e => e.number === n).figure_ids)])]
+  const options = opts.map((o, i) => ({ id: String.fromCharCode(65 + i), text: o.text, figure_ids: [] }))
+  const correct = opts.flatMap((o, i) => o.truth === 'correct' ? [options[i].id] : [])
+  if ((mode === 'single' && correct.length !== 1) || !correct.length) throw new Error(`bad native mode: ${id}`)
+  questions.push({
+    id, source_numbers: nums,
+    view: { mode, stem, figure_ids: figures, options },
+    intent: {
+      task: nums.map(n => `${n}: ${solutions[n].split('\n')[0]}`).join(' '),
+      source_solution: nums.map(n => `${n}. ${solutions[n]}`).join('\n\n'),
+      unit_reason: reason, concept_blocks: [], limitations: [recognition, ...losses],
+      figure_observations: allFigures.map(figure_id => {
+        if (!observations[figure_id]) throw new Error(`actual observation missing ${figure_id}`)
+        return { figure_id, observation: observations[figure_id] }
+      }),
+    },
+    key: {
+      correct,
+      rationales: opts.map((o, i) => ({ option_id: options[i].id, truth: o.truth, derivation: o.derivation, misconception: o.misconception })),
+    },
+  })
+  questionUnits.push({ question_id: id, source_units: units || Object.fromEntries(nums.map(n => [n, sourceUnits[n]])) })
+}
+
+const sourceUnits = {
+  682: ['a','b','c'], 683: ['a','b','c','d','e','f','g','h'],
+  684: ['a','b','c','d','e'], 685: ['a','b','c','d','e','f'],
+  686: ['a','b','c','d'], 687: ['a','b'],
+  688: ['sketch-1.5','sketch-2','equality','less','greater'],
+  689: ['a-equality','a-greater','a-less','b-equality','b-greater','b-less'],
+  690: ['positive-x','negative-x'], 691: ['sketch-a','sketch-b'],
+  692: ['sketch-half','sketch-third','place-.4'],
+  693: ['increasing-sketch-exp','increasing-sketch-line','decreasing-sketch-exp','decreasing-sketch-line','increasing-order','decreasing-order'],
+  694: ['a','b','c'], 695: ['a','b','c','d'], 696: ['a','b','c','d'], 697: ['a','b','c','d'],
+  698: ['a','b'], 699: ['graph-solve'],
+  700: ['a','b','c','d','e','f'], 701: ['a','b','c','d','e','f'], 702: ['a','b','c','d'],
+  703: ['a','b','c','d','e','f','g','h','i','j'], 704: ['a','b','c'], 705: ['a','b','c'], 706: ['a','b','c','d'],
+  707: ['forward-proof','reverse-proof'], 708: ['30.2','.49','-2/3','-10.8'],
+  709: ['105','-7.8','-21-2/7'], 710: ['a','b','c','d'],
+  711: ['sqrt2','negative-sqrt2','sqrt13','negative-sqrt13','sqrt47','negative-sqrt47'],
+  712: ['a','b','c','d'], 713: ['a-examples','b-examples','c-examples'],
+  714: ['a','b'], 715: ['a','b','c','d','e','f'], 716: ['a-counterexample','b-counterexample'],
+  717: ['product-validity-and-justification'], 718: ['sum-validity-and-justification'],
+  719: ['plot-a','plot-b','plot-c'], 720: ['plane-a','plane-b','plane-c'], 721: ['plot-all-tiles'],
+  722: ['a','b','c','d'], 723: ['a','b','c','d'], 724: ['a','b','c','d'],
+}
+
+q('q682-order', [682], 'multiple', R`哪些比较成立？`, [
+  C(R`$2^{6/7}<2^{7/8}$`, '6/7<7/8，底数2递增。'),
+  I(R`$2^{\sqrt3}>2^{\sqrt7}$`, 'sqrt3<sqrt7，故关系应为小于。', '把根号内较小的数当作产生较大的指数，再按递增性比较。'),
+  C(R`$2^{-\sqrt5}<2^{-\sqrt3}$`, '-sqrt5<-sqrt3，递增性不因指数为负而改变。'),
+  C(R`$2^{\sqrt3}<2^{\sqrt7}$`, '正平方根保序且底数2>1。'),
+  I(R`$2^{6/7}=2^{7/8}$`, '6*8=48而7*7=49，指数不相等。', '只看两个分数的分子都比分母少1，误认为分数相同。'),
+], '三组指数的有序性组成同一比较任务；多选保留分数、根式和负指数三个关键区别。')
+
+q('q683-constants', [683], 'single', R`把 $2^{-100},2^{0.0001},2^{-\sqrt3},2^{\sqrt5},2^{2-\sqrt2},2^{1-\sqrt3}$ 依次与 $1$ 比较。哪一列关系完全正确？`, [
+  I(R`$<,\ >,\ <,\ >,\ <,\ >$`, '末两指数实际一正一负。', '把2-sqrt2与1-sqrt3的符号误由根号项的大小单独决定。'),
+  C(R`$<,\ >,\ <,\ >,\ >,\ <$`, '六个指数的符号依次负、正、负、正、正、负；与2^0比较。'),
+  I(R`$>,\ >,\ >,\ >,\ >,\ >$`, '负指数产生0与1之间的数。', '从底数2>1错误推出任意指数的幂都>1。'),
+  I(R`$<,\ =,\ <,\ >,\ >,\ <$`, '.0001仍严格大于0。', '把很小但非零的指数四舍五入为0。'),
+], '一个完整符号分类保留全部六项，不把每项改成单独数值点击。', [], [], {683: ['a','b','c','d','e','f']})
+
+q('q683-variable', [683], 'single', R`对任意实数 $x$，哪一项完整描述了 $2^x$ 和 $2^{1-x}$ 与 $1$ 的关系？`, [
+  I(R`$2^x$ 在 $x<0,=0,>0$ 时依次为 $<1,=1,>1$；$2^{1-x}$ 在 $x<1,=1,>1$ 时也依次为 $<1,=1,>1$。`, '第二函数随x递减，其第一和第三关系颠倒。', '识别底数2递增后，忽略指数1-x随x递减。'),
+  I(R`两式都在 $x<0,=0,>0$ 时依次为 $<1,=1,>1$。`, '第二式等于1的阈值是1而非0。', '套用2^x的三分规则而不解1-x=0。'),
+  C(R`$2^x$ 在 $x<0,=0,>0$ 时依次为 $<1,=1,>1$；$2^{1-x}$ 在 $x<1,=1,>1$ 时依次为 $>1,=1,<1$。`, '分别检查x和1-x与0的关系，含全部等号边界。'),
+  I(R`$2^x>1$ 且 $2^{1-x}>1$ 对所有 $x$ 都成立。`, 'x=-1使第一式<1，x=2使第二式<1。', '把底数大于1误当成幂大于1的充分条件，省略指数范围。'),
+], '两个可变指数各自有三个分支，使用完整条件陈述避免默默给x赋值。', [], [], {683: ['g','h']})
+
+q('q684-images', [684], 'multiple', R`令 $f(x)=2^x$。下列关于区间像的陈述，哪些正确？`, [
+  C(R`$f((0,+\infty))=(1,+\infty)$，$f((-\infty,0))=(0,1)$。`, '严格递增，零点值1和水平渐近值0均未取得。'),
+  C(R`$f((1,5))=(2,32)$。`, '端点2和32均不取得。'),
+  I(R`$f([-1,1])=[-2,2]$。`, '2^-1=1/2而非-2。', '将负指数看成把函数值取负。'),
+  C(R`$f([-1,1])=[1/2,2]$，$f([0,1])=[1,2]$。`, '有限闭区间的端点值都取得，且函数递增。'),
+  I(R`$f((-\infty,0))=[0,1)$。`, '2^x永不为0。', '把趋于0当成在某个有限x达到0。'),
+], '按无穷开区间、有限开区间和闭区间组织像集合，不拆成五个端点填空。')
+
+q('q685-inverse', [685], 'single', R`方程 $2^x=32,\ 2^x=1/64,\ 2^x=0.5,\ 2^x=0.25,\ 2^x=0.125,\ 2^x=128$ 的根，按这个次序组成哪一列？`, [
+  I(R`$(5,6,1,2,3,7)$`, '小于1的右端应对应负指数。', '对倒数或小数只数2的因子个数，丢掉倒数的负号。'),
+  I(R`$(5,-6,-1,-4,-8,7)$`, '.25=2^-2，.125=2^-3。', '把.25和.125取倒数后所得4和8直接当成负指数。'),
+  C(R`$(5,-6,-1,-2,-3,7)$`, '逐项统一为2的整数次幂，严格递增确保唯一。'),
+  I(R`$(32,-64,-0.5,-0.25,-0.125,128)$`, '指数不是右端本身。', '用大于1保持原数、小于1取负的规则代替指数反演。'),
+], '同一个逆映射的完整输出列，包括倒数和有限小数；完整结果识别替代独立求解，未按六个原答槽拆题。')
+
+q('q686-bounds', [686], 'multiple', R`哪些解集正确？`, [
+  C(R`$2^x\ge256$ 的解集是 $[8,+\infty)$。`, '256=2^8，保留弱不等号。'),
+  C(R`$2^x\le0.25$ 的解集是 $(-\infty,-2]$。`, '.25=2^-2，底数2递增。'),
+  I(R`$2^x>1/128$ 的解集是 $(-\infty,-7)$。`, '指数应大于-7。', '见右端是倒数便反转不等号，混淆小数值和小于1的底数。'),
+  C(R`$2^x>1/128$ 的解集是 $(-7,+\infty)$。`, '1/128=2^-7，严格保序。'),
+  C(R`$2^x<2$ 的解集是 $(-\infty,1)$。`, '2=2^1，等号不属于严格不等式。'),
+  I(R`$2^x<2$ 的解集是 $(-\infty,1]$。`, 'x=1使两端相等。', '求出阈值后照搬闭端点，没有检验原严格符号。'),
+], '解集判断保留方向、负阈值与端点拓扑；多选逐一判断确定数学陈述。')
+
+q('q687-changes', [687], 'single', R`观察图 A 的 $y=2^x$。分别比较 $x:0.5\to1.5$ 与 $1.5\to2.5$，以及 $0.2\to0.7$ 与 $1.2\to1.7$ 的纵向变化量。哪项正确？`, [
+  I('两组都是前一段变化更大。', '同宽区间向右移1，函数增量乘2。', '认为越靠近y轴图形弯曲越明显就变化越大，忽略纵向高度差。'),
+  C('两组都是后一段变化更大。', 'delta(t,h)=2^t(2^h-1)，两组后段起点均比前段大1。'),
+  I('第一组后段更大，第二组两段相等。', '第二组h=.5也有后段为前段两倍。', '只在整数宽度认识增长，误把半单位宽度当成线性等增量。'),
+  I('两组的两段变化量都相等。', '相同横向宽度不保证指数函数的相同纵向增量。', '把函数当作直线，照搬等宽区间等变化量。'),
+], '两组同宽但不同起点的增量形成一个图形比较任务；必须看实际图，不改成单纯终值比较。', [G], ['读取成图替代书面说明；图中0.2等位置需在网格间估计。'])
+
+q('q688-crossing', [688], 'multiple', R`图 B 在同一坐标系画出 $y=1.5^x$ 与 $y=2^x$。根据相互位置，哪些结论正确？`, [
+  C(R`$1.5^x=2^x$ 的解集是 $\{0\}$。`, '比值(.75)^x=1只在x=0发生，交点(0,1)。'),
+  I(R`$1.5^x<2^x$ 的解集是所有实数。`, '负x时1.5^x反而更高。', '把1.5<2的顺序无条件延伸到负指数。'),
+  C(R`$1.5^x<2^x$ 的解集是 $(0,+\infty)$。`, '右半平面2^x在上。'),
+  C(R`$1.5^x>2^x$ 的解集是 $(-\infty,0)$。`, '左半平面1.5^x在上。'),
+  I(R`两个图像还会在某个 $x>0$ 处相交。`, '比值(.75)^x对正x严格小于1。', '把两条弯曲上升曲线的接近误当成还会交换上下顺序。'),
+], '交点及其两侧的相对位置是一项完整图解任务，多选保持三个命题的原生真值。', [G], [plotting])
+
+q('q689-partition', [689], 'single', R`分别考察 $(15^x,8^x)$ 与 $(0.9^x,0.8^x)$。哪一项给出两组都适用的完整解集划分？每组关系均按“前者 $=$、$>$、$<$ 后者”的次序写出。`, [
+  I(R`两组均为 $\{0\},\ (-\infty,0),\ (0,+\infty)$。`, '两组前后底数之比均>1。', '把比较指数幂统一套为递减关系，未计算两底数的比。'),
+  I(R`第一组为 $\{0\},(0,+\infty),(-\infty,0)$；第二组为 $\{0\},(-\infty,0),(0,+\infty)$。`, '.9^x/.8^x=(1.125)^x仍是递增的比值。', '因两个底数都<1，误把底数间比较的关系反转。'),
+  C(R`两组均为 $\{0\},\ (0,+\infty),\ (-\infty,0)$。`, '比值分别(15/8)^x及(9/8)^x，均与1按x符号比较。'),
+  I(R`两组均为 $\varnothing,\ \mathbb R,\ \varnothing$。`, 'x=0相等，负指数时次序颠倒。', '仅比较15>8及.9>.8而省略零和负指数。'),
+], '两组三关系的共同结构是比值底数大于1，不因原底数是否小于1机械拆分。')
+
+q('q690-source-graph', [690], 'multiple', R`观察图中的三条曲线。哪些关于它们相互位置的陈述成立？`, [
+  C(R`当 $x>0$ 时，$0.25^x<(1/3)^x<0.8^x$。`, '图的右侧从低到高对应这三个底数。'),
+  C(R`当 $x<0$ 时，$0.25^x>(1/3)^x>0.8^x$。`, '图的左侧对应次序反转。'),
+  I(R`当 $x<0$ 时，$0.8^x$ 仍在另外两条曲线上方。`, '负x时最接近1的底数曲线最低。', '把右半平面的排序不加改变地平移到左半平面。'),
+  I(R`三条曲线在 $y=0$ 的点相交。`, '共同交点是(0,1)，所有函数值为正。', '将x=0误读成y=0，把指数零次幂当成0。'),
+], '复用实际图76的两侧排序；不再审图，也不以函数表达式替代观察任务。', ['fig-76'])
+
+q('q691-family', [691], 'multiple', R`已知 $0<a<b<1$。图 E 的两条外侧曲线取 $a=1/3,\ b=1/2$ 作为示意实例；数值不是对一般 $a,b$ 的附加限制。哪些图形性质对所有符合原条件的 $a,b$ 都成立？`, [
+  C(R`两条曲线均下降，且均经过 $(0,1)$。`, '0<a,b<1时幂随x递减，零次幂均为1。'),
+  C(R`$x>0$ 时 $a^x$ 在 $b^x$ 下方；$x<0$ 时在上方。`, 'a/b<1，按x符号比较比值。'),
+  I(R`两条曲线均与 $x$ 轴有交点。`, '正底数的实数幂始终>0。', '把靠近x轴的渐近形状误当成最终相交。'),
+  I(R`因为 $a<b$，所以 $a^x$ 在所有实数 $x$ 处都低于 $b^x$。`, '在负x处顺序相反，x=0相等。', '只比较底数，忽略负指数与零次幂。'),
+], '完整曲线族的形状与互序共同识别，而非把任意a,b偷换成示意值。', [D], [plotting, '实例有固定数值锚，但问题保留所有0<a<b<1的量化；不能从成图测出一般a,b的具体陡峭程度。'])
+
+q('q692-middle', [692], 'single', R`图 E 给出了 $(1/2)^x,(1/3)^x,0.4^x$。哪一项同时正确描述 $0.4^x$ 的位置和三条曲线的共同点？`, [
+  I(R`$x>0$ 时 $0.4^x$ 最高，$x<0$ 时最低；共同点为 $(0,1)$。`, '.4在1/3与1/2之间，两个半平面都应在中间。', '把.4与1/3正确比较后漏掉.4<1/2，误排到最外侧。'),
+  I(R`$x>0$ 时 $(1/2)^x<0.4^x<(1/3)^x$，$x<0$ 时相反；共同点为 $(0,1)$。`, '正指数的底数顺序被倒置。', '从三函数都递减，错误推出同一正x处底数顺序也反转。'),
+  C(R`$x>0$ 时 $(1/3)^x<0.4^x<(1/2)^x$，$x<0$ 时顺序相反；共同点为 $(0,1)$。`, '1/3<.4<1/2，负指数将三者次序颠倒。'),
+  I(R`$0.4^x$ 在每个 $x$ 处都是另外两条曲线高度的算术平均；共同点为 $(0,1)$。`, 'x=1时(.5+1/3)/2=5/12，不等于.4。', '把底数居中近似误当成幂值严格算术居中。'),
+], '三条图像的整体配置，包括共点与两侧次序；不把“中间曲线”简化成无图的数值排序。', [D], [plotting])
+
+q('q693-constant-crossing', [693], 'single', R`图 C、D 分别用 $a=2$ 和 $a=1/2$ 展示 $y=a^x$ 与 $y=a$；这里只是两种底数范围的实例。对于一般 $a>1$ 或 $0<a<1$，哪一项正确？`, [
+  C(R`均在 $x=1$ 相交；$x<1$ 时，$a>1$ 的指数曲线低于直线，而 $0<a<1$ 的指数曲线高于直线；$x>1$ 时各自顺序反转。`, 'a^x=a^1，按两种单调性比较x和1。'),
+  I(R`均在 $x=0$ 相交；$x<0$ 时，$a>1$ 的指数曲线低于直线，而 $0<a<1$ 的指数曲线高于直线；$x>0$ 时顺序反转。`, 'a^0=1不是a，因a!=1。', '把指数曲线与y=1的交点记忆误用于y=a。'),
+  I(R`均在 $x=1$ 相交；不论底数范围，指数曲线在 $x<1$ 时都低于直线，在 $x>1$ 时都高于直线。`, '底数<1时递减，必须反转。', '把a>1的比较规则照搬给0<a<1。'),
+  I(R`底数 $a>1$ 时不相交；底数 $0<a<1$ 时在 $x=0$ 相交。`, '两种范围均有a^1=a。', '将y轴处a^0=1与常数a大小比较，错误当成所有x的结论。'),
+], '用两个实际图支撑两种底数范围的同一阈值比较，四个绘图目标和两个互序目标共同保留。', [G], [plotting, '图形参数固定为代表值，但选项显式量化一般a；不把图的具体高度推广为所有a。'])
+
+q('q694-reciprocal', [694], 'multiple', R`哪些比较成立？`, [
+  C(R`$0.04^{-5}<25^6$。`, '.04=1/25，所以左侧25^5<25^6。'),
+  C(R`$(2/3)^{-6}=1.5^6$。`, '倒数3/2=1.5，取六次幂。'),
+  I(R`$0.5^{-11}<0$。`, '正底数任意实指数的值为正。', '把负指数直接当作负号放到幂值前。'),
+  C(R`$0.5^{-11}=2^{11}$。`, '1/.5=2，倒数幂规则。'),
+  I(R`$0.04^{-5}=25^6$。`, '倒数变底数不改变指数的绝对值5。', '倒数转换后无依据把指数5增加为6。'),
+], '三个倒数幂比较共同考查底数转换，不逐个提示转换后的答案。')
+
+q('q695-monotonicity', [695], 'single', R`以下四种情况各自独立，分别给定 $\pi^k>\pi^m,\ (\pi/3)^k<(\pi/3)^m,\ (\sqrt3-\sqrt2)^k>(\sqrt3-\sqrt2)^m,\ (\sqrt7-1)^k<(\sqrt7-1)^m$。按次序比较各自的 $k$ 与 $m$，哪一项正确？`, [
+  I(R`$>,\ >,\ <,\ <$`, 'pi/3>1，第二个不等式保持小于。', '把pi/3当成小于1的真分数，只看分母3。'),
+  C(R`$>,\ <,\ <,\ <$`, '底数依次>1、>1、介于0与1、>1；只有第三个反转。'),
+  I(R`$>,\ <,\ >,\ <$`, 'sqrt3-sqrt2在0与1之间。', '把含根号的正底数都按大于1处理。'),
+  I(R`$<,\ >,\ <,\ >$`, '第1、2、4底数>1，应保序。', '所有底数无差别地应用递减函数规则。'),
+], '完整底数分类后的推断，保留pi/3和根式差的实质判定。')
+
+q('q696-one', [696], 'single', R`$(3/7)^\pi,\ \pi^{-\pi},\ (\sqrt{15}/4)^{-1/3},\ (\sqrt3-\sqrt2)^{-3/2}$ 依次与 $1$ 比较，哪一列正确？`, [
+  I(R`$<,\ <,\ <,\ <$`, '末两项是小于1的底数取负幂，应大于1。', '先判定底数小于1就固定幂小于1，未处理负指数。'),
+  I(R`$<,\ >,\ >,\ >$`, 'pi>1且指数-pi<0，因此第二项<1。', '把负指数只当成取绝对值，保留底数大于1后的大于关系。'),
+  C(R`$<,\ <,\ >,\ >$`, '逐项用底数范围与指数符号组合判定。'),
+  I(R`$>,\ <,\ >,\ <$`, '第一底数<1取正幂<1；第四底数<1取负幂>1。', '只按指数正负直接决定大小，跳过底数范围。'),
+], '统一比较到1的结构，完整列保留每种底数与指数符号组合。')
+
+q('q697-signs', [697], 'multiple', R`每个等式中的 $k$ 分别求符号，不把不同等式的 $k$ 视为同一个数。哪些结论成立？`, [
+  C(R`若 $5^k=10$，则 $k>0$；若 $7^k=1.003$，也有 $k>0$。`, '两底数>1、右侧>1，故指数均为正。'),
+  C(R`若 $0.3^k=100$，则 $k<0$；若 $0.4^k=18$，也有 $k<0$。`, '两底数<1，取得大于1的值需要负指数。'),
+  I(R`若 $7^k=1.003$，则 $k=0$。`, '7^0=1不等于1.003。', '把接近1的右侧舍入成1再求指数。'),
+  I(R`若 $0.3^k=100$，则 $k>0$。`, '正幂(.3)^k<1不能等于100。', '仅见右端100>1就推断指数正，不区分底数范围。'),
+], '把两类底数组织成符号判断，不要求不必要的对数近似。')
+
+q('q698-increasing', [698], 'single', R`观察交点图 A。用图解法求 $2^x=x+1$ 的根的集合。`, [
+  I(R`$\{0\}$`, 'x=1也是交点横坐标。', '只识别y轴上的共同点，未检查右侧第二个交点。'),
+  C(R`$\{0,1\}$`, '两个交点(0,1),(1,2)，严格凸性保证没有第三根。'),
+  I(R`$\{-1,0\}$`, 'x=-1时左端1/2而右端0。', '将直线与x轴的交点也误当成与指数曲线的交点。'),
+  I(R`$[0,1]$`, '区间内部例如x=.5两端不等。', '把两条曲线间封闭区域的横向投影当成等式根集合。'),
+], '两个交点作为一个完整根集合，避免把交点拆成答槽。', [X], ['选择有限成图读出的根集，不展示学习者独立论证全实轴无其他交点的能力。'], {698:['a']})
+
+q('q698-decreasing', [698], 'single', R`观察交点图 B。用图解法求 $0.3^x=x+1$ 的根的集合。`, [
+  I(R`$\{0,1\}$`, 'x=1时.3!=2。', '照搬底数2与同一直线的两个交点，忽略递减形状。'),
+  I(R`$\{-1\}$`, 'x=-1时左端10/3，右端0。', '把直线的x截距当成两图交点。'),
+  C(R`$\{0\}$`, '递减曲线与递增直线最多相交一次，零点验证成立。'),
+  I(R`$\varnothing$`, 'x=0时两边都为1。', '见一升一降误以为无交点，未检查共同点。'),
+], '与同一直线但不同单调性的交点任务独立成立，保留实际图解路线。', [X], ['不能以有限图窗代替独立的全局唯一性书面论证。'], {698:['b']})
+
+q('q699-near-miss', [699], 'single', R`图 C、D 展示 $y=2^x$ 与 $y=x^2-2$ 的负、正两侧视窗。用图解法估计方程 $2^x=x^2-2$ 的根。下面哪项与图一致？`, [
+  I(R`有两个根，约为 $-1.5$ 和 $3.2$。`, '正侧在3.2附近靠近但不相交，差值仍为正。', '把两曲线距离最小处误当成相交点。'),
+  C(R`只有一个根，位于 $(-1.6,-1.5)$；正侧近距离处不是交点。`, '唯一负根约-1.53163；正侧局部最小差值>0。'),
+  I(R`只有一个根，位于 $(1.5,1.6)$。`, '负侧交点不能漏掉负号；正侧没有对应交点。', '读取交点到y轴的距离却丢掉横坐标符号。'),
+  I(R`没有实根。`, '负侧连续曲线在-2与-1之间互换上下位置。', '只检查正侧近距离窗口，把无正根错误推广到全实轴。'),
+], '负侧交点与正侧近乎相交一起作为完整图解判断，不暗中预设两个根。', [X], ['图解仅给0.1宽的根区间；不能认证全实轴的严格唯一性证明，详见独立源解。'])
+
+q('q700-linear-exponents', [700], 'multiple', R`哪些根的判断正确？各方程独立求解。`, [
+  C(R`$3^x=1/\sqrt[3]{9}$ 的根是 $-2/3$；$7^x=1/\sqrt[5]{7}$ 的根是 $-1/5$。`, '右端分别3^-2/3及7^-1/5。'),
+  C(R`$0.4^x=6\frac14$ 的根是 $-2$；$0.2^x=125$ 的根是 $-3$。`, '25/4=(2/5)^-2，125=5^3=(1/5)^-3。'),
+  C(R`$5^x=((4/5)\cdot1.25)^{10}$ 的根是 $0$。`, '括号为1，右侧1，5^0=1唯一。'),
+  I(R`$3^x=1/\sqrt[3]{9}$ 的根是 $-3/2$。`, '根指数为-2/3。', '把立方根9=3^(2/3)的指数分子分母交换后取负。'),
+  I(R`$0.4^x=6\frac14$ 的根是 $2$。`, '.4^2=.16，并非6.25。', '将右端25/4读为(.4)^2而忽略倒数。'),
+], '倒数根式、有限小数和单位积按数学结构分组，但每个原方程都给出可确定的完整根。', [], [], {700:['a','b','c','d','e']})
+
+q('q700-quadratic', [700], 'single', R`方程 $6^{x^2-1}=1$ 的根的集合是什么？`, [
+  I(R`$\{0\}$`, 'x=0使值1/6。', '把指数中出现x^2就直接置x=0，忘记减1。'),
+  I(R`$\{1\}$`, 'x=-1也满足。', '对x^2=1只取正平方根。'),
+  C(R`$\{-1,1\}$`, '指数必须等于0，x^2=1给两个实根。'),
+  I(R`$\mathbb R$`, 'x=0不满足。', '认为等式右端1能让任意指数消失。'),
+], '非线性指数的完整根集合与其余线性反演独立，保留两个根。', [], [], {700:['f']})
+
+q('q701-sets', [701], 'multiple', R`下列不等式按成对陈述给出解集，哪些整项正确？`, [
+  C(R`$2^x>\sqrt{2^3}$：$x>3/2$；$5^x<\sqrt[3]{25}$：$x<2/3$。`, '统一底数后保序，阈值分别3/2及2/3。'),
+  C(R`$10^x>1/\sqrt{10}$：$x>-1/2$；$0.7^x>2\frac{2}{49}$：$x<-2$。`, '后右端100/49=.7^-2，底数<1故反转。'),
+  C(R`$0.2^x<25$：$x>-2$；$(1/3)^x>\sqrt[3]{1/9}$：$x<2/3$。`, '两底数均<1，分别比较指数与-2及2/3后反向。'),
+  I(R`$10^x>1/\sqrt{10}$：$x>1/2$；$0.7^x>2\frac{2}{49}$：$x<-2$。`, '第一阈值漏了倒数负号。', '把1/sqrt10当成sqrt10对应的指数1/2。'),
+  I(R`$0.2^x<25$：$x<-2$；$(1/3)^x>\sqrt[3]{1/9}$：$x>2/3$。`, '两个底数<1，均须反转原符号。', '化为同底幂后按底数>1的规则保序。'),
+], '成对结果覆盖六个独立不等式，重点比较底数范围、根指数及严格端点，而非每个答槽独立点击。')
+
+q('q702-linear', [702], 'single', R`依次解 $2^{5x}=1/128,\ 0.5^{-2x}=0.125,\ 17^{3x}=1,\ 0.2^{7x}=0.04$。哪一列根完全正确？`, [
+  I(R`$(-7/5,\ 3/2,\ 0,\ 2/7)$`, '第二式应-2x=3。', '化.125为2^-3，却保留.5的指数-2x不作底数转换，得到错号。'),
+  C(R`$(-7/5,\ -3/2,\ 0,\ 2/7)$`, '比较同底指数：5x=-7，-2x=3，3x=0，7x=2。'),
+  I(R`$(-35,\ -6,\ 0,\ 14)$`, '未知指数中的乘数应除掉，不应再乘。', '把5x=-7,-2x=3,7x=2中的系数继续相乘作为x。'),
+  I(R`$(7/5,\ -3/2,\ 1/3,\ 2/7)$`, '第一式倒数需要负指数，第三式右端1对应零指数。', '把倒数的负号丢失，并把1误等同于指数1。'),
+], '同底转换后的完整根列；负底数倒数转换与单位右端都有独立数学意义。')
+
+q('q703-radicals', [703], 'single', R`解 $\sqrt{2^x}=1024$ 与 $(\sqrt{10})^x\cdot0.1=1000$。两根按次序是什么？`, [
+  I(R`$(10,3)$`, '开方和乘.1必须计入指数。', '去掉根号和乘法因子后直接读取1024=2^10与1000=10^3。'),
+  C(R`$(20,8)$`, 'x/2=10；x/2-1=3。'),
+  I(R`$(5,2)$`, '根式给x/2而非2x。', '误将底数或整体平方根转换为指数2x。'),
+  I(R`$(20,6)$`, '第二式需补偿10^-1。', '正确处理根底数，却漏掉乘.1的指数-1。'),
+], '两个根式指数的等价转换一起判断，避免只看右端幂指数。', [], [], {703:['a','b']})
+
+q('q703-compatibility', [703], 'multiple', R`分别考察 $4^{3x-1}=(1/8)^{5-2x}$ 和 $16^{x-0.5}=32^{14-x}$。哪些判断正确？`, [
+  C(R`第一个方程没有实根。`, '第一式统一为2^(6x-2)=2^(6x-15)，常数矛盾。'),
+  I(R`第一个方程对每个实数 $x$ 都成立。`, '两边指数虽同含6x，但常数分别-2及-15。', '消去相同x项后不检查残余常数，误判为恒等式。'),
+  C(R`第二个方程的根的集合为 $\{8\}$。`, '4x-2=70-5x =>9x=72。'),
+  I(R`第二个方程的根的集合为 $\{72\}$。`, '72是9x而非x。', '移项后停止在9x=72，把右端当作根。'),
+], '同底指数可能矛盾或给唯一根，两个结局构成兼容性判断，保留无解任务。', [], [], {703:['c','d']})
+
+q('q703-products', [703], 'multiple', R`下列独立方程的根成对列出，哪些整项正确？`, [
+  C(R`$5^x2^x=0.001$ 的根是 $-3$；$2^x3^x=216$ 的根是 $3$。`, '分别10^x=10^-3、6^x=6^3。'),
+  C(R`$5^{x-1}2^{x-1}=0.001$ 的根是 $-2$；$7^{1-x}4^{1-x}=1/28$ 的根是 $2$。`, '分别x-1=-3、1-x=-1。'),
+  C(R`$(\sqrt{12})^x(\sqrt3)^x=1/6$ 的根是 $-1$；$(\sqrt7)^{x-1}(\sqrt2)^{x-1}=1$ 的根是 $1$。`, '乘积底数分别6及sqrt14；指数分别-1及0。'),
+  I(R`$5^{x-1}2^{x-1}=0.001$ 的根是 $-3$；$7^{1-x}4^{1-x}=1/28$ 的根是 $-1$。`, '这些是指数值，不是x值。', '合底正确后，把x-1与1-x都替换成x，忘记解线性关系。'),
+  I(R`$(\sqrt{12})^x(\sqrt3)^x=1/6$ 的根是 $1$；$(\sqrt7)^{x-1}(\sqrt2)^{x-1}=1$ 的根是 $0$。`, '前者为倒数，后者指数x-1应为0。', '忽略倒数负指数，且把指数为0误读为变量为0。'),
+], '同指数乘积的三个有区别的结构组覆盖六项；每组的整项有确定真值。', [], [], {703:['e','f','g','h','i','j']})
+
+q('q704-product-bounds', [704], 'single', R`$(\sqrt3)^x\cdot3>1/27,\ 27^x3^{1-x}<1/3,\ (1/64)^x\sqrt[3]2>1$ 的解集按次序是哪一项？`, [
+  I(R`$x>-6,\quad x<-1,\quad x<1/18$`, '第一式指数x/2+1>-3，而非x/2>-3。', '把左侧乘3忽略，只解根底数与右侧的比较。'),
+  C(R`$x>-8,\quad x<-1,\quad x<1/18$`, '分别x/2+1>-3；2x+1<-1；-6x+1/3>0。'),
+  I(R`$x>-8,\quad x<-1,\quad x>1/18$`, '除以-6要反号。', '在-6x>-1/3后除负数仍保持大于。'),
+  I(R`$x>-8,\quad x<-1/2,\quad x<1/18$`, '第二式指数是3x+1-x=2x+1。', '漏掉3^{1-x}中常数1，仅比较2x<-1，得到x<-1/2。'),
+], '三种合底不等式的完整解集，第三项保留负系数导致的反向。')
+
+q('q705-roots', [705], 'multiple', R`哪些完整根集正确？`, [
+  C(R`$81^{x-1}=243$ 的根集是 $\{9/4\}$。`, '3^(4x-4)=3^5 =>x=9/4。'),
+  C(R`$36^{2x+3}=216$ 的根集是 $\{-3/4\}$。`, '6^(4x+6)=6^3 =>x=-3/4。'),
+  C(R`$2^{x^2-2x+1}=8^{-1}2^3$ 的根集是 $\{1\}$。`, '右端1，(x-1)^2=0仅一个不同实根。'),
+  I(R`$81^{x-1}=243$ 的根集是 $\{5/4\}$。`, '解的是4(x-1)=5，必须加1。', '求出x-1=5/4后直接记为x。'),
+  I(R`$2^{x^2-2x+1}=8^{-1}2^3$ 的根集是 $\{-1,1\}$。`, '平方的是x-1，而非x。', '把(x-1)^2=0误套为x^2=1的两个根。'),
+], '两线性指数与一个重根结构共同组成根集诊断，强调“不同根”的集合含义。')
+
+q('q706-factor', [706], 'single', R`依次解 $2^x+2^{x+2}=20,\ 3^x+3^{x+1}=12,\ 5^x+5^{x-1}=30,\ 4^{x-1}+4^x+4^{x+1}=84$。哪一列根正确？`, [
+  I(R`$(4,3,5,4)$`, '这些分别是2^x、3^x、5^(x-1)、4^(x-1)的值而非x。', '提公因式后不再反演幂，直接把残余值作为根。'),
+  I(R`$(2,1,1,1)$`, '后两式是x-1=1。', '提取最低次幂后漏掉指数平移+1。'),
+  C(R`$(2,1,2,2)$`, '提公因式系数5、4、6、21，得到指数x=2,1及x-1=1,1。'),
+  I(R`$(10,6,15,28)$`, '加项不能简单除以项数求x。', '把指数幂都当作同一个变量x，两项或三项直接按项数平均右端。'),
+], '四式以提公因式为共同数学行动，一次识别完整解列，不提示中间幂值。')
+
+q('q707-forward-domain', [707], 'multiple', R`这里显式取序列下标 $n=1,2,\ldots$，并把等比定义为存在固定实数 $r$，使 $u_{n+1}=r u_n$；不要求各项非零。关于表示 $u_n=c a^n$ 的论断，哪些成立？`, [
+  C(R`若 $r\ne0$，取 $a=r,\ c=u_1/r$ 就能表示全部项，负公比也适用。`, 'u_n=u1*r^(n-1)=(u1/r)*r^n，整数指数允许负底数。'),
+  C(R`序列 $1,0,0,\ldots$ 满足上述等比定义，但不能用有限实数 $c,a$ 写成 $u_n=c a^n$。`, '第一项非零要求ca=1，因此c,a都非零，第二项ca^2=a也非零，矛盾。'),
+  I(R`所有符合这里定义的序列都能用 $a=0$ 表示。`, 'a=0在正整数下标给全零序列。', '把公比0的第一项也错误写成u1*0^1，抹掉非零首项。'),
+  I(R`只要 $r<0$，在整数下标上就不可能使用 $a=r$。`, '负底数的整数幂可定义，交替符号合法。', '把实指数函数正底数限制未经区分地施加到整数下标序列。'),
+], '对原普遍证明做有实质内容的域和反例判断；新增定义与下标明确可见，不默证收窄的原命题。', [], ['原文N是否含0和等比数列的非零要求未给定；原a方向的无条件证明未完成。', '选择有效映射与反例不能验证独立证明能力。'], {707:['forward-proof']})
+
+q('q707-reverse-domain', [707], 'multiple', R`仍取 $n=1,2,\ldots$，等比采用递推定义 $u_{n+1}=r u_n$。令 $u_n=c a^n$，其中 $a,c$ 为实数。哪些关于定义域与等比性质的判断成立？`, [
+  C(R`若 $a\ne0$，每项有定义，且 $u_{n+1}=a u_n$；即使 $c=0$ 也成立。`, '整数幂及乘法递推恒成立，零序列不用相邻项商。'),
+  I(R`当 $c=0$ 时，可用每个相邻项的商来证明公比是 $a$。`, '0/0没有定义。', '以相邻商的常见公式取代递推定义，却未排除零项。'),
+  C(R`当 $a=0$ 时，正整数下标给出全零序列；若下标还包含 $0$，则须另行处理 $0^0$。`, '正整数次幂0合法，零次幂需明示约定或单独定义首项。'),
+  I(R`负 $a$ 在整数下标上的合法性说明 $c a^x$ 对每个实数 $x$ 也有实数值。`, '如a=-1,x=1/2没有实值。', '从整数幂可定义错误推广到任意实数指数。'),
+], '反方向检查递推、零项和指数域，不把指数函数定义与序列定义混为一谈。', [], ['原文N和等比约定未知；本题仅给显式条件下的结论，未提供原b方向独立书面证明。'], {707:['reverse-proof']})
+
+q('q708-brackets', [708], 'single', R`给 $30.2,\ 0.49,\ -2/3,\ -10.8$ 按次序选择两个连续整数，使每个数严格处于对应两整数之间。哪一项正确？`, [
+  C(R`$(30,31),\ (0,1),\ (-1,0),\ (-11,-10)$`, '对负数仍按数轴从小到大夹住，四数均非整数。'),
+  I(R`$(30,31),\ (0,1),\ (0,1),\ (-10,-9)$`, '两负数不在所列的正侧/向零侧区间。', '直接截去小数或分数部分再取加1，把截断误作下界。'),
+  I(R`$(30,31),\ (-1,0),\ (-1,0),\ (-11,-10)$`, '.49>0不在(-1,0)。', '因为.49<1便错误把区间放在0左侧。'),
+  I(R`$(30,32),\ (0,1),\ (-1,0),\ (-11,-10)$`, '30与32不是连续整数。', '为保证能夹住30.2，扩大右端而未检查连续要求。'),
+], '四个数的连续整数夹逼为一个完整数轴定位结果，不需补充floor约定。')
+
+q('q709-parts', [709], 'multiple', floor + R` 哪些分解同时满足“整数部分 + 小数部分”？`, [
+  C(R`$105=105+0$。`, '整数本身的地板为自身，余数0合法。'),
+  C(R`$-7.8=-8+0.2$。`, '-8<=-7.8<-7，余数.2。'),
+  I(R`$-7.8=-7+(-0.8)$。`, '和虽对，但余数为负且-7>原数。', '向零截断为整数部分，把有符号残差当作小数部分。'),
+  C(R`$-21\frac27=-22+\frac57$。`, '-21 2/7=-(21+2/7)，floor=-22，余数5/7。'),
+  I(R`$-21\frac27=-21+\frac27$。`, '右边是-20 5/7，不等于原数。', '负混合数只给整数21加负号而保留分数为正。'),
+], '完整分解必须同时校验和、floor下界及非负余数；数字分项不是答槽提示。', [], [floorCondition])
+
+q('q710-decompose', [710], 'single', floor + R` 把 $54.1,\ 12.63,\ -0.97,\ -20.15$ 依次写成上述两部分之和，哪一项全部正确？`, [
+  I(R`$54+0.1,\ 12+0.63,\ 0-0.97,\ -20-0.15$`, '后两式余数为负。', '对负输入向零截断，保留负残差。'),
+  C(R`$54+0.1,\ 12+0.63,\ -1+0.03,\ -21+0.85$`, '每个首项是不大于原数的最大整数，余数均在[0,1)。'),
+  I(R`$54+0.1,\ 12+0.63,\ -1+0.97,\ -21+0.15$`, '后两式之和不等于原输入。', 'floor向下正确，但把原负数的小数绝对值照抄为余数。'),
+  I(R`$55-0.9,\ 13-0.37,\ -1+0.03,\ -21+0.85$`, '前两式第一项超过原数，余数为负。', '用最近的上方整数与有符号误差替代地板和非负余数。'),
+], '四项组成一个同时满足两个定义的完整分解列。', [], [floorCondition])
+
+q('q711-root-floors', [711], 'multiple', floor + R` 下列正、负根式的整数部分，哪些整项正确？`, [
+  C(R`$[\sqrt2]=1,\ [-\sqrt2]=-2$。`, '1<sqrt2<2，负数在(-2,-1)。'),
+  C(R`$[\sqrt{13}]=3,\ [-\sqrt{13}]=-4$。`, '9<13<16，故正根在(3,4)。'),
+  I(R`$[\sqrt{47}]=6,\ [-\sqrt{47}]=-6$。`, '36<47<49，负根在(-7,-6)。', '把地板运算当奇函数，直接取正地板的负值。'),
+  C(R`$[\sqrt{47}]=6,\ [-\sqrt{47}]=-7$。`, '正根在(6,7)，负根在(-7,-6)，向下取整。'),
+  I(R`$[\sqrt{13}]=4,\ [-\sqrt{13}]=-4$。`, '正根<4，其floor为3。', '对根式按最近整数四舍五入，误替代向下取整。'),
+], '每对正负根保留floor不是奇函数的区别，覆盖六个原目标。', [], [floorCondition])
+
+q('q712-nesting', [712], 'multiple', floor + R` 对 $\{[17.3]\},\ [\{-25.7\}],\ \{[15]\},\ [\{23\}]$，哪些判断正确？`, [
+  C('四个式子的值都为0。', '依次为{17}、[.3]、{15}、[0]，均0。'),
+  C(R`对每个实数 $t$，$\{[t]\}=0$。`, '[t]是整数，整数的小数部分为0。'),
+  I(R`对每个实数 $t$，$[\{t\}]=1$。`, '{t}在[0,1)，其floor只能为0。', '把不足1的非负余数向上取整。'),
+  I(R`$[\{-25.7\}]=-1$。`, '{-25.7}=.3，不是-.7。', '先向零截断给小数部分-.7，再向下取整得-1。'),
+], '用两种嵌套的定义解释全部四个式子，不把零答案改造成四次重复点击。', [], [floorCondition])
+
+q('q713-small-witness', [713], 'multiple', floor + R` 哪些 $a$ 值满足 $\{a\}<0.15$？`, [
+  C(R`$a=-1$`, '整数的余数0<.15。'),
+  I(R`$a=0.15$`, '等于阈值而非小于。', '把严格小于误当成小于或等于。'),
+  C(R`$a=0.1$`, '余数.1<.15。'),
+  C(R`$a=-0.9$`, 'floor(-.9)=-1，余数.1。'),
+  I(R`$a=-0.1$`, '余数.9不满足。', '把负数本身的小数绝对值.1当成非负余数。'),
+], '选取正、负、整数和边界见证，保留提供几个例子的实质，但不认证自行生成新例子。', [], [floorCondition, '原任务要求自行写出几个值；这里仅识别给定见证。'], {713:['a-examples']})
+
+q('q713-large-witness', [713], 'multiple', floor + R` 哪些 $a$ 值满足 $\{a\}>2/3$？`, [
+  C(R`$a=0.7$`, '.7>2/3。'),
+  C(R`$a=-0.2$`, 'floor=-1，余数.8>2/3。'),
+  I(R`$a=2/3$`, '严格大于不含等号。', '把等号边界纳入严格不等式。'),
+  I(R`$a=1.5$`, '余数.5<2/3，整体值1.5不能代替余数。', '直接把a与2/3比较而不取小数部分。'),
+  C(R`$a=1.8$`, '余数.8满足。'),
+], '覆盖多个有效见证及负数/整体值/严格端点区别，而非给定一个例子问复述。', [], [floorCondition, '原开放式例子生成能力未测。'], {713:['b-examples']})
+
+q('q713-carry-witness', [713], 'multiple', floor + R` 哪些 $a$ 值使 $\{a\}+0.05>\{a+0.05\}$ 成立？`, [
+  I(R`$a=0.94$`, '两侧都为.99。', '把接近1的.99提前当成已跨整数进位。'),
+  C(R`$a=0.95$`, '左侧1，右侧0。'),
+  C(R`$a=-0.05$`, '余数.95，a+.05=0，所以左侧1右侧0。'),
+  I(R`$a=1$`, '两侧都为.05。', '只见a+.05>1就当成从原余数跨越1，忽略原整数部分。'),
+  C(R`$a=1.99$`, '左侧1.04，右侧.04。'),
+], '跨整数的严格比较用多个见证及临界点表达，保持进位机制。', [], [floorCondition, '选择见证不能验证独立生成；未要求学习者写出全部周期性区间。'], {713:['c-examples']})
+
+q('q714-periodicity', [714], 'single', floor + R` 分别解 $[2.75+x]=[2.75]$ 和 $\{2.75+x\}=\{2.75\}$。哪项给出两个完整解集？`, [
+  I(R`$x\in[-0.75,0.25]$；$x=0$。`, '第一右端应开，第二所有整数成立。', '把floor区间两端都闭合，并仅保留保持原输入不变的零平移。'),
+  C(R`$x\in[-0.75,0.25)$；$x\in\mathbb Z$。`, '2<=2.75+x<3；同余数输入差整数。'),
+  I(R`$x\in[0,1)$；$x\in\mathbb Z$。`, '第一式要按2.75平移，不是x本身floor为0。', '删去同两端的2.75，错误视floor为可线性相消。'),
+  I(R`$x\in[-0.75,0.25)$；$x\in[0,1)$。`, '第二允许任意正负整数，而非一周期内全部实数。', '把余数范围[0,1)当作保持余数不变的输入平移集。'),
+], 'floor相等的区间与余数相等的整数晶格形成同一对照任务。', [], [floorCondition])
+
+q('q715-floor-systems', [715], 'multiple', floor + R` 下列三个方程的完整解集，哪些正确？`, [
+  C(R`$[0.21+x]=[0.21]$：$x\in[-0.21,0.79)$。`, '0<=.21+x<1。'),
+  C(R`$[y-0.36]=[2.4]$：$y\in[2.36,3.36)$。`, 'floor2.4=2，2<=y-.36<3。'),
+  I(R`$[1.7+z]=[-8.2]$：$z\in[-9.7,-8.7)$。`, 'floor(-8.2)=-9，而非-8。', '对右端负数向零截断为-8再解区间。'),
+  C(R`$[1.7+z]=[-8.2]$：$z\in[-10.7,-9.7)$。`, '-9<=1.7+z<-8。'),
+  I(R`$[y-0.36]=[2.4]$：$y\in[1.64,2.64)$。`, '移项应加.36。', '在2<=y-.36<3后再次减.36，错误移项方向。'),
+], '三个平移floor方程作为完整解集判断，含负右端和变量区别。', [], [floorCondition], {715:['a','b','c']})
+
+q('q715-fraction-lattices', [715], 'multiple', floor + R` 其中 $n$ 遍历所有整数。哪些完整解集正确？`, [
+  C(R`$\{0.58+x\}=0.58$ 的解集是 $x=n$。`, '.58+x=n+.58所以x=n。'),
+  C(R`$\{y-0.39\}=0.61$ 的解集是 $y=n$。`, 'y=n+.61+.39=n+1，仍遍历Z。'),
+  C(R`$\{1.62+x\}=0.65$ 的解集是 $x=n-0.97$。`, 'x=n+.65-1.62=n-.97。'),
+  I(R`$\{y-0.39\}=0.61$ 的解集是 $y=n+0.22$。`, '移项应加.39而非减。', '把y-.39=n+.61错解为y=n+.61-.39。'),
+  I(R`$\{1.62+x\}=0.65$ 的解集是 $x=-0.97$。`, '原式还允许全部整数平移。', '在余数等式中仅取隐藏整数n=0，遗漏无限多个解。'),
+], '整数晶格而非单个解；避免把n-.97与n+.03两种等价写法列作不同真答案。', [], [floorCondition], {715:['d','e','f']})
+
+q('q716-fraction-counterexample', [716], 'multiple', floor + R` 哪些 $x$ 值是等式 $\{5.41+x\}=\{5.41\}+\{x\}$ 的反例？`, [
+  C(R`$x=0.6$`, '左.01，右1.01。'),
+  I(R`$x=0.5$`, '两端.91相等。', '把.41+.5=.91误当成已进位。'),
+  C(R`$x=-0.4$`, '余数.6，左{5.01}=.01，右1.01。'),
+  C(R`$x=0.59$`, '左{6}=0，右1。'),
+  I(R`$x=1$`, '两端.41相等。', '用x的整体值1替代余数0判断是否进位。'),
+], '实际反例选择保留进位和负见证、含等号临界；不把“给任一反例”变成固定样例复述。', [], [floorCondition, '不能测独立生成新的反例。'], {716:['a-counterexample']})
+
+q('q716-floor-counterexample', [716], 'multiple', floor + R` 哪些 $x$ 值是等式 $[2x]=2[x]$ 的反例？`, [
+  C(R`$x=0.5$`, '左1右0。'),
+  C(R`$x=-0.25$`, '左floor(-.5)=-1，右2floor(-.25)=-2。'),
+  I(R`$x=0.4$`, '左0右0。', '认为任何非整数都会破坏可加性，不检验翻倍后的余数是否到1。'),
+  I(R`$x=2$`, '左4右4。', '认为乘2与floor一概不可交换，连整数都误判。'),
+  C(R`$x=1.75$`, '左3右2。'),
+], '一个真实多选见证集表达余数翻倍是否跨整数，不要求固定某个原答案。', [], [floorCondition, '原反例生产能力未测。'], {716:['b-counterexample']})
+
+q('q717-product-counterexamples', [717], 'multiple', floor + R` 要判断 $\{ab\}=\{a\}\{b\}$ 是否对任意实数都成立。哪些数对确实能推翻这个普遍命题？`, [
+  C(R`$(a,b)=(1.2,2.3)$`, '{2.76}=.76而.2*.3=.06。'),
+  I(R`$(a,b)=(0.8,0.8)$`, '两端.64相等。', '认为只要乘积与某个因子不同就是反例，未计算两端。'),
+  I(R`$(a,b)=(1.5,1.5)$`, '{2.25}=.25而.5*.5=.25，是巧合相等。', '只见两数有整数部分就断言cross terms一定使余数不等。'),
+  C(R`$(a,b)=(2.5,0.4)$`, '{1}=0而.5*.4=.2。'),
+], '原普遍恒等式的真假需实质反例；混入巧合相等的非反例，不能靠“有整数部分”作答。', [], [floorCondition, '不能验证独立构造反例和完整文字解释，普遍否定仅以见证识别体现。'])
+
+q('q718-sum-counterexamples', [718], 'multiple', floor + R` 哪些数对是命题 $[a+b]=[a]+[b]$ 的反例？`, [
+  C(R`$(a,b)=(0.6,0.6)$`, 'floor1.2=1，而0+0=0。'),
+  C(R`$(a,b)=(-0.2,-0.3)$`, 'floor(-.5)=-1，而-1+-1=-2。'),
+  I(R`$(a,b)=(0.2,0.3)$`, '两端0相等。', '把任意非整数加法都当成发生整数进位。'),
+  C(R`$(a,b)=(1.7,0.3)$`, 'floor2=2，而1+0=1；余数恰好和为1也进位。'),
+  I(R`$(a,b)=(2,-0.3)$`, 'floor1.7=1，而2-1=1。', '看到负加数就以为floor相加必定失败，不看余数和。'),
+], '同时检验正、负、边界进位及未进位数对，保留原恒等性判定。', [], [floorCondition, '独立证明通用进位公式和构造例子能力未测。'])
+
+q('q719-graph-matching', [719], 'single', floor + R` 图 A、B 的直线均向视窗外继续。函数 $y=[x]+\{x\},\ y=[\{x\}],\ y=\{[x]\}$ 依次对应哪三个实际图像？`, [
+  I('A、A、B', '第二式floor({x})=0，不是x。', '把连续执行floor和fraction当成互逆运算，错误还原x。'),
+  I('B、A、B', '第一式floor+remainder=x，第二式=0。', '将相加误视为两种取整嵌套，把第一式消成0。'),
+  C('A、B、B', '第一恒为x，余数floor及整数fraction均恒为0，包括整数点。'),
+  I('A、B、A', '第三式整数的余数恒为0。', '错误认为fraction抵消floor，返回原x。'),
+], '三个全实域图的完整对应，无图时不允许仅选符号表达式代替绘图路线。', [F], [floorCondition, plotting])
+
+q('q720-plane-sets', [720], 'multiple', floor + R` 图 A、B、C 的阴影表示点集，实线边界包含、虚线边界不包含；视窗边框不是点集边界。哪些对应或边界判断正确？`, [
+  C(R`$[x]=0$ 对应图 A，与 $y$ 无关。`, '0<=x<1，y任意。'),
+  C(R`$[y]=1$ 对应图 B，与 $x$ 无关。`, '1<=y<2，x任意。'),
+  C(R`$[x]=1,\ [y]=2$ 同时成立对应图 C。`, '1<=x<2，2<=y<3，填满半开矩形。'),
+  I(R`图 C 的四个角点均属于点集。`, '仅(1,2)属于；另外三个至少有x=2或y=3。', '把上/右开端点读成闭端点，误包含四角。'),
+  I(R`$[x]=0$ 只表示直线 $x=0$。`, 'x=.5等都满足floor=0。', '把floor等于0误解为变量本身等于0。'),
+], '三个完整点集与边界一起判断，阴影不能降为符号解集或仅边界线。', [P], [floorCondition, plotting])
+
+q('q721-tiled-set', [721], 'multiple', floor + R` 图 D 的方格规律对每个整数都继续重复；实线边界包含、虚线边界不包含，角点另以实心/空心标明。关于方程 $[x]=[y]$，哪些说法正确？`, [
+  C(R`解集是图 D 表示的 $\displaystyle\bigcup_{n\in\mathbb Z}[n,n+1)\times[n,n+1)$。`, '两floor同为某个整数n，两个坐标各在同一半开单位区间。'),
+  I(R`它的图像仅是直线 $y=x$。`, '例如(.2,.8)不在直线上但floor均0。', '把相同floor错误提升为两个原数相等。'),
+  C(R`$(0.2,0.8)$ 属于该图，且每个 $(n,n)$（$n$ 为整数）都属于。`, '同一单位区间及新方格左下角均包含。'),
+  I(R`只要 $|x-y|<1$，点就属于该图。`, '(.9,1.1)距离.2但floor不同。', '把处于同一个单位区间的必要距离条件误当充分条件。'),
+  I(R`图 D 只保留方格边线，不保留方格内部。`, '内部两坐标同floor仍满足。', '把“方程图像”一律当成一维曲线，丢掉二维点集内部。'),
+], '实际二维阴影和半开边界是核心，保留不是直线也不是整条带的区别。', [P], [floorCondition, plotting, '有限视窗需要显式全整数重复；不能检验学习者独立画出无限周期点集。'])
+
+q('q722-exponent-laws', [722], 'multiple', R`设 $31.5=10^a,\ 0.42=10^b$。哪些表示正确？`, [
+  C(R`$31.5\cdot0.42=10^{a+b}$。`, '同底幂相乘加指数。'),
+  C(R`$(31.5)^3=10^{3a}$。`, '幂的幂相乘指数。'),
+  I(R`$\sqrt{0.42}=10^{2b}$。`, '平方根对应指数b/2。', '把开平方和平方的指数作用交换。'),
+  C(R`$\sqrt{0.42}=10^{b/2}$。`, '0.42>0，平方根为10^(b/2)。'),
+  C(R`$(31.5)^{2/3}\sqrt[5]{0.42}=10^{2a/3+b/5}$。`, '分别贡献2a/3和b/5，再相加。'),
+  I(R`$31.5\cdot0.42=10^{ab}$。`, '乘底数对应相加指数而非相乘。', '把幂的幂法则错误套用于两个同底幂的乘积。'),
+], '四种幂运算的确定断言统一判断，全部原数学目标保留。')
+
+const decimalStem = R`利用所示 $y=10^x$ 的实际图像估计；它给出 $0\le x\le1$ 的十进制尾数视窗，其他数量级用 $10^{k+t}=10^k10^t$（整数 $k$）移位。每次横坐标读数允许约 $0.02$ 的误差，选择与读图估计相容的一项。`
+q('q723-positive-powers', [723], 'single', decimalStem + R` $(1.95)^{1/5}$ 和 $23^{5/6}$ 的值按次序约为多少？`, [
+  I(R`$0.94,\quad0.073$`, '两输入>1取正幂仍>1。', '把正分数指数当成先求对应正幂再取倒数。'),
+  C(R`$1.14,\quad14$`, '图读log1.95约.29、log23约1.36，指数.058及1.13，经图反读。'),
+  I(R`$1.95,\quad23$`, '指数均不等于1，值不同于输入。', '只完成输入的纵坐标定位，忘记对读取指数乘1/5或5/6。'),
+  I(R`$0.39,\quad19$`, '幂不是按指数线性缩放输入。', '直接计算1.95/5及23*5/6，再粗略舍入。'),
+], '两次图像的反查、指数运算及正查为完整读图计算，不给对数值作为题干答案提示。', [T], ['无源图可复用；尾数归一化和读数误差是显式新增辅助条件。', '近似选项只能体现图读数量级与运算，不检验自行写出近似算法及精度记录。'], {723:['a','b']})
+
+q('q723-small-and-product', [723], 'single', decimalStem + R` $(0.0041)^{2/3}$ 和 $(0.18)^{0.2}\sqrt[3]{400}$ 的值按次序约为多少？`, [
+  C(R`$0.026,\quad5.2$`, 'log.0041约-2.39，乘2/3约-1.59；另.2log.18+log400/3约.72。'),
+  I(R`$39,\quad0.19$`, '这些约为正确结果的倒数。', '负指数输入移位时反号，末项又错误把整体指数取负。'),
+  I(R`$0.0027,\quad4.8$`, '这是对原数按2/3及对.18按.2线性相乘的结果。', '将分数幂误当数值乘指数；第二式以(.18*.2)*400/3代替幂与根。'),
+  I(R`$0.0026,\quad2.4$`, '第一按4.1^(2/3)*10^-3约.00256；第二按.18^.2*400^.2=72^.2约2.35，均不是原式。', '第一对科学计数法只给尾数取幂，数量级不乘2/3；第二把两个因子的幂指数都套成.2，忽略立方根。'),
+], '极小数的数量级移位和乘积指数合成作为同一图读结构；选项有可复现错误来源。', [T], ['归一化图和误差限为新增可见条件，不是原课图像。', '选择近似数不能验证独立写出精度控制与每一步反读。'], {723:['c','d']})
+
+q('q724-lookup-table', [724], 'single', R`下表是本题提供的 $10^t$ 数值表（保留五位小数），不是本课缺失的原表。先将数量级归一化到 $1\le m<10$，再选择表中最接近尾数 $m$ 的数值。按此规则，把 $1.594,\ 0.373,\ 51.74,\ 200.1$ 依次近似表示为底数为 $10$ 的幂，哪一项正确？
+
+| $t$ | $10^t$ | $t$ | $10^t$ |
+|---|---:|---|---:|
+| $0.20$ | $1.58489$ | $0.57$ | $3.71535$ |
+| $0.21$ | $1.62181$ | $0.58$ | $3.80189$ |
+| $0.30$ | $1.99526$ | $0.71$ | $5.12861$ |
+| $0.31$ | $2.04174$ | $0.72$ | $5.24807$ |
+`, [
+  I(R`$10^{0.20},\ 10^{0.57},\ 10^{0.71},\ 10^{0.30}$`, '后三个数量级指数须分别减1、加1、加2。', '正确查尾数但完全丢掉十进制整数移位。'),
+  I(R`$10^{0.20},\ 10^{-0.57},\ 10^{1.71},\ 10^{2.30}$`, '.373=3.73*10^-1，指数是.57-1=-.43而非-.57。', '把小于1的原数的指数直接取尾数指数的负号。'),
+  C(R`$10^{0.20},\ 10^{-0.43},\ 10^{1.71},\ 10^{2.30}$`, '最近尾数分别取.20,.57,.71,.30，加数量级0,-1,1,2。'),
+  I(R`$10^{0.21},\ 10^{-0.42},\ 10^{1.72},\ 10^{2.31}$`, '这四项都取了较大端，而实际均更接近较小端。', '一律向上选择表中包住尾数的上界，不按最近数值。'),
+], '完整数值表查找及正负数量级恢复，不把给定数的对数直接放进题干；四个原目标都被表达为幂。', [], ['原数值表不在本课输入内；提供新表与最近尾数规则并显式标注来源。', '指数只保留表格允许的0.01步长近似；不能证明学习者能自行插值或给出更高精度。'])
+
+const newFigures = [G,D,X,F,P,T].map(id => {
+  const base = `${own}/figures/${id}`
+  const spec = JSON.parse(fs.readFileSync(`${base}.spec.json`, 'utf8'))
+  const report = JSON.parse(fs.readFileSync(`${base}.render.json`, 'utf8'))
+  if (report.status !== 'pass') throw new Error(`render blocked: ${id}`)
+  return { id, path: `${base}.svg`, sha256: hash(`${base}.svg`), basis: spec.source.authoredBasis }
+})
+const plotUnitMap = {
+  688:['sketch-1.5','sketch-2'], 691:['sketch-a','sketch-b'], 692:sourceUnits[692],
+  693:sourceUnits[693].filter(x => x.includes('sketch')), 719:sourceUnits[719], 720:sourceUnits[720], 721:sourceUnits[721],
+}
+const openUnitMap = {
+  707:sourceUnits[707], 713:sourceUnits[713], 716:sourceUnits[716], 717:sourceUnits[717], 718:sourceUnits[718],
+}
+const coverage = seed.exercises.map(e => {
+  const qs = questions.filter(q => q.source_numbers.includes(e.number))
+  const losses = [...new Set(qs.flatMap(q => q.intent.limitations).filter(x => x !== recognition))]
+  return {
+    source_number: e.number, question_ids: qs.map(q => q.id),
+    omitted_tasks: losses,
+    reason: `独立求解全部源任务后按数学行动设计${qs.length}个响应单元；详见coverage-provenance-FIRST.json的严格目标、条件依赖和生产能力损失。${e.number === '707' ? '原无条件证明未解决，仅保留显式整数域下的实质有效性判断。' : '未省略未声明的数值子问；不把识别覆盖声称为书面生产覆盖。'}`,
+  }
+})
+const draft = { schema: 's10y-choice-draft-v1', seed_sha256: seedHash, new_figures: newFigures, questions, coverage }
+const ledger = seed.exercises.map(e => {
+  const n = e.number
+  const covered = [...new Set(questionUnits.flatMap(q => q.source_units[n] || []))]
+  const omitted = sourceUnits[n].filter(u => !covered.includes(u))
+  const conditional = n === '707' || (+n >= 709 && +n <= 721)
+  return {
+    source_number: n, strict_response_units: sourceUnits[n],
+    recognitional_target_units: covered, missing_response_units: omitted,
+    condition_exact_strict_units: conditional ? [] : covered,
+    condition_dependent_units: conditional ? covered : [],
+    original_written_production_omitted_units: [...(plotUnitMap[n] || []), ...(openUnitMap[n] || [])],
+    production_mode_loss_for_all_units: recognition,
+    domain_status: n === '707' ? 'unresolved original N/geometric conventions; forward universal false in stated recurrence domain; reverse conditional only'
+      : conditional ? 'explicit authored floor condition; source lesson supplies no definition'
+      : 'original conditions retained; approximation/scaffolding exceptions separately logged',
+    questions: questionUnits.filter(q => q.source_units[n]).map(q => ({ id:q.question_id, units:q.source_units[n] })),
+  }
+})
+const sum = key => ledger.reduce((s, x) => s + x[key].length, 0)
+const countSourceUnits = ledger.reduce((s,x) => s+x.strict_response_units.length,0)
+const provenance = {
+  schema: 'bounded-choice-author-provenance-FIRST-v1',
+  status: 'frozen_author_candidate_not_semantically_approved',
+  book: '8a', lesson: 'alg8-c5-ex', ticket: 'STEMROBIN-182',
+  authoritative_inputs: seed.trace,
+  seed_sha256: seedHash, independent_source_solution_record: recordPath,
+  source_solution_record_file_sha256: hash(recordPath),
+  allowed_input_policy: 'modern written prose, exercises and actual referenced source/modern image only; no answers, interactions, old choices, other author/reviewer material',
+  source_object_inventory: {
+    original_figure_76: { original_path:'ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-76.png', file_sha256:hash('ssot-resources/soviet10year-textbooks/artifacts/8a/figures/fig-76.png'), source_page:206, borrowed:true, page_and_borrowing_authority:'direct caller instruction; no external page scan opened', actual_pixel_observation:solving.split('Figure 76 source pixels (opened once):')[1].split('\n\n682.')[0].trim(), modern_svg:seed.figures[0].assets[0], existing_pass_reused:true, regeneration:false, rereview:false },
+    new_figures: newFigures.map(f => ({ id:f.id, original_image:null, inventory_kind:'conceptual_dependency', path:f.path, sha256:f.sha256, spec:`${own}/figures/${f.id}.spec.json`, render:`${own}/figures/${f.id}.render.json`, authored_basis:f.basis })),
+  },
+  errata: [{ source_number:'707', approved:'modern ca -> ca^x already present; no editing of seed', unresolved:'N starting index, allowed zero common ratio/terms, real-vs-integer exponent domain' }],
+  fixed_anchors: [
+    { sources:['691'], anchor:'a=1/3,b=1/2 in illustrative graph E', status:'visible representative only; question still quantifies all 0<a<b<1', omitted_general_response_units:0 },
+    { sources:['693'], anchor:'a=2 and a=1/2 in panels C/D', status:'visible representatives only; both source regimes retained with general quantification', omitted_general_response_units:0 },
+    { sources:['707'], anchor:'n=1,2,... and recurrence definition allowing zeros', status:'explicit authored domain; does not resolve original conventions', condition_exact_omitted_units:2 },
+    { sources:['709','710','711','712','713','714','715','716','717','718','719','720','721'], anchor:'floor and nonnegative fractional part definitions', status:'explicit added condition, not a sourced definition', condition_exact_omitted_units:ledger.filter(x=>+x.source_number>=709&&+x.source_number<=721).reduce((s,x)=>s+x.strict_response_units.length,0) },
+    { sources:['699'], anchor:'negative viewport [-2,0] and positive near-miss [2,4]', status:'finite graph only; full uniqueness solution in frozen record, independent written proof capacity not represented' },
+    { sources:['723'], anchor:'normalized decade window and 0.02 per graph x-reading error', status:'explicit authored visible scaffolding and approximation; all four original expressions retained' },
+    { sources:['724'], anchor:'8-row lookup data, 0.01 exponent grid, nearest mantissa rule', status:'explicit authored table rather than absent original table; all four expressions retained as approximate base-10 powers' },
+  ],
+  response_coverage_definition: 'A strict response unit is each requested mathematical output/subquestion; sketching and comparisons are separately counted, paired +/- roots separately counted. Recognition coverage records a whole requested target appearing in a determinable response, not number of answer slots. Condition-exact coverage additionally refuses unresolved/explicitly narrowed source conventions. Neither count establishes written/proof/plot production.',
+  counts: {
+    seed_sources:seed.exercises.length, prose_blocks:seed.concepts.length, questions:questions.length,
+    single:questions.filter(q=>q.view.mode==='single').length, multiple:questions.filter(q=>q.view.mode==='multiple').length,
+    source_response_units:countSourceUnits, recognitional_target_units:sum('recognitional_target_units'),
+    missing_response_units:sum('missing_response_units'),
+    condition_exact_strict_units:sum('condition_exact_strict_units'),
+    conditional_not_condition_exact_units:sum('condition_dependent_units'),
+    separately_counted_plotting_production_units:Object.values(plotUnitMap).reduce((s,a)=>s+a.length,0),
+    separately_counted_open_example_counterexample_proof_justification_units:Object.values(openUnitMap).reduce((s,a)=>s+a.length,0),
+    all_response_units_have_written_production_loss:countSourceUnits,
+    author_image_payloads:observed.actual_payload_count, new_images:newFigures.length, source_images:1, modern_previews:1,
+    host_tokens:'UNKNOWN', host_cost:'UNKNOWN', external_api_calls:0,
+  },
+  ledger,
+  unresolved_issues: [
+    'No independent mathematical, option, leakage, or new-figure review has been performed. Parent must settle promoted paths before sole blind-view then key review.',
+    '707 original conventions are unresolved; candidate explicitly tests restricted-domain validity, not original unrestricted proofs.',
+    '709--721 use explicitly added floor definitions because empty source prose supplies none; strict condition-exact coverage treats these units as conditional.',
+    '723 actual graph estimation and 724 authored table cannot recover the absent source graph/table precision. Scaffolding and approximation are visible and losses recorded.',
+    'Finite graph windows do not establish global uniqueness proofs. No extra image payload may be opened; this batch used all 8.',
+  ],
+}
+const writeNew = (p,v) => fs.writeFileSync(p, JSON.stringify(v,null,2)+'\n',{flag:'wx'})
+writeNew(`${own}/draft-FIRST.json`, draft)
+writeNew(`${own}/learner-view-FIRST.json`, {
+  questions:questions.map(q=>({id:q.id,view:q.view})),
+  figures:[...seed.figures.map(f=>({id:f.id,assets:f.assets})),...newFigures.map(f=>({id:f.id,path:f.path,sha256:f.sha256}))],
+})
+writeNew(`${own}/coverage-provenance-FIRST.json`, provenance)
+console.log(JSON.stringify(provenance.counts,null,2))

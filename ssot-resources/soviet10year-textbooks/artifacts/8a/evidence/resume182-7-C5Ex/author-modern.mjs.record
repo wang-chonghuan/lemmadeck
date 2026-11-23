@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const input = `${base}/modern-prepared/adapt/8a/modern-us-neutral/lessons/alg8-c5-ex`;
+const evidence = `${base}/modern-author-FIRST`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex';
+assert.ok(!fs.existsSync(evidence));
+fs.mkdirSync(evidence, { recursive: true });
+fs.mkdirSync(target, { recursive: true });
+const names = ['lesson.template.json', 'exercises.template.json', 'figures.template.json'];
+const docs = names.map(name => JSON.parse(fs.readFileSync(`${input}/${name}`)));
+for (const name of names) {
+  fs.copyFileSync(`${input}/${name}`, `${evidence}/${name}.before.record`, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(`${evidence}/${name}.before.record`, 0o444);
+}
+const labels = new Map([...'\u0430\u0431\u0432\u0433\u0434\u0435\u0436\u0437\u0438\u043a']
+  .map((letter, index) => [letter, 'abcdefghij'[index]]));
+let changedLabels = 0;
+for (const ex of docs[1].exercises) {
+  ex.text = ex.text.replace(/(^|\n)([\u0430-\u044f])\)/gu, (_, prefix, letter) => {
+    assert.ok(labels.has(letter), letter);
+    changedLabels++;
+    return `${prefix}${labels.get(letter)})`;
+  });
+  if (ex.number === '707') {
+    assert.equal((ex.text.match(/\$y=ca\$/gu) || []).length, 1);
+    ex.text = ex.text.replace('$y=ca$', '$y=ca^x$');
+    ex.changes.push('math-correction');
+  }
+}
+assert.equal(docs[0].errata.length, 1);
+assert.equal(docs[0].errata[0].original, '$y=ca$');
+docs[0].errata[0].corrected = '$y=ca^x$';
+const command = [
+  'import json,sys',
+  'sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")',
+  'import edition',
+  'documents=json.load(sys.stdin)',
+  'edition.normalize_lesson_layout(documents[0])',
+  'edition.normalize_exercise_layout(documents[1])',
+  'json.dump(documents,sys.stdout,ensure_ascii=False)',
+].join('\n');
+const normalized = JSON.parse(execFileSync(
+  '.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c', command],
+  { cwd: root, input: JSON.stringify(docs), encoding: 'utf8' },
+));
+for (let i = 0; i < names.length; i++) {
+  assert.deepEqual(normalized[i].source, docs[i].source);
+  const bytes = `${JSON.stringify(normalized[i], null, 2)}\n`;
+  fs.writeFileSync(`${target}/${names[i]}`, bytes, { flag: 'wx' });
+  fs.writeFileSync(`${evidence}/${names[i]}.record`, bytes, { flag: 'wx', mode: 0o444 });
+}
+const record = {
+  lesson: 'alg8-c5-ex', sourceFieldsPreserved: true,
+  exercises: 43, prose: 0, changedLabels,
+  registeredCorrection: { exercise: '707', original: '$y=ca$', corrected: '$y=ca^x$' },
+  figure76: 'reuse unchanged independently approved component; N32 course HOLD unchanged',
+  databaseWrites: 0, externalPaidCalls: 0, parentImageLoads: 0,
+};
+fs.writeFileSync(path.join(evidence, 'author-FIRST.record'),
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify(record));

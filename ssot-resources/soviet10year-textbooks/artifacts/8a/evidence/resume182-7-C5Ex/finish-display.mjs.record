@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const reportPath = `${base}/display-RECOVERY1/report.json`;
+const load = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const binding = file => ({
+  path: file, sha256: createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+});
+const report = load(reportPath);
+assert.equal(report.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(report.cleanup, true);
+assert.equal(report.views.length, 6);
+assert.equal(report.screenshots.length, 33);
+assert.equal(report.failures.length, 0);
+for (const width of [1440, 390]) {
+  for (const surface of ['text', 'exercises', 'choices']) {
+    assert.equal(report.views.filter(view => view.width === width
+      && view.surface === surface && view.status === 'PASS').length, 1);
+  }
+}
+const paths = [1, 2, 3, 4, 5].map(batch => `${base}/display-review-batch${batch}-FIRST.record`);
+const reviews = paths.map(load);
+for (const review of reviews) {
+  assert.equal(review.status, 'PASS');
+  assert.ok(review.images.length > 0 && review.images.length <= 8);
+}
+const observed = reviews.flatMap(review => review.images.map(image => ({
+  path: image.path, sha256: image.sha256,
+}))).sort((a, b) => a.path.localeCompare(b.path));
+const expected = report.screenshots.map(image => ({
+  path: image.path, sha256: image.sha256,
+})).sort((a, b) => a.path.localeCompare(b.path));
+assert.deepEqual(observed, expected);
+const output = `${base}/display-review.record`;
+assert.ok(!fs.existsSync(output));
+fs.writeFileSync(output, JSON.stringify({
+  status: 'PASS',
+  lesson: 'alg8-c5-ex',
+  edition: 'modern-us-neutral',
+  report: binding(reportPath),
+  reusedTextExercises: binding(`${base}/display-FIRST/report.json`),
+  independentVisualReviews: paths.map(binding),
+  headed: true,
+  isolatedOffline: true,
+  viewCount: 6,
+  screenshotCount: 33,
+  sourceOrMathematicsReReview: false,
+  unchangedDisplayRepeated: false,
+  clientControls: 0,
+  privateKeysInView: false,
+  limitations: [
+    'Visual observations cover actual screenshot regions; full 43-exercise and 54-question/240-option projection and clipping use the original DOM checks.',
+    'All six new figures have desktop whole and mobile left/right coverage. The two repaired pairs also have actual option-block screenshots in both viewports.',
+    'No DB or live-product acceptance is claimed; these are offline read-only content views.',
+  ],
+}, null, 2) + '\n', { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ status: 'PASS', views: 6, screenshots: 33, output }));

@@ -1,0 +1,114 @@
+# STEMROBIN-182 / C5Ex text review FIRST
+
+Reviewer: sole active independent reviewer, separate from text/answer/choice authors.
+Explicit working directory: /Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182
+Stage: raw-to-current-modern text review performed alongside blind independent source solving. No answer, choice draft/keys, interaction, other solution record or bookRaw read. No product files edited.
+
+## Snapshot bindings
+
+| Repo-relative input | SHA-256 |
+| --- | --- |
+| ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c5-ex/exercises.json | d149c68df09c9c03dc55b32eca0eb2f6559671b56e507db2b525dc97789b626d |
+| ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex/exercises.json | 24b56367302d2652f246afc99676f115ae639ae3152472029fd151df119aee8a |
+| ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex/lesson.json | dc7689c3a6c0d32a5d63e99003b802f7ce3166293f7b5cfdb877ce4f1dbd514a |
+| ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex/figures.json | b6e3f49daf4149c51ac3a5ee9e1814219f62a67319ae0d787158027235da2dd3 |
+
+## Mechanical comparison actually executed
+
+Read the raw and modern JSON with Node's structured JSON parser. Compared all 43 aligned exercise objects, with exact equality for number, source_number, group, group_id, pages, figure_refs and figures. Compared modern.source_text with raw.text for each exercise. Compared the entire modern.source.data object with the entire raw JSON object: exact structural equality.
+
+For visible prose, mapped printed Cyrillic a/b/etc. labels in source order to Latin a/b/etc., removed whitespace only, and compared every complete exercise string. The sole non-layout exception was the single registered 707a replacement of $y=ca$ by $y=ca^x$. All other normalized visible characters agree. Also independently extracted all 188 $...$ formula strings in order and compared them completely, allowing only that 707a replacement: no other formula difference. Final local verification returned exit 0 and confirmed unchanged byte hashes for all four whitelist inputs, all 127 visible labels beginning separate lines in natural Latin order, source.data exact equality and the one attachment owner 690.
+
+Observed results:
+43 raw / 43 modern / numbers 682-724 consecutive, no duplicate.
+127 source labels / 127 visible Latin labels.
+Groups: g1 "第 31 小节" 6 exercises (682-687); g2 "第 32 小节" 20 (688-707); g3 "第 33 小节" 14 (708-721); g4 "第 34 和 35 小节" 3 (722-724).
+0 prose paragraphs; 0 section breaks; lesson.exercise_count=43.
+One lesson figure, one edition-figure manifest entry, and one exercise figures attachment, all fig-76. Its only owner is 690; its one figure_refs entry also belongs to 690. The lesson-level shared-figure metadata is a registry entry, not a second exercise attachment.
+
+Modern .lines retain source-script subquestion labels where present; learner-facing .text has Latin labels. That is source-field preservation, not an extra Cyrillic learner-facing label claim. Source line-wrap markers in legacy .lines are not introduced into visible .text.
+
+## Substantive per-exercise comparison
+
+Each row records a meaning-bearing preservation check, not merely a generic PASS.
+
+| Exercise | Observed preserved task |
+| --- | --- |
+| 682 | Three pairs retain rational exponents 6/7 versus 7/8, radicals sqrt(3)/sqrt(7), and both negative-radical exponents. Comparison direction is not prefilled. Labels a-c each start their own visible line. |
+| 683 | All eight expressions and comparison with 1 retained, including variable exponents x and 1-x, which require cases and equality thresholds. No variable case removed. |
+| 684 | All five intervals retain their original open/closed endpoints and infinities. The source ]...[ open-interval notation is unchanged inside formulas; no endpoint semantics modernized away. |
+| 685 | Six exponential equations retain 32, 1/64, 0.5, 0.25, 0.125, 128 and unknown x. |
+| 686 | Four inequality signs retain two non-strict and two strict cases, with exact thresholds 256,0.25,1/128,2. |
+| 687 | Graph-based changes, not just function values, are asked in both paired intervals; every endpoint .5,1.5,2.5,.2,.7,1.2,1.7 remains. |
+| 688 | Same-sheet construction of both 1.5^x and 2^x preserved together with equation, less-than and greater-than tasks. Not reduced to one comparison. |
+| 689 | Both labeled parts retain all three propositions (=,>,<), including both subunit bases in b. Internal semicolon relationships remain; no loss through splitting labels. |
+| 690 | Specifically names figure 76, subunit bases, and both x>0 and x<0 regions. One figure attachment belongs to this exercise and no other exercise. Actual source PNG names the three bases; this stage does not invent them from a generic exponential description. |
+| 691 | The strict condition 0<a<b<1 and both graph constructions preserved, including cross-page source references p0225#9,p0226#1. |
+| 692 | Both fractional-base graph constructions and the approximate placement of 0.4^x remain; no third-curve omission. Visible formula has no legacy source wrap marker. |
+| 693 | Both a>1 and 0<a<1 cases remain, together with y=a^x versus the horizontal y=a. Neither horizontal function nor case comparison replaced with y=1. |
+| 694 | Three pairs retain negative exponents -5,-6,-11 and exact counterpart powers. |
+| 695 | Four k/m comparisons retain signs and all bases, especially pi/3 and sqrt(7)-1; these are not silently treated as bases below 1. |
+| 696 | All four comparison-with-1 questions retain base radicals and negative fractional exponents. |
+| 697 | The task asks only the sign of k; all four equations, particularly 1.003, survive unchanged. |
+| 698 | Both equations and the explicit graphical solution method retained; no graph method removed in favor of a supplied calculator answer. |
+| 699 | Graphs of 2^x and x^2-2, and their equality, retained exactly. The source omission of whitespace before the equation is harmless and preserved, not a changed minus sign. |
+| 700 | Six root-set problems retain cube/fifth roots, mixed number 6 1/4, product (4/5)*1.25, and the quadratic exponent x^2-1. |
+| 701 | Six strict inequalities retain all root orders and mixed number 2 2/49; no non-strict endpoint substituted. |
+| 702 | Four equations preserve 5x,-2x,3x,7x and every decimal/right-hand-side value. |
+| 703 | Ten labeled equations retained in source order; h and i are separated by visible newlines despite the source missing a semicolon there. Roots, coefficient 0.1, both affine exponents, and all multiplication factors preserved. |
+| 704 | Three inequality problems retain the exterior factor 3, the factor 3^(1-x), and cube root of 2. Formula scopes and strict signs unchanged. |
+| 705 | Three equations retain x-1,2x+3,x^2-2x+1 and the product 8^-1*2^3. |
+| 706 | All four exponential sums and every offset x+2,x+1,x-1 remain; common factors are not canceled in the prompt. |
+| 707 | Exactly two proof directions. Visible a uses registered y=ca^x, raw.source_text/source.data retain y=ca. b already had y=ca^x and is unchanged. N-domain and the universal quantifier remain; convention caveats are not silently rewritten by this reviewer. |
+| 708 | Four unlabeled values retain positive decimals, negative fraction -2/3 and negative decimal -10.8; "two consecutive integers" remains. |
+| 709 | Three unlabeled inputs and both requested parts (integer/fractional) retained, including the whole negative mixed number -21 2/7. |
+| 710 | Four decompositions into integer-plus-fractional parts retained, including -0.97 and -20.15. |
+| 711 | Both signs of each radical sqrt(2),sqrt(13),sqrt(47) retained; no loss of the second requested value within any label. |
+| 712 | Inner/outer floor versus fractional-part operations retain their nesting order in all four formulas. |
+| 713 | All three strict conditions retained; c retains {a}+0.05 versus {a+0.05}, which is a carry question, not a decimal multiplication. |
+| 714 | Floor equation and fractional-part equation retained separately, both with shift 2.75. |
+| 715 | Six equations retain correct variable identities x,y,z and every shift/reference value; brackets and braces never interchanged. |
+| 716 | Both explicit counterexample requests retained; the sum identity and factor-2 floor identity are distinct tasks. |
+| 717 | Unlabeled question retains the general multiplication identity query; no example or answer inserted into prompt. |
+| 718 | Unlabeled question retains the general addition/floor identity query. |
+| 719 | Three graph tasks retain floor(x)+{x}, floor({x}), and {floor(x)} separately. |
+| 720 | Coordinate-plane point sets retain two single-coordinate conditions and the two-equation system [x]=1,[y]=2. All boundary conventions are left to mathematical solving; no coordinate lost at the source wrap. |
+| 721 | Equation [x]=[y] and the graph/set task retained, not replaced with y=x. |
+| 722 | Given 31.5=10^a,0.42=10^b and all four power conversions retained; product scope and root order 5 in d remain. |
+| 723 | All four expressions and use of the 10^x graph retained. Tiny decimal .0041, exponent 5/6, and product with cube root of 400 remain exact. |
+| 724 | All four numbers 1.594,.373,51.74,200.1 and use of a numerical 10^x table retained. No prompt claims an original-table/Bradis-2010 equivalence. |
+
+## Registered exception and source limitations
+
+Modern lesson.errata contains id p0228-ex707a-missing-exponent, target exercises[25], source block p0228#4, original $y=ca$, corrected $y=ca^x$. The visible difference occurs only in 707a. Source-text fields still contain the literal original. Source-page SHA in the registration is 35ec940d4984063d77a9e176aa30a8a5fa0f00cc97704584d8f31034d2f2a91b; the bound PDF SHA is 5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071. This stage checked the registration against the whitelisted prose, not fresh scan pixels or a re-finalization.
+
+No new raw-to-modern text defect found. Known source defect 707a is handled by the registered exception only. The mathematical scope of "any geometric progression" is independently qualified in the math record (ordinary nonzero ratio and integer-index domain); no unprinted assumption is inserted into the source fields.
+
+## Figure/display boundary and failures
+
+Figure 76 source SHA 05707a0a8188ec56b4426b63493d04eb25f3dc8abc8f1c7ecf484238653e349d, modern SVG SHA a2e809828fa8a86da610bd51c6da3949fdf96f6ba6cdce560535b8635f0e99cd, spec SHA 95138d0930651d15b5b20bb5d0effe6b2245d6b61df26b40925af38d162ab209.
+
+The current manifest uses exactly one deterministic final-output contract (svg,render,review,spec), with no generated/hybrid extra output contract. Figure 76 is intentionally reused from earlier source page 206; that registry page is not confused with the referencing exercise page 225.
+
+The already approved geometry review is reused by explicit instruction and is not redone. The partial-left-border regularization is disclosed and NOT source-exact. This record does not turn idealized mathematical curves or a registered modern frame into original pixel facts.
+
+The single permitted modern raster preview appeared black in the image tool; pixel inspection later showed black marks on largely transparent pixels. Original preview retained at
+.tmp/ld-s10y-lesson/resume182-7-C5Ex/math-independent-FIRST/fig-76.preview-FIRST.png
+SHA f07376d3258b231670ec18104e7ba2ccc68cfafddf7fc46d1116888f1ed0a2dd.
+No reopen, reset or second product payload was used. This is a preview/display-evidence failure, not a new failed geometry review.
+
+Structural once-only exercise attachment: PASS (one attachment in 690).
+New runtime once-only/display certification: NOT PERFORMED, and not claimed. No website/browser/DB was used. Modern-preview visual legibility: NOT PASS for this viewing attempt.
+
+The first ls discovery command returned exit 1 because owned directories and one possible alternate library location were absent. The actual existing library was found and used without installation; the absent owned directories were created. The later pixel diagnostic had exit 0 and a real Pillow deprecation warning. No fabricated execution receipt or discarded failure.
+
+The FIRST freeze invocation returned exit 1 with a Node SyntaxError caused by an unquoted result-object metadata key beginning with digits (707ConventionCaveat). Parsing failed before chmod or other command-body execution. The actual failure is retained here; recovery quotes that key and retries only the freeze/metadata step, without redoing passed text/math checks or loading any further image.
+
+## Outcome and stop
+
+Text/source-projection comparison: PASS, 43/43 exercised substantively; 127/127 labels Latin; 0 prose; 0 breaks; one structural figure attachment.
+No new text defects. Explicit qualifications: known 707a erratum, 707 convention scope, source-exact frame limitation, unsuccessful modern preview, no fresh runtime-display verdict.
+
+Image usage shared with math record: 8 total = source1 + modern1 + six reference graph/table images, each once. No images opened specifically for a second text review.
+ExternalAPI=0; paid calls=0; host tokens/cost=UNKNOWN.
+Freeze this file mode 0444 with the math record. Stop; later answer/choice comparison requires separate authorization. Writes remain only inside the two assigned review directories.

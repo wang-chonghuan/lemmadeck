@@ -1,6 +1,226 @@
 # 当前开发状态
 
-### 182-7 2026-11-23 N35完整离线收口，立即保存
+### 182-7 2026-11-23 C5Ex完整离线PASS，立即窄保存
+
+- `alg8-c5-ex`完整：0正文、43原题682–724、图76，43ready答案
+  （26auto/17ungraded、135部件）；选择54题240项（24single/30multiple）。
+  来源/现代文本/独立数学/全部选项及误区推导PASS，最终RECOVERY4稿SHA
+  `ef0db44af0794401f4e94aa088dd3eaf8617add695076f76ee045bb2a484279f`。
+  原answer finalizer RECOVERY2、choices validator with review和retain均实际exit0。
+  FIRST失败、blocked、各修正版与已注册707a勘误保持。
+- 五fresh显示批次全部实际PASS：7+8+8+8+2=33张。
+  批4 SHA`748945120559d12c2d5f8e39149b449e3a9d5c57478badff45d47a378747bb0e`；
+  批5 SHA`652399b43c78bc4432fab2908dfe535f0f93c41393fd83e69e0f50ab85e46ebb`。
+  原`finish-display.mjs`实际exit0，六组合/33截图全部被绑定观察覆盖。
+  旧正文/书写题和来源数学不重跑；真实headed报告仍0失败、cleanup=true。
+  所有观察0444，五审者均已关闭；父仍24图、本轮0。
+- 立即运行既有retain-final/stage-final，仅C5Ex现代课/原课、必要206及
+  225–230来源、图76/六选择新图、两索引、必要审查和本轮progress前缀。
+  原旧dirty尾部按HEAD版本进入index，不撤销工作树旧修改；N36只scratch，
+  231及以后源页/7a/6a/技能/模板不混入。
+  普通commit使用既有index，不用整progress路径`--only`；随后普通push
+  原分支`codex/STEMROBIN-182-textbooks`，实际SHA在既有入库队列登记。
+  本条是保存前状态，不宣称尚未运行的push、DB或全项目验收通过。
+
+### 182-7 2026-11-23 C5Ex显示前三批PASS，N36单点来源恢复PASS
+
+- C5Ex正文/书写题七截图实际观察PASS，批1 SHA
+  `f2708a202f1bff5d99d0ac4cc39d81f4e9bc45c062cf1b540276f49e460f8d4e`；
+  桌面首末页及六张完整新图实际观察PASS，批2 SHA
+  `8507533772ec3ccfffebeaa8ed5c63139b22ff4ae5a155bbd5d07019fc5acdad`。
+  手机首末页及六图左端实际观察PASS，批3 SHA
+  `045165f774158a5333da93383e9f00101889f1dc0ebc31608597c1ce650f6ab5`。
+  三记录均0444；原headed六组合33截图/0失败/cleanup=true直接复用，
+  不重渲染或重解源、数学、图。批4（右端六图及两桌面选项块）在途；
+  批5两手机选项块未观察。仍未宣称整课完成或入库。
+- Pascal原尺寸裁图确认727b句末实心点；FIRST REVISE保持，SHA
+  `8db1091e5e9ed39c22498bd2768ec7e0e95923047af6160dd6ae5616ed2cef33`。
+  只补ASCII句点并修矛盾note，233原native PUNCT1实际exit0，7块/19=19行/
+  0图/0规范化；原稿、失败、scope和流保留。
+  同Pascal纯文字受影响复核PASS，RECOVERY1 SHA
+  `bd503a7159986a722aedeb84679374aded33315c3ec4535c4558e058ca354700`；
+  其原8/8图、恢复0新图、0native重跑，已关闭。来源阶段由原66行PASS及
+  单点恢复组成，不覆盖FIRST FAIL，不提升N37或现代整课。
+- N36原窄assembler实际exit0，231–234四源页→19正文对象/7题725–731/
+  图83，边界p0231#3至p0234#3前；assembly SHA
+  `d43af19701e8fcc1f3dfda88d929231005b2ab4842b6bbdc5d178d2eff346b29`。
+  仅在N36 scratch装订，未保留/reindex到全局8a索引，不混入C5Ex窄课程提交。
+  原modern prepare实际exit0；作者稿冻结19正文/18显示段/34Latin标号/
+  一例题边界，仅已登记定义`a≠0`→`a≠1`数学纠正，其它数学/source不变。
+  新图83作者仅scratch在途；现代finalizer、独审、答案/选择/显示均未完。
+- N41作者Dalton已关闭，253/254原native各exit0，26/22行，794闭合、
+  末798；记录SHA
+  `b849a9800fe9a179a3423a2f505e2bc096059b4ab86f326fd2cdafbfb17e4916`。
+  N37–N41仍未独审，不解除252实印`n`争议，不混入C5Ex课程数据。
+- live Plane verify/read实际HTTP200，ticket state_group=started；同一开发调用
+  接续，不重装技能/重做setup/grill。父累计24图、本轮0；fresh每批≤8，
+  最多一个在途独审；外部付费API0，宿主用量/费用UNKNOWN。
+  暂存仍空，HEAD仍`de9b06ce4b58df08669883561261da097c4036a4`；
+  本聊天0DB/合并/部署/关单/主动消息/新聊天或工作树/分支/定时器。
+
+### 182-7 2026-11-23 C5Ex选择完整PASS，显示机械PASS及观察路径恢复中
+
+- 最终RECOVERY4只复核七条内部修正，133误区/107正确推导全PASS、
+  未审0；54正确集/240真值、源解/盲view/六图审全部复用。
+  最终键审SHA`53789f11ed5523e4b607445f584ce05902ca9e40570ae5d61e1420c3baac5b74`；
+  canonical SHA
+  `1b3b9fc7f4a9ef1ca6799b77ce35f3f08c49775f162afd539e73b6ccc05d3520`。
+  原validator with review实际一次exit0；历次FIRST/revise/blocked/exit3保留。
+  Sartre累计8/8图、0新图片，已关闭。
+- 原`retain_choices.py`实际exit0；最终54题240项choice-set保留。
+  原choices-only renderer实际exit0，sourcePagesSkipped=true；
+  原headed checker选择续查实际exit0，复用旧正文/书写题四组合，
+  合并六组合33张截图、0失败、cleanup=true。未重渲染已PASS正文/书写题。
+- fresh Pascal第一调用错误从主树解析relativepaths，实际载图0、
+  一个失败cropopen；C5Ex七截图/N36crop均实际在授权工作树，不是内容缺失。
+  三原失败同字节保留到正确树WRONG-CWD记录，不覆盖主树输出。
+  已改所有工具read/write/view_image为完整授权绝对路径，接续原8图
+  （七显示截图+一N36标点crop）未完成观察，原计数不重置。
+  暂无完整视觉批准，不宣称整课完成，不commit/入库；父仍24图、本次0。
+
+### 182-7 2026-11-23 C5Ex选择两题受影响恢复PASS，最终键/显示待完
+
+- FIRST盲view实际FAIL，仅723两题第一坐标粗范围唯一答案，原失败0444保持。
+  另建`choices-RECOVERY1`，只修六个错误选项及对应误区推导，正确项、
+  题干、图、其它52题与完整54键/240项不变；路径稿FIRST保留。
+  稿SHA`3903a08a4aaece4092033935dfca6cf2ede988e4c7bddf15922553ed11dc370c`。
+- 同一Sartre先纯view affected复核并0444冻结PASS，SHA
+  `d8438aced197925926e54d58ba89c31dad1645b99276e44550520a5604ca7fb9`。
+  完整2×2配对使每个坐标单独判断均剩两项，声明每次x误差0.02传播及
+  选项舍入后只有一个完整相容项；0新图片，原8/8不重置。
+  冻结后才首次授权最终作者键，全部240项键/误区比较及canonical在途。
+  尚不retain选择题或宣称C5Ex完整，不重跑源解/六图审/已PASS52view。
+- 既有正文/书写题四组合七截图原runtime-PASS复用；只准备选择新图
+  桌面整图、手机左右端及受影响选项显示补查，尚未执行或视觉批准。
+  父累计24图、本次0；所有未知宿主用量仍UNKNOWN，外部付费API0。
+- 原分支普通fetch成功，HEAD仍`de9b06ce4b58df08669883561261da097c4036a4`，
+  未rebase/merge/新分支，暂存空。C5Ex尚无新commit/入库。
+- N39 physical244–247原prepare-range一次实际exit0，仅备料；
+  fresh源作者Franklin已完成关闭，原native各exit0，25/23/18/24行；
+  773闭合，247实际N40起始排除，0新图/图85引用保留，作者5/8图片。
+  记录SHA`20c7a2bd35781065cf8b3c7c1a9c0a906e8b7342a51a0356da34d95b25590a4b`，
+  243已有源作者文本复用，未独审/装订/现代化/批准。
+  N36/N37/N38来源未解除待审或单点HOLD；后续课不混入C5Ex课程提交。
+- 首次最终键比较实际FAIL，54正确集/240真值全部一致，但696/D的
+  指数符号误区不能产生完整列；首键审SHA
+  `710dce8ea8a881560b51b0d14569eb58457fbc75261385a6ccef10814df6bd77`，
+  canonical及validator均未执行，不冒充机械通过。
+  父另建RECOVERY2仅修该internal derivation/misconception，
+  全部54view/240项/正确键/图不变；稿SHA
+  `8fd5baadbfc5bc3166aa3876612c3d43891771781e409ab22a6b32669822ed3d`。
+  同审者只续受影响内部复核及缺失canonical/validator，仍0新图片。
+- RECOVERY2的696/D内部复核PASS，但其它误区因首处失败停止而尚未完成；
+  canonical真实BLOCKED，SHA
+  `bf006510be7a5dbb5db57a36bf608c00950c87344db0e7af387ad3fd8b89e721`；
+  原validator一次实际exit3，结构通过、semantic blocked，不提升选择。
+  原RECOVERY2键审SHA
+  `0d4937b2d9f46ddcb842a949ccb5b54d67778ae9b349b0ca00537af70d8ef8cc`。
+  已明确接续首次最终键阶段尚未审完的推导，已审PASS/54键/240真值/
+  源解/盲view/六图直接复用；不将240真值比较计为240误区完成。
+- N40 physical248–252准备FIRST实际exit1（入口max4，未跑任何page producer），
+  原失败保留。仅分4+1原prepare-range各实际exit0，五页备料完成；
+  fresh作者Singer已完成关闭，原native五次各exit0，23/19/19/24/24行；
+  774–791闭合，252实际N41开头不计完整；实印`1≤a<n`与后文`1≤a<10`
+  差异照印保留，未审或改成10。作者7/8图、0新图；记录SHA
+  `bcc808a5d80dc448c3e3aaaec6c9c7bdb8d8e132110711cab7bcd09a0aeb6684`。
+  247既有源作者文字复用，未独审/装订/现代化，不进入C5Ex提交。
+- 首次未完成内部推导已全部续审，RECOVERY3实际FAIL七项但未审0：
+  132新误区125PASS/7需修，696/D此前PASS复用；107正确项推导全PASS，
+  43作者源解字段无新缺陷。完整记录SHA
+  `9d0b55a7efe413957b8fa8ecd9913aab4fe436f0088a7a79d8e5823be3a125ee`。
+  七项为683/A、685/D、693/D、698/C、707/C、712/C、719/B，仅internal误区。
+- 父另建RECOVERY4集中修七条derivation/misconception，全部54view/240项/
+  正确键/图/来源/其它233rationale不变；稿SHA
+  `ef0db44af0794401f4e94aa088dd3eaf8617add695076f76ee045bb2a484279f`。
+  同Sartre只复核七修正及缺失最终canonical/validator，源解/126误区PASS/
+  107正确推导PASS/盲view/图直接复用，0新图片。选择及显示仍未完。
+- N41 physical253/254原prepare-range一次各exit0，仅备料；
+  fresh源作者Dalton在途，≤8图片，252既有作者文本复用，
+  不解除该页实印`n`差异HOLD、不混入C5Ex完整课提交。
+
+### 182-7 2026-11-23 C5Ex来源收口及现代机械阶段PASS，整课未完
+
+- 上下文检查点不是暂停；唯一cwd仍为`lemmadeck--STEMROBIN-182`，
+  原分支/已push的N35 `de9b06ce4b58df08669883561261da097c4036a4`不变。
+  N35入库队列回执随下一次普通提交保存，不新增单独发布提交。
+- 225–228 FIRST源审实际FAIL，四个字面争议独立定点确认后只修694b、
+  696a/b、703a；FIRST作者/六份native-PASS/source-FAIL输出与首审0444保留。
+  两页SOURCE1原native真实exit0，受影响源比较PASS，SHA
+  `e4561174244a19374dd4392b854bb6860fe889d391aa88d18fffcbd2ee553268`，
+  无新增图片。707a实印`y=ca`保持，仅登记绑定`p0228#4`的缺指数勘误；
+  228 ERRATA1原native实际exit0，23/23，全部源blocks未改。
+- 229/230/231独立源比较PASS，SHA
+  `ab2250671a4b6be251586f33309283a276a1a5ee1337f24884cafea259bffb80`；
+  原229/230失败及计数原型/真实测试失败保留，只修实际短分数指数和brace行归属，
+  720仅空组编码修复，数学不变。两页RECOVERY1原native各exit0，26/26、10/10；
+  最终分式61例PASS（7skip）、offset6例PASS，layout17例前次PASS。
+  技能旧dirty及新8例聚焦测试未混入课程提交。231属于N36，排除C5Ex。
+- fig76既有源/spec/SVG/render/独审PASS一致，只由原record_review补缺少的
+  持久review.json，实际exit0；未开图/重渲染/改spec，N32其它HOLD不解除。
+  装订FIRST原assembler返回0，但窄范围断言实际exit1：图76放在目标h3前
+  产生虚“承上页”课。全部FIRST输出保留，不提升。
+  仅窄入口将真实`p0206`依赖放在C5Ex h3后，原assembler与范围断言
+  RECOVERY1实际exit0：一个`alg8-c5-ex`、43题682–724、0正文/1图。
+  assembly SHA`6e19c162ac98f0a9e8d77cd6bff52ecdf382375e9322e011e837d361d78e9101`。
+  必要原225–230/独审及FIRST失败已持久保留，原206依赖从已审N32保留源
+  同字节复制，不提升N32现代课；原reindex实际exit0，28 retained lessons。
+- 原modern prepare实际exit0，作者FIRST冻结127Latin标号及707a已登记
+  `y=ca^x`修正，0正文/0概念边界；原源字段/公式/数值保持。
+  FIRST现代finalize实际exit2，因读未编辑scratch模板及缺图76输出/审查路径；
+  首输入/失败audit0444保留，只将同字节作者稿放到工具真实输入并绑定既有图文件。
+  RECOVERY1原finalizer实际exit0，0/0正文、32/43题变化、1图。
+  独立文本实质审查与43题独立数学源解在途，不将机械PASS当整课批准。
+- 原offline renderer和headedchecker各实际exit0，正文/书写题四视口组合，
+  43题完整投影、无公式裁切/页横溢/输入/私钥，图76桌面整图/手机左右端
+  实达；七张截图、cleanup=true。实图观察待接续，未宣称显示PASS或DB/产品验收。
+  scratch根`.tmp/ld-s10y-lesson/resume182-7-C5Ex/`；
+  来源持久根`8a/evidence/resume182-7-C5Ex/`。答案作者Laplace、
+  选择作者Wegener各独立先解原题；唯一独审Pasteur先冻结源解，不披露作者键。
+- N36已有Erdos独审返回并关闭：232/233/234为24/19/24行，
+  仅727b句末点与首冻观察分歧，实际FAIL、不冒充作者漏点；其它源文/公式/
+  边界PASS，定义`a≠0`实印勘误保持。首审SHA
+  `23b4dc6e7042e8793a30d6a7c4ec17c8157a1c696b565549d7017f34aa600346`。
+  父仅生成未缩放/未增强的727两行native裁图，未开图/未判定，
+  crop SHA`e857bbb593ee76df7b2df520b0993a711f3aadadc949c8bd7fc82f69eb8f9618`；
+  等唯一审查者空闲后只续该分歧，不重审已PASS页。
+  N37 physical235–237原prepare-range实际exit0一次，仅备料；
+  新fresh作者Heisenberg在途，234已PASS来源复用，不开旧整页。
+- 父继承累计24图、本轮新增0；fresh子代理每批≤8图、最多一个在途独审。
+  0新外部付费API，宿主用量/费用UNKNOWN；暂存为空、尚无本次新commit。
+  本聊天0DB/合并/部署/关单/主动监督消息/新聊天或工作树/分支/定时器，
+  6a第二章266有效题/N31/N32/7a真HOLD保持。C5Ex不完整、不入库排队。
+
+- 接续事实：Pasteur已冻结43题独立源解和实质文本PASS（127标号/188公式），
+  文本SHA`baa4c6f1c76f66f7f90290c52939350db4542025f28a581ef86eb7b606d68ba0`。
+  随后才首次披露作者答案，43显示/135部件比较PASS、0缺陷，SHA
+  `b9631350c142388a14507194a3def0c43d9c998dd0dff58f3a03facbb4581e3e`。
+  Laplace初始现代栅格预览不完整如实保留；只补第8张真实headed整图，
+  作者690观察缺口已解除、键未改，SHA
+  `657a9215cbd6a64ac70aca40eb53166e8b924abfafac22ab1e821fab6fd4a9e9`。
+  两者已关闭，不再开图。
+- 原answer finalizer FIRST实际exit2：64exact中4失败。三条683g的
+  `2^x`序列化成`2^{x}`定点复现；疑似700集合案例实际PASS，反例完整保留不改键。
+  仅三条expected同义补括号后，RECOVERY1原finalizer实际exit2，剩1项696a的
+  `^\pi`→`^{\pi}`；完整stderr/报告保留。仅再修这一序列化字符串，
+  RECOVERY2原finalizer实际exit0，43ready/26auto/17ungraded、135部件。
+  显示答案/数学/其它字段不变，原43数学比较复用，不改app/规范器或绕过合同。
+  两轮原finalizer内置64项校验有真实记录，未知键盘attempts仍UNKNOWN。
+- Wegener选择作者先解43题再冻结54题240项（24single/30multiple），
+  163识别响应/122条件严格/41条件增补，18作图及9开放/证明产出损失明确。
+  原结构checker exit0，不等于语义PASS；作者8图结束已关闭。
+  唯一Sartre复用已PASS独立源解，六候选图新实质独审0444 PASS，
+  原始无图的题按完整公式新绘，未伪造source PNG；当前6图已同字节提升，
+  原record_review六次实际exit0，仅render路径重绑，无重渲染或再图审。
+  `choices-final/draft.json`只改new_figures路径、54view/240项/键不变；
+  盲view实质审查仍在途，未披露作者draft键/生成canonical批准。
+- N38 physical238–243原prepare两次实际exit0，六页作者分4+2完成关闭；
+  原native每页一次各exit0，9/8/20/22/18/25行，fig84/85 PNG已捕获，
+  754跨至242、758后243实际N39标题，N39末证明仍open。
+  作者记录SHA`598a72c357b5be520d681a64ef18e64db01177bd8f222222905cf0aa4b556a99`
+  及`350f2c2209bd9b681b51f2fd6c25dea76cde910dca014454d74031327cf0179d`，
+  未独审/装订/现代化/批准，未混入C5Ex完整课登记。
+
+### 182-7 2026-11-23 N35完整离线收口并已普通push
 
 - N34已完整推送`2839d35da305a8de8cb49e7cfb3a64654759137c`，见下方既有单一入库队列；
   不等待写入方，本聊天不DB/部署/关单/主动消息，继续N35。
@@ -70,7 +290,10 @@
   `cee854285169ec1b498ca7c05b034d6bd8cd2301719b65905ce7a3d757276b4d`；
   原finish-display真实exit0，完整离线显示PASS为六组合/11截图，
   没重渲染已PASS正文/书写题，没有声称DB或产品交互验收。
-  现在保留必要证据、窄commit/普通push，再登记既有单一入库队列。
+  必要证据已持久保留，156明确路径及本轮progress窄commit
+  `de9b06ce4b58df08669883561261da097c4036a4`，
+  普通push实际exit0，`2839d35da..de9b06ce4`；暂存已清空。
+  已登记下方既有单一入库队列，不等待DB写入方，继续补充习题源审。
   下一目录卡第五章补充习题physical225–231原prepare-range两次实际exit0，
   仅备料，未转写/装订/现代化/批准。224起始源页已有全页PASS可直接复用。
   随后225–228源作者原native finalize各实际exit0，24/22/20/23行，
@@ -134,7 +357,29 @@
 - 父累计图片24，不再开图；仅fresh有界子代理负责新图与显示观察。
   外部付费API=0，宿主用量/费用UNKNOWN；0DB/部署/关单/主动监督消息。
 
-### 182-7 单一入库队列：8a N34/N33完整推送快照
+### 182-7 单一入库队列：8a N35/N34/N33完整推送快照
+
+#### N35
+
+- lessonId：`alg8-c5-s2-n35`，edition：`modern-us-neutral`。
+  已推送commit：`de9b06ce4b58df08669883561261da097c4036a4`，
+  原分支：`codex/STEMROBIN-182-textbooks`；
+  普通push实际exit0，`2839d35da..de9b06ce4`，未force/merge/换分支。
+- 保留根：`ssot-resources/soviet10year-textbooks/artifacts/8a/`；
+  现代课：`editions/modern-us-neutral/lessons/alg8-c5-s2-n35/`，
+  8正文源对象/10显示段/1概念边界、7原题675–681、
+  7ready答案（5auto/2ungraded）；`choice-set/`为16题50项
+  （15single/1multiple），含已独审的指数图四文件。
+  五行表`tbl-p0222-01.*`、原223/224源页、原课及两必要索引已保存。
+  2010共享PDF仅一份，位于教材`sources/references/`，不依赖scratch。
+- 必要来源/文本/120位置表/答案/盲view/最终50项键审、FIRST失败及
+  六组合/11张显示证据在`8a/evidence/resume182-7-N35/`。
+  严格响应58/82、五固定锚/19未问及作图产出能力损失如实保留；
+  2010实用格已核，未用格NOT_REVIEWED/原三格HOLD/1978等价UNVERIFIED保持。
+- 仅156明确路径及本轮progress；旧325行dirty、技能、7a和N31/N32未完组件未混入。
+  既有唯一写入方team-leader只接本推送快照，按原base/answers/choices单课流程；
+  不生产废弃交互、不`--all`或重发旧课。本聊天0DB/部署/关单/主动消息。
+  DB结果待写入方；队列回执随下一次普通提交保存，不造单独发布提交。
 
 #### N34
 

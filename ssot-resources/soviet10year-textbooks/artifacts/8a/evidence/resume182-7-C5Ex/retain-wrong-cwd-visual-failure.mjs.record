@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const wrong = '/Users/yong/work/lemmadeck-ws/lemmadeck/.tmp/ld-s10y-lesson';
+const copies = [
+  [`${wrong}/resume182-7-C5Ex/display-review-batch1-FIRST.record`,
+    '.tmp/ld-s10y-lesson/resume182-7-C5Ex/display-review-batch1-WRONG-CWD.failed.record'],
+  [`${wrong}/resume182-7-N36/source-punctuation-review-FIRST/observation.record`,
+    '.tmp/ld-s10y-lesson/resume182-7-N36/source-punctuation-review-WRONG-CWD/observation.failed.record'],
+  [`${wrong}/resume182-7-N36/source-punctuation-review-FIRST/resolution.record`,
+    '.tmp/ld-s10y-lesson/resume182-7-N36/source-punctuation-review-WRONG-CWD/resolution.failed.record'],
+];
+for (const [from, to] of copies) {
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  fs.copyFileSync(from, to, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(to, 0o444);
+}
+const diagnosis = {
+  stage: 'WRONG-CWD-VISUAL-EXECUTION-FAILURE-NOT-CONTENT-FAILURE',
+  actual_files_root: root,
+  wrong_resolution_root: '/Users/yong/work/lemmadeck-ws/lemmadeck',
+  preserved: copies,
+  images_actually_loaded: 0,
+  crop_open_failed: 1,
+  correction: 'Use absolute image/read/write paths in the authorized worktree; resume the same unperformed 8-image batch, without rerender or counter reset.',
+};
+fs.writeFileSync('.tmp/ld-s10y-lesson/resume182-7-C5Ex/visual-path-failure.record',
+  JSON.stringify(diagnosis, null, 2) + '\n', { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify(diagnosis, null, 2));

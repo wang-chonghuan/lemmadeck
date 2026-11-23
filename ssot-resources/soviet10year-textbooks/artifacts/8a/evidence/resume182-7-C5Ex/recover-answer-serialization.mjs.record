@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const input = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex/answer-keys.json';
+const report = JSON.parse(fs.readFileSync(`${base}/answer-runtime-FIRST-failure/scoped-report.json`));
+assert.equal(report.caseCount, 4);
+assert.equal(report.failures, 3);
+const failed = report.results.filter(result => !result.accepted);
+assert.equal(failed.length, 3);
+assert.ok(failed.every(result => result.preserved && result.inserted && result.inputEvents > 0
+  && result.input.startsWith('2^x') && result.emitted.startsWith('2^{x}')));
+const original = JSON.parse(fs.readFileSync(input));
+const candidate = structuredClone(original);
+const answer = candidate.answers.find(answer => answer.exercise === '683');
+const deltas = [];
+for (const result of failed) {
+  const label = result.name.slice('alg8-c5-ex/683/'.length);
+  const part = answer.parts.find(part => part.label === label);
+  assert.deepEqual(part.expected, [result.input]);
+  part.expected = [result.emitted];
+  deltas.push({ exercise: '683', label, before: result.input, after: result.emitted,
+    realEditPreservedMathematics: result.preserved });
+}
+assert.equal(deltas.length, 3);
+const restored = structuredClone(candidate);
+for (const delta of deltas) {
+  restored.answers.find(answer => answer.exercise === delta.exercise)
+    .parts.find(part => part.label === delta.label).expected = [delta.before];
+}
+assert.deepEqual(restored, original);
+const directory = `${base}/answer-runtime-RECOVERY1`;
+assert.ok(!fs.existsSync(directory));
+fs.mkdirSync(directory);
+const bytes = `${JSON.stringify(candidate, null, 2)}\n`;
+fs.writeFileSync(input, bytes);
+fs.writeFileSync(`${directory}/candidate.json.record`, bytes, { flag: 'wx', mode: 0o444 });
+fs.writeFileSync(`${directory}/serialization-delta.record`, `${JSON.stringify({
+  deltas, changeKind: 'MathLive observed equivalent serialization only',
+  displayAnswersAndOtherFieldsUnchanged: true,
+  firstScopedDiagnosticActualExit: 2,
+  negativeControl700Set: 'PASS unchanged; initial suspicion disproved',
+  originalFinalizerFourthFailure: 'Not identified from truncated stderr; no unproven fix applied',
+  before: 'd4fb9b5739db182f184b29c947e9e51136671e32247494c7d5ccf3a7376fa05f',
+  after: createHash('sha256').update(bytes).digest('hex'),
+  independentMathReviewReused: true, newMathematicalClaims: false,
+}, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ changedExpectedStrings: 3, mathematicalContentChanged: false }));

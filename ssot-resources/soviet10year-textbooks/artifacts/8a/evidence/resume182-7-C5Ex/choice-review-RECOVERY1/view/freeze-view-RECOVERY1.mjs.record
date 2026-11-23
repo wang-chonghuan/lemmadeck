@@ -1,0 +1,256 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const own = `${base}/choice-review-RECOVERY1/view`;
+const candidatePath = `${base}/choices-RECOVERY1/learner-view.json`;
+const firstProjectionPath = `${base}/choices-author-FIRST/learner-view-FIRST.json`;
+const sourcePath = `${base}/math-independent-FIRST/source-solutions-FIRST.record0444`;
+const firstFigurePath = `${base}/choice-review-FIRST/figures/fig-review-FIRST.record0444`;
+const firstReviewPath = `${base}/choice-review-FIRST/view/choice-view-FIRST.record0444`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = p => ({ path: p, sha256: hash(fs.readFileSync(p)) });
+const load = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const serialize = value => Buffer.from(JSON.stringify(value), 'utf8');
+const expected = new Map([
+  [sourcePath, '92ebd86c58ebab876c51b7a2ffe63d69c9f779232628483a4356c4e248a47db4'],
+  [firstFigurePath, '86db4942801c68d003e668c6ee28c467ed9e2eac0f44301dc4bd6d2a111e87c4'],
+  [firstReviewPath, '6fe3ab7e1f5934d325028ebb426877320c2d656194a3deb0c9c3abbf2275d86a'],
+  [candidatePath, '3979552a3de1e1a8db3fe6237ea4709c89b1f22dc6bfaf346bb0bb74c9ff275b'],
+]);
+for (const [p, digest] of expected) {
+  assert.equal(bind(p).sha256, digest);
+  if (p !== candidatePath) assert.equal(fs.statSync(p).mode & 0o777, 0o444);
+}
+const first = load(firstProjectionPath);
+const recovery = load(candidatePath);
+assert.ok(Array.isArray(recovery));
+assert.equal(recovery.length, 54);
+const firstById = new Map(first.questions.map(q => [q.id, q]));
+const affectedIds = ['q723-positive-powers', 'q723-small-and-product'];
+const affected = new Set(affectedIds);
+const unchanged = [];
+const deltas = [];
+for (const q of recovery) {
+  assert.deepEqual(Object.keys(q).sort(), ['id', 'source_numbers', 'view']);
+  assert.deepEqual(Object.keys(q.view).sort(), ['figure_ids', 'mode', 'options', 'stem']);
+  for (const o of q.view.options)
+    assert.deepEqual(Object.keys(o).sort(), ['figure_ids', 'id', 'text']);
+  const original = firstById.get(q.id);
+  assert.ok(original, q.id);
+  if (!affected.has(q.id)) {
+    const a = serialize(original.view), b = serialize(q.view);
+    assert.ok(a.equals(b), q.id);
+    unchanged.push({ question_id: q.id, check: 'UTF8-JSON.stringify-view-bytes',
+      first_sha256: hash(a), recovery1_sha256: hash(b), byte_equal: true,
+      semantic_review: 'PREEXISTING_PASS_REUSED_NOT_REPEATED' });
+    continue;
+  }
+  assert.equal(q.view.stem, original.view.stem);
+  assert.equal(q.view.mode, original.view.mode);
+  assert.deepEqual(q.view.figure_ids, original.view.figure_ids);
+  assert.equal(q.view.options.length, 4);
+  deltas.push({ question_id: q.id, stem_unchanged: true, mode_unchanged: true,
+    figure_ids_unchanged: true,
+    options: q.view.options.map((o, i) => ({
+      option_id: o.id, first_sha256: hash(serialize(original.view.options[i])),
+      recovery1_sha256: hash(serialize(o)),
+      changed: !serialize(o).equals(serialize(original.view.options[i])),
+    })) });
+}
+assert.equal(unchanged.length, 52);
+assert.equal(deltas.length, 2);
+assert.equal(deltas.flatMap(d => d.options).filter(o => o.changed).length, 6);
+const firstReview = load(firstReviewPath);
+const firstFigures = load(firstFigurePath);
+assert.equal(firstFigures.status, 'PASS');
+assert.equal(firstFigures.image_usage.actually_viewed_total, 8);
+
+// These centers are read from the immutable independent source appendix,
+// not recalculated from the 43 exercises and not obtained from author keys.
+const sourceText = fs.readFileSync(sourcePath, 'utf8');
+const components = [
+  { part: '723a', log10_center: 0.05800692227250361,
+    value_center: 1.142896551411561, inverse_weights: [1/5],
+    formula: 'log10((1.95)^(1/5)) = log10(1.95)/5',
+    source_graph_reading: 'Inverse read near .29; divide by 5; forward read near .058, about 1.14.' },
+  { part: '723b', log10_center: 1.134773196681327,
+    value_center: 13.63870691008028, inverse_weights: [5/6],
+    formula: 'log10(23^(5/6)) = (5/6)*(1+log10(2.3))',
+    source_graph_reading: 'Normalize 23 to 10*2.3; inverse mantissa read near .36; apply 5/6; forward mantissa reading with decade shift gives about 13.6.' },
+  { part: '723c', log10_center: -1.591477428853510,
+    value_center: 0.02561666395516977, inverse_weights: [2/3],
+    formula: 'log10((.0041)^(2/3)) = (2/3)*(-3+log10(4.1))',
+    source_graph_reading: 'Normalize .0041 to 10^-3*4.1; inverse read near .61; multiply by 2/3; use exponent -2 plus mantissa to read about .026.' },
+  { part: '723d', log10_center: 0.7184078314633153,
+    value_center: 5.228869842458469, inverse_weights: [1/5, 1/3],
+    formula: 'log10((.18)^.2*cuberoot(400)) = (1/5)*(-1+log10(1.8))+(1/3)*(2+log10(4))',
+    source_graph_reading: 'Inverse mantissa reads near .26 and .60; weight by 1/5 and 1/3 with exact decade characteristics; forward read near .72 gives about 5.2.' },
+];
+for (const c of components) assert.ok(sourceText.includes(String(c.value_center)), c.part);
+const perReadError = .02;
+const budgets = components.map(c => {
+  const inverseRadius = c.inverse_weights.reduce((n, w) => n+Math.abs(w)*perReadError, 0);
+  const finalRadius = inverseRadius+perReadError;
+  return { ...c, inverse_read_error_each: perReadError,
+    inverse_reads: c.inverse_weights.length,
+    transformed_inverse_log10_radius: inverseRadius,
+    final_forward_x_read_radius: perReadError,
+    total_log10_radius: finalRadius,
+    log10_interval: [c.log10_center-finalRadius, c.log10_center+finalRadius],
+    value_interval: [10**(c.log10_center-finalRadius), 10**(c.log10_center+finalRadius)] };
+});
+const byPart = new Map(budgets.map(c => [c.part, c]));
+const parseOption = text => {
+  const match = text.match(/^\$(\d+(?:\.\d+)?),\\quad(\d+(?:\.\d+)?)\$$/);
+  assert.ok(match, text);
+  return match.slice(1).map(token => {
+    const places = token.includes('.') ? token.split('.')[1].length : 0;
+    const value = Number(token), halfUnit = .5*10**(-places);
+    return { displayed_token: token, displayed_value: value,
+      display_rounding_half_unit: halfUnit,
+      display_rounding_interval: [value-halfUnit, value+halfUnit] };
+  });
+};
+const pairs = new Map([
+  ['q723-positive-powers', ['723a', '723b']],
+  ['q723-small-and-product', ['723c', '723d']],
+]);
+const questionReviews = affectedIds.map(id => {
+  const q = recovery.find(q => q.id === id);
+  assert.ok(q, id);
+  const parts = pairs.get(id);
+  const optionChecks = q.view.options.map(o => {
+    const values = parseOption(o.text);
+    const coordinates = values.map((v, i) => {
+      const budget = byPart.get(parts[i]);
+      const [low, high] = budget.value_interval;
+      const [roundLow, roundHigh] = v.display_rounding_interval;
+      const overlaps = roundHigh >= low && roundLow <= high;
+      const whollyInside = roundLow >= low && roundHigh <= high;
+      if (overlaps) assert.ok(whollyInside, `${id}/${o.id}/${parts[i]} borderline rounding`);
+      return { source_part: parts[i], ...v,
+        permitted_value_interval: budget.value_interval,
+        nominal_log10_distance: Math.abs(Math.log10(v.displayed_value)-budget.log10_center),
+        permitted_total_log10_radius: budget.total_log10_radius,
+        display_rounding_interval_overlaps_error_band: overlaps,
+        entire_display_rounding_interval_inside_error_band: whollyInside,
+        compatible: overlaps,
+        evidence: overlaps
+          ? 'The entire displayed-rounding interval lies inside the conservative propagated x-read band. Compatible graphical estimate; no high-precision source-image claim.'
+          : roundLow > high
+            ? 'Even the lower edge of displayed rounding is above the maximum propagated graphical estimate; quantitatively incompatible.'
+            : 'Even the upper edge of displayed rounding is below the minimum propagated graphical estimate; quantitatively incompatible.' };
+    });
+    const truth = coordinates.every(c => c.compatible) ? 'correct' : 'incorrect';
+    return { option_id: o.id, option_text: o.text,
+      option_serialized_sha256: hash(serialize(o)), truth, coordinate_checks: coordinates,
+      evidence: `${coordinates[0].compatible ? 'First compatible' : 'First incompatible'}; ${coordinates[1].compatible ? 'second compatible' : 'second incompatible'}. Both coordinates are required for a true complete pair.` };
+  });
+  const correct = optionChecks.filter(o => o.truth === 'correct').map(o => o.option_id);
+  assert.equal(correct.length, 1, id);
+  assert.equal(q.view.mode, 'single');
+  const values = q.view.options.map(o => parseOption(o.text).map(v => v.displayed_token));
+  const firstCoordinates = [...new Set(values.map(v => v[0]))];
+  const secondCoordinates = [...new Set(values.map(v => v[1]))];
+  assert.equal(firstCoordinates.length, 2);
+  assert.equal(secondCoordinates.length, 2);
+  const uniquePairs = new Set(values.map(v => v.join('/')));
+  assert.equal(uniquePairs.size, 4);
+  for (const a of firstCoordinates) for (const b of secondCoordinates)
+    assert.ok(uniquePairs.has(`${a}/${b}`));
+  for (const i of [0, 1])
+    assert.equal(optionChecks.filter(o => o.coordinate_checks[i].compatible).length, 2);
+  return {
+    question_id: id, source_parts: parts, view_serialized_sha256: hash(serialize(q.view)),
+    task_fidelity: { verdict: 'pass',
+      evidence: 'The two original expressions, actual approved mantissa graph, normalization, per-read .02 declaration and source response order are unchanged. All candidate first values satisfy the elementary source power range, removing the FIRST range-only discriminator. Each coordinate has two compatible-option occurrences, and the full 2x2 Cartesian pairing requires both quantitative estimates to identify a unique complete response.' },
+    graph_reading: { verdict: 'pass',
+      evidence: parts.map(p => byPart.get(p).source_graph_reading).join(' ')
+        +' These are reused independent source/figure observations; no new image, source solving or figure review occurred. Supplied normalization is disclosed scaffolding, not a numerical answer.' },
+    pairing_dependence: { verdict: 'pass', pairing: 'complete 2x2 Cartesian product',
+      coordinate_only_compatible_options: [2, 2],
+      evidence: 'Either single quantity, even when estimated correctly, leaves two options. The second coordinate independently eliminates one remaining option. No combination is missing or duplicated; the pair is not inferable from one estimate or option-order correlation.' },
+    error_ambiguity: { verdict: 'pass', error_model: 'each inverse x read +/- .02, weighted in exponent arithmetic, plus an independent final forward x read +/- .02; candidate display rounding also allowed',
+      evidence: 'Exactly one complete pair overlaps the propagated bands; its full display-rounding intervals are inside both bands. Every false pair has at least one coordinate separated from the band even after display rounding. Thus the declared x-read errors do not create a second compatible option.' },
+    answer_leakage: { verdict: 'pass',
+      evidence: 'Only competing numerical estimates are changed. No correctness marker, source-solve text, root/output marker, author key or supplied logarithm appears in the learner view. Repeated coordinate values are unkeyed competing claims and enforce two-quantity discrimination.' },
+    redundancy: { verdict: 'pass',
+      evidence: 'The four pairs are distinct. Reusing one coordinate twice is purposeful paired-task assessment, not duplicate complete options. The other repaired question addresses different source expressions.' },
+    mathematics: { verdict: 'pass', correct, option_checks: optionChecks,
+      independent_solution: 'Only frozen independent source-723 graph/numeric evidence was reused as reference. The new work propagates declared read errors and checks the eight candidate pairs without consulting author correct sets.' },
+    mode_correctness: { verdict: 'pass', mode: 'single', independent_true_count: 1 },
+    issue_ids: [],
+  };
+});
+const firstIssues = firstReview.issues.filter(i => affected.has(i.question_id));
+assert.equal(firstIssues.length, 2);
+const record = {
+  schema: 'C5Ex-independent-choice-view-RECOVERY1-v1',
+  stage: 'AFFECTED-PURE-VIEW-FREEZE-BEFORE-FIRST-AUTHOR-KEY-DISCLOSURE',
+  reviewer: { kind: 'independent_agent', identity: 'sole active independent C5Ex FIGURE + BLIND VIEW reviewer' },
+  cwd: root, frozenAt: new Date().toISOString(), mode: '0444', status: 'PASS', outcome: 'pass',
+  candidate_learner_view: bind(candidatePath), first_learner_projection: bind(firstProjectionPath),
+  reused_independent_source: bind(sourcePath),
+  reused_first_figure_review: bind(firstFigurePath),
+  preserved_first_blind_view_review: bind(firstReviewPath),
+  delta_inventory: deltas,
+  unchanged_view_byte_checks: unchanged,
+  unchanged_check_scope: 'Only UTF-8 JSON.stringify(view) bytes and hashes compared for the other 52 views, preserving property/option order. This is not equality of whole-file indentation/wrapper bytes: RECOVERY1 is an array with source_numbers, FIRST is a questions/figures wrapper. No repeated semantic review of these 52 PASS views.',
+  figure_reuse: 'Both affected views still reference fig-choice-decimal-graph-FIRST. Six existing actual figure observations/approvals inherited; no figure file or image payload opened in this continuation.',
+  error_propagation: {
+    per_x_read_error: .02, method: 'linear weighted error sums in log10 exponent; final forward x-read allowance included conservatively; exact decade shifts add no error; map exponent endpoints through increasing 10^t',
+    components: budgets,
+    rounding: 'Each printed value is additionally treated as its full half-last-displayed-unit rounding interval, not an exact calculator output.',
+    scope: 'This check covers the declared per-x-read approximately .02 convention and explicit display rounding. No unprinted independent vertical-error budget is invented; a different future tolerance contract would need an affected check.',
+    ambiguity: 'NONE under the declared convention for either complete pair',
+  },
+  question_reviews: questionReviews,
+  affected_cross_question_relations: [
+    { questions: affectedIds, verdict: 'pass',
+      evidence: 'The shared approved y=10^x mantissa graph remains unannotated and its normalization is reusable domain knowledge, not an answer to either repaired question. Source quantities are disjoint; no coordinate estimate or true-pair letter from one gives the other. Both now independently require two quantitative estimates, and neither supplies a solved logarithm for the other.' },
+    { related_questions: ['q722-exponent-laws', 'q724-lookup-table'], verdict: 'PREEXISTING_PASS_RELATION_REUSED',
+      evidence: 'These two views and the other 50 unaffected views are byte-equal and are not semantically re-reviewed. Reusing general exponent laws is legitimate source knowledge; the unchanged independently authored table does not contain the four repaired quantities or their required paired answers. No new instruction/dependency from either repaired stem was added.' },
+  ],
+  first_defect_dispositions: firstIssues.map(i => ({
+    issue_id: i.id, first_record_preserved: true, recovery1_status: 'resolved-in-affected-view',
+    question_id: i.question_id,
+    evidence: 'All four pairings of two plausible values per coordinate are now present; neither first-coordinate elementary range nor one correctly estimated coordinate isolates a unique option. Both quantitative source expressions are discriminated without tolerance overlap.',
+  })),
+  source_response_loss: 'Free graph construction and independent written workings remain the previously disclosed choice-response production losses. RECOVERY1 removes the essential quantitative graph-bypass defect without claiming to restore handwritten production or historical-image identity.',
+  coverage: { affected_questions_semantically_reviewed: 2, complete_options_judged: 8,
+    changed_wrong_options: 6, unchanged_correct_options_rechecked_within_affected_pairs: 2,
+    independent_truth_sets: 2, unique_single_modes: 2, quantitative_graph_tasks: 4,
+    unchanged_pass_views_byte_checked_only: 52, repeated_source_solves: 0,
+    repeated_figure_reviews: 0, new_images: 0, total_previous_image_payloads: 8,
+    image_cap: 8, author_keys_seen: 0, author_key_comparisons: 0 },
+  image_usage: { previous_actual_payloads: 8, new_payloads: 0, cumulative_payloads: 8,
+    cap: 8, reopens: 0, crops: 0, resets: 0, rerenders: 0 },
+  execution_first_failures_preserved: [
+    'First read-only inspection assumed the FIRST wrapper shape for RECOVERY1; assertion failed because RECOVERY1 is an array. No output or image was written/opened.',
+    'Second read-only shape check omitted the allowed source_numbers field; assertion failed before view output. Third inspection used the actual safe learner projection, checked the other 52 view bytes and printed only the affected pair views. No forbidden internal artifact was opened.',
+  ],
+  boundaries: [
+    'Did not open choices-RECOVERY1/draft.json, repair.record, old/final author keys, author internal solutions or misconception derivations.',
+    'This is an affected pure-view independent freeze, not a canonical final draft/key agreement review.',
+    'FIRST source/figure/view records remain byte-identical and 0444; path-only original author material is untouched.',
+    'No installation, skill edit, Git/DB/paid API/new chat/branch/worktree/image/browser operation. Writes confined to choice-review-RECOVERY1/view.',
+    'Separate human authorization is still required before the first author-key disclosure or canonical review.',
+  ],
+  usage: { host_usage: 'UNKNOWN', external_API: 0, paid_calls: 0, model_service_calls: 0 },
+};
+assert.equal(questionReviews.flatMap(q => q.mathematics.option_checks).length, 8);
+for (const [p, digest] of expected) assert.equal(bind(p).sha256, digest);
+fs.mkdirSync(own, { recursive: true });
+const output = `${own}/choice-view-RECOVERY1.record0444`;
+fs.writeFileSync(output, JSON.stringify(record, null, 2)+'\n', { flag: 'wx' });
+fs.chmodSync(output, 0o444);
+assert.equal(fs.statSync(output).mode & 0o777, 0o444);
+console.log(JSON.stringify({ status: 'PASS', path: path.resolve(output),
+  sha256: bind(output).sha256, mode: '0444', affected_questions: 2,
+  complete_options: 8, unchanged_views_byte_equal: 52, error_ambiguity: false,
+  new_images: 0, cumulative_images: 8, author_keys_seen: 0, external_API: 0 }));

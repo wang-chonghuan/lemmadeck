@@ -1,0 +1,75 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+let code = fs.readFileSync('.tmp/ld-s10y-lesson/resume182-7-N35/check-display.mjs', 'utf8');
+function change(before, after) {
+  assert.equal(code.split(before).length, 2, `Expected one scoped adaptation: ${before}`);
+  code = code.replace(before, after);
+}
+change("const id = 'alg8-c5-s2-n35';", "const id = 'alg8-c5-ex';");
+change("const base = '.tmp/ld-s10y-lesson/resume182-7-N35';",
+  "const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';");
+change('assert.equal(dom.media.length, figures.length);',
+  "assert.equal(dom.media.length, lesson.prose.filter(block => block.type === 'fig').length);");
+change('exercises.flatMap(e => e.figures || [])',
+  'exercises.flatMap(e => e.figures || []).map(figure => typeof figure === "string" ? figure : figure.id)');
+change("const focus = surface === 'text' ? 'figure:last-of-type'\n          : surface === 'exercises' ? '#ex-679' : 'section.choice:nth-of-type(1)';",
+  "const focus = surface === 'text' ? 'body'\n          : surface === 'exercises' ? '#ex-690' : 'section.choice:nth-of-type(1)';");
+change("        if (surface === 'choices') {\n          const last = page.locator('section.choice:last-of-type');",
+  `        if (surface === 'exercises') {
+          const figure = page.locator('figure#fig-76');
+          await figure.scrollIntoViewIfNeeded();
+          for (const end of width === 1440 ? ['whole'] : ['left', 'right']) {
+            const media = await figure.evaluate((element, end) => {
+              element.scrollLeft = end === 'right' ? element.scrollWidth : 0;
+              const svg = element.querySelector('svg');
+              return { svg: !!svg, width: svg.getBoundingClientRect().width,
+                left: element.scrollLeft, maximum: element.scrollWidth - element.clientWidth };
+            }, end);
+            assert.equal(media.svg, true);
+            assert.ok(Math.abs(media.width - 640) <= 1);
+            assert.ok(Math.abs(media.left - (end === 'right' ? media.maximum : 0)) <= 1);
+            const shot = \`\${output}/\${width}-fig76-\${end}.png\`;
+            await figure.screenshot({ path: shot, animations: 'disabled' });
+            report.screenshots.push({ path: shot, sha256: sha(shot), width, surface,
+              focus: 'figure#fig-76', end, media });
+          }
+        }
+        if (surface === 'choices') {
+          const last = page.locator('section.choice:last-of-type');`);
+change(`          report.screenshots.push({ path: screenshot, sha256: sha(screenshot), width, surface,
+            focus: 'section.choice:last-of-type' });
+        }`,
+  `          report.screenshots.push({ path: screenshot, sha256: sha(screenshot), width, surface,
+            focus: 'section.choice:last-of-type' });
+          for (const entry of draft.new_figures) {
+            const figure = page.locator('figure[id="' + entry.id + '"]').first();
+            await figure.scrollIntoViewIfNeeded();
+            for (const end of width === 1440 ? ['whole'] : ['left', 'right']) {
+              const media = await figure.evaluate((element, end) => {
+                element.scrollLeft = end === 'right' ? element.scrollWidth : 0;
+                const box = element.querySelector('.figure-media').getBoundingClientRect();
+                return { id: element.id, width: box.width, height: box.height,
+                  left: element.scrollLeft, maximum: element.scrollWidth - element.clientWidth };
+              }, end);
+              assert.ok(Math.abs(media.left - (end === 'right' ? media.maximum : 0)) <= 1);
+              const shot = output + '/' + width + '-' + entry.id + '-' + end + '.png';
+              await figure.screenshot({ path: shot, animations: 'disabled' });
+              report.screenshots.push({ path: shot, sha256: sha(shot), width, surface,
+                focus: entry.id, end, media, supplemental: true });
+            }
+          }
+          for (const questionId of ['q723-positive-powers', 'q723-small-and-product']) {
+            const index = draft.questions.findIndex(q => q.id === questionId);
+            assert.ok(index >= 0);
+            const options = page.locator('section.choice').nth(index).locator('.choice-options');
+            await options.scrollIntoViewIfNeeded();
+            const shot = output + '/' + width + '-' + questionId + '-options.png';
+            await options.screenshot({ path: shot, animations: 'disabled' });
+            report.screenshots.push({ path: shot, sha256: sha(shot), width, surface,
+              focus: questionId + ':options', supplemental: true });
+          }
+        }`);
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

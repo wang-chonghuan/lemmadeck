@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const beforePath = `${base}/choices-RECOVERY2/draft.json`;
+const original = JSON.parse(fs.readFileSync(beforePath, 'utf8'));
+const draft = structuredClone(original);
+const repairs = [
+  {
+    question: 'q683-constants', option: 'A',
+    derivation: '前四项按实际指数符号得到<,>,<,>；末两项错误把减法顺序颠倒为sqrt2-2<0和sqrt3-1>0，误得<,>，生成整列<,>,<,>,<,>。实际原来的2-sqrt2>0、1-sqrt3<0，末两关系应反过来。',
+    misconception: '只在末两个复合指数中颠倒减法的先后顺序，然后按颠倒后的符号与2^0比较；前四个指数照原式处理。',
+  },
+  {
+    question: 'q685-inverse', option: 'D',
+    derivation: '错误按右端的书写形式抄答案：整数32和128原样抄；单位分数1/64抄成负分母-64；小数0.5、0.25、0.125直接加负号，得到(32,-64,-0.5,-0.25,-0.125,128)。这些抄值不是2的指数，真实根为(5,-6,-1,-2,-3,7)。',
+    misconception: '不反演指数，右端写成整数就原样抄，写成单位分数就取负分母，写成小于1的小数就给原小数加负号。',
+  },
+  {
+    question: 'q693-constant-crossing', option: 'D',
+    derivation: '在a>1图中错误把x=0处1<a的高度比较推广到所有x，因而宣称不相交；在0<a<1图中又把直线y=a误当成y=1，用a^0=1宣称x=0相交，生成D的两个结论。实际两种底数均有a^1=a，交点横坐标都是1。',
+    misconception: '两种图分别误读：大于1的底数把y轴上的高度差当成全域不相交；小于1的底数把常数直线改认成y=1，误套y轴交点。',
+  },
+  {
+    question: 'q698-increasing', option: 'C',
+    derivation: '错误只检查y轴及其左侧，因此保留共同点(0,1)而漏掉右侧(1,2)；再把直线与x轴的点(-1,0)误当成两曲线交点，生成{-1,0}。但x=-1时2^x=1/2而x+1=0，且右侧真实根x=1不能漏掉。',
+    misconception: '只看y轴和左半图，忽略右侧真实交点；同时把直线自身的x轴截点误作指数曲线与直线的交点。',
+  },
+  {
+    question: 'q707-forward-domain', option: 'C',
+    derivation: '错误先在r=0特例中把非零首项写成u1*0^1而抹成0，再把这个全零特例推广到任意公比，统一选a=0并误信调整c能恢复所有序列，生成全称断言。实际n>=1时c*0^n恒为0，任何有限c都不能表示非零序列。',
+    misconception: '把零公比特例的错误全零表示无条件推广到所有公比，并误以系数c能够补回取a=0后消失的非零项。',
+  },
+  {
+    question: 'q712-nesting', option: 'C',
+    derivation: '错误把外层[t]改成严格大于输入的最小整数，也就是floor(t)+1；因余数v={t}总在[0,1)，该错误操作对v=0和0<v<1都给1，生成对每个实数都等于1的断言。真正的floor(v)包括v=0边界在内始终为0。',
+    misconception: '把不大于输入的最大整数误换成严格大于输入的下一个整数，连零余数也错移到1，而不是普通向上取整。',
+  },
+  {
+    question: 'q719-graph-matching', option: 'B',
+    derivation: '第一式错误把floor(x)+{x}当成{floor(x)}，得到零函数B；第二式错误把floor与fraction当成互逆，令floor({x})还原成x，得到直线A；第三式按原式{floor(x)}=0，得到B，从而生成B、A、B。真实顺序是x、0、0，即A、B、B。',
+    misconception: '第一式把相加错读为先取整再取余，第二式又把嵌套的两操作误作互逆并还原x；第三式按整数的余数为零处理。',
+  },
+];
+for (const repair of repairs) {
+  const item = draft.questions.find(q => q.id === repair.question)
+    .key.rationales.find(r => r.option_id === repair.option);
+  assert.equal(item.truth, 'incorrect');
+  item.derivation = repair.derivation;
+  item.misconception = repair.misconception;
+}
+const restored = structuredClone(draft);
+for (const repair of repairs) {
+  const item = restored.questions.find(q => q.id === repair.question)
+    .key.rationales.find(r => r.option_id === repair.option);
+  const old = original.questions.find(q => q.id === repair.question)
+    .key.rationales.find(r => r.option_id === repair.option);
+  item.derivation = old.derivation;
+  item.misconception = old.misconception;
+}
+assert.deepEqual(restored, original);
+assert.deepEqual(draft.questions.map(q => q.view), original.questions.map(q => q.view));
+const out = `${base}/choices-RECOVERY4`;
+fs.mkdirSync(out, { recursive: false });
+for (const file of ['seed.json', 'learner-view.json']) {
+  fs.copyFileSync(`${base}/choices-RECOVERY2/${file}`, `${out}/${file}`);
+}
+const save = (name, value) => {
+  const bytes = JSON.stringify(value, null, 2) + '\n';
+  fs.writeFileSync(path.join(out, name), bytes, { flag: 'wx', mode: 0o444 });
+  return createHash('sha256').update(bytes).digest('hex');
+};
+const digest = save('draft.json', draft);
+save('repair.record', {
+  stage: 'SEVEN-INTERNAL-PROCEDURES-RECOVERY4-NOT-APPROVAL',
+  original: beforePath,
+  first_full_internal_failure: `${base}/choice-review-RECOVERY3/key/choice-key-internal-RECOVERY3.record0444`,
+  repaired_draft_sha256: digest,
+  repaired_units: repairs.map(({ question, option }) => ({ question, option })),
+  unchanged: 'All54views/240options/correctkeys/source/figures/coverage/other233rationales',
+  new_images: 0,
+});
+console.log(JSON.stringify({ status: 'REPAIRED_NOT_APPROVED', units: 7, draft_sha256: digest }));

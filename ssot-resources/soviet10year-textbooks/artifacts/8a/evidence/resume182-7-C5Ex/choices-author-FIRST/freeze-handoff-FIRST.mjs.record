@@ -1,0 +1,104 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+
+const cwd = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+if (process.cwd() !== cwd) throw new Error('wrong cwd')
+const own = '.tmp/ld-s10y-lesson/resume182-7-C5Ex/choices-author-FIRST'
+const sha = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const canonical = p => {
+  const r = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py','digest',p], { cwd, encoding:'utf8' })
+  if (r.status !== 0) throw new Error(r.stderr)
+  return r.stdout.trim()
+}
+const draft = JSON.parse(fs.readFileSync(`${own}/draft-FIRST.json`,'utf8'))
+const coverage = JSON.parse(fs.readFileSync(`${own}/coverage-provenance-FIRST.json`,'utf8'))
+const receipt = JSON.parse(fs.readFileSync(`${own}/structural-check-FIRST.execution.json`,'utf8'))
+const textNames = [
+  'seed-FIRST.json','draft-FIRST.json','learner-view-FIRST.json',
+  'author-source-solutions-FIRST.record0444','coverage-provenance-FIRST.json',
+  'actual-image-count-FIRST.json','prepare-executions-FIRST.json',
+  'figure-authoring-provenance-FIRST.json','structural-check-FIRST.execution.json',
+  'structural-check-FIRST.stdout.txt','structural-check-FIRST.stderr.txt',
+  'figure-render-executions-FIRST.json','figure-render-repaired-executions-FIRST.json',
+  'figure-render-repaired-2-executions-FIRST.json',
+  'figure-render-remaining-executions-FIRST.json',
+  'figure-render-remaining-2-executions-FIRST.json',
+  'figure-render-remaining-3-executions-FIRST.json',
+]
+const snapshots = textNames.map(name => {
+  const p = `${own}/${name}`
+  return { name, path:path.resolve(p), file_sha256:sha(p), canonical_sha256:name.endsWith('.json') ? canonical(p) : null }
+})
+const figures = draft.new_figures.map(f => {
+  const base = `${own}/figures/${f.id}`
+  return {
+    id:f.id, image:path.resolve(f.path), image_sha256:sha(f.path),
+    spec:path.resolve(`${base}.spec.json`), spec_sha256:sha(`${base}.spec.json`),
+    render:path.resolve(`${base}.render.json`), render_sha256:sha(`${base}.render.json`),
+    preview:path.resolve(`${base}.preview.png`), preview_sha256:sha(`${base}.preview.png`),
+    independent_review:'NOT PERFORMED',
+  }
+})
+const manifest = {
+  status:'AUTHOR FROZEN; FIRST STRUCTURAL PASS ONLY; NOT SEMANTICALLY APPROVED',
+  cwd, ownership:path.resolve(own), counts:coverage.counts, snapshots, new_candidate_figures:figures,
+  structural_checker:{
+    cwd:receipt.cwd, command:receipt.command, argv:receipt.argv, exitCode:receipt.exitCode,
+    stdout:fs.readFileSync(`${own}/structural-check-FIRST.stdout.txt`,'utf8'),
+    receipt:path.resolve(`${own}/structural-check-FIRST.execution.json`),
+  },
+  promotion_before_final_keyreview: {
+    authorized_actor:'parent only',
+    required:'Promote the six exact new SVG/spec/render assets, settle draft image paths without pretending scratch paths are durable, preserve FIRST immutable snapshots and hash-bind the promoted draft before final key review.',
+    blind_order:'Seed + actual images and learner-view first; only afterwards author source-solving record and draft key. No author-created independent or canonical review exists.',
+    byte_changes:'A real geometry/option/source change needs affected review. Path-only relocation must not be presented with stale draft digest.',
+  },
+  unresolved:coverage.unresolved_issues,
+  bounded_stop:'All 8 allowed image payloads have been used once. No further author images may be loaded in this context.',
+  prohibited_side_effects:'No git, install, DB, paid API, skill/app edit, branch/worktree creation, timer, cross-chat, or independent review occurred.',
+  usage:{host_tokens:'UNKNOWN',host_cost:'UNKNOWN',external_api_calls:0,paid_calls:0},
+}
+fs.writeFileSync(`${own}/handoff-FIRST.json`,JSON.stringify(manifest,null,2)+'\n',{flag:'wx'})
+const line = s => `${s.name}\n  ${s.path}\n  file SHA256 ${s.file_sha256}${s.canonical_sha256 ? `\n  canonical SHA256 ${s.canonical_sha256}` : ''}`
+const text = [
+  '# C5Ex FIRST author handoff',
+  '',
+  manifest.status,
+  '',
+  `43 seeds, 0 prose, 54 questions (24 single / 30 multiple).`,
+  `163 recognitional targets / 163 enumerated source units; 0 unmapped response units.`,
+  `Condition-exact strict coverage 122/163; 41 explicitly conditional units (707 and floor-definition tasks).`,
+  `Independent plotting production omitted for 18 units; proof/open-example/counterexample/justification production omitted for 9 further units. All 163 choice responses lose independent written production evidence.`,
+  `Actual image payload count 8: original source 1 + modern preview 1 + new candidate previews 6. Each opened once; no remaining image allowance.`,
+  '',
+  '## Frozen text snapshots',
+  ...snapshots.map(line),
+  '',
+  '## Exact new assets for parent promotion before final key review',
+  ...figures.map(f=>`${f.id}\n  SVG ${f.image}\n  SHA256 ${f.image_sha256}\n  spec ${f.spec}\n  SHA256 ${f.spec_sha256}\n  render ${f.render}\n  SHA256 ${f.render_sha256}\n  preview ${f.preview}\n  SHA256 ${f.preview_sha256}`),
+  '',
+  '## First structural execution',
+  `cwd: ${receipt.cwd}`,
+  `${receipt.command} ${receipt.argv.join(' ')}`,
+  `exitCode: ${receipt.exitCode}`,
+  manifest.structural_checker.stdout.trim(),
+  '',
+  '## Unresolved',
+  ...coverage.unresolved_issues.map(x=>`- ${x}`),
+  '',
+  'The parent owns promotion and the sole independent blind-view then keys review. This author has not written a canonical review or semantic approval. Reuse unchanged Figure 76 PASS; do not regenerate or re-review it to package this handoff.',
+  'Host tokens/cost UNKNOWN; external API 0; paid calls 0.',
+  '',
+].join('\n')
+fs.writeFileSync(`${own}/handoff-FIRST.md`,text,{flag:'wx'})
+for (const s of snapshots) fs.chmodSync(s.path,0o444)
+for (const f of figures) for (const p of [f.image,f.spec,f.render,f.preview]) fs.chmodSync(p,0o444)
+fs.chmodSync(`${own}/handoff-FIRST.json`,0o444)
+fs.chmodSync(`${own}/handoff-FIRST.md`,0o444)
+console.log(JSON.stringify({
+  handoff:path.resolve(`${own}/handoff-FIRST.json`),file_sha256:sha(`${own}/handoff-FIRST.json`),
+  text:path.resolve(`${own}/handoff-FIRST.md`),text_file_sha256:sha(`${own}/handoff-FIRST.md`),
+  snapshots:snapshots.slice(0,6),counts:coverage.counts,
+},null,2))

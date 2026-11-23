@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex';
+const work = `${base}/modern-prepared/adapt/8a/modern-us-neutral/lessons/alg8-c5-ex`;
+const failed = `${base}/modern-final-FIRST-failure`;
+const recovery = `${base}/modern-author-RECOVERY1`;
+assert.ok(!fs.existsSync(failed));
+assert.ok(!fs.existsSync(recovery));
+fs.mkdirSync(failed);
+fs.mkdirSync(recovery);
+fs.copyFileSync(`${target}/adaptation.audit.json`, `${failed}/adaptation.audit.json.record`);
+for (const name of ['lesson.template.json', 'exercises.template.json', 'figures.template.json']) {
+  fs.copyFileSync(`${work}/${name}`, `${failed}/${name}.record`);
+  const doc = JSON.parse(fs.readFileSync(`${base}/modern-author-FIRST/${name}.record`));
+  if (name === 'figures.template.json') {
+    Object.assign(doc.figures[0], {
+      mode: 'deterministic', svg: 'figures/fig-76.svg',
+      render: 'figures/fig-76.render.json', review: 'figures/fig-76.review.json',
+    });
+  }
+  const bytes = `${JSON.stringify(doc, null, 2)}\n`;
+  fs.writeFileSync(`${work}/${name}`, bytes);
+  fs.writeFileSync(`${recovery}/${name}.record`, bytes, { flag: 'wx', mode: 0o444 });
+}
+for (const name of fs.readdirSync(failed)) fs.chmodSync(`${failed}/${name}`, 0o444);
+console.log(JSON.stringify({
+  failedActualExit: 2, recovery: 'original author bytes + existing fig76 paths',
+  sourceAndMathUnchangedFromAuthor: true, rerender: false, independentFigureRereview: false,
+}));

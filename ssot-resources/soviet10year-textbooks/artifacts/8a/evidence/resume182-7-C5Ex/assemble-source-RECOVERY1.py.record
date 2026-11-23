@@ -1,0 +1,139 @@
+"""Use the existing assembler for the reviewed supplementary card only."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sys
+
+REPO = Path("/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import assemble as A
+
+BASE = REPO / ".tmp/ld-s10y-lesson/resume182-7-C5Ex"
+RAW = BASE / "raw-FIRST/8a"
+STAGE = BASE / "assembly-RECOVERY1"
+BOOK = STAGE / "artifacts/8a"
+ID = "alg8-c5-ex"
+assert not BOOK.exists(), "Keep prior attempts intact"
+
+
+def binding(file):
+    return {
+        "path": str(file.relative_to(REPO)),
+        "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+    }
+
+
+reviews = [
+    BASE / "source-review-225-228-FIRST/source-comparison-FIRST.record",
+    BASE / "source-review-229-231-FIRST/source-comparison-FIRST.record",
+    BASE / "source-disputed-review-FIRST/affected-resolution-SOURCE1.record",
+]
+first_review = json.loads(reviews[0].read_bytes())
+assert first_review["pages"][0]["status"] == "pass"
+assert first_review["pages"][-1]["status"] == "pass"
+assert {item["id"] for item in first_review["defects"]} == {"D1", "D2", "D3", "D4"}
+for file in reviews[1:]:
+    assert json.loads(file.read_bytes())["status"] == "pass", file
+
+documents = []
+sources = []
+for page in [198, 213, 224]:
+    file = REPO / (
+        "ssot-resources/soviet10year-textbooks/artifacts/8a/"
+        f"pages/{page:04d}/page.json"
+    )
+    documents.append((file, json.loads(file.read_bytes())))
+    sources.append(binding(file))
+file = REPO / (
+    "ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/"
+    "resume182-7-N32-source-held/current/pages/0206/page.json.record"
+)
+documents.append((file, json.loads(file.read_bytes())))
+sources.append(binding(file))
+documents.sort(key=lambda item: item[1]["meta"]["page"])
+for page in range(225, 231):
+    directory = RAW / f"pages/{page:04d}"
+    audit = json.loads((directory / "audit.json").read_bytes())
+    assert not audit["errors"], (page, audit["errors"])
+    assert audit["lines_md"] == audit["lines_printed"]
+    file = directory / "page.json"
+    documents.append((file, json.loads(file.read_bytes())))
+    sources.append(binding(file))
+
+stream = A.load_stream(RAW, documents)
+chapter = next(block for block in stream
+               if block["kind"] == "h1" and block["page"] == 198)
+section = next(block for block in stream
+               if block["kind"] == "h2" and block["page"] == 213)
+dependency = [block for block in stream
+              if block["kind"] == "fig" and block.get("id") == "fig-76"]
+assert len(dependency) == 1
+starts = [i for i, block in enumerate(stream)
+          if block["page"] == 224 and block["kind"] == "h3"
+          and "补充习题" in A.B.text_of(block)]
+assert len(starts) == 1
+start = starts[0]
+assert not any(block["kind"] in ("h1", "h2", "h3")
+               for block in stream[start + 1:])
+card = stream[start:]
+# Borrowed figure stays inside the target card without changing its source ref.
+selected = [chapter, section, card[0], *dependency, *card[1:]]
+merged, warnings = A.merge_across_pages(copy.deepcopy(selected))
+assert not warnings, warnings
+assert not any(block.get("open") for block in merged)
+numbers = [int(block["label"]) for block in merged if block["kind"] == "ex"]
+assert numbers == list(range(682, 725))
+assert next(block for block in reversed(merged)
+            if block["kind"] == "ex")["page"] == 230
+
+for file, document in documents:
+    destination = BOOK / f"pages/{document['meta']['page']:04d}/page.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(file, destination)
+figure = REPO / (
+    "ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/"
+    "resume182-7-N32-source-held/current/figures/fig-76.png"
+)
+destination = BOOK / "figures/fig-76.png"
+destination.parent.mkdir(parents=True, exist_ok=True)
+shutil.copyfile(figure, destination)
+sources.append(binding(figure))
+
+loader = A.load_stream
+A.load_stream = lambda book: copy.deepcopy(selected) if book == BOOK else loader(book)
+try:
+    result = A.run(
+        BOOK, REPO / "ssot-resources/soviet10year-textbooks/toc/8a/zh.json",
+        TOOLS.parent / "profiles/soviet-cn.json",
+        strict=True, work=None, exercise_numbering="book",
+    )
+finally:
+    A.load_stream = loader
+assert result == 0
+index = json.loads((BOOK / "book.json").read_bytes())
+assert not index["audit"]["errors"]
+assert [lesson["id"] for lesson in index["lessons"]] == [ID]
+record = {
+    "schema": "stemrobin-182/scoped-source-assembly@1",
+    "status": "RAW_CLOSED_NOT_MODERN_APPROVAL",
+    "lesson": ID,
+    "sources": sources,
+    "independent_source_reviews": [binding(file) for file in reviews],
+    "selected_refs": [block["ref"] for block in selected],
+    "boundary": {"start": stream[start]["ref"], "last_exercise": 724,
+                 "last_page": 230, "excluded_next_page": 231},
+    "external_figure_refs": [block["ref"] for block in dependency],
+    "exercise_numbers": numbers,
+    "existing_assembler_used": True,
+    "source_block_indexes_preserved": True,
+    "database_writes": 0,
+    "complete_modern_lesson": False,
+}
+output = STAGE / "assembly.record"
+output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({**binding(output), "exercises": len(numbers)}))

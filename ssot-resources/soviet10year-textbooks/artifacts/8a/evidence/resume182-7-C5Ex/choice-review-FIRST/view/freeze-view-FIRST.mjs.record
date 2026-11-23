@@ -1,0 +1,594 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const author = `${base}/choices-author-FIRST`;
+const own = `${base}/choice-review-FIRST/view`;
+const sourcePath = `${base}/math-independent-FIRST/source-solutions-FIRST.record0444`;
+const figurePath = `${base}/choice-review-FIRST/figures/fig-review-FIRST.record0444`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = file => ({ path: file, sha256: hash(fs.readFileSync(file)) });
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sorted = value => Array.isArray(value) ? value.map(sorted)
+  : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map(k => [k, sorted(value[k])]))
+    : value;
+const canonical = value => hash(Buffer.from(JSON.stringify(sorted(value))
+  .replace(/[\u007f-\uffff]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`)));
+assert.equal(bind(sourcePath).sha256, '92ebd86c58ebab876c51b7a2ffe63d69c9f779232628483a4356c4e248a47db4');
+assert.equal(fs.statSync(sourcePath).mode & 0o777, 0o444);
+assert.equal(fs.statSync(figurePath).mode & 0o777, 0o444);
+const figureReview = read(figurePath);
+assert.equal(figureReview.status, 'PASS');
+assert.equal(figureReview.image_usage.actually_viewed_total, 8);
+const learnerPath = `${author}/learner-view-FIRST.json`;
+const seedPath = `${author}/seed-FIRST.json`;
+const learner = read(learnerPath);
+const seed = read(seedPath);
+assert.deepEqual(Object.keys(learner).sort(), ['figures', 'questions']);
+for (const q of learner.questions) {
+  assert.deepEqual(Object.keys(q).sort(), ['id', 'view']);
+  assert.deepEqual(Object.keys(q.view).sort(), ['figure_ids', 'mode', 'options', 'stem']);
+  for (const o of q.view.options) assert.deepEqual(Object.keys(o).sort(), ['figure_ids', 'id', 'text']);
+}
+
+// Independent judgments of the permitted views. Letters here were determined
+// before author keys; the evidence includes every true and false alternative.
+const rows = [
+  ['q682-order', 'ACD',
+    'All three original comparisons appear as complete relational claims, with a second alternative for the radical comparison and a false equality for the fractional comparison. Reversing B/D is a normal competing claim, not redundant duplicate wording.',
+    '48/56 < 49/56 and base 2 is increasing.',
+    'sqrt(3) < sqrt(7), so the displayed greater-than relation reverses the actual order.',
+    '-sqrt(5) < -sqrt(3); increasing base preserves this order.',
+    'sqrt(3) < sqrt(7); increasing base preserves this order.',
+    'The fractional exponents differ by 1/56; injectivity rules out equality.'],
+  ['q683-constants', 'B',
+    'All six constant exponents retain their signs, radicals and tiny positive exponent. Complete-column recognition retains comparison with 1, including the near-zero distractor.',
+    'The last two exponents have signs positive, negative, not negative, positive.',
+    'Exponent signs are negative, positive, negative, positive, positive, negative; base 2 puts the powers on corresponding sides of 1.',
+    'The three negative exponents give powers below 1, so all-greater is false.',
+    '0.0001 is strictly positive; its power is greater than 1, not equal.'],
+  ['q683-variable', 'C',
+    'Both real-variable cases preserve all three sign regions and equality boundaries; the shifted/reflected exponent is not treated as x.',
+    '1-x is positive for x<1 and negative for x>1; the second sign sequence is reversed here.',
+    'The second equality boundary is x=1, not x=0; x=0 gives 2^(1-x)=2.',
+    'Monotonicity and exponent zeros give thresholds 0 and 1 with the displayed opposite sign sequences.',
+    'At x=0 the first power equals 1; at x=2 the second is below 1.'],
+  ['q684-images', 'ABD',
+    'All five source intervals are present. Open/closed finite boundaries and nonattainment of the zero asymptote are tested, not only endpoint numbers.',
+    'Increasing positive 2^x maps the two open half-lines to (1,infinity) and (0,1).',
+    'The open endpoints 1,5 map to 2,32 without inclusion.',
+    'At x=-1 the value is 1/2, not -2; the function has no negative values.',
+    'Included endpoints give [1/2,2] and [1,2].',
+    'Zero is a limit as x tends leftward, never a value of 2^x.'],
+  ['q685-inverse', 'C',
+    'All six equations remain in their original order. Vector recognition loses independent written inverse derivations but does not delete an equation or change a right-hand side.',
+    'Reciprocals below 1 require negative exponents, not the positive entries in positions 2-5.',
+    'The 0.25 and 0.125 roots are -2 and -3, not -4 and -8.',
+    '32,1/64,0.5,0.25,0.125,128 are respectively powers with exponents 5,-6,-1,-2,-3,7.',
+    'The right-hand sides are not exponents; for example 2^32 is not 32.'],
+  ['q686-bounds', 'ABDE',
+    'All four source inequalities retain strictness and the two non-strict boundaries. C/D and E/F discriminate direction and endpoint inclusion.',
+    '256=2^8; increasing comparison gives x>=8.',
+    '0.25=2^-2; increasing comparison gives x<=-2.',
+    'The threshold is -7, but values to its right, not left, satisfy the strict greater relation.',
+    '1/128=2^-7 gives x>-7.',
+    '2=2^1 gives x<1.',
+    'At x=1 equality holds, so the strict less-than excludes that endpoint.'],
+  ['q687-changes', 'B',
+    'Both original interval pairs are shown in the stem and lie inside graph A. The learner compares vertical increments, not merely the equal horizontal widths. No drawn increment or supplied factor answers the task.',
+    'Each second interval is one unit to the right; multiplying both ordinates by 2 doubles, not reduces, its gap.',
+    'For both pairs the one-unit translate doubles the positive vertical difference, matching the steeper right-hand graph.',
+    'The second pair is also translated by one unit, so its two differences are not equal.',
+    'Equal interval widths do not give equal exponential increments.'],
+  ['q688-crossing', 'ACD',
+    'The two specified functions share one actual graph. Equality and both strict inequalities are retained. Free graph construction becomes interpretation of a supplied graph, a concrete production loss.',
+    'Both powers equal 1 at x=0 and their ratio is (4/3)^x, equaling 1 only there.',
+    'At x=0 the powers are equal; at x=-1 the first is larger, so the less-than cannot hold on R.',
+    'The base ratio exceeds 1, giving first<second exactly for x>0.',
+    'The first power is larger exactly for x<0.',
+    'The ratio is strictly increasing and equals 1 only at zero; there is no positive crossing.'],
+  ['q689-partition', 'C',
+    'All six equality/greater/less source tasks are retained in one full partition for each base pair; decreasing individual functions do not reverse comparison between bases at fixed x.',
+    'Both base ratios exceed 1; positive exponents give greater, not less.',
+    'The second base ratio 0.9/0.8 exceeds 1 as well, so its partition does not reverse.',
+    'Both ratios exceed 1 and give equality at zero, greater on positive x, less on negative x.',
+    'Both pairs equal at zero and the signs reverse across zero; no comparison is true on all R.'],
+  ['q690-source-graph', 'AB',
+    'The current figure-76 SVG exactly matches the seed binding. The authorized source PNG and styled full current view were interpreted once; geometry PASS is reused. Both requested half-planes use the three specifically named curves.',
+    'For x>0 the base order .25<1/3<.8 is preserved, matching the right side.',
+    'For x<0 reciprocal powers reverse the base order, matching the left side.',
+    'The .8-base curve is lowest, not highest, on negative x.',
+    'All powers are positive and meet at (0,1), never at y=0.'],
+  ['q691-family', 'AB',
+    'The universal condition 0<a<b<1 remains explicit; the figure bases are explicitly examples, not replacements for general a,b. Sketch production becomes general-property recognition using both sides of an actual shared graph.',
+    'Both bases are below 1, so both curves decrease and a^0=b^0=1.',
+    'Positive powers preserve base order; negative powers reverse it.',
+    'A positive exponential never equals zero.',
+    'At x=-1 the reciprocals give 1/a>1/b; at zero equality also contradicts strict all-real ordering.'],
+  ['q692-middle', 'C',
+    'All three original formulas are shown and both sides of zero are judged. The common point is a helpful added relation, not a lost source subtask; all alternatives sharing it means that extra relation is not independently discriminated.',
+    '0.4 is between 1/3 and 1/2; it cannot be the highest positive-side curve.',
+    'This positive-side ordering reverses the actual base order.',
+    'The intermediate base gives the intermediate curve on both sides, with reversed exterior order; every zero power is 1.',
+    'At x=1 the outer-height mean is (1/3+1/2)/2=5/12, not .4.'],
+  ['q693-constant-crossing', 'A',
+    'Both base regimes remain universal and the representative bases are disclosed. The constant is y=a, not y=1; all before/at/after intersection positions are retained. Supplied graphs replace drawing.',
+    'a^x=a iff x=1; increasing and decreasing regimes give opposite inequalities on either side.',
+    'a^0=1 differs from a in both permitted regimes, so zero is not the crossing.',
+    'For 0<a<1 and x<1, a^x>a; this item incorrectly uses the increasing ordering for both regimes.',
+    'Every permitted a gives a^1=a, so both claimed exceptions fail.'],
+  ['q694-reciprocal', 'ABD',
+    'All three original comparisons retained. Equivalent reciprocal bases, equality and positive range are distinguished; no answer-bearing prose precedes the claims.',
+    '.04^-5=25^5<25^6 since 25>1.',
+    '(2/3)^-6=(3/2)^6=1.5^6.',
+    'A positive base raised to a real exponent remains positive.',
+    '.5^-11=2^11.',
+    'The transformed left exponent is 5, not 6, so equality is false.'],
+  ['q695-monotonicity', 'B',
+    'All four independent hypotheses remain separate; the stem explicitly prevents incorrectly treating the four k,m pairs as one inconsistent system. Base classification still has to be judged.',
+    'pi/3>1, so the second less-than implies k<m, not k>m.',
+    'pi and pi/3 exceed 1, sqrt(3)-sqrt(2) is in (0,1), and sqrt(7)-1 exceeds 1; the sequence is >,<,<,<.',
+    'The third base lies below 1 and reverses the displayed power inequality, requiring k<m.',
+    'The first and fourth increasing bases contradict their entries; the second is also reversed.'],
+  ['q696-one', 'C',
+    'All four source expressions, signs and fractional exponents remain. Comparing bases with 1 and accounting for negative powers is still required.',
+    'The last two bases lie in (0,1) with negative exponents, so their values exceed 1.',
+    'pi^-pi is below 1 because pi>1 and -pi<0.',
+    'The first two are below 1; the two subunit bases raised to negative exponents exceed 1.',
+    'The first is below 1 and the last exceeds 1, contrary to this column.'],
+  ['q697-signs', 'AB',
+    'All four independent equations are covered in paired complete claims. The stem explicitly separates each k and retains the 1.003 near-one value.',
+    'For bases 5 and 7 above 1, the right sides exceeding 1 imply positive exponents.',
+    'For bases .3 and .4 below 1, the right sides exceeding 1 imply negative exponents.',
+    '7^0=1, not 1.003.',
+    'A positive exponent of .3 would be below 1, not 100.'],
+  ['q698-increasing', 'B',
+    'The original graph-solving equation appears unchanged with its actual analytic plot. All crossings rather than one observed root are requested; free construction is lost, graphical crossing interpretation retained.',
+    'The source-frozen second crossing at x=1 is omitted.',
+    'The visible crossings at x=0 and x=1 satisfy the equation; the frozen convexity argument excludes further roots.',
+    'At x=-1, the two sides are .5 and 0, so -1 is not a root; this also omits 1.',
+    'At x=.5, sqrt(2) is not 1.5; the intervening interval is not filled with roots.'],
+  ['q698-decreasing', 'C',
+    'The second source equation is separate from its increasing counterpart and uses graph B. Decreasing/increasing geometry and root-set completeness are retained.',
+    'At x=1, .3 differs from 2, so the extra root is false.',
+    'At x=-1 the positive exponential differs from zero.',
+    'At x=0 both sides are 1; the exponential decreases and the line increases, so this is the unique crossing.',
+    'The displayed crossing at zero is an actual root.'],
+  ['q699-near-miss', 'B',
+    'The original nonlinear crossing task retains the negative root, approximate precision and positive near-miss, with two clearly labeled finite windows. The source-frozen global completeness proof is reused; no finite plot is called a global certificate. Free construction is lost.',
+    'The positive near-miss is not a root; at 3.2 the two function values differ, as the separated paths indicate.',
+    'The frozen root lies between -1.6 and -1.5; the fine negative-side grid supports that bracket. The reused complete source proof excludes positive roots.',
+    'The only root is negative, not between positive 1.5 and 1.6.',
+    'The negative-window sign change/crossing gives a real root.'],
+  ['q700-linear-exponents', 'ABC',
+    'All five linear-exponent source equations retain radicands, mixed number and decimal bases. The sixth quadratic exponent is separately reviewed; paired recognition does not omit an equation.',
+    'The right sides are 3^(-2/3) and 7^(-1/5); injectivity gives the stated roots.',
+    '6 1/4=(2/5)^-2 and 125=(1/5)^-3.',
+    '(4/5)*1.25=1, so the right side is 1 and the nonunit base gives x=0.',
+    'The cube root of 9 gives exponent -2/3, not its reciprocal -3/2.',
+    'At x=2, .4^2=.16, not 6.25; the exponent must be negative.'],
+  ['q700-quadratic', 'C',
+    'The source quadratic exponent remains a complete root-set task, including both signs and contrast with an all-real claim.',
+    'At x=0 the power is 6^-1, not 1.',
+    'x=-1 also makes the exponent zero, so the singleton omits a root.',
+    'The exponent must be zero: x^2-1=0 gives both -1 and 1.',
+    'Nonzero exponents, for example at x=0, do not give 1.'],
+  ['q701-sets', 'ABC',
+    'All six original strict inequalities remain in complete paired solution claims. Irrational thresholds, mixed-number reciprocal and decreasing-base reversals are covered.',
+    'Increasing bases 2 and 5 give thresholds 3/2 and 2/3 with displayed directions.',
+    '10^(-1/2) is the reciprocal square root; .7^-2=100/49 is the mixed number and the decreasing base reverses direction.',
+    '.2^-2=25 and (1/3)^(2/3)=cuberoot(1/9); both decreasing comparisons give the displayed directions.',
+    'The first threshold should be -1/2; this unnecessarily excludes valid x=0.',
+    'Both subunit-base inequality directions are reversed.'],
+  ['q702-linear', 'B',
+    'All four source exponent equations remain in order with zero exponent and two decreasing-base transformations. Written algebra is replaced by full-vector recognition.',
+    '.5^-2x=2^(2x)=2^-3 requires -3/2, not +3/2.',
+    'Exponent equations give -7/5,-3/2,0,2/7, respectively.',
+    'Dividing exponent coefficients is required; multiplying them gives these erroneous large entries.',
+    'The first sign is wrong and 17^(3x)=1 requires x=0, not 1/3.'],
+  ['q703-radicals', 'B',
+    'The two source radical equations retain the extra factor .1. They are not simplified in the prompt; the other eight source parts are reviewed separately.',
+    'The square-root power halves x; x=10 and x=3 fail the transformed right exponents.',
+    'x/2=10 and x/2-1=3 give 20 and 8.',
+    'These halve the required roots instead of doubling the transformed exponents.',
+    'The second x=6 gives 10^(3-1)=100, not 1000.'],
+  ['q703-compatibility', 'AC',
+    'Source c/d remain independent equations. Empty set versus all-real set and linear-coefficient division are explicit; cancellation is not mistaken for identity.',
+    'The first equation reduces to 6x-2=6x-15, a contradiction.',
+    'Cancelling the x terms leaves unequal constants, not an identity.',
+    '4x-2=70-5x gives 9x=72 and x=8.',
+    '72 is the undivided constant, not the root.'],
+  ['q703-products', 'ABC',
+    'All remaining six source product equations retain shared shifts, product bases and radicals. Complete paired root claims cover every part.',
+    'Product bases 10 and 6 give exponents -3 and 3.',
+    '10^(x-1)=10^-3 gives -2; 28^(1-x)=28^-1 gives 2.',
+    'sqrt(12)*sqrt(3)=6 gives x=-1; sqrt(7)*sqrt(2)=sqrt(14) is nonunit and its exponent must be zero, giving 1.',
+    'Both displayed shifts are mishandled: the roots are -2 and 2.',
+    'The roots are -1 and 1, not 1 and 0.'],
+  ['q704-product-bounds', 'B',
+    'All three original inequalities retain product factors and strictness. Increasing-base conversion still requires solving the linear exponent direction, including the negative coefficient.',
+    'The first exponent is x/2+1>-3, giving x>-8 rather than -6.',
+    'The three exponent comparisons give x>-8, x<-1, x<1/18.',
+    'The third inequality -6x+1/3>0 requires x<1/18, not greater.',
+    'The middle exponent is 2x+1<-1, giving x<-1 rather than -1/2.'],
+  ['q705-roots', 'ABC',
+    'All three equations retain shifted powers and the repeated quadratic root; singleton/extra-root alternatives judge completeness.',
+    '4(x-1)=5 gives x=9/4.',
+    '4x+6=3 gives x=-3/4.',
+    'The right side is 1 and (x-1)^2=0 gives only x=1.',
+    'Dropping the shift produces 5/4, which does not satisfy 4(x-1)=5.',
+    'At x=-1, (x-1)^2=4, so the left is not 1.'],
+  ['q706-factor', 'C',
+    'All four original sums are preserved in a full-vector task. Common-factor algebra is not supplied in the stem; free written derivation is the response loss.',
+    'The vector treats isolated coefficients/right sides as exponents and fails each common-factor equation.',
+    'The first two entries are correct; the third/fourth incorrectly ignore their shared exponent shifts.',
+    'Common factors give 5*2^x=20,4*3^x=12,6*5^(x-1)=30,21*4^(x-1)=84, hence 2,1,2,2.',
+    'Dividing constants does not directly give the exponent roots in these four equations.'],
+  ['q707-forward-domain', 'AB',
+    'Source 707a uses the registered missing-exponent correction. The view explicitly chooses positive integer indexing and a broader recurrence definition, retaining the ordinary nonzero-ratio representation theorem and adding the zero-ratio obstruction. This is a disclosed convention qualification, not a hidden restriction of negative ratios. Proof production/induction is lost; verifying the coefficient construction is retained.',
+    'Independently substituting c=u1/r and a=r gives u_n=u1*r^(n-1) for r!=0; integer powers admit negative r.',
+    'This recurrence has r=0. If ca=1 then c and a are nonzero, forcing ca^2=a!=0, contradiction with the second term.',
+    'a=0 gives all zero terms at positive indices and cannot represent a sequence with first term 1.',
+    'Negative real bases have valid integer powers, so a=r is allowed on this domain.'],
+  ['q707-reverse-domain', 'AC',
+    'Source 707b converse is preserved under the explicitly stated recurrence convention. Zero coefficients, zero base, natural-index convention and invalid extension to all-real x are separately judged. Ordinary nonzero-ratio convention remains in the frozen source rather than being silently rewritten.',
+    'For a!=0, integer powers exist and ca^(n+1)=a*ca^n; if c=0 both sides remain zero.',
+    'For c=0, adjacent quotients are 0/0 and cannot prove a common ratio.',
+    'a=0 gives 0^n=0 for n>=1; adding n=0 requires a separate 0^0 convention.',
+    'For negative a, noninteger powers such as exponent 1/2 need not be real.'],
+  ['q708-brackets', 'A',
+    'All four original numbers retain their signs and strict bracketing by consecutive integers. No number is removed.',
+    'Floors 30,0,-1,-11 give the displayed four consecutive pairs.',
+    'The two negative numbers lie below the proposed lower endpoints 0 and -10.',
+    '.49 is positive and is not between -1 and 0.',
+    '30 and 32 are not consecutive, despite bracketing 30.2.'],
+  ['q709-parts', 'ABD',
+    'The largest-integer floor convention is explicitly supplied because the exercise-only lesson has no definitions. All three source numbers require both parts; negative mixed-number sign is preserved.',
+    'The integer 105 has zero fractional part.',
+    'floor(-7.8)=-8, leaving the nonnegative remainder .2.',
+    'Although the sum is -7.8, -7 is not its floor and -.8 is not a fractional part.',
+    '-21 2/7 means -(21+2/7); subtracting floor -22 leaves 5/7.',
+    'This sum is -21+2/7, not the negative mixed number, and uses the wrong floor.'],
+  ['q710-decompose', 'B',
+    'All four source values remain. The view requires the prescribed two parts, not just any arithmetically equal sum. Full-vector recognition loses separate production.',
+    'For the negative values the first summands are truncations and the second summands are negative, not fractional parts.',
+    'Floors 54,12,-1,-21 leave .1,.63,.03,.85 respectively.',
+    'The negative remainders are the wrong complements and the sums fail the original values.',
+    'The first two remainders are negative and first summands are ceilings, not floors.'],
+  ['q711-root-floors', 'ABD',
+    'Both positive and negative radicals in all three original parts are retained. Square bounds and the asymmetric negative floor are needed.',
+    '1<sqrt(2)<2 gives floors 1 and -2.',
+    '3<sqrt(13)<4 gives floors 3 and -4.',
+    '6<sqrt(47)<7 puts the negative radical between -7 and -6, with floor -7.',
+    'The same square bounds give floors 6 and -7.',
+    'sqrt(13) is below 4, so its positive floor is 3.'],
+  ['q712-nesting', 'AB',
+    'All four original expressions occur in the stem and are jointly judged by A; a general nested identity is added. Separate nested calculation production is lost, but order of operations and floor/fraction range remain.',
+    'The inner floors in expressions 1/3 are integers; inner fractions in 2/4 lie in [0,1). Each outer operation therefore returns zero.',
+    'floor(t) is an integer, so its fractional part is zero for every real t.',
+    'A fractional part is in [0,1), so its floor is zero, never 1.',
+    'frac(-25.7)=.3, whose floor is zero, not -1.'],
+  ['q713-small-witness', 'ACD',
+    'Source 713a request for several witnesses is converted to selecting all valid candidates, including a negative value, an integer and the strict boundary. Unlimited example generation is lost, validity judgment retained.',
+    'frac(-1)=0<.15.',
+    'Equality .15=.15 does not satisfy strict less-than.',
+    'frac(.1)=.1<.15.',
+    'floor(-.9)=-1 and frac(-.9)=.1<.15.',
+    'frac(-.1)=.9, not less than .15.'],
+  ['q713-large-witness', 'ABE',
+    'Source 713b retains strict >2/3, positive/negative witnesses and an exact boundary. Generated witnesses become candidate evaluation.',
+    '.7>2/3.',
+    'frac(-.2)=.8>2/3.',
+    'The exact fraction equals the threshold, so strict greater-than fails.',
+    'frac(1.5)=.5<2/3.',
+    'frac(1.8)=.8>2/3.'],
+  ['q713-carry-witness', 'BCE',
+    'Source 713c carry inequality is unchanged. Candidates discriminate the included carry threshold, integer case and negative witness. No carry rule is printed in the prompt.',
+    '.94+.05=.99 below the next integer; both sides equal .99.',
+    '.95+.05=1; the left is 1 and the new fractional part is zero.',
+    'frac(-.05)=.95 and frac(-.05+.05)=0; the carry inequality holds.',
+    'For integer a=1 both sides are .05, so no strict inequality.',
+    'frac(1.99)=.99; adding .05 crosses an integer and changes the right remainder to .04.'],
+  ['q714-periodicity', 'B',
+    'Both original equations retain the distinct floor interval versus fractional lattice. Included left and excluded right endpoints are discriminated; complete solution sets are requested.',
+    'The first right endpoint is excluded; the second has every integer solution, not only zero.',
+    '2<=2.75+x<3 gives [-.75,.25); equal fractional parts require an integer shift.',
+    'The first interval ignores the .75 shift; for x=.5 the new floor is 3.',
+    'The second solution set is all integers, not a continuous unit interval.'],
+  ['q715-floor-systems', 'ABD',
+    'All three source floor equations retain variables, signs and decimal offsets. Half-open complete intervals are required, including the floor of a negative number.',
+    '0<=.21+x<1 gives [-.21,.79).',
+    '2<=y-.36<3 gives [2.36,3.36).',
+    'floor(-8.2)=-9, not -8, so this interval is one integer too high.',
+    '-9<=1.7+z<-8 gives [-10.7,-9.7).',
+    'The shift .36 must be added, not subtracted, to the floor-2 interval.'],
+  ['q715-fraction-lattices', 'ABC',
+    'All three source fractional equations retain all-integer shifts rather than singleton answers. The n domain is explicit and no positivity restriction is imposed.',
+    'frac(.58+x)=.58 iff x is an integer.',
+    'y-.39=n+.61 gives y=n+1; as n ranges over Z this is exactly Z.',
+    '1.62+x=n+.65 gives x=n-.97, equivalently Z+.03.',
+    'The shift is a whole integer, not .22; y=.22 gives frac(-.17)=.83.',
+    'The stated value is one solution but omits every nonzero integer translate.'],
+  ['q716-fraction-counterexample', 'ACD',
+    'Source 716a existence of any counterexample becomes all-candidate checking. The carry threshold, equality cases and negative remainder are retained without a supplied counterexample solution.',
+    'frac(6.01)=.01 whereas .41+frac(.6)=1.01.',
+    'frac(5.91)=.91 and .41+.5=.91, so this is not a counterexample.',
+    'frac(5.01)=.01 whereas .41+frac(-.4)=1.01.',
+    '5.41+.59=6; left remainder zero and right sum 1, so the boundary is a counterexample.',
+    'An integer shift x=1 leaves remainder .41 and adds zero on the right.'],
+  ['q716-floor-counterexample', 'ABE',
+    'Source 716b retains doubled argument versus doubled floor. Integer, sub-half, positive-half and negative cases require equality testing. Free witness generation is lost.',
+    'floor(1)=1 versus 2*floor(.5)=0.',
+    'floor(-.5)=-1 versus 2*floor(-.25)=-2.',
+    'floor(.8)=0 equals 2*floor(.4)=0.',
+    'floor(4)=4 equals 2*floor(2)=4.',
+    'floor(3.5)=3 versus 2*floor(1.75)=2.'],
+  ['q717-product-counterexamples', 'AD',
+    'The source universal product question becomes explicit counterexample judgment, including genuine equality examples to prevent assuming every noninteger pair refutes the identity.',
+    'Product 2.76 has remainder .76 while .2*.3=.06, unequal.',
+    'Product .64 and fractional product .8*.8 both give .64, so equality holds here.',
+    'Product 2.25 has remainder .25 and .5*.5=.25, so this is not a counterexample.',
+    'Product 1 has remainder zero while .5*.4=.2, unequal.'],
+  ['q718-sum-counterexamples', 'ABD',
+    'The source universal floor-sum question becomes explicit refuting-pair selection. Negative summands and exact carry threshold are included; equality examples remain.',
+    'floor(1.2)=1 versus floor(.6)+floor(.6)=0.',
+    'floor(-.5)=-1 versus floor(-.2)+floor(-.3)=-2.',
+    'floor(.5)=0 equals floor(.2)+floor(.3)=0.',
+    'floor(2)=2 versus floor(1.7)+floor(.3)=1; exact carry also breaks equality.',
+    'floor(1.7)=1 equals floor(2)+floor(-.3)=2-1=1.'],
+  ['q719-graph-matching', 'C',
+    'All three source functions match actual unlabeled candidate graphs. Floor definitions and continuation outside the view are explicit; no integer holes or finite-domain restrictions. Free drawing is replaced by matching, with nested simplification retained.',
+    'The second function is zero, so it must match B rather than A.',
+    'The first is x, so it must match A rather than B; the second is also wrong.',
+    'floor(x)+frac(x)=x gives A; floor(frac(x))=0 and frac(floor(x))=0 both give B on R.',
+    'The third is zero, not the diagonal A.'],
+  ['q720-plane-sets', 'ABC',
+    'All three source sets use actual shaded figures and retain free coordinates, half-open edges and corner membership. The border/line conventions are representation scaffolding, not solved condition annotations. Drawing is lost.',
+    'floor(x)=0 gives [0,1) times R, the vertical strip A with free y.',
+    'floor(y)=1 gives R times [1,2), the horizontal strip B with free x.',
+    'The conjunction gives [1,2) times [2,3), exactly rectangle C.',
+    'Only the lower-left corner belongs to this rectangle; right/top coordinate boundaries are excluded.',
+    'Every x in [0,1), such as .5, is allowed; the set is not a line.'],
+  ['q721-tiled-set', 'AC',
+    'The source graph of equal floors becomes interpretation of the actual repeating half-open tiles. Infinite integer union, interior membership and mixed boundaries are retained. No finite five-tile truncation is imposed.',
+    'Equal floors mean both coordinates are in the same [n,n+1), giving exactly the displayed infinite union.',
+    'The off-diagonal interior point (.2,.8) is included, so a line is insufficient.',
+    'Both .2,.8 have floor zero; every integer diagonal pair has equal floors and belongs to the next tile.',
+    'For x=.9,y=1.1 the coordinate gap is .2<1 but floors 0 and 1 differ.',
+    'The condition allows all same-tile interiors, visibly shaded, not just edges.'],
+  ['q722-exponent-laws', 'ABDE',
+    'All four original expressions retain a,b and root orders. Products, ordinary powers and fractional powers are distinguished with no intermediate exponent already supplied in the stem.',
+    'Multiplication of powers with base 10 adds a+b.',
+    'Cubing multiplies a by 3.',
+    'A square root multiplies b by 1/2, not by 2.',
+    'The positive square root of 10^b is 10^(b/2).',
+    'The two exponents are 2a/3 and b/5, added under multiplication.',
+    'The product exponent is a+b, not ab.'],
+  ['q723-positive-powers', 'B',
+    'REVISION REQUIRED: both requested numerical graphical estimates are present, but their discrimination is lost. Since 1<1.95^(1/5)<1.95, A/D first entries are below 1 and C first entry is the unchanged input; B is the sole admissible first entry. No graph, inverse reading, numerical exponent or estimate of the second expression is needed to select it. This deletes the key quantitative graph-reading task, beyond ordinary elimination between plausible graphical estimates.',
+    'The first power exceeds 1 and the second exceeds 1; both listed estimates violate these basic ranges and cannot fit .02 graph error.',
+    'The reused independent graph/numeric evidence gives about 1.14 and 13.6; 14 is compatible with the explicit .02 reading allowance and appropriate coarse precision.',
+    'The powers differ substantially from unchanged bases; the first is near 1.14, not 1.95, far beyond allowed graph error.',
+    'The first .39 is below 1 despite a base above 1; the second 19 is far from about 13.6 and is not a compatible paired estimate.'],
+  ['q723-small-and-product', 'A',
+    'REVISION REQUIRED: since .0041<(.0041)^(2/3)<1, B first entry exceeds 1 and C/D first entries are below .0041; A alone satisfies the elementary range. The graph and the product estimate are dispensable. The coarse numerical values are mathematically compatible, but the source quantitative graph-reading/combined-power workflow is not assessed by these distractors.',
+    'The reused independent graph evidence gives about .026 and 5.2; both are compatible with the explicit reading tolerance and coarse precision.',
+    '39 is outside (0,1) for the first expression; .19 is also far below the actual combined positive-power estimate.',
+    '.0027 is below the original base, whereas a subunit base raised to a positive exponent below 1 becomes larger. Thus the pair fails regardless of the second value.',
+    '.0026 likewise violates that range; 2.4 is also far from about 5.2.'],
+  ['q724-lookup-table', 'C',
+    'The original numerical-table inverse task is retained with an explicitly authored eight-entry replacement, not claimed historical source/table identity. Normalization, nearest mantissa and approximate equality are explicit. Precision is reduced to .01 exponents versus the frozen reference-table .0001 readings; original-table use/interpolation and free lookup production are lost, but table inversion and decade shifts remain. Values require comparison of distances, not copying an exact target cell.',
+    'The mantissa exponents are selected correctly but decade shifts -1,+1,+2 for the last three inputs are omitted.',
+    'For .373=10^-1*3.73, the exponent is -1+.57=-.43, not -.57.',
+    'Nearest mantissa columns are .20,.57,.71,.30; adding the decade characteristics 0,-1,1,2 gives .20,-.43,1.71,2.30.',
+    'Each chosen upper neighbor is farther from the normalized input than its lower counterpart.'],
+];
+assert.equal(rows.length, 54);
+assert.equal(learner.questions.length, 54);
+assert.equal(learner.questions.reduce((n, q) => n+q.view.options.length, 0), 240);
+const rowMap = new Map(rows.map(r => [r[0], r]));
+assert.equal(rowMap.size, 54);
+
+const issues = [
+  {
+    id: 'C5EX-VIEW-723A-GRAPH-BYPASS-FIRST',
+    severity: 'revise', source_number: '723',
+    question_id: 'q723-positive-powers',
+    affected_items: ['view.options.A.text', 'view.options.C.text', 'view.options.D.text'],
+    finding: 'Only one first-coordinate value passes elementary power bounds. The quantitative graph and all work on the second requested expression can be bypassed.',
+    smallest_repair: 'Keep the source formulas and approved graph; replace only the competing paired estimates so plausible first-coordinate values do not uniquely identify the answer, and second-coordinate graph reading is discriminated. Recheck affected options/task fidelity, not the unchanged source/figure gates.',
+  },
+  {
+    id: 'C5EX-VIEW-723CD-GRAPH-BYPASS-FIRST',
+    severity: 'revise', source_number: '723',
+    question_id: 'q723-small-and-product',
+    affected_items: ['view.options.B.text', 'view.options.C.text', 'view.options.D.text'],
+    finding: 'Only one first-coordinate value is in the elementary required range. No graphical estimate or combined-power calculation is needed for selection.',
+    smallest_repair: 'Keep the source formulas and approved graph; revise only competing estimates to test quantitative graph normalization/reading and the product as well. Recheck changed options and their dependency on the approved graph.',
+  },
+];
+const affected = new Map(issues.map(i => [i.question_id, i]));
+const sourceNumbers = [...new Set(learner.questions.map(q => q.id.match(/^q(\d{3})-/)[1]))];
+assert.equal(sourceNumbers.length, 43);
+assert.deepEqual(sourceNumbers, seed.exercises.map(e => e.number));
+const questionReviews = learner.questions.map((q, index) => {
+  const r = rowMap.get(q.id);
+  assert.ok(r, q.id);
+  const [, trueLetters, fidelity, ...evidence] = r;
+  assert.equal(evidence.length, q.view.options.length, q.id);
+  const correct = [...trueLetters];
+  assert.deepEqual(q.view.options.map(o => o.id), evidence.map((_, i) => String.fromCharCode(65+i)));
+  assert.ok(correct.every(id => q.view.options.some(o => o.id === id)));
+  assert.ok(q.view.mode === 'single' ? correct.length === 1
+    : correct.length > 1 && correct.length < q.view.options.length, q.id);
+  const issue = affected.get(q.id);
+  const sourceNumber = q.id.match(/^q(\d{3})-/)[1];
+  const usedFigures = [...new Set([...q.view.figure_ids, ...q.view.options.flatMap(o => o.figure_ids)])];
+  const redundancyEvidence = ({
+    'q683-constants': 'Separated from variable-domain question: six constant signs versus shifted-variable partition; neither asks for the same response.',
+    'q691-family': 'The general two-base theorem differs from 692 intermediate-curve placement. Numerical examples are expressly not a restriction on all a,b.',
+    'q692-middle': 'Unlike the two-base general theorem, this requires the specified third curve and rejects arithmetic-mean interpolation. The added common-point statement repeats a mathematical fact but not a distinct original task.',
+    'q698-decreasing': 'Distinct decreasing/increasing root geometry, not a duplicate of the two-root increasing case.',
+    'q707-reverse-domain': 'Converse recurrence proof/domain checks differ from the forward representation/zero-ratio obstruction. Explicit recurrence convention applies in both.',
+    'q712-nesting': 'General nested identities also support later graph matching, but no keyed answer is exposed; calculating a value and identifying an all-real graph are distinct tasks.',
+    'q721-tiled-set': 'The repeating equal-floor union is not the single rectangle or two strips in 720; mixed-tile and interior membership add distinct judgments.',
+    'q723-positive-powers': 'Two distinct source quantities, not duplicate questions, but the second can be skipped because the first-coordinate bounds isolate one option.',
+    'q723-small-and-product': 'Different source quantities from the first pair, but the combined-product response is not required to distinguish options.',
+  })[q.id] ?? `The ${sourceNumber} mathematical response is distinct from neighboring source tasks; competing alternatives change a sign, value, domain, endpoint or general claim rather than repeat equivalent option text. Paired/column recognition has production losses recorded in task_fidelity.`;
+  return {
+    question_id: q.id, inspection_order: index+1, source_number: sourceNumber,
+    view_canonical_sha256: canonical(q.view), used_figures: usedFigures,
+    task_fidelity: { verdict: issue ? 'revise' : 'pass', evidence: fidelity },
+    redundancy: { verdict: 'pass', evidence: redundancyEvidence },
+    answer_leakage: {
+      verdict: 'pass',
+      evidence: q.id === 'q724-lookup-table'
+        ? 'The visible table contains candidate values, not exact requested inputs or keyed results. Its normalization/nearest-cell rule is honest lookup scaffolding; choosing and shifting cells remains mathematical work.'
+        : usedFigures.length
+          ? 'Visible figures contain formula/stroke legends or unkeyed candidate geometry, not root markers, matched formula-to-option keys or supplied result annotations. Where the graph embodies the requested relationship, reading it is the intended recognition response; the separate graph-bypass fidelity issues are not relabeled secret-key leakage.'
+          : 'Only visible source conditions, competing mathematical claims and definitions are supplied. No correctness marker, source-solving record, author rationale or keyed cross-question instruction appears. Assertions in other unkeyed options are not accepted as facts without checking.'
+    },
+    mathematics: {
+      verdict: 'pass',
+      independent_solution: `Reused source-${sourceNumber} derivation from the hash-frozen independent solve; independently evaluated this view's complete statements and all alternatives as recorded below. No author correct set consulted.`,
+      correct,
+      option_checks: q.view.options.map((o, i) => ({
+        option_id: o.id, truth: correct.includes(o.id) ? 'correct' : 'incorrect',
+        option_canonical_sha256: canonical(o), evidence: evidence[i],
+      })),
+    },
+    mode_correctness: {
+      verdict: 'pass', mode: q.view.mode, true_count: correct.length,
+      evidence: q.view.mode === 'single'
+        ? 'Exactly one complete alternative is true/compatible; no equivalent second true option.'
+        : 'Complete independent true set has more than one but fewer than all options; native multiple selection is appropriate.',
+    },
+    issue_ids: issue ? [issue.id] : [],
+  };
+});
+
+const sourceReviews = seed.exercises.map(e => {
+  const questions = questionReviews.filter(q => q.source_number === e.number);
+  const number = Number(e.number);
+  let loss = 'Independent writing of the comparison, root, interval or decomposition is replaced by recognition of complete mathematical alternatives. No source number/value, sign or labeled part is silently omitted.';
+  if ([687, 688, 691, 692, 693, 698, 699, 719, 720, 721].includes(number))
+    loss = 'Freehand construction/explanation is replaced by interpretation of actual approved graph geometry. The relevant ordering, increments, crossings, regions, all-real continuation or boundary inclusion remain; no original PNG is invented.';
+  if (number === 707)
+    loss = 'Written two-direction proof/induction is replaced by verification of coefficient construction and recurrence/domain propositions. Positive-integer indexing and the broader recurrence definition are visibly declared; ordinary nonzero-ratio theorem, negative ratios and zero cases are distinguished. This conditional convention scope is accepted, not claimed to resolve every historical definition.';
+  if ([713, 716, 717, 718].includes(number))
+    loss = 'Free witness/counterexample production is replaced by evaluating genuine and nongenuine candidate witnesses. Universal truth, carries, strict boundaries and negative remainders remain mathematically discriminated.';
+  if (number === 723)
+    loss = 'Essential loss: graphical inverse/forward numerical reading and both paired source quantities need not be performed. Each pair is uniquely selectable by the first-coordinate elementary range; quantitative graph-based approximation is not discriminated. Both source pairs require affected option revision.';
+  if (number === 724)
+    loss = 'The actual original/retained-reference table and finer exponent precision are not tested. An explicitly new table provides nearest .01 exponent values with an approximate-equality rule; normalization, actual nearest-cell comparison and decade-characteristic addition remain. No historical-table identity is claimed.';
+  return {
+    source_number: e.number, independent_solution_record: { ...bind(sourcePath), section: `### ${e.number}` },
+    question_ids: questions.map(q => q.question_id),
+    coverage: {
+      verdict: number === 723 ? 'revise' : 'pass',
+      evidence: `Reviewed every permitted view and all its options for this source (${questions.length} question${questions.length > 1 ? 's' : ''}). ${questions.map(q => q.task_fidelity.evidence).join(' ')}`,
+    },
+    source_response_loss: loss,
+  };
+});
+
+// Corroborate only the new candidate table and option witnesses, not the 43
+// already-passed source solves.
+const corroboration = [];
+for (const [t, value] of [[.20,1.58489],[.21,1.62181],[.30,1.99526],[.31,2.04174],
+                         [.57,3.71535],[.58,3.80189],[.71,5.12861],[.72,5.24807]]) {
+  assert.equal(Number((10**t).toFixed(5)), value);
+  corroboration.push({ kind: 'authored-table-cell', exponent: t, displayed_value: value, pass: true });
+}
+for (const [m, t, v, alternate] of [
+  [1.594,.20,1.58489,1.62181], [3.73,.57,3.71535,3.80189],
+  [5.174,.71,5.12861,5.24807], [2.001,.30,1.99526,2.04174],
+]) {
+  assert.ok(Math.abs(m-v)<Math.abs(m-alternate));
+  corroboration.push({ kind: 'candidate-nearest-cell', mantissa: m, selected_exponent: t, pass: true });
+}
+const graphA = learner.questions.find(q => q.id === 'q723-positive-powers');
+const graphCD = learner.questions.find(q => q.id === 'q723-small-and-product');
+assert.ok(graphA && graphCD);
+corroboration.push({
+  kind: 'graph-reading-bypass', question: graphA.id,
+  evidence: 'The first exact quantity is strictly between 1 and 1.95. Among .94,1.14,1.95,.39 only one satisfies these bounds; no graphical numerical work or second-coordinate discrimination is required.',
+  pass: true,
+}, {
+  kind: 'graph-reading-bypass', question: graphCD.id,
+  evidence: 'The first exact quantity is strictly between .0041 and 1. Among .026,39,.0027,.0026 only one satisfies these bounds; no graphical numerical work or product discrimination is required.',
+  pass: true,
+});
+
+const record = {
+  schema: 'C5Ex-independent-choice-view-FIRST-v1', stage: 'BLIND-VIEW-BEFORE-AUTHOR-KEYS',
+  reviewer: { kind: 'independent_agent', identity: 'sole active independent C5Ex FIGURE + BLIND VIEW reviewer' },
+  cwd: root, frozenAt: new Date().toISOString(), mode: '0444',
+  source_solve_reused: bind(sourcePath), source_solve_recomputed: false,
+  source_stage_answer_comparison: 'Parent states prior comparison PASS/no defects; its file was not opened in this stage.',
+  seed: bind(seedPath), seed_canonical_sha256: canonical(seed),
+  learner_view: bind(learnerPath), learner_view_canonical_sha256: canonical(learner),
+  figures_first_freeze: bind(figurePath),
+  new_figure_reviews: figureReview.figures.map(f => ({
+    figure_id: f.figure_id, asset_path: f.svg.path, asset_sha256: f.svg.sha256,
+    reviewer: { kind: 'independent_agent', identity: 'sole active independent C5Ex FIGURE + BLIND VIEW reviewer' },
+    verdict: f.status.toLowerCase(), evidence: f.persisted_review,
+  })),
+  review_order: [
+    'Verified source independent FIRST hash and reused all 43 solutions; read allowed raw/current JSON and seed.',
+    'Actually opened each of the eight authorized images once; independently checked six figure specs/SVG/render bindings and froze the separate figure PASS record.',
+    'Inspected all 54 permitted learner views and all 240 options without author keys; task fidelity/redundancy/leakage judged separately from the mathematics.',
+    'Recorded complete independent truth sets, individual option evidence, unique-set/mode checks, source-response losses, graph coverage and concrete FIRST defects.',
+    'Freeze at 0444 before any author correct-set comparison; canonical final key review is not written.',
+  ],
+  source_reviews: sourceReviews, question_reviews: questionReviews,
+  issues, local_candidate_corroboration: corroboration,
+  coverage: {
+    source_exercises: 43, source_labeled_parts_reused: 127,
+    source_range: '682-724', learner_views_inspected: 54, options_independently_judged: 240,
+    independent_truth_sets_frozen: 54, unique_mode_correct_sets: 54,
+    mathematical_questions_pass: 54, mathematical_options_checked: 240,
+    fidelity_pass: 52, fidelity_revise: 2, source_coverage_pass: 42, source_coverage_revise: 1,
+    new_figures_pass: 6, source_fig76_geometry_reused: true,
+    key_fields_seen: 0, author_correct_set_comparisons: 0, omissions_silently_accepted: 0,
+  },
+  image_usage: figureReview.image_usage,
+  original_failures_preserved: [
+    'The earlier source-stage black transparent modern preview remains failed visual evidence; no rewrite of that FIRST source record.',
+    'Both graph-bypass fidelity defects are preserved in this immutable FIRST record. Author work is not fixed by the reviewer.',
+  ],
+  outcome: 'revise', status: 'FAIL',
+  limits: [
+    'No author source solve, full draft, handoff, provenance, answer-author or answer comparison file opened.',
+    'No canonical s10y-choice-review-v1/final path-bound key review is claimed. This learner-only freeze has no draft digest and cannot certify agreement with an unseen author key.',
+    'The declared author limitations, distractor derivations and full coverage metadata remain unseen and require separate authorized comparison; independently observed response losses are recorded here.',
+    'Path-only relocation of same SVG/spec does not require another mathematical/image gate, but final snapshot bindings must be updated under separate authorization.',
+    'No new runtime render, source PDF, crop, screenshot, rerender or image payload after the eight-payload cap.',
+  ],
+  scope: 'Writes only in choice-review-FIRST/figures and choice-review-FIRST/view. Dirty concurrent work preserved; no install/git/DB/paid call/new worktree/branch/timer/skill modification/app/cross-chat action.',
+  usage: { host_tokens: 'UNKNOWN', host_cost: 'UNKNOWN', external_API: 0, paid_calls: 0, model_service_calls: 0 },
+};
+assert.equal(record.question_reviews.flatMap(q => q.mathematics.option_checks).length, 240);
+assert.equal(record.question_reviews.filter(q => q.task_fidelity.verdict === 'pass').length, 52);
+assert.equal(record.source_reviews.length, 43);
+const allBindings = [record.source_solve_reused, record.seed, record.learner_view, record.figures_first_freeze];
+for (const b of allBindings) assert.equal(bind(b.path).sha256, b.sha256);
+for (const f of figureReview.figures) {
+  for (const b of [f.spec, f.svg, f.render, f.preview, f.persisted_review])
+    assert.equal(bind(b.path).sha256, b.sha256);
+}
+const target = `${own}/choice-view-FIRST.record0444`;
+fs.writeFileSync(target, JSON.stringify(record, null, 2)+'\n', { flag: 'wx' });
+fs.chmodSync(target, 0o444);
+console.log(JSON.stringify({
+  path: path.resolve(target), sha256: bind(target).sha256, status: record.status,
+  outcome: record.outcome, questions: 54, options: 240, mathematical_pass: 54,
+  fidelity_revise: 2, issue_ids: issues.map(i => i.id),
+  figures: 6, image_payloads: 8, mode: '0444', author_keys_seen: 0,
+  host_usage: 'UNKNOWN', external_API: 0,
+}));

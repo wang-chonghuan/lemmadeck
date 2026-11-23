@@ -1,0 +1,281 @@
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+import { chromium } from '../../../../.agents/skills/node_modules/playwright-core/index.mjs'
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+if (process.cwd() !== root) throw new Error('wrong cwd')
+const own = '.tmp/ld-s10y-lesson/resume182-7-C5Ex/choices-author-FIRST'
+const seed = JSON.parse(fs.readFileSync(`${own}/seed-FIRST.json`, 'utf8'))
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const sourceText = numbers => numbers.map(n => ({
+  lesson: 'alg8-c5-ex', exercise: String(n),
+  text: seed.exercises.find(e => e.number === String(n)).text,
+}))
+const writeNew = (p, data) => fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n', { flag: 'wx' })
+
+function figure(id, numbers, count, basis) {
+  const height = count * 390
+  return {
+    schema: 'ld-s10y-image/figure-spec@2', id, mode: 'deterministic',
+    description: basis,
+    source: { authoredBasis: basis, authoritativeText: sourceText(numbers), inventory: [] },
+    canvas: { width: 640, height, boundingBox: [0, height, 640, 0], background: 'paper', keepAspectRatio: false },
+    display: { purpose: 'instructional', layout: 'scroll', minTextPx: 16, widths: [640] },
+    objects: [], assertions: [],
+  }
+}
+
+function panel(s, index, title, legend, box, steps, plotHeight = 255) {
+  const h = s.canvas.height, top = index * 390 + 95
+  const [xmin, xmax, ymin, ymax] = box
+  const x = v => 95 + (v - xmin) * 440 / (xmax - xmin)
+  const y = v => h - top - plotHeight + (v - ymin) * plotHeight / (ymax - ymin)
+  const prefix = `panel-${index}`
+  const text = (id, X, Y, str, size = 19) => s.objects.push({
+    id, type: 'text', at: [X, Y], text: str, fontSize: size,
+    labelPlacement: { position: 'CENTER', offset: [0, 0] }, stroke: 'ink',
+  })
+  text(`${prefix}-title`, 320, h - index * 390 - 25, title, 20)
+  text(`${prefix}-legend`, 320, h - index * 390 - 58, legend, 19)
+  s.objects.push({
+    id: `${prefix}-grid`, type: 'grid', bounds: [x(xmin), y(ymax), x(xmax), y(ymin)],
+    xStep: steps[0] * 440 / (xmax - xmin), yStep: steps[1] * plotHeight / (ymax - ymin),
+    xOffset: x(xmin), yOffset: y(ymin), stroke: 'grid', strokeWidth: 1,
+  })
+  s.assertions.push({
+    id: `${prefix}-grid-count`, type: 'gridDimensions', grid: `${prefix}-grid`,
+    columns: Math.round((xmax - xmin) / steps[0]), rows: Math.round((ymax - ymin) / steps[1]),
+  })
+  s.objects.push({ id: `${prefix}-xaxis`, type: 'segment', from: [x(xmin), y(Math.max(ymin, Math.min(ymax, 0)))], to: [x(xmax), y(Math.max(ymin, Math.min(ymax, 0)))], stroke: 'muted', strokeWidth: 1.5 })
+  s.objects.push({ id: `${prefix}-yaxis`, type: 'segment', from: [x(Math.max(xmin, Math.min(xmax, 0))), y(ymin)], to: [x(Math.max(xmin, Math.min(xmax, 0))), y(ymax)], stroke: 'muted', strokeWidth: 1.5 })
+  const xtick = (v, label = String(v)) => text(`${prefix}-xtick-${String(v).replace('.', 'p')}`, x(v), y(ymin) - 20, label, 18)
+  const ytick = (v, label = String(v)) => text(`${prefix}-ytick-${String(v).replace('.', 'p')}`, 58, y(v), label, 18)
+  text(`${prefix}-xlabel`, 565, y(ymin) - 20, 'x', 19)
+  text(`${prefix}-ylabel`, 58, y(ymax) + 48, 'y', 19)
+  const curve = (tag, fn, dash = 0) => {
+    let data = '', drawing = false
+    for (let i = 0; i <= 1000; i++) {
+      const t = xmin + (xmax - xmin) * i / 1000, value = fn(t)
+      if (value < ymin || value > ymax || !Number.isFinite(value)) { drawing = false; continue }
+      data += `${drawing ? 'L' : 'M'}${x(t).toFixed(5)},${(h - y(value)).toFixed(5)} `
+      drawing = true
+    }
+    s.objects.push({ id: `${prefix}-${tag}`, type: 'svgPath', d: data.trim(), stroke: 'ink', strokeWidth: 2.5, dash })
+    const samples = [xmin, (xmin + xmax) / 2, xmax].filter(t => fn(t) >= ymin && fn(t) <= ymax)
+    samples.forEach((t, j) => {
+      const p = `${prefix}-${tag}-sample-${j}`
+      s.objects.push({ id: p, type: 'point', at: [x(t), y(fn(t))], visible: false })
+      s.assertions.push({ id: `${p}-location`, type: 'displacement', from: [0, 0], to: p, dx: x(t), dy: y(fn(t)) })
+    })
+  }
+  const segment = (tag, p, q, dash = 0, strokeWidth = 2.5) => s.objects.push({
+    id: `${prefix}-${tag}`, type: 'segment', from: [x(p[0]), y(p[1])], to: [x(q[0]), y(q[1])], stroke: 'ink', strokeWidth, dash,
+  })
+  const point = (tag, p, open = false) => s.objects.push({
+    id: `${prefix}-${tag}`, type: 'point', at: [x(p[0]), y(p[1])], size: 4,
+    fill: open ? 'paper' : 'ink', stroke: 'ink', strokeWidth: 2,
+  })
+  const region = (tag, xmin1, xmax1, ymin1, ymax1) => s.objects.push({
+    id: `${prefix}-${tag}`, type: 'polygon',
+    points: [[x(xmin1), y(ymin1)], [x(xmax1), y(ymin1)], [x(xmax1), y(ymax1)], [x(xmin1), y(ymax1)]],
+    fill: 'accentSoft', fillOpacity: 0.25, strokeWidth: 0, stroke: 'paper',
+  })
+  return { x, y, text, xtick, ytick, curve, segment, point, region, prefix }
+}
+
+function inventory(s, descriptions) {
+  descriptions.forEach((description, i) => {
+    const prefix = `panel-${i}`
+    const visiblePoints = s.objects.filter(o => o.id.startsWith(`${prefix}-`) && o.type === 'point' && o.visible !== false)
+    if (visiblePoints.length > 1) {
+      const anchor = visiblePoints[0]
+      visiblePoints.slice(1).forEach(p => s.assertions.push({
+        id: `${p.id}-relative-position`, type: 'displacement', from: anchor.id, to: p.id,
+        dx: p.at[0] - anchor.at[0], dy: p.at[1] - anchor.at[1],
+      }))
+    }
+    s.source.inventory.push({
+      id: `${prefix}-authored-requirements`, description,
+      objects: s.objects.filter(o => o.id.startsWith(`${prefix}-`) && o.visible !== false).map(o => o.id),
+      assertions: s.assertions.filter(a => a.id.startsWith(`${prefix}-`)).map(a => a.id),
+      requires: visiblePoints.length > 1 ? ['gridDimensions', 'pointRelationships'] : ['gridDimensions'],
+    })
+  })
+  s.assertions.push({ id: 'all-authored-curves', type: 'objectCount', objectType: 'svgPath', count: s.objects.filter(o => o.type === 'svgPath').length })
+}
+
+const all = []
+{
+  const s = figure('fig-choice-growth-FIRST', [687, 688, 693], 4,
+    'Authored from the complete tasks, not a source scan. A plots 2^x with readable increments; B plots 2^x solid and 1.5^x dashed. C plots 2^x solid with y=2 dashed; D plots (1/2)^x solid with y=1/2 dashed. Bases 2 and 1/2 are explicitly representative for the two regimes in 693, not new source givens. No solutions or intersections are annotated.')
+  let p = panel(s, 0, 'A', 'y = 2^x', [0, 3, 0, 8], [.5, 1])
+  p.curve('exponential', x => 2 ** x)
+  ;[0, .5, 1.5, 2.5, 3].forEach(v => p.xtick(v))
+  ;[2, 4, 6, 8].forEach(v => p.ytick(v))
+  p = panel(s, 1, 'B', 'solid: 2^x; dashed: 1.5^x', [-2, 3, 0, 8], [1, 1])
+  p.curve('two', x => 2 ** x); p.curve('one-half', x => 1.5 ** x, 2)
+  ;[-2, -1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [2, 4, 6, 8].forEach(v => p.ytick(v))
+  p = panel(s, 2, 'C', 'solid: 2^x; dashed: y = 2', [-2, 3, 0, 8], [1, 1])
+  p.curve('two', x => 2 ** x); p.curve('constant', () => 2, 2)
+  ;[-2, -1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [2, 4, 6, 8].forEach(v => p.ytick(v))
+  p = panel(s, 3, 'D', 'solid: (1/2)^x; dashed: y = 1/2', [-2, 3, 0, 4], [1, .5])
+  p.curve('half', x => .5 ** x); p.curve('constant', () => .5, 2)
+  ;[-2, -1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [.5, 2, 4].forEach(v => p.ytick(v))
+  inventory(s, ['Exact increasing base-2 curve and increment coordinate grid.', 'Two specified increasing curves on a common grid.', 'Representative increasing exponential and its constant-base line.', 'Representative decreasing exponential and its constant-base line.'])
+  all.push(s)
+}
+{
+  const s = figure('fig-choice-decay-FIRST', [691, 692], 1,
+    'Authored exact functions from 692, with solid (1/3)^x, dashed .4^x, dotted (1/2)^x; the pair 1/3 and 1/2 is a visibly stated representative of 0<a<b<1 in 691. Curve domains are R; the viewport is finite. No original diagram exists in these source tasks. No arithmetic mean curve or false alternative is drawn.')
+  const p = panel(s, 0, 'E', 'solid: (1/3)^x; dashed: .4^x; dotted: (1/2)^x', [-2, 2, 0, 9], [.5, 1])
+  p.curve('third', x => (1 / 3) ** x)
+  p.curve('two-fifths', x => .4 ** x, 2)
+  p.curve('half', x => .5 ** x, 1)
+  ;[-2, -1, 0, 1, 2].forEach(v => p.xtick(v)); [1, 3, 6, 9].forEach(v => p.ytick(v))
+  inventory(s, ['Three exact decreasing curves share (0,1); negative and positive x sides both visible. Their numerical bases are source facts for 692 and representative anchors only for 691.'])
+  all.push(s)
+}
+{
+  const s = figure('fig-choice-intersections-FIRST', [698, 699], 4,
+    'Four authored graph windows from the complete equations: A solid 2^x vs dashed x+1; B solid .3^x vs dashed x+1; C and D solid 2^x vs dashed x^2-2, respectively negative and positive windows. Both sides are rendered, including the positive near-miss; no root markers, values or answer-bearing labels are added. These are new analytic plots, not invented original scans.')
+  let p = panel(s, 0, 'A', 'solid: 2^x; dashed: x + 1', [-2, 3, -1, 8], [.5, 1])
+  p.curve('exponential', x => 2 ** x); p.curve('line', x => x + 1, 2)
+  ;[-2, -1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [1, 3, 5, 8].forEach(v => p.ytick(v))
+  p = panel(s, 1, 'B', 'solid: .3^x; dashed: x + 1', [-1, 2, -1, 4], [.5, 1])
+  p.curve('exponential', x => .3 ** x); p.curve('line', x => x + 1, 2)
+  ;[-1, 0, 1, 2].forEach(v => p.xtick(v)); [1, 2, 4].forEach(v => p.ytick(v))
+  p = panel(s, 2, 'C: negative-x window', 'solid: 2^x; dashed: x^2 - 2', [-2, 0, -2, 4], [.1, 1])
+  p.curve('exponential', x => 2 ** x); p.curve('parabola', x => x * x - 2, 2)
+  ;[-2, -1.5, -1, -.5, 0].forEach(v => p.xtick(v)); [-2, 0, 2, 4].forEach(v => p.ytick(v))
+  p = panel(s, 3, 'D: positive-x window', 'solid: 2^x; dashed: x^2 - 2', [2, 4, 2, 18], [.25, 2])
+  p.curve('exponential', x => 2 ** x); p.curve('parabola', x => x * x - 2, 2)
+  ;[2, 2.5, 3, 3.5, 4].forEach(v => p.xtick(v)); [2, 6, 10, 14, 18].forEach(v => p.ytick(v))
+  inventory(s, ['Increasing exponential and straight line.', 'Decreasing exponential and straight line.', 'Negative intersection viewport with 0.1 x grid.', 'Positive near-miss viewport; not a claim that the finite viewport proves global completeness.'])
+  all.push(s)
+}
+{
+  const s = figure('fig-choice-floor-functions-FIRST', [719], 2,
+    'New conceptual graph candidates, conditional on visible [x]=floor(x), {x}=x-floor(x). A is the complete diagonal y=x; B is the complete horizontal y=0, each continued beyond the viewport. These match mathematical definitions, not a source image. The candidate contains no holes at integers.')
+  let p = panel(s, 0, 'A', 'candidate graph', [-2, 2, -2, 2], [1, 1])
+  p.curve('diagonal', x => x)
+  ;[-2, -1, 0, 1, 2].forEach(v => p.xtick(v)); [-2, -1, 1, 2].forEach(v => p.ytick(v))
+  p = panel(s, 1, 'B', 'candidate graph', [-2, 2, -2, 2], [1, 1])
+  p.curve('horizontal', () => 0)
+  ;[-2, -1, 0, 1, 2].forEach(v => p.xtick(v)); [-2, -1, 1, 2].forEach(v => p.ytick(v))
+  inventory(s, ['All-real diagonal candidate, no integer holes.', 'All-real zero candidate, no integer holes.'])
+  all.push(s)
+}
+{
+  const s = figure('fig-choice-floor-regions-FIRST', [720, 721], 4,
+    'Authored plane-set candidates conditional on visible floor definition: A shades [0,1) times R, B shades R times [1,2), C shades [1,2) times [2,3), D shades the diagonal unit tiles [n,n+1) times [n,n+1), n integer. Solid edges are included; dashed edges excluded; filled/open corner dots resolve corner membership. Shading reaches the plot-window edge for unbounded sets; viewport borders are not set boundaries. All n tiles repeat beyond the view. No source image exists; inventory is conceptual, not pixel provenance.')
+  s.canvas.height += 24
+  s.canvas.boundingBox[1] += 24
+  let p = panel(s, 0, 'A', 'solid included; dashed excluded', [-1, 3, -1, 4], [1, 1])
+  p.region('vertical-region', 0, 1, -1, 4)
+  p.segment('left', [0, -1], [0, 4]); p.segment('right', [1, -1], [1, 4], 2)
+  ;[-1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [0, 2, 4].forEach(v => p.ytick(v))
+  p = panel(s, 1, 'B', 'solid included; dashed excluded', [-1, 3, -1, 4], [1, 1])
+  p.region('horizontal-region', -1, 3, 1, 2)
+  p.segment('bottom', [-1, 1], [3, 1]); p.segment('top', [-1, 2], [3, 2], 2)
+  ;[-1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [0, 2, 4].forEach(v => p.ytick(v))
+  p = panel(s, 2, 'C', 'solid included; dashed excluded', [-1, 3, -1, 4], [1, 1])
+  p.region('rectangle-region', 1, 2, 2, 3)
+  p.segment('left', [1, 2], [1, 3]); p.segment('bottom', [1, 2], [2, 2])
+  p.segment('right', [2, 2], [2, 3], 2); p.segment('top', [1, 3], [2, 3], 2)
+  p.point('corner-in', [1, 2]); p.point('corner-right', [2, 2], true)
+  p.point('corner-top', [1, 3], true); p.point('corner-topright', [2, 3], true)
+  ;[-1, 0, 1, 2, 3].forEach(v => p.xtick(v)); [0, 2, 4].forEach(v => p.ytick(v))
+  p = panel(s, 3, 'D', 'solid included; dashed excluded; pattern repeats', [-2, 3, -2, 3], [1, 1])
+  for (let n = -2; n < 3; n++) {
+    p.region(`tile-${n}`, n, n + 1, n, n + 1)
+    p.segment(`left-${n}`, [n, n], [n, n + 1]); p.segment(`bottom-${n}`, [n, n], [n + 1, n])
+    p.segment(`right-${n}`, [n + 1, n], [n + 1, n + 1], 2)
+    p.segment(`top-${n}`, [n, n + 1], [n + 1, n + 1], 2)
+    p.point(`upperleft-${n}`, [n, n + 1], true); p.point(`lowerright-${n}`, [n + 1, n], true)
+    p.point(`diagonal-${n}`, [n, n])
+  }
+  p.point('diagonal-final', [3, 3])
+  ;[-2, -1, 0, 1, 2, 3].forEach(v => p.text(`${p.prefix}-xtick-${v}`, p.x(v), p.y(-2) - 34, String(v), 18)); [-2, -1, 1, 2, 3].forEach(v => p.ytick(v))
+  inventory(s, ['Vertical half-open strip with unbounded y.', 'Horizontal half-open strip with unbounded x.', 'Filled half-open rectangle and all four corner memberships.', 'Integer-indexed filled diagonal tiles with explicit open/closed edge and corner pattern.'])
+  all.push(s)
+}
+{
+  const s = figure('fig-choice-decimal-graph-FIRST', [723], 1,
+    'Authored numerical graph y=10^x on the mantissa window 0<=x<=1, 1<=y<=10. The full related task contains five positive inputs spanning different decades; integer shifts 10^(k+t)=10^k 10^t allow this honest normalized graph to support every lookup and inverse lookup. Fine grid x step .02, y step .2; axis labels .0,.2,...,1.0 and 1,2,4,6,8,10. No requested result, input logarithm, or output marker is annotated. No original source image exists.')
+  s.canvas.height = 450
+  s.canvas.boundingBox[1] = 450
+  const p = panel(s, 0, 'y = 10^x', 'mantissa window', [0, 1, 0, 10], [.02, .2], 300)
+  p.curve('ten', x => 10 ** x)
+  ;[0, .2, .4, .6, .8, 1].forEach(v => p.xtick(v))
+  ;[1, 2, 4, 6, 8, 10].forEach(v => p.ytick(v))
+  inventory(s, ['Normalized exact analytic exponential with fine quantitative grid; decade normalization is authored scaffolding, not a fake original image.'])
+  all.push(s)
+}
+
+if (process.argv[2].startsWith('repair-regions') || process.argv[2] === 'repair-decimal') {
+  const s = all.find(s => s.id === (process.argv[2] === 'repair-decimal' ? 'fig-choice-decimal-graph-FIRST' : 'fig-choice-floor-regions-FIRST'))
+  const base = `${own}/figures/${s.id}`
+  for (const suffix of ['spec.json', 'svg', 'render.json']) {
+    fs.copyFileSync(`${base}.${suffix}`, `${base}.before-${process.argv[2]}.${suffix}`, fs.constants.COPYFILE_EXCL)
+  }
+  fs.writeFileSync(`${base}.spec.json`, JSON.stringify(s, null, 2) + '\n')
+} else if (process.argv[2].startsWith('repair-specs')) {
+  all.forEach(s => {
+    const p = `${own}/figures/${s.id}.spec.json`
+    fs.copyFileSync(p, `${own}/figures/${s.id}.spec-before-${process.argv[2]}.json`, fs.constants.COPYFILE_EXCL)
+    fs.writeFileSync(p, JSON.stringify(s, null, 2) + '\n')
+  })
+  for (const suffix of ['svg', 'render.json']) {
+    const p = `${own}/figures/fig-choice-growth-FIRST.${suffix}`
+    if (fs.existsSync(p)) fs.copyFileSync(p, `${own}/figures/fig-choice-growth-FIRST.before-${process.argv[2]}.${suffix}`, fs.constants.COPYFILE_EXCL)
+  }
+} else if (process.argv[2] === 'specs') {
+  fs.mkdirSync(`${own}/figures`, { recursive: true })
+  all.forEach(s => writeNew(`${own}/figures/${s.id}.spec.json`, s))
+  writeNew(`${own}/figure-authoring-provenance-FIRST.json`, {
+    source_pixels: false,
+    source_object_inventory_kind: 'conceptual_dependency',
+    source_seed_sha256: '5ae53656673d12bc528e3aca6a5181e165ef847d3b724a683ebe6fb62224e0d0',
+    independently_solved_record: `${own}/author-source-solutions-FIRST.record0444`,
+    source_solution_file_sha256: hash(`${own}/author-source-solutions-FIRST.record0444`),
+    figures: all.map(s => ({ id: s.id, spec: `${own}/figures/${s.id}.spec.json`, original_image: null, authored_basis: s.source.authoredBasis, related_full_tasks: s.source.authoritativeText.map(t => t.exercise) })),
+    independent_review: 'not performed; parent-authorized sole reviewer pending',
+  })
+} else if (process.argv[2].startsWith('render')) {
+  const executions = []
+  for (const s of all) {
+    const base = `${own}/figures/${s.id}`
+    if (process.argv[2].startsWith('render-remaining') && fs.existsSync(`${base}.render.json`)) {
+      const previous = JSON.parse(fs.readFileSync(`${base}.render.json`, 'utf8'))
+      if (previous.status === 'pass' && previous.spec.sha256 === hash(`${base}.spec.json`)) {
+        executions.push({ reused:true, spec:`${base}.spec.json`, prior_report:`${base}.render.json`, exitCode:0 })
+        continue
+      }
+    }
+    const argv = ['.agents/skills/ld-s10y-image/scripts/render_spec.mjs', '--spec', `${base}.spec.json`, '--svg', `${base}.svg`, '--png', `${base}.preview.png`, '--report', `${base}.render.json`]
+    const r = spawnSync('node', argv, { cwd: root, encoding: 'utf8' })
+    executions.push({ cwd: root, command: 'node', argv, exitCode: r.status, stdout: r.stdout, stderr: r.stderr })
+    if (r.status !== 0) break
+  }
+  writeNew(`${own}/figure-${process.argv[2]}-executions-FIRST.json`, executions)
+  console.log(JSON.stringify(executions.map(e => ({ spec: e.spec || e.argv[2], reused:e.reused || false, exitCode: e.exitCode, stdout: e.stdout, stderr: e.stderr })), null, 2))
+  if (executions.length !== all.length || executions.some(e => e.exitCode !== 0)) process.exitCode = 2
+} else if (process.argv[2] === 'modern-preview') {
+  const executable = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+  const browser = await chromium.launch({ executablePath: executable, headless: true })
+  try {
+    const page = await browser.newPage({ viewport: { width: 640, height: 1400 } })
+    const svg = fs.readFileSync(seed.figures[0].assets[0].path, 'utf8')
+    await page.setContent(`<html><body style="margin:0;background:white">${svg}</body></html>`)
+    const dimensions = await page.locator('svg').evaluate(el => {
+      const vb = el.viewBox.baseVal
+      el.setAttribute('width', '640')
+      el.setAttribute('height', String(640 * vb.height / vb.width))
+      return { width: 640, height: Math.ceil(640 * vb.height / vb.width) }
+    })
+    await page.setViewportSize(dimensions)
+    await page.screenshot({ path: `${own}/fig-76-modern-preview-FIRST.png`, fullPage: true })
+    console.log(JSON.stringify({ actual_asset: seed.figures[0].assets[0], dimensions, preview: `${own}/fig-76-modern-preview-FIRST.png`, action: 'read-only complete SVG rendering; no regeneration or review' }))
+  } finally { await browser.close() }
+} else throw new Error('use specs, render, or modern-preview')

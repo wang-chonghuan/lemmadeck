@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const text = fs.readFileSync(`${base}/answer-runtime-RECOVERY1/stderr.record`, 'utf8');
+const parser = [
+  'import json,sys',
+  'sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")',
+  'from production import read_json_documents',
+  'json.dump(read_json_documents(sys.stdin.read()),sys.stdout)',
+].join('\n');
+const reports = JSON.parse(execFileSync('.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  ['-c', parser], { cwd: root, input: text, encoding: 'utf8' }));
+assert.equal(reports.length, 1);
+const report = reports[0];
+assert.equal(report.caseCount, 64);
+assert.equal(report.failures, 1);
+const failures = report.results.filter(result => !result.accepted);
+assert.equal(failures.length, 1);
+const result = failures[0];
+assert.equal(result.name, 'alg8-c5-ex/696/a) 与 1 比较');
+assert.ok(result.preserved && result.inserted && result.inputEvents > 0);
+const file = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-ex/answer-keys.json';
+const original = JSON.parse(fs.readFileSync(file));
+const candidate = structuredClone(original);
+const part = candidate.answers.find(answer => answer.exercise === '696')
+  .parts.find(part => part.label === 'a) 与 1 比较');
+assert.deepEqual(part.expected, [result.input]);
+part.expected = [result.emitted];
+const restored = structuredClone(candidate);
+restored.answers.find(answer => answer.exercise === '696')
+  .parts.find(part => part.label === 'a) 与 1 比较').expected = [result.input];
+assert.deepEqual(restored, original);
+const directory = `${base}/answer-runtime-RECOVERY2`;
+assert.ok(!fs.existsSync(directory));
+fs.mkdirSync(directory);
+fs.copyFileSync(`${base}/finalize-answer-recovery.mjs`,
+  `${base}/answer-runtime-RECOVERY1/finalizer-wrapper-at-call.mjs.record`,
+  fs.constants.COPYFILE_EXCL);
+const bytes = `${JSON.stringify(candidate, null, 2)}\n`;
+fs.writeFileSync(file, bytes);
+fs.writeFileSync(`${directory}/candidate.json.record`, bytes, { flag: 'wx', mode: 0o444 });
+fs.writeFileSync(`${directory}/serialization-delta.record`, `${JSON.stringify({
+  exercise: '696', label: part.label, before: result.input, after: result.emitted,
+  realMathLiveEditPreservedMathematics: result.preserved,
+  displayAndOtherFieldsUnchanged: true, previousFinalizerExit: 2,
+  previousFinalizerFailedCases: 1, previousFinalizerPassedCases: 63,
+  negativeControl700Unchanged: true,
+  afterSha256: createHash('sha256').update(bytes).digest('hex'),
+  independentMathematicsReviewReused: true, newMathematicalClaims: false,
+}, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+console.log(JSON.stringify({ changedExpectedStrings: 1, mathematicalContentChanged: false }));

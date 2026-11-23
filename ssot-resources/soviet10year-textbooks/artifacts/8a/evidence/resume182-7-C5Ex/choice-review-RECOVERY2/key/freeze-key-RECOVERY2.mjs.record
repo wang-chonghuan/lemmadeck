@@ -1,0 +1,329 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const own = `${base}/choice-review-RECOVERY2/key`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = p => fs.readFileSync(p, 'utf8');
+const load = p => JSON.parse(read(p));
+const bind = p => ({ path: p, sha256: hash(fs.readFileSync(p)) });
+const sorted = v => {
+  if (Array.isArray(v)) return v.map(sorted);
+  if (v && typeof v === 'object')
+    return Object.fromEntries(Object.keys(v).sort().map(k => [k, sorted(v[k])]));
+  return v;
+};
+const canonical = v => JSON.stringify(sorted(v)).replace(
+  /[\u007f-\uffff]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+const digest = v => hash(canonical(v));
+const writeFrozen = (p, text) => {
+  assert.equal(fs.existsSync(p), false, p);
+  fs.writeFileSync(p, text, { flag: 'wx', mode: 0o444 });
+  assert.equal(fs.statSync(p).mode & 0o777, 0o444, p);
+  return bind(p);
+};
+const jsonText = v => `${JSON.stringify(v, null, 2)}\n`;
+const sourcePath = `${base}/math-independent-FIRST/source-solutions-FIRST.record0444`;
+const firstViewPath = `${base}/choice-review-FIRST/view/choice-view-FIRST.record0444`;
+const recoveryViewPath = `${base}/choice-review-RECOVERY1/view/choice-view-RECOVERY1.record0444`;
+const figurePath = `${base}/choice-review-FIRST/figures/fig-review-FIRST.record0444`;
+const previousKeyPath = `${base}/choice-review-RECOVERY1/key/choice-key-RECOVERY1.record0444`;
+const previousDraftPath = `${base}/choices-RECOVERY1/draft.json`;
+const previousSeedPath = `${base}/choices-RECOVERY1/seed.json`;
+const draftPath = `${base}/choices-RECOVERY2/draft.json`;
+const seedPath = `${base}/choices-RECOVERY2/seed.json`;
+const repairPath = `${base}/choices-RECOVERY2/repair.record`;
+const reviewPath = `${base}/choices-RECOVERY2/review.json`;
+const recordPath = `${own}/choice-key-RECOVERY2.record0444`;
+const expectedFrozen = new Map([
+  [sourcePath, '92ebd86c58ebab876c51b7a2ffe63d69c9f779232628483a4356c4e248a47db4'],
+  [figurePath, '86db4942801c68d003e668c6ee28c467ed9e2eac0f44301dc4bd6d2a111e87c4'],
+  [firstViewPath, '6fe3ab7e1f5934d325028ebb426877320c2d656194a3deb0c9c3abbf2275d86a'],
+  [recoveryViewPath, 'd8438aced197925926e54d58ba89c31dad1645b99276e44550520a5604ca7fb9'],
+  [previousKeyPath, '710dce8ea8a881560b51b0d14569eb58457fbc75261385a6ccef10814df6bd77'],
+]);
+for (const [p, expected] of expectedFrozen) {
+  assert.equal(bind(p).sha256, expected, p);
+  assert.equal(fs.statSync(p).mode & 0o777, 0o444, p);
+}
+const previousKey = load(previousKeyPath);
+const first = load(firstViewPath);
+const recovery = load(recoveryViewPath);
+const figures = load(figurePath);
+const previousDraft = load(previousDraftPath);
+const draft = load(draftPath);
+const seed = load(seedPath);
+const repair = load(repairPath);
+assert.equal(bind(previousDraftPath).sha256, previousKey.final_snapshot.draft.sha256);
+assert.equal(bind(draftPath).sha256,
+  '8fd5baadbfc5bc3166aa3876612c3d43891771781e409ab22a6b32669822ed3d');
+assert.equal(bind(draftPath).sha256, repair.repaired_draft_sha256);
+assert.ok(fs.readFileSync(previousSeedPath).equals(fs.readFileSync(seedPath)));
+assert.equal(digest(seed), draft.seed_sha256);
+assert.equal(previousKey.coverage.correct_set_matches, 54);
+assert.equal(previousKey.coverage.truth_matches, 240);
+assert.equal(previousKey.coverage.full_mistaken_procedure_approval, false);
+assert.equal(draft.questions.length, 54);
+assert.equal(seed.exercises.length, 43);
+const oldQuestion = previousDraft.questions.find(q => q.id === 'q696-one');
+const newQuestion = draft.questions.find(q => q.id === 'q696-one');
+const before = oldQuestion.key.rationales.find(r => r.option_id === 'D');
+const after = newQuestion.key.rationales.find(r => r.option_id === 'D');
+const normalized = structuredClone(draft);
+const normalizedRationale = normalized.questions.find(q => q.id === 'q696-one')
+  .key.rationales.find(r => r.option_id === 'D');
+normalizedRationale.derivation = before.derivation;
+normalizedRationale.misconception = before.misconception;
+assert.deepEqual(normalized, previousDraft);
+assert.notEqual(before.derivation, after.derivation);
+assert.notEqual(before.misconception, after.misconception);
+assert.deepEqual(after, repair.after);
+assert.deepEqual(before, repair.before);
+
+const affectedReview = {
+  question_id: 'q696-one',
+  option_id: 'D',
+  changed_fields: ['key.rationales[D].derivation', 'key.rationales[D].misconception'],
+  verdict: 'pass',
+  before,
+  after,
+  evidence: 'The repaired procedure has exactly two stated errors: reverse the first fractional base, and incorrectly classify the final difference of roots as greater than 1. It explicitly handles the middle bases correctly. Positive exponent on the reversed first base produces >; the second base is >1 with a negative exponent and produces <; the third base is <1 with a negative exponent and produces >; the wrongly classified final base is >1 with a negative exponent and produces <. These four steps produce the complete displayed D column, not only a fragment. The correction also identifies the first and fourth entries as the actual errors. This disposes of the previous sign-only-procedure defect without changing any option or correct set.',
+  previous_issue: 'C5EX-KEY-696D-PROCEDURE-MISMATCH-RECOVERY1',
+  disposition: 'REPAIRED_IN_NEW_SNAPSHOT_PREVIOUS_FAIL_PRESERVED',
+  independent_truth_reused: 'incorrect',
+};
+const incompleteId = 'C5EX-KEY-INTERNAL-PROCEDURE-AUDIT-UNFINISHED';
+const missingEvidence = `The hash-frozen prior key record ${previousKeyPath} SHA ${bind(previousKeyPath).sha256} explicitly states full_mistaken_procedure_approval=false and marks remaining entries NOT_GLOBALLY_APPROVED_STOP_ON_DEFECT. RECOVERY2 authorizes only the q696-one/D internal repair review. Snapshot equality preserves the 54 correct-set and 240 truth-label comparisons but cannot turn an unfinished generative-rationale audit into a completed pass. No unchanged source/view mathematics is re-solved to fill this gap.`;
+
+// Copy the already frozen solution prose; do not derive the 43 sources again.
+const sourceText = read(sourcePath);
+const sections = new Map([...sourceText.matchAll(
+  /^### (\d+)\n([\s\S]*?)(?=\n### |\n## |$)/gm)]
+  .map(m => [m[1], m[2].trim()]));
+const sourceReviews = seed.exercises.map(ex => {
+  const solution = sections.get(ex.number);
+  assert.ok(solution, ex.number);
+  const prior = previousKey.source_coverage_comparisons
+    .find(s => s.source_number === ex.number);
+  assert.ok(prior, ex.number);
+  return {
+    source_number: ex.number,
+    independent_solution: `Reused ${sourcePath}, SHA ${bind(sourcePath).sha256}, section ### ${ex.number}.\n${solution}`,
+    coverage: {
+      verdict: 'pass',
+      evidence: `${prior.reused_fidelity_and_response_loss_evidence} Recognition coverage and declared production/condition losses are reused, not re-reviewed: ${JSON.stringify(prior.author_omitted_tasks)}. ${prior.author_reason}`,
+    },
+  };
+});
+const merged = new Map([...first.question_reviews, ...recovery.question_reviews]
+  .map(q => [q.question_id, q]));
+const questionReviews = draft.questions.map(q => {
+  const blind = merged.get(q.id);
+  const compared = previousKey.question_key_comparisons.find(k => k.question_id === q.id);
+  assert.ok(blind && compared, q.id);
+  const checks = blind.mathematics.option_checks.map(c => {
+    const corrected = q.id === 'q696-one' && c.option_id === 'D';
+    return {
+      option_id: c.option_id,
+      truth: c.truth,
+      evidence: `${c.evidence} Exact author truth comparison is reused from ${previousKeyPath}, SHA ${bind(previousKeyPath).sha256}; no new truth-set computation. ${corrected ? affectedReview.evidence : 'The unchanged internal derivation/misconception was not globally approved by that record; this continuation does not claim otherwise.'}`,
+    };
+  });
+  return {
+    question_id: q.id,
+    task_fidelity: blind.task_fidelity,
+    redundancy: blind.redundancy,
+    answer_leakage: blind.answer_leakage,
+    mathematics: {
+      verdict: 'blocked',
+      independent_solution: `${blind.mathematics.independent_solution}\nThe correct set and all option truths below are known and reused. The blocked verdict is the unresolved contract-required internal-rationale audit, not uncertainty about those mathematical truths. ${missingEvidence}`,
+      correct: blind.mathematics.correct,
+      option_checks: checks,
+    },
+  };
+});
+const figureChecks = [];
+for (const f of seed.figures) {
+  assert.equal(f.id, 'fig-76');
+  const a = f.assets[0];
+  assert.equal(a.sha256, figures.reused_fig76.svg.sha256);
+  assert.equal(bind(a.path).sha256, a.sha256);
+  figureChecks.push({
+    figure_id: f.id,
+    asset_path: a.path,
+    asset_sha256: a.sha256,
+    observation: `Reused independent interpretation from ${figurePath}, SHA ${bind(figurePath).sha256}: ${figures.reused_fig76.interpretation} Actual styled view previously opened once: ${figures.reused_fig76.styled_view.path}, SHA ${figures.reused_fig76.styled_view.sha256}. ${figures.reused_fig76.original_failure_preserved} No image reopened.`,
+  });
+}
+const newFigureReviews = draft.new_figures.map(f => {
+  const original = figures.figures.find(x => x.figure_id === f.id);
+  const relocation = previousKey.new_figure_bindings.find(x => x.figure_id === f.id);
+  assert.ok(original && relocation, f.id);
+  assert.equal(original.status, 'PASS');
+  assert.equal(bind(f.path).sha256, f.sha256);
+  assert.equal(f.sha256, original.svg.sha256);
+  assert.equal(bind(original.persisted_review.path).sha256, original.persisted_review.sha256);
+  assert.equal(bind(relocation.final_spec.path).sha256, relocation.final_spec.sha256);
+  assert.equal(bind(relocation.final_render.path).sha256, relocation.final_render.sha256);
+  figureChecks.push({
+    figure_id: f.id,
+    asset_path: f.path,
+    asset_sha256: f.sha256,
+    observation: `Reused actual observation from ${figurePath}, SHA ${bind(figurePath).sha256}: ${original.independent_inventory} ${original.mathematical_and_visual_evidence} Final paths and same-asset binding were settled in ${previousKeyPath}; no new observation or rendering.`,
+  });
+  return {
+    figure_id: f.id,
+    asset_sha256: f.sha256,
+    reviewer: figures.reviewer,
+    verdict: 'pass',
+    evidence: `Existing independent PASS ${original.persisted_review.path}, SHA ${original.persisted_review.sha256}; reused figure freeze ${figurePath}, SHA ${bind(figurePath).sha256}. ${original.independent_inventory} ${original.mathematical_and_visual_evidence} Final asset ${f.path}; SVG/spec unchanged and render-report path-only binding reused. No new images.`,
+  };
+});
+assert.equal(questionReviews.length, 54);
+assert.equal(questionReviews.flatMap(q => q.mathematics.option_checks).length, 240);
+assert.equal(sourceReviews.length, 43);
+assert.equal(newFigureReviews.length, 6);
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: digest(seed),
+  draft_sha256: digest(draft),
+  reviewer: first.reviewer,
+  source_reviews: sourceReviews,
+  figure_checks: figureChecks,
+  new_figure_reviews: newFigureReviews,
+  question_reviews: questionReviews,
+  outcome: 'blocked',
+};
+fs.mkdirSync(own, { recursive: true });
+const reviewBinding = writeFrozen(reviewPath, jsonText(review));
+
+const args = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', '.',
+  '--seed', seedPath,
+  '--draft', draftPath,
+  '--review', reviewPath,
+];
+const stdoutPath = `${own}/validator-RECOVERY2.stdout.txt`;
+const stderrPath = `${own}/validator-RECOVERY2.stderr.txt`;
+const executionPath = `${own}/validator-RECOVERY2.execution.record0444`;
+for (const p of [stdoutPath, stderrPath, executionPath, recordPath])
+  assert.equal(fs.existsSync(p), false, p);
+const startedAt = new Date().toISOString();
+const result = spawnSync('python3', args, {
+  cwd: root,
+  encoding: 'utf8',
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+});
+const endedAt = new Date().toISOString();
+const stdoutBinding = writeFrozen(stdoutPath, result.stdout ?? '');
+const stderrBinding = writeFrozen(stderrPath, result.stderr ?? '');
+const execution = {
+  schema: 'C5Ex-choice-validator-actual-execution-RECOVERY2-v1',
+  cwd: root,
+  command: 'python3',
+  args,
+  environment_override: { PYTHONDONTWRITEBYTECODE: '1' },
+  startedAt,
+  endedAt,
+  invocations: 1,
+  exitCode: result.status,
+  signal: result.signal,
+  error: result.error ? String(result.error) : null,
+  stdout: result.stdout ?? '',
+  stderr: result.stderr ?? '',
+  stdout_binding: stdoutBinding,
+  stderr_binding: stderrBinding,
+  review: reviewBinding,
+  seed: bind(seedPath),
+  draft: bind(draftPath),
+};
+const executionBinding = writeFrozen(executionPath, jsonText(execution));
+const record = {
+  schema: 'C5Ex-independent-choice-key-RECOVERY2-v1',
+  cwd: root,
+  reviewer: first.reviewer,
+  frozenAt: new Date().toISOString(),
+  mode: '0444',
+  status: 'BLOCKED',
+  affected_internal_repair_status: 'PASS',
+  canonical_outcome: review.outcome,
+  current_seed: { ...bind(seedPath), canonical_sha256: digest(seed) },
+  current_draft: { ...bind(draftPath), canonical_sha256: digest(draft) },
+  repair: bind(repairPath),
+  previous_draft: bind(previousDraftPath),
+  preserved_frozen_records: [...expectedFrozen.keys()].map(bind),
+  delta: {
+    question_id: 'q696-one',
+    option_id: 'D',
+    fields: affectedReview.changed_fields,
+    other_all_draft_fields_equal: true,
+    all_54_views_and_240_option_texts_equal: true,
+    all_correct_keys_and_239_other_rationales_equal: true,
+    seed_bytes_equal: true,
+    figures_paths_hashes_basis_source_coverage_intent_equal: true,
+  },
+  affected_review: affectedReview,
+  whole_comparison_reuse: {
+    record: bind(previousKeyPath),
+    question_correct_sets: 54,
+    option_truths: 240,
+    keys_recompared: 0,
+    source_solutions_recomputed: 0,
+    unchanged_math_repeated: 0,
+    RECOVERY1_pure_view_repeated: 0,
+    new_figure_independent_PASS_records_reused: 6,
+  },
+  remaining_blocker: {
+    id: incompleteId,
+    status: 'blocked',
+    evidence: missingEvidence,
+    remaining_authorization: 'Complete only the unfinished author internal derivation/misconception audit. This does not require another source solve, blind-view truth computation or image gate.',
+  },
+  canonical_review: { ...reviewBinding, canonical_sha256: digest(review) },
+  new_figure_review_paths_reused: figures.figures.map(f => f.persisted_review),
+  actual_validator: executionBinding,
+  validator_exitCode: result.status,
+  validator_stdout: stdoutBinding,
+  validator_stderr: stderrBinding,
+  image_usage: {
+    cap: 8,
+    cumulative_actual_image_payloads: 8,
+    new_images_RECOVERY2: 0,
+    reopens: 0,
+    crops: 0,
+    renders: 0,
+    resets: 0,
+  },
+  first_failures_preserved: [
+    'FIRST two graph-bypass defects remain in FIRST; repaired pure view RECOVERY1 is separate.',
+    'RECOVERY1 q696-one/D generative-procedure FAIL remains immutable; its RECOVERY2 repair PASS is separate.',
+    'The source FIRST transparent-black visual failure remains unchanged.',
+    'The incomplete RECOVERY1 global internal-rationale approval is not retroactively labeled PASS.',
+  ],
+  boundaries: 'Only RECOVERY2 owned key records and its canonical review written. No author/old-record changes, no extra validator or no-review checker, no image/browser/render/reset/API/install/skill/git/DB/retain/publish/cross-chat action.',
+  usage: { host_tokens: 'UNKNOWN', host_cost: 'UNKNOWN', external_API: 0, paid_calls: 0 },
+};
+const recordBinding = writeFrozen(recordPath, jsonText(record));
+for (const [p, expected] of expectedFrozen) assert.equal(bind(p).sha256, expected, p);
+assert.equal(bind(draftPath).sha256, repair.repaired_draft_sha256);
+assert.equal(bind(reviewPath).sha256, reviewBinding.sha256);
+console.log(JSON.stringify({
+  status: record.status,
+  affected_repair_status: affectedReview.verdict,
+  key_record: recordBinding,
+  canonical_review: record.canonical_review,
+  canonical_outcome: review.outcome,
+  reused_questions: 54,
+  reused_option_truths: 240,
+  validator_exitCode: result.status,
+  validator_stdout: result.stdout,
+  validator_stderr: result.stderr,
+  validator_execution: executionBinding,
+  cumulative_image_payloads: 8,
+  new_images: 0,
+}, null, 2));

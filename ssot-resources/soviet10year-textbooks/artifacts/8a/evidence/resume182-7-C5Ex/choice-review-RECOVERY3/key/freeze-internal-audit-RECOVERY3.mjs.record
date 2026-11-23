@@ -1,0 +1,529 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const own = `${base}/choice-review-RECOVERY3/key`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const load = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const bind = p => ({ path: p, sha256: hash(fs.readFileSync(p)) });
+const sourcePath = `${base}/math-independent-FIRST/source-solutions-FIRST.record0444`;
+const firstFigurePath = `${base}/choice-review-FIRST/figures/fig-review-FIRST.record0444`;
+const firstViewPath = `${base}/choice-review-FIRST/view/choice-view-FIRST.record0444`;
+const recoveryViewPath = `${base}/choice-review-RECOVERY1/view/choice-view-RECOVERY1.record0444`;
+const key1Path = `${base}/choice-review-RECOVERY1/key/choice-key-RECOVERY1.record0444`;
+const key2Path = `${base}/choice-review-RECOVERY2/key/choice-key-RECOVERY2.record0444`;
+const review2Path = `${base}/choices-RECOVERY2/review.json`;
+const validator2Path = `${base}/choice-review-RECOVERY2/key/validator-RECOVERY2.execution.record0444`;
+const draftPath = `${base}/choices-RECOVERY2/draft.json`;
+const seedPath = `${base}/choices-RECOVERY2/seed.json`;
+const expected = new Map([
+  [sourcePath, '92ebd86c58ebab876c51b7a2ffe63d69c9f779232628483a4356c4e248a47db4'],
+  [firstFigurePath, '86db4942801c68d003e668c6ee28c467ed9e2eac0f44301dc4bd6d2a111e87c4'],
+  [firstViewPath, '6fe3ab7e1f5934d325028ebb426877320c2d656194a3deb0c9c3abbf2275d86a'],
+  [recoveryViewPath, 'd8438aced197925926e54d58ba89c31dad1645b99276e44550520a5604ca7fb9'],
+  [key1Path, '710dce8ea8a881560b51b0d14569eb58457fbc75261385a6ccef10814df6bd77'],
+  [key2Path, '0d4937b2d9f46ddcb842a949ccb5b54d67778ae9b349b0ca00537af70d8ef8cc'],
+  [review2Path, 'bf006510be7a5dbb5db57a36bf608c00950c87344db0e7af387ad3fd8b89e721'],
+  [validator2Path, 'e88a6ba25f6856cb1efa33f3724c661f55935cd9a65316b6e325dd50aaaced2b'],
+  [draftPath, '8fd5baadbfc5bc3166aa3876612c3d43891771781e409ab22a6b32669822ed3d'],
+]);
+for (const [p, sha] of expected) {
+  assert.equal(bind(p).sha256, sha, p);
+  assert.equal(fs.statSync(p).mode & 0o777, 0o444, p);
+}
+const key1 = load(key1Path);
+const key2 = load(key2Path);
+const draft = load(draftPath);
+assert.equal(key2.affected_review.verdict, 'pass');
+
+// Each entry describes the authored wrong operation, not a fresh source solve.
+const procedures = {
+  'q682-order': {
+    B: 'Reverse the order of the two radical exponents; increasing base 2 then produces the displayed greater-than claim.',
+    E: 'Equate fractions whose numerators are each one less than their denominators; equal exponents then produce the displayed equality.',
+  },
+  'q683-constants': {
+    A: 'FAIL: no signed comparison or threshold rule is stated for the last two composite exponents; ignoring their constants cannot reproduce both reversed entries.',
+    C: 'Treat base 2>1 as sufficient for every power to exceed 1, producing all six greater-than entries.',
+    D: 'Round only the tiny positive exponent .0001 to zero; this changes the second comparison to equality and leaves the other five entries as shown.',
+  },
+  'q683-variable': {
+    A: 'Keep the correct first-function partition and equality threshold 1 for the second, but apply increasing-in-x signs to the second function while omitting the decreasing 1-x composition.',
+    B: 'Copy the entire 2^x three-case partition to the second function, including the incorrect equality threshold 0.',
+    D: 'Use the base-above-1 shortcut for both powers without any exponent-domain restriction, giving both all-real greater-than assertions.',
+  },
+  'q684-images': {
+    C: 'Read a negative exponent as a negative function value: replace the left endpoint value 2^-1 by -2, retaining the right endpoint 2 and closed topology.',
+    E: 'Include the limiting ordinate zero as attained while retaining the open upper endpoint 1, giving [0,1).',
+  },
+  'q685-inverse': {
+    A: 'Count powers of 2 in the positive numbers and reciprocal magnitudes but discard reciprocal exponent signs, giving 5,6,1,2,3,7.',
+    B: 'The procedure explicitly targets .25 and .125: use their reciprocals 4 and 8 directly as negative exponents. Leave the other four roots correct, giving 5,-6,-1,-4,-8,7.',
+    D: 'FAIL: the stated keep-original/negate-original rule gives -1/64 in position 2, but the displayed option uses -64. No reciprocal step is stated for that position.',
+  },
+  'q686-bounds': {
+    C: 'Obtain threshold -7, then incorrectly reverse the inequality merely because the right side is a reciprocal, giving x<-7.',
+    F: 'Keep threshold 1 but include its equality endpoint despite the strict source inequality, producing the displayed closed upper endpoint.',
+  },
+  'q687-changes': {
+    A: 'Choose the interval closer to the y axis in each pair by the stated perceived-curvature heuristic; these are the first intervals in both pairs.',
+    C: 'Treat only the half-unit-width pair as linear/equal-increment while handling the integer-width pair correctly, giving later-first/equal-second.',
+    D: 'Treat the curve as a line with equal changes over equal widths in both pairs.',
+  },
+  'q688-crossing': {
+    B: 'Extend the strict base ordering unconditionally to all exponents, including the omitted zero/negative exceptions, yielding the all-real less-than set.',
+    E: 'Interpret an apparent approach of two rising curves as a future exchange of vertical order, hence assert an additional positive crossing. No numeric crossing is claimed by the option.',
+  },
+  'q689-partition': {
+    A: 'Use decreasing-ratio comparison in both triples: equality at zero, greater on negative x and less on positive x.',
+    B: 'Handle the first ratio correctly but reverse the second triple solely because both original bases are below 1.',
+    D: 'Compare only the two base orders and omit zero/negative-exponent cases, producing no equality roots, all-real greater and no less roots in both triples.',
+  },
+  'q690-source-graph': {
+    C: 'Transfer the positive-side curve ordering unchanged to the negative side, leaving the .8-base curve highest there.',
+    D: 'Replace the common zero-abscissa, unit-ordinate point by an ordinate-zero point using the stated zero-power-equals-zero error.',
+  },
+  'q691-family': {
+    C: 'Treat the horizontal asymptotic approach as actual contact with the x axis for both curves.',
+    D: 'Promote a<b directly to a^x<b^x for every real exponent, omitting equality and reciprocal cases.',
+  },
+  'q692-middle': {
+    A: 'Rank .4 above both exterior bases after comparing only against 1/3 and omitting the upper half-base bound; preserve zero powers and reverse the exterior ranking on negative x.',
+    B: 'Reverse the positive-side base ordering from the fact that all three functions decrease, then reverse that erroneous order on the negative side; retain their common zero-abscissa point.',
+    D: 'Replace an intermediate-base curve by the arithmetic average of the exterior curves at every abscissa; this also preserves the stated common point.',
+  },
+  'q693-constant-crossing': {
+    B: 'Substitute the remembered horizontal reference y=1 for y=a in both regimes; this moves the crossing threshold to 0 and gives exactly the displayed side orderings.',
+    C: 'Use the increasing-base orderings in both regimes while retaining the correct crossing threshold 1.',
+    D: 'FAIL: extending the ordinate comparison at x=0 to all x predicts no crossing in both regimes, not a decreasing-regime crossing at x=0.',
+  },
+  'q694-reciprocal': {
+    C: 'Move the negative exponent sign in front of the positive power value, making the whole expression negative as claimed.',
+    E: 'Reciprocate the base, then apply the explicitly stated off-by-one change from exponent 5 to 6, yielding the exact false equality.',
+  },
+  'q695-monotonicity': {
+    A: 'Misclassify only pi/3 as a subunit fraction, reversing the second exponent comparison; other entries are handled correctly.',
+    C: 'Treat the positive radical-difference base as above 1 and preserve its power inequality; all other displayed entries are unchanged.',
+    D: 'Apply the decreasing-function reversal to each of the four original power inequalities, producing the full displayed reversed column.',
+  },
+  'q696-one': {
+    A: 'Fix every subunit-base power below 1 regardless of exponent sign, affecting the last two entries; the second superunit negative power remains correctly below 1.',
+    B: 'The derivation identifies the second pi-base entry and the misconception qualifies the base-above-1 case: discard that negative exponent sign locally. This makes only the second entry greater, retaining the three other correctly handled entries. No blanket application to all subunit-base entries is claimed here.',
+    D: 'REUSED_RECOVERY2_PASS',
+  },
+  'q697-signs': {
+    C: 'Round the near-unit right-hand side 1.003 to 1 before inverse exponent comparison, producing the claimed zero exponent.',
+    D: 'Infer a positive exponent from the right-hand side exceeding 1 without accounting for the subunit base.',
+  },
+  'q698-increasing': {
+    A: 'Keep only the common y-axis crossing and omit the right-side crossing, producing the singleton zero root.',
+    C: 'FAIL: adding the line x-intercept to genuine intersections gives {-1,0,1}, not {-1,0}; the stated procedure does not remove the genuine x=1 root.',
+    D: 'Use the horizontal projection of the enclosed between-curves region as the solution set, producing the whole closed interval between crossings.',
+  },
+  'q698-decreasing': {
+    A: 'Copy both roots from the increasing-base equation without changing them for the decreasing exponential.',
+    B: 'Use only the line x-intercept as a curve intersection, producing the displayed singleton -1.',
+    D: 'Treat opposite monotonic directions as precluding intersection, yielding the empty set.',
+  },
+  'q699-near-miss': {
+    A: 'Keep the visible negative crossing estimate and promote the positive local near-miss to a second intersection near 3.2.',
+    C: 'Take the unsigned distance of the sole negative crossing from the y axis, changing its bracket to the positive counterpart.',
+    D: 'Inspect only the positive window, then extend its absence of crossings to the entire real domain.',
+  },
+  'q700-linear-exponents': {
+    D: 'Exchange the numerator and denominator of the cube-root exponent 2/3, then attach the reciprocal negative sign, giving -3/2.',
+    E: 'Misread the reciprocal relation by representing 25/4 as .4^2 rather than .4^-2, yielding positive root 2.',
+  },
+  'q700-quadratic': {
+    A: 'Set x=0 on seeing x^2 and omit the -1 exponent shift, giving the singleton zero.',
+    B: 'Solve x^2=1 but retain only the positive square root.',
+    D: 'Treat the right-hand value 1 as making any exponent acceptable, giving all real x.',
+  },
+  'q701-sets': {
+    D: 'Drop the reciprocal sign in the first square-root threshold, using +1/2; retain the second correctly reversed inequality.',
+    E: 'Preserve both inequalities after same-base conversion instead of reversing them for subunit bases.',
+  },
+  'q702-linear': {
+    A: 'Convert .125 to 2^-3 without converting the .5-base exponent, then equate -2x=-3; other roots remain correct.',
+    C: 'Multiply each constant by its exponent coefficient rather than divide: -7*5,3*(-2),0*3,2*7, producing the full displayed vector.',
+    D: 'Drop the reciprocal sign in the first equation and use exponent 1 for the third unit right side; retain the second and fourth correct roots.',
+  },
+  'q703-radicals': {
+    A: 'Omit both square-root transformations and the .1 factor, then read exponents 10 and 3 directly.',
+    C: 'Replace both square-root exponent transformations by 2x; with the second .1 factor retained, solve 2x=10 and 2x-1=3, yielding the full (5,2) vector.',
+    D: 'Handle the first square root correctly and omit only the second multiplicative .1 factor, giving second root 6.',
+  },
+  'q703-compatibility': {
+    B: 'Cancel the equal variable terms and ignore the unequal residual constants, declaring an identity for all real x.',
+    D: 'Stop after the correct relation 9x=72 and report its constant directly as the root.',
+  },
+  'q703-products': {
+    D: 'Treat both shifted exponents x-1 and 1-x as x after correct base combination, producing roots -3 and -1.',
+    E: 'Drop the first reciprocal exponent sign and interpret zero shifted exponent as zero variable in the second equation, producing 1 and 0.',
+  },
+  'q704-product-bounds': {
+    A: 'Omit only the external factor 3, changing the first exponent inequality to x/2>-3; other two intervals remain correct.',
+    C: 'Divide the third strict inequality by its negative coefficient without reversing the sign; retain the other two intervals.',
+    D: 'Omit the additive constant 1 from the second combined exponent, solve 2x<-1 and retain the first/third intervals.',
+  },
+  'q705-roots': {
+    D: 'Report the intermediate shifted variable x-1=5/4 directly as x.',
+    E: 'Replace the shifted-square equation by x^2=1 and report its two roots -1 and 1.',
+  },
+  'q706-factor': {
+    A: 'After the four stated common-factor isolations, report the power values 4,3,5,4 directly as variable roots.',
+    B: 'Handle the first two roots correctly and omit the x-1 shifts in the last two, giving their intermediate exponents 1,1 as x.',
+    D: 'Replace every exponential term by the same variable x and divide each right side by the number of terms, yielding 20/2,12/2,30/2,84/3.',
+  },
+  'q707-forward-domain': {
+    C: 'FAIL: erasing the first term of a zero-ratio sequence is a zero-ratio error only; it does not yield the option universal over all recurrence sequences, including nonzero-ratio sequences.',
+    D: 'Apply the positive-base requirement for arbitrary real exponents to integer-indexed negative-ratio sequences, rejecting every negative ratio.',
+  },
+  'q707-reverse-domain': {
+    B: 'Use the adjacent-quotient formula even when every term is zero, claiming a ratio from the undefined 0/0 quotient.',
+    D: 'Extend integer-power legality of negative bases to all real exponents, yielding the unrestricted real-value claim.',
+  },
+  'q708-brackets': {
+    B: 'Use truncation toward zero as every lower integer endpoint and then add 1, giving 30/31,0/1,0/1,-10/-9.',
+    C: 'Put only the positive subunit .49 in the negative unit interval on the basis that it is below 1, retaining the other correct brackets.',
+    D: 'Enlarge only the first upper endpoint to 32 to guarantee bracketing while dropping the requirement of consecutive endpoints.',
+  },
+  'q709-parts': {
+    C: 'Truncate the negative number toward zero and keep the signed residual, producing -7+(-.8).',
+    E: 'Attach the negative sign only to the integer component of the negative mixed number and keep its positive fractional component.',
+  },
+  'q710-decompose': {
+    A: 'Truncate both negative inputs toward zero and retain their negative residuals; the two positive decompositions stay correct.',
+    C: 'Keep the downward floors but copy the absolute decimal tails instead of their complements for both negative inputs.',
+    D: 'Use the upper integer and negative signed residual for the two positive inputs, leaving the negative decompositions correct.',
+  },
+  'q711-root-floors': {
+    C: 'Apply odd-function negation to floor, keeping positive floor 6 and assigning negative floor -6.',
+    E: 'Round both signed radicals to their nearest integers rather than downward floors, producing 4 and -4.',
+  },
+  'q712-nesting': {
+    C: 'FAIL: ordinary upward rounding/ceiling gives 0 for fractional part 0, so it does not yield the displayed universal value 1 at integer inputs.',
+    D: 'Truncate the negative input first to get signed fractional residue -.7, then correctly floor that wrong residue to -1.',
+  },
+  'q713-small-witness': {
+    B: 'Replace strict less-than by weak less-than and select the threshold witness .15.',
+    E: 'Use the absolute decimal tail .1 instead of the nonnegative fractional remainder .9 of the negative input.',
+  },
+  'q713-large-witness': {
+    C: 'Include equality in the strict greater-than test and select the threshold witness 2/3.',
+    D: 'Compare the full value 1.5, rather than its remainder .5, to the threshold 2/3.',
+  },
+  'q713-carry-witness': {
+    A: 'Round the near-unit residue sum .99 up prematurely and infer a carry, selecting .94.',
+    D: 'Use the full input-plus-shift exceeding 1 as the carry criterion and select the integer input 1, ignoring its zero original fractional residue.',
+  },
+  'q714-periodicity': {
+    A: 'Close the first upper floor endpoint and restrict the second invariant shift to the identity shift zero; both errors are explicitly stated.',
+    C: 'Cancel the constant input linearly through floor, leaving floor(x)=0 and the unit interval, while retaining the correct integer-period second answer.',
+    D: 'Use the fractional-part output range as the second allowable shift set, while keeping the first interval correct.',
+  },
+  'q715-floor-systems': {
+    C: 'Truncate the negative right-hand value to -8, then solve its half-open floor interval, giving the displayed interval shifted upward by 1.',
+    E: 'Subtract .36 instead of adding it when isolating y, shifting both endpoints in the stated wrong direction.',
+  },
+  'q715-fraction-lattices': {
+    D: 'Move -.39 to the other side with the wrong sign, forming y=n+.61-.39=n+.22.',
+    E: 'Set the hidden integer n to zero only, replacing the full lattice by its displayed singleton solution.',
+  },
+  'q716-fraction-counterexample': {
+    B: 'Treat the .91 remainder sum as already carried across an integer, selecting the equality case x=.5 as a counterexample.',
+    E: 'Use whole x=1 instead of its fractional part zero to trigger the carry test, selecting the integer equality case as a counterexample.',
+  },
+  'q716-floor-counterexample': {
+    C: 'Assume every noninteger input makes floor fail to commute with doubling and select .4 without the carry threshold test.',
+    D: 'Assume doubling and floor never commute, including at integer inputs, and select x=2.',
+  },
+  'q717-product-counterexamples': {
+    B: 'Test the product against a factor instead of testing the two proposed fractional expressions; .64 differs from .8 and is therefore misselected.',
+    C: 'Infer unequal fractional expressions merely from nonzero integer parts/cross terms, selecting the coincidental-equality pair (1.5,1.5).',
+  },
+  'q718-sum-counterexamples': {
+    C: 'Treat any pair of nonintegers as a carry and misselect (.2,.3).',
+    E: 'Treat a negative summand as sufficient for floor additivity failure and misselect the equality pair (2,-.3).',
+  },
+  'q719-graph-matching': {
+    A: 'The derivation identifies the second expression: apply an erroneous inverse-cancellation only to that nested floor-of-fraction expression, making it x. Keep the sum x and the third zero, producing A,A,B. This local scope is explicit in the named second-expression derivation.',
+    B: 'FAIL: replacing only the first sum by a zero nesting changes the first graph to B but leaves the second graph B. The displayed second graph A requires an additional unstated error.',
+    D: 'Apply erroneous fraction-cancels-floor to the third expression, making it x; retain the first x and second zero, producing A,B,A.',
+  },
+  'q720-plane-sets': {
+    D: 'Close the upper/right excluded boundaries and include all their corners, producing the all-four-corners membership claim.',
+    E: 'Replace floor(x)=0 by x=0, collapsing the vertical strip to the line.',
+  },
+  'q721-tiled-set': {
+    B: 'Replace equality of floors by equality of the original coordinates, collapsing the filled tiles to y=x.',
+    D: 'Promote the necessary within-unit distance condition to a sufficient condition, admitting every point with coordinate gap below 1.',
+    E: 'Interpret every equation graph as one-dimensional and delete all tile interiors, leaving only borders.',
+  },
+  'q722-exponent-laws': {
+    C: 'Apply the exponent-doubling square rule to a square root, producing exponent 2b instead of b/2.',
+    F: 'Use the power-of-a-power exponent product rule for multiplication of two same-base powers, producing ab.',
+  },
+  'q723-positive-powers': {
+    A: 'Keep the first graphical estimate and multiply the second original number by 5/6 instead of exponentiating, giving about 19 as the second displayed coordinate.',
+    C: 'Double only the first exponent to 2/5, giving about 1.306 and its coarse graphical estimate about 1.30; keep the second estimate 14. The view specifies approximate graph reading, not nearest .01 rounding.',
+    D: 'Combine the first doubled-exponent error with the second number-times-exponent error, giving the complete approximate pair 1.30,19.',
+  },
+  'q723-small-and-product': {
+    B: 'Keep the first estimate .026 and give both product factors exponent .2, forming 72^.2 about 2.35 and the displayed one-decimal estimate 2.4.',
+    C: 'Replace only the first 2/3 power by the square root, giving about .06403 and displayed .064; retain the second estimate 5.2.',
+    D: 'Combine the first square-root substitution with the second common-.2 product exponent, giving .064,2.4.',
+  },
+  'q724-lookup-table': {
+    A: 'Keep the four selected mantissa exponents and drop all decade shifts, producing .20,.57,.71,.30.',
+    B: 'Negate only the subunit number mantissa exponent instead of subtracting the unit characteristic, producing -.57 with the other three exponents unchanged.',
+    D: 'Choose the upper bracketing mantissa cell in each of the four cases and retain the respective decade shifts, producing .21,-.42,1.72,2.31.',
+  },
+};
+
+const issueData = [
+  ['q683-constants', 'A', 'UNDERSPECIFIED-RADICAL-SIGN',
+    'The author only says the composite exponent signs are decided from the radical terms alone; it gives no wrong comparison, threshold or subtraction-order operation. Literal omission of the additive constants leaves -sqrt(2) and -sqrt(3), both negative, rather than the displayed negative/positive pair. Reversing both subtractions could produce that pair, but is not the stated procedure. The refutation that the two actual signs differ is true, not a generative explanation.',
+    'Specify the concrete wrong comparisons or arithmetic operations that reproduce both displayed last entries; preserve the visible option and correct key.'],
+  ['q685-inverse', 'D', 'RECIPROCAL-NOT-IN-RULE',
+    'The stated rule is keep the original right side when it exceeds 1 and negate the original right side when below 1. For the second right side 1/64 it yields -1/64, but D displays -64. It yields the displayed negative original decimals for the next three positions, making the missing reciprocal operation in position 2 concrete. The rationale does not state that extra operation.',
+    'Account explicitly for the distinct mistaken reciprocal handling of the second input while preserving the other five entries.'],
+  ['q693-constant-crossing', 'D', 'SECOND-REGIME-NOT-GENERATED',
+    'At the y axis the curve has height 1 and the horizontal line has height a in either allowed base regime. Extending this fixed ordinate comparison to all x gives no intersection in either regime. D instead asserts an intersection at x=0 for the subunit regime. Neither the procedure nor its true refutation supplies an error producing that second claim.',
+    'State the distinct erroneous operation producing the subunit-regime zero crossing as well as the superunit-regime no-crossing claim.'],
+  ['q698-increasing', 'C', 'ADDED-ROOT-OMITTED-ROOT',
+    'The stated procedure additionally counts the line x-intercept as an exponential/line intersection. Applied to the known genuine crossing set {0,1}, it adds -1 and yields {-1,0,1}; C displays {-1,0}. It therefore also deletes a genuine crossing without an authored explanation. Calling the line intercept an extra crossing only explains the added false root, not the complete displayed set.',
+    'Specify why the right-side genuine crossing is omitted or replaced, in addition to the x-intercept mistake.'],
+  ['q707-forward-domain', 'C', 'UNIVERSAL-CLAIM-NOT-GENERATED',
+    'The misconception concerns replacing the first term of a zero-ratio sequence by u1*0^1, erasing that first term. C is universal over every recurrence-defined geometric sequence, including all nonzero ratios. That zero-ratio-only operation does not assign a=0 to nonzero-ratio sequences and therefore does not produce the quantified full alternative. The explanation of what a=0 actually does refutes C but does not complete its mistaken generation.',
+    'State the mistaken universalization or ratio replacement that leads to a=0 for every sequence, not only the zero-ratio first-term error.'],
+  ['q712-nesting', 'C', 'CEILING-ZERO-BOUNDARY',
+    'Upward rounding/ceiling of a fractional part yields 1 for a strictly positive fractional part, but yields 0 when the input is an integer and its fractional part is 0. C asserts value 1 for every real input. The authored procedure therefore fails exactly at the integer boundary needed to generate the universal false claim; rounding zero to the next integer would be a different procedure requiring explicit disclosure.',
+    'Specify an erroneous next-integer operation that also maps zero to one, or otherwise account for every real input in the displayed universal claim.'],
+  ['q719-graph-matching', 'B', 'SECOND-MATCH-NOT-GENERATED',
+    'The procedure replaces the first sum by a nesting and makes that first function zero. With the remaining expressions handled as written, the second and third functions are also zero, yielding B,B,B. B displays B,A,B, so the second function must also be incorrectly restored to x. That extra inverse-cancellation error is absent from the authored misconception, although the refutation correctly states the actual second function is zero.',
+    'State the additional wrong operation that makes the second nested function x, so all three graph choices are reproducible.'],
+];
+const issues = issueData.map(([q, o, suffix, evidence, repair]) => ({
+  id: `C5EX-KEY-${q}-${o}-${suffix}-RECOVERY3`,
+  verdict: 'revise',
+  question_id: q,
+  option_id: o,
+  affected_field: `questions[id=${q}].key.rationales[option_id=${o}].misconception`,
+  evidence,
+  smallest_repair: repair,
+  truth_key_effect: 'None. Frozen option truth and correct set stay unchanged.',
+}));
+const issueMap = new Map(issues.map(x => [`${x.question_id}/${x.option_id}`, x]));
+const completedChecks = [];
+const reusedChecks = [];
+const sourceGroups = new Map();
+for (const q of key1.question_key_comparisons) {
+  const current = draft.questions.find(v => v.id === q.question_id);
+  assert.ok(current, q.question_id);
+  const sourceNumber = current.source_numbers[0];
+  assert.equal(current.source_numbers.length, 1);
+  if (!sourceGroups.has(sourceNumber)) sourceGroups.set(sourceNumber, {
+    source_number: sourceNumber,
+    author_solution: current.intent.source_solution,
+    author_solution_sha256: hash(current.intent.source_solution),
+    question_ids: [],
+  });
+  const sourceGroup = sourceGroups.get(sourceNumber);
+  assert.equal(sourceGroup.author_solution, current.intent.source_solution);
+  sourceGroup.question_ids.push(current.id);
+  for (const option of q.options) {
+    const author = current.key.rationales.find(r => r.option_id === option.option_id);
+    const visible = current.view.options.find(v => v.id === option.option_id);
+    const id = `${q.question_id}/${option.option_id}`;
+    const issue = issueMap.get(id);
+    const common = {
+      question_id: q.question_id,
+      option_id: option.option_id,
+      source_number: sourceNumber,
+      learner_option: visible,
+      independent_truth_reused: option.independent_truth,
+      independent_evidence_reused: option.independent_evidence,
+      reused_truth_comparison: { record: bind(key1Path), status: option.truth_comparison },
+      author_rationale: author,
+      author_rationale_snapshot_sha256: hash(JSON.stringify(author)),
+    };
+    if (id === 'q696-one/D') {
+      assert.deepEqual(author, key2.affected_review.after);
+      reusedChecks.push({
+        ...common,
+        check_kind: 'incorrect-option-mistaken-procedure-and-refutation',
+        verdict: 'pass',
+        evidence: key2.affected_review.evidence,
+        review_reused: bind(key2Path),
+        repeated: false,
+      });
+      continue;
+    }
+    assert.deepEqual(author, option.author_rationale, id);
+    if (option.independent_truth === 'correct') {
+      assert.equal(author.misconception, null);
+      completedChecks.push({
+        ...common,
+        check_kind: 'correct-option-author-derivation',
+        verdict: 'pass',
+        evidence: `Author derivation: ${author.derivation} Frozen independent verification: ${option.independent_evidence} The author source-solution field for source ${sourceNumber} supplies the same transformation/results and is compared below; concise option derivations are not treated as independent handwritten production evidence.`,
+        issue_ids: [],
+      });
+    } else {
+      const procedure = procedures[q.question_id]?.[option.option_id];
+      assert.ok(procedure, id);
+      assert.equal(procedure.startsWith('FAIL:'), Boolean(issue), id);
+      completedChecks.push({
+        ...common,
+        check_kind: 'incorrect-option-mistaken-procedure-and-refutation',
+        verdict: issue ? 'revise' : 'pass',
+        mistaken_procedure_evidence: issue ? issue.evidence : procedure,
+        refutation_verdict: 'pass',
+        refutation_evidence: `Author refutation: ${author.derivation} Reused frozen false-option evidence: ${option.independent_evidence} These agree about why the option is false; that agreement is separate from the generative-procedure verdict.`,
+        issue_ids: issue ? [issue.id] : [],
+      });
+    }
+  }
+}
+assert.equal(completedChecks.length, 239);
+assert.equal(reusedChecks.length, 1);
+const misconceptions = completedChecks.filter(x => x.independent_truth_reused === 'incorrect');
+const correctDerivations = completedChecks.filter(x => x.independent_truth_reused === 'correct');
+assert.equal(misconceptions.length, 132);
+assert.equal(correctDerivations.length, 107);
+assert.equal(misconceptions.filter(x => x.verdict === 'revise').length, 7);
+assert.equal(issues.length, 7);
+assert.equal(sourceGroups.size, 43);
+
+const authorSourceSolutionChecks = [...sourceGroups.values()].map(s => {
+  const priorCoverage = key1.source_coverage_comparisons
+    .find(x => x.source_number === s.source_number);
+  const concreteEvidence = key1.question_key_comparisons
+    .filter(q => q.source_numbers.includes(s.source_number))
+    .flatMap(q => q.options.filter(o => o.independent_truth === 'correct')
+      .map(o => `${q.question_id}/${o.option_id}: ${o.independent_evidence}`));
+  const qualifications = s.source_number === '702'
+    ? 'The initially wrong sign is explicitly retained as a historical fault and then corrected in the same field; the final result, not the obsolete intermediate claim, agrees with the frozen independent solution.'
+    : s.source_number === '707'
+      ? 'Both mapping directions retain the integer-index/recurrence restrictions, zero-sequence exceptions and unresolved original conventions; this is not approval of the unrestricted original proof claim.'
+      : ['723', '724'].includes(s.source_number)
+        ? 'Computed internal numerical values are not recast as historical-image precision; authored graph/table normalization and recognition losses remain those already frozen.'
+        : 'The transformation, final responses and endpoint/domain distinctions match the already frozen independent solution. No new source solve was performed.';
+  return {
+    source_number: s.source_number,
+    question_ids: s.question_ids,
+    author_solution_sha256: s.author_solution_sha256,
+    author_solution: s.author_solution,
+    independent_authority_reused: {
+      ...bind(sourcePath),
+      section: `### ${s.source_number}`,
+    },
+    verdict: 'pass',
+    evidence: `${qualifications} ${concreteEvidence.join(' ')} ${priorCoverage.reused_fidelity_and_response_loss_evidence}`,
+  };
+});
+const counts = {
+  total_incorrect_option_misconceptions: 133,
+  misconceptions_newly_reviewed_this_continuation: 132,
+  misconceptions_new_PASS: 125,
+  misconceptions_new_revise: 7,
+  misconceptions_prior_PASS_reused: 1,
+  misconceptions_total_PASS: 126,
+  misconceptions_unreviewed: 0,
+  misconceptions_reviewed_but_require_repair: 7,
+  correct_option_derivations_newly_reviewed: 107,
+  correct_option_derivations_PASS: 107,
+  correct_option_derivations_revise: 0,
+  correct_option_derivations_unreviewed: 0,
+  distinct_author_source_solution_fields_compared: 43,
+  question_author_source_solution_field_bindings: 54,
+  author_source_solution_defects: 0,
+  author_source_solution_unreviewed: 0,
+  all_239_previous_unapproved_option_rationales_now_reviewed: true,
+  exact_correct_sets_reused: 54,
+  option_truth_comparisons_reused: 240,
+  source_solutions_recomputed: 0,
+  learner_view_mathematics_repeated: 0,
+  new_figure_PASS_reused: 6,
+  new_images: 0,
+};
+const record = {
+  schema: 'C5Ex-final-key-internal-continuation-RECOVERY3-v1',
+  stage: 'FINISH-FIRST-FINAL-KEY-INTERNAL-AUDIT-ON-UNCHANGED-RECOVERY2-SNAPSHOT',
+  cwd: root,
+  reviewer: key1.reviewer,
+  frozenAt: new Date().toISOString(),
+  mode: '0444',
+  status: 'FAIL',
+  outcome: 'revise',
+  authorization: 'Parent explicitly authorized the unfinished internal author derivation/misconception audit, then clarified that new defects stop downstream approval but do not stop the remaining internal audit; collect all defects in this continuation.',
+  candidate_draft: { ...bind(draftPath), canonical_sha256: key2.current_draft.canonical_sha256 },
+  candidate_seed: { ...bind(seedPath), canonical_sha256: key2.current_seed.canonical_sha256 },
+  preserved_evidence: [...expected.keys()].map(bind),
+  counts,
+  completed_option_internal_checks: completedChecks,
+  prior_PASS_internal_checks_reused: reusedChecks,
+  author_source_solution_checks: authorSourceSolutionChecks,
+  issues,
+  review_order: [
+    'Started only at prior NOT_GLOBALLY_APPROVED_STOP_ON_DEFECT entries.',
+    'q682-order A-E passed; q683-constants/A was recorded as the first new defect.',
+    'The subsequent parent clarification authorized completing all remaining internal entries and collecting every new defect without starting a new round.',
+    'Continued in original question/option order; the first six already reviewed internal entries were not repeated.',
+    'Reused q696-one/D RECOVERY2 PASS without rereview. Every other unapproved option rationale was substantively checked exactly once in this continuation.',
+    'Compared 43 distinct author source-solution fields across their 54 question bindings using frozen independent results, without repeating source mathematics.',
+  ],
+  specific_unreviewed_misconception_list: [],
+  specific_unreviewed_correct_derivation_list: [],
+  specific_unreviewed_author_source_solution_list: [],
+  reviewed_remaining_repair_list: issues.map(x => ({
+    question_id: x.question_id,
+    option_id: x.option_id,
+    field: x.affected_field,
+    issue_id: x.id,
+    status: 'REVIEWED_REVISE_NOT_UNREVIEWED',
+  })),
+  downstream: {
+    choices_RECOVERY3_snapshot_created: false,
+    canonical_review_written: false,
+    validator_executed_this_continuation: false,
+    validator_invocations_this_continuation: 0,
+    validator_exitCode_this_continuation: null,
+    reason: 'Seven real internal-generative-procedure defects remain. Downstream approval is stopped, but all authorized remaining internal audit entries are now reviewed.',
+    preserved_RECOVERY2_canonical: bind(review2Path),
+    preserved_RECOVERY2_validator: bind(validator2Path),
+    preserved_RECOVERY2_validator_exitCode: 3,
+  },
+  image_usage: {
+    cap: 8,
+    cumulative_actual_image_payloads: 8,
+    new_images: 0,
+    reopens: 0,
+    crops: 0,
+    renders: 0,
+    resets: 0,
+  },
+  limitations: 'This record distinguishes complete internal audit coverage from successful internal approval. It does not relabel the 54/240 truth comparisons as 240 completed misconceptions. Seven internal misconception fields need author repair; no source, view, option, correct key or figure repair is indicated by these findings.',
+  boundaries: 'Writes only choice-review-RECOVERY3/key. No author changes, old-record overwrite, canonical approval, snapshot copy, validator rerun, image, browser, source recomputation, render, API, install, skill edit, git, DB, retain, publication or cross-chat action.',
+  usage: { host_tokens: 'UNKNOWN', host_cost: 'UNKNOWN', external_API: 0, paid_calls: 0 },
+};
+fs.mkdirSync(own, { recursive: true });
+const output = `${own}/choice-key-internal-RECOVERY3.record0444`;
+assert.equal(fs.existsSync(output), false);
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+assert.equal(fs.statSync(output).mode & 0o777, 0o444);
+for (const [p, sha] of expected) assert.equal(bind(p).sha256, sha, p);
+console.log(JSON.stringify({
+  status: record.status,
+  record: bind(output),
+  mode: '0444',
+  counts,
+  affected_items: issues.map(x => `${x.question_id}/${x.option_id}`),
+  new_validator_exitCode: null,
+  cumulative_images: 8,
+  new_images: 0,
+}, null, 2));

@@ -1,0 +1,331 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const own = `${base}/choice-review-RECOVERY4/key`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const load = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const bind = p => ({ path: p, sha256: hash(fs.readFileSync(p)) });
+const sorted = v => {
+  if (Array.isArray(v)) return v.map(sorted);
+  if (v && typeof v === 'object')
+    return Object.fromEntries(Object.keys(v).sort().map(k => [k, sorted(v[k])]));
+  return v;
+};
+const canonical = v => JSON.stringify(sorted(v)).replace(
+  /[\u007f-\uffff]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+const digest = v => hash(canonical(v));
+const jsonText = v => `${JSON.stringify(v, null, 2)}\n`;
+const writeFrozen = (p, bytes) => {
+  assert.equal(fs.existsSync(p), false, p);
+  fs.writeFileSync(p, bytes, { flag: 'wx', mode: 0o444 });
+  assert.equal(fs.statSync(p).mode & 0o777, 0o444, p);
+  return bind(p);
+};
+const sourcePath = `${base}/math-independent-FIRST/source-solutions-FIRST.record0444`;
+const figurePath = `${base}/choice-review-FIRST/figures/fig-review-FIRST.record0444`;
+const firstViewPath = `${base}/choice-review-FIRST/view/choice-view-FIRST.record0444`;
+const recoveryViewPath = `${base}/choice-review-RECOVERY1/view/choice-view-RECOVERY1.record0444`;
+const key1Path = `${base}/choice-review-RECOVERY1/key/choice-key-RECOVERY1.record0444`;
+const key2Path = `${base}/choice-review-RECOVERY2/key/choice-key-RECOVERY2.record0444`;
+const audit3Path = `${base}/choice-review-RECOVERY3/key/choice-key-internal-RECOVERY3.record0444`;
+const blockedReviewPath = `${base}/choices-RECOVERY2/review.json`;
+const blockedValidatorPath = `${base}/choice-review-RECOVERY2/key/validator-RECOVERY2.execution.record0444`;
+const previousDraftPath = `${base}/choices-RECOVERY2/draft.json`;
+const previousSeedPath = `${base}/choices-RECOVERY2/seed.json`;
+const draftPath = `${base}/choices-RECOVERY4/draft.json`;
+const seedPath = `${base}/choices-RECOVERY4/seed.json`;
+const viewPath = `${base}/choices-RECOVERY4/learner-view.json`;
+const repairPath = `${base}/choices-RECOVERY4/repair.record`;
+const reviewPath = `${base}/choices-RECOVERY4/review.json`;
+const expected = new Map([
+  [sourcePath, '92ebd86c58ebab876c51b7a2ffe63d69c9f779232628483a4356c4e248a47db4'],
+  [figurePath, '86db4942801c68d003e668c6ee28c467ed9e2eac0f44301dc4bd6d2a111e87c4'],
+  [firstViewPath, '6fe3ab7e1f5934d325028ebb426877320c2d656194a3deb0c9c3abbf2275d86a'],
+  [recoveryViewPath, 'd8438aced197925926e54d58ba89c31dad1645b99276e44550520a5604ca7fb9'],
+  [key1Path, '710dce8ea8a881560b51b0d14569eb58457fbc75261385a6ccef10814df6bd77'],
+  [key2Path, '0d4937b2d9f46ddcb842a949ccb5b54d67778ae9b349b0ca00537af70d8ef8cc'],
+  [audit3Path, '9d0b55a7efe413957b8fa8ecd9913aab4fe436f0088a7a79d8e5823be3a125ee'],
+  [blockedReviewPath, 'bf006510be7a5dbb5db57a36bf608c00950c87344db0e7af387ad3fd8b89e721'],
+  [blockedValidatorPath, 'e88a6ba25f6856cb1efa33f3724c661f55935cd9a65316b6e325dd50aaaced2b'],
+  [previousDraftPath, '8fd5baadbfc5bc3166aa3876612c3d43891771781e409ab22a6b32669822ed3d'],
+  [draftPath, 'ef0db44af0794401f4e94aa088dd3eaf8617add695076f76ee045bb2a484279f'],
+]);
+for (const [p, sha] of expected) {
+  assert.equal(bind(p).sha256, sha, p);
+  assert.equal(fs.statSync(p).mode & 0o777, 0o444, p);
+}
+const draft = load(draftPath);
+const seed = load(seedPath);
+const previousDraft = load(previousDraftPath);
+const key1 = load(key1Path);
+const key2 = load(key2Path);
+const audit3 = load(audit3Path);
+const blockedReview = load(blockedReviewPath);
+const first = load(firstViewPath);
+const recovery = load(recoveryViewPath);
+assert.equal(audit3.issues.length, 7);
+assert.equal(audit3.counts.misconceptions_unreviewed, 0);
+assert.equal(audit3.counts.correct_option_derivations_PASS, 107);
+assert.equal(audit3.counts.misconceptions_total_PASS, 126);
+assert.ok(fs.readFileSync(seedPath).equals(fs.readFileSync(previousSeedPath)));
+assert.equal(digest(seed), draft.seed_sha256);
+assert.equal(bind(viewPath).sha256,
+  '3979552a3de1e1a8db3fe6237ea4709c89b1f22dc6bfaf346bb0bb74c9ff275b');
+
+const repairEvidence = new Map([
+  ['q683-constants/A', 'The first four comparisons are explicitly left correct. Only the last two subtractions are reversed; their reversed exponent signs yield the two displayed opposite comparisons. All six entries are now generated and the actual last-entry errors are correctly refuted.'],
+  ['q685-inverse/D', 'The new rule branches on written form: copy integers, use a negative denominator for a unit fraction, and negate original subunit decimals. The six branches generate every displayed coordinate, including the previously unexplained reciprocal input. The refutation distinguishes these copied values from exponent roots.'],
+  ['q693-constant-crossing/D', 'Both regimes have distinct stated mistakes: the superunit regime extends the y-axis height comparison to the whole domain, producing no crossing; the subunit regime replaces the horizontal line by y=1, producing a zero-abscissa crossing. Both false claims are generated and their actual common threshold is correctly refuted.'],
+  ['q698-increasing/C', 'Restricting attention to the y axis and its left side removes the genuine right-side intersection, while miscounting the line x-intercept adds the displayed false root. The retained common intersection completes exactly the displayed two-element set. Both omission and false addition are explicit and correctly refuted.'],
+  ['q707-forward-domain/C', 'The zero-ratio first-term error is now explicitly generalized to every ratio, with a further belief that adjusting c restores lost nonzero terms after choosing a=0. This produces the full universal assertion rather than only a special case. The refutation correctly notes that finite c cannot restore nonzero terms at positive indices.'],
+  ['q712-nesting/C', 'The mistaken operation is now explicitly the strictly next integer, floor(v)+1, not ordinary ceiling. For every fractional residue v in [0,1), including v=0, that operation returns 1, so it generates the entire universal false claim. The actual floor-zero boundary is correctly refuted.'],
+  ['q719-graph-matching/B', 'The first sum is misread as fraction-of-floor, yielding zero/B; the second nesting is misread as inverse cancellation, yielding x/A; the third expression is handled correctly as zero/B. All three graph choices are generated, and the true sequence is correctly refuted.'],
+]);
+const normalized = structuredClone(draft);
+const affected = audit3.issues.map(issue => {
+  const q = draft.questions.find(q => q.id === issue.question_id);
+  const old = previousDraft.questions.find(q => q.id === issue.question_id)
+    .key.rationales.find(r => r.option_id === issue.option_id);
+  const after = q.key.rationales.find(r => r.option_id === issue.option_id);
+  const n = normalized.questions.find(q => q.id === issue.question_id)
+    .key.rationales.find(r => r.option_id === issue.option_id);
+  assert.notEqual(after.derivation, old.derivation);
+  assert.notEqual(after.misconception, old.misconception);
+  n.derivation = old.derivation;
+  n.misconception = old.misconception;
+  const evidence = repairEvidence.get(`${issue.question_id}/${issue.option_id}`);
+  assert.ok(evidence);
+  return {
+    question_id: issue.question_id,
+    option_id: issue.option_id,
+    affected_fields: ['key.rationales.derivation', 'key.rationales.misconception'],
+    before: old,
+    after,
+    learner_option: q.view.options.find(o => o.id === issue.option_id),
+    verdict: 'pass',
+    evidence,
+    refutation_verdict: 'pass',
+    original_issue: issue.id,
+    disposition: 'REPAIRED_IN_RECOVERY4_PRIOR_FAILURE_PRESERVED',
+  };
+});
+assert.deepEqual(normalized, previousDraft);
+const internal = new Map([
+  ...audit3.completed_option_internal_checks,
+  ...audit3.prior_PASS_internal_checks_reused,
+].map(c => [`${c.question_id}/${c.option_id}`, c]));
+for (const a of affected) internal.set(`${a.question_id}/${a.option_id}`, {
+  ...a,
+  check_kind: 'incorrect-option-mistaken-procedure-and-refutation',
+  independent_truth_reused: 'incorrect',
+});
+assert.equal(internal.size, 240);
+assert.equal([...internal.values()].filter(c => c.independent_truth_reused === 'incorrect').length, 133);
+assert.ok([...internal.values()].every(c => c.verdict === 'pass'));
+const counts = {
+  misconceptions_total: 133,
+  misconceptions_PASS: 133,
+  misconceptions_rechecked_this_stage: 7,
+  misconceptions_previous_PASS_reused: 126,
+  misconceptions_revise: 0,
+  misconceptions_unreviewed: 0,
+  correct_derivations_PASS_reused: 107,
+  correct_derivations_unreviewed: 0,
+  author_source_solutions_PASS_reused: 43,
+  author_source_solution_question_bindings_reused: 54,
+  exact_correct_sets_reused: 54,
+  option_truth_comparisons_reused: 240,
+  correct_sets_recomputed: 0,
+  option_truths_recomputed: 0,
+  source_solutions_recomputed: 0,
+  unchanged_internal_checks_repeated: 0,
+  blind_view_checks_repeated: 0,
+  new_figure_independent_PASS_reused: 6,
+};
+fs.mkdirSync(own, { recursive: true });
+const affectedPath = `${own}/affected-internal-RECOVERY4.record0444`;
+const affectedRecord = {
+  schema: 'C5Ex-affected-internal-final-key-RECOVERY4-v1',
+  cwd: root,
+  reviewer: key1.reviewer,
+  frozenAt: new Date().toISOString(),
+  mode: '0444',
+  status: 'PASS',
+  current_seed: { ...bind(seedPath), canonical_sha256: digest(seed) },
+  current_draft: { ...bind(draftPath), canonical_sha256: digest(draft) },
+  learner_view: bind(viewPath),
+  author_repair_record: bind(repairPath),
+  delta: {
+    changed_rationales: 7,
+    changed_fields: 14,
+    all_other_draft_fields_equal: true,
+    other_233_rationales_equal: true,
+    seed_bytes_equal: true,
+    learner_projection_same_as_frozen_RECOVERY1: true,
+    all_keys_source_intent_coverage_figure_paths_hashes_basis_unchanged: true,
+  },
+  affected_reviews: affected,
+  counts,
+  reused_complete_internal_audit: bind(audit3Path),
+  reused_true_sets_and_truth_labels: bind(key1Path),
+  reused_first_source_and_blind_evidence: [
+    sourcePath, firstViewPath, recoveryViewPath, figurePath,
+  ].map(bind),
+  previously_frozen_failures_preserved: [...expected.keys()].map(bind),
+  image_usage: { cap: 8, cumulative_actual_image_payloads: 8, new_images: 0, renders: 0, resets: 0 },
+  usage: { host_tokens: 'UNKNOWN', host_cost: 'UNKNOWN', external_API: 0, paid_calls: 0 },
+};
+const affectedBinding = writeFrozen(affectedPath, jsonText(affectedRecord));
+const blind = new Map([...first.question_reviews, ...recovery.question_reviews]
+  .map(q => [q.question_id, q]));
+const questionReviews = draft.questions.map(q => {
+  const frozen = blind.get(q.id);
+  assert.ok(frozen);
+  return {
+    question_id: q.id,
+    task_fidelity: frozen.task_fidelity,
+    redundancy: frozen.redundancy,
+    answer_leakage: frozen.answer_leakage,
+    mathematics: {
+      verdict: 'pass',
+      independent_solution: `Reused blind solution, unchanged since its freeze: ${frozen.mathematics.independent_solution} Final 54-set/240-truth author comparison is reused from ${key1Path}, SHA ${bind(key1Path).sha256}. Completed internal audit is reused from ${audit3Path}, SHA ${bind(audit3Path).sha256}, with only seven internal repairs checked in ${affectedPath}, SHA ${affectedBinding.sha256}. All internal checks now pass; no source solve or unchanged mathematics was repeated.`,
+      correct: frozen.mathematics.correct,
+      option_checks: frozen.mathematics.option_checks.map(o => {
+        const checked = internal.get(`${q.id}/${o.option_id}`);
+        assert.equal(checked.verdict, 'pass');
+        const a = affected.find(a => a.question_id === q.id && a.option_id === o.option_id);
+        const evidence = checked.mistaken_procedure_evidence ?? checked.evidence;
+        return {
+          option_id: o.option_id,
+          truth: o.truth,
+          evidence: `${o.evidence} Exact author truth match is reused from ${key1Path}. Internal ${o.truth === 'correct' ? 'correct derivation' : 'mistaken procedure'} PASS ${a ? `from ${affectedPath}, SHA ${affectedBinding.sha256}` : `reused from ${audit3Path}, SHA ${bind(audit3Path).sha256}`}: ${evidence}`,
+        };
+      }),
+    },
+  };
+});
+const sourceReviews = blockedReview.source_reviews.map(s => ({
+  ...s,
+  coverage: {
+    verdict: s.coverage.verdict,
+    evidence: `${s.coverage.evidence} Author source-solution field comparison PASS is reused from ${audit3Path}, SHA ${bind(audit3Path).sha256}; no new source computation.`,
+  },
+}));
+for (const f of draft.new_figures) {
+  assert.equal(bind(f.path).sha256, f.sha256);
+  const prior = key2.new_figure_review_paths_reused
+    .find(p => p.path.endsWith(`/${f.id}.review.json`));
+  assert.ok(prior);
+  assert.equal(bind(prior.path).sha256, prior.sha256);
+}
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: digest(seed),
+  draft_sha256: digest(draft),
+  reviewer: first.reviewer,
+  source_reviews: sourceReviews,
+  figure_checks: blockedReview.figure_checks,
+  new_figure_reviews: blockedReview.new_figure_reviews,
+  question_reviews: questionReviews,
+  outcome: 'pass',
+};
+assert.equal(review.source_reviews.length, 43);
+assert.equal(review.question_reviews.length, 54);
+assert.equal(review.question_reviews.flatMap(q => q.mathematics.option_checks).length, 240);
+assert.equal(review.new_figure_reviews.length, 6);
+const reviewBinding = writeFrozen(reviewPath, jsonText(review));
+const stdoutPath = `${own}/validator-RECOVERY4.stdout.txt`;
+const stderrPath = `${own}/validator-RECOVERY4.stderr.txt`;
+const executionPath = `${own}/validator-RECOVERY4.execution.record0444`;
+const completionPath = `${own}/choice-key-RECOVERY4.record0444`;
+for (const p of [stdoutPath, stderrPath, executionPath, completionPath])
+  assert.equal(fs.existsSync(p), false, p);
+const args = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', '.',
+  '--seed', seedPath,
+  '--draft', draftPath,
+  '--review', reviewPath,
+];
+const startedAt = new Date().toISOString();
+const result = spawnSync('python3', args, {
+  cwd: root,
+  encoding: 'utf8',
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+});
+const endedAt = new Date().toISOString();
+const stdoutBinding = writeFrozen(stdoutPath, result.stdout ?? '');
+const stderrBinding = writeFrozen(stderrPath, result.stderr ?? '');
+const execution = {
+  schema: 'C5Ex-choice-validator-actual-execution-RECOVERY4-v1',
+  cwd: root,
+  command: 'python3',
+  args,
+  environment_override: { PYTHONDONTWRITEBYTECODE: '1' },
+  startedAt,
+  endedAt,
+  invocations: 1,
+  exitCode: result.status,
+  signal: result.signal,
+  error: result.error ? String(result.error) : null,
+  stdout: result.stdout ?? '',
+  stderr: result.stderr ?? '',
+  stdout_binding: stdoutBinding,
+  stderr_binding: stderrBinding,
+  review: reviewBinding,
+  seed: bind(seedPath),
+  draft: bind(draftPath),
+};
+const executionBinding = writeFrozen(executionPath, jsonText(execution));
+const completion = {
+  schema: 'C5Ex-final-bound-choice-key-RECOVERY4-v1',
+  cwd: root,
+  reviewer: first.reviewer,
+  frozenAt: new Date().toISOString(),
+  mode: '0444',
+  status: result.status === 0 ? 'PASS' : 'BLOCKED_MECHANICAL_VALIDATION',
+  semantic_outcome: 'pass',
+  counts,
+  affected_completion: affectedBinding,
+  canonical_review: { ...reviewBinding, canonical_sha256: digest(review) },
+  current_seed: { ...bind(seedPath), canonical_sha256: digest(seed) },
+  current_draft: { ...bind(draftPath), canonical_sha256: digest(draft) },
+  learner_view: bind(viewPath),
+  complete_internal_audit_reused: bind(audit3Path),
+  truth_comparison_reused: bind(key1Path),
+  independent_new_figure_PASS_records_reused: key2.new_figure_review_paths_reused,
+  actual_validator: executionBinding,
+  validator_exitCode: result.status,
+  validator_stdout: stdoutBinding,
+  validator_stderr: stderrBinding,
+  preserved_failures_and_blind_freezes: [...expected.keys()].map(bind),
+  preserved_RECOVERY2_validator_exitCode: 3,
+  image_usage: {
+    cap: 8, cumulative_actual_image_payloads: 8,
+    new_images: 0, reopens: 0, crops: 0, renders: 0, resets: 0,
+  },
+  boundaries: 'Only RECOVERY4 owned key evidence and its canonical review written. Seven repaired internal rationale checks only; all other semantic evidence reused. No author changes, old-record overwrite, additional validator/no-review checker, source solve, image/browser/render/reset/API/install/skill/git/DB/retain/publish/cross-chat action.',
+  usage: { host_tokens: 'UNKNOWN', host_cost: 'UNKNOWN', external_API: 0, paid_calls: 0 },
+};
+const completionBinding = writeFrozen(completionPath, jsonText(completion));
+for (const [p, sha] of expected) assert.equal(bind(p).sha256, sha, p);
+assert.equal(bind(reviewPath).sha256, reviewBinding.sha256);
+console.log(JSON.stringify({
+  status: completion.status,
+  semantic_outcome: completion.semantic_outcome,
+  canonical_review: completion.canonical_review,
+  key_record: completionBinding,
+  affected_record: affectedBinding,
+  counts,
+  validator_exitCode: result.status,
+  validator_stdout: result.stdout,
+  validator_stderr: result.stderr,
+  validator_execution: executionBinding,
+  cumulative_images: 8,
+  new_images: 0,
+}, null, 2));

@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { execFileSync } from 'node:child_process';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const attempt = process.argv[2] || 'RECOVERY1';
+assert.match(attempt, /^RECOVERY[12]$/);
+const directory = `.tmp/ld-s10y-lesson/resume182-7-C5Ex/answer-runtime-${attempt}`;
+const command = '.claude/skills/ld-s10y-lesson/.venv/bin/python';
+const argv = [
+  '.claude/skills/ld-s10y-answer/tools/lesson_answers.py', 'finalize',
+  '--book', '8a', '--edition', 'modern-us-neutral', '--lesson', 'alg8-c5-ex',
+  '--work', '.tmp/ld-s10y-lesson/resume182-7-C5Ex/answers-prepared',
+];
+assert.ok(!fs.existsSync(`${directory}/execution.record`));
+let stdout = '', stderr = '', exitCode = 0;
+try {
+  stdout = execFileSync(command, argv, { cwd: root, encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 16 * 1024 * 1024 });
+} catch (error) {
+  stdout = error.stdout || '';
+  stderr = error.stderr || '';
+  exitCode = error.status ?? 1;
+}
+fs.writeFileSync(`${directory}/stdout.record`, stdout, { flag: 'wx' });
+fs.writeFileSync(`${directory}/stderr.record`, stderr, { flag: 'wx' });
+fs.writeFileSync(`${directory}/execution.record`,
+  `${JSON.stringify({ cwd: root, command, argv, exitCode }, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ lesson: 'alg8-c5-ex', exitCode,
+  directory, stdout: stdout.trim(), failureOutputRetained: Boolean(stderr),
+  mathLiveAttempts: 'UNKNOWN' }));
+process.exitCode = exitCode;

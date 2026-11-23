@@ -1,0 +1,303 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const own = `${base}/choice-review-RECOVERY1/key`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = p => fs.readFileSync(p, 'utf8');
+const load = p => JSON.parse(read(p));
+const bind = p => ({
+  path: p,
+  sha256: hash(fs.readFileSync(p)),
+  mode: `0${(fs.statSync(p).mode & 0o777).toString(8)}`,
+});
+const sorted = v => {
+  if (Array.isArray(v)) return v.map(sorted);
+  if (v && typeof v === 'object')
+    return Object.fromEntries(Object.keys(v).sort().map(k => [k, sorted(v[k])]));
+  return v;
+};
+const canonical = v => JSON.stringify(sorted(v)).replace(
+  /[\u007f-\uffff]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+const digest = v => hash(canonical(v));
+const sourcePath = `${base}/math-independent-FIRST/source-solutions-FIRST.record0444`;
+const firstViewPath = `${base}/choice-review-FIRST/view/choice-view-FIRST.record0444`;
+const recoveryViewPath = `${base}/choice-review-RECOVERY1/view/choice-view-RECOVERY1.record0444`;
+const figurePath = `${base}/choice-review-FIRST/figures/fig-review-FIRST.record0444`;
+const draftPath = `${base}/choices-RECOVERY1/draft.json`;
+const seedPath = `${base}/choices-RECOVERY1/seed.json`;
+const learnerPath = `${base}/choices-RECOVERY1/learner-view.json`;
+const frozen = new Map([
+  [sourcePath, '92ebd86c58ebab876c51b7a2ffe63d69c9f779232628483a4356c4e248a47db4'],
+  [figurePath, '86db4942801c68d003e668c6ee28c467ed9e2eac0f44301dc4bd6d2a111e87c4'],
+  [firstViewPath, '6fe3ab7e1f5934d325028ebb426877320c2d656194a3deb0c9c3abbf2275d86a'],
+  [recoveryViewPath, 'd8438aced197925926e54d58ba89c31dad1645b99276e44550520a5604ca7fb9'],
+]);
+for (const [p, expected] of frozen) {
+  assert.equal(bind(p).sha256, expected, p);
+  assert.equal(fs.statSync(p).mode & 0o777, 0o444, p);
+}
+assert.equal(bind(draftPath).sha256,
+  '3903a08a4aaece4092033935dfca6cf2ede988e4c7bddf15922553ed11dc370c');
+assert.equal(bind(learnerPath).sha256,
+  '3979552a3de1e1a8db3fe6237ea4709c89b1f22dc6bfaf346bb0bb74c9ff275b');
+const first = load(firstViewPath);
+const recovery = load(recoveryViewPath);
+const figures = load(figurePath);
+const draft = load(draftPath);
+const seed = load(seedPath);
+const learner = load(learnerPath);
+const provenancePath = `${base}/choices-author-FIRST/coverage-provenance-FIRST.json`;
+const provenance = load(provenancePath);
+assert.equal(digest(seed), draft.seed_sha256);
+assert.equal(draft.seed_sha256, first.seed_canonical_sha256);
+assert.equal(recovery.status, 'PASS');
+assert.equal(figures.status, 'PASS');
+assert.equal(figures.image_usage.actually_viewed_total, 8);
+assert.equal(draft.questions.length, 54);
+assert.equal(seed.exercises.length, 43);
+const replacementIds = new Set(recovery.question_reviews.map(q => q.question_id));
+assert.deepEqual([...replacementIds].sort(),
+  ['q723-positive-powers', 'q723-small-and-product'].sort());
+const merged = new Map([...first.question_reviews, ...recovery.question_reviews]
+  .map(q => [q.question_id, q]));
+const projected = new Map(learner.map(q => [q.id, q]));
+const defectId = 'C5EX-KEY-696D-PROCEDURE-MISMATCH-RECOVERY1';
+const comparisons = draft.questions.map(q => {
+  const blind = merged.get(q.id);
+  assert.ok(blind, q.id);
+  assert.deepEqual(projected.get(q.id).source_numbers, q.source_numbers, q.id);
+  assert.deepEqual(projected.get(q.id).view, q.view, q.id);
+  assert.deepEqual([...blind.mathematics.correct].sort(), [...q.key.correct].sort(), q.id);
+  assert.equal(q.key.rationales.length, q.view.options.length, q.id);
+  if (q.view.mode === 'single') assert.equal(blind.mathematics.correct.length, 1, q.id);
+  const options = q.view.options.map(o => {
+    const independent = blind.mathematics.option_checks.find(c => c.option_id === o.id);
+    const author = q.key.rationales.find(c => c.option_id === o.id);
+    assert.ok(independent && author, `${q.id}/${o.id}`);
+    assert.equal(author.truth, independent.truth, `${q.id}/${o.id}`);
+    assert.equal(author.truth === 'correct', q.key.correct.includes(o.id));
+    const defective = q.id === 'q696-one' && o.id === 'D';
+    return {
+      option_id: o.id,
+      option_snapshot_sha256: digest(o),
+      independent_truth: independent.truth,
+      independent_evidence: independent.evidence,
+      author_truth: author.truth,
+      truth_comparison: 'PASS',
+      author_rationale: author,
+      author_rationale_sha256: digest(author),
+      mistaken_procedure_gate: defective ? 'FAIL' : 'NOT_GLOBALLY_APPROVED_STOP_ON_DEFECT',
+      issue_ids: defective ? [defectId] : [],
+    };
+  });
+  return {
+    question_id: q.id,
+    source_numbers: q.source_numbers,
+    independent_record: bind(replacementIds.has(q.id) ? recoveryViewPath : firstViewPath),
+    independent_correct: blind.mathematics.correct,
+    author_correct: q.key.correct,
+    correct_set_comparison: 'PASS',
+    mode: q.view.mode,
+    mode_and_frozen_view_binding: 'PASS',
+    task_fidelity: blind.task_fidelity,
+    redundancy: blind.redundancy,
+    answer_leakage: blind.answer_leakage,
+    author_source_solution_sha256: hash(q.intent.source_solution),
+    source_solution_policy: 'Author source_solution is disclosed and bound; independent authority remains the reused frozen source record. No source re-solving or blanket internal-solution approval is claimed after the concrete defect stopped approval.',
+    author_limitations: q.intent.limitations,
+    options,
+  };
+});
+assert.equal(comparisons.flatMap(q => q.options).length, 240);
+
+// Relocation is checked by text/byte bindings, not by opening or rendering images.
+const figureBindings = draft.new_figures.map(f => {
+  const prior = figures.figures.find(x => x.figure_id === f.id);
+  assert.ok(prior, f.id);
+  assert.equal(prior.status, 'PASS');
+  assert.equal(bind(f.path).sha256, f.sha256, f.id);
+  assert.equal(f.sha256, prior.svg.sha256, f.id);
+  assert.equal(bind(prior.persisted_review.path).sha256, prior.persisted_review.sha256);
+  assert.equal(bind(prior.spec.path).sha256, prior.spec.sha256);
+  const spec = load(prior.spec.path);
+  assert.equal(spec.source.authoredBasis, f.basis, f.id);
+  const retainedSpec = f.path.replace(/\.svg$/, '.spec.json');
+  const retainedRender = f.path.replace(/\.svg$/, '.render.json');
+  assert.equal(bind(retainedSpec).sha256, prior.spec.sha256, f.id);
+  assert.equal(bind(prior.render.path).sha256, prior.render.sha256, f.id);
+  const originalReport = load(prior.render.path);
+  const finalReport = load(retainedRender);
+  assert.equal(finalReport.spec.path, retainedSpec, f.id);
+  assert.equal(finalReport.output.svg.path, f.path, f.id);
+  const normalizedReport = structuredClone(finalReport);
+  normalizedReport.spec.path = originalReport.spec.path;
+  normalizedReport.output.svg.path = originalReport.output.svg.path;
+  assert.deepEqual(normalizedReport, originalReport, f.id);
+  return {
+    figure_id: f.id,
+    final_asset: bind(f.path),
+    final_spec: bind(retainedSpec),
+    final_render: bind(retainedRender),
+    unchanged_basis_sha256: hash(f.basis),
+    reused_independent_review: bind(prior.persisted_review.path),
+    reused_figure_freeze: bind(figurePath),
+    original_svg: prior.svg,
+    original_render: prior.render,
+    render_relocation: {
+      changed_fields: ['spec.path', 'output.svg.path'],
+      all_nonpath_fields_equal: true,
+      rerendered: false,
+    },
+    verdict: 'PASS_REUSED_PATH_ONLY',
+    new_observations: 0,
+    new_image_payloads: 0,
+  };
+});
+assert.equal(figureBindings.length, 6);
+const sourceCoverage = draft.coverage.map(c => {
+  const sourceBlind = first.source_reviews.find(s => s.source_number === c.source_number);
+  const ledger = provenance.ledger.find(s => s.source_number === c.source_number);
+  assert.ok(sourceBlind && ledger, c.source_number);
+  const citing = draft.questions.filter(q => q.source_numbers.includes(c.source_number)).map(q => q.id);
+  assert.deepEqual([...c.question_ids].sort(), citing.sort(), c.source_number);
+  assert.deepEqual(ledger.missing_response_units, []);
+  let evidence = sourceBlind.coverage.evidence;
+  if (c.source_number === '723') {
+    evidence = `${recovery.source_response_loss} ${recovery.affected_cross_question_relations[0].evidence}`;
+  }
+  return {
+    source_number: c.source_number,
+    independent_source: { ...bind(sourcePath), section: `### ${c.source_number}` },
+    covered_question_ids: c.question_ids,
+    reused_fidelity_and_response_loss_evidence: evidence,
+    author_omitted_tasks: c.omitted_tasks,
+    author_reason: c.reason,
+    ledger,
+    comparison: 'RECOGNITION_AND_DECLARED_LOSSES_ACCEPTED_NOT_PRODUCTION_EQUIVALENCE',
+  };
+});
+assert.equal(sourceCoverage.length, 43);
+const faultyQuestion = draft.questions.find(q => q.id === 'q696-one');
+const faulty = faultyQuestion.key.rationales.find(r => r.option_id === 'D');
+assert.equal(faulty.misconception, '只按指数正负直接决定大小，跳过底数范围。');
+const record = {
+  schema: 'C5Ex-independent-choice-key-RECOVERY1-v1',
+  stage: 'FIRST-AUTHORIZED-AUTHOR-KEY-DISCLOSURE-AFTER-BOTH-BLIND-FREEZES',
+  cwd: root,
+  reviewer: first.reviewer,
+  frozenAt: new Date().toISOString(),
+  mode: '0444',
+  status: 'FAIL',
+  outcome: 'revise',
+  disclosure_order: [
+    'Independent source FIRST was frozen before answer/choice author exposure.',
+    'All 54 learner views and 240 options were frozen in FIRST without author keys.',
+    'The two changed views/eight complete options were frozen PASS in RECOVERY1 before author keys.',
+    'Only the subsequent explicit parent authorization permitted the first full author-key disclosure; it occurred in this final-key stage, not retroactively in the blind stages.',
+  ],
+  final_snapshot: {
+    seed: bind(seedPath),
+    seed_canonical_sha256: digest(seed),
+    draft: bind(draftPath),
+    draft_canonical_sha256: digest(draft),
+    learner: bind(learnerPath),
+    final_draft_projection_equals_frozen_learner: true,
+  },
+  preserved_records: [...frozen.keys()].map(bind),
+  author_metadata_bindings: [
+    provenancePath,
+    `${base}/choices-author-FIRST/handoff-FIRST.json`,
+    `${base}/choices-RECOVERY1/repair.record`,
+  ].map(bind),
+  contract_bindings: [
+    '.agents/skills/ld-s10y-choice/references/contract.md',
+    '.agents/skills/ld-s10y-choice/references/review.md',
+  ].map(bind),
+  question_key_comparisons: comparisons,
+  source_coverage_comparisons: sourceCoverage,
+  new_figure_bindings: figureBindings,
+  affected_cross_question_relations_reused: recovery.affected_cross_question_relations,
+  error_propagation_reused: recovery.error_propagation,
+  author_coverage_counts: provenance.counts,
+  coverage_count_qualification: '163 targets, 122 condition-exact and 41 conditional are the author recognition ledger, not a restoration of writing/proof/drawing production. The graph normalization and authored-table precision exceptions remain explicit even where the ledger counts unchanged formula targets as condition-exact.',
+  issues: [{
+    id: defectId,
+    verdict: 'revise',
+    question_id: 'q696-one',
+    source_number: '696',
+    option_id: 'D',
+    affected_field: 'questions[id=q696-one].key.rationales[option_id=D].misconception',
+    final_draft_line: 1350,
+    author_misconception: faulty.misconception,
+    displayed_option: faultyQuestion.view.options.find(o => o.id === 'D'),
+    author_derivation: faulty.derivation,
+    evidence: 'The four exponent signs are positive, negative, negative, negative. Applying the claimed sign-only shortcut (positive exponent -> above 1, negative exponent -> below 1) gives >,<,<,<, whereas D displays >,<,>,<. In particular, the third and fourth exponents are both negative but D assigns opposite comparisons; no rule based only on the exponent sign can produce the whole column. The supplied derivation correctly refutes D but never accounts for this unexplained third entry.',
+    truth_key_effect: 'None: D is independently false and the exact correct set remains the frozen set. The failure is the contract-required generative connection between the stated wrong procedure and this complete false option.',
+    smallest_repair: 'Repair only this internal misconception/procedure so it explicitly accounts for every entry of D, or obtain authorization for an affected option edit and corresponding blind review. Do not silently reinterpret the existing procedure or change unrelated views.',
+  }],
+  stopping_rule: 'A substantive mistaken-procedure defect was confirmed. Approval work stopped under the explicit instruction to stop and report; all 54 exact keys and 240 truth labels are nevertheless recorded as compared. No global PASS is claimed for all 240 derivations/misconceptions, and unapproved entries are explicitly marked.',
+  canonical_review: {
+    path: `${base}/choices-RECOVERY1/review.json`,
+    written: false,
+    reason: 'Stop-on-substantive-defect; no canonical approval generated.',
+  },
+  validator: {
+    executed: false,
+    invocations_this_stage: 0,
+    exitCode: null,
+    reason: 'Stopped at semantic defect before canonical review and its single authorized validator invocation.',
+  },
+  coverage: {
+    source_solutions_reused: 43,
+    source_solutions_recomputed: 0,
+    question_correct_sets_compared: 54,
+    option_truths_compared: 240,
+    correct_set_matches: 54,
+    truth_matches: 240,
+    new_figures_independent_pass_reused: 6,
+    unchanged_view_mathematics_repeated: 0,
+    affected_RECOVERY1_view_mathematics_repeated: 0,
+    full_mistaken_procedure_approval: false,
+    confirmed_defects: 1,
+  },
+  image_usage: {
+    cap: 8,
+    previously_viewed_total: 8,
+    new_images_this_stage: 0,
+    reopens: 0,
+    crops: 0,
+    renders: 0,
+    resets: 0,
+  },
+  first_failures_preserved: [
+    'The source FIRST transparent/black preview failure remains unchanged.',
+    'FIRST two q723 graph-bypass failures remain unchanged; RECOVERY1 affected blind PASS is a later separate record.',
+    'Initial final-key evidence inspection attempted JSON parsing of the Markdown source record and returned exit 1; recovered by text reading, without mutation.',
+    'Broad final-key text projections were truncated; compact targeted projections recovered the relevant evidence without new images.',
+    'Initial key-freeze execution returned exit 1 before writing its record because it asserted full render-report byte identity. Targeted text comparison found only spec.path and output.svg.path relocation in all six reports. The owned helper was corrected to require all nonpath fields equal; no author asset was changed and no render occurred.',
+  ],
+  boundaries: 'Only owned key records written. No author changes, canonical PASS, validator, installation, skill/app edit, git, database, publication, retention, paid API, browser, image, render, new chat/branch/tree, timer or cross-chat action.',
+  usage: { host_tokens: 'UNKNOWN', host_cost: 'UNKNOWN', external_API: 0, paid_calls: 0 },
+};
+fs.mkdirSync(own, { recursive: true });
+const out = `${own}/choice-key-RECOVERY1.record0444`;
+assert.equal(fs.existsSync(out), false);
+fs.writeFileSync(out, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx', mode: 0o444 });
+assert.equal(fs.statSync(out).mode & 0o777, 0o444);
+for (const [p, expected] of frozen) assert.equal(bind(p).sha256, expected, p);
+console.log(JSON.stringify({
+  status: record.status,
+  outcome: record.outcome,
+  path: out,
+  sha256: bind(out).sha256,
+  mode: bind(out).mode,
+  coverage: record.coverage,
+  canonical_review_written: false,
+  validator_exitCode: null,
+  validator_executed: false,
+  new_images: 0,
+}, null, 2));

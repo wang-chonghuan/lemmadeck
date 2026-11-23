@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const first = `${base}/choices-RECOVERY1`;
+const out = `${base}/choices-RECOVERY2`;
+const original = JSON.parse(fs.readFileSync(`${first}/draft.json`, 'utf8'));
+const draft = structuredClone(original);
+const rationale = draft.questions.find(q => q.id === 'q696-one')
+  .key.rationales.find(r => r.option_id === 'D');
+const before = structuredClone(rationale);
+rationale.derivation = '第一把3/7倒读为7/3>1，正幂误判为>；第二pi>1且指数为负，判为<；第三sqrt(15)<4，底数<1且指数为负，判为>；第四错误以两根都>1为由认定sqrt3-sqrt2>1，负幂误判为<，得到整列>,<,>,<。实际第一<、第四>，所以整列为假。';
+rationale.misconception = '把第一项分数底数倒读，并误以两个大于1的平方根之差仍大于1；中间两项按实际底数范围处理，再分别使用指数符号。';
+const restored = structuredClone(draft);
+Object.assign(restored.questions.find(q => q.id === 'q696-one')
+  .key.rationales.find(r => r.option_id === 'D'), before);
+assert.deepEqual(restored, original);
+assert.deepEqual(draft.questions.map(q => q.view), original.questions.map(q => q.view));
+fs.mkdirSync(out, { recursive: false });
+fs.copyFileSync(`${first}/seed.json`, `${out}/seed.json`);
+fs.copyFileSync(`${first}/learner-view.json`, `${out}/learner-view.json`);
+const save = (name, value) => {
+  const bytes = JSON.stringify(value, null, 2) + '\n';
+  fs.writeFileSync(path.join(out, name), bytes, { flag: 'wx', mode: 0o444 });
+  return createHash('sha256').update(bytes).digest('hex');
+};
+const digest = save('draft.json', draft);
+const record = {
+  stage: 'INTERNAL-696D-PROCEDURE-RECOVERY2-NOT-APPROVAL',
+  preserved_first_failed_key_record: `${base}/choice-review-RECOVERY1/key/choice-key-RECOVERY1.record0444`,
+  previous_draft: `${first}/draft.json`,
+  repaired_draft_sha256: digest,
+  changed_fields: [
+    'questions[q696-one].key.rationales[D].derivation',
+    'questions[q696-one].key.rationales[D].misconception',
+  ],
+  all_54_views_240_options_keys_source_and_figures_unchanged: true,
+  before,
+  after: rationale,
+  new_images: 0,
+};
+save('repair.record', record);
+console.log(JSON.stringify({ status: 'REPAIRED_NOT_APPROVED', draft_sha256: digest, new_images: 0 }));

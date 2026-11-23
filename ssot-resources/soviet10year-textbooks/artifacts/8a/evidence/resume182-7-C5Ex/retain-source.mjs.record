@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const stage = `${base}/assembly-RECOVERY1/artifacts/8a`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const evidence = `${target}/evidence/resume182-7-C5Ex`;
+const prior = `${target}/evidence/resume182-7-N32-source-held`;
+assert.equal(JSON.parse(fs.readFileSync(
+  `${base}/source-disputed-review-FIRST/affected-resolution-SOURCE1.record`,
+)).status, 'pass');
+assert.equal(JSON.parse(fs.readFileSync(
+  `${base}/source-review-229-231-FIRST/source-comparison-FIRST.record`,
+)).status, 'pass');
+
+function keep(from, to) {
+  fs.mkdirSync(path.dirname(to), { recursive: true });
+  if (fs.existsSync(to)) assert.ok(fs.readFileSync(from).equals(fs.readFileSync(to)), to);
+  else fs.copyFileSync(from, to, fs.constants.COPYFILE_EXCL);
+}
+
+function tree(relative) {
+  const source = `${base}/${relative}`;
+  if (fs.statSync(source).isDirectory()) {
+    for (const name of fs.readdirSync(source)) tree(`${relative}/${name}`);
+  } else keep(source, `${evidence}/${relative}`);
+}
+
+for (const number of [225, 226, 227, 228, 229, 230]) {
+  const page = String(number).padStart(4, '0');
+  for (const name of ['page.json', 'page.md', 'audit.json']) {
+    keep(`${base}/raw-FIRST/8a/pages/${page}/${name}`, `${target}/pages/${page}/${name}`);
+  }
+}
+// This source dependency is approved independently of the still-held N32 lesson.
+for (const name of ['page.json', 'page.md', 'audit.json']) {
+  keep(`${prior}/current/pages/0206/${name}.record`, `${target}/pages/0206/${name}`);
+}
+keep(`${stage}/figures/fig-76.png`, `${target}/figures/fig-76.png`);
+for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  keep(`${stage}/lessons/alg8-c5-ex/${name}`, `${target}/lessons/alg8-c5-ex/${name}`);
+}
+for (const relative of [
+  'source-author-225-228-FIRST', 'source-review-225-228-FIRST',
+  'source-author-229-231-FIRST/0229', 'source-author-229-231-FIRST/0230',
+  'source-author-229-231-FIRST/author-source-FIRST.record',
+  'source-author-229-231-FIRST/row-diagnostics.record',
+  'source-review-229-231-FIRST', 'source-disputed-crops-FIRST',
+  'source-disputed-review-FIRST', 'source-recovery-SOURCE1',
+  'source-recovery-RECOVERY1', 'source-recovery-ERRATA1',
+  'layout-before-recovery.record', 'assembly-RECOVERY1/assembly.record',
+  'assembly-FIRST/assemble-source-FIRST.py.record',
+]) tree(relative);
+for (const name of ['book.json', 'lessons/alg8-c5-ex/lesson.json',
+  'lessons/alg8-c5-ex/exercises.json', 'lessons/alg8-c5-ex/lesson.md',
+  'lessons/x1-承上页/lesson.json', 'lessons/x1-承上页/exercises.json',
+  'lessons/x1-承上页/lesson.md']) {
+  keep(`${base}/assembly-FIRST/artifacts/8a/${name}`,
+    `${evidence}/assembly-FIRST/${name}.record`);
+}
+keep(`${base}/assemble-source.py`, `${evidence}/assemble-source-RECOVERY1.py.record`);
+console.log(JSON.stringify({
+  lesson: 'alg8-c5-ex', sourceRetained: true, exercises: 43,
+  borrowedFigureSourcePage: 206, N32LessonHoldUnchanged: true, modernApproved: false,
+}));

@@ -1,0 +1,107 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '.tmp/ld-s10y-lesson/resume182-7-C5Ex';
+const source = path.join(root, 'choices-final/draft.json');
+const out = path.join(root, 'choices-RECOVERY1');
+const original = JSON.parse(fs.readFileSync(source, 'utf8'));
+const draft = structuredClone(original);
+const repairs = {
+  'q723-positive-powers': {
+    A: {
+      text: '$1.14,\\quad19$',
+      derivation: '第一式按图读指数再乘1/5，约1.14；第二式错误作23乘5/6，约19.17再取约19，实际幂约13.64。',
+      misconception: '第一式正确，第二式把分数幂误作原数乘指数。',
+    },
+    C: {
+      text: '$1.30,\\quad14$',
+      derivation: '第一式错误用2/5代替1/5，得1.95^(2/5)约1.306，取约1.30；第二式正确约13.64，取约14。',
+      misconception: '求五次方根时额外平方，将第一式指数翻倍；第二式按原式计算。',
+    },
+    D: {
+      text: '$1.30,\\quad19$',
+      derivation: '第一式错误用2/5，约1.306；第二式错误作23乘5/6，约19.17；取约1.30和19，均不符原式。',
+      misconception: '第一式指数翻倍，同时把第二式分数幂当成原数乘指数。',
+    },
+  },
+  'q723-small-and-product': {
+    B: {
+      text: '$0.026,\\quad2.4$',
+      derivation: '第一式正确约0.02562；第二式把立方根400也错用0.2次幂，得到(.18*400)^.2=72^.2约2.35，取约2.4而非约5.23。',
+      misconception: '第一式正确，乘积中两个因子都套用0.2次幂，忽略立方根的1/3指数。',
+    },
+    C: {
+      text: '$0.064,\\quad5.2$',
+      derivation: '第一式误作平方根sqrt(.0041)，约0.06403，取约0.064；第二式正确约5.2289，取约5.2。',
+      misconception: '第一式把2/3次幂错读为平方根；第二式按原式计算。',
+    },
+    D: {
+      text: '$0.064,\\quad2.4$',
+      derivation: '第一式误作sqrt(.0041)，约0.06403；第二式误作72^.2，约2.35；取约0.064和2.4而非原式的约0.02562和5.23。',
+      misconception: '第一式错用平方根，同时把第二式立方根的指数也错套成0.2。',
+    },
+  },
+};
+
+for (const q of draft.questions) {
+  for (const [id, repair] of Object.entries(repairs[q.id] ?? {})) {
+    q.view.options.find(option => option.id === id).text = repair.text;
+    Object.assign(q.key.rationales.find(rationale => rationale.option_id === id), {
+      derivation: repair.derivation,
+      misconception: repair.misconception,
+    });
+  }
+}
+const restored = structuredClone(draft);
+for (const q of restored.questions) {
+  const before = original.questions.find(item => item.id === q.id);
+  for (const id of Object.keys(repairs[q.id] ?? {})) {
+    q.view.options.find(option => option.id === id).text =
+      before.view.options.find(option => option.id === id).text;
+    const rationale = q.key.rationales.find(item => item.option_id === id);
+    const old = before.key.rationales.find(item => item.option_id === id);
+    rationale.derivation = old.derivation;
+    rationale.misconception = old.misconception;
+  }
+}
+assert.deepEqual(restored, original);
+assert.equal(draft.questions.length, 54);
+assert.equal(draft.questions.reduce((n, q) => n + q.view.options.length, 0), 240);
+fs.mkdirSync(out, { recursive: false });
+fs.copyFileSync(path.join(root, 'choices-final/seed.json'), path.join(out, 'seed.json'));
+const save = (name, value) => {
+  const bytes = JSON.stringify(value, null, 2) + '\n';
+  fs.writeFileSync(path.join(out, name), bytes, { flag: 'wx', mode: 0o444 });
+  return createHash('sha256').update(bytes).digest('hex');
+};
+const digest = save('draft.json', draft);
+const viewDigest = save('learner-view.json', draft.questions.map(q => ({
+  id: q.id, source_numbers: q.source_numbers, view: q.view,
+})));
+const evidence = {
+  stage: 'CHOICE-PAIRS-RECOVERY1-AUTHOR-REPAIR-NOT-APPROVAL',
+  first_preserved: source,
+  repaired_draft_sha256: digest,
+  learner_view_sha256: viewDigest,
+  changed_questions: Object.keys(repairs),
+  changed_wrong_options: 6,
+  unchanged_other_questions: 52,
+  correct_options_stems_figures_keys_unchanged: true,
+  scope_assertion: 'PASS',
+  error_check: {
+    first_positive_log_allowance: 0.02 / 5 + 0.02,
+    second_positive_log_allowance: 0.02 * 5 / 6 + 0.02,
+    first_small_log_allowance: 0.02 * 2 / 3 + 0.02,
+    second_product_log_allowance: 0.02 * 0.2 + 0.02 / 3 + 0.02,
+    positive_first_separation: Math.log10(1.30) - Math.log10(1.95) / 5,
+    positive_second_separation: Math.log10(19) - Math.log10(23) * 5 / 6,
+    small_first_separation: Math.log10(0.064) - Math.log10(0.0041) * 2 / 3,
+    product_second_separation: Math.log10(0.18) * 0.2 + Math.log10(400) / 3 - Math.log10(2.4),
+    note: 'All wrong-coordinate log separations exceed propagated .02 input/output reading allowances. Independent affected view review still required.',
+  },
+  images_opened: 0,
+};
+save('repair.record', evidence);
+console.log(JSON.stringify(evidence, null, 2));
