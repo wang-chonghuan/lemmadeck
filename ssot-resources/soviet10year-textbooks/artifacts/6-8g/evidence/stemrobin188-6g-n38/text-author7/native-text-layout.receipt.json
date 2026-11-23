@@ -1,0 +1,25 @@
+{
+  "stage": "native-text-layout",
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188",
+  "argv": [
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport json, sys\nsys.path.insert(0, sys.argv[1])\nimport edition\ndata = json.load(sys.stdin)\nlesson = data[\"lesson\"]\nexercises = data[\"exercises\"]\nedition.normalize_lesson_layout(lesson)\nedition.normalize_exercise_layout(exercises)\nfacts = []\nfor kind, items in ((\"prose\", lesson[\"prose\"]), (\"exercise\", exercises[\"exercises\"])):\n    for item in items:\n        source = item[\"source_text\"]\n        modern = item[\"text\"]\n        expressions = lambda text: [match.group(0) for match in edition.MATH.finditer(text)]\n        fact = {\n            \"kind\": kind,\n            \"sourceRefs\": item.get(\"source_refs\", item.get(\"pages\")),\n            \"number\": item.get(\"number\"),\n            \"sourceBodyMath\": expressions(source),\n            \"candidateBodyMath\": expressions(modern),\n            \"exactBodyMathEqual\": expressions(source) == expressions(modern),\n            \"nativeMathSignatureEqual\": edition.math_signature(source) == edition.math_signature(modern),\n            \"sourceNumberSignature\": edition.number_signature(source),\n            \"candidateNumberSignature\": edition.number_signature(modern),\n            \"nativeNumberSignatureEqual\": edition.number_signature(source) == edition.number_signature(modern),\n            \"nativeLayoutStable\": (\n                edition.normalize_prose_layout(modern) == modern if item.get(\"kind\") == \"p\"\n                else edition.normalize_numbered_subparts(modern) == modern if kind == \"exercise\"\n                else True\n            )\n        }\n        facts.append(fact)\n        assert fact[\"exactBodyMathEqual\"], fact\n        assert fact[\"nativeMathSignatureEqual\"], fact\n        assert fact[\"nativeNumberSignatureEqual\"], fact\n        assert fact[\"nativeLayoutStable\"], fact\njson.dump({\"lesson\": lesson, \"exercises\": exercises, \"facts\": facts}, sys.stdout, ensure_ascii=False)\nsys.stdout.write(\"\\n\")\n",
+    "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.claude/skills/ld-s10y-lesson/tools"
+  ],
+  "exitCode": 1,
+  "signal": null,
+  "error": null,
+  "stdinSha256": "96cac3ad402861f1af5d45df3a3746183c717a55780df08fe2f15ec9d38e3c8a",
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.intentfold/tickets/STEMROBIN-188/tmp/n38-text-author7/native-text-layout.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stderr": {
+      "path": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188/.intentfold/tickets/STEMROBIN-188/tmp/n38-text-author7/native-text-layout.stderr",
+      "sha256": "bcd7d7b34606a8eadf505f0b07191a50e46f10697c154751a5bd4282142c032c"
+    }
+  }
+}

@@ -1,0 +1,680 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "0ce7f246bc37e82a440c45a1365c209606a51cf4f8f937515bc2dbf539c8e4ed",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q01",
+      "source_numbers": ["488"],
+      "view": {
+        "mode": "single",
+        "stem": "三个三角形的内角依次与 $1:2:3$、$3:7:8$、$1:1:3$ 成比例。每组三个角按对应比值的顺序排列。哪组完整结果正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(75^\\circ,60^\\circ,45^\\circ)$；$(75^\\circ,55^\\circ,50^\\circ)$；$(72^\\circ,72^\\circ,36^\\circ)$。", "figure_ids": []},
+          {"id": "b", "text": "$(30^\\circ,60^\\circ,90^\\circ)$；$(30^\\circ,70^\\circ,80^\\circ)$；$(36^\\circ,36^\\circ,108^\\circ)$。", "figure_ids": []},
+          {"id": "c", "text": "$(15^\\circ,30^\\circ,45^\\circ)$；$(15^\\circ,35^\\circ,40^\\circ)$；$(18^\\circ,18^\\circ,54^\\circ)$。", "figure_ids": []},
+          {"id": "d", "text": "$(90^\\circ,60^\\circ,30^\\circ)$；$(80^\\circ,70^\\circ,30^\\circ)$；$(108^\\circ,36^\\circ,36^\\circ)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "求三个比例条件下全部有序内角三元组。",
+        "source_solution": "角设为 ak,bk,ck，k=180/(a+b+c)。三次比例和为6、18、5，k=30、10、36，结果为(30,60,90)、(30,70,80)、(36,36,108)度。",
+        "unit_reason": "三种比例共享比例归一化规则，整组三行结果保留尺度与对应顺序，不逐角点击。",
+        "concept_blocks": [4],
+        "limitations": ["整组结果识别不能证明学习者独立设比例系数并写出三次计算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把每个权重r错误替换成其余两权重之和s-r，再归一化到180，得180(s-r)/(2s)。三行依次为(75,60,45)、(75,55,50)、(72,72,36)，不满足指定的原权重比例。", "misconception": "把某角的比例权重与另外两角的合计权重混淆。"},
+          {"option_id": "b", "truth": "correct", "derivation": "180/6=30、180/18=10、180/5=36，依次乘各行权重，全部角和180且对应比值正确。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把三角形总角度误用90，系数90/6=15、90/18=5、90/5=18，生成此三行；每行仅和90。", "misconception": "将三角形内角和误当成一个直角。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "先得到正确三行，再从最大权重到最小权重反向列出。这样和仍为180，但第一位置对应原最小比值却放最大角，不满足题设对应顺序。", "misconception": "忽略比值与输出位置的对应，统一按角度降序列出。"}
+        ]
+      }
+    },
+    {
+      "id": "q02",
+      "source_numbers": ["489"],
+      "view": {
+        "mode": "single",
+        "stem": "三角形的内角分别记为 $A,B,C$ 和 $A',B',C'$，且 $A=A'$、$B=B'$。哪段论证能由这些条件证明 $C=C'$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "两对角相等便有两三角形全等；由全等三角形的对应角相等，得到 $C=C'$。", "figure_ids": []},
+          {"id": "b", "text": "$C=90^\\circ-A-B$，$C'=90^\\circ-A'-B'$；代入两对相等的角，得到 $C=C'$。", "figure_ids": []},
+          {"id": "c", "text": "$A+B+C=A'+B'+C'$；消去 $A+B$ 后，两边只剩相等的边长，所以 $C=C'$。", "figure_ids": []},
+          {"id": "d", "text": "$C=180^\\circ-A-B$，$C'=180^\\circ-A'-B'$；代入两对相等的角，得到 $C=C'$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别从两个对应角相等到第三角相等的完整合法证明。",
+        "source_solution": "各三角形总角度180，故C=180-A-B，C'=180-A'-B'；已知两对应加数相等，差相等。不需要边相等或三角形全等。",
+        "unit_reason": "整段证明而非单独结论保留所需推理依据；数值代入不是此命题的任务。",
+        "concept_blocks": [4],
+        "limitations": ["选择合法证明不能证明学习者独立组织并书写一般证明。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "从AA相等错误升级为全等，再引用全等角相等。将任意三角形放大两倍，A、B仍相等但边长不相等，故第一步不成立，即使结论本身为真也不是合法证明。", "misconception": "把两个角相等的角形相似条件当成三角形全等条件。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "误设内角和90后两边同减仍得C=C'，但起始表达式不等于实际C；如60、60、60时它给C=-30，证明的前提公式错误。", "misconception": "以错误的内角和建立对称代数式，误以为相同错误可证明几何命题。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "总角和等式成立，消去A+B后实际剩角C、C'，不是边长。把角量偷换成边量无法建立所述推理链。", "misconception": "把三角形的角记号误作对应边，消元时改变几何量的类型。"},
+          {"option_id": "d", "truth": "correct", "derivation": "两式使用正确180度内角和，A=A'、B=B'使被减之和相等，故C=C'。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q03",
+      "source_numbers": ["490"],
+      "view": {
+        "mode": "single",
+        "stem": "在三角形 $ABC$ 中，$A=25^\\circ$、$B=68^\\circ$。过 $A,B,C$ 分别作对边的平行线 $l_A,l_B,l_C$。设 $P=l_B\\cap l_C$、$Q=l_C\\cap l_A$、$R=l_A\\cap l_B$。下列关于新三角形角度对应及 $(P,Q,R)$ 的结论，哪一个正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$P$ 对应 $A$，$Q$ 对应 $B$，$R$ 对应 $C$；$(P,Q,R)=(25^\\circ,68^\\circ,87^\\circ)$。", "figure_ids": []},
+          {"id": "b", "text": "$P$ 对应 $C$，$Q$ 对应 $A$，$R$ 对应 $B$；$(P,Q,R)=(87^\\circ,25^\\circ,68^\\circ)$。", "figure_ids": []},
+          {"id": "c", "text": "$P$ 对应 $A$ 的补角，$Q$ 对应 $B$ 的补角，$R$ 对应 $C$ 的补角；$(P,Q,R)=(155^\\circ,112^\\circ,93^\\circ)$。", "figure_ids": []},
+          {"id": "d", "text": "$P$ 对应 $A$ 的一半，$Q$ 对应 $B$ 的一半，$R$ 对应 $C$ 的一半；$(P,Q,R)=(12.5^\\circ,34^\\circ,43.5^\\circ)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由过三顶点的对边平行线确定外围三角形完整角度及对应。",
+        "source_solution": "C=180-25-68=87。P两边分别平行AB、AC，Q两边分别平行AB、BC，R两边分别平行AC、BC，内角依次等于A、B、C，所以(25,68,87)。独立坐标验证A=0,B=u,C=v给P=u+v,Q=v-u,R=u-v。",
+        "unit_reason": "完整角度对应与三元组同时作答，保留平行线几何，而不是仅点击第三角87。",
+        "concept_blocks": [4],
+        "limitations": ["未要求学习者亲自绘制三条平行线或书写角度对应推导；给出新顶点名称仅用于无图有序响应。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "P交l_B与l_C，其边向为AC与AB；两方向同时反转不改角。Q与R循环对应B、C。三角和给C=87，故完整结果成立。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "按P,Q,R的书写顺序循环错配成C,A,B；套入已求原角87,25,68即得该三元组。P的两线实际是平行AC、AB而非AC、BC，故不能对应C。", "misconception": "按交点排列顺序而非两条构成边的平行关系分配原角。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "原角25,68,87逐一从180减，得到155,112,93。错误地只反转每对边中的一条射线，取外侧补角而非新三角形内角；和360也不符合三角形。", "misconception": "平行线对应角选择了补角扇区。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "将25,68,87均除2，得12.5,34,43.5。平行线不是角平分线，没有角度减半的构造条件。", "misconception": "把过顶点作平行线误当作作内角平分线。"}
+        ]
+      }
+    },
+    {
+      "id": "q04",
+      "source_numbers": ["491"],
+      "view": {
+        "mode": "multiple",
+        "stem": "图中的证明过程是：过 $C$ 作 $MN\\parallel AB$，延长 $AC,BC$；由相应射线同向得到 $1=4$、$3=6$，由对顶角得到 $2=5$，最后把角 $4,5,6$ 相加成为平角 $MCN$。选择这个证明实际采用的公理、定理或角度基本性质。",
+        "figure_ids": ["fig-233"],
+        "options": [
+          {"id": "a", "text": "过直线外一点存在且只有一条与该直线平行的直线，保证所作 $MN$ 的存在。", "figure_ids": []},
+          {"id": "b", "text": "对应边的两对射线方向分别相同的两个角相等，用于转移角 $1,3$ 的大小。", "figure_ids": []},
+          {"id": "c", "text": "三角形的一个外角等于不相邻的两个内角之和，用于转移角 $1,3$ 的大小。", "figure_ids": []},
+          {"id": "d", "text": "对顶角相等，用于把三角形在 $C$ 处的内角与上方相应角联系起来。", "figure_ids": []},
+          {"id": "e", "text": "相邻角的角度可相加，平角为 $180^\\circ$，用于求角 $4,5,6$ 的总和。", "figure_ids": []},
+          {"id": "f", "text": "全等三角形的对应角相等，用于把三角形的角与平行线上方的角联系起来。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别当前教材三角形内角和证明的构造与各推理步骤的实际依赖。",
+        "source_solution": "当前白名单proof块8,10,11,12只用作491任务上下文。MN的构造需过线外点的平行线存在；1=4、3=6用同向射线角相等；2=5用对顶角；4+5+6=180用角加法和平角。唯一性未另作等角推理。外角定理是后续推论，不作为此证明依据；没有全等三角形构造。",
+        "unit_reason": "一题多选检查所有真实依赖，每个选项是可独立判断的依据，不是组合代码或逐证明空格点击。",
+        "concept_blocks": [4],
+        "limitations": ["呈现当前证明步骤并给出候选依据，不能证明学习者能自行回忆全部依赖或独立写出证明。", "proof文本未冒充定义；仅本题使用该当前证明上下文。"],
+        "figure_observations": [
+          {"figure_id": "fig-233", "observation": "完整640x500渲染已打开；AB在C下方，MN过C横贯，AC向右上延至F、BC向左上延至H；1、2、3与4、5、6全部可辨，N、F与底端A、B完整可见。"}
+        ]
+      },
+      "key": {
+        "correct": ["a", "b", "d", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "第一步需要从AB外点C作出平行线MN。该公理给存在和唯一性，其中存在是本证明实际使用的构造保障，不另宣称唯一性用于后续等角。", "misconception": null},
+          {"option_id": "b", "truth": "correct", "derivation": "AF与CF同向，AB与CN同向，得到1=4；另一组同向射线同样给3=6，与当前proof块10、11对应。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把后来由内角和导出的外角和公式当成先前内角和证明的依据，并把等角转移误写成两角和关系；当前步骤1=4、3=6并未使用外角和，倒置依赖形成循环。", "misconception": "将待证定理的后续推论倒用为其上游依据。"},
+          {"option_id": "d", "truth": "correct", "derivation": "AC/CF与BC/CH形成两相交直线，角2和角5对顶，因此相等，正是当前proof块12的对应步骤。", "misconception": null},
+          {"option_id": "e", "truth": "correct", "derivation": "4、5、6是顺序相邻扇区且合为MCN平角，角加法给总和，平角大小为180。", "misconception": null},
+          {"option_id": "f", "truth": "incorrect", "derivation": "将角1、3上方的射线扇区想象成另一个全等三角形，然后用对应角；图中未构造这样的闭合三角形也无全等条件，等角实际来自平行射线。", "misconception": "用不存在的全等三角形代替射线方向的等角依据。"}
+        ]
+      }
+    },
+    {
+      "id": "q05",
+      "source_numbers": ["492"],
+      "view": {
+        "mode": "single",
+        "stem": "三角形的外角指某个内角的邻补角。如图所示，外角与一个内角相邻，与另两个内角不相邻。关于外角能否小于一个内角，哪项判断正确？",
+        "figure_ids": ["fig-234", "fig-232"],
+        "options": [
+          {"id": "a", "text": "可以小于相邻内角，也可以小于至少一个不相邻内角。", "figure_ids": []},
+          {"id": "b", "text": "不可能小于相邻内角，也不可能小于任一不相邻内角。", "figure_ids": []},
+          {"id": "c", "text": "可以小于相邻内角，但不可能小于任一不相邻内角。", "figure_ids": []},
+          {"id": "d", "text": "不可能小于相邻内角，但可以小于至少一个不相邻内角。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "回答外角可能小于内角的存在性问题，区分相邻和不相邻。",
+        "source_solution": "e=180-A，所以e<A当且仅当A>90；(120,30,30)在120旁的外角60是实例。又e=B+C，由B,C>0得到e>B,C。故可小于邻角但不能小于远端角。",
+        "unit_reason": "一个完整判断保留原是非问题及其必要的角位置区分，不把每个角改为点击。",
+        "concept_blocks": [1, 4, 16],
+        "limitations": ["不能证明学习者独立作出反例并写出两类角关系的论证。", "fig-232只支持邻补角定义，不将其多边形当成三角形。"],
+        "figure_observations": [
+          {"figure_id": "fig-234", "observation": "完整640x400渲染中A-C-D共线，B位于C右上；BCD为C的邻补角，A和B为远端角，最右D及底端A、C均可见。"},
+          {"figure_id": "fig-232", "observation": "完整640x520渲染中阴影凸六边形的A处，AF向左延到G，BAF在内部，BAG为外部邻补角；E、F及最底G、A全部可见。"}
+        ]
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "正确用180-A发现邻角可更大，但把远端关系e=B+C错误减成B-C；例如B=50,C=30时错算e=20<50，实际e=80，两远端角都小于e。", "misconception": "把外角的远端内角和改成差，产生虚假的较小外角。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "由e=B+C>B,C把非邻接的比较错误推广到A，遗漏A在e=180-A的关系；取A=120,B=C=30便有60<120反例。", "misconception": "将外角大于两不相邻内角的结论全称化到所有三个内角。"},
+          {"option_id": "c", "truth": "correct", "derivation": "A=120给邻补外角60<A；任意三角形e=B+C而两角都正，故不存在e<B或e<C。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "先求例(120,30,30)中的e=60，再把120错标为不相邻、把30错标为相邻，从同一例得出颠倒的两类结论；图中邻角实际是外角同顶点的C类角。", "misconception": "交换相邻内角与不相邻内角的类别。"}
+        ]
+      }
+    },
+    {
+      "id": "q06",
+      "source_numbers": ["493"],
+      "view": {
+        "mode": "single",
+        "stem": "按内角分类，下面哪组分别是钝角三角形、直角三角形、锐角三角形的定义？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "钝角：三个内角都大于 $90^\\circ$；直角：三个内角都等于 $90^\\circ$；锐角：至少一个内角小于 $90^\\circ$。", "figure_ids": []},
+          {"id": "b", "text": "钝角：一个内角大于 $90^\\circ$；直角：一个内角等于 $90^\\circ$；锐角：三个内角都小于 $90^\\circ$。", "figure_ids": []},
+          {"id": "c", "text": "钝角：一个内角大于 $90^\\circ$；直角：一个内角等于 $90^\\circ$；锐角：至少一个内角小于 $90^\\circ$。", "figure_ids": []},
+          {"id": "d", "text": "钝角：一个内角小于 $90^\\circ$；直角：一个内角等于 $90^\\circ$；锐角：三个内角都大于 $90^\\circ$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别三种角分类定义的量词与90度边界。",
+        "source_solution": "钝角存在一个角>90，直角存在一个角=90，锐角每个角<90。总和180且角为正使两个非锐角不能并存，所有三角形至少有两个锐角，因此仅存在一个锐角不足以定义锐角三角形。",
+        "unit_reason": "原第一部分是定义任务，独立于第二部分关系分类；完整三定义为一个单位，不逐词填空。",
+        "concept_blocks": [4, 14],
+        "limitations": ["识别定义不能证明学习者独立措辞给出定义。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把钝角与直角定义的存在量词替成全称，再把锐角定义全称替成存在；全钝使和>270，全直和270均不可能，存在锐角又让(120,30,30)被错收为锐角三角形。", "misconception": "互换存在一个与全部角的量词。"},
+          {"option_id": "b", "truth": "correct", "derivation": "依次为存在>90、存在=90、全部<90，正好区分三种角分类；内角和180保证前两类的非锐角唯一。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "只将锐角全称改为存在，(90,45,45)和(120,30,30)均含锐角，便同时被归入锐角类，破坏类型定义。", "misconception": "认为含有一个锐角就属于锐角三角形。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "交换锐、钝比较符号，钝角条件变为存在<90而所有三角形都满足，锐角条件变为全部>90而无三角形满足。", "misconception": "把锐角与钝角的大小方向反用。"}
+        ]
+      }
+    },
+    {
+      "id": "q07",
+      "source_numbers": ["493"],
+      "view": {
+        "mode": "single",
+        "stem": "三角形内角为 $A,B,C$。分别考虑三个条件：$A=B+C$；$A>B+C$；$A<B+C$。按这个顺序，哪组关于整个三角形类型的结论正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "直角三角形；钝角三角形；三角形类型不能确定。", "figure_ids": []},
+          {"id": "b", "text": "直角三角形；钝角三角形；锐角三角形。", "figure_ids": []},
+          {"id": "c", "text": "钝角三角形；钝角三角形；三角形类型不能确定。", "figure_ids": []},
+          {"id": "d", "text": "直角三角形；直角三角形；三角形类型不能确定。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "对等于、大于、小于另两角和的全部三个条件作出正确的类型推断，包括第三条件不能确定。",
+        "source_solution": "B+C=180-A。三关系等价A=90、A>90、A<90。前两分别直角、钝角；第三只保证A锐，(60,60,60)、(40,90,50)、(40,100,40)覆盖三种类型。",
+        "unit_reason": "三个关系共享补角比较且边界相互对照，作为完整顺序结果；与独立定义任务分开。",
+        "concept_blocks": [4, 14],
+        "limitations": ["不能证明学习者独立推导不等式或构造第三条件的三类实例。", "种子原样保留UNKNOWN标签；可见响应以条件语义排序，不复制不可辨的旧子题标签，也不把标签未知视为条件缺失。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "代入180-A得2A=180、2A>180、2A<180，分别A=90、A>90、A<90；第三对B,C无排除非锐角条件，因此整三角形不能定类。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "前三代数判断同正确式，但将第三的A<90扩展为A,B,C全小于90。反例(40,100,40)满足40<140却为钝角。", "misconception": "把指定一个角为锐角误推广为所有角锐。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "正确算出第一A=90，却把钝角阈值误用A>=90，因此把等号情形归为钝角；第二>90仍钝，第三仍未定，得到该整组。", "misconception": "钝角定义错误包含90度边界。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "第一A=90正确；第二2A>180推到A>90后丢弃严格号，当作A=90，错列为直角；第三仍只A<90而未定类。", "misconception": "解严格不等式时把大于变成等于。"}
+        ]
+      }
+    },
+    {
+      "id": "q08",
+      "source_numbers": ["494"],
+      "view": {
+        "mode": "single",
+        "stem": "一个三角形中，任意两个内角的和都大于 $90^\\circ$。下列类型判断及其理由，哪项正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "直角三角形：每个内角都是 $180^\\circ$ 减去另外两角之和，因此每个内角等于 $90^\\circ$。", "figure_ids": []},
+          {"id": "b", "text": "钝角三角形：任意两个内角之和大于 $90^\\circ$，因此至少一个内角也大于 $90^\\circ$。", "figure_ids": []},
+          {"id": "c", "text": "类型不能确定：只能知道某一对角和大于 $90^\\circ$，因此只能知道剩下的一个角是锐角。", "figure_ids": []},
+          {"id": "d", "text": "锐角三角形：每个内角都是 $180^\\circ$ 减去另外两角之和，因此每个内角小于 $90^\\circ$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从任意两角的严格和条件，量化到每个第三角的类型。",
+        "source_solution": "每个角=180-另两角和<90；任意二角和条件涵盖三个互补位置，故三个角都锐。",
+        "unit_reason": "类型与量词推理放在同一完整判断，不只选择一个标签。",
+        "concept_blocks": [4, 14],
+        "limitations": ["识别完整理由不验证学习者独立写出对三对角的全称推理。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "从180-S且S>90错误把S替换为90，得到每角=90；实际应严格小于90，且三个90总270不可能。", "misconception": "把严格下界当成精确值代入减法。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "将A+B>90错误拆成A>90或B>90；(60,60,60)每对和120却没有钝角，两个小量之和可超过90。", "misconception": "把一个和的阈值错误赋给其中一个加数。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把题设任意两角改成存在一对，只应用A+B>90得到C<90而不检查A、B，遂报未定；原任意量词允许三个位置同样推导。", "misconception": "丢弃任意两角的全称条件，只处理一对。"},
+          {"option_id": "d", "truth": "correct", "derivation": "对A用B+C>90，对B用A+C>90，对C用A+B>90，各有180-和<90，三角形为锐角。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q09",
+      "source_numbers": ["495"],
+      "view": {
+        "mode": "single",
+        "stem": "三角形 $ABC$ 的 $A=60^\\circ$、$B=72^\\circ$。从 $A,B,C$ 出发的高所在直线记为 $h_A,h_B,h_C$，内角平分线所在直线记为 $b_A,b_B,b_C$。每两条直线的夹角都取较小的一个。哪张完整表正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "| 顶点对 | 两条高所在直线 | 两条内角平分线所在直线 |\n| --- | --- | --- |\n| A、B | $132^\\circ$ | $114^\\circ$ |\n| B、C | $120^\\circ$ | $120^\\circ$ |\n| C、A | $108^\\circ$ | $126^\\circ$ |", "figure_ids": []},
+          {"id": "b", "text": "| 顶点对 | 两条高所在直线 | 两条内角平分线所在直线 |\n| --- | --- | --- |\n| A、B | $48^\\circ$ | $24^\\circ$ |\n| B、C | $60^\\circ$ | $30^\\circ$ |\n| C、A | $72^\\circ$ | $36^\\circ$ |", "figure_ids": []},
+          {"id": "c", "text": "| 顶点对 | 两条高所在直线 | 两条内角平分线所在直线 |\n| --- | --- | --- |\n| A、B | $48^\\circ$ | $66^\\circ$ |\n| B、C | $60^\\circ$ | $60^\\circ$ |\n| C、A | $72^\\circ$ | $54^\\circ$ |", "figure_ids": []},
+          {"id": "d", "text": "| 顶点对 | 两条高所在直线 | 两条内角平分线所在直线 |\n| --- | --- | --- |\n| A、B | $60^\\circ$ | $60^\\circ$ |\n| B、C | $72^\\circ$ | $54^\\circ$ |\n| C、A | $48^\\circ$ | $66^\\circ$ |", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "求全部三对高与三对内角平分线所在直线的较小夹角，保留两类方向变换。",
+        "source_solution": "C=48。h_A与h_B对应两条垂直于BC、CA的直线，较小角=C=48；循环为60、72。两内角平分线交点处三角形角为90+剩余角/2，完整直线的较小角为其补角90-剩余角/2；循环为66、60、54。",
+        "unit_reason": "高线与平分线两类结果按同一三对顶点组织成整表，保留六个值及较小角约定，不逐格点击。",
+        "concept_blocks": [4],
+        "limitations": ["不验证亲自作六条直线、推导两类夹角公式和独立计算整表的生产能力。", "A、B名称为原未命名两已知角的明确对应，C为剩余角，没有增加角度条件。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "高线对把48,60,72一律取180减得到132,120,108；平分线对取交点处大角90+C/2、90+A/2、90+B/2得114,120,126。全部选了两完整直线的较大夹角。", "misconception": "忽略题设较小夹角，统一保留补角中的大角。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "高线结果正确48,60,72，但把平分线夹角误当成剩余顶角的一半，逐行48/2=24、60/2=30、72/2=36；实际须先90减去一半。", "misconception": "把两条平分线的夹角误作第三个顶角的半角。"},
+          {"option_id": "c", "truth": "correct", "derivation": "剩余顶角依次C=48、A=60、B=72；高线较小角保持这些角；平分线较小角90-24=66、90-30=60、90-36=54。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "使用正确两公式，但按每行第一个顶点A,B,C而非未出现的顶点C,A,B代入，得到高60,72,48和平分60,54,66。", "misconception": "顶点对与其对应的剩余顶角错配。"}
+        ]
+      }
+    },
+    {
+      "id": "q10",
+      "source_numbers": ["496"],
+      "view": {
+        "mode": "single",
+        "stem": "一个等腰三角形的某个外角为 $100^\\circ$，未指定这个外角的顶点。下列完整分类中，哪项正确？各组三个角只表示大小，不表示排列顺序。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "外角在顶角处：$80^\\circ,50^\\circ,50^\\circ$；外角在底角处：$80^\\circ,50^\\circ,50^\\circ$。", "figure_ids": []},
+          {"id": "b", "text": "外角在顶角处：$80^\\circ,50^\\circ,50^\\circ$；外角在底角处：$20^\\circ,80^\\circ,80^\\circ$。", "figure_ids": []},
+          {"id": "c", "text": "外角在顶角处：$20^\\circ,80^\\circ,80^\\circ$；外角在底角处：$20^\\circ,80^\\circ,80^\\circ$。", "figure_ids": []},
+          {"id": "d", "text": "外角在顶角处：$50^\\circ,65^\\circ,65^\\circ$；外角在底角处：$80^\\circ,50^\\circ,50^\\circ$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "求外角未定位时等腰三角形全部可能角度，必须分顶角与底角两类。",
+        "source_solution": "邻角180-100=80。若为顶角，两底角各(180-80)/2=50；若为底角，另底角80且顶角180-160=20。两解均成立。",
+        "unit_reason": "完整位置分类为一个响应，避免漏解，也不把一个确定角80当成全部任务。",
+        "concept_blocks": [1, 4],
+        "limitations": ["不能证明学习者独立发现外角顶点未指定并生成两种情况。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "邻角80后无论外角在哪都当作顶角，余角分成50,50，于是两行重复80,50,50；第二行底角50的外角实际130，不是100。", "misconception": "发现邻角80却将它固定为顶角，丢失底角情形。"},
+          {"option_id": "b", "truth": "correct", "derivation": "顶角邻外角100使顶角80、两底角50；底角邻外角100使两底角80、顶角20。各角和180且对应外角100。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "邻角80后无论位置都视作底角，另一底角80、顶角20，两行重复；第一行顶角20的外角实际160。", "misconception": "将未知外角位置一律固定为底角。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "误把外角与邻角关系当成e=2i，算i=100/2=50；顶角50时底角65,65，底角50时顶角80。对应外角实际130，非100。", "misconception": "把邻补关系误改成倍角关系。"}
+        ]
+      }
+    },
+    {
+      "id": "q11",
+      "source_numbers": ["497"],
+      "view": {
+        "mode": "single",
+        "stem": "在三角形的每个顶点只取一个邻补外角，比较不同顶点的外角。要证明不可能有两个锐角外角，下面哪段反证成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "若两外角都小于 $90^\\circ$，则对应两内角都小于 $90^\\circ$；两锐角内角与三角形内角和矛盾。", "figure_ids": []},
+          {"id": "b", "text": "若两外角都小于 $90^\\circ$，则第三外角由总和 $180^\\circ$ 决定；两个小于 $90^\\circ$ 的角会使第三外角为负。", "figure_ids": []},
+          {"id": "c", "text": "若两外角都小于 $90^\\circ$，则对应两内角都大于 $90^\\circ$；这两内角之和已大于 $180^\\circ$，不可能再有正的第三内角。", "figure_ids": []},
+          {"id": "d", "text": "若两外角都小于 $90^\\circ$，则对应两内角都大于 $90^\\circ$；两个不同顶点的内角仍是同一个角，因此不能算作两个。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在每个不同顶点取一个外角的约定下识别不可能出现两个锐外角的反证。",
+        "source_solution": "两e<90给两邻角180-e>90，合计>180与第三角正及内角和180矛盾。如果同一钝角顶点的两个外角都计入，(120,30,30)在120处有两个60度外角，原不加限定的说法不成立；故可见题面明确distinct-vertex约定。",
+        "unit_reason": "一段完整反证包含邻补转换、两个不同内角及正第三角，不拆成局部算式。",
+        "concept_blocks": [1, 4, 14, 25],
+        "limitations": ["选择反证不能证明学习者独立生成反设与矛盾。", "未声称原文字在同顶点双外角计数下成立；显式每顶点一次限制是保留本节计数约定的必要限定。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "将i=180-e的严格比较反向写成e<90导致i<90，再把两个锐内角当作矛盾；如等边三角形本来有三个锐内角，两锐内角并无矛盾。", "misconception": "邻补关系中的减法不等号方向错误，并误把两个锐角当成不可能。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "误用外角总和180算e3=180-e1-e2；即便错误总和成立，两个小于90的正角之和小于180，结果仍为正而不是负。", "misconception": "把内角总和套给外角并倒置差的正负判断。"},
+          {"option_id": "c", "truth": "correct", "derivation": "两不同顶点给两个不同内角i1=180-e1>90,i2=180-e2>90，因此i1+i2>180，不容第三正角，反设矛盾。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "转换成两钝内角正确，但将不同顶点的角合并为一个角以消掉冲突。这违反比较对象为不同顶点的条件，不构成反证。", "misconception": "在计数矛盾中错误合并位于不同顶点的角。"}
+        ]
+      }
+    },
+    {
+      "id": "q12",
+      "source_numbers": ["498"],
+      "view": {
+        "mode": "single",
+        "stem": "分别考虑两个三角形：第一个有一个锐角外角；第二个有一个外角等于该三角形的一个内角，但未指定是哪一个内角。外角均指邻补角。哪组分类及依据正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "第一个为钝角三角形，因邻角大于 $90^\\circ$；第二个为直角三角形，因相等的只能是邻接内角，且两邻补角相等。", "figure_ids": []},
+          {"id": "b", "text": "第一个为锐角三角形，因外角小于 $90^\\circ$；第二个为直角三角形，因相等的只能是邻接内角，且两邻补角相等。", "figure_ids": []},
+          {"id": "c", "text": "第一个为钝角三角形，因邻角大于 $90^\\circ$；第二个为等边三角形，因外角等于一个内角时三个内角相等。", "figure_ids": []},
+          {"id": "d", "text": "第一个为钝角三角形，因邻角大于 $90^\\circ$；第二个类型不能确定，因外角可以等于任一不相邻内角。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断锐外角与外角等某内角的两个类型条件，完整处理等角位置。",
+        "source_solution": "锐e使邻角180-e>90故钝；相等内角不能是远端B或C，因为e=B+C>B,C，只能为邻角A，180-A=A给90故直。",
+        "unit_reason": "两个外角条件作为成对完整分类，保留相同邻补机制和第二项的排除推理。",
+        "concept_blocks": [1, 4, 14, 16],
+        "limitations": ["不验证独立写出两类分类以及排除不邻接等角的证明。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "e<90给A>90。第二e=B+C严格大于B,C，故e=A而e+A=180，于是A=90。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "第二项正确；第一项直接把外角的锐性质当作三角形内角的分类性质，略去A=180-e，得到错误锐类。", "misconception": "以外角锐钝直接命名三角形，而不转换到内角。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "第一项正确；第二把e=某内角错误扩成所有内角相等，再各分180/3=60。等边外角120不等于60，所以等边不是条件的解。", "misconception": "将外角与一个内角相等误作三个内角相等。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "第一项正确；第二试令e=B，并联e=B+C，实得C=0，非法三角形；忽略正角约束便错误保留远端等角分支并称未定。", "misconception": "未排除导致另一内角为零的不相邻等角分支。"}
+        ]
+      }
+    },
+    {
+      "id": "q13",
+      "source_numbers": ["499"],
+      "view": {
+        "mode": "single",
+        "stem": "已知图中 $MN\\parallel KL$。过 $B$ 作朝左且平行于这两条直线的射线 $BX$，它位于 $\\angle ABC$ 内部。下列哪段论证证明了 $\\angle ABC=\\angle NAB+\\angle BCL$？",
+        "figure_ids": ["fig-238"],
+        "options": [
+          {"id": "a", "text": "平行关系给 $\\angle ABX=180^\\circ-\\angle NAB$、$\\angle XBC=\\angle BCL$；相加得 $\\angle ABC=180^\\circ-\\angle NAB+\\angle BCL$。", "figure_ids": []},
+          {"id": "b", "text": "平行关系给 $\\angle ABX=\\angle NAB$、$\\angle XBC=\\angle BCL$；两部分相减得 $\\angle ABC=\\angle NAB-\\angle BCL$。", "figure_ids": []},
+          {"id": "c", "text": "平行关系给 $\\angle ABX=\\angle NAB$、$\\angle XBC=\\angle BCL$；两部分相加得 $\\angle ABC=\\angle NAB+\\angle BCL$。", "figure_ids": []},
+          {"id": "d", "text": "平行关系给 $\\angle ABX=\\angle NAB$、$\\angle XBC=\\angle BCL$；两部分先相加再取补角得 $\\angle ABC=180^\\circ-\\angle NAB-\\angle BCL$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别平行线辅助射线将折线顶角分为两部分并证明所求角和的完整论证。",
+        "source_solution": "完整图238中B在A,C右方。朝左的平行射线BX确在BA与BC间；平行等角给ABX=NAB、XBC=BCL，内部角加法给ABC=两角和。",
+        "unit_reason": "完整辅助线论证为单位，包含两次平行转角和内部相加，而非只复制题目等式。",
+        "concept_blocks": [],
+        "limitations": ["辅助射线用文字给出，未要求学习者自行发现或画出它，也不验证独立书写证明。", "不新作候选图；原规范图加明确文字足以确定辅助射线的方向。"],
+        "figure_observations": [
+          {"figure_id": "fig-238", "observation": "完整640x420渲染已打开；上横线M-A-N与下横线K-C-L完整，AB向右下至B、BC向左下至C，B在两已知点右方；最右N、L和最底K、C、L标签完整可见。"}
+        ]
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "将朝左BX误当朝右方向，使第一角转移错取NAB补角，再正常相加得到180-NAB+BCL；实际BA与BX的较小内部扇区等于NAB而非补角。", "misconception": "在平行射线转角时反转一条射线而取补角。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "两个转角等式正确，但将两个不重叠的相邻内部扇区视为重叠角求差，得到NAB-BCL；图中BX位于整个ABC内部，应相加。", "misconception": "对由内部射线分割的相邻角做减法。"},
+          {"option_id": "c", "truth": "correct", "derivation": "BX与AN、CL平行且朝左，平行方向成对转角给两等式；BX在ABC内，角加法给目标等式。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "先正确相加两内部扇区，再把其补角当成ABC，得到180-NAB-BCL。ABC已经是两个内部角之和，补角属于另一扇区。", "misconception": "把折线内侧顶角与其补角混淆。"}
+        ]
+      }
+    },
+    {
+      "id": "q14",
+      "source_numbers": ["500"],
+      "view": {
+        "mode": "single",
+        "stem": "依次求十边形、十二边形、三十边形、九十六边形的内角和。下列按此顺序列出的完整结果，哪组正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(1800^\\circ,2160^\\circ,5400^\\circ,17280^\\circ)$。", "figure_ids": []},
+          {"id": "b", "text": "$(1440^\\circ,1800^\\circ,5040^\\circ,16920^\\circ)$。", "figure_ids": []},
+          {"id": "c", "text": "$(1620^\\circ,1980^\\circ,5220^\\circ,17100^\\circ)$。", "figure_ids": []},
+          {"id": "d", "text": "$(720^\\circ,900^\\circ,2520^\\circ,8460^\\circ)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "将四个给定边数映射为全部内角和。",
+        "source_solution": "2d=180，由S=180(n-2)，n=10,12,30,96时三角形数8,10,28,94，对应1440,1800,5040,16920度。",
+        "unit_reason": "四边数是同一规则的完整向前映射，作为整行结果，不逐个多边形或逐格点击。",
+        "concept_blocks": [4, 20, 24],
+        "limitations": ["识别整行结果不能证明独立推导及执行四次乘法。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把S写成180n，不减2，逐项180*10、*12、*30、*96，得到1800,2160,5400,17280。", "misconception": "忘记多边形角和公式中的减去两个三角形。"},
+          {"option_id": "b", "truth": "correct", "derivation": "180*8=1440、180*10=1800、180*28=5040、180*94=16920，全部按源顺序。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把n-2错作n-1，算180*9、*11、*29、*95，得到1620,1980,5220,17100。", "misconception": "将从一顶点分出的三角形数量多计一个。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "由2d误丢倍数2，用90(n-2)，得90*8=720、*10=900、*28=2520、*94=8460。", "misconception": "把每个三角形内角和2d误作d。"}
+        ]
+      }
+    },
+    {
+      "id": "q15",
+      "source_numbers": ["501"],
+      "view": {
+        "mode": "single",
+        "stem": "四个多边形的内角和依次为 $1080^\\circ$、$1620^\\circ$、$3960^\\circ$、$1800^\\circ$。下列依次给出的边数，哪组正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(6,9,22,10)$。", "figure_ids": []},
+          {"id": "b", "text": "$(4,7,20,8)$。", "figure_ids": []},
+          {"id": "c", "text": "$(14,20,46,22)$。", "figure_ids": []},
+          {"id": "d", "text": "$(8,11,24,12)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由四个内角和反求全部边数。",
+        "source_solution": "S=180(n-2)故n=S/180+2。四个商6,9,22,10，加2得8,11,24,12，皆整数至少3。",
+        "unit_reason": "反向规则和完整输出顺序组成一个响应，与前向题的运算方向不同，不分四个简单商点击。",
+        "concept_blocks": [4, 20],
+        "limitations": ["不验证独立解边数方程及执行四个逆运算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "求S/180依次6,9,22,10就停止，把三角形数量n-2当成边数n。", "misconception": "逆求边数时遗漏加2。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "由n-2=S/180错误移项为n=S/180-2，四商6,9,22,10各减2得4,7,20,8。", "misconception": "逆解n-2时移项方向相反。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把每个三角形角和误用90，n=S/90+2，给12+2、18+2、44+2、20+2，即14,20,46,22。", "misconception": "以一个直角而非180度作为三角形角和单位。"},
+          {"option_id": "d", "truth": "correct", "derivation": "四商为6,9,22,10，方程n-2=商，分别加2得到8,11,24,12。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q16",
+      "source_numbers": ["502"],
+      "view": {
+        "mode": "single",
+        "stem": "四个多边形分别满足每个内角都为 $144^\\circ$、$150^\\circ$、$170^\\circ$、$171^\\circ$。下列依次给出的边数，哪组正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$(10,12,36,40)$。", "figure_ids": []},
+          {"id": "b", "text": "$(5,6,18,20)$。", "figure_ids": []},
+          {"id": "c", "text": "$(4,5,17,19)$。", "figure_ids": []},
+          {"id": "d", "text": "$(20,24,72,80)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由每个内角相等的四个角度反求全部边数，不额外要求边相等。",
+        "source_solution": "na=180(n-2)得n=360/(180-a)。残差36,30,10,9给10,12,36,40。等角即可列方程，不需假设等边。",
+        "unit_reason": "同一等角多边形方程对应四个有序结果为一个单位，保留接近180度时边数变化。",
+        "concept_blocks": [1, 4, 20, 25],
+        "limitations": ["不验证独立建立na=180(n-2)或完成四次除法。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "n(180-a)=360，分母36,30,10,9，商360/36=10、/30=12、/10=36、/9=40。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "正确算邻补外角36,30,10,9，但把其总和误用180，于是180/分母给5,6,18,20。", "misconception": "将每顶点取一次的外角和误作180。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把n算成a/(180-a)，给144/36=4、150/30=5、170/10=17、171/9=19；该比值实际为n/2-1，不是n。", "misconception": "用一个内角除一个外角代替总外角除外角。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "将每个顶点的两种邻补外角都计入总和720，却仍按每顶点一个角除，720/36=20、/30=24、/10=72、/9=80。", "misconception": "外角总和双计，边数计数仍单计。"}
+        ]
+      }
+    },
+    {
+      "id": "q17",
+      "source_numbers": ["503"],
+      "view": {
+        "mode": "single",
+        "stem": "对凸多边形，在每个顶点只取一个邻补外角。要同时证明不存在多于四个直角外角、也不存在多于三个钝角外角的情形，哪段总角度论证成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "所取外角总和为 $720^\\circ$；五个直角为 $450^\\circ$，四个钝角只保证超过 $360^\\circ$，所以两种情形均不违反总和。", "figure_ids": []},
+          {"id": "b", "text": "所取外角总和为 $180^\\circ$；三个直角已超过总和，两个钝角也超过总和，所以直角至多两个、钝角至多一个。", "figure_ids": []},
+          {"id": "c", "text": "所取外角总和为 $360^\\circ$；四个直角等于总和，三个钝角超过 $270^\\circ$，所以四个直角和三个钝角都不可能。", "figure_ids": []},
+          {"id": "d", "text": "所取外角总和为 $360^\\circ$；五个直角已为 $450^\\circ$，四个钝角之和严格超过 $360^\\circ$，两种都与总和矛盾。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "以正外角总和对两个数量阈值作完整反证，保留等号与严格超过的区别。",
+        "source_solution": "每不同顶点一个外角总和4d=360。五直角450>360，四钝角>360，因此所述多于阈值不可能。四直角的矩形、三钝外角的等边三角形表明不能错排等号边界。",
+        "unit_reason": "两个同一总角预算约束作为完整论证，不逐顶点或组合代码。",
+        "concept_blocks": [1, 4, 15, 20, 24, 25],
+        "limitations": ["不验证独立构造两个严格和的反证。", "显式限定凸多边形及每不同顶点一次；未宣称可任意重复顶点或采用非凸反身、带符号外角。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把两个邻补外角都计入总和2*360=720，却题设只取一个；用错误预算比较450与720、钝角下界360与720，便错误放行两种。", "misconception": "外角倍计与题设单计不一致。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把三角形内角和180套给任意凸多边形的外角预算，3*90=270>180和2*90严格下界>180给错误上限2、1；矩形四个直外角和等边三角形三个钝外角反驳。", "misconception": "混淆三角形内角和与凸多边形外角和。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "四直角总360等于而非超过预算，矩形成立；三钝角只知>270，错误加强为>360才排除，等边三角形三外角120恰和360。", "misconception": "将预算等号当矛盾，并把270的严格下界加强到360。"},
+          {"option_id": "d", "truth": "correct", "derivation": "所有外角正且和360，任选五个直角便450，任选四个钝角每个>90故和>360；子集已超全部总和，均矛盾。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q18",
+      "source_numbers": ["504"],
+      "view": {
+        "mode": "multiple",
+        "stem": "这里 $d$ 与下列角度表达式一致：三角形内角和为 $180^\\circ$，凸 $n$ 边形内角和为 $2d(n-2)$，四边形内角和为 $4d$。以下每项均断言给出的数值可以成为一个多边形的内角和，并给出对应边数。选择所有成立的断言。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$9180^\\circ$ 可以，边数为 $53$。", "figure_ids": []},
+          {"id": "b", "text": "$3600^\\circ$ 可以，边数为 $22$。", "figure_ids": []},
+          {"id": "c", "text": "$2040^\\circ$ 可以，边数为 $13$。", "figure_ids": []},
+          {"id": "d", "text": "$11d$ 可以，边数为 $8$。", "figure_ids": []},
+          {"id": "e", "text": "$18d$ 可以，边数为 $11$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "对全部五个角和值判断可实现性，包括从当前语句推导d与整数边数限制。",
+        "source_solution": "n=3给2d=180故d=90；四边形4d=360相容。n=S/180+2。9180、3600、2040、11d=990、18d=1620分别给53、22、40/3、15/2、11，只有53,22,11为整数。整数n>=3可取凸正n边形实现。",
+        "unit_reason": "五个可实现性断言以原生多选统合整数边数与单位判断，每项独立判真，不使用选项组合编码。",
+        "concept_blocks": [4, 20, 24],
+        "limitations": ["不能验证独立推导d、完成精确除法、写出不可行证明或构造实现多边形。", "可见题面提供d的当前三句定义关系，不假设未给出的角度记号惯例。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "b", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "9180/180=51，n=51+2=53整数至少3，凸正53边形的角和为180*51=9180。", "misconception": null},
+          {"option_id": "b", "truth": "correct", "derivation": "3600/180=20，n=22，凸正22边形实现内角和3600。", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "2040/180=34/3，n=40/3；误将13又1/3四舍五入为13生成候选。13边形角和180*11=1980，不等2040，精确问题不能舍入边数。", "misconception": "将非整数边数四舍五入后误保留原精确角和。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "由d=90得11d=990，n=990/180+2=7.5；误向上取整为8生成候选，8边形角和1080非990。", "misconception": "用向上取整把不可实现的半整数边数强行变成多边形。"},
+          {"option_id": "e", "truth": "correct", "derivation": "18d=18*90=1620，n=1620/180+2=11，凸正11边形实现。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q19",
+      "source_numbers": ["505"],
+      "view": {
+        "mode": "single",
+        "stem": "不用延长三角形两边后以对顶角转移内角的方法，改用平行四边形补形来证明三角形内角和。对任意三角形 $ABC$，过 $B$ 作 $AC$ 的平行线，过 $C$ 作 $AB$ 的平行线，交于 $D$，得到凸四边形 $ABDC$。记原三角形内角为 $A,B,C$。哪段角度论证成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$\\angle ABD=A$，$\\angle CBD=C$，且 $\\angle ABD=B+C$；因此 $A=B+C$。", "figure_ids": []},
+          {"id": "b", "text": "$\\angle ABD=180^\\circ-A$，$\\angle CBD=180^\\circ-C$，且 $\\angle ABD=B+180^\\circ-C$；因此 $B=C-A$。", "figure_ids": []},
+          {"id": "c", "text": "$\\angle ABD=180^\\circ-A$，$\\angle CBD=C$，且 $\\angle ABD=B+C$；因此 $A+B+C=180^\\circ$。", "figure_ids": []},
+          {"id": "d", "text": "$\\angle ABD=180^\\circ-A$，$\\angle CBD=C$，且 $\\angle ABD=2B+C$；因此 $A+2B+C=180^\\circ$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别不同于教材单平行线、两延长线和对顶角链的平行四边形补形证明。",
+        "source_solution": "两条平行线相交构成ABDC。AB截平行AC,BD使角ABD与A邻补；BD平行AC使CBD=C；BC在角ABD内，故ABD=B+C。因此A+B+C180。未使用平行四边形角和或三角形角和作上游依据，避免循环。",
+        "unit_reason": "原505的两个定理具有不同构造和计数任务，分成两个完整证明单元；本题完整检查补形、平行转角与角分割。",
+        "concept_blocks": [1, 4],
+        "limitations": ["已给出替代构造；识别其证明不能证明学习者自行发明、画出或书写与教材不同的证明。", "替代为双平行补形成四边形并拆分其顶角，不声称只是换教材原图的顶点字母就是新方法。", "不借用原教材proof块作为本题定义或解答；平行关系与角度推导由给出的新构造独立推得。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "把同侧内角ABD与A误当对应角写相等，再正确分割ABD=B+C，得A=B+C，只适用于原A=90的特殊三角形而不适用于任意三角形。", "misconception": "平行线中同侧内角关系误用为相等而非互补。"},
+          {"option_id": "b", "truth": "incorrect", "derivation": "ABD=180-A正确；CBD与C实际相等，却误取补角180-C。分割角后180-A=B+180-C，移项得B=C-A，正是该错误链。", "misconception": "将CBD与原角C的相等转角错误取补。"},
+          {"option_id": "c", "truth": "correct", "derivation": "AB为AC和BD两平行线的截线给ABD=180-A；BD平行AC给CBD=C；内部射线BC分割ABD为B+CBD，故180-A=B+C。", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "两次平行转角正确，但计角ABD时将原ABC计两遍成2B，再加CBD=C，得到180-A=2B+C；BC只划分一次，原B没有两个不重叠副本。", "misconception": "相邻角分割中把一个子角重复计入。"}
+        ]
+      }
+    },
+    {
+      "id": "q20",
+      "source_numbers": ["505"],
+      "view": {
+        "mode": "single",
+        "stem": "用从一个顶点引对角线的方法证明凸 $n$ 边形的内角和，不在内部另取一个点。设顶点依次为 $V_1,\\ldots,V_n$，从 $V_1$ 连接 $V_3,\\ldots,V_{n-1}$。下列哪个完整计角论证成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "这些线分成 $n-2$ 个三角形；各三角形的角恰好分割多边形各内角，没有额外中心角，所以总和是 $180^\\circ(n-2)$。", "figure_ids": []},
+          {"id": "b", "text": "这些线分成 $n-1$ 个三角形；总和 $180^\\circ(n-1)$ 中多算了顶点 $V_1$ 处的一个平角，减去 $180^\\circ$ 得 $180^\\circ(n-2)$。", "figure_ids": []},
+          {"id": "c", "text": "这些线分成 $n$ 个三角形；总和 $180^\\circ n$ 中多算了顶点 $V_1$ 周围的一周角，减去 $360^\\circ$ 得 $180^\\circ(n-2)$。", "figure_ids": []},
+          {"id": "d", "text": "这些线分成 $n-2$ 个三角形；每个原内角都完整计入两次，所以先得 $360^\\circ(n-2)$，再除以 $2$ 得 $180^\\circ(n-2)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别顶点对角线三角剖分这一替代证明的三角形数与角度覆盖关系。",
+        "source_solution": "凸性保证V1至V3...Vn-1的n-3条对角线在内部，将多边形分为n-2个不重叠三角形。角分片恰合各原内角，没有额外内部顶点，和180(n-2)。这不同于内部取O连各顶点所得n三角形再减360的教材方式。",
+        "unit_reason": "完整计数和角分割为一个单位，与三角形补形证明数学独立。所有选项有相同最终公式，必须判断分割依据，不能靠别题公式匹配答对。",
+        "concept_blocks": [4, 20],
+        "limitations": ["候选剖分已给出，不验证自行寻找、绘制或书写与教材不同的多边形证明。", "认识正确三角剖分不构成独立生产证明的证据。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "n-3条无交叉的内部对角线每条增加一个区域，得1+(n-3)=n-2个三角形。顶点处角片只覆盖原内角一次，总和即所有三角形内角和180(n-2)。", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "把V1与其相邻顶点V2的边也误当增加区域的对角线，三角形数多1成n-1；为修正最终式虚构V1多一个180平角，再减180。实际没有额外三角形或该平角。", "misconception": "将已有边误计为分割线，再虚构一个平角抵消多计。"},
+          {"option_id": "c", "truth": "incorrect", "derivation": "把边界顶点V1误当内部中心点，照搬中心扇形计数n与满周角360，做180n-360得到正确最终式，但V1周围只占原内角扇区且实际仅n-2三角形。", "misconception": "对边界顶点的对角线剖分错误套用内部中心点的满周角剖分。"},
+          {"option_id": "d", "truth": "incorrect", "derivation": "三角形数量n-2正确，却把内角片拼合误当每角完整重复两遍，故错误写总和2*180(n-2)，再除2掩盖重复计数。实际每片出现一次，既无双份总和也无除2理由。", "misconception": "把共享顶点的角片错看成重复的完整内角，再用相反操作掩盖错误。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "488", "question_ids": ["q01"], "omitted_tasks": ["独立设比例系数与写出三组完整计算。"], "reason": "完整三行结果覆盖全部比例、角度与对应顺序；生产计算能力降为结果识别。"},
+    {"source_number": "489", "question_ids": ["q02"], "omitted_tasks": ["独立书写一般证明。"], "reason": "选择完整合法证明覆盖内角和与同量相减，未声称学习者自行生产证明。"},
+    {"source_number": "490", "question_ids": ["q03"], "omitted_tasks": ["亲自作三条平行线及推导新旧角对应。"], "reason": "新顶点定义与完整对应三元组保留全部几何角度任务；绘图、推导改为识别。"},
+    {"source_number": "491", "question_ids": ["q04"], "omitted_tasks": ["无候选列表时独立回忆并解释实际证明依赖。"], "reason": "当前proof仅作本题上下文；所有构造、转角、对顶角、角加法依赖均可独立选择，非后续推论循环。"},
+    {"source_number": "492", "question_ids": ["q05"], "omitted_tasks": ["独立构造存在性实例并书写邻接与远端比较证明。"], "reason": "完整位置判断覆盖原是否可能问题，不抹去外角可小于邻角的情形。"},
+    {"source_number": "493", "question_ids": ["q06", "q07"], "omitted_tasks": ["独立措辞给出三个定义。", "独立解三个关系并构造小于情形的不同类型反例。"], "reason": "定义和关系分类是两个不同任务，全部覆盖；UNKNOWN为原标签不明，种子原文未改，可见顺序以三个条件语义明确。"},
+    {"source_number": "494", "question_ids": ["q08"], "omitted_tasks": ["独立书写对任意二角条件的全称证明。"], "reason": "完整类型加理由保留任意量词、严格不等号与三个补角位置。"},
+    {"source_number": "495", "question_ids": ["q09"], "omitted_tasks": ["自行构造六条高线和平分线。", "独立推导两类线角公式并计算全部六个较小夹角。"], "reason": "整表包含两个类别全部三对直线，明确只取较小角；没有遗漏原两个部分。"},
+    {"source_number": "496", "question_ids": ["q10"], "omitted_tasks": ["独立识别未定位外角并生成全部等腰情况。"], "reason": "顶角、底角两分支全部作为完整分类呈现，未遗漏任何可行角组。"},
+    {"source_number": "497", "question_ids": ["q11"], "omitted_tasks": ["独立写出反设与内角和矛盾。", "未证明同一顶点两外角均计入的无限定读法；该读法实际上有反例。"], "reason": "每顶点一次的本节外角计数约定显式可见；原无约束文字保留于种子，未伪称全部读法成立。"},
+    {"source_number": "498", "question_ids": ["q12"], "omitted_tasks": ["独立证明锐外角分类及排除不相邻等角分支。"], "reason": "成对完整分类涵盖两个部分，并保留第二项内角位置未指定的条件。"},
+    {"source_number": "499", "question_ids": ["q13"], "omitted_tasks": ["自主发现并绘制过B的内部平行辅助射线。", "独立写出两次平行转角和角加法证明。"], "reason": "规范图完整使用，完整论证保留目标等式而不是数值验例；辅助构造生产能力明示降为识别。"},
+    {"source_number": "500", "question_ids": ["q14"], "omitted_tasks": ["独立应用公式完成四次乘法。"], "reason": "完整向前四值映射无省略，无逐格点击。"},
+    {"source_number": "501", "question_ids": ["q15"], "omitted_tasks": ["独立建立逆方程与完成四次边数运算。"], "reason": "完整反向四边数映射保留全部源数值及顺序。"},
+    {"source_number": "502", "question_ids": ["q16"], "omitted_tasks": ["独立推导等角边数方程与计算四个边数。"], "reason": "完整四值映射保留等内角条件，不引入等边假设。"},
+    {"source_number": "503", "question_ids": ["q17"], "omitted_tasks": ["独立书写两种外角计数反证。", "未声称任意非凸或重复顶点、双外角计数的无约束推广。"], "reason": "凸且每顶点一个外角条件显式；5个直角及4个钝角的严格总和矛盾完整覆盖。"},
+    {"source_number": "504", "question_ids": ["q18"], "omitted_tasks": ["独立推导d与精确整数条件、写不可行证明及构造可行多边形。"], "reason": "全部五种和都被判断；d由当前三句一致关系导出，没有假设缺失惯例，非整数边数不舍入。"},
+    {"source_number": "505", "question_ids": ["q19", "q20"], "omitted_tasks": ["自主寻找、绘制并书写不同方法的三角形内角和证明。", "自主寻找、绘制并书写不同方法的凸多边形内角和证明。"], "reason": "两个完整替代证明均在封存求解中独立建立且分别作论证识别；这种识别不等于原要求的自主生产新证明，不能以选对选项声称已完成生产任务。"}
+  ]
+}
