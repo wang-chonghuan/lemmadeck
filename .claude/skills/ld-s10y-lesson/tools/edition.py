@@ -762,7 +762,7 @@ def validate_identity_fields(
 
 def validate_lesson_identity(source: dict, modern: dict) -> list[str]:
     locale = modern.get("locale")
-    translated_fields = ("title", "chapter", "printed_title") if locale == "en" else ()
+    translated_fields = ("title", "chapter", "section", "printed_title") if locale == "en" else ()
     fields = tuple(
         field for field in IDENTITY_FIELDS
         if field not in translated_fields

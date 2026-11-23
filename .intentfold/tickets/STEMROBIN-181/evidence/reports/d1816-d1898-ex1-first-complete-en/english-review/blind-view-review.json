@@ -1,0 +1,147 @@
+{
+  "schema": "s10y-independent-blind-view-review-v1",
+  "reviewer_id": "codex-independent-en-reviewer-d1816-d1894",
+  "reviewer_role": "independent_agent",
+  "is_author": false,
+  "stage": "view-first-key-blind",
+  "sealed": true,
+  "prepared_at_utc": "2026-11-23T05:48:18.460Z",
+  "source_freeze_sha256": "b3344dcc76f8e30985008a498f03ffc5e138be5f7e3d8a31e39f981abaf148b3",
+  "source_freeze_observed_at_utc": "2026-11-23T05:48:02.672Z",
+  "views_raw_sha256": "42ab55f1e1985edebcce47dd95703504b037095731ac79ac96242bf3fb19c3c5",
+  "views_canonical_sha256": "0460ea105558068df3aa42309b2b6350ce3c64e79fb0babd5eb75baee336e413",
+  "unread_at_freeze": ["draft.json", "all answer keys", "author reports", "historical reviews", "canonical English lesson and exercise internals"],
+  "reviews": [
+    {
+      "view_index": 0,
+      "source_number": "1",
+      "mode": "single",
+      "independent_correct_option_ids": ["a"],
+      "fidelity": "Same oil volume 1 mm^3, water surface, area upper bound 3 m^2 and particle-size estimation. Asking for a model and conclusion preserves the source inference while exposing its necessary monolayer assumption.",
+      "redundancy": "a and d deliberately share the same valid model but give different lengths; they are not equivalent. b claims an exact model-free diameter; c claims multilayer thickness equals particle diameter.",
+      "leakage": "The stem supplies neither V/A nor the correct thickness nor the monolayer conclusion. a and d have identical conditional wording, so that style cannot select a.",
+      "option_reviews": [
+        {"option_id": "a", "truth": true, "reasoning": "1 mm^3 = 1e-9 m^3; at A near 3 m^2, t = V/A near 3.333e-10 m. A uniform single-particle layer justifies estimating the particle dimension along the thickness. Conditional and approximate, not a uniquely known spherical diameter."},
+        {"option_id": "b", "truth": false, "reasoning": "A <= 3 only implies film t >= 3.333e-10 m for a uniform film. It does not uniquely fix every particle diameter without specifying packing and number of layers; 3.33e-10 is not an exact value."},
+        {"option_id": "c", "truth": false, "reasoning": "In a uniform k-layer idealization, t is about k times the particle thickness, not the size of one particle for k > 1. Thus the multilayer premise invalidates the conclusion."},
+        {"option_id": "d", "truth": false, "reasoning": "Same acceptable monolayer model as a, but 3.33e-7 m is 1000 times V/A; the cubic millimetre conversion is wrong."}
+      ],
+      "limitations": "Monolayer approximation is explicit; numerical precision is an estimate, not a measurement."
+    },
+    {
+      "view_index": 1,
+      "source_number": "2",
+      "mode": "multiple",
+      "independent_correct_option_ids": ["a", "d"],
+      "fidelity": "Both original gas molecular weights are tested together. Diatomic identity and relative atomic masses are supplied as background scaffolding; this reduces recall, but still requires both molecular sums.",
+      "redundancy": "Two hydrogen claims (2 versus 1) and two nitrogen claims (14 versus 28) test different subjects and truth values. No duplicate propositions.",
+      "leakage": "The stem states atomic masses 1 and 14, not molecular masses 2 and 28. Doubling for two atoms remains required; it does not identify the full set.",
+      "option_reviews": [
+        {"option_id": "a", "truth": true, "reasoning": "Mr(H2) = 2*Ar(H) = 2*1 = 2, dimensionless."},
+        {"option_id": "b", "truth": false, "reasoning": "14 is Ar(N), whereas Mr(N2) = 2*14 = 28."},
+        {"option_id": "c", "truth": false, "reasoning": "1 is Ar(H), whereas Mr(H2) = 2."},
+        {"option_id": "d", "truth": true, "reasoning": "Mr(N2) = 2*Ar(N) = 28, dimensionless."}
+      ],
+      "limitations": "This view does not independently test recalling diatomic gas formulae or atomic masses."
+    },
+    {
+      "view_index": 2,
+      "source_number": "3",
+      "mode": "single",
+      "independent_correct_option_ids": ["c"],
+      "fidelity": "Retains 1 g water and requested amount in moles. Supplying 18 g/mol scaffolds the original calculation, but removes recall of the water molar mass.",
+      "redundancy": "18, 1000/18, 1/18 and 1/18000 mol are distinct amounts.",
+      "leakage": "The given molar mass is not the result. All options use mol units; division and consistent mass units still select the answer.",
+      "option_reviews": [
+        {"option_id": "a", "truth": false, "reasoning": "n = 1/18 mol, not 18 mol. Multiplying by molar mass or inverting the quotient does not compute amount."},
+        {"option_id": "b", "truth": false, "reasoning": "1000/18 = 55.56 mol is 1000 times too high for 1 g; 18 g/mol already matches the input mass unit."},
+        {"option_id": "c", "truth": true, "reasoning": "n = m/M = (1 g)/(18 g/mol) = 1/18 mol = 0.05556 mol."},
+        {"option_id": "d", "truth": false, "reasoning": "1/18000 = 5.556e-5 mol is 1000 times too low; it mixes a kilogram-converted mass with an unconverted g/mol molar mass."}
+      ],
+      "limitations": "H2O-to-18-g/mol recall is supplied, not assessed."
+    },
+    {
+      "view_index": 3,
+      "source_number": "4",
+      "mode": "single",
+      "independent_correct_option_ids": ["b"],
+      "fidelity": "Retains 10 g oxygen and a molecule count, clarifies ordinary oxygen gas, and supplies M = 32 g/mol and NA. Core m/M times NA remains.",
+      "redundancy": "All four counts are distinct; a is the atomic-count confusion, c a factor-1000 conversion error, and d omits molar-mass division.",
+      "leakage": "No value of m/M or molecule count is stated. Supplying 32 g/mol avoids requiring O2 formula recall but does not answer the calculation.",
+      "option_reviews": [
+        {"option_id": "a", "truth": false, "reasoning": "(10/16)*6.02e23 = 3.7625e23 counts oxygen atoms, not O2 molecules; each molecule has two atoms."},
+        {"option_id": "b", "truth": true, "reasoning": "(10/32)*6.02e23 = 1.88125e23, rounding to 1.88e23 molecules."},
+        {"option_id": "c", "truth": false, "reasoning": "1.88e26 is 1000 times the correct count, consistent with mixing g and kg units."},
+        {"option_id": "d", "truth": false, "reasoning": "10*6.02e23 = 6.02e24 omits division by 32 g/mol; grams alone are not moles."}
+      ],
+      "limitations": "Approximate school calculation; three-digit output need not imply metrological accuracy."
+    },
+    {
+      "view_index": 4,
+      "source_number": "5",
+      "mode": "single",
+      "independent_correct_option_ids": ["d"],
+      "fidelity": "Retains nitrogen molar mass 0.028 kg/mol and mass of one molecule, adding only NA and approximate wording.",
+      "redundancy": "Three negative-exponent candidates differ by factors of 1000; the large positive-exponent value tests multiplication instead of division.",
+      "leakage": "Neither M/NA nor the exponent of the result appears in the stem. All options use kg.",
+      "option_reviews": [
+        {"option_id": "a", "truth": false, "reasoning": "4.65e-23 kg is 1000 times too large; 28 g/mol cannot be inserted as 28 kg/mol."},
+        {"option_id": "b", "truth": false, "reasoning": "0.028*6.02e23 = 1.6856e22, but multiplication has units kg/mol^2 and is not the mass per molecule."},
+        {"option_id": "c", "truth": false, "reasoning": "4.65e-29 kg is 1000 times too small; 0.028 kg/mol is already in the required mass unit."},
+        {"option_id": "d", "truth": true, "reasoning": "(0.028 kg/mol)/(6.02e23 mol^-1) = 4.65116e-26 kg, approximately 4.65e-26 kg; 4.7e-26 would be the two-significant-figure presentation."}
+      ],
+      "limitations": "Candidate approximation carries a guard digit beyond the two significant digits in 0.028; not an exactness claim or a key ambiguity."
+    },
+    {
+      "view_index": 5,
+      "source_number": "6",
+      "mode": "single",
+      "independent_correct_option_ids": ["a"],
+      "fidelity": "Preserves smooth clean cut lead surfaces, pressing, adhesion and the why task. Room temperature, slow hand pressure and no heating constrain the ordinary demonstration; they do not assert the attraction mechanism.",
+      "redundancy": "Attraction, repulsion, stopped thermal motion and melting are four distinct proposed causes.",
+      "leakage": "Stem names interactions, not attraction. a and b share the same close-contact wording, so the correct force direction must be understood. No heating makes d less plausible, but is a physical boundary condition rather than a disclosed correct explanation.",
+      "option_reviews": [
+        {"option_id": "a", "truth": true, "reasoning": "Clean smooth close contact permits cohesive interatomic attraction across the interface. In lead, particles are atoms in a metallic solid, not discrete lead molecules."},
+        {"option_id": "b", "truth": false, "reasoning": "Short-range repulsion resists excessive compression; it does not bind the two surfaces or explain adhesion."},
+        {"option_id": "c", "truth": false, "reasoning": "Slow hand pressure at room temperature does not stop thermal motion, and stationary particles are not an adhesion mechanism."},
+        {"option_id": "d", "truth": false, "reasoning": "Slow hand pressure without heating at room temperature does not melt lead. The stated adhesion does not require a melt-solidification process."}
+      ],
+      "limitations": "Substantive text assessment only; no experiment or display observed."
+    },
+    {
+      "view_index": 6,
+      "source_number": "7",
+      "mode": "single",
+      "independent_correct_option_ids": ["c"],
+      "fidelity": "Retains 1 m^3 copper, M = 0.0635 kg/mol, rho = 9000 kg/m^3, and atom count. NA is supplied as background constant.",
+      "redundancy": "a and b are opposite factor-1000 errors; d uses molar-mass multiplication. None equals c within rounding.",
+      "leakage": "No intermediate mass, mole count, formula or atom count is supplied; combining density, volume, molar mass and NA is still required.",
+      "option_reviews": [
+        {"option_id": "a", "truth": false, "reasoning": "8.53e25 is 1000 times too small, as if 9000 kg were treated as 9000 g with 63.5 g/mol."},
+        {"option_id": "b", "truth": false, "reasoning": "8.53e31 is 1000 times too large, as if 9e6 g were divided by unconverted 0.0635 kg/mol."},
+        {"option_id": "c", "truth": true, "reasoning": "m = 9000*1 = 9000 kg; N = (9000/0.0635)*6.02e23 = 8.532283e28, approximately 8.53e28 atoms."},
+        {"option_id": "d", "truth": false, "reasoning": "9000*0.0635*6.02e23 = 3.44043e26, but multiplying by M instead of dividing is dimensionally wrong and does not compute an atom count."}
+      ],
+      "limitations": "Three-digit numerical approximation from rounded textbook inputs; no precision guarantee."
+    },
+    {
+      "view_index": 7,
+      "source_number": "8",
+      "mode": "single",
+      "independent_correct_option_ids": ["b"],
+      "fidelity": "Retains 3500 kg/m^3 diamond, 1e22 atoms, and requested volume. Carbon molar mass and NA are supplied; the carbon identity/constant recall is scaffolded.",
+      "redundancy": "a is numerically the sample mass relabelled as volume, c a gram/kilogram error, d numerically the amount relabelled as volume. Four distinct results.",
+      "leakage": "The stem gives constants, not N/NA, mass, or volume. The full atoms-to-moles-to-mass-to-volume chain remains required.",
+      "option_reviews": [
+        {"option_id": "a", "truth": false, "reasoning": "(1e22/6.02e23)*0.012 = 1.993355e-4 kg is the sample mass, not a volume in m^3; division by rho is missing."},
+        {"option_id": "b", "truth": true, "reasoning": "M = 12 g/mol = 0.012 kg/mol. V = (1e22/6.02e23)*0.012/3500 = 5.695301e-8 m^3, approximately 5.7e-8 m^3 = 0.057 cm^3."},
+        {"option_id": "c", "truth": false, "reasoning": "Using 12 rather than 0.012 with SI density yields 5.695301e-5 m^3, 1000 times too large."},
+        {"option_id": "d", "truth": false, "reasoning": "1e22/6.02e23 = 0.0166113 mol is an amount of substance, not m^3. Multiplication by carbon molar mass and division by density are missing."}
+      ],
+      "limitations": "The explicit carbon constant means carbon identity recall is not separately assessed; diamond atom language denotes carbon atoms in a network."
+    }
+  ],
+  "counts": {"source_problems": 8, "choice_views": 8, "single_choice_views": 7, "multiple_choice_views": 1, "options_checked": 32, "true_options": 9, "false_options": 23, "image_opens": 0},
+  "blind_status": "PASS",
+  "limitations": ["No draft keys or internals read.", "No rendered display or accessibility assessment.", "Scaffolding reduces background-constant/formula recall in views 2, 3, 4 and 8 without removing their requested calculations."]
+}

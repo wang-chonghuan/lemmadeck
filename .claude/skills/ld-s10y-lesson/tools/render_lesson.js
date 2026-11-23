@@ -249,7 +249,7 @@ for (const lid of lessonDirs) {
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
   const english = L.locale === "en";
   const title = english ? L.title : (L.printed_title || L.title);
-  const crumb = [metadataLabel(L.chapter, english, true), metadataLabel(L.section, english),
+  const crumb = [metadataLabel(L.chapter, english, true), metadataLabel(L.section, english, true),
     `${english ? "Printed page" : "印刷页"} ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
 
