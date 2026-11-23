@@ -446,6 +446,30 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     return 0
 
 
+def _math_layout_parts(expression: str) -> list[str]:
+    """Compare a three-row vertical layout to its unchanged source rows."""
+    array = re.fullmatch(
+        r"\\begin\{array\}\{(r{1,2})\}(.+)\\end\{array\}",
+        expression.strip(),
+        re.S,
+    )
+    if array is None:
+        return [expression]
+    rows = array.group(2).split(r"\\")
+    cells = [row.split("&") for row in rows]
+    if len(rows) != 3 or any(len(row) != len(array.group(1)) for row in cells):
+        return [expression]
+    if any(not cell.strip() for row in cells for cell in row):
+        return [expression]
+    numeral = r"(?:\\phantom\{[+\-0-9 ]+\})?\d+(?:\.\d+)?"
+    operation = r"\\underline\{[+-](?:\s|\\ )*" + numeral + r"\}"
+    for row_index, row in enumerate(cells):
+        pattern = operation if row_index == 1 else numeral
+        if any(re.fullmatch(pattern, cell.strip()) is None for cell in row):
+            return [expression]
+    return [r"\qquad".join(cell.strip() for cell in row) for row in cells]
+
+
 def math_signature(text: str) -> list[str]:
     def normalize_text_literals(expression: str) -> str:
         return MATH_TEXT_LITERAL.sub(
@@ -457,12 +481,13 @@ def math_signature(text: str) -> list[str]:
 
     signature = []
     for match in MATH.finditer(text):
-        expression = normalize_text_literals(match.group(1) or match.group(2))
-        signature.extend(
-            re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
-            for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
-            if part.strip()
-        )
+        for expression in _math_layout_parts(match.group(1) or match.group(2)):
+            expression = normalize_text_literals(expression)
+            signature.extend(
+                re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
+                for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
+                if part.strip()
+            )
     return signature
 
 

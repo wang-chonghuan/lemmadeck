@@ -1,5 +1,40 @@
 # 当前检查点
 
+### 2026-11-23 N58完整单课保存及writer提交
+
+- N58《小数的加法》`math4-c2-s2-n58`，物理213–216/印刷204–207，
+  961–975十五道书写题。源转写、独立源解及作者/现代TEXT比较PASS；
+  两现代图222及tbl-p0216-01正式review、adapt-finalize PASS。
+  967原图量角约49±1度、24.5±0.5度而非印刷精确给数；
+  原上端Q-shaped字形与正文O及现代准确平分规范化分别披露。
+  974完整4×4、六seed、九内部空白加空白corner、紧邻上左递归保留；
+  965逐秒距离澄清不改数字。全部旧HOLD、首失败和修前字节保持。
+- 选择28题（27single/1multiple）完成源盲解、盲view、内部误解推导、
+  ordering及局部padding修订独审，正式checker/retain PASS。
+  位置修订仅排列22题，反向映射内容比较PASS；q09/A末次padding
+  21.210→21.192、8.020→8.002，A仍false，B=22.065正确。
+  FIRST及REVISE快照不覆盖；最终review SHA
+  `8bcb382335628ce3b8f84e753f09fd86315709db2bb6ea8e7dca19e73132314d`。
+- 答案11auto/4ungraded/33numeric parts，独立转移及官方finalize PASS；
+  无旧键盘interactions。转移报告SHA
+  `614b61c16cd7a5cc0d312914fb8bfc35aa7a0a50ac723871d0f53f2d059c60a5`。
+  官方render正文11段、书写15题、选择28题PASS；桌面1440x960及手机390x844
+  四视图共8条显示检查及独立八截图实收PASS，Beauvoir实际8/24已关闭。
+  显示review SHA
+  `8b0c7d0c47e7ebc60c9ba4a64150989b4c74ea73077c5d6887ee73664e33c5e2`。
+  全部必需证据已留原课evidence；不重开图片或重复已通过内容阶段。
+- 最后依赖核发现HEAD缺angleRegion支持：仅合成schema/校验器角域增量及
+  六focused tests，排除source_image_path迁移辅助、renderer与其它dirty。
+  edition仅三行竖式数学签名布局及十focused tests；索引仅HEAD+N58，
+  依赖页213–216，新增四页78→82。选中版本验证及本课commit/普通push
+  正在执行，实际SHA和writer提交在成功后填写，当前不冒称push或DB发布。
+- N56已普通push实际commit `1ffca7518d19e9a28b6f80daf75b9f5a03c5e9a2`，
+  其唯一writer提交保留，不以push冒称入库。N57未完，946/218/219 HOLD
+  及纠正210/212后的现代旧绑定待刷新，未提交不完整课给writer。
+  父永久24/24、零新图；无DB/env、其它chat消息、新树/分支/定时器、
+  合并部署关闭。保存后接续N59，216只读边界及217–221缓存已备料，
+  不重跑备料、不等待writer，本检查点不是暂停或整组完成。
+
 ### 2026-11-23 N56十一题完整审查及单课保存
 
 - N56《角的度量》`math4-c2-s1-n56`，物理208–210/印刷199–201，

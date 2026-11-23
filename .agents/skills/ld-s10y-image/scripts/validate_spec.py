@@ -86,6 +86,7 @@ def assertion_point_ids(
         "pointOnCircle": ("point", "center"),
         "connects": ("from", "to"),
         "displacement": ("from", "to"),
+        "angleRegion": ("vertex", "a", "b"),
     }.get(kind, ())
     values = [assertion.get(field) for field in fields]
     if kind == "centralSymmetry":
@@ -183,6 +184,91 @@ def point_in_polygon(
                 inside = not inside
         previous = current
     return inside
+
+
+def angle_region_errors(
+    item: dict,
+    objects_by_id: dict[str, dict],
+    points: dict[str, tuple[float, float]],
+    label: str,
+    tolerance: float,
+) -> list[str]:
+    errors = []
+    region = item.get("region")
+    if not isinstance(region, str) or region not in {"minor", "reflex"}:
+        return [f"{label}.region must be minor or reflex"]
+    object_id = item.get("object")
+    obj = objects_by_id.get(object_id) if isinstance(object_id, str) else None
+    if not isinstance(obj, dict) or obj.get("type") not in {"segment", "arc"}:
+        return [f"{label}.object must reference a segment or arc"]
+    resolved = {
+        name: resolve_point(item.get(name), points, f"{label}.{name}", errors)
+        for name in ("vertex", "a", "b")
+    }
+    if any(value is None for value in resolved.values()):
+        return errors
+    vertex, a, b = (resolved[name] for name in ("vertex", "a", "b"))
+    first, second = vector(vertex, a), vector(vertex, b)
+    lengths = math.hypot(*first), math.hypot(*second)
+    if min(lengths) <= tolerance:
+        return [f"{label}: angle rays must be nonzero"]
+    first = tuple(value / lengths[0] for value in first)
+    second = tuple(value / lengths[1] for value in second)
+    turn = cross(first, second)
+    if abs(turn) <= 1e-12:
+        return [f"{label}: angle rays must define distinct non-straight regions"]
+    if obj["type"] == "segment":
+        if region != "minor":
+            return [f"{label}: segment containment requires a minor region"]
+        endpoints = [
+            resolve_point(obj.get(name), points, f"{label}.object.{name}", errors)
+            for name in ("from", "to")
+        ]
+        if any(value is None for value in endpoints):
+            return errors
+        if distance(*endpoints) <= tolerance:
+            return [f"{label}: contained segment must be nonzero"]
+        if turn < 0:
+            first, second = second, first
+        # A non-reflex wedge is convex; checking both ends covers the whole segment.
+        for endpoint in endpoints:
+            offset = vector(vertex, endpoint)
+            if (
+                cross(first, offset) < -tolerance
+                or cross(offset, second) < -tolerance
+            ):
+                errors.append(f"{label}: segment leaves the minor angle region")
+                break
+        return errors
+
+    arc_points = {
+        name: resolve_point(obj.get(name), points, f"{label}.object.{name}", errors)
+        for name in ("center", "start", "end")
+    }
+    if any(value is None for value in arc_points.values()):
+        return errors
+    center, start, end = (arc_points[name] for name in ("center", "start", "end"))
+    if distance(center, vertex) > tolerance:
+        errors.append(f"{label}: selector center must be the angle vertex")
+    radii = distance(center, start), distance(center, end)
+    if min(radii) <= tolerance or abs(radii[0] - radii[1]) > tolerance:
+        errors.append(f"{label}: selector endpoints must share a nonzero radius")
+    if point_to_segment_distance(start, vertex, a) > tolerance:
+        errors.append(f"{label}: selector start must attach to the first drawn ray")
+    if point_to_segment_distance(end, vertex, b) > tolerance:
+        errors.append(f"{label}: selector end must attach to the second drawn ray")
+    start_angle = math.atan2(start[1] - center[1], start[0] - center[0])
+    end_angle = math.atan2(end[1] - center[1], end[0] - center[0])
+    # The renderer's arc object runs counterclockwise from start to end.
+    sweep = (end_angle - start_angle) % math.tau
+    expected_reflex = region == "reflex"
+    if (
+        sweep <= 1e-12
+        or abs(sweep - math.pi) <= 1e-12
+        or (sweep > math.pi) != expected_reflex
+    ):
+        errors.append(f"{label}: selector does not take the {region} angle route")
+    return errors
 
 
 def relation_membership_errors(
@@ -570,6 +656,11 @@ def assertion_errors(
         tolerance = item.get("tolerance", 1e-6)
         if not finite_number(tolerance) or tolerance < 0:
             errors.append(f"{label}.tolerance must be a nonnegative number")
+            continue
+        if kind == "angleRegion":
+            errors += angle_region_errors(
+                item, objects_by_id, points, label, tolerance
+            )
             continue
         if kind == "objectCount":
             object_type = item.get("objectType")
