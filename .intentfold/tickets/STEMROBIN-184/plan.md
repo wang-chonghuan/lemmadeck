@@ -216,6 +216,40 @@ table spacing, scaled full-frame and scrolled-tail limits. Heisenberg actually
 closed after8total image opens once each; parent new model image opens0.
 N15 complete offline at finish=review, ready for scoped commit/ordinary push.
 No unchanged app/keyboard regression, publication, queue credit or packaging replay.
+N15 scoped committed and ordinary pushed as48187c970; staged whitespace PASS.
+Exactly one existing writerQueue entry added; this run complete lessons4to5.
+Only84owned files saved, raw index57to61; unrelated initial dirt preserved.
+No metadata-only second commit, producer DB write or supervisor/peer message.
+Continue N18 from unchanged reviewed70 and missing71 without writer waiting.
+N16 historical64 source-subscript ambiguity remains HOLD; N17 is already retained.
+Source71 historicalMarkdown only, no native approval; recover/prepare/review once.
+N18 source71 prepared once, exact PNG hash matches historical draft. Original
+historical draft and unchanged70triple recovered; only N18 source70 text projected
+for fresh independent source-first reviewer. First native71 FAIL25/23,11blocks,
+zero figures/normalizations; first triple retained. No body/count/exclusion edit,
+source approval, dependent modern stage, complete credit or DB write.
+
+N18 completed offline at finish=review. Source71 affected native PASS23/23;
+two independently inspected scan-artifact boxes only, seven literal stops
+restored, formula/body rows and original pixels unchanged. Original FAIL25/23
+and source-first uncertainty retained; G01/G02 resolved by bound crops as n.
+One scoped70–71 assembly PASS: N18 closed5prose/0ex/0fig; partial N19/x1 not
+promoted. First modern formula-order failure retained; original formula
+appearance order restored without changing formulas or validator. Modern
+finalize PASS;5objects become11paragraphs with3flow anchors at1/5/9.
+Independent math/source/scope PASS; required historical-entity declarations
+for Germany/Cantor added as the only subsequent metadata correction, affected
+PASS. Raw70 unchanged; nondegenerate interval and canonical-fraction convention
+clarified only in modern prose. Empty official answers/interactions finalized
+ready0; no exercise, choice or figure task invented.
+One complete headed desktop/mobile display PASS5coverage captures/2empty-view
+clicks,11paragraphs/3matched breaks,zero page/formula faults and matched fonts.
+All10math ports at each width measured end0/reachable; independent pixel PASS
+with explicit offline/device/minimum-glyph-size limits. Metadata-only correction
+does not invalidate the unchanged HTML/captures. Poincare closed at5images,
+Carver closed at5images; parent new model images0.13owned source/base files
+promoted, canonical70 and partial N19/x1 untouched. Ready for scoped commit and
+ordinary push; no queue credit, producer DB write or packaging replay yet.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
