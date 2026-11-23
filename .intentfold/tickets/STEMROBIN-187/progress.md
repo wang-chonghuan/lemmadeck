@@ -1,5 +1,51 @@
 # 当前检查点
 
+### 2026-11-23 N60完整单课保存及writer提交
+
+- N60《数的四舍五入》`math4-c2-s2-n60`离线全部收口，物理221–224/
+  印刷212–215，1009–1019共11题、18显示正文段、两原书图224/225。
+  222/223/224页finalize实际24/24、25/25、22/22 PASS；
+  221仅获准移动N60断行标记，finalize23/23、normalizations0 PASS，
+  原md/json/audit/FIRST bindings及其它页/N59不变证明均保留。
+  224的N61“写成：”及图VII引用仅边界，不计完整下一课。
+- modern adapt-finalize实际PASS，10/18正文、4/11题变化；
+  原`p0222-math-1`保留，现代整数部分14的范围明确排除15。
+  两图正式独审PASS及全部必要候选/失败留`evidence/figure-author/`，
+  不重新打开源/preview或重做图。原始及现代JSON/图资产均正式保留。
+- official answer prepare/finalize实际PASS：11derived、7auto/4ungraded、
+  43numeric parts、bookRaw0。1013区域、1014和式及值、1016条件模型、
+  1018作图保留ungraded完整答案；原1016无条件唯一性HOLD未解除。
+  沿用已冻结SOURCE数学、Gibbs TEXT及43parts答案比较PASS，不重复源解。
+- 选择题14题（13single/1multiple）/58options、11源全覆盖，
+  仅concept10舍入规则、复用批准225、newfigures0。Meitner先源解后作者稿，
+  Confucius先源解/visible冻后看键，FIRST正式review实际exit3 REVISE：
+  1018未明确OC与OA反向。FIRST稿/正式审查/原双流/执行helper不改保留。
+  只改1018题干“with OC opposite OA”；13其它题/全键/数值/seed不变。
+  affected独审PASS，真集a，官方full validator实际exit0，retain_choices成功。
+  final draft canonical`03f70cd3bd77a785d6da3a5d4227b433a4b9702aab7d77e2dccccb11a2dba3dd`，
+  final reviewSHA`6dbaede1f0ecefad8d70b71eaae90b372d67b4dd5c06d3302dbcc23e64feb065`。
+  原1016条件缺口及实际作图/独立书写损失明确保留。
+- official render及完整display实际PASS：1440x960、390x844四views共8观察，
+  18正文段/11习题/14choices/58options/11answers逐项投影、表维数、
+  640px图宽/最低字体、页面不溢出、所有横向末端及末尾可达，无数学/pageerror。
+  scoped视觉八采样PASS，reviewSHA
+  `087d6065ebf29f8f44d5b81506643148d06ac87967b58c6ef7d24c593c336b8f`。
+  采样不是整文像素审查，未含表像素；全量内容/表维数复用同次DOM证据。
+  实跑driver/report/fullscreenshots/inspection/visualreview均持久保留。
+- 本课已离线完整，接着执行本课窄commit/普通push；本行尚不声称push成功，
+  实际SHA及单一writer提交将在成功后填写，不制造第二receipt-only commit。
+  retained根`ssot-resources/soviet10year-textbooks/artifacts/4m/`：
+  raw`lessons/math4-c2-s2-n60/`、source`pages/0221/`至`pages/0224/`、
+  原`figures/fig-224.{png,svg}`和`figures/fig-225.{png,svg}`；
+  modern`editions/modern-us-neutral/lessons/math4-c2-s2-n60/`含答案/choice-set/
+  FIRST/affected证据，modern`figures/fig-224.*`和`figures/fig-225.*`。
+  采用pushed snapshot，writer只依既有publisher串行本课及要求组件，
+  不读后续未提交N61、不提供未完N57、不积攒多课；发布仍待实际回执。
+- N59真实push及writer提交保持，N57原946/218/219 HOLD和其它dirty/staged保留。
+  父永久24/24零新图，所有FIRST/失败/修订计数保留，无运行exec/server、
+  DB/env、付费/依赖稳定技能改动、其它聊天消息、新树分支定时器、合并部署关闭。
+  本节不是整组完成或暂停；保存push及提交后接续N61，不等待writer。
+
 ### 2026-11-23 N59完整单课保存及writer提交
 
 - N59《小数的减法》`math4-c2-s2-n59`离线全部收口，物理216–221/
@@ -48,10 +94,21 @@
   visual-reviewSHA `c829fe27d6b5e06bf0309d75662334bda1a04b5af9af4519865ab249cc84de3d`。
   使用isolated headless Chromium离线内容证据，不声称线上/DB功能验收；
   稳定键盘未重测。实跑driver、report、完整screenshots和inspection保留。
-- 当前仅准备窄commit/普通push；真实SHA与push结果随后回写本节。
-  未提交writer，未以离线PASS冒称入库。待保存后以本课pushed commit为输入，
-  指定raw/现代lesson、图223及choice-set量角图、答案和选择题既有路径；
-  不提供未完成N57/N60，也不要求writer积攒多课。
+- 本课119owned files窄commit
+  `6b762187945f3786e04d23a42b38502cc0179953`，普通push实际exit0，
+  `04ec2cc89..6b7621879`到既有`codex/STEMROBIN-187-textbooks`。
+  两索引仅HEAD+N59，来源页217–221新增五页82→87；
+  无关工作区字节/既有编辑保留，没有稳定工具改动或第二receipt-only commit。
+  **提交唯一串行DB写入方：`math4-c2-s2-n59`，以上pushed commit为输入**。
+  保留根`ssot-resources/soviet10year-textbooks/artifacts/4m/`，raw
+  `lessons/math4-c2-s2-n59/`、来源`pages/0216/`至`pages/0221/`、
+  原`figures/fig-223.{png,svg}`；现代
+  `editions/modern-us-neutral/lessons/math4-c2-s2-n59/`含课文/习题/答案/
+  choice-set及全部审查，现代`figures/fig-223.*`与本课
+  `choice-set/figures/fig-choice-4m-992-measure.*`均为正式PASS保留资产。
+  writer只按既有publisher串行写本课和要求组件，采用pushed snapshot，
+  不读后续未提交N60工作，不提供未完成N57/N60、不积攒多课。
+  worker未DB/env操作，发布仍待真实writer回执；不以push冒称入库。
 - N58真实push/writer提交保留且将随本次窄进度保存；N57未完及946/
   218/219 HOLD不变。父永久24/24零新图，所有FIRST及其它dirty/staged保持。
   无DB/env、其它chat消息、付费、新树/分支/定时器、合并部署关闭。
