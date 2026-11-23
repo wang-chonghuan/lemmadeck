@@ -1,11 +1,96 @@
 # 当前开发状态
 
+### 182-7 2026-11-23 N35完整离线收口，立即保存
+
+- N34已完整推送`2839d35da305a8de8cb49e7cfb3a64654759137c`，见下方既有单一入库队列；
+  不等待写入方，本聊天不DB/部署/关单/主动消息，继续N35。
+- N35physical223/224来源独审PASS，26/23行、677跨页闭合、675–681完整，
+  681后第五章补充习题排除；222起始页/五行XIV表复用已PASS来源，不重开整页。
+  源比较SHA`ba24002486c426e9bcd2cea8617f99ec1be2060e7c4518e4a15f6106763024d4`。
+  原装订实际exit0，8正文/7题/1表；必要原页/原课/表与源审持久保留，
+  原reindex实际exit0，27 retained lessons，没重装订旧课。
+- 原modern prepare实际exit0；只改标点、空白和排版，原公式/数值/1978引用保留。
+  用原lesson/exercise normalizer及actual prose_flow取锚，10段/1概念边界；
+  FIRST作者前后稿和flow已0444冻结；独立文本审PASS、0缺陷/0新图，
+  SHA`5b39e13e7e8ced0ccd6dfdf44c5dcbcbc12a2b20149df22188c323da50711331`。
+  五行表作者原context/validate/render首次各exit0，6×20格、640px最小16px，
+  原图1/预览1/0重开；fresh图独审PASS，120位置/0差异，
+  SHA`991c3a856c74bd7003ee5bb69a572ac782c1e50079e7e7ceb4e1ddfeb00dba6a`；
+  原promotion/record_review实际exit0，spec/SVG未变，仅render路径重绑。
+  FIRST modern finalize实际exit2，西里尔缩写/五题标号和历史实体声明失败；
+  原作者/失败audit保留，只改V. M.缩写、真实伯拉基斯/苏联/莫斯科声明、
+  22个行首Latin标号。1978/源字段/公式/数值不变；
+  原RECOVERY1 finalize实际exit0，5/8正文、7/7题、1图，仍10段/1边界。
+  受影响文本独审0444 PASS，SHA
+  `8b13ccee4b8e2cc2de80668671b085a70fdbb387a3960e18e2a811476577a721`。
+- 既有Bradis ZIP字节恢复成功，无新下载/开封面；2010版PDF哈希与旧身份记录一致，
+  1978等价仍UNVERIFIED。新源作者8图结束，XIV实定位物理69–71/印刷68–70，
+  100行1900格登记，1898数字串、2null及3格HOLD；全表未独审，不冒充已通过。
+  必需查表数学已从4张实图独立冻结，再首次比表作者：76/76cells PASS、0数学HOLD；
+  解SHA`e1c59ceb6da50bc3ad19b22be4a7f70e1eb327f71d42cb1bee87e468748b3c35`，
+  cells审SHA`e01c78935ea1230949eee85ff760816d157806b5d37011b7654e331367968f88`；
+  0.6057实表4.033、sqrt10分步1452保持，不改成直接求幂末位。
+  未用格仍NOT_REVIEWED，原3格HOLD不全局解除；原N35五行表独立现代化。
+  恢复PDF仅一份持久共享为`sources/references/bradis-2010-four-figure-tables.pdf`，
+  不在每课复制整份旧包、不使产品JSON依赖scratch。
+  物理92实际印刷90，不推广全书+1偏移；外部API0，父累计24不增，宿主用量UNKNOWN。
+- 标准答案作者7题/82输出/53auto parts已0444冻结；首次独审比较PASS，
+  82/82输出、53/53部件、54expected串一致，SHA
+  `7c0fc02fbc0aa8a6a875793243337426c6f434859f2358cf007635d9f97a986c`。
+  678完整25点表/作图步骤、679查表精度边界保留，两题ungraded；
+  原answer finalizer实际exit0，7ready/5auto/2ungraded，真实ComputeEngine/MathLive，
+  无bypass/废弃交互生产，不把宿主未知attempts写成0。
+- 正文/书写题原离线renderer和headedchecker实际exit0，四组合/四截图，
+  0失败/cleanup=true；fresh四张实图观察PASS，视口可见范围如实记录，
+  SHA`b4c0c92ef39d4e522392b16f888dd29855fb51282ff8e2f0e58ffb1457ccb8a0`。
+  新选择图FIRST标签碰撞失败保留，修一次后原validate/render/检查成功；
+  fresh独审1图PASS，SHA`c363227db0cd37193f415fed22a8d64888ecfb6c7beb46f5c1aecd3a981c8335`。
+  原路径提升/record_review实际exit0，四文件在本课choice-set/figures，
+  SVG`fecbc86508ce024ab84125953ec559207bb215425c0caa9a198e011a94599286`未变。
+  FIRST选择作者已冻结16题50项（15single/1multiple），先解82源输出，
+  严格响应58/82、五个固定锚/19未问及作图产出损失明示；
+  稿SHA`bce7385cf5b2a97dc159b2d62f2abb25cf7c5bb01ed6908a871b22398862bbd2`。
+  原作者checker错误调用不同主树脚本的exit0保留；当前树原checker续查实际exit0，
+  题稿未变，不把结构检查当语义PASS。
+  679新用PDF36的2,5主列0格1,581及页脚独立像素核实PASS、1新图，
+  SHA`5c074b6096d4f0bd509b7c4b779121ba1ccca003faf2e818396c16d66a3bf9c1`，
+  事先披露待核数值如实声明，不伪称盲源解，不解除全表/1978等价HOLD。
+  只接已披露2010替代源路线；RECOVERY1仅三处来源说明，view/keys同字节，
+  最终稿SHA`500b45e425500a2e592691b79925d8479ae51d8514e09a33d1558408c43eccc7`。
+  审者先看纯view/50项，盲view已冻结PASS，SHA
+  `e0733910a0e111df1e38a7284d837967ce65cc44d047436be4f4c618a5f5f28d`；
+  随后首次披露最终稿，全部50项/键及误区比较PASS，SHA
+  `44319748496873f499360efd3a52ec7a7f4ef7faa1668aeefdd84d75d8306441`。
+  canonical review SHA
+  `d4dc66d27b0208e7fe9d7c36161c7431e1134effbcb0f965a77c1c0e8970e271`；
+  当前原validator with review和retain_choices.py真实exit0，choice-set已保留。
+  原choices-only renderer、headed续查各exit0，合并六组合/八首末截图；
+  q11/q12实图未在首末区域，只补其桌面整图和手机滚动左/右三图，检查exit0。
+  fresh七张选择截图实质独审0444 PASS，SHA
+  `cee854285169ec1b498ca7c05b034d6bd8cd2301719b65905ce7a3d757276b4d`；
+  原finish-display真实exit0，完整离线显示PASS为六组合/11截图，
+  没重渲染已PASS正文/书写题，没有声称DB或产品交互验收。
+  现在保留必要证据、窄commit/普通push，再登记既有单一入库队列。
+  下一目录卡第五章补充习题physical225–231原prepare-range两次实际exit0，
+  仅备料，未转写/装订/现代化/批准。224起始源页已有全页PASS可直接复用。
+  随后225–228源作者原native finalize各实际exit0，24/22/20/23行，
+  684–711、691/699/704内部跨页，四图/零crop/零重开；707а印刷y=ca保留。
+  本卡源捕获不构成独审PASS，fig76外部引用仍须按实际依赖处理。
+  229–231作者已完成并关闭，229/230 FIRST真实exit1，作者/counter为26/25及10/11；
+  229的720还有`cases`换行后`[y]`被KaTeX误解为行高参数的编码缺陷。
+  独立源/计行复核未做，不凑行、不改audit、不装订；
+  重跑前先保存失败page.md/page.json/audit.json，原作者及回执0444保持。
+  722在230跨页闭合，723/724完整；本卡右边界724，231第六章/N36全部排除。
+  231 native-FIRST实际exit0但未批准；旧N31/N32/7a HOLD均保持。
+
 ### 182-7 2026-11-23 N34完整离线收口
 
 - N33已推送快照直接复用，不重做；唯一cwd为`lemmadeck--STEMROBIN-182`。
   N34physical218–222源忠实审PASS，5/22/9/25/18行；实际装订exit0，
   28正文、10原题665–674、五图表，N35排除；来源/原课已持久保留，
-  reindex实际exit0，26 retained lessons。本课完整离线收口，按单课SOP立即保留/commit/push。
+  reindex实际exit0，26 retained lessons。本课完整离线收口及持久保留，
+  143明确路径窄commit `2839d35da305a8de8cb49e7cfb3a64654759137c`，
+  普通push实际exit0，`04a27893d..2839d35da`，原分支未改。
 - 现代文本保持公式/数值/来源字段，实际prose_flow为21段；
   三个概念边界由工具相邻段落文本解析取得，冻结作者稿和flow已留scratch。
   Maxwell完成独立10源题/44分题/69待求量源解，SHA
@@ -49,7 +134,30 @@
 - 父累计图片24，不再开图；仅fresh有界子代理负责新图与显示观察。
   外部付费API=0，宿主用量/费用UNKNOWN；0DB/部署/关单/主动监督消息。
 
-### 182-7 单一入库队列：8a N33完整推送快照
+### 182-7 单一入库队列：8a N34/N33完整推送快照
+
+#### N34
+
+- lessonId：`alg8-c5-s2-n34`，edition：`modern-us-neutral`。
+  已推送commit：`2839d35da305a8de8cb49e7cfb3a64654759137c`，
+  原分支：`codex/STEMROBIN-182-textbooks`；
+  普通push实际exit0，`04a27893d..2839d35da`，未force/merge/换分支。
+- 保留根：`ssot-resources/soviet10year-textbooks/artifacts/8a/`；
+  现代课：`editions/modern-us-neutral/lessons/alg8-c5-s2-n34/`，
+  28正文源对象、21显示段落、10原题665–674、10ready答案（4auto/6ungraded）；
+  `choice-set/`为11题48项（10single/1multiple），无新选择图。
+  五图：`fig-81/82`、`tbl-p0217/0218/0219-01`，原页218–222、
+  原图/原课及两必要索引已随本课保存。
+- 必要来源/文本/图/答案/盲view/最终键审、FIRST失败及六组合/八张显示证据：
+  `8a/evidence/resume182-7-N34/`（位于artifacts根），无scratch运行依赖。
+  图81/82扫描精确几何HOLD仍保留，现代规整化已明确；不是像素恢复批准。
+  选择题60/69覆盖、九项遗漏及识别替代书面产出的容量损失明确保留。
+- 仅143明确路径及本轮progress段；旧325行dirty、技能、7a和N32未完组件
+  没有混入。单一写入方team-leader只接此推送快照，按原base/answers/choices
+  单课流程，不生产废弃交互、不`--all`或重发旧课。
+  本聊天0DB/部署/关单/主动消息；DB结果待写入方，不等待，继续N35。
+
+#### N33
 
 - lessonId：`alg8-c5-s2-n33`，edition：`modern-us-neutral`。
   已推送commit：`04a27893dcb265cdea27b7532a44d645a90ab933`，

@@ -1,0 +1,487 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { createRequire } from 'node:module'
+
+const cwd = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182'
+assert.equal(process.cwd(), cwd, 'Only the explicitly authorized cwd is allowed')
+const owned = path.join(cwd, '.tmp/ld-s10y-lesson/resume182-7-N35/choice-figure-author-FIRST')
+const id = 'fig-choice-n35-exponential-FIRST'
+const sourcePath = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c5-s2-n35/exercises.template.json'
+const specPath = path.join(owned, 'spec.json')
+const svgPath = path.join(owned, `${id}.svg`)
+const renderPath = path.join(owned, 'render.json')
+const previewPath = path.join(owned, 'preview-FIRST.png')
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const hashFile = file => hash(fs.readFileSync(file))
+const write = (name, value) => {
+  const file = path.join(owned, name)
+  assert.equal(path.dirname(file), owned)
+  fs.writeFileSync(file, typeof value === 'string' ? value : `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx', mode: 0o644 })
+  fs.chmodSync(file, 0o644)
+}
+const pointId = i => `sample-${String(i).padStart(2, '0')}`
+const commandLogPath = path.join(owned, 'commands-FIRST.json')
+
+function build() {
+  assert.ok(!fs.existsSync(specPath), 'Preserve the first spec; do not overwrite it')
+  const bytes = fs.readFileSync(path.join(cwd, sourcePath))
+  const template = JSON.parse(bytes.toString('utf8'))
+  const matches = template.exercises.filter(e => String(e.number) === '678')
+  assert.equal(matches.length, 1)
+  const seed = { number: String(matches[0].number), text: matches[0].text, figure_refs: matches[0].figure_refs }
+  assert.deepEqual(seed.figure_refs, [])
+  assert.ok(seed.text.includes('10^x') && seed.text.includes('0.1') && seed.text.includes('1cm'))
+  assert.ok(seed.text.includes('[-1.2,\\ 1.2]'))
+  write('source-678-FIRST.json', {
+    path: sourcePath, templateSha256: hash(bytes), projection: seed,
+    projectionSha256: hash(JSON.stringify(seed)),
+    scope: 'Only written exercise 678 text and empty figure_refs; no answers or other choice contents.',
+  })
+
+  const canvas = { width: 640, height: 960, boundingBox: [-6.4, 18, 6.4, -1.2], background: 'paper', keepAspectRatio: true }
+  const samples = Array.from({ length: 25 }, (_, i) => {
+    const x = (i - 12) / 10
+    return { id: pointId(i), type: 'point', at: [x, Math.pow(10, x)], visible: true,
+      size: i === 0 || i === 24 ? 2.2 : 1.1, face: 'o', stroke: 'ink', fill: 'ink', strokeWidth: 1 }
+  })
+  // The fallback path is analytic cubic Hermite interpolation in the renderer's
+  // source-screen coordinates, not a looked-up or answer-derived value table.
+  const screen = (x, y) => [x + 6.4, 18 - y]
+  const number = n => Number(n.toPrecision(15)).toString()
+  const pair = p => p.map(number).join(' ')
+  const commands = [`M ${pair(screen(-1.2, Math.pow(10, -1.2)))}`]
+  for (let i = 0; i < 240; i += 1) {
+    const x0 = (i - 120) / 100
+    const x1 = (i - 119) / 100
+    const h = x1 - x0
+    const y0 = Math.pow(10, x0)
+    const y1 = Math.pow(10, x1)
+    commands.push(`C ${pair(screen(x0 + h / 3, y0 + h * Math.LN10 * y0 / 3))} ${pair(screen(x1 - h / 3, y1 - h * Math.LN10 * y1 / 3))} ${pair(screen(x1, y1))}`)
+  }
+  const xTicks = samples.map((sample, i) => ({
+    at: [sample.at[0], 0], size: [2, 12, 22].includes(i) ? 0.12 : 0.045,
+    ...([2, 12, 22].includes(i) ? { label: String(sample.at[0]), fontSize: 18,
+      labelPlacement: { position: 'S', gap: 11 } } : {}),
+  }))
+  const yTicks = Array.from({ length: 16 }, (_, i) => ({
+    at: [0, i + 1], label: String(i + 1), size: 0.085, fontSize: 18,
+    labelPlacement: { position: 'W', gap: 12 },
+  }))
+  const text = (name, at, value, fontSize = 18, position = 'CENTER') => ({
+    id: name, type: 'text', at, text: value, fontSize, fontWeight: 400,
+    labelPlacement: { position },
+  })
+  const objects = [
+    { id: 'x-axis', type: 'axis', from: [-1.7, 0], to: [2, 0], stroke: 'ink', strokeWidth: 1.2, ticks: xTicks },
+    { id: 'y-axis', type: 'axis', from: [0, -0.14], to: [0, 16.4], stroke: 'ink', strokeWidth: 1.2, ticks: yTicks },
+    { id: 'x-positive-arrow', type: 'arrow', from: [1.75, 0], to: [2, 0], stroke: 'ink', strokeWidth: 1.2 },
+    { id: 'y-positive-arrow', type: 'arrow', from: [0, 16.15], to: [0, 16.4], stroke: 'ink', strokeWidth: 1.2 },
+    ...samples,
+    { id: 'function-curve', type: 'svgPath', d: commands.join(' '), stroke: 'ink', strokeWidth: 2.4 },
+    text('function-label', [0, 17.6], 'y = 10^x', 22),
+    text('domain-label', [0, 17], 'x in [-1.2, 1.2]', 18),
+    text('x-label', [2.4, 0], 'x', 20),
+    text('y-label', [-0.45, 16.4], 'y', 20),
+    text('modern-label', [2, 12.4], 'Modern graph', 16, 'E'),
+    text('definition-label', [2, 11.9], 'from the function.', 16, 'E'),
+    text('not-scan-label', [2, 11.2], 'Not a scan or', 16, 'E'),
+    text('not-table-label', [2, 10.7], 'Bradis table values.', 16, 'E'),
+    text('source-unit-label', [0, -0.9], 'Source scale: 1 unit = 1 cm on each axis.', 17),
+  ]
+  const relationships = samples.slice(1).map((sample, i) => ({
+    id: `sample-step-${String(i).padStart(2, '0')}`, type: 'displacement',
+    from: samples[i].id, to: sample.id, dx: 0.1,
+    dy: sample.at[1] - samples[i].at[1], tolerance: 1e-12,
+  }))
+  const assertions = [
+    { id: 'sampling-count-25', type: 'objectCount', objectType: 'point', count: 25 },
+    { id: 'single-function-curve', type: 'objectCount', objectType: 'svgPath', count: 1 },
+    ...relationships,
+    { id: 'closed-domain-span', type: 'displacement', from: pointId(0), to: pointId(24),
+      dx: 2.4, dy: samples[24].at[1] - samples[0].at[1], tolerance: 1e-12 },
+    { id: 'equal-axis-units', type: 'equalDistance', a: [0, 0], b: [1, 0], c: [0, 0], d: [0, 1] },
+    { id: 'x-unit-length', type: 'distance', a: [0, 0], b: [1, 0], value: 1 },
+    { id: 'y-unit-length', type: 'distance', a: [0, 0], b: [0, 1], value: 1 },
+    { id: 'axes-perpendicular', type: 'perpendicular', a: [-1.7, 0], b: [2, 0], c: [0, -0.14], d: [0, 16.4] },
+    { id: 'x-arrow-direction', type: 'connects', arrow: 'x-positive-arrow', from: [1.75, 0], to: [2, 0] },
+    { id: 'y-arrow-direction', type: 'connects', arrow: 'y-positive-arrow', from: [0, 16.15], to: [0, 16.4] },
+    { id: 'nine-meaning-labels', type: 'objectCount', objectType: 'text', count: 9 },
+  ]
+  const spec = {
+    schema: 'ld-s10y-image/figure-spec@2', id, mode: 'deterministic',
+    description: 'One unframed true exponential graph on the stated closed domain, for subsequent independently authored graph-reading or graph/table-consistency tasks. No options or answer annotations.',
+    source: {
+      authoritativeText: [{ lesson: 'alg8-c5-s2-n35', exercise: '678', text: seed.text }],
+      authoredBasis: 'New mathematical graph authored solely from written exercise 678 and the definition y=10^x, NOT a recovered source illustration. There is no original PNG. The closed domain [-1.2,1.2], 0.1 sampling step and source 1 cm per unit on both axes are written givens. All visible axes, positive arrowheads, ticks, English labels, 25 unlabeled analytic sample markers (solid closed endpoints included), no frame/no grid, equal-unit 640x960 composition, and continuous curve rendering are modern authored components, not source pixels. Coordinates are calculated by the function definition with JavaScript Math.pow, never from an answer table, Bradis four-place lookup, original artwork or source solution. One svgPath uses 240 analytic cubic Hermite intervals of width 0.01 and derivative ln(10)*10^x; authored executable checks bound its function error below 0.000002 CSS px at width 640 and verify every sample/endpoint, source-space point relationship, monotonicity, domain and actual SVG equal units of 50 px/unit. No deliberate false alternatives are supplied. The source-scale label preserves the 1 cm/unit paper instruction; CSS display does not assert a physical screen centimetre. This shared true graph is not a question answer set. A later choice author must first solve all of 678 independently and explicitly account for the loss of autonomous graph/table production. This author does not provide options, source_solution, independent review or promotion.',
+      inventory: [
+        { id: 'authored-function-and-samples', description: 'Authored analytic curve and all 25 points, from the stated function and domain; no original pixel inventory.',
+          objects: ['function-curve', ...samples.map(p => p.id)],
+          assertions: ['sampling-count-25', 'single-function-curve', ...relationships.map(a => a.id), 'closed-domain-span'],
+          requires: ['pointRelationships'] },
+        { id: 'authored-equal-unit-axes', description: 'Modern orthogonal axes, readable unit scales and positive arrows; equal unit lengths preserve the written scale, not unequal aspect scaling.',
+          objects: ['x-axis', 'y-axis', 'x-positive-arrow', 'y-positive-arrow'],
+          assertions: ['equal-axis-units', 'x-unit-length', 'y-unit-length', 'axes-perpendicular', 'x-arrow-direction', 'y-arrow-direction'] },
+        { id: 'authored-visible-statements', description: 'Modern English function/domain, axis, provenance and source-scale labels; no point values or solution commentary.',
+          objects: objects.filter(o => o.type === 'text').map(o => o.id),
+          assertions: ['nine-meaning-labels'] },
+      ],
+    },
+    canvas,
+    display: { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] },
+    objects, assertions, layout: { minLabelGap: 4 },
+  }
+  write('spec.json', spec)
+  console.log(JSON.stringify({ authored: id, sourceNumber: '678', samples: samples.length, curveIntervals: 240,
+    canvas, display: spec.display, templateSha256: hash(bytes), sourceProjectionSha256: hash(JSON.stringify(seed)), specSha256: hashFile(specPath) }, null, 2))
+}
+
+function render(suffix = 'FIRST', pngPath = previewPath) {
+  const logPath = suffix === 'FIRST' ? commandLogPath : path.join(owned, `commands-${suffix}.json`)
+  assert.ok(!fs.existsSync(logPath), 'No repeated rendering run')
+  const commands = [
+    { executable: 'python3', args: ['.agents/skills/ld-s10y-image/scripts/validate_spec.py', specPath, '--stage', 'draft', '--json'], name: `validate-${suffix}` },
+    { executable: 'node', args: ['.agents/skills/ld-s10y-image/scripts/render_spec.mjs', '--spec', specPath, '--svg', svgPath,
+      '--report', renderPath, '--png', pngPath], name: `render-${suffix}` },
+  ]
+  const results = []
+  for (const command of commands) {
+    const startedAt = new Date().toISOString()
+    const result = spawnSync(command.executable, command.args, { cwd, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
+    write(`${command.name}.stdout`, result.stdout || '')
+    write(`${command.name}.stderr`, result.stderr || '')
+    results.push({ ...command, cwd, startedAt, finishedAt: new Date().toISOString(), exitCode: result.status, signal: result.signal })
+    console.log(`${command.name} exit=${result.status}\n${result.stdout || ''}${result.stderr || ''}`)
+    if (result.status !== 0) break
+  }
+  write(path.basename(logPath), results)
+  assert.equal(results.length, 2)
+  for (const result of results) assert.equal(result.exitCode, 0)
+  for (const file of [specPath, svgPath, renderPath, pngPath]) fs.chmodSync(file, 0o644)
+}
+
+function repair() {
+  const first = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  const firstReport = JSON.parse(fs.readFileSync(renderPath, 'utf8'))
+  assert.equal(firstReport.status, 'fail')
+  assert.equal(firstReport.spec.sha256, hashFile(specPath))
+  assert.equal(firstReport.output.svg.sha256, hashFile(svgPath))
+  for (const [name, file] of [['spec-FIRST.failed.json', specPath], ['render-FIRST.failed.json', renderPath],
+    [`${id}.FIRST.failed.svg`, svgPath]]) {
+    write(name, fs.readFileSync(file, 'utf8'))
+    fs.chmodSync(path.join(owned, name), 0o444)
+  }
+  const repaired = structuredClone(first)
+  const objects = new Map(repaired.objects.map(o => [o.id, o]))
+  const changes = []
+  for (const [i, tick] of objects.get('x-axis').ticks.entries()) {
+    if ('label' in tick) {
+      changes.push({ path: `x-axis.ticks[${i}].labelPlacement.gap`, before: 11, after: 20 })
+      tick.labelPlacement.gap = 20
+    }
+  }
+  objects.get('y-axis').ticks[0].labelPlacement.gap = 22
+  changes.push({ path: 'y-axis.ticks[0].labelPlacement.gap', before: 12, after: 22 })
+  for (const [name, at] of [['domain-label', [0, 16.95]], ['y-label', [0.55, 16.3]],
+    ['definition-label', [2, 11.8]], ['not-table-label', [2, 10.6]], ['source-unit-label', [0, -0.95]]]) {
+    changes.push({ path: `${name}.at`, before: objects.get(name).at, after: at })
+    objects.get(name).at = at
+  }
+  assert.deepEqual(first.canvas, repaired.canvas)
+  assert.deepEqual(first.display, repaired.display)
+  assert.deepEqual(first.source, repaired.source)
+  assert.deepEqual(first.assertions, repaired.assertions)
+  assert.deepEqual(first.objects.filter(o => o.type === 'point' || o.type === 'svgPath'),
+    repaired.objects.filter(o => o.type === 'point' || o.type === 'svgPath'))
+  fs.writeFileSync(specPath, `${JSON.stringify(repaired, null, 2)}\n`, { mode: 0o644 })
+  fs.chmodSync(specPath, 0o644)
+  write('repair1-delta.json', {
+    role: 'AUTHOR_ONLY', reason: 'Six native FIRST label-clearance failures. Footer clearance is affected by moving the x tick labels.',
+    changes, untouched: ['source', 'canvas', 'display', 'function-curve', 'all 25 samples', 'axis lines and arrows', 'all mathematical assertions'],
+    firstSpecSha256: hashFile(path.join(owned, 'spec-FIRST.failed.json')), repairedSpecSha256: hashFile(specPath),
+    previewPreservation: 'preview-FIRST.png remains the original failed FIRST; preview-REPAIR1.png is the final repaired candidate.',
+  })
+  render('REPAIR1', path.join(owned, 'preview-REPAIR1.png'))
+}
+
+async function check() {
+  const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  const report = JSON.parse(fs.readFileSync(renderPath, 'utf8'))
+  const objects = new Map(spec.objects.map(o => [o.id, o]))
+  const samples = spec.objects.filter(o => o.type === 'point')
+  assert.equal(samples.length, 25)
+  assert.deepEqual(spec.canvas, { width: 640, height: 960, boundingBox: [-6.4, 18, 6.4, -1.2], background: 'paper', keepAspectRatio: true })
+  assert.deepEqual(spec.display, { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] })
+  assert.ok(!spec.source.image && spec.source.authoredBasis)
+  let maximumSampleError = 0
+  samples.forEach((p, i) => {
+    assert.equal(p.id, pointId(i))
+    assert.equal(p.at[0], (i - 12) / 10)
+    const error = Math.abs(p.at[1] - Math.exp(p.at[0] * Math.LN10))
+    maximumSampleError = Math.max(maximumSampleError, error)
+    assert.ok(error < 1e-12)
+    assert.equal(p.visible, true)
+    assert.equal(p.fill, 'ink')
+    assert.equal(p.face, 'o')
+    assert.ok(!p.label)
+    if (i) assert.ok(p.at[1] > samples[i - 1].at[1])
+  })
+  assert.equal(samples[0].at[0], -1.2)
+  assert.equal(samples.at(-1).at[0], 1.2)
+  assert.equal(samples[0].size, samples.at(-1).size)
+  assert.equal(spec.objects.filter(o => o.type === 'svgPath').length, 1)
+  assert.equal(spec.objects.filter(o => ['grid', 'polygon', 'image'].includes(o.type)).length, 0)
+  assert.equal(objects.get('x-axis').ticks.length, 25)
+  assert.deepEqual(objects.get('x-axis').ticks.filter(t => 'label' in t).map(t => t.label), ['-1', '0', '1'])
+  objects.get('x-axis').ticks.forEach((t, i) => assert.deepEqual(t.at, [(i - 12) / 10, 0]))
+  assert.deepEqual(objects.get('y-axis').ticks.map(t => t.label), Array.from({ length: 16 }, (_, i) => String(i + 1)))
+  objects.get('y-axis').ticks.forEach((t, i) => assert.deepEqual(t.at, [0, i + 1]))
+
+  const curve = objects.get('function-curve')
+  const tokens = curve.d.trim().split(/\s+/)
+  assert.equal(tokens.shift(), 'M')
+  let previous = [Number(tokens.shift()), Number(tokens.shift())]
+  assert.ok(Math.abs(previous[0] - 5.2) < 1e-12)
+  assert.ok(Math.abs(previous[1] - (18 - Math.exp(-1.2 * Math.LN10))) < 1e-12)
+  let maximumCurveErrorPx = 0
+  for (let i = 0; i < 240; i += 1) {
+    assert.equal(tokens.shift(), 'C')
+    const controls = Array.from({ length: 3 }, () => [Number(tokens.shift()), Number(tokens.shift())])
+    const ps = [previous, ...controls]
+    assert.ok(Math.abs(controls[2][0] - (6.4 + (i - 119) / 100)) < 1e-12)
+    for (let j = 0; j <= 8; j += 1) {
+      const t = j / 8
+      const b = [(1 - t) ** 3, 3 * t * (1 - t) ** 2, 3 * t ** 2 * (1 - t), t ** 3]
+      const screen = [0, 1].map(k => ps.reduce((sum, p, n) => sum + p[k] * b[n], 0))
+      const x = screen[0] - 6.4
+      const y = 18 - screen[1]
+      const errorPx = Math.abs(y - Math.exp(x * Math.LN10)) * 50
+      maximumCurveErrorPx = Math.max(maximumCurveErrorPx, errorPx)
+      assert.ok(errorPx < 0.000002)
+      assert.ok(x >= -1.2 - 1e-12 && x <= 1.2 + 1e-12)
+      assert.ok(y > 0)
+    }
+    previous = controls[2]
+  }
+  assert.equal(tokens.length, 0)
+  assert.ok(Math.abs(previous[0] - 7.6) < 1e-12)
+  assert.ok(Math.abs(previous[1] - (18 - Math.exp(1.2 * Math.LN10))) < 1e-12)
+  // Hermite's fourth-derivative bound covers the entire interval, not just probes.
+  const wholeCurveErrorBoundPx = Math.exp(1.2 * Math.LN10) * Math.LN10 ** 4 * 0.01 ** 4 / 384 * 50
+  assert.ok(wholeCurveErrorBoundPx < 0.000002)
+  assert.equal(report.status, 'pass')
+  assert.deepEqual(report.collisions, [])
+  assert.equal(report.spec.sha256, hashFile(specPath))
+  assert.equal(report.output.svg.sha256, hashFile(svgPath))
+  assert.equal(report.displayChecks.length, 1)
+  assert.equal(report.displayChecks[0].width, 640)
+  assert.equal(report.displayChecks[0].status, 'pass')
+  assert.ok(report.displayChecks[0].measuredMinPx >= 16)
+
+  const require = createRequire(path.join(cwd, '.agents/skills/package.json'))
+  const { chromium } = require('playwright-core')
+  const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, process.env.CHROME_PATH,
+    chromium.executablePath(), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].filter(Boolean).find(p => fs.existsSync(p))
+  assert.ok(executablePath, 'Existing local browser required; no install permitted')
+  const browser = await chromium.launch({ executablePath, headless: true })
+  let actualSvg
+  try {
+    const page = await browser.newPage({ viewport: { width: 640, height: 960 }, deviceScaleFactor: 1 })
+    await page.route('**/*', route => route.abort())
+    await page.setContent(fs.readFileSync(svgPath, 'utf8'))
+    actualSvg = await page.evaluate(({ id, samples }) => {
+      const root = document.querySelector('svg')
+      const node = name => document.getElementById(`ld-${id}_ld-${name}`)
+      const center = name => {
+        const e = node(name)
+        if (!e) throw new Error(`Missing point ${name}`)
+        const box = e.getBBox()
+        if (!['ellipse', 'circle'].includes(e.tagName)) throw new Error(`Unexpected point node ${e.tagName}`)
+        return { center: [Number(e.getAttribute('cx')), Number(e.getAttribute('cy'))],
+          bboxCenter: [box.x + box.width / 2, box.y + box.height / 2],
+          bounds: { x: box.x, y: box.y, width: box.width, height: box.height },
+          fill: e.getAttribute('fill'), stroke: e.getAttribute('stroke'), tag: e.tagName }
+      }
+      const line = name => {
+        const e = node(name)
+        if (!e) throw new Error(`Missing axis ${name}`)
+        return ['x1', 'y1', 'x2', 'y2'].map(a => Number(e.getAttribute(a)))
+      }
+      const labels = [...root.querySelectorAll('text')].map(e => ({
+        text: e.textContent, fontSize: Number(e.getAttribute('font-size')),
+        bounds: (() => { const b = e.getBBox(); return { x: b.x, y: b.y, width: b.width, height: b.height } })(),
+      }))
+      const curve = root.querySelector(`g[id$="-raw-path-layer"] path`)
+      if (!curve) throw new Error('Missing rendered continuous curve')
+      const ctm = curve.getCTM()
+      const box = curve.getBBox()
+      return { width: Number(root.getAttribute('width')), height: Number(root.getAttribute('height')),
+        xAxis: line('x-axis'), yAxis: line('y-axis'), points: samples.map(p => ({ id: p.id, ...center(p.id) })),
+        labels, path: { d: curve.getAttribute('d'), matrix: [ctm.a, ctm.b, ctm.c, ctm.d, ctm.e, ctm.f],
+          bounds: { x: box.x, y: box.y, width: box.width, height: box.height } },
+        arrowHeads: root.querySelectorAll('[data-arrowhead-for]').length }
+    }, { id, samples })
+  } finally {
+    await browser.close()
+  }
+  assert.equal(actualSvg.width, 640)
+  assert.equal(actualSvg.height, 960)
+  const xAxis = objects.get('x-axis')
+  const yAxis = objects.get('y-axis')
+  const pixelXUnit = (actualSvg.xAxis[2] - actualSvg.xAxis[0]) / (xAxis.to[0] - xAxis.from[0])
+  const pixelYUnit = (actualSvg.yAxis[1] - actualSvg.yAxis[3]) / (yAxis.to[1] - yAxis.from[1])
+  assert.ok(Math.abs(pixelXUnit - pixelYUnit) < 1e-9)
+  assert.ok(Math.abs(pixelXUnit - 50) < 1e-9)
+  assert.ok(Math.abs(actualSvg.xAxis[1] - actualSvg.xAxis[3]) < 1e-9)
+  assert.ok(Math.abs(actualSvg.yAxis[0] - actualSvg.yAxis[2]) < 1e-9)
+  actualSvg.points.forEach((p, i) => {
+    const expected = [320 + 50 * samples[i].at[0], 900 - 50 * samples[i].at[1]]
+    p.center.forEach((v, k) => assert.ok(Math.abs(v - expected[k]) < 1e-8))
+    assert.ok(p.fill !== 'none' && p.fill.includes('ink'))
+    assert.ok(p.bounds.x > 0 && p.bounds.y > 0 && p.bounds.x + p.bounds.width < 640 && p.bounds.y + p.bounds.height < 960)
+  })
+  assert.equal(actualSvg.path.d, curve.d)
+  assert.deepEqual(actualSvg.path.matrix, [50, 0, 0, 50, 0, 0])
+  assert.equal(actualSvg.arrowHeads, 2)
+  assert.ok(actualSvg.labels.every(l => l.fontSize >= 16 && l.bounds.x >= 0 && l.bounds.y >= 0 &&
+    l.bounds.x + l.bounds.width <= 640 && l.bounds.y + l.bounds.height <= 960))
+  const result = {
+    role: 'AUTHOR_ONLY', notIndependentReview: true, status: 'pass',
+    checks: { closedDomain: [-1.2, 1.2], sampleCount: 25, samplingStep: 0.1, analyticSamples: true,
+      maximumSampleError, wholeCurveErrorBoundPx, maximumCurveErrorPx, cubicIntervals: 240,
+      sourceSpaceAssertions: spec.assertions.length, pointRelationshipCoverage: 'all 25 points via 24 adjacent displacements',
+      pixelXUnit, pixelYUnit, equalUnitScales: true, actualMediaWidth: 640, minTextPx: 16,
+      completeUnclippedCurveAndEndpoints: true, noFrameNoGrid: true, noPointValueLabels: true },
+    hashes: { spec: hashFile(specPath), svg: hashFile(svgPath), render: hashFile(renderPath),
+      previewFirst: hashFile(previewPath), previewFinal: hashFile(path.join(owned, 'preview-REPAIR1.png')) },
+    actualSvg,
+  }
+  write('author-checks-FIRST.json', result)
+  console.log(JSON.stringify({ role: result.role, status: result.status, checks: result.checks, hashes: result.hashes }, null, 2))
+}
+
+function seal() {
+  const checks = JSON.parse(fs.readFileSync(path.join(owned, 'author-checks-FIRST.json'), 'utf8'))
+  const source = JSON.parse(fs.readFileSync(path.join(owned, 'source-678-FIRST.json'), 'utf8'))
+  const currentSourceBytes = fs.readFileSync(path.join(cwd, sourcePath))
+  const currentMatches = JSON.parse(currentSourceBytes.toString('utf8')).exercises.filter(e => String(e.number) === '678')
+  assert.equal(currentMatches.length, 1)
+  const currentSeed = { number: String(currentMatches[0].number), text: currentMatches[0].text, figure_refs: currentMatches[0].figure_refs }
+  assert.equal(hash(JSON.stringify(currentSeed)), source.projectionSha256)
+  assert.equal(checks.role, 'AUTHOR_ONLY')
+  assert.equal(checks.notIndependentReview, true)
+  assert.equal(checks.status, 'pass')
+  const finalPng = path.join(owned, 'preview-REPAIR1.png')
+  for (const [key, file] of [['spec', specPath], ['svg', svgPath], ['render', renderPath],
+    ['previewFirst', previewPath], ['previewFinal', finalPng]]) assert.equal(checks.hashes[key], hashFile(file))
+  const curveBounds = checks.actualSvg.path.bounds
+  const strokeMarginPx = 1.2
+  const completeCurveBoundsPx = {
+    left: curveBounds.x * 50, top: curveBounds.y * 50,
+    right: (curveBounds.x + curveBounds.width) * 50, bottom: (curveBounds.y + curveBounds.height) * 50,
+  }
+  assert.ok(completeCurveBoundsPx.left > strokeMarginPx && completeCurveBoundsPx.top > strokeMarginPx)
+  assert.ok(completeCurveBoundsPx.right < 640 - strokeMarginPx && completeCurveBoundsPx.bottom < 960 - strokeMarginPx)
+  for (const file of [specPath, svgPath, renderPath]) fs.chmodSync(file, 0o644)
+  fs.chmodSync(previewPath, 0o444)
+  fs.chmodSync(path.join(owned, 'author-FIRST.mjs'), 0o644)
+  const toolPaths = [
+    '.agents/skills/ld-s10y-image/SKILL.md',
+    '.agents/skills/ld-s10y-image/references/figure-spec.md',
+    '.agents/skills/ld-s10y-image/references/routing.md',
+    '.agents/skills/ld-s10y-choice/references/authoring.md',
+    '.agents/skills/ld-s10y-image/assets/figure-spec.schema.json',
+    '.agents/skills/ld-s10y-image/scripts/validate_spec.py',
+    '.agents/skills/ld-s10y-image/scripts/render_spec.mjs',
+    '.agents/skills/ld-s10y-image/scripts/materialize_arrowheads.mjs',
+  ]
+  const retainedFiles = fs.readdirSync(owned).sort().map(name => {
+    const file = path.join(owned, name)
+    assert.ok(fs.statSync(file).isFile(), 'Only owned evidence files are retained')
+    return { name, path: file, bytes: fs.statSync(file).size,
+      mode: (fs.statSync(file).mode & 0o777).toString(8).padStart(4, '0'), sha256: hashFile(file) }
+  })
+  const record = {
+    schema: 'ld-s10y-image/author-only-record@1',
+    role: 'AUTHOR_ONLY',
+    authorStatus: 'READY_FOR_ONE_INDEPENDENT_REVIEW',
+    independentReview: { status: 'NOT_PERFORMED', independentPassRecorded: false, promotionPerformed: false },
+    figureId: id,
+    cwd, ownedWriteRange: `${owned}/`,
+    source: { writtenExercise: '678', lesson: 'alg8-c5-s2-n35', book: '8a', edition: 'modern-us-neutral',
+      path: path.join(cwd, sourcePath), firstTemplateSha256: source.templateSha256,
+      currentTemplateSha256: hash(currentSourceBytes), selectedProjectionSha256: source.projectionSha256,
+      selectedProseUnchangedAtClosure: true, originalImage: null, sourceImageInventoryFabricated: false },
+    sourceReadBoundary: 'Only the written modern-template seed 678 (number, text, empty figure_refs) is projected. No answer keys, other choice contents, Poincare source solution/math review or Euler author answers were opened. File discovery exposed unrelated filenames only, no file/image contents.',
+    sideEffects: { network: 0, database: 0, git: 0, modelApis: 0, dependencyInstalls: 0, newAgents: 0,
+      otherChatsOpenedOrMessaged: 0, productChoiceSetWrites: 0, sourceLessonRegistryWrites: 0, rollbacks: 0 },
+    mathematicalRange: { function: 'y=10^x', closedDomain: [-1.2, 1.2], samplingStep: 0.1,
+      samplingCount: 25, sourceUnitLengthCm: 1, sameUnitScaleBothAxes: true, canvas: [640, 960],
+      display: { layout: 'scroll', purpose: 'instructional', widths: [640], measuredMinTextPx: 16 },
+      authoredChecks: checks.checks, completeCurveBoundsPx },
+    executableToolResults: {
+      build: { executable: 'node', args: [path.join(owned, 'author-FIRST.mjs'), 'build'], cwd, observedExitCode: 0,
+        evidence: 'source-678-FIRST.json and spec-FIRST.failed.json', firstSpecSha256: '4695cccbbd8e8619d33d8ce4e474d4e88e24daff80ca93fdd1fe345ef577191d' },
+      firstNative: JSON.parse(fs.readFileSync(commandLogPath, 'utf8')),
+      affectedRepairNative: JSON.parse(fs.readFileSync(path.join(owned, 'commands-REPAIR1.json'), 'utf8')),
+      firstAuthorCheck: JSON.parse(fs.readFileSync(path.join(owned, 'author-check-command-FIRST.json'), 'utf8')),
+      recoveredAuthorCheck: JSON.parse(fs.readFileSync(path.join(owned, 'author-check-command-RECOVERY1.json'), 'utf8')),
+    },
+    failuresAndRepairs: [
+      { stage: 'render-FIRST', exitCode: 2, retained: ['spec-FIRST.failed.json', 'render-FIRST.failed.json', `${id}.FIRST.failed.svg`, 'preview-FIRST.png', 'render-FIRST.stdout', 'render-FIRST.stderr'],
+        cause: 'Six label clearance failures; min text and source-space assertions already passed.',
+        repair: 'One affected-only label-spacing repair; source, curve, all samples, mathematical axes, canvas, display and assertions unchanged. See repair1-delta.json.' },
+      { stage: 'author-check-FIRST', exitCode: 1, retained: ['author-check-FIRST.stdout', 'author-check-FIRST.stderr', 'author-check-command-FIRST.json'],
+        cause: 'SVG getBBox float32 centre differed from exact ellipse coordinates by about 0.00002 px.',
+        repair: 'Checker uses original rendered ellipse cx/cy attributes; bbox remains the clipping check. RECOVERY1 exit 0, no image or spec change.' },
+    ],
+    imageLedger: { initialContextImages: 0, newPreviewsCreated: 2, previewsOpenedInCurrentContext: 2,
+      currentBatchImages: 2, currentContextImages: 2, batchLimitExclusive: 8, contextLimit: 24,
+      repairCountRetained: 1, finalPreview: finalPng, firstFailurePreview: previewPath,
+      sourceImagesOpened: 0, crops: 0, reopens: 0, parentImagePayloads: 0,
+      entries: [
+        { path: previewPath, attempt: 'FIRST', nativeStatus: 'fail', viewed: true, sha256: checks.hashes.previewFirst },
+        { path: finalPng, attempt: 'REPAIR1', nativeStatus: 'pass', viewed: true, sha256: checks.hashes.previewFinal },
+      ] },
+    authorVisualObservation: 'Full 640x960 repaired preview viewed exactly once by this author. One unframed narrow exponential curve spans both solid closed-domain endpoints. All 25 unannotated sample markers are on the analytic curve; the negative endpoint is very near but visibly above the x axis as equal units require. Positive arrows, x ticks -1/0/1 with minor ticks, y integer labels 1 through 16, exact source-function/domain text and short modern/non-Bradis/source-scale labels are legible without collisions. There are no options, point-value labels or solution comments. This is an author observation, not independent review.',
+    finalBinding: { spec: specPath, svg: svgPath, render: renderPath, preview: finalPng,
+      authorChecks: path.join(owned, 'author-checks-FIRST.json'), hashes: checks.hashes,
+      requiredPreviewFirstIsPreservedFailure: true },
+    parentHandoff: 'Arrange exactly one independent figure review of the final SVG and preview-REPAIR1.png against the bound spec, authoredBasis, source-678-FIRST.json and executable evidence. Retain these exact paths and hashes. Do not review/promote the preserved failed FIRST by mistake. No independent pass is claimed here. Later choice author independently solves 678 and declares loss of autonomous graph/table construction; this author supplied no options or source_solution.',
+    tools: toolPaths.map(p => ({ path: path.join(cwd, p), sha256: hashFile(path.join(cwd, p)) })),
+    retainedFiles,
+    sealedAt: new Date().toISOString(),
+  }
+  write('author-FIRST.record', record)
+  const recordPath = path.join(owned, 'author-FIRST.record')
+  fs.chmodSync(recordPath, 0o444)
+  console.log(JSON.stringify({ role: record.role, authorStatus: record.authorStatus, independentReview: record.independentReview,
+    record: recordPath, recordMode: '0444', recordSha256: hashFile(recordPath), finalBinding: record.finalBinding,
+    imageLedger: { fresh: 0, created: 2, viewed: 2, context: 2, parentPayload: 0 },
+    completeCurveBoundsPx, workModes: ['spec.json', `${id}.svg`, 'render.json'].map(name => ({
+      name, mode: (fs.statSync(path.join(owned, name)).mode & 0o777).toString(8).padStart(4, '0'),
+    })) }, null, 2))
+}
+
+const action = process.argv[2]
+if (action === 'build') build()
+else if (action === 'render') render()
+else if (action === 'repair1') repair()
+else if (action === 'check') await check()
+else if (action === 'seal') seal()
+else if (action === 'check-run') {
+  const suffix = process.argv[3] || 'FIRST'
+  assert.ok(['FIRST', 'RECOVERY1'].includes(suffix))
+  const executable = 'node'
+  const args = [path.join(owned, 'author-FIRST.mjs'), 'check']
+  const startedAt = new Date().toISOString()
+  const result = spawnSync(executable, args, { cwd, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
+  write(`author-check-${suffix}.stdout`, result.stdout || '')
+  write(`author-check-${suffix}.stderr`, result.stderr || '')
+  write(`author-check-command-${suffix}.json`, { executable, args, cwd, startedAt,
+    finishedAt: new Date().toISOString(), exitCode: result.status, signal: result.signal })
+  console.log(`author-check-${suffix} exit=${result.status}\n${result.stdout || ''}${result.stderr || ''}`)
+  assert.equal(result.status, 0)
+} else throw new Error('Use build, render, repair1, check, check-run or seal; no review/promote action exists')

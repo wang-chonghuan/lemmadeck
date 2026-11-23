@@ -1,0 +1,121 @@
+"""Assemble only N35 after independent source review."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sys
+
+REPO = Path("/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import assemble as A
+
+BASE = REPO / ".tmp/ld-s10y-lesson/resume182-7-N35"
+RAW = BASE / "raw-FIRST/8a"
+STAGE = BASE / "assembly-FIRST"
+BOOK = STAGE / "artifacts/8a"
+ID = "alg8-c5-s2-n35"
+assert not BOOK.exists(), "Preserve earlier attempts"
+review = BASE / "source-review-FIRST/source-comparison.record"
+assert review.is_file(), "Independent source review required"
+assert json.loads(review.read_bytes())["status"] == "pass"
+
+
+def binding(path):
+    return {
+        "path": str(path.relative_to(REPO)),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+
+
+documents = []
+sources = []
+for page in [198, 213, 222]:
+    file = REPO / f"ssot-resources/soviet10year-textbooks/artifacts/8a/pages/{page:04d}/page.json"
+    documents.append((file, json.loads(file.read_bytes())))
+    sources.append(binding(file))
+for page in [223, 224]:
+    directory = RAW / f"pages/{page:04d}"
+    audit = json.loads((directory / "audit.json").read_bytes())
+    assert not audit["errors"]
+    assert audit["lines_md"] == audit["lines_printed"]
+    file = directory / "page.json"
+    document = json.loads(file.read_bytes())
+    assert document["meta"]["printed_page"] == page - 7
+    documents.append((file, document))
+    sources.append(binding(file))
+
+stream = A.load_stream(RAW, documents)
+
+
+def number(block):
+    match = A.SEC_NUM.match(A.B.text_of(block)) if block["kind"] == "h3" else None
+    return match.group(1) if match else None
+
+
+starts = [i for i, block in enumerate(stream) if number(block) == "35"]
+assert len(starts) == 1
+start = starts[0]
+assert stream[start]["page"] == 222
+end = next(i for i in range(start + 1, len(stream))
+           if stream[i]["kind"] in ("h1", "h2", "h3"))
+assert stream[end]["page"] == 224 and "补充习题" in A.B.text_of(stream[end])
+chapter = next(block for block in reversed(stream[:start]) if block["kind"] == "h1")
+section = next(block for block in reversed(stream[:start]) if block["kind"] == "h2")
+selected = [chapter, section, *stream[start:end]]
+merged, warnings = A.merge_across_pages(copy.deepcopy(selected))
+assert not warnings, warnings
+assert not any(block.get("open") for block in merged)
+exercises = [int(block["label"]) for block in merged if block["kind"] == "ex"]
+assert exercises == list(range(675, 682))
+figure_blocks = [block for block in selected if block["kind"] == "fig"]
+assert [block["id"] for block in figure_blocks] == ["tbl-p0222-01"]
+for block in figure_blocks:
+    image = REPO / (
+        ".tmp/ld-s10y-lesson/resume182-7-N34/raw-FIRST/8a/"
+        f"pages/{block['page']:04d}/figures/{block['id']}.png"
+    )
+    destination = BOOK / f"figures/{block['id']}.png"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(image, destination)
+    sources.append(binding(image))
+for source, document in documents:
+    destination = BOOK / f"pages/{document['meta']['page']:04d}/page.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+original_loader = A.load_stream
+A.load_stream = lambda book: copy.deepcopy(selected) if book == BOOK else original_loader(book)
+try:
+    result = A.run(
+        BOOK, REPO / "ssot-resources/soviet10year-textbooks/toc/8a/zh.json",
+        TOOLS.parent / "profiles/soviet-cn.json",
+        strict=True, work=None, exercise_numbering="book",
+    )
+finally:
+    A.load_stream = original_loader
+assert result == 0
+index = json.loads((BOOK / "book.json").read_bytes())
+assert not index["audit"]["errors"]
+assert [lesson["id"] for lesson in index["lessons"]] == [ID]
+record = {
+    "schema": "stemrobin-182/scoped-source-assembly@1",
+    "status": "RAW_CLOSED_NOT_MODERN_APPROVAL",
+    "lesson": ID,
+    "sources": sources,
+    "independent_source_review": binding(review),
+    "selected_refs": [block["ref"] for block in selected],
+    "boundary": {"start": stream[start]["ref"], "excluded": stream[end]["ref"]},
+    "exercise_numbers": exercises,
+    "figures": ["tbl-p0222-01"],
+    "prose_count": index["lessons"][0]["prose_blocks"],
+    "existing_assembler_used": True,
+    "source_block_indexes_preserved": True,
+    "database_writes": 0,
+    "complete_modern_lesson": False,
+}
+output = STAGE / "assembly.record"
+output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({**binding(output), "exercises": len(exercises)}))

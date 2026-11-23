@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+
+const root = '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182';
+assert.equal(process.cwd(), root);
+const base = '.tmp/ld-s10y-lesson/resume182-7-N35';
+const html = `${base}/display-render/render/8a/modern-us-neutral/alg8-c5-s2-n35/choices.html`;
+const priorPath = `${base}/display-RECOVERY1/report.json`;
+const prior = JSON.parse(fs.readFileSync(priorPath));
+assert.equal(prior.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.ok(prior.views.filter(view => view.surface === 'choices').every(view => view.status === 'PASS'));
+const output = `${base}/display-choice-media-FIRST`;
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+const binding = file => ({ path: file,
+  sha256: createHash('sha256').update(fs.readFileSync(file)).digest('hex') });
+const { chromium } = createRequire(path.join(root, 'app/package.json'))('playwright');
+const report = {
+  status: 'RUNNING', scope: 'New q11 graph display missing from first/last choice screenshots only',
+  source: binding(html), existingChecks: binding(priorPath), screenshots: [], failures: [], cleanup: false,
+  sourceOrOptionReviewRepeated: false, fullDisplayChecksRepeated: false, headless: false,
+};
+const browser = await chromium.launch({ headless: false });
+try {
+  for (const width of [1440, 390]) {
+    const context = await browser.newContext({ viewport: { width, height: width === 1440 ? 960 : 844 } });
+    try {
+      await context.route('**/*', route => /^(file:|data:)/.test(route.request().url())
+        ? route.continue() : route.abort());
+      const page = await context.newPage();
+      await page.goto(pathToFileURL(path.join(root, html)).href);
+      await page.evaluate(() => document.fonts.ready);
+      const figure = page.locator('section.choice').filter({ has: page.locator('figure') }).first().locator('figure');
+      await figure.scrollIntoViewIfNeeded();
+      for (const end of width === 1440 ? ['whole'] : ['left', 'right']) {
+        const media = await figure.evaluate((element, end) => {
+          element.scrollLeft = end === 'right' ? element.scrollWidth : 0;
+          const svg = element.querySelector('svg');
+          const box = element.querySelector('.figure-media').getBoundingClientRect();
+          return { id: element.id, svg: !!svg, width: box.width, height: box.height,
+            scrollLeft: element.scrollLeft, maximum: element.scrollWidth - element.clientWidth };
+        }, end);
+        report.lastObserved = { width, end, media };
+        assert.equal(media.id, 'fig-choice-n35-exponential-FIRST');
+        assert.equal(media.svg, true);
+        assert.ok(Math.abs(media.width - 640) <= 1 && Math.abs(media.height - 960) <= 1);
+        assert.ok(Math.abs(media.scrollLeft - (end === 'right' ? media.maximum : 0)) <= 1);
+        const file = `${output}/${width}-graph-${end}.png`;
+        await figure.screenshot({ path: file, animations: 'disabled' });
+        report.screenshots.push({ ...binding(file), width, end, media });
+      }
+    } finally {
+      await context.close();
+    }
+  }
+  report.status = 'RUNTIME_PASS_VISUAL_PENDING';
+} catch (error) {
+  report.status = 'FAIL';
+  report.failures.push(error.message);
+  process.exitCode = 1;
+} finally {
+  await browser.close();
+  report.cleanup = !browser.isConnected();
+  fs.writeFileSync(`${output}/report.json`, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(JSON.stringify({ status: report.status, screenshots: report.screenshots.length,
+    cleanup: report.cleanup, report: `${output}/report.json`, failures: report.failures }));
+}
