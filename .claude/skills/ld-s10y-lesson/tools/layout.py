@@ -357,7 +357,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         clearance = int(2 * glyph_h)
         margin_blot = (
             (columns.stop <= 0.05 * ink.shape[1]
-             or columns.start >= 0.95 * ink.shape[1])
+             or columns.start >= int(0.95 * ink.shape[1]))
             and 0.45 * glyph_h <= height <= 1.3 * glyph_h
             and 0.8 * height <= width <= 1.4 * height
             and (
