@@ -1,5 +1,176 @@
 # 生产检查点
 
+## 2026-11-23 180-7 n10 Complete Offline; Immediate Save
+
+Same independent reviewer first modern-text PASS,0 revisions/0 new images.
+Actual adapt-finalize PASS21/25 text changes,0/0 exercises,0 new figures;
+empty answer prepare/finalize PASSauto0/ungraded0. No choices/interactions apply.
+Render PASS31 emitted prose paragraphs; the finalizer changed only whitespace,
+and four reviewed concept anchors remain valid. One isolated headless Chrome
+display run PASS2 text surfaces at1440x960/390x844. Both full-page screenshots
+independently inspected with2 new images; no clipping/overlap/overflow/console
+error. Peirce collected/closed,6 historical total images, no source replay.
+
+Ready for immediate ordinary commit/push of n10 and source49-52 ONLY.
+Staged raw index29 lessons/86 pages is HEAD+n10; working held n37 index
+30 lessons/87 pages preserved. No n8/n9 rows, counter edits, source43-48,
+installer/user changes or held n37 staged. Paid69/new0, parent23/24,
+delivered31/increment3 until actual push; unknown tokens/costs retained.
+Source53-54 cache prepared once exit0,0 image opens; chapter summary and
+second-chapter boundary are not authored/reviewed/promoted yet.
+No DB writes, deployment, closure or new chat/branch/worktree/timer.
+
+## 2026-11-23 180-7 n10 Source PASS; Modern Text Review; Affected Counters Continued
+
+Peirce first independent full49-52 source PASS:101 rows/43 blocks,
+4 images/0 repairs; n10 contains25 prose entries/0 figures/exercises.
+N9 exercise6 is source10米/分, not秒; all6 page49 tasks stay out of n10.
+Only n10 promoted after one limited assembly. Four actual-flow text anchors
+added before length/time/speed/unit-system concepts. Same reviewer now owns
+FIRST modern-text review with0 new source image opens; no modern PASS yet.
+Page49 actual initial receipt/streams retained in its existing finalize-initial
+directory; review observation hashes unchanged. Chapter summary stays scratch.
+
+Ampere technical result collected/closed:13 focused tests PASS,32 actual
+deleted-row controls lower counts; shared47 checks retain4 failures/2 skips,
+combined exit1. Original candidate01/02 and failure evidence preserved.
+Parent affected44 finalize PASS15/15 and47 PASS17/17,0 normalization.
+First initial45 FAIL17/15 and48 FAIL26/25,0 normalization;46 not run after45.
+Actual argv/cwd/streams and failed artifacts retained in the affected page
+directories. Planck owns bounded source45/48 counter/source-defect diagnosis,
+not semantic approval; no source rewrites or passed43/49 replay.
+N8 essential new-car-artwork HOLD and n37 paid HOLD remain local.
+
+Parent images23/24, delivered31/increment3, paid69/new0, unknown cost/tokens.
+No DB writes, deployment/closure, new branch/worktree/chat/timer or messaging.
+N10 completes next and is promptly saved/pushed before further sourced lessons.
+
+## 2026-11-23 180-7 n10 First Source Review; n9 First Counter Failure Retained
+
+Maxwell n10 source author collected/closed:50-52 first finalize PASS26/25/25,
+76 lines/32 blocks,0 figures/tables/exercises,0 normalizations/repairs/retries,
+3/8 images. Source report and actual argv/cwd/streams retained in pages0050-52.
+Parent ran INITIAL source49 as an independent required n10 boundary, not a p47
+retry: PASS25/25,0 figures/normalizations. N9 source47 remains its own failed phase.
+One limited49-52 scratch assembly PASS: n10 has25 prose entries,0 exercises/figures;
+orphan n9 example/exercises and incomplete chapter summary stay scratch only.
+Peirce `01a206c0-cc17-7003-b560-e25147f6925c` is sole first independent
+source49-52 reviewer, fresh4-page-image batch. No source approval/promotion yet.
+
+Halley n9 source author collected/closed:47-49 authored17/25/25 lines,
+figures35/36 and6 exercises in练习6. First47 finalize FAIL18/17 from left-margin
+blot y772-800;48 not finalized,49 subsequently first-finalized for n10 as above.
+First47 source/crop/streams/diagnostic and source-author-report.md already durable.
+4/8 images (3 grids +1 margin crop),0 author repairs. Ampere's same narrow-margin
+technical repair now includes this actually affected p47 case and controls,
+without adding an unrelated repair or replaying n7. Current candidate code is
+not reported PASS before its actual final technical result.
+
+Primary next complete candidate is n10, which has no image/paid dependency.
+N8 source work and its genuine figure32 paid HOLD continue independently.
+No DB work, old passed pipeline replay, new paid request or source/complete count
+increase; parent23/24, complete31/increment3, historical paid69, unknown cost/tokens.
+
+## 2026-11-23 180-7 n10 Next Source Author Active
+
+After n8's actual paid-artwork dependency, independent available source work
+continues: n10 printed37-40/physical49-52, source49 belongs to the n9 boundary.
+Cache50-52 prepared once exit0 (all3 prepared),0 image opens/0 source approval.
+Maxwell `01a206bb-1bd7-7a91-ac8c-66923d6020af` owns first missing50-52
+author/finalize only, <=3 baseline grids/<=8 total; no shared tooling, source49,
+index, lesson, Git or DB writes. N9 author and n8 counter repair keep disjoint
+ownership. Chapter-summary boundary52 is source only, not a promoted extra course.
+No independent reviewer active; no source/modern/complete-course PASS yet.
+Parent images23/24, complete31/increment3, paid69/new0, costs/tokens unknown.
+
+## 2026-11-23 180-7 n8 Counter Repair; Paid Figure32 HOLD; n9 Source Active
+
+Helmholtz source author collected/closed:43-46 authored30 blocks/81 lines,
+0 exercises, prose figures33/34. Source43 actual finalize PASS26/26;44 first
+finalize FAIL17/15,0 normalizations.45-46 not finalized after the first failure.
+Five images total (4 grids +1 targeted margin diagnostic), page42 unchanged.
+First failed44 page/audit/crop retained in pages/0044/first-failure; author report,
+actual two-command streams/results and diagnosis retained under raw n8/source-author.
+No independent source approval, no missing-text conclusion from the counter alone.
+
+Ampere `01a206b8-7534-72b3-9366-98d62a6634d6` owns smallest p44 marginal-blot
+rounding/isolation repair and portable focused test; no source/finalize/Git/DB
+writes. Parent later resumes affected44 then initial45/46, followed by one new
+independent source review. Source prose/crops cannot be changed to satisfy counts.
+
+Averroes figure32 routing author collected/closed,1/8 images, paid calls0.
+Actual inventory confirms one car location relative to settlements A/B, N/east
+directions and l1/l2. Required hybrid car artwork has no applicable approved
+existing asset; truck/boat/house reviews do not approve that new composition.
+Precise paid-artwork dependency HOLD retained at raw n8/figure-routing/fig-32-hold.md.
+No new source/scientific HOLD, silhouette substitution, paid call or retry.
+N8 source/modern-text work can proceed; complete course/display/push waits only
+on its essential dependency. N37's separate paid-artwork HOLD stays unchanged.
+
+N9 printed34-37/physical46-49: source46 tail is authored/reused, cache47-49
+prepared once exit0, no images or approval from preparation. Halley
+`01a206b8-ed2f-71e1-8a03-184c48f0cbc6` owns first missing47-49 author/finalize,
+independent of n8's failed source44 and paid figure dependency.
+No independent reviewer active; parent images23/24, complete31/increment3,
+paid69/new0, tokens/costs unknown. No n7/n5/n36 pipeline replay or DB wait.
+
+## 2026-11-23 180-7 n8 Missing Source Author Active
+
+Latest direct continuation requires the unfinished group to continue, with no new
+pause; n7 pushed intake received by supervisor, who owns its serialized DB work.
+Producer remains offline, same absolute workdir/branch, no proactive chat messages.
+N8 physical42-46: inspected existing state once;42 is retained/reused,43-46
+cache complete, no durable authored pages/lesson or earlier n8 result exists.
+Missing-path inventory/gate-reference lookup failed only because those paths do
+not exist; actual cap1 rules live in SKILL.md, not a separate page-gate directory.
+No prepare replay, content rejection or approval inferred from those lookups.
+
+Helmholtz `01a206b0-f833-7712-92a5-6868db49b6bf` owns first43-46 source
+authoring/finalize only, fresh4-source-image budget, no shared code/index/Git/DB
+work. Parent prepares limited42-46 assembly; independent source review and n8
+promotion/modern/answers/choices/display are pending. No reviewer active.
+Parent images23/24; use bounded fresh delegation for later image-bearing stages.
+Complete31/increment3, paid69/new0, unknown tokens/costs remain unchanged.
+N7/n5/n36 applicable passed evidence reused; n37 paid-artwork HOLD unchanged.
+One push/turn ending is not group completion: after each complete saved lesson,
+record its existing single-lesson intake then continue without DB/inspection wait.
+
+## 2026-11-23 180-7 n7 Pushed; Supervisor-Only Single-Lesson Intake
+
+Pushed snapshot `80155967dd57b2c83917d46590d2181dc63dea86` on existing
+`codex/STEMROBIN-180-textbooks`. Commit saved273 owned files; ordinary push
+exit0 reported `f96a2ed2d..80155967d`. No remote-ref replay required.
+Raw staged index28 lessons/82 pages included n7 only; working held n37 index
+and all installer/user changes were preserved. Complete delivered31 / 180-7
+increment3. Parent images23/24, paid69/new0, tokens/billed costs unknown.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s1-n7`, title 运动的图象.
+- Use the exact pushed snapshot above, not later uncommitted bytes or held n37.
+- Durable lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s1-n7/`.
+- Necessary source: raw n7/reviews, existing page38 and new pages39-42, original
+  figures27-31; page42 fig32 is page evidence only, not an n8 course/modern figure.
+- Actual counts:20 raw entries,24 rendered entries/14 paragraphs,3 concept
+  boundaries,5 deterministic figures,3 written exercises,3 ready answers
+  (1 auto numeric part,2 ungraded),3 native single choices/12 options.
+- Source, modern text, all5 figures, choice mathematics/options and answer Gate2
+  are independently PASS. Existing first source/counter/figure/technical failures
+  remain retained. Modern display/check.json has6 desktop/mobile surfaces PASS;
+  reuse unchanged applicable offline display and interaction evidence.
+- Authorized writer serializes existing single-lesson base, answer and retained
+  choice publishers. No new interactions stage exists. Then one small affected
+  readback; no all/earlier-lesson replay or duplicate complete display review.
+
+Producer DB writes0; this intake does not authorize producer publication or
+messaging other chats. No DB wait, deployment, closure, new chat/worktree/branch
+or timer. N36 already published/read back and n5 pushed intake stay unchanged.
+N37 remains excluded artwork HOLD. Next n8 physical42-46 has reused42/cache43-46
+only, no authored/reviewed/assembled/promoted next course. Full-project checks/
+build remain deferred to formal handoff; the four expanded baseline/candidate
+margin-numeral failures and two skips are not claimed all-green.
+
 ## 2026-11-23 180-7 n7 Ready; Display PASS; Immediate Save
 
 Dirac independent CHOICE PASS and answer Gate2 mathematics PASS:3 source
