@@ -795,6 +795,25 @@ def _single_fraction_row(
             bounds for bounds in glyph_bounds
             if left <= bounds[1].start and bounds[1].stop - 1 <= right
         ]
+        # A full caption glyph can have smaller co-row digits as its peers.
+        # Do not discard that group merely because the digits miss the body scale.
+        if len(group) == 1:
+            body_rows, _ = group[0]
+            group += [
+                bounds for bounds in residual_bounds if bounds is not None
+                for rows, columns in [bounds]
+                if 0.35 * line_h <= rows.stop - rows.start < 0.6 * line_h
+                and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+                and columns.start <= right + 2 * line_h
+                and columns.stop - 1 >= left - 2 * line_h
+                and max(
+                    rows.start + 0.25 * (rows.stop - rows.start),
+                    body_rows.start + 0.25 * (body_rows.stop - body_rows.start),
+                ) <= min(
+                    rows.stop - 0.25 * (rows.stop - rows.start),
+                    body_rows.stop - 0.25 * (body_rows.stop - body_rows.start),
+                )
+            ]
         if len(group) >= 2 or any(left <= x <= y <= right for x, y in rules):
             supported_glyphs.extend(group)
     # Rejected singleton glyphs must not widen either residual-row evidence.
