@@ -1,5 +1,188 @@
 # 生产检查点
 
+## 2026-11-23 180-7 n7 Ready; Display PASS; Immediate Save
+
+Dirac independent CHOICE PASS and answer Gate2 mathematics PASS:3 source
+tasks,3 native single questions/12 options,3 answers,0 content repairs.
+Blind source and visible judgments were frozen before author keys; checker
+ran once exit0. Reviewer collected/closed,6/8 images including2 viewing faults.
+Existing bound review is retained under raw n7 choice-answer-review.
+
+Actual answer finalize PASS auto1/ungraded2;3 ready answers,1 numeric part,
+0 exact candidates, no MathLive editing check applicable and0 new interactions.
+Approved choices retained through existing retain_choices.py. Final answer
+content matches the approved canonical draft after undoing only ready/count
+metadata in memory. First parent comparison used UTF-8 rather than the checker's
+ASCII-escaped canonical JSON and exited1; corrected encoding matched exactly.
+This was a comparison-helper failure, not a content defect or another review.
+
+Actual render PASS24 entries,14 paragraphs,3 written exercises,3 choices.
+One isolated headless Chrome desktop/mobile display invocation PASS6 surfaces:
+text,exercises,choices at1440x960/390x844. Actual SVG geometry/label collisions,
+3 section boundaries, shared exercise figures,3 displayed answers,12 options,
+no selected/leaked choice keys, scroll endpoints and console errors checked.
+Four targeted screenshots visually inspected; no missing media/overlap observed.
+Minimum actual label size16.7919375px across these surfaces. Evidence retained
+in modern n7 display/check.json and6 screenshots. This is offline content display,
+not headed running-product acceptance; existing unchanged interaction evidence
+is reused. Parent images23/24. No source or figure review replay.
+
+Commit/push now pending, so complete30/increment2 remain unchanged until actual
+push. Stage only owned layout53-line patch/test, n7/source39-42/figures27-31
+and necessary indices/reviews/checkpoint/usage. Raw working index retains held
+n37; stage HEAD+n7 only through existing stage_index.py, not working book.json.
+Page42 fig32 remains page evidence only; no n8 or canonical fig32 promoted.
+Expanded4 baseline/candidate margin-numeral failures and2 skips remain retained;
+6 focused/21 related tests previously passed, not recast as all-green.
+No DB writes, deployment, merge/closure or new paid requests. Paid69/new0,
+tokens/billed costs unknown. After normal push, record exact single-n7
+supervisor-only intake here; no writer wait, messaging or earlier-lesson replay.
+
+## 2026-11-23 180-7 n7 Choice/Answer AUTHORREADY; Blind Review Active
+
+Sartre returned3 native single-choice questions/12 options,3 draft answers,
+structure choice exit0/answer errors[];6/8 images,0 content repairs.
+Technical failures and author solution/report retained, not recast as PASS.
+Author collected/closed. Answer metadata:1 auto numeric,2 ungraded; no
+exact MathLive candidate or new input interaction.
+Dirac `01a20681-299f-7013-aed3-db9a2cea30e9` is sole independent reviewer:
+blind seed/source/actual-image solution before visible-option judgments,
+then author-key and answer-gate comparison. No semantic PASS yet.
+After actual PASS, parent only finalizes answers, retains approved choices,
+renders and runs the existing one6-surface desktop/mobile display, then
+promptly saves n7 and records supervisor-only intake. No DB wait or replay.
+N8 cache43-46 prepared only; n7 remains uncommitted, complete30/increment2,
+parent images19/24, paid69/new0, costs/tokens unknown.
+
+## 2026-11-23 180-7 n7 All Figures PASS; Choice/Answer Author Active
+
+Avicenna first27-29 source/current-pixel PASS,6/8 images; canonical
+spec/SVG promoted byte-identical, proper render/current reviews and bound
+report retained. Reviewer collected/closed. All5 modern figures27-31 and
+modern text now independent PASS; no source/old-stage replay.
+Actual ordinary adapt-finalize PASS9/20 layout text changes,0/3 exercise
+changes,5 new figures. JSON remains20 entries/10 text blocks; actual
+prose_flow14 paragraphs gives24 rendered entries including media/captions.
+Modern index diff adds only n7's10 lines.
+
+Sartre `01a20678-3eab-7660-94c4-88e4b3587b6d` is bounded choice/answer
+AUTHOR only. Blind source solve/options first, original answer data only
+afterward; independent review/finalization/retention/display/save still pending.
+No independent reviewer currently active. No new input interactions.
+Next n8 TOC printed30..34 => physical42..46; existing42 reused, cache43-46
+prepared once successfully,0 images/0 durable source edits. N8 unassembled,
+unapproved and unpromoted.
+Parent images19/24, complete30/increment2, paid69/new0, billed cost/tokens
+unknown; n7 uncommitted, latest pushed n5 intakef96a2ed2d unchanged.
+
+## 2026-11-23 180-7 n7 Figure30-31 PASS; First27-29 Review Active
+
+Popper first independent30/31 source/current-pixel PASS at318/358/480,
+images4/8. Canonical spec/SVG byte-identical; only render paths rebound,
+proper current reviews recorded. No promotion rerender or text replay.
+Both figures/report/inspection bindings durable; reviewer collected/closed.
+Avicenna `01a20670-f7f2-7362-9bf0-33799d4f9c35` is sole first27-29
+reviewer, fresh bounded image batch. Candidate-2 is unchanged.
+Figure template now names all five intended final SVG/spec/render/review
+contracts, but27-29 remain unapproved until actual result. No premature
+adapt-finalize/answers/choices/render/display/Git/DB step.
+N5 pushed intake stillf96a2ed2d, n7 uncommitted; parent images19/24,
+complete30/increment2, historical paid69/new0, costs/tokens unknown.
+
+## 2026-11-23 180-7 n7 Text PASS; First Figure30-31 Review Active
+
+Popper independent modern-text PASS:20 raw entries/3 original exercises
+preserved;14 actual prose paragraphs and3 anchored concept boundaries sound.
+Images0; immutable snapshots/bindings under raw n7 modern-text-review.
+Same Popper `01a20667-494b-7d13-8116-f8499186acc2` now sole first independent
+figure30/31 reviewer, new image batch only; no text/source page replay.
+Both figure authors collected/closed. Author27-29 AUTHORREADY,6/8 images,
+one content repair, min17.225px at318/358/480; source inventory and failed
+candidates retained, final candidate-2 still awaits independent review.
+Author30-31 AUTHORREADY,4/8 images, one content repair, min16.56px;
+current repair1 spec/SVG/render already durable in figure-author-30-31.
+Entry-time read-only Git-status rule violation reported by27-29 author is
+retained, not silently omitted; no Git write or content approval inferred.
+No canonical modern figures or figure independent PASS claimed yet.
+N7 answers/choices/display/save remain pending, completion30 unchanged.
+
+## 2026-11-23 180-7 n7 Source PASS; Modern Figure Authors Active
+
+Archimedes first5-page source review REVISE found only missing"画" in
+p0041#6. Sole character restored; affected finalize PASS19/19,0 normalization,
+crops unchanged. Same independent affected source review PASS,0 new opens,
+cumulative5/8. First rejection/current binding retained under raw n7
+source-review; reviewer collected/closed. No confirmed source erratum.
+Limited TOC assembly38-42 PASS; only complete n7 promoted:20 raw entries,
+3 exercises in练习5,5 figures27-31. n6 orphan and incomplete n8/fig32 stay
+scratch. Working raw index29/pages83 retains held n37; eventual n7 commit
+must stage only its necessary index addition, not held n37 bytes.
+Original vectorization5/5 PASS, pixel mismatch0.007%-0.028%; original crops
+unchanged. Modern template keeps source mathematics/numbers and only layout,
+with3 concept-boundary anchors from prose_flow.
+
+Authors Bernoulli `01a20662-42a7-79e3-a10d-5c38e350bc1d` own27-29;
+Wegener `01a20662-8004-7c90-9671-fe43cc0f215f` owns30-31.
+Both deterministic only, independent review not yet claimed. Parent prepares
+one6-surface desktop/mobile check, then only real affected failures if any.
+No n7 modern/answer/choice completion, DB work or publication claimed.
+Images parent19/24, complete30/increment2, paid69/new0, costs/tokens unknown.
+
+## 2026-11-23 180-7 n7 Counter Integrated; First Source Review Active
+
+n5 intake now binds pushed index follow-up `f96a2ed2d2b108caaac7584df361573a897ab49a`;
+only its omitted modern index addition changed. No n5 stage replay.
+n7 p41 scoped53-line counter patch integrated byte-identical to approved
+technical candidate (`ecb1b4ef9a8e9437501630cc8a8e4e844cee44388a5945e63c5b00e74a74fe4f`).
+Portable focused test reads retained PDF rather than scratch;6 tests PASS,
+including19 actual pixel-row deletions,19 authored-row omissions,3 margin
+deletions and actual margin continuation. Related discovery21 tests PASS.
+Actual affected finalize p41 PASS19/19,2 unchanged crops,0 normalization.
+Candidate's already retained p29/p31/p158 guards reused because code is identical;
+expanded4 baseline/candidate narrow-margin numeral failures and2 skips remain,
+not waived or claimed all-green.
+
+Sole first independent source reviewer Archimedes
+`01a2065a-3de1-7a60-b151-abfa5076cef6` owns n7 physical38-42 review only.
+Parent prepares limited scratch assembly, promotes only reviewed complete n7;
+next n8 opening and fig32 stay scratch. Source approval/modern completion not
+claimed. Parent images19/24, complete30/increment2, paid69/new0, DB writes0.
+
+## 2026-11-23 180-7 n5 Pushed; Supervisor-Only Single-Lesson Intake
+
+Intake snapshot `f96a2ed2d2b108caaac7584df361573a897ab49a`.
+Main commit `cca3287731d7a546f69c4c3ddfaee9c97ff8a1b4` saved336 owned files;
+the follow-up saved only the omitted modern book index's10-line n5 addition.
+Both ordinary pushes exited0; latest reported `cca328773..f96a2ed2d`.
+No remote-ref replay, n5 rerender, re-review or republish is needed.
+Complete delivered30 / 180-7 increment2. Historical paid69/new0,
+parent images19/24, billed costs/tokens unknown. n36 is already published and
+read back; do not replay it. n37 remains excluded local artwork HOLD.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s1-n5`.
+- Use the pushed snapshot above on existing `codex/STEMROBIN-180-textbooks`,
+  not later uncommitted n7 or held n37 bytes.
+- Durable lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s1-n5/`.
+- Necessary source: raw n5 lesson/reviews, pages28-32 and original figures15-23.
+  Modern canonical figures15-23 include specs, render and independent reviews.
+- Actual counts:43 raw entries,46 rendered entries/28 paragraphs,9 deterministic
+  figures; zero written exercises, ready empty answers, zero choices/interactions.
+- Current combined `display/check.json` references unchanged display scope and
+  the actual `emphasis-affected-check.json` PASS. Reuse this applicable evidence;
+  original display and selector failures remain, not recast as initial PASS.
+- Authorized writer runs existing single-lesson base publisher, then empty
+  answer publisher as required; no interaction/choice stage exists for this
+  questionless lesson. One small affected readback; no all/earlier-lesson replay.
+
+Producer DB writes0, no merge/closure/deployment/new chat/worktree/branch/timer.
+The intake record does not authorize this producer to publish or message other
+chats. Continue n7 now without waiting for DB. Its source39-42/first41 failure
+and scratch counter candidate remain uncommitted; shared candidate integration
+is now allowed after the saved n5 commit. No n7 source/figure approval yet.
+
 ## 2026-11-23 180-7 n5 Verified; Immediate Commit/Push
 
 Dewey first22/23 independent source/current-pixel PASS, images4; final22

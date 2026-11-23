@@ -1,0 +1,275 @@
+from __future__ import annotations
+
+import os
+import sys
+import unittest
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+TOOLS = Path(__file__).resolve().parents[1] / "tools"
+sys.path.insert(0, str(TOOLS))
+
+import layout
+
+
+class IsolatedMarginBlotTest(unittest.TestCase):
+    @staticmethod
+    def page_with_two_prose_rows() -> np.ndarray:
+        ink = np.zeros((500, 1600), dtype=bool)
+        for top in (40, 360):
+            for left in range(200, 1400, 45):
+                ink[top:top + 40, left:left + 36] = True
+        return ink
+
+    def test_dense_isolated_blots_on_either_margin_are_not_rows(self) -> None:
+        for left in (21, 1549):
+            with self.subTest(left=left):
+                ink = self.page_with_two_prose_rows()
+                ink[220:250, left:left + 30] = True
+                original = ink.copy()
+                self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
+                self.assertTrue(np.array_equal(ink, original))
+
+    def test_fragmented_compact_margin_blots_are_not_rows(self) -> None:
+        for left in (21, 1549):
+            with self.subTest(left=left):
+                ink = self.page_with_two_prose_rows()
+                ink[220:246, left:left + 12] = True
+                ink[220:246, left + 13:left + 35] = True
+                original = ink.copy()
+                self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
+                self.assertTrue(np.array_equal(ink, original))
+
+    def test_shorter_margin_blots_with_small_voids_are_not_rows(self) -> None:
+        for left in (21, 1549):
+            with self.subTest(left=left):
+                ink = self.page_with_two_prose_rows()
+                ink[220:246, left:left + 30] = True
+                ink[227:239, left + 3:left + 27] = False
+                original = ink.copy()
+                self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
+                self.assertTrue(np.array_equal(ink, original))
+
+    def test_narrow_standalone_margin_numerals_remain_rows(self) -> None:
+        for left in (21, 1549):
+            for digit in ("1", "7"):
+                with self.subTest(left=left, digit=digit):
+                    ink = self.page_with_two_prose_rows()
+                    if digit == "1":
+                        ink[220:250, left:left + 14] = True
+                    else:
+                        ink[220:225, left:left + 22] = True
+                        ink[225:250, left + 8:left + 22] = True
+                    bands = layout.line_bands(ink, 1600)
+                    self.assertEqual(len(bands), 3)
+                    self.assertIn((220, 249), bands)
+
+    def test_hollow_edge_glyph_remains_a_row(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[225:245, 26:46] = False
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    def test_dense_edge_glyph_with_neighbor_remains_a_row(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[220:250, 60:90] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    def test_vertically_offset_neighbor_vetoes_margin_removal(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[265:295, 65:95] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 4)
+        self.assertIn((220, 249), bands)
+        self.assertIn((265, 294), bands)
+
+    def test_dense_interior_component_remains_a_row(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 700:730] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    def test_edge_figure_label_with_nearby_stroke_is_retained(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[242:246, 80:180] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    @unittest.skipUnless(os.environ.get("B53_SOURCE107_PAGE"), "requires original107 fixture")
+    def test_original107_counts_twenty_rows_without_pixel_changes(self) -> None:
+        ink = layout.ink_mask(Image.open(os.environ["B53_SOURCE107_PAGE"]))
+        ink[1732:2189, 338:1446] = False
+        original = ink.copy()
+        self.assertEqual(len(layout.line_bands(ink, 1534)), 20)
+        self.assertTrue(np.array_equal(ink, original))
+
+    @unittest.skipUnless(os.environ.get("B53_SOURCE107_PAGE"), "requires original107 fixture")
+    def test_original107_without_margin_blot_still_counts_twenty_rows(self) -> None:
+        ink = layout.ink_mask(Image.open(os.environ["B53_SOURCE107_PAGE"]))
+        ink[1732:2189, 338:1446] = False
+        ink[1887:1917, 21:52] = False
+        original = ink.copy()
+        self.assertEqual(len(layout.line_bands(ink, 1534)), 20)
+        self.assertTrue(np.array_equal(ink, original))
+
+
+class LineBandsTest(unittest.TestCase):
+    def test_emphasis_dots_do_not_bridge_a_short_middle_body_row(self) -> None:
+        ink = np.zeros((800, 1400), dtype=bool)
+        for top, count in ((40, 24), (112, 24), (184, 3), (256, 24), (400, 24)):
+            for index in range(count):
+                left = 100 + index * 45
+                ink[top:top + 40, left:left + 36] = True
+                if top in (112, 184):
+                    ink[top + 49:top + 58, left + 14:left + 23] = True
+        original = ink.copy()
+
+        bands = layout.line_bands(ink, content_w=1400)
+
+        self.assertEqual(len(bands), 5)
+        self.assertIn((184, 223), bands)
+        self.assertTrue(np.array_equal(ink, original))
+
+    def test_sparse_enumerator_on_a_wide_page(self) -> None:
+        ink = np.zeros((500, 1473), dtype=bool)
+        for top in (40, 110, 180, 250):
+            ink[top:top + 40, 100:1300] = True
+        ink[350:355, 210:220] = True
+        ink[350:355, 239:241] = True
+        ink[360:369, 231:241] = True
+        ink[360:369, 210:212] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1473)), 5)
+
+    def test_sparse_wide_scan_noise_is_not_a_text_row(self) -> None:
+        ink = np.zeros((500, 1473), dtype=bool)
+        for top in (40, 110, 180, 250):
+            ink[top:top + 40, 100:1300] = True
+        ink[350:360, 100:1000:90] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1473)), 4)
+
+    def test_nested_fraction_fragments_ignore_scan_edge_streak(self) -> None:
+        ink = np.zeros((800, 1000), dtype=bool)
+        for top in (60, 130, 200, 270, 340):
+            ink[top:top + 40, 100:900] = True
+        ink[420:451, 490:530] = True
+        ink[468:548, 200:800] = True
+        ink[565:583, 490:530] = True
+        ink[400:700, 3:5] = True
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 6)
+        self.assertIn((420, 582), bands)
+
+    def test_keeps_separate_narrow_row_outside_fraction_span(self) -> None:
+        ink = np.zeros((800, 1000), dtype=bool)
+        for top in (60, 130, 200, 270, 340):
+            ink[top:top + 40, 100:900] = True
+        ink[420:451, 850:890] = True
+        ink[468:548, 200:800] = True
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 7)
+        self.assertIn((420, 450), bands)
+        self.assertIn((468, 547), bands)
+
+    def test_merges_split_glyphs_and_ignores_scan_decorations(self) -> None:
+        ink = np.zeros((700, 400), dtype=bool)
+        ink[0:16, 0:390] = True
+        for top in (60, 130, 200, 270, 340):
+            ink[top:top + 40, 40:360] = True
+
+        ink[410:416, 170:230] = True
+        ink[428:434, 140:260] = True
+        ink[442:478, 160:240] = True
+
+        ink[530:538, 40:360] = True
+        ink[585:594, 10:25] = True
+
+        bands = layout.line_bands(ink, content_w=400)
+
+        self.assertEqual(len(bands), 6)
+        self.assertIn((410, 477), bands)
+        self.assertNotIn((0, 15), bands)
+        self.assertNotIn((530, 537), bands)
+        self.assertNotIn((585, 593), bands)
+
+    def test_keeps_split_standalone_enumerator_near_a_table(self) -> None:
+        ink = np.zeros((500, 400), dtype=bool)
+        for top in (40, 110, 180, 250, 320):
+            ink[top:top + 40, 40:360] = True
+        ink[400:405, 180:213] = True
+        ink[414:417, 182:211] = True
+
+        bands = layout.line_bands(ink, content_w=400)
+
+        self.assertEqual(len(bands), 6)
+        self.assertIn((400, 416), bands)
+
+    def test_recovers_rows_from_an_unusually_tall_merged_band(self) -> None:
+        ink = np.zeros((600, 400), dtype=bool)
+        for top in (40, 110, 180, 500, 570):
+            ink[top:top + 40, 40:360] = True
+
+        # Three staggered rows leave no empty horizontal projection between
+        # them, as happens beside a portrait caption.
+        ink[250:310, 40:190] = True
+        ink[300:370, 210:360] = True
+        ink[360:430, 40:190] = True
+
+        bands = layout.line_bands(ink, content_w=400)
+
+        self.assertEqual(len(bands), 8)
+
+    def test_three_brace_connected_rows_use_nearest_pitch(self) -> None:
+        ink = np.zeros((800, 1000), dtype=bool)
+        for top in (40, 110, 180, 580, 650, 720):
+            ink[top:top + 40, 100:900] = True
+        for top in (300, 360, 420):
+            ink[top:top + 40, 220:650] = True
+        ink[300:460, 200:212] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 9)
+
+    def test_tall_nested_fraction_remains_one_row(self) -> None:
+        ink = np.zeros((800, 1000), dtype=bool)
+        for top in (40, 110, 180, 580, 650, 720):
+            ink[top:top + 40, 100:900] = True
+        ink[300:331, 450:490] = True
+        ink[348:428, 200:800] = True
+        ink[445:476, 450:490] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 7)
+
+    def test_parallel_two_row_systems_with_fraction_spill(self) -> None:
+        ink = np.zeros((900, 1000), dtype=bool)
+        for top in (40, 110, 180, 650, 720, 790):
+            ink[top:top + 40, 100:900] = True
+        for left in (180, 590):
+            ink[300:440, left:left + 10] = True
+            ink[315:355, left + 30:left + 320] = True
+            ink[385:425, left + 30:left + 320] = True
+            ink[290:301, left + 130:left + 165] = True
+        # Side-by-side systems have two horizontal rows, not four or three.
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 8)
+
+    def test_three_system_rows_followed_by_two_prose_rows(self) -> None:
+        ink = np.zeros((900, 1000), dtype=bool)
+        for top in (40, 110, 180, 650, 720, 790):
+            ink[top:top + 40, 100:900] = True
+        ink[300:460, 180:190] = True
+        for top in (300, 360, 420):
+            ink[top:top + 40, 220:650] = True
+        ink[490:530, 100:900] = True
+        ink[550:590, 100:900] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 11)
+
+
+if __name__ == "__main__":
+    unittest.main()

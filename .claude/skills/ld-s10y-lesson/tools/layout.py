@@ -414,6 +414,59 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             ink[bounds] = False
             # Standalone numeral recovery must not resurrect removed ink.
             components[bounds] = 0
+    # Separate solid specks can form one margin blot without a full-height glyph.
+    fragment_gap = max(3, int(0.4 * glyph_h))
+    margin_w = int(0.05 * ink.shape[1]) + fragment_gap
+    fragment_mask = np.zeros_like(ink)
+    for left, right in ((0, margin_w), (ink.shape[1] - margin_w, ink.shape[1])):
+        fragment_mask[:, left:right] = ndimage.binary_closing(
+            ink[:, left:right],
+            structure=np.ones((fragment_gap, fragment_gap), dtype=bool),
+        )
+    fragment_clusters, _ = ndimage.label(fragment_mask)
+    fragment_bounds = ndimage.find_objects(margin_clusters)
+    for bounds in ndimage.find_objects(fragment_clusters):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if not (
+            (columns.stop <= 0.05 * ink.shape[1]
+             or columns.start >= int(0.95 * ink.shape[1]))
+            and 0.45 * glyph_h <= height <= 1.3 * glyph_h
+            and 0.8 * height <= width <= 1.6 * height
+        ):
+            continue
+        ids = np.unique(margin_clusters[bounds])
+        fragments = [fragment_bounds[cid - 1] for cid in ids if cid]
+        if len(fragments) < 2 or any(
+            item[0].stop - item[0].start > 0.75 * glyph_h
+            or item[1].stop - item[1].start > 1.3 * glyph_h
+            or np.any(
+                ndimage.binary_fill_holes(margin_clusters[item] > 0)
+                & (margin_clusters[item] == 0)
+            )
+            for item in fragments
+        ):
+            continue
+        area = np.count_nonzero(ink[bounds])
+        dense_fragments = all(
+            item[0].stop - item[0].start <= 0.65 * glyph_h
+            and np.count_nonzero(ink[item]) >= 0.6 * (
+                (item[0].stop - item[0].start) * (item[1].stop - item[1].start)
+            )
+            for item in fragments
+        )
+        clearance = int(2 * glyph_h)
+        if (
+            (area >= 0.35 * width * height or dense_fragments)
+            and np.count_nonzero(ink[
+                max(0, rows.start - clearance):rows.stop + clearance,
+                max(0, columns.start - clearance):columns.stop + clearance,
+            ]) <= area * 1.1
+        ):
+            ink[bounds] = False
+            components[bounds] = 0
     # Shallow blemishes must occupy an otherwise isolated projection row.
     for component_id, bounds in enumerate(bounds_list, 1):
         if bounds is None:
