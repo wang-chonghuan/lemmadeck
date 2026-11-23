@@ -37,7 +37,7 @@ NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
 # Model-name hyphens have the same boundary in source Cyrillic and modern Latin.
 ERRATA_NUMBER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?"
-    r"(?![A-Za-z0-9_\u0400-\u04ff.])",
+    r"(?![A-Za-z0-9_\u0400-\u04ff]|\.\d)",
     re.ASCII,
 )
 PART_MARKER = re.compile(
@@ -679,14 +679,22 @@ def normalize_numbered_subparts(text: str) -> str:
                 )
 
     prefix = text[:markers[0].start()].rstrip()
+    trailing_break = next(
+        re.compile(r"\n[\t \u3000]*\n").finditer(masked_text, markers[-1].end()),
+        None,
+    )
+    body_end = trailing_break.start() if trailing_break else len(text)
     parts = []
     for index, marker in enumerate(markers):
-        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        end = markers[index + 1].start() if index + 1 < len(markers) else body_end
         part = text[marker.start():end]
         part = re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
         parts.append((order[marker.group("label")], part))
     ordered = [part for _, part in sorted(parts)]
-    return "\n".join(([prefix] if prefix else []) + ordered)
+    result = "\n".join(([prefix] if prefix else []) + ordered)
+    if trailing_break:
+        result += "\n\n" + text[trailing_break.end():].strip()
+    return result
 
 
 def validate_numbered_subpart_layout(text: object) -> list[str]:

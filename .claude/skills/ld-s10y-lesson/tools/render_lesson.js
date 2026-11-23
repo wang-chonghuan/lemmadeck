@@ -267,7 +267,8 @@ for (const lid of lessonDirs) {
     const prefix = printedNumber == null ? "" : String(printedNumber);
     const suffix = e.text.slice(prefix.length);
     const hasPrintedPrefix = prefix && e.text.startsWith(prefix)
-      && (/^\.\s/.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/.test(suffix));
+      && (/^\.\s/.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/.test(suffix)
+        || /^\u3002/.test(suffix));
     const displayText = hasPrintedPrefix
       ? e.text.slice(prefix.length + 1).trimStart()
       : e.text;

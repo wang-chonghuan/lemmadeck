@@ -1,0 +1,323 @@
+# N33 affected TEXT recovery review RECOVERY1
+
+Date: 2026-11-23
+Workdir: /Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182
+Lesson: alg8-c5-s2-n33
+Outcome: PASS for F1/F2 affected recovery and exercise identity only
+F1: PASS
+F2: PASS
+REVISE findings: none in the authorized affected recovery
+HOLD findings: none
+Recovery reviews: 1
+New full substantive lesson reviews: 0
+
+The caller explicitly authorized this affected-only recovery after FIRST.
+FIRST remains frozen with its original REVISE verdict and original hash.
+No author file, helper, test, source artifact or earlier record is edited.
+Only this new record is written in the reviewer's existing owned directory.
+No lesson JSON, lesson template, source page, image, answer or option file
+was reopened. All paths below are relative to the exact workdir above.
+
+## Actual byte bindings
+
+| Input | Bytes | SHA-256 |
+| --- | ---: | --- |
+| .tmp/ld-s10y-lesson/resume182-7-N33/text-review-FIRST/text-review-FIRST.record | 20180 | bab45e114370efc333325a90707f7f6aa55a1d466affda97d4e27497f071ebcc |
+| .tmp/ld-s10y-lesson/resume182-7-N33/modern-author-FIRST/exercises.template.json | 17543 | 4a50b0b3cb764f88649df2a095b76a56beaceeb43820ebf54393d6f2994b4e19 |
+| .tmp/ld-s10y-lesson/resume182-7-N33/modern-author-RECOVERY1/exercises.template.json | 17555 | a1319dda8d0f8bd28d7567ea9573f31fd8105510fb2968ee71fc5f07908fc61a |
+| ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c5-s2-n33/exercises.json | 6426 | 0251870a09660fc31c479e390c9de1de623d6aab7e1528c3eb87d94089242393 |
+
+FIRST record, old template and raw exercise hashes were asserted against
+the frozen FIRST bindings. Recovery is bound to the actual hash above.
+The caller states these recovery bytes will not change during this review.
+
+Helper/evidence hashes obtained without reading lesson/source-page content:
+
+| Path | SHA-256 |
+| --- | --- |
+| .claude/skills/ld-s10y-lesson/tools/edition.py | 607cc7508130d646a85d4c73a59818e1b93812d0d2a597ace11dd6d7d260cd57 |
+| .tmp/ld-s10y-lesson/resume182-7-N33/edition-before-shared-instruction.record | 9ddb7040bc9b76e0bf3790ee4b13289e6ec2c75b351bccaac77d13b43390262a |
+| .tmp/ld-s10y-lesson/resume182-7-N33/repair-modern-text-RECOVERY1.py | 4c3b2d051538c809fcb93ee9ee79c1e698d61e69b71c2cf71c0a8b409d58e704 |
+
+## F1 recovery: PASS
+
+Recovered file:
+.tmp/ld-s10y-lesson/resume182-7-N33/modern-author-RECOVERY1/exercises.template.json
+
+Exactly 53 leading /text markers changed by
+а -> a, б -> b, в -> c, г -> d, д -> e, е -> f, ж -> g, з -> h.
+Every recovered /text is exactly the old /text with only those leading
+marker substitutions and, for 660/661, the two authorized blank-paragraph
+insertions. No other /text change is present. No Cyrillic remains in any
+recovered display text. All eleven sequences are complete natural Latin
+order, with each subpart on its own line and its own payload retained.
+
+| Number | Exact text pointer | Leading label lines | Recovered sequence | F1 |
+| --- | --- | --- | --- | --- |
+| 653 | /exercises/0/text | /exercises/0/lines/1 through /exercises/0/lines/8 | abcdefgh | PASS |
+| 654 | /exercises/1/text | /exercises/1/lines/1 through /exercises/1/lines/4 | abcd | PASS |
+| 655 | /exercises/2/text | /exercises/2/lines/1 through /exercises/2/lines/8 | abcdefgh | PASS |
+| 656 | /exercises/3/text | /exercises/3/lines/1 through /exercises/3/lines/4 | abcd | PASS |
+| 657 | /exercises/4/text | /exercises/4/lines/1 through /exercises/4/lines/2 | ab | PASS |
+| 658 | /exercises/5/text | /exercises/5/lines/1 through /exercises/5/lines/8 | abcdefgh | PASS |
+| 659 | /exercises/6/text | /exercises/6/lines/1 through /exercises/6/lines/6 | abcdef | PASS |
+| 660 | /exercises/7/text | /exercises/7/lines/1 through /exercises/7/lines/5 | abcde | PASS |
+| 661 | /exercises/8/text | /exercises/8/lines/1 through /exercises/8/lines/2 | ab | PASS |
+| 662 | /exercises/9/text | /exercises/9/lines/1 through /exercises/9/lines/3 | abc | PASS |
+| 663 | /exercises/10/text | /exercises/10/lines/1 through /exercises/10/lines/3 | abc | PASS |
+
+All recovered /lines arrays equal their /text split on newline, including
+the explicit blank lines in F2. The repair regenerated these derived
+arrays, so their full-stop punctuation now agrees with existing modern
+/text instead of retaining the old arrays' ASCII periods. This is derived
+layout consistency, not a changed task, formula or number. Review664's
+/text is completely unchanged; its derived /lines also agrees with /text.
+
+## F2 recovery: PASS
+
+660 exact affected pointers:
+/exercises/7/text, /exercises/7/lines/5, /exercises/7/lines/6,
+/exercises/7/lines/7.
+
+Actual final subpart /lines/5: `e) $-17$。`
+Actual separator /lines/6: empty string.
+Actual standalone shared command /lines/7:
+`指出变量 $x$ 的值的集合。`
+
+661 exact affected pointers:
+/exercises/8/text, /exercises/8/lines/2, /exercises/8/lines/3,
+/exercises/8/lines/4.
+
+Actual final subpart /lines/2: `b) $[x]=-3$。`
+Actual separator /lines/3: empty string.
+Actual standalone shared command /lines/4:
+`在数轴上指出变量 $x$ 的值的集合。`
+
+Both commands occur exactly once after the full list, outside any labelled
+subpart, with their original wording and scope. The recovered /text has
+the explicit "\n\n" separator at these boundaries.
+
+Actual existing-normalizer execution:
+- normalize_exercise_layout applied to an in-memory deepcopy of recovered
+  exercises produces a structurally identical document.
+- normalize_numbered_subparts leaves each recovered 660/661 text identical.
+- validate_numbered_subpart_layout returns no errors for either.
+- Each final shared instruction is the separate suffix after "\n\n";
+  it is absent from the labelled list body.
+
+Narrow helper inspected: edition.py normalize_numbered_subparts lines
+714-730. The new trailing_break is searched in masked_math text after the
+last marker, so a blank line inside math is not a paragraph delimiter.
+body_end stops the final subpart at that explicit blank paragraph; the
+suffix is appended after the normalized list using "\n\n" instead of
+being whitespace-collapsed into the final subpart. No helper change was
+made by this reviewer. No finalizer was called.
+
+## Exercise identity comparison: PASS
+
+For all 12 corresponding exercises:
+- /source (including /source/data, /source/path and /source/sha256) is
+  structurally identical between FIRST and RECOVERY1.
+- Recovery /source/data equals actual raw exercises.json structurally.
+- Every /source_text equals actual raw /text exactly.
+- Every field other than /text and derived /lines equals FIRST exactly,
+  including number, source_number, group, group_id, pages, figure_refs,
+  figures, changes, numeric_changes and historical_entities.
+- Top-level fields other than exercises are unchanged; count remains 12.
+- All 52 math occurrences match raw and FIRST byte-for-byte in sequence.
+- Numeric identities match raw and FIRST, including source exercise
+  numbering, decimals, zeros and negative quantities.
+- Exact permitted-transform equality protects all nonnumeric wording and
+  subpart task payloads as well; no added explanation or answer is present.
+
+| Pointer | Number | Math occurrences | Formula/number/source identity |
+| --- | --- | ---: | --- |
+| /exercises/0 | 653 | 4 | PASS |
+| /exercises/1 | 654 | 4 | PASS |
+| /exercises/2 | 655 | 4 | PASS |
+| /exercises/3 | 656 | 4 | PASS |
+| /exercises/4 | 657 | 4 | PASS |
+| /exercises/5 | 658 | 5 | PASS |
+| /exercises/6 | 659 | 3 | PASS |
+| /exercises/7 | 660 | 4 | PASS |
+| /exercises/8 | 661 | 3 | PASS |
+| /exercises/9 | 662 | 12 | PASS |
+| /exercises/10 | 663 | 0 | PASS |
+| /exercises/11 | 664 | 5 | PASS |
+
+## Reused PASS and retained caller report
+
+Reuse, without reopening or rerunning:
+- FIRST coverage/identity PASS for all 35 lesson objects, 29 prose plus
+  3 figure placeholders and 3 captions.
+- FIRST 84 prose formula occurrences and floor/braces/right-open interval
+  convention PASS.
+- FIRST canonical conceptual boundary PASS, resolvedBreaks [11,20,23],
+  exact /section_breaks/0, /section_breaks/1, /section_breaks/2.
+
+The reused FIRST lesson-template hash is
+bac7ea5523a06406f4b0feff9cef651300bf771ba9806cb51c126fae5f0acff0.
+This is a reference from frozen FIRST, not a new lesson read or rehash.
+
+Caller-supplied test report retained verbatim from the recovery instruction:
+
+> Own4focusedtests PASS, adjacent3PASS. Oldedition35run34PASS1FAIL in unrelatedproseparagraphtest; one-case execution against before-repair snapshot proves samepreexistingfailure, notnewchange (keepreport).
+
+Provenance: direct caller report, not reviewer-executed test output.
+The reported old-suite status is preserved as 34 PASS / 1 FAIL, not
+silently changed to PASS. The reported one-case baseline also FAILS.
+The named before-repair snapshot is byte-bound above. These tests were
+not rerun by this reviewer; no command for the caller's executions is
+invented. The unrelated preexisting failure is not F1/F2 and does not
+change this affected text-recovery PASS into full-suite approval.
+
+## Actual affected comparison command
+
+Executed once successfully after the scanner-only technical recovery
+documented below, exit 0. This command reads exercise JSON and FIRST
+evidence only; it does not load lesson content or write any file.
+
+```sh
+node --input-type=module -e '
+import fs from "node:fs";
+import crypto from "node:crypto";
+import {isDeepStrictEqual as same} from "node:util";
+import assert from "node:assert/strict";
+const base = ".tmp/ld-s10y-lesson/resume182-7-N33/";
+const paths = [base+"text-review-FIRST/text-review-FIRST.record",base+"modern-author-FIRST/exercises.template.json",base+"modern-author-RECOVERY1/exercises.template.json","ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c5-s2-n33/exercises.json"];
+const inputs = paths.map(path=>{const bytes=fs.readFileSync(path);return {path,sha256:crypto.createHash("sha256").update(bytes).digest("hex"),bytes:bytes.length,bytesValue:bytes};});
+assert.equal(inputs[0].sha256,"bab45e114370efc333325a90707f7f6aa55a1d466affda97d4e27497f071ebcc");
+assert.equal(inputs[1].sha256,"4a50b0b3cb764f88649df2a095b76a56beaceeb43820ebf54393d6f2994b4e19");
+assert.equal(inputs[3].sha256,"0251870a09660fc31c479e390c9de1de623d6aab7e1528c3eb87d94089242393");
+const [old,current,raw]=inputs.slice(1).map(x=>JSON.parse(x.bytesValue));
+const formulas=text=>[...text.matchAll(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs)].map(m=>m[1]??m[2]);
+const numbers=text=>[...text.replace(/\.(?!\d)/g,"。").matchAll(/(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?(?![A-Za-z0-9_\u0400-\u04ff.])/g)].map(m=>m[0]);
+const labels=Object.fromEntries([..."абвгдежз"].map((x,i)=>[x,"abcdefgh"[i]]));
+let translated=0;
+assert(same(old.source,current.source));assert(same(raw,current.source.data));assert.equal(current.source.sha256,inputs[3].sha256);
+assert(same(Object.fromEntries(Object.entries(old).filter(([k])=>k!=="exercises")),Object.fromEntries(Object.entries(current).filter(([k])=>k!=="exercises"))));
+assert.equal(current.exercises.length,12);
+const rows=current.exercises.map((item,i)=>{
+ const before=old.exercises[i],source=raw.exercises[i];
+ let expected=before.text.replace(/^([абвгдежз])(?=\))/gm,(_,label)=>{translated++;return labels[label];});
+ if(item.number==="660")expected=expected.replace("。指出变量","。\n\n指出变量");
+ if(item.number==="661")expected=expected.replace("。在数轴上指出","。\n\n在数轴上指出");
+ assert.equal(item.text,expected);assert(same(item.lines,item.text.split("\n")));
+ assert(same(Object.fromEntries(Object.entries(before).filter(([k])=>!["text","lines"].includes(k))),Object.fromEntries(Object.entries(item).filter(([k])=>!["text","lines"].includes(k)))));
+ assert.equal(item.source_text,source.text);assert(same(formulas(before.text),formulas(item.text)));assert(same(formulas(source.text),formulas(item.text)));assert(same(numbers(before.text),numbers(item.text)));assert(same(numbers(source.text),numbers(item.text)));
+ const markers=[...item.text.matchAll(/^([a-z])\)/gm)].map(m=>m[1]);assert.deepEqual(markers,[..."abcdefghijklmnopqrstuvwxyz"].slice(0,markers.length));assert(!/[\u0400-\u04ff]/.test(item.text));
+ return {pointer:`/exercises/${i}`,number:item.number,parts:markers.length,sequence:markers.join(""),formula_count:formulas(item.text).length,source_snapshot:"PASS",numbers_formulas_identity:"PASS",only_expected_text_repair:"PASS",lines_match_text:"PASS",other_fields_unchanged:"PASS",F1:i<11?"PASS":"NOT_AFFECTED"};
+});
+assert.equal(translated,53);
+console.log(JSON.stringify({status:"PASS",inputs:inputs.map(({bytesValue,...x})=>x),source_object_unchanged:true,source_data_matches_raw:true,top_level_identity_unchanged:true,translated_leading_labels:translated,rows,formula_count:rows.reduce((a,x)=>a+x.formula_count,0),affected_shared_instructions:current.exercises.filter(x=>["660","661"].includes(x.number)).map(x=>({number:x.number,text:x.text,lines:x.lines}))},null,2));
+'
+```
+
+## Actual existing normalizer command
+
+Exit 0. PYTHONDONTWRITEBYTECODE and -B prevent import-cache writes.
+JSON comes from stdin. Normalization and all assertions are in memory.
+This is not a test-suite or finalization invocation.
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python -B -c '
+import copy
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(".claude/skills/ld-s10y-lesson/tools").resolve()))
+import edition
+document = json.load(sys.stdin)
+normalized = copy.deepcopy(document)
+edition.normalize_exercise_layout(normalized)
+assert normalized == document, "existing normalizer changes recovered document"
+result = []
+for index, instruction in [(7, "指出变量 $x$ 的值的集合。"), (8, "在数轴上指出变量 $x$ 的值的集合。")]:
+    item = normalized["exercises"][index]
+    body, suffix = item["text"].rsplit("\n\n", 1)
+    assert suffix == instruction
+    assert item["lines"][-2:] == ["", instruction]
+    assert instruction not in body
+    assert edition.normalize_numbered_subparts(item["text"]) == item["text"]
+    assert not edition.validate_numbered_subpart_layout(item["text"])
+    result.append({"pointer": f"/exercises/{index}/text", "number": item["number"], "body_last_line": body.splitlines()[-1], "standalone_suffix": suffix, "normalizer_retains_explicit_blank_paragraph": True, "status": "PASS"})
+print(json.dumps({"status": "PASS", "existing_normalize_exercise_layout_unchanged": True, "F2": result, "lesson_loaded": False, "finalizer_called": False}, ensure_ascii=False, indent=2))
+' < .tmp/ld-s10y-lesson/resume182-7-N33/modern-author-RECOVERY1/exercises.template.json
+```
+
+Actual helper/evidence binding command, exit 0:
+
+```sh
+shasum -a 256 .claude/skills/ld-s10y-lesson/tools/edition.py .tmp/ld-s10y-lesson/resume182-7-N33/edition-before-shared-instruction.record .tmp/ld-s10y-lesson/resume182-7-N33/repair-modern-text-RECOVERY1.py
+```
+
+Other commands were read-only cat/rg/sed/ls for FIRST, the two named
+directories, the repair script and narrow existing helper/import context.
+The repair script was read for provenance, not executed.
+
+## Recovery initial scanner failure preserved
+
+The first affected comparison invocation exited 1, before any write,
+at /exercises/0:
+
+```text
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  assert(same(numbers(source.text),numbers(item.text)))
+at file:///Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-182/[eval1]:27:211
+actual: false
+expected: true
+operator: '=='
+Node.js v24.16.0
+```
+
+Its exact command is the successful comparison command above with only
+the numbers definition replaced by this original failed definition:
+
+```js
+const numbers=text=>[...text.matchAll(/(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?(?![A-Za-z0-9_\u0400-\u04ff.])/g)].map(m=>m[0]);
+```
+
+Actual read-only diagnosis command, exit 0:
+
+```sh
+node --input-type=module -e '
+import fs from "node:fs";
+const raw=JSON.parse(fs.readFileSync("ssot-resources/soviet10year-textbooks/artifacts/8a/lessons/alg8-c5-s2-n33/exercises.json"));
+const current=JSON.parse(fs.readFileSync(".tmp/ld-s10y-lesson/resume182-7-N33/modern-author-RECOVERY1/exercises.template.json"));
+const tokens=text=>[...text.matchAll(/(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?(?![A-Za-z0-9_\u0400-\u04ff.])/g)].map(m=>m[0]);
+for(let i=0;i<12;i++){const source=tokens(raw.exercises[i].text),recovered=tokens(current.exercises[i].text);if(JSON.stringify(source)!==JSON.stringify(recovered))console.log(JSON.stringify({pointer:`/exercises/${i}`,number:current.exercises[i].number,raw_tokens:source,recovered_tokens:recovered,raw_prefix:raw.exercises[i].text.slice(0,5),recovered_prefix:current.exercises[i].text.slice(0,5)}));}
+'
+```
+
+Concrete diagnosis: the scanner incorrectly excluded a number immediately
+followed by an ASCII full stop, while including the same number before a
+modern Chinese full stop. Raw "653. " lost token 653 but recovered
+"653。 " kept it; the same affected all exercise-number prefixes.
+Raw 663's final "0." also lost token 0, while recovered "0。" kept it.
+All corresponding task quantities otherwise agreed.
+
+Technical recovery: normalize only a dot not followed by a digit to the
+modern full stop for numeric-token comparison, preserving decimal dots.
+Math comparison remains exact and independent. Exact permitted-transform
+comparison also remains independent. Only this scanner was corrected in
+the next command; author/recovery bytes were never changed. This is not
+an erased content failure, new author revision or second full review.
+
+## Usage and stop
+
+Images opened / unique / reopened: 0 / 0 / 0
+Outside paid API calls: 0
+Host/model usage: UNKNOWN
+Source-page or lesson reopens: 0
+Canonical-boundary reruns: 0
+Full reviews/tests: 0
+Reviewer content repairs: 0
+Author/helper/source writes: 0
+Finalizer/render/publisher calls: 0
+DB/Plane/git/network/install/new-dispatch calls: 0
+FIRST record modifications: 0
+
+Stop at affected text-recovery PASS for the bound recovered exercises.
+Keep original FIRST and all reported/executed initial failures. This record
+does not authorize finalization, figure/solution/option review, a full
+lesson review, a full test suite, DB/network operations or dispatch.

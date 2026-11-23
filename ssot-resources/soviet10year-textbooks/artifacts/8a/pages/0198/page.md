@@ -1,0 +1,80 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 198,
+  "printed_page": 191,
+  "notes": [
+    "source-author-FIRST: only alg8-c5-s1-n31; physical 198 / printed 191.",
+    "The paragraph ending 例如: continues on physical 199.",
+    "Chapter underline and bibliography separator are typographic rules, not numbered figures.",
+    "Footnote bibliography initials are transcribed in Cyrillic; no mathematical erratum or scientific approval is asserted."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 198
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "fe273c55e34f1e56b39e8daba6ad545f08d5919da949dd49feb526c8bff3affe"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 18,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h1 -->
+第五章 指数函数
+
+<!-- h2 -->
+§11. 指数函数的性质
+
+<!-- h3 -->
+31. 函数 $y=2^x$
+
+<!-- p -->
+我们在整数集合上讨论过由公式 $y=2^x$ 给出的函数的性
+质（参看第27小节）. 引进有理数指数幂的概念以后，现在可
+以在有理数的集合上讨论由同一个公式给出的函数.
+
+<!-- p -->
+我们每次相隔 $\frac{1}{4}$（$x$ 的每一个值取成比它前面一个值大
+$\frac{1}{4}$）列出函数 $y=2^x$ 的数值表.
+
+<!-- p -->
+因为
+
+<!-- p -->
+$2^{\frac{1}{2}}=\sqrt{2}\approx1.414,$
+
+<!-- p -->
+所以 $2^{\frac{1}{4}}=(2^{\frac{1}{2}})^{\frac{1}{2}}=\sqrt{\sqrt{2}}\approx\sqrt{1.414}\approx1.189^*$.
+
+<!-- p -->
+知道了式 $2^{\frac{1}{2}}$ 和 $2^{\frac{1}{4}}$ 的值，我们再来求式 $2^{\frac{3}{4}}$ 的值. 得到：
+
+<!-- p -->
+$2^{\frac{3}{4}}=2^{\frac{1}{2}+\frac{1}{4}}=2^{\frac{1}{2}}\cdot2^{\frac{1}{4}}\approx1.414\times1.189\approx1.681.$
+
+<!-- p open -->
+类似地，可以计算表中列出的其他 $x$ 值对应的函数值.
+例如：
+
+<!-- foot -->
+* 参看 В М. 伯拉基斯《四位数学用表》. 苏联教育出版社，莫斯科，
+1978.
+
+<!-- foot -->
+191
