@@ -1,0 +1,101 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6-8g",
+  "page": 164,
+  "printed_page": 154,
+  "source": {
+    "pdf": "6-8g 苏联十年制学校数学教材 几何 六-八年级.pdf",
+    "pdf_sha256": "d06ea093886065380febda597331bb5d48c81303d955161f2f84a7f11c116e5c",
+    "pdf_page": 164
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1441,
+    "h": 2079,
+    "sha256": "b6fa85db711d522ae699814e21b3adefe89f2dacfaa1669674fcb55741adda98"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "a8d11cbd06153ba7f91ef75369fac95e6801c8c37b6dcf1bec9fa9f3286ecb8b"
+  },
+  "notes": [
+    "SOURCE AUTHOR_ONLY; first candidate written only after source0164.FIRSTlock.json froze SOURCE transcription and inventory. No independent review or source approval.",
+    "Filled square after p0164#1 has UNKNOWN character identity/printing role, retained in source pixels and not replaced by a guessed proof-end symbol.",
+    "Printed exercise numbers450-453 are represented in native ex headers. Their small printed separators have UNKNOWN punctuation identity; original pixels retained.",
+    "Eight alphabetic submarkers in source rows11,12,13,14,17,18,20,21 remain localized UNKNOWN in ex452/ex453. No guessed Cyrillic from a-shaped pixels.",
+    "Fig218 has three main strokes and eight readable labels A,B,C,D,E,F,P,Q; endpoint dark-mark roles UNKNOWN. Native machine snap/crop preserves the original, without redrawing.",
+    "Fig218 caption shares actual source row08 with ex451 first line; ex451 open/cont keeps those boundaries through the transparent caption.",
+    "Horizontal separator between prose and exhead, top/left edge strokes and flecks retained in source; no count_exclusions or tool/whitelist modifications.",
+    "问题和习题 is an actual exhead, not a new numbered-unit heading. No complete35 claim, no wholelesson/canonical approval.",
+    "Last page outgoing fragment UNKNOWN. Last visible sentence ends答案。; no165 inspected and no unseen continuation inferred."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-218",
+      "label": "图 218",
+      "box": [
+        806,
+        430,
+        368,
+        311
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+如果直线$AB$和直线$A_1B_1$重合，其证明相类似。
+
+<!-- p -->
+下面的论断是正确的：两条中心对称的射线方向相反。
+
+<!-- exhead -->
+问题和习题
+
+<!-- ex 450 -->
+直线$AB$和直线$CD$平行。
+1) 图218上哪几条射线的
+方向相同？2) 哪几条射线
+的方向相反？
+
+<!-- fig 图 218 box 806,430,368,311 -->
+![图 218](figures/fig-218.png)
+
+<!-- ex 451 open -->
+已知射线$AB$。1) 与射线
+
+<!-- cap 图 218 samerow -->
+图218
+
+<!-- ex 451 cont -->
+$AB$同方向、始点在点$M$的射线有几条？2) 与射线$AB$
+方向相反、始点在点$M$的射线有几条？
+
+<!-- ex 452 -->
+1) 分别作两条方向相同的射线$MA$和$KB$：UNKNOWN) 它们不
+在一条直线上；UNKNOWN) 它们在一条直线上。
+2) 分别作两条方向相反的射线$MC$和$KD$：UNKNOWN) 它们不
+在一条直线上；UNKNOWN) 它们在一条直线上。
+3) 利用规定的表示方法写出：射线$MA$和射线$KB$方
+向相同，射线$MC$和射线$KD$方向相反。
+
+<!-- ex 453 -->
+1) 方向相同的两条射线$AB$和$CD$在一条直线上。UNKNOWN)
+这两条射线的并可以是怎样的图形？UNKNOWN) 这两条射线的
+交可以是怎样的图形？
+2) 方向相反的两条射线$AM$和$BD$在一条直线上。UNKNOWN)
+这两条射线的并可以是怎样的图形？UNKNOWN) 这两条射线的
+交可以是怎样的图形？
+作图表示各种可能的情况，并且用规定的符号写出
+答案。
+
+<!-- foot -->
+• 154 •

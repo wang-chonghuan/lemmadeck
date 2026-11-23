@@ -11354,3 +11354,358 @@ N34 source15 entries/12 text、native flow18、四题446–449、两图、
 四derived/ungraded只读答案、五choice/22项已完整离线，开始立即窄stage/commit/普通push。
 两索引仅HEAD+N34，必要source161162历史/161受影响凭据随课；
 N35备料/父冗余source163164 attempt、其余未完课/9-10g/dirty技能代码与runtime依赖均排除。
+
+### 2026-11-23 单课入库队列提交：N34
+
+- lessonId: `geo68-c3-s2-n34`
+- book/edition: `6-8g` / `modern-us-neutral`
+- branch: `codex/STEMROBIN-188-textbooks`
+- pushed commit: `a10e9a29a16c4d1233ae4eb343ba3ff9452ef5d1`
+- sole production root: `/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188`
+- retained lesson: `ssot-resources/soviet10year-textbooks/artifacts/6-8g/editions/modern-us-neutral/lessons/geo68-c3-s2-n34/`
+- retained raw lesson: `ssot-resources/soviet10year-textbooks/artifacts/6-8g/lessons/geo68-c3-s2-n34/`
+- assets: 同book raw/modern `tbl-p0160-01`、`fig-213`；来源pages0149/0159/0160/0161。
+- necessary evidence: 同book `evidence/stemrobin188-6g-n34/` 与same snapshot source161162/161受影响凭据；source149150/159160既有pushed证据直接复用。
+- scope: raw15 entries/12 text、native flow18、四题446–449、两现代图、四derived/ungraded只读答案、五choice/22项（single4/multiple1），完整中文离线课。
+- review: 正文/四答案/两图独审PASS；正文parallel-inclusive说明一次精确指代恢复，原新增449数字失败保留；choice source-first→views-first→keys比较独审PASS/唯一native exit0；完整正文/答案与choice桌面手机显示PASS。
+- execution recovery: bind-answers装四键后解析spec说明header exit1，保留原失败，仅恢复结构JSON解析exit0，不重写键、不重跑modern；原native modern/answers/render各首次exit0。
+- staging: 265 owned/necessary paths，NUL-delimited验证exit0/unexpected0，HEAD+N34两索引；N35、冗余source163164 attempt、其它两册dirty/技能代码及runtime不混入、不还原。
+- save/push: commit exit0，普通push exit0，`b65b8c678..a10e9a29a HEAD -> codex/STEMROBIN-188-textbooks`；不追加remote重复检查。
+- publication: 待获准单一串行写入方从此pushed snapshot intake；本聊天DB writes0，未声称published，不发送监督/同伴消息。
+- interactions: 四答案ungraded/read-only，不新增证明/作图键盘或新interaction；choices保持原生single/multiple。
+- acceptance reuse: 不因commit/push/intake重复通过阶段、旧image/PDF/crop、键盘或全产品套件；父实际图仍8/24，本段新增0，历史24/24/备份/原FAIL/UNKNOWN/真实计数不改。
+
+即时提交后继续同一授权的N35缺失生产，不等待writer或四课门。
+共享源准备Einstein仅isolated preparation7在途，尚无N35现代正文/答案/现代图/choices批准，
+不把备料或原source PAGE/affected PASS当整课；finish=review，不启动E/DB写入/merge/deploy/关单。
+
+### 2026-11-23 N35 既有源复用与限定原版安装
+
+Einstein共享源准备已一次收取关闭，manifest SHA
+`b64d211b5dec2a3dbedc0745d9c84c04923b0dd4ed34500deb4485a07d7236eb`，
+保留于同book `evidence/stemrobin188-6g-n35/preparation7/`。
+边界[p0161#7,p0165#7)、祖先p0149#2/p0159#5；
+原批准163/164 affected-repair12直接复用，父冗余attempt未读/未用/不重审。
+162open+163cont及451同页两ex块经native各闭合；
+isolated assemble/adapt-prepare各一次exit0，21prose/13text、十题450–459、
+五original figures214–218、三个template，TOC31/34/36范围warning保留。
+准备仅opaque复制原图，0image loads、0source repair/finalize、0新源或整课批准。
+
+parent resume-n35-7 install首次exit0：原版三件、五原PNG与必要7source JSON安装，
+canonical149/159/161相同字节复用；162/163/164/165按已持久source快照复制，
+原161/165native glyph/alphabet失败及所有UNKNOWN/原audits不清除。
+raw reindex一次exit0、29 retained lessons，工作索引有未完N35，
+下次仍只能stage HEAD+N35；尚无本课modern最终目录/modern images/答案/choices/显示批准。
+Hooke只现代正文作者，Nietzsche只九无图答案451–459作者，
+Hubble只SOURCE-FIRST内容独审（原五图各一次目标5/8，未披露作者稿/键）。
+450有图答案明确待获批modern218，不用泛答充数；全部written answers仍ungraded/read-only。
+源165#1–6为N35最后六题，36/219及166之后排除；不重查旧全页或原source repairs。
+N34即时intake留既有plan尚未二次提交，随下一次正常窄提交带入；本聊天DB writes0。
+
+### 2026-11-23 N35 作者候选与 SOURCE-FIRST 一次收取
+
+Hooke/Nietzsche已收取并关闭，候选一次保留在同book
+`evidence/stemrobin188-6g-n35/text-author7/`、`nine-answers-author7/`；
+原候选/作者记录/源码封存/辅助脚本按原字节保留0444，尚非完整课批准。
+正文lesson/exercises SHA分别
+`e4adb032a0171cb919edd7204b1caa319c16a3813d21966859c39396344c038d`、
+`0f103a9b9f71b52f767a31c65f0d739ade98e15314935decf84a65ccfff3ca81`；
+原78公式跨度、native16段/四概念边界保持；作者43定理顺序parser初次exit1
+及仅parser修复完整留存，不重跑作者或native flow。
+九答案451–459 candidate SHA
+`278753ebdc2164aa6105a9ece63c19751d673ba05ce47314ebe1990a78e69a69`，
+SOURCE-SOLVING先封存0444、SHA
+`0d7ac2bd5cad5c34eb2d4ba0528b6fd1c156a59cde520c11f72b69a7cf1e8dd7`。
+全部derived/ungraded/parts=[]；450 absent/deferred，未写通用占位。
+原missing-directory probe exit1、450题面文字意外超读保留，0图/0解450，
+不改为零失败；455/457/459措辞与存在条件未知完整保留。
+
+Hubble独审SOURCE-FIRST已收到并一次保留 `content-independent7/`，
+13原文记录/十题450–459先独解，两文件先封存0444；
+SOURCE-FIRST SHA `54306095a7400879ba1b77d53cec5c7088ccb84fa3f2b2edd2863fece36824a9`，
+source-review SHA `80d9ac5d23950869c0bb1ac3598cf68b5c8a325cb14494313b9b912d73e74ad7`。
+其原图214–218各一次、actual5/8、5/24、零crop/reopen，父新增0、仍8/24，
+不汇总child计数或重置历史24/24。
+封存后才披露持久现代正文/十题面与九答案作原任务独立比较，
+不重开原图；450最终答案仍等获批modern218。原FAIL/UNKNOWN/backup保持，
+本阶段无canonical现代收口/新图/答案finalize/choices/显示/DB写入。
+
+Hubble封存后比较一次收取，`content-independent7/comparison-review.json`
+SHA `82f22937e54e0b08518e4fa804f9b4315cf0931eb1fa63e9dca3b1e8d32c1a45`、
+COMPARISON SHA `72eacd3c98960d1dd77a1b81206cf6efc32759f539168b9b92caf2f799201d0d`。
+13正文/十题面/native16段四文字边界PASS；九数学PASS，但完整答案5PASS/4FAIL：
+F01仅452/453/459 displayAnswer旧小问字形与现代b/c不一致；
+F02仅457“即使”连接词不顺。两实际finding原FAIL永久保留，非源/数学失败。
+`working-text`只复制获批三模板到可写adapt工作目录；
+`repair-answer-text`首修452/453/459旧显示submarker为b/c及457连接词为“也就是使”，
+其余字段/原source_text/公式/五未变答案/顺序/parts=[]未改，
+candidate保留0444于 `nine-answers-text-repair7/candidate-answer-keys.json`，
+SHA `4ef92b61a2f54dd140d906f30ae4bb02976e93652ea533d711f367a9e3f2e95b`，
+Hubble仅四显示字段受影响复核在途，不重九数学或图。
+
+图217/218独立SOURCE-FIRST Euclid先看两原图且未披露作者设计；
+正文/题面PASS后Bacon仅同一有界图批作者开始，完整已批准text-author7上下文，
+不披露任何答案/独审解，先pixel inventory再spec/render，现代标签英文/数学。
+父新增0图、仍8/24；图批均独立上下文，未开始其它批或modern-finalize。
+N35专属 `display-n35-7.mjs` 已按实际正文图/习题图及choice seed资产写好，
+node --check exit0，仅脚本准备，未capture或声称显示PASS。
+定位辅助figure_html.mjs的只读rg因文件不存在exit2；实际helper在htmlfrag.js，
+未补文件/改共享模块；另一在途输出目录尚不存在的rg exit2也保持技术性质，
+不据此重派或判内容失败。原FAIL/UNKNOWN/备份/计数不清除，DB writes0。
+
+四显示字段affected独审一次PASS，`content-independent7/affected-review7.json`
+SHA `e7c369e661b127f7deed1a3d1a02116092c78f7975eec8d16f698a3c46229652`，
+MD SHA `a09ac89866078070d05f6c52cb888a89fa79e205f8fa7fc042ed88e02c4b2279`；
+实际十submarker/一连接词、零额外字段变化；四affectedPASS+五复用PASS=九答案PASS，
+0图/0native重跑，原F01/F02 FAIL封存不改，450仍无最终答案批准。
+Hubble保留待后续450披露，不替换其已封存SOURCE-FIRST。
+Euclid217/218先源独审三封存文件已一次持久保留 `fig217218-independent7/`，
+source-inventory SHA `b8828a71a148071634c9630263cc19867e489c117edb906fbb3a73ff422eb38b`，
+MD SHA `6e4f5c2c146c6bd99e281ad8c57907d6d8854e8cb89506bf160d2804b971629a`，
+actual2/8、2/24、0crop/reopen，尚无现代图批准；
+Bacon同批作者在途，父8/24不变，未开后续图批/modern收口/DB写入。
+
+Bacon217/218候选已一次收取持久留存 `fig217218-author7/`，manifest SHA
+`3822d6d7ea0182447a37ddf2ee5fd562876cb9e1b9d2428caea74a7e1a92c1c8`；
+source2/combined显示2、actual4/8、4/24、0crop/reopen、paid0，browser已关闭，
+native实际5调用（217三次/218两次），三label-clearance FAIL及一mobile宽度FAIL
+和before/current全保留，不重置成两成功调用，不重跑已PASS。Bacon已关闭。
+源先封存后才对Euclid披露获批现代全文/该批spec-render-SVG/桌面手机两图，
+不披露答案、不重开源；图独审在途，尚不promotion。
+前作者已结束并返回纯文字后，新鲜Beauvoir仅214/215作者与Kepler仅该批
+SOURCE-FIRST并行；各不读其它图批/同伴解，源inventory先封存再披露。
+父actual8/24不变，不聚合child计数，N35未完整、DB writes0。
+
+Euclid217/218独审各PASS、aggregatePASS一次收取留存，review SHA
+`57c91ddb2e361593b55c13b4cd2c8d4e09da7c1f7a672ee7cc606a5271f6718b`，
+actual4/8、4/24、0crop/reopen/renderer replay，browser0，Euclid已关闭。
+promotion首个native record-review217 exit1（stale/missing output svg）保留原streams；
+仅producer报告的spec.path/output.svg.path从edition-relative改repo-relative，
+native recorder不读取producer.root，非源/数学/SVG/显示失败。
+两原render在不可改作者证据，current path-only恢复的old/new SHA与独审引用
+留resume7/fig-217、218.render-path-recovery7.json；零源/spec/SVG hash变更，
+不重开图或重渲染。record217仅失败记录步骤恢复exit0，218首次exit0；
+两canonical图与native review已promotion，现代文字模板图manifest更新，
+本课adapt-finalize仍未跑。
+
+Kepler214/215 SOURCE-FIRST已一次留存 `fig214215-independent7/`，
+source-inventory SHA `ca706af8c04198e5872e8e5b2ab5c9960081bc34c977fd2cc38400f86673ebb6`，
+MD SHA `dee2a9c341d06cc6d9f8487ac19fdd158eeaaa661a71144448bff828052bb2d1`，
+actual2/8、2/24、0crop/reopen/pages、未披露现代candidate；
+Beauvoir同批作者在途，已只告知native repo-relative producer路径技术合同，
+不告知其它批图/解。先源批完成后Poincare fresh仅216 SOURCE-FIRST在途，
+尚无216作者；父actual仍8/24。
+`stage-n35-7.mjs`仅备好显式本课/必要来源白名单及HEAD+N35索引逻辑，
+未运行stage；不sync/rebase或混其它dirty，DB writes0。
+
+Beauvoir214/215候选已一次收取留存 `fig214215-author7/`、manifest SHA
+`e0dd074bc147fc53cfa228aec656b8fd60a251d4edc777e575d954bcb472f04b`，
+display report SHA `65a553935f00621c0dbf657e220af7246ded6eb11d9ed970ece32d466a94859b`。
+actual source2/combinedscreen2=4/8、4/24、0crop/reopen；native4调用、
+validation1FAIL/render2FAIL及r214=3/r215=2全保留，未重跑未变PASS，
+41native assertions/28额外relationships仅机械证据，尚非独审。
+producer路径在披露前以元数据可携修复且before/current留存，不重渲染或显示；
+作者关闭后才对Kepler披露已持久current（figures/子目录）及两screens作独审，
+不再源图，尚未promotion。
+前作者纯文字返回并关闭后James fresh仅216作者开始，Poincare仍只SOURCE-FIRST，
+不披露作者/答案/其它批图history。父actual8/24不变，无新modern finalize/DB写入。
+
+Kepler214/215独审各PASS、aggregatePASS已一次留存，review SHA
+`e7c9365c9d207a24e60c75e224edffe0c27b0c8bcfec888f90b3960ba2afdaea`，
+MD SHA `4edd00d73e9ac9a2c808781ace34f77e3c6e96b588ad6eb19ec585473fbb18ff`。
+actual4/8、4/24、source2/screens2、0crop/reopen/native replay，browser0；
+Kepler关闭，两图spec/SVG/current render原样promotion、native record各首次exit0，
+零重渲染/重审/新图片。至此获批并提升214/215/217/218，216尚在途。
+Poincare216 SOURCE-FIRST已一次持久留存 `fig216-independent7/`，
+source-inventory SHA `fd9760b9ef97bf03d7d389ac7f555e804a601c57e9d060074bb0b0a80bea5846`，
+MD SHA `f6def977d03efe985223a0bc25932a2af82e54e59034a2e7e5973f72958362ec`，
+actual1/8、1/24、0crop/reopen/inherited，仍未披露现代候选；
+James216作者在途，Hubble等待后续450有界披露，父8/24不变、DB writes0。
+
+James216候选一次收取留存 `fig216-author7/`，manifest SHA
+`67fef3908d6d8b157ad243f0238153dbd10702744615e52c307a20ea3d0df2f3`，
+spec/SVG/render SHA分别
+`661179c5eca23cad3df50b1b69d1182a800368bddfdd942351057c87da676c95`、
+`635a213a9171704fd52615a878e145fc36aa9d08d512536dfe0594f025803c59`、
+`732da3e0b98dedb4f866ea295f6fee657236decadf36f0aa3e6dbef84e577188`；
+actual3/8、3/24（source1/screens2）、0crop/reopen、native3（1PASS/2FAIL）、
+figure revisions2/display1、34native+134supplemental，仅机械作者证据。
+全before/failure/current留存，James已关闭；source先封存后披露Poincare，
+独审一次PASS留 `fig216-independent7/review.json`，SHA
+`981f246e118ef72378195cb8e707a155ad95da9ee046b151562030c1c9480a71`，
+实质fig-review SHA `8c7c035b139df8e552822e9ec692f54f6cadc15971c390108c9741ec567749a6`，
+actual3/8、3/24、0reopen/crop/native replay、browser0，Poincare已关闭。
+promotion216首helper exit1停在relative路径断言，原manifest是相对文件名而非绝对path；
+尚未copy/native调用，不是科学失败。仅增加该明确filename-relative解码，
+续缺失promotion exit0/native record216首次exit0，零图/spec/SVG改动。
+
+五图214–218全独审PASS并提升后，N35 adapt-finalize首次exit0：
+21正文记录/十题/新图5；原生answer-prepare首次exit0：十答案模板。
+无重跑modern或原源；written答案尚未合入canonical，全部仍应derived/ungraded/parts=[]。
+Godel fresh仅450作者现获准看当前题面、spec、原PNG与实际现代218像素先独解再封存；
+Hubble先复用原已封存450解，仅检查当前现代450/218对应，不接触候选键，
+尚未最终450答案批准或新增父图片。
+choices原生inspect首次exit0；种子显式选十题450–459和自足定义blocks
+1/2/7/8/9/12/13/14/20，不选证明/解例块；无必要concept-figure额外加载。
+原生prepare首次exit0，seed digest
+`029294324997c6b097f467ae580c8d06323565798041adb236bce6c4ab524058`，
+Schrodinger fresh作者与Darwin SOURCE-FIRST独审各仅该seed/actual218资产，
+不读written答案/旧choices/keys/interaction或其它课，先source封存再views再keys。
+父actual8/24、历史24/24均不变，未render/capture/stage/commit N35、DB writes0。
+
+Godel450作者已一次留 `answer450-author7/`，candidate SHA
+`8c156179355333fd00e08bb5d3faac23f907e7e62ad2b430c33421d678685044`，
+SOURCE-SOLVING先0444/SHA `5f82d2384026467da0f980dc8d0d31c5c5ee1e591157b17cf156ea928e23470b`，
+AUTHOR-RECORD SHA `8bdafc32b63e599af98c1d21283b6b9b9a26177c5bff81eef1488cab18824d44`。
+actual2/8、2/24（source1/modern1），command failure1/truncations3/scope-projection1
+全部保留，otheranswers0/paid0；Godel关闭，未把候选视为PASS。
+Hubble先封存现代450/218对应PASS，SHA
+`b8c57b6765e808cbc1c0609668251567ba98ee2e66755106473ed189f72e5034`；
+只新读modern1，累计6/8、6/24，0源重开。其后才披露450候选，
+独审PASS `answer450-review7.json` SHA
+`5efda2b0c32659c015323b37fe22538907e234ad002ac0291acbcf6aa1a5287c`，
+MD SHA `91dd8ad7cfebd417e7ebfb611575ed10e9fb97e5e33993c6b6c438d2ae2e6df6`；
+14distinctrays/25oppositepairs完整、0实际findings，0新图/native重跑，
+450PASS+九复用PASS=十答案PASS，Hubble关闭。
+bind-answers只沿用native当前prompt/figureEvidence，写获批答案字段，
+十derived/ungraded/parts=[]；answers-finalize首次exit0 auto0/ungraded10，
+render首次exit0 tenexercises/prose24(native16正文段+4fig+4cap)，不重modern/原源。
+
+完整text桌面/手机capture首次exit0：两整图，exercises+十答案首次exit0：
+desktop2/mobile3有界图；均mechanical-pass-visual-review-pending，source/符号/图min16/
+actual可达scroll-end和documentoverflow机械PASS，未据此代替视觉批准。
+Halley text两图独审PASS已留 `text-display-independent7/review.json`，
+SHA `5f95ad780b867d5d6599a2e6411f821a07fa0e4f31d6cd70fa71f6416643576f`；
+actual2/8、2/24、0crop/reopen/native，Halley关闭；text.json实际升PASS，
+旧mechanical-pending另0444留存。Hypatia仅exercises五图显示独审在途，不重数学。
+
+Schrodinger choices作者10源独解先封存，SOURCE-SOLVING SHA
+`c4e52c6cfbcbc54962dbea7df032e21d3c33baa1d379d45e3f1d4e46d4d4460a`，
+九questions/39options/0newfig，currentdraft digest
+`3e32b79a09f42fcd57c1b3c6b0b19979feb145142759ad3f8ecf82a183aa206a`，
+AUTHOR-RECORD SHA `ad7e8bb6cd19aa434726d0bbb839f11d5a9d2b00f75f4b337a22d68a228c9955`，
+完整原稿/两candidate/原validation/streams一次留 `choices-author7/`，作者关闭。
+actualimage1/8、1/24、0crop/reopen、screens1success/2attempts，全部失败计数保留。
+first structural exit2：guard把四选项table的原a<b...a>b识为HTML；
+仅八比较符号换等义LaTeX lt/gt，新稿未复验（作者误将“首次检查”理解为失败恢复禁令）。
+父按binding SOP仅续missing failed结构phase首次recovery exit0，不改题/键，
+原exit2及bad4…旧digest不清零；本native成功仅结构，非语义PASS。
+
+Darwin choice SOURCE-FIRST十源/actualseed218已先封存一次留 `choices-independent7/`，
+SOURCE-FIRST SHA `da457315b2b8ab3e492291190a6cd706ee73e2b53100a6f235e735821cf3f7d9`，
+source-review SHA `1ad4b93563cfe1400d50b68c837d04e4fa1f0bc5d7dc4c73f74c420db8b05163`；
+actual1/8、1/24、0crop/reopen；capture1success/1FAIL和初次cwd-boundary deviation1
+如实保留，未据此重派/重解/重置；后续强制每command sole W。
+其封存后只披露九views/39项：`resume7/choice-views-first7.json` SHA
+`a7eb10191e97724966f588078eed312e8ae4209a197316a4b47a5e195e60db73`，
+无intent/keys/author解/newfig，Darwin现在VIEWS-FIRST在途，尚未keys比较/semantic/native
+retention/choice显示/窄commit。父actual仍8/24、历史24/24不改，DB writes0。
+
+### 2026-11-23 N35 四项显示局部恢复与选择绑定接续
+
+Hypatia完整习题/十只读答案首次显示FAIL已一次保留，
+`exercises-display-independent7/review.json` SHA
+`b4fe6bc612e4a5cf091e91ebbcb1d1fa9045af3db5f5016adea30c0f4cfdcbca`：
+F1/F2/F3仅454/456/459蓝题号与数学前缀重复，F4仅451手机末句句号独占一行。
+十题/十答案/29小问与实际459右端scroll的未变coverage直接复用；
+原五整图加一右端图actual6/8、6/24，原scroll locator失败保留。
+仅working现代三个prefix period移到数学区外并追加layout；
+原source_text、题号/marker/数学及451标准答案未改。
+原working/canonical exercises、keys与旧HTML一次留`layout-repair7/`；
+offline helper只补应用既有sr-nb CSS，shared app/skill代码未改。
+resume helper在执行前阻止receipt冲突、支持唯一recovery suffix；
+affected modern、三canonical answer prompt绑定、answer-finalize、render各一次exit0，
+auto0/ungraded10、正文24/题10，不重answer-prepare或源/图/text显示。
+affected桌面1440/手机390两图capture成功留`display7/exercises-layout7.json`，
+Hypatia只续四finding，最多两新图，总8/8，尚未升显示PASS。
+首次read root tmp helper不存在exit1、rg不存在common.py exit2为路径发现失败，
+不作内容判定或替换；checkpoint append首次anchor不匹配，未改文件后改正锚点。
+
+Darwin VIEWS-FIRST九题/39项先封存收取：MD SHA
+`1dc3b404fcdea94263085a3e34aebd7666f74490cf8ad7ec378ac8e6b8820745`，
+review SHA `d9a7e37b44349902a693e045b05c78b05e11d40f03988b4036232f50db850b2e`；
+12true/27false、十源coverage、source两封存不变、新增0图。
+native新seed prepare一次exit0，digest
+`c7406fb6a2c456510dac7847f734961a7b8011b1fd809006532f41dd4eed5eed`；
+后续parent binding helper首次exit1：误假设seed不含栏目标头。
+原helper留`layout-repair7/resume.before-seed-projection-recovery7.mjs`，
+native成功与helper失败分开记录，仅修一次prefix occurrence比较、不重prepare。
+新seed只有三prefix periods及exercise trace hash变更；新draft只seed_sha256变更，
+九views/39项/keys/intents/coverage/figures不变；旧seed/draft/FAIL和ltgt恢复保持。
+封存views后才披露`tmp/n35-choices-layout7/`完整稿给Darwin，
+只续作者键/误解/覆盖比较与native语义验证，不重解源/看图。
+当前尚无choice语义/retention/display批准或N35commit/push；
+父actual8/24、历史24/24不变，DB writes0，finish=review及原sole W/branch保持。
+
+Hypatia四finding affected各PASS、完整display aggregatePASS已一次保留：
+`exercises-display-independent7/affected-review7.json` SHA
+`8171d4424fabfc5c761ff74763271f4a377057aae951cba5f169b6a01e5bc054`，
+MD SHA `70ca8a36e12a31a36053f2eb83c8d55a46b41d860cee789f7ee0635371be1f07`；
+只两新增图，累计8/8、8/24，零reopen/crop/browser/源数学重审。
+原完整coverage加affected恢复接回`display7/exercises.json`实际PASS，
+原sourceHashes仍对应旧整图，currentSourceHashes及affected manifest单独绑定；
+原review FAIL与旧mechanical manifest封存不改，Hypatia已关闭。
+完整text与习题显示已通过，Darwin最终选择比较在途，本课尚未commit/push。
+
+Darwin最终选择首审实际REVISE，native with-review一次exit3：
+结构PASS但语义REVISE，九keys/39truth均与盲解相符。
+三实际内部finding为ray-groups D互相包含误述、ray-groups C误解不能推出选项、
+origin-counts D共同起点禁令不能在任意M下推出零。
+原`choices-independent7/review.json` SHA
+`b3e6affb9e28a8eca5bc13683c8c3f40f2209029b11ce92c3f1dc46eed6cb4a1`，
+MD SHA `b9855712d2cac44c2faf744c29d2719a7ff5f01eb254c678fe614396baefc761`，
+native receipt SHA `083fc79fca27f854bd4c8fa5404809653b33f521483ee4845d130c48435140da`
+已一次持久保留，原REVISE/exit3不改。
+仅三rationale字段修为“一条包含另一条”、错误独立指定上右/下左正向、
+误把固定起点兼作固定朝向；拒绝draft一次留`choice-rationale-repair7/draft.before.json`，
+修版在`tmp/n35-choices-rationale7/`，seed/九views/39truth/keys/intents/coverage/figures不变。
+Darwin只续三项affected解释及新绑定native review，其余36rationales与全部盲解直接复用；
+新增0图、source/prepare重跑0，尚未choice语义PASS/retention/display/本课commit。
+
+Darwin三rationale affected实质PASS，native changed-snapshot验证首次exit0，
+首REVISE/exit3及四盲审封存保持；受影响review SHA
+`c082664bcca3bb1e5665701a3135a75908f1bf5421e26385b06c206f70b7c207`，
+MD SHA `0c97758a58013adf80ea0df6a37d675d0bf3c72ad6f3c8e61b772a662e5fc9fd`，
+native receipt SHA `ce9b4435d6f0bd5de751712ce0661064d43440ab108cf670fd9b34ab4fc48e72`。
+36未改rationales、七未改question review及全部source/views/keys/truth复用，
+累计native2次、actual图片1/8与1/24（新增0），Darwin已收取关闭。
+新draft canonical digest
+`d830569a84f4f325fb2c34ad2bc078e78c1d753b603f340a2e11b3c95d5d2fc7`；
+native retain_choices首次exit0，九题/39选项/0新图实际保留canonical choice-set。
+
+choices两尺寸capture首次exit0、desktop2/mobile2整图，9questions/39controls、
+media label/scroll、pageoverflow/katex-error/pageerror机械PASS，尚非视觉批准。
+渲染实际发出unicodeTextInMathMode顿号warning，次数UNKNOWN，不据此判数学FAIL，
+保留实际观察于现checkpoint，不重新render或将warning隐去。
+fresh Avicenna仅四整图及views-only coverage作独立显示审查，
+不读键/答案或重源/数学/figure gate。当前text/exercises displayPASS、
+choice内容PASS且retained、choice visual在途，尚无N35commit/push，DB writes0。
+
+Avicenna choice完整首显示FAIL已保留，review SHA
+`d21dde78ce16a01ede72a3f81a68e935b0621da165bc191b31705407609bdbbb`，
+MD SHA `b0d49dc7442d1128bdde7bd8162393661d305a83017a78122aa4c225e653da4e`：
+仅mobile Q4 ray-set-table四选项的union尾及第四intersection列不在初始窗口；
+原报告明确未测试runtime可达性，未臆断clip原因，其他九stem/39controls/35mobile
+完整选项及全desktop PASS复用。实际四图各一次、context4，零crop/reopen/browser。
+parent仅affected Q4现有CSS/content作一次scroll诊断，无native render/内容/CSS改动：
+四表4列/4行，.choice-content overflow-x:auto，end A170/B173/C174/D152全部实达，
+table.right在窗口终点内（不足1px舍入），所有formula内overflow0。
+唯一mobile endpoint整图及geometry留`display7/choices-table-scroll7.json`，
+原display helper留before-table-scroll-diagnosis7快照，原四整图/FAIL不改。
+Avicenna只续该一新图与四表右端，复用完整左窗/desktop/其余选项coverage，
+尚未把机械可达直接当视觉PASS；父图片仍8/24，历史24/24不变。
+只读误猜app/src/styles.css路径exit2保留，实际app.css仅查阅，shared代码未改。
+
+Avicenna唯一affected endpoint实质PASS，四union尾/第四列/各四行完整可读，
+旧左窗及desktop/其余35项显示直接复用，完整每viewport9stems/39options/25tables/58rows。
+affected review SHA `47d138e5b6bd3cbaab92be82a1ebe304d787bda7fcfe121cda5131a7e0a2ec26`，
+MD SHA `99f83b837f29a2f0fc41eec4bf70d2746f11a55f980a8e7588dd6b71f66846f9`，
+已一次保留；累计5/8、5/24，0reopen/crop/browser，Avicenna已关闭。
+`display7/choices.json`接回完整旧coverage+新scroll证据实际PASS，
+原FAIL/原四图/机械manifest均封存，不重choice语义/native retention。
+至此N35完整source/现代文字/十题450–459/五图214–218/十derived-ungraded只读答案/
+九选择39项与text/exercises/choices两尺寸显示批准；答案parts=[]、新键盘0。
+保留final templates/helper后即时窄stage/commit/普通push原分支，
+仅HEAD+N35索引与必要来源，不stage9-10g或冗余163164尝试，不sync/rebase/merge。
+本检查点尚未记录实际commit/push结果；DB writes0、finish=review、
+父actual8/24与历史24/24、全部原失败/UNKNOWN/备份及计数保持。
