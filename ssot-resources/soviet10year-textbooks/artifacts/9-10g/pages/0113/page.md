@@ -1,0 +1,82 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 113,
+  "printed_page": 106,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 113
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "6fb2e8bf1582117b7fdd27a924b98acd9ca73379196f4ceb7d7d7b546c613ac1"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "FIRST transcription: physical113/printed106; one full page.grid.png image call. First seven-line paragraph is new after the closed paragraph on112, and continues section32 discussion without a cont marker.",
+    "Complete printed exercises299-304 retained: 299-302 have raised circle marks, 303-304 stars; numerical subquestions1)/2)/3) are printed numeric, not inferred Cyrillic. These exercises have no answers on this page.",
+    "Section33 is an actual new heading. Theorem19 begins at bottom, ends this page with 垂直于, and is open into114. No closure or approval of theorem/section from this fragment.",
+    "No figure, table, construction diagram or teaching footnote on this page; bottom printed page106 is separate. No count exclusions or errata claimed."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+经验表明，在空间中连续不断地移动两个合同的平面图
+形的模型中的一个，可以使它正好占据与另一个模型完全相
+同的位置. 换句话说，两个合同的平面图形可以相叠. 但是，
+你可以试试看能不能将四面体$ABCD$和$A_1B_1C_1D_1$叠合(参
+看图122). 你将发现这是不可能的. 另外，明显的不能叠合
+的合同图形的例子是左手和右手. 利用中心对称也可能得到
+不能叠合的合同图形.
+
+<!-- exhead -->
+习 题
+
+<!-- ex 299 -->
+299°. 1) 在关于平面$\alpha$对称下，求映射成自身的所有点
+的集合.
+2) 在关于平面对称下，怎样的直线映射成自身？
+
+<!-- ex 300 -->
+300°. 在关于平面对称下，1) 直线和它的象的相关位置
+怎样？2) 平面和它的象的相关位置怎样？
+
+<!-- ex 301 -->
+301°. 在关于平面对称下，如果一个图形映射成自身，那
+么这个平面叫做已知图形的**对称平面**. 指出以下图形的对称
+平面：1) 线段；2) 直线；3) 射线.
+
+<!-- ex 302 -->
+302°. 在自然界和技术设备中，有没有可以认为是有对
+称平面的空间图形的模型？举出例子.
+
+<!-- ex 303 -->
+303*. 证明：如果一个图形有唯一的对称中心和对称平
+面，那么对称中心属于对称平面.
+
+<!-- ex 304 -->
+304*. 存在仅有一个对称平面的四面体吗？
+
+<!-- h3 -->
+§33. 垂直于同一条直线的两个平面
+
+<!-- p open -->
+**定理19. 垂直于两个平行平面中一个的直线必垂直于**
+
+<!-- foot -->
+• 106 •

@@ -1,0 +1,101 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 157,
+  "numbering_scope": "g10",
+  "printed_page": 150,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 157
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "892c232deb264312e24f9e7001c97b4055d93785d237ae5ce09306e430a6f939"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "逐页源图转写。页首承接物理156已存文本的“一个”；只读该页page.md/page.json，不重开其图。",
+    "本页无新标题、无习题栏目或独立习题题号；问题1为正文例题题干，解在物理158开始。",
+    "图6和图7保留印刷标签；两图题确实同排，图7 cap 使用 samerow。",
+    "页底问题1题干以点M句点结束，不虚构后续解答。未装订，未判定课完成。",
+    "页顶和底边有孤立墨点；未从本页确定其来源，不把无可读正文的墨点猜作字母或数字，不设count_exclusions。",
+    "仅来源作者候选，无独立审查、来源批准或现代图批准。"
+  ],
+  "errata": [],
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-g10-06",
+      "label": "图 6",
+      "box": [
+        130,
+        1086,
+        439,
+        365
+      ]
+    },
+    {
+      "id": "fig-g10-07",
+      "label": "图 7",
+      "box": [
+        659,
+        981,
+        527,
+        517
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+向量 $\overrightarrow{OM}$. 在这时，不同的点对应于不同的向量. 除点 $O$ 之
+外，还给出直角基底 $(\vec i,\vec j,\vec k)$（图6）. 每一个向量在这个基底
+中的坐标是：
+$\overrightarrow{OM}=(x,y,z)$.
+
+<!-- p -->
+如果给定了直角基底 $(\vec i,\vec j,\vec k)$ 和点 $O$，那么就说，建立了
+空间的直角坐标系. 点 $O$ 叫做坐标原点，而向量 $\vec i,\vec j,\vec k$ 叫做
+坐标向量. 向量 $\overrightarrow{OM}$ 在直角基底 $(\vec i,\vec j,\vec k)$ 中的坐标，称为在直
+角坐标系中点 $M$ 的坐标.
+
+<!-- p -->
+如果 $\overrightarrow{OM}=(x,y,z)$，那么点 $M$ 的坐标写成 $M(x,y,z)$. 数
+$x$ 叫做点 $M$ 的横坐标，$y$ 叫做点 $M$ 的纵坐标，$z$ 叫做点 $M$ 的竖
+坐标.
+
+<!-- fig 图 6 box 130,1086,439,365 -->
+![图 6](figures/fig-g10-06.png)
+
+<!-- cap 图 6 -->
+图 6
+
+<!-- fig 图 7 box 659,981,527,517 -->
+![图 7](figures/fig-g10-07.png)
+
+<!-- cap 图 7 samerow -->
+图 7
+
+<!-- p -->
+我们再引入几个常用的术语. 向量 $\overrightarrow{OA}=\vec i$、$\overrightarrow{OB}=\vec j$、
+$\overrightarrow{OC}=\vec k$ 所确定的轴叫做坐标轴（图7）；通过每两个坐标轴的
+平面叫做坐标平面；给出了坐标系的空间叫做坐标空间.
+
+<!-- p -->
+问题1. 已知直角坐标系（图8）. 作出坐标为 $(x,y,z)$ 的
+点 $M$.
+
+<!-- foot -->
+· 150 ·

@@ -1,0 +1,97 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 337,
+  "printed_page": 327,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 337
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "bc733cd4f8c22317d03381105c14d68bf067db0025310c3e7d5b1246152fed59"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D041 candidate from hash-bound independent observation. Native finalization is not SOURCE approval.",
+    "Figure263 left-ray glyph remains HOLD, with no codepoint selected. Raw crop retention does not approve this figure or unit129.",
+    "Unit128 ends at p0337#4 before actual unit129 heading p0337#5; unit128 has no figures or questions."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-263",
+      "label": "图 263",
+      "box": [
+        830,
+        1063,
+        497,
+        564
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+罗多夫斯卡·居里的祖国波兰而命名的。
+
+<!-- p -->
+终于又发现了一种能强烈辐射射线的元素， 此元素被命
+名为镭（意思是放射的）。 自发放射的现象被居里夫妇取名为
+**放射性。**
+
+<!-- p -->
+镭的相对原子量为 226， 在门捷列夫周期表上居于 88
+位。 在居里发现它以前这一格是空白的。 根据它的化学性质，
+镭属于碱土元素。
+
+<!-- p -->
+以后又证明了序号为 83 以上的所有化学元素都是放射
+性元素。
+
+<!-- h3 -->
+129. $\alpha$、$\beta$ 和 $\gamma$ 射线
+
+<!-- p -->
+放射性元素被发现以后， 就开始研究它们辐射的物理性
+质。 除了贝克勒尔和居里夫妇以外，卢瑟福也从事这项研究。
+
+<!-- p -->
+能证明放射线的复杂组成
+的经典实验如下： 把放射性样
+品放在铅块的窄孔底上， 在孔
+的对面放着照相底片， 垂直于
+射线的强磁场作用于从窄孔射
+出的射线上（图 263）。 整个装
+置放在真空中。
+
+<!-- p open -->
+在没有磁场时， 显影后在
+底片上可以发现正对着孔的一
+
+<!-- fig 图 263 box 830,1063,497,564 -->
+![图 263](figures/fig-263.png)
+
+<!-- cap 图 263 samerow -->
+图 263
+
+<!-- p cont open -->
+个暗斑。 而在有磁场时射线分成三束。 其中两束向相反的方
+向偏离。 这一点肯定地证明了这些电荷的符号是相反的。 在
+这种情况下带负电荷的射线由于磁场的作用偏转得较大， 带
+
+<!-- foot -->
+• 327 •

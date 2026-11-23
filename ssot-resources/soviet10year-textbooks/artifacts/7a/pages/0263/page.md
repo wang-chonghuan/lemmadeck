@@ -1,0 +1,91 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 263,
+  "printed_page": 257,
+  "notes": [
+    "The first line completes the open paragraph on physical 262.",
+    "The D/4 identity after 就是 wraps across two printed rows; the wrap marker preserves the complete formula.",
+    "The final displayed D/4 calculation ends with a period. The worked example continues conceptually on physical 264, but no syntactically unfinished paragraph or equation is invented.",
+    "No source figure or table is visible."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 263
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "90391c953fd4ccb85f3d83639e584d6fdfbb587e4f018d2ecb950e850453f3d9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+边分解因式的方法更方便.
+
+<!-- p -->
+举例说，对于方程 $x^2-1.21=0$ 得到：
+
+<!-- p -->
+$(x+1.1)(x-1.1)=0$，
+
+<!-- p -->
+$x=-1.1$ 或 $x=1.1$.
+
+<!-- p -->
+方程 $7x^2=0$ 只有一个根，等于 0.
+
+<!-- p -->
+解二次方程时，有时利用写成另一种形式的根的公式比
+较方便.
+
+<!-- p -->
+把分式 $\frac{-b\pm\sqrt{D}}{2a}$ 的分子和分母除以 2 并且把因数 $\frac{1}{2}$ 移到根号
+下面. 得到：
+
+<!-- p -->
+$\frac{-b\pm\sqrt{D}}{2a}=\frac{-\frac{b}{2}\pm\frac{1}{2}\sqrt{D}}{a}=\frac{-\frac{b}{2}\pm\sqrt{\frac{D}{4}}}{a}$.
+
+<!-- p -->
+因为 $D=b^2-4ac$，所以 $\frac{D}{4}=\frac{b^2-4ac}{4}=\frac{b^2}{4}-ac$，就是 $\frac{D}{4}↵=\left(\frac{b}{2}\right)^2-ac$.
+
+<!-- p -->
+二次方程的求根公式可以写成下面的形式，就是：
+
+<!-- p -->
+$x=\frac{-\frac{b}{2}\pm\sqrt{\frac{D}{4}}}{a}$，其中　$\frac{D}{4}=\left(\frac{b}{2}\right)^2-ac$.
+
+<!-- p -->
+写成这种形式的公式，可以用来解判别式不是负值的任何二次方
+程（显然，如果 $D\geq0$，那么 $\frac{D}{4}\geq0$）. 实际上，在 $b$ 是偶数（也就是 $\frac{b}{2}$ 是
+整数）的情况下，常常运用这个公式.
+
+<!-- p -->
+举例说，假设需要解方程
+
+<!-- p -->
+$9x^2-14x+5=0$.
+
+<!-- p -->
+这里　　$\frac{b}{2}=-7$，　$a=9$，　$c=5$.
+
+<!-- p -->
+$\frac{D}{4}=(-7)^2-9\times5=4$.
+
+<!-- foot -->
+257

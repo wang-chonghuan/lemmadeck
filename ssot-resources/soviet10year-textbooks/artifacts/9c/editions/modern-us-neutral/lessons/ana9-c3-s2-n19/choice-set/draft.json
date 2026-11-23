@@ -1,0 +1,359 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "f509542a201c44b67e77c391e9ed17248b19b32abb2e21c1d365c02afc13e2df",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "n19-rational-successor",
+      "source_numbers": ["148"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(x_n)$ 由 $x_n=\\frac{2n+1}{n+3}$ 给出，$n=1,2,3,\\ldots$。下列哪一组依次给出 $x_{10}$、$x_{25}$、$x_{n+1}$ 和 $x_{n+1}-x_n$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\left(\\frac{51}{10},\\frac{126}{25},\\frac{5n+6}{n+1},-\\frac{1}{n(n+1)}\\right)$", "figure_ids": []},
+          {"id": "B", "text": "$\\left(\\frac{21}{13},\\frac{51}{28},\\frac{2n+3}{n+3},\\frac{2}{n+3}\\right)$", "figure_ids": []},
+          {"id": "C", "text": "$\\left(\\frac{21}{13},\\frac{51}{28},\\frac{2n+3}{n+4},\\frac{5}{(n+3)(n+4)}\\right)$", "figure_ids": []},
+          {"id": "D", "text": "$\\left(\\frac{23}{14},\\frac{53}{29},\\frac{2n+5}{n+5},\\frac{5}{(n+4)(n+5)}\\right)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Evaluate the two specified terms and derive both the next-term formula and the exact adjacent difference for the same rational sequence.",
+        "source_solution": "For n>=1, x_10=21/13 and x_25=51/28. Substitution in every occurrence of n gives x_(n+1)=(2n+3)/(n+4). The common-denominator numerator for the difference is (2n+3)(n+3)-(2n+1)(n+4)=5, hence the difference is 5/[(n+3)(n+4)]. All denominators are nonzero. This is the complete result independently recorded in the frozen source-solving.md.",
+        "unit_reason": "The two numerical evaluations, successor substitution and difference form one complete output tuple governed by a single formula. A whole tuple preserves their relationship instead of four disconnected arithmetic clicks. The exponential sequence in the other part is mathematically independent and has a separate unit.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Recognition of the complete result does not demonstrate independently writing the evaluations, index substitution or common-denominator derivation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Misgroup the formula as (2n+1)/n+3=5+1/n. This produces 5+1/10=51/10, 5+1/25=126/25, next term 5+1/(n+1)=(5n+6)/(n+1), and difference 1/(n+1)-1/n=-1/[n(n+1)], exactly the displayed tuple.", "misconception": "Move the denominator's +3 outside the quotient, then consistently evaluate the wrong rational expression."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Evaluate x_10 and x_25 correctly. For the successor, replace n by n+1 only in the numerator, leaving the denominator n+3. Subtracting the original term with this frozen denominator gives [(2n+3)-(2n+1)]/(n+3)=2/(n+3).", "misconception": "Advance the index in the numerator but not the denominator, then use the resulting incorrect successor to compute the difference."},
+          {"option_id": "C", "truth": "correct", "derivation": "Substitute 10 and 25 to obtain 21/13 and 51/28. Substitute n+1 throughout to obtain (2n+3)/(n+4). Subtract with denominator (n+3)(n+4); the numerator simplifies to 5, giving the displayed difference for every n>=1.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Shift the sequence itself one place by using g_n=x_(n+1)=(2n+3)/(n+4). Then g_10=23/14, g_25=53/29, g_(n+1)=(2n+5)/(n+5), and g_(n+1)-g_n=5/[(n+4)(n+5)]. These are outputs for the shifted sequence, not the specified one.", "misconception": "Use n+1 as the term index everywhere, including the requested numerical terms, rather than retaining the sequence's given indexing."}
+        ]
+      }
+    },
+    {
+      "id": "n19-exponential-successor",
+      "source_numbers": ["148"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(b_n)$ 由 $b_n=\\frac{n}{3^n}$ 给出，$n=1,2,3,\\ldots$。下列哪一组依次给出 $b_3$、$b_5$、$b_{n+1}$ 和 $\\frac{b_{n+1}}{b_n}$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\left(\\frac{1}{9},\\frac{5}{243},\\frac{n+1}{3^n},\\frac{n+1}{n}\\right)$", "figure_ids": []},
+          {"id": "B", "text": "$\\left(\\frac{4}{81},\\frac{2}{243},\\frac{n+2}{3^{n+2}},\\frac{n+2}{3(n+1)}\\right)$", "figure_ids": []},
+          {"id": "C", "text": "$\\left(\\frac{1}{3},\\frac{1}{3},\\frac{1}{3},1\\right)$", "figure_ids": []},
+          {"id": "D", "text": "$\\left(\\frac{1}{9},\\frac{5}{243},\\frac{n+1}{3^{n+1}},\\frac{n+1}{3n}\\right)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Evaluate two terms, advance both the linear numerator and exponential denominator, and derive the ratio of adjacent terms.",
+        "source_solution": "b_3=3/27=1/9 and b_5=5/243. For all n>=1, b_(n+1)=(n+1)/3^(n+1), and dividing by the nonzero b_n gives [(n+1)/3^(n+1)](3^n/n)=(n+1)/(3n). This complete four-part result is independently recorded in the frozen source-solving.md.",
+        "unit_reason": "One complete tuple keeps the numerical terms, index substitution and quotient linked to the same sequence. The exponential denominator and quotient distinguish this task from the rational sequence's adjacent difference; the printed subpart label is not the reason for separation.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Recognition does not demonstrate independently evaluating the powers, writing the successor or producing the cancellation steps for the ratio."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Compute b_3 and b_5 correctly. Advance only the numerator to n+1 while retaining 3^n, obtaining (n+1)/3^n. Dividing that wrong successor by n/3^n cancels the equal powers and yields (n+1)/n.", "misconception": "Treat the exponent as unchanged when the sequence index advances, thereby losing the factor 1/3 in the ratio."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Use the shifted sequence c_n=b_(n+1)=(n+1)/3^(n+1). Then c_3=4/81, c_5=6/729=2/243, c_(n+1)=(n+2)/3^(n+2), and c_(n+1)/c_n=(n+2)/[3(n+1)].", "misconception": "Shift every requested index forward by one instead of using the sequence's stated term numbering."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Replace the power 3^n by the product 3n. The resulting wrong sequence is n/(3n)=1/3 for all positive n, so both specified terms and the successor are 1/3, with ratio 1.", "misconception": "Interpret an exponent as multiplication, converting the nonconstant sequence into a constant one."},
+          {"option_id": "D", "truth": "correct", "derivation": "3/3^3=1/9 and 5/3^5=5/243. Index substitution gives (n+1)/3^(n+1); division by n/3^n leaves (n+1)/(3n), since 3^(n+1)=3*3^n and n>=1.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n19-prefix-reciprocal-power",
+      "source_numbers": ["149"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(y_n)$ 由 $y_n=1+\\frac{1}{2^n}$ 给出，$n=1,2,3,\\ldots$。它的前五项依次为哪一组？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\left(2,\\frac{3}{2},\\frac{5}{4},\\frac{9}{8},\\frac{17}{16}\\right)$", "figure_ids": []},
+          {"id": "B", "text": "$\\left(\\frac{3}{2},\\frac{5}{4},\\frac{9}{8},\\frac{17}{16},\\frac{33}{32}\\right)$", "figure_ids": []},
+          {"id": "C", "text": "$\\left(\\frac{3}{2},\\frac{5}{4},\\frac{7}{6},\\frac{9}{8},\\frac{11}{10}\\right)$", "figure_ids": []},
+          {"id": "D", "text": "$\\left(1,\\frac{1}{2},\\frac{1}{4},\\frac{1}{8},\\frac{1}{16}\\right)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compute the entire ordered five-term prefix of a constant plus a reciprocal power, with the sequence's positive-integer indexing.",
+        "source_solution": "At n=1,2,3,4,5 the powers are 2,4,8,16,32. Adding 1 to their reciprocals gives 3/2,5/4,9/8,17/16,33/32, in that order. The leading 1 is outside the fraction. This full prefix was independently solved in the frozen source-solving.md.",
+        "unit_reason": "The five entries are an ordered result governed by one exponential rule, not five independent blanks. A full-prefix unit checks the starting index and the rule beyond the first two terms. The other three analytic formulas require distinct evaluations and are separate units rather than a large combination-code question.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Selecting a complete prefix does not demonstrate independently writing all five substitutions and exact fractions."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Enumerate indices 0,1,2,3,4 instead of 1,2,3,4,5. The formula then gives 1+1=2 followed by 3/2,5/4,9/8,17/16, which is the displayed list.", "misconception": "Start the sequence at index zero despite the supplied domain N={1,2,3,...}."},
+          {"option_id": "B", "truth": "correct", "derivation": "Substitute n=1 through 5 into 1+1/2^n. The sums (2+1)/2,(4+1)/4,(8+1)/8,(16+1)/16,(32+1)/32 yield exactly 3/2,5/4,9/8,17/16,33/32.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Replace 2^n by 2n and evaluate 1+1/(2n) at n=1 through 5. This yields 3/2,5/4,7/6,9/8,11/10. The coincidence of the first two entries does not make the complete prefix correct.", "misconception": "Read the exponential denominator as a linear product and infer the remaining terms from that wrong rule."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Put both constants over the denominator by replacing 1+1/2^n with (1+1)/2^n=2/2^n. At n=1 through 5 this gives 1,1/2,1/4,1/8,1/16.", "misconception": "Extend the reciprocal's denominator to the leading constant instead of leaving the additive 1 outside the fraction."}
+        ]
+      }
+    },
+    {
+      "id": "n19-prefix-power-plus-reciprocal",
+      "source_numbers": ["149"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(x_n)$ 由 $x_n=2^n+\\frac{1}{2^n}$ 给出，$n=1,2,3,\\ldots$。它的前五项依次为哪一组？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\left(2,\\frac{5}{2},\\frac{17}{4},\\frac{65}{8},\\frac{257}{16}\\right)$", "figure_ids": []},
+          {"id": "B", "text": "$\\left(\\frac{5}{2},\\frac{17}{4},\\frac{37}{6},\\frac{65}{8},\\frac{101}{10}\\right)$", "figure_ids": []},
+          {"id": "C", "text": "$\\left(\\frac{5}{2},\\frac{17}{4},\\frac{65}{8},\\frac{257}{16},\\frac{1025}{32}\\right)$", "figure_ids": []},
+          {"id": "D", "text": "$\\left(\\frac{5}{2},\\frac{9}{2},\\frac{17}{2},\\frac{33}{2},\\frac{65}{2}\\right)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Evaluate the sum of a power and its reciprocal at the same five consecutive positive-integer indices.",
+        "source_solution": "Using powers 2,4,8,16,32 at indices 1 through 5 gives 2+1/2=5/2, 4+1/4=17/4, 8+1/8=65/8, 16+1/16=257/16, and 32+1/32=1025/32. Both summands depend on n. This entire prefix was independently recorded in the frozen source-solving.md.",
+        "unit_reason": "One ordered prefix retains all five requested evaluations and the shared exponent in the two summands. It differs substantively from the constant-plus-reciprocal formula, so the two are not redundant alternate questions about the same result; no individual term is atomized.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Complete-prefix recognition does not demonstrate unaided production of the five evaluations or their common-denominator arithmetic."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Evaluate the formula at indices 0 through 4. At index 0 it is 1+1=2, followed by the actual terms at indices 1 through 4: 5/2,17/4,65/8,257/16.", "misconception": "Include an index-zero value and omit the fifth term instead of enumerating the stated positive-integer domain."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Replace both appearances of 2^n by 2n. Then 2n+1/(2n) at n=1 through 5 equals 5/2,17/4,37/6,65/8,101/10. Only the first two terms coincide with the required power-based formula.", "misconception": "Convert both exponential expressions into linear products, preserving a superficial pattern that fails at later indices."},
+          {"option_id": "C", "truth": "correct", "derivation": "For each n from 1 to 5, combine 2^n+1/2^n as (2^(2n)+1)/2^n. The resulting numerators are 5,17,65,257,1025 and denominators are 2,4,8,16,32, exactly as shown.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Keep the first summand 2^n but freeze the second summand at its first value 1/2. Evaluating 2^n+1/2 for n=1 through 5 gives 5/2,9/2,17/2,33/2,65/2.", "misconception": "Advance the index in the power but treat the reciprocal as the constant 1/2 rather than an equally indexed term."}
+        ]
+      }
+    },
+    {
+      "id": "n19-prefix-reciprocal-index",
+      "source_numbers": ["149"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(a_n)$ 由 $a_n=2+\\frac{3}{n}$ 给出，$n=1,2,3,\\ldots$。它的前五项依次为哪一组？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\left(5,8,11,14,17\\right)$", "figure_ids": []},
+          {"id": "B", "text": "$\\left(5,\\frac{5}{2},\\frac{5}{3},\\frac{5}{4},1\\right)$", "figure_ids": []},
+          {"id": "C", "text": "$\\left(\\frac{7}{2},3,\\frac{11}{4},\\frac{13}{5},\\frac{5}{2}\\right)$", "figure_ids": []},
+          {"id": "D", "text": "$\\left(5,\\frac{7}{2},3,\\frac{11}{4},\\frac{13}{5}\\right)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compute all five ordered terms of a constant plus a reciprocal-index expression, respecting the fraction's scope.",
+        "source_solution": "At n=1,2,3,4,5 the values 2+3/n are respectively 5,7/2,3,11/4,13/5. Only the summand 3 is divided by n. This complete prefix was independently derived in the frozen source-solving.md.",
+        "unit_reason": "A five-term prefix is one coherent mapping from indices to values. This reciprocal-index rule is mathematically independent of the two exponential rules and of the parity-sensitive rule, so it is a separate complete unit rather than five per-term questions.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Selection does not establish independently writing the full ordered list or showing each reciprocal-index calculation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Replace 3/n by 3n. The wrong formula 2+3n gives 5,8,11,14,17 at indices 1 through 5, exactly the displayed increasing list.", "misconception": "Multiply by the index instead of dividing by it."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Extend the denominator n to both summands, using (2+3)/n=5/n. At indices 1 through 5 this gives 5,5/2,5/3,5/4,1.", "misconception": "Treat the whole sum as a fraction although only 3 is divided by n."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Begin with n=2 and enumerate indices 2,3,4,5,6. Then 2+3/n yields 7/2,3,11/4,13/5,5/2, omitting the actual first term.", "misconception": "Shift the five-term index range forward one place instead of starting at n=1."},
+          {"option_id": "D", "truth": "correct", "derivation": "Substitution gives 2+3=5, 2+3/2=7/2, 2+3/3=3, 2+3/4=11/4, and 2+3/5=13/5 in the required order.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n19-prefix-parity-rational",
+      "source_numbers": ["149"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(b_n)$ 由 $b_n=\\frac{2n+(-1)^n}{3n}$ 给出，$n=1,2,3,\\ldots$。它的前五项依次为哪一组？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\left(\\frac{1}{3},\\frac{5}{6},\\frac{5}{9},\\frac{3}{4},\\frac{3}{5}\\right)$", "figure_ids": []},
+          {"id": "B", "text": "$\\left(1,\\frac{5}{6},\\frac{7}{9},\\frac{3}{4},\\frac{11}{15}\\right)$", "figure_ids": []},
+          {"id": "C", "text": "$\\left(1,\\frac{1}{2},\\frac{7}{9},\\frac{7}{12},\\frac{11}{15}\\right)$", "figure_ids": []},
+          {"id": "D", "text": "$\\left(\\frac{5}{3},\\frac{25}{6},\\frac{53}{9},\\frac{97}{12},\\frac{149}{15}\\right)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Evaluate an entire five-term prefix where parity changes the numerator and the entire numerator is divided by the index-dependent denominator.",
+        "source_solution": "At n=1 through 5, (-1)^n has signs -,+,-,+,-. Thus the numerators are 1,5,5,9,9 and the denominators are 3,6,9,12,15; simplification gives 1/3,5/6,5/9,3/4,3/5. The full result is recorded in the frozen source-solving.md.",
+        "unit_reason": "The ordered prefix keeps odd and even indices together, exposing the parity rule rather than isolating one sign check. Its parity and whole-numerator division are independent mathematical demands not captured by the other three source formulas.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Recognition of a complete list does not demonstrate independently generating the parity-dependent numerators and all five fractions."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Apply -1 at odd indices and +1 at even indices: (2-1)/3=1/3, (4+1)/6=5/6, (6-1)/9=5/9, (8+1)/12=3/4, (10-1)/15=3/5.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Replace (-1)^n by +1 at every index. The wrong expression (2n+1)/(3n) gives 3/3=1,5/6,7/9,9/12=3/4,11/15. The even-index agreements do not fix the odd-index errors.", "misconception": "Ignore parity and use the positive sign for every power of -1."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Reverse the parity phase by using (-1)^(n-1). The resulting numerators at n=1 through 5 are 3,3,7,7,11; division by 3,6,9,12,15 gives 1,1/2,7/9,7/12,11/15.", "misconception": "Use a positive sign at odd indices and a negative sign at even indices, shifting the exponent's parity by one."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Divide only the alternating summand by 3n, using 2n+(-1)^n/(3n). At n=1 through 5 this gives 2-1/3=5/3,4+1/6=25/6,6-1/9=53/9,8+1/12=97/12,10-1/15=149/15.", "misconception": "Remove the numerator grouping and leave the linear term 2n outside the division."}
+        ]
+      }
+    },
+    {
+      "id": "n19-strict-bound-indices",
+      "source_numbers": ["150"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(y_n)$ 由 $y_n=2n-5$ 给出，$n=1,2,3,\\ldots$。满足 $y_n>200$ 的全部序号构成哪一个集合？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\{102,103,104,\\ldots\\}$", "figure_ids": []},
+          {"id": "B", "text": "$\\{103,104,105,\\ldots\\}$", "figure_ids": []},
+          {"id": "C", "text": "$\\{98,99,100,\\ldots\\}$", "figure_ids": []},
+          {"id": "D", "text": "$\\{103\\}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find the complete positive-integer index set of a strict inequality, including its first qualifying index and the entire subsequent tail.",
+        "source_solution": "2n-5>200 is equivalent to n>205/2=102.5. On N={1,2,3,...}, this gives exactly {103,104,105,...}. y_102=199 fails and y_103=201 succeeds; the formula increases by 2, so every larger index qualifies. This complete solution is in the frozen source-solving.md.",
+        "unit_reason": "One full index set is the complete result of the source inequality, preserving both its integer boundary and all subsequent terms. Asking only the first qualifying index would omit the quantifier over all terms; this question does not do that.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Selecting the complete index set does not demonstrate independently writing the inequality transformations and integer-boundary argument."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Solve correctly to n>102.5, but convert the real boundary into n>=floor(102.5)=102. This incorrectly includes n=102, for which 2*102-5=199 is not greater than 200.", "misconception": "Round the lower bound down and include the rounded integer instead of finding the least integer strictly above 102.5."},
+          {"option_id": "B", "truth": "correct", "derivation": "Add 5 and divide by the positive number 2 to get n>102.5. Exactly the integers n>=103 satisfy this, so the complete set is the displayed infinite tail.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Move -5 to the other side without changing its sign: use 2n>200-5=195 rather than 205. This gives n>97.5 and thus the wrong tail starting at 98.", "misconception": "Subtract 5 from the right-hand side while trying to remove the left-hand -5, reversing the required algebraic operation."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Correctly find the first qualifying index 103, then return just that one index. The source asks for all qualifying terms; for example n=104 also gives y_104=203>200 and is missing.", "misconception": "Replace the set of every satisfying index by its least element and stop after the boundary calculation."}
+        ]
+      }
+    },
+    {
+      "id": "n19-upper-bound-indices",
+      "source_numbers": ["151"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(y_n)$ 由 $y_n=3n-100$ 给出，$n=1,2,3,\\ldots$。满足 $y_n\\leqslant30$ 的全部序号构成哪一个集合？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\{44,45,46,\\ldots\\}$", "figure_ids": []},
+          {"id": "B", "text": "$\\{1,2,3,\\ldots,44\\}$", "figure_ids": []},
+          {"id": "C", "text": "$\\{0,1,2,\\ldots,43\\}$", "figure_ids": []},
+          {"id": "D", "text": "$\\{1,2,3,\\ldots,43\\}$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find every positive-integer index below a non-strict upper bound, retaining both the domain's lower endpoint and the last admissible integer.",
+        "source_solution": "3n-100<=30 gives 3n<=130 and n<=130/3=43+1/3. Intersecting with the given positive-integer domain yields {1,2,...,43}. y_43=29 qualifies and y_44=32 does not. All smaller positive indices qualify since the sequence is increasing. This complete solution is frozen in source-solving.md.",
+        "unit_reason": "One complete finite index set keeps the direction, the real-to-integer upper boundary and the positive lower endpoint together. This finite upper-bound task is independent of the other source's strict lower-bound infinite tail, rather than a duplicate of its first-index calculation.",
+        "concept_blocks": [5, 7, 8, 14],
+        "limitations": ["Recognition does not demonstrate unaided inequality solving or independently expressing the intersection with the sequence's domain."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Add 100 to reach 3n<=130, but reverse the inequality when dividing by the positive number 3, obtaining n>=130/3. The corresponding integer tail is n>=44, exactly the displayed set.", "misconception": "Reverse an inequality on division by a positive number, confusing an upper bound with a lower bound."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Obtain n<=130/3=43+1/3 correctly, then replace the upper bound by ceil(130/3)=44 and include all positive indices through 44. But y_44=32>30, so the added endpoint is invalid.", "misconception": "Round a real upper bound upward instead of taking the greatest integer not exceeding it."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Use the correct upper endpoint 43, but intersect n<=130/3 with {0,1,2,...} rather than the supplied domain {1,2,3,...}. The resulting list adds the forbidden index zero.", "misconception": "Import a different natural-number convention and include zero as a sequence index despite the explicit positive-integer domain."},
+          {"option_id": "D", "truth": "correct", "derivation": "Adding 100 and dividing by positive 3 preserves <=, giving n<=43+1/3. The positive-integer solutions are exactly 1 through 43, with no zero or 44.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "n19-additive-recurrence-result",
+      "source_numbers": ["152"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(x_n)$ 满足 $x_1=-10$、$x_{n+1}=x_n+5$，$n=1,2,3,\\ldots$。下列哪一组同时给出了它的前五项及对所有正整数 $n$ 成立的第 $n$ 项公式？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(-10,-5,0,5,10)$；$x_n=5n-10$。", "figure_ids": []},
+          {"id": "B", "text": "$(-10,-15,-20,-25,-30)$；$x_n=-5n-5$。", "figure_ids": []},
+          {"id": "C", "text": "$(-10,-5,0,5,10)$；$x_n=5n-15$。", "figure_ids": []},
+          {"id": "D", "text": "$(-10,-50,-250,-1250,-6250)$；$x_n=-10\\cdot5^{n-1}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Generate the first five terms of the additive recurrence and supply an analytic formula satisfying both the initial term and the recurrence for every positive index.",
+        "source_solution": "Starting from -10 and adding 5 gives the prefix (-10,-5,0,5,10). Index n requires n-1 increments, so x_n=-10+5(n-1)=5n-15. It gives x_1=-10 and x_(n+1)=5(n+1)-15=x_n+5 for every n>=1; the initial condition and recurrence uniquely determine all terms. This construction was independently recorded in the frozen source-solving.md.",
+        "unit_reason": "The prefix and formula are one complete result for the same recurrence. Keeping them together preserves the source's connection between recursive generation and an analytic rule instead of separate prefix-entry and formula clicks. The negation recurrence has a different mechanism and is an independent unit.",
+        "concept_blocks": [5, 7, 8, 14, 21],
+        "limitations": ["Selecting a prefix-and-formula pair does not demonstrate independently generating the terms or constructing and verifying a formula from recurrence data."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Generate the five displayed terms correctly from the recurrence, but write the formula as x_1+5n=-10+5n instead of x_1+5(n-1). This yields 5n-10, which gives x_1=-5 and is incompatible with the stated initial term and prefix.", "misconception": "Count n increments from the first term instead of n-1, even though the finite recurrence calculations are correct."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Replace the step +5 by -5. Starting at -10 then gives -10,-15,-20,-25,-30, and the wrong formula -10-5(n-1) simplifies to -5n-5.", "misconception": "Subtract the positive increment at each recurrence step rather than add it."},
+          {"option_id": "C", "truth": "correct", "derivation": "Four successive additions give -10,-5,0,5,10. There are n-1 additions before term n, so x_n=-10+5(n-1)=5n-15. The initial term and the difference x_(n+1)-x_n=5 both match the source for all n>=1.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Read the additive recurrence as x_(n+1)=5x_n. Repeated multiplication starting at -10 gives -10,-50,-250,-1250,-6250, with formula -10*5^(n-1). These outputs consistently solve the wrong multiplicative recurrence.", "misconception": "Treat the recurrence's added 5 as a multiplier and construct a geometric rather than additive sequence."}
+        ]
+      }
+    },
+    {
+      "id": "n19-negation-recurrence-result",
+      "source_numbers": ["152"],
+      "view": {
+        "mode": "single",
+        "stem": "数列 $(x_n)$ 满足 $x_1=4$、$x_{n+1}=-x_n$，$n=1,2,3,\\ldots$。下列哪一组同时给出了它的前五项及对所有正整数 $n$ 成立的第 $n$ 项公式？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(4,-4,4,-4,4)$；$x_n=4(-1)^n$。", "figure_ids": []},
+          {"id": "B", "text": "$(4,-4,4,-4,4)$；$x_n=4(-1)^{n-1}$。", "figure_ids": []},
+          {"id": "C", "text": "$(4,4,4,4,4)$；$x_n=4$。", "figure_ids": []},
+          {"id": "D", "text": "$(4,-4,-12,-20,-28)$；$x_n=12-8n$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Generate the first five terms of repeated negation and express the sequence for every positive index with the phase fixed by its first term.",
+        "source_solution": "Repeated negation yields (4,-4,4,-4,4). After n-1 negations, x_n=4(-1)^(n-1), so odd-indexed terms are 4 and even-indexed terms are -4. This formula gives x_1=4 and x_(n+1)=4(-1)^n=-x_n for all n>=1; the recurrence uniquely generates the sequence. The full construction is recorded in the frozen source-solving.md.",
+        "unit_reason": "One prefix-and-formula pair checks both recursive generation and the global phase. It is not a separate question about every sign or every term, and it is independent of the additive recurrence because negation is a multiplicative sign flip, not a fixed additive increment.",
+        "concept_blocks": [5, 7, 8, 14, 21],
+        "limitations": ["Recognition cannot certify independently generating the alternating sequence or constructing a closed formula with the correct parity phase."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Generate the finite prefix by negating each previous term, but put n rather than n-1 negations into the formula. The resulting 4(-1)^n has first term -4, so it contradicts the given x_1=4 and the displayed prefix even though the sign-flip recurrence alone would hold.", "misconception": "Ignore the initial phase when translating repeated negation into an exponent, counting n rather than n-1 sign flips."},
+          {"option_id": "B", "truth": "correct", "derivation": "Negating successively gives 4,-4,4,-4,4. The n-th term follows n-1 negations, hence 4(-1)^(n-1), which satisfies both the first term and x_(n+1)=-x_n for every n>=1.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Drop the minus sign and use x_(n+1)=x_n. Starting from 4 produces five copies of 4 and the constant formula x_n=4. This fails the actual recurrence already at n=1, where the next term must be -4.", "misconception": "Treat negation as leaving the previous term unchanged."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Compute the first transition 4 to -4 correctly, take its difference -8 as a fixed additive step, and continue subtracting 8. The list becomes 4,-4,-12,-20,-28, with formula 4-8(n-1)=12-8n. At the second transition the source instead requires -(-4)=4.", "misconception": "Infer a constant additive difference from the first two terms instead of repeatedly applying the negation rule."}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "148",
+      "question_ids": ["n19-rational-successor", "n19-exponential-successor"],
+      "omitted_tasks": ["Unaided written production of both four-part outputs, including successor substitution and adjacent difference/ratio derivations, is not assessed by choosing complete tuples."],
+      "reason": "Both independent formulas are represented in full: two numerical terms, a next-term formula and the requested adjacent relation for each. No requested mathematical result or domain condition is omitted; the explicit loss is written production, not source-result coverage."
+    },
+    {
+      "source_number": "149",
+      "question_ids": ["n19-prefix-reciprocal-power", "n19-prefix-power-plus-reciprocal", "n19-prefix-reciprocal-index", "n19-prefix-parity-rational"],
+      "omitted_tasks": ["Independently writing all twenty terms and the calculation steps for the four complete prefixes is not demonstrated by prefix recognition."],
+      "reason": "All four analytic rules have one complete ordered five-term result, retaining exponential growth, reciprocal powers, reciprocal-index division, parity and fraction scope. There is no per-term atomization and no deferred formula or term; separate units reflect mathematically independent rules, not a question quota."
+    },
+    {
+      "source_number": "150",
+      "question_ids": ["n19-strict-bound-indices"],
+      "omitted_tasks": ["Independent written inequality solving and construction of the complete index set are not proved by selecting the set."],
+      "reason": "The question asks for every satisfying index, preserving the strict lower bound and the entire infinite tail, not just its first member. All source mathematical content is retained as complete-result recognition."
+    },
+    {
+      "source_number": "151",
+      "question_ids": ["n19-upper-bound-indices"],
+      "omitted_tasks": ["Unaided algebraic derivation and written domain intersection for the finite index set are not assessed by selecting a complete set."],
+      "reason": "The complete finite solution includes both the positive lower endpoint and the last qualifying integer; the non-strict inequality and the index domain are visible. No source result or boundary task is deferred."
+    },
+    {
+      "source_number": "152",
+      "question_ids": ["n19-additive-recurrence-result", "n19-negation-recurrence-result"],
+      "omitted_tasks": ["Independently generating the two prefixes and constructing their analytic formulas from recurrence data are replaced by recognition, not certified as written-production abilities."],
+      "reason": "Each of the two different recurrence mechanisms retains all five requested terms and a formula valid for every positive index, including the initial condition. No formula or term is omitted; the choice response preserves judgment of complete results but loses unaided construction."
+    }
+  ]
+}

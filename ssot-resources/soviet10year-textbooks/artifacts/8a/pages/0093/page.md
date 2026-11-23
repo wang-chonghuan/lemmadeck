@@ -1,0 +1,98 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 93,
+  "printed_page": 86,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 93
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "4500bda24e94bddcc1086805e7c18274d2d13f028ca842bc719e0a500c15e75d"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "SOURCE_AUTHOR only; not independently reviewed or approved. One grid-image view; no reopen or crop.",
+    "p0093#1 continues p0092#8. p0093#11 is exercise 232 open at the page bottom.",
+    "Figure 30 is a prose-owned coordinate plot referenced by p0093#5; native fig block p0093#6, caption p0093#7. Rough box [1400,1140,590,900] excludes the caption.",
+    "Figure inventory: rectangular ruled grid, visually 12 columns by 18 rows; horizontal axis n with right arrow, vertical axis a_n, origin O, horizontal labels 4 and 8, vertical labels 4,8,12,16,20,24; rising dashed oblique line with filled plotted markers. Text explicitly identifies (1,6),(2,10),(3,14). Higher marker coordinates and the upper clipped line endpoint need independent pixel confirmation; no inferred additional coordinates are asserted.",
+    "The caption shares the printed row of the prose reference (图30), so cap uses samerow. Layout has 26 bands; 25 content rows and one footer, with the caption not an additional row. Two formulas cross printed rows and use only the WRAP marker, without an additional Markdown newline at those breaks."
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [
+    {
+      "id": "fig-30",
+      "label": "图 30",
+      "box": [
+        1399,
+        1151,
+        586,
+        889
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$n-1=18$，
+$n=19$.
+
+<!-- p -->
+当$n=19$时，式$-10+4.5(n-1)$取等于71的值，而且19
+是自然数. 因此，71是这个数列的第19项.
+
+<!-- p -->
+我们来看由条件$a_1=6$，$d=4$给出的等差数列$(a_n)$. 求出
+这个等差数列的通项：
+$a_n=6+4(n-1)$，也就是$a_n=4n+2$.
+
+<!-- p -->
+我们得到的公式中，右边是二
+项式$4n+2$，变量$n(n\in N)$是一次
+的. 这就是说，等差数列$(a_n)$是在
+自然数集合$N$上由公式$y=4x+2$
+给出的线性函数.
+
+<!-- p -->
+这个等差数列的图象是属于直
+线$y=4x+2$，横坐标是自然数的点
+的集合. 例如，点$(1,6)$，$(2,10)$，
+$(3,14)$等等就是这个集合中的点
+（图30）.
+
+<!-- fig 图 30 box 1399,1151,586,889 -->
+![图 30](figures/fig-30.png)
+
+<!-- cap 图 30 samerow -->
+图30
+
+<!-- p -->
+一般地，等差数列是在自然数集合上给出的线性函数.
+
+<!-- p -->
+为了证明这一点，我们把等差数列的通项公式$a_n=a_1+↵d(n-1)$写成下列形式：
+$a_n=dn+(a_1-d)$.
+
+<!-- p -->
+我们得到$y=kx+b$这种形式的公式，其中$k=d$和$b=a_1↵-d$是某一个数，$x=n$和$y=a_n$是变量. 大家知道，这个公式
+给出的是线性函数.
+
+<!-- ex 232 open -->
+232. 设$(a_n)$是等差数列，它的第1项是$a_1$，公差是$d$，用$a_1$和
+
+<!-- foot -->
+86

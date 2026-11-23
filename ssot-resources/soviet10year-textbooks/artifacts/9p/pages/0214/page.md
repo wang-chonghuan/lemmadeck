@@ -1,0 +1,96 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 214,
+  "printed_page": 205,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 214
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "eb52acf39812e3785c7e857c0d86197c39f755b4b9042ff9fe6261ce52a3eff0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Author-only scratch candidate, not independently SOURCE reviewed or finalized. Opened0214/page.grid.png once at original resolution.",
+    "Initial p cont open joins213 terminal 接 to 动起电机 and remains open across figures167/168; subsequent p cont completes the same experiment paragraph before88 heading.",
+    "88 has one opening printed body row ending 形 and remains p open for215. Bold 载流导体内部的电场 is an inline lead, not a separate title.",
+    "14 visually authored printed rows including both separate caption rows,88 heading and footer.167/168 each includes the whole wood-strip, foil, two stands, generator, connecting leads and any depicted earth connection.",
+    "Far-left block-shaped ink around y1230-1340 and lower-right ink below the footer are scan-edge marks outside body/rough figure frames. Default counting retained; no crop/padding/counting override authored."
+  ],
+  "errata": [],
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Independent original-grid SOURCE review: the dense left-edge mark around x10-55,y1230-1346 is outside figure168 and has no source text ownership; the extra native band y2152-2177 is below footer205 y1997-2025 and contains edge shadow/specks. The left/right 100px strips contain no printed text, caption, footer or source figure. Exclude only those strips in the counting copy; preserve the complete apparatus and both real caption rows."
+  },
+  "printed_lines": 14,
+  "figures": [
+    {
+      "id": "fig-167",
+      "label": "图167",
+      "box": [
+        300,
+        577,
+        987,
+        354
+      ]
+    },
+    {
+      "id": "fig-168",
+      "label": "图168",
+      "box": [
+        297,
+        1047,
+        985,
+        334
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont open -->
+动起电机的手柄. 我们发现，所有的金箔都张开相同的角度
+(图167). 就是说，导体上所有点对地的电势是相同的. 当电
+荷在导体上平衡时就应该是这样. 如果现在把木条的另外一
+端接地，则当旋转起电机的手柄时，情况就改变了. (因为地球
+是导体，所以当导体接地时，电路就变成闭合电路.)接地一端
+
+<!-- fig 图167 box 300,577,987,354 -->
+![图167](figures/fig-167.png)
+
+<!-- cap 图167 -->
+图167
+
+<!-- fig 图168 box 297,1047,985,334 -->
+![图168](figures/fig-168.png)
+
+<!-- cap 图168 -->
+图168
+
+<!-- p cont -->
+的金属箔不张开——导体这一端的电势实际上等于地面的电
+势(在金属导体中电势降落很小). 导体与起电机连接的那一
+端，金箔的张角最大(图168). 金箔的张角随着远离起电机
+而减小，这就证明了电势沿着导体而降落.
+
+<!-- h3 -->
+88. 通电导体的电场
+
+<!-- p open -->
+**载流导体内部的电场** 可以使载流导体有各式各样的形
+
+<!-- foot -->
+· 205 ·

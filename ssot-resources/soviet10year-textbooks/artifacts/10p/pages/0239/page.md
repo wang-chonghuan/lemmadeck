@@ -1,0 +1,103 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 239,
+  "printed_page": 229,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 239
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "8bd6943f2ddaffebff87ac8445feeccdadc1b69677446f21097f8e586e014e80"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "FIRST original-source offline author; source/full-card approval remains HOLD.",
+    "SOURCE239 original pixels independently show 25 text rows: heading 1, prose 23, footer 1; the caption shares the row ending 收了并带上绿色；不会再发生.",
+    "Section 90 starts here. Supplied incoming238 fact only: its last paragraph closes, with no outgoing open. No SOURCE238 images/whole report or SOURCE240 content was read.",
+    "Figure 208 belongs to section 90 prose through its sole explicit body reference; there are no exercises, formulas, or exercise-owned figures.",
+    "The final paragraph has an internal p open / p cont pair around figure and caption; its last sentence closes on this page, with no outgoing open.",
+    "Preserve the bold heading 横振性 separately from prose 横向性; no distinct body emphasis span is confidently visible.",
+    "Footer uses centered black dots around italic 229; text represents the dots with U+00B7."
+  ],
+  "errata": [],
+  "figure_crops": {
+    "fig-208": {
+      "padding_px": 0,
+      "reason": "Original pixels show the slab bottom immediately above caption 图 208; default white padding would include caption ink. Preserve all figure ink with no added padding and keep the caption as a separate text block."
+    }
+  },
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-208",
+      "label": "图 208",
+      "box": [
+        801,
+        1571,
+        498,
+        243
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+90. 光波的横振性  光的偏振
+
+<!-- p -->
+干涉和衍射现象使人们不再怀疑传播的光具有波动性，
+但这些波是纵波还是横波呢？
+
+<!-- p -->
+很长时间波动光学的创始人杨和菲涅耳认为光波是纵
+波，即类似于声波. 在当时光波被看作是在充满了空间和渗
+入所有的物体内部的以太里的弹性波. 横波只能存在于固体
+里（见第四章），但是在固体的以太里物体怎么能运动，而不遇
+到阻力呢？ 要知道以太不应该阻碍物体的运动，否则，惯性定
+律不能成立.
+
+<!-- p -->
+但是逐渐地积累了越来越多的事实. 这些事实无论如何
+也不能说明光波是纵向的. 在这些事实的压力下菲涅耳终于
+不得不承认光波的横向性，尽管这从作为携带光波的机械以
+太论的观点来看，似乎是异常奇怪的.
+
+<!-- p -->
+光波的横向性被大量的实验所证明. 我们详细地研究其
+中简单和特别有效的一个. 这是用电气石晶体做的实验（绿
+色的透明晶体）.
+
+<!-- p open -->
+电气石晶体有对称轴，属于所谓单轴晶体. 我们拿一块
+矩形平板电气石，它的一边切成与晶体的轴重合. 如果让电灯
+或者太阳光束垂直射入这个平板，那么当平板绕光束旋转时，
+不应引起通过平板的光强度的
+任何改变（图 208）. 可以设想，
+在电气石里光仅是部分地被吸
+收了并带上绿色；不会再发生
+
+<!-- fig 图 208 box 801,1571,498,243 -->
+![图 208](figures/fig-208.png)
+
+<!-- cap 图 208 samerow -->
+图 208
+
+<!-- p cont -->
+任何其他情况. 但事实并非如此. 光波获得了新的性质！
+
+<!-- foot -->
+· 229 ·

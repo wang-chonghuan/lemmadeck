@@ -1,0 +1,77 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 166,
+  "printed_page": 156,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 166
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "2d8081beb3f8d655af820d2d92e7d7c8271ddeb7a4707a90c1971049143da0a1"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Physical page166 / printed156 was actually opened once at original detail; initial cumulative image count13, after this source page14.",
+    "The first printed row continues p0165#13 exercise5 question1 and closes at 中的磁感应强度为零？. The preceding author's bytes/open marker and owner HOLD are not edited.",
+    "Printed exercises2,3,4,5 are each visibly complete. Preserve their original wording, L=2 times10^-4 henry, C, and 12 to450 picofarad source values without solving or modernizing.",
+    "There are11 observed printed text rows: ex1 continuation1, ex2 two, ex3 three, caption127 one, ex4 two, ex5 one, footer one. The prepared unmasked figure ink band is not an additional text row.",
+    "One complete drawing has caption 图127 and the unique explicit reference in question4. It shows a horizontal aerial atop a mast, an inclined/flat roof and facade/window strokes, with no internal word labels or numeric dimensions. The coarse figure box excludes the caption and neighboring exercises.",
+    "No new unit heading, explanatory footnote or additional source figure is visible. Exercise-group ownership remains HOLD; figure-to-question4 usage is explicit and is distinct from unresolved card ownership."
+  ],
+  "errata": [],
+  "printed_lines": 11,
+  "figures": [
+    {
+      "id": "fig-127",
+      "label": "图 127",
+      "box": [
+        554,
+        566,
+        354,
+        317
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 1 cont -->
+中的磁感应强度为零？
+
+<!-- ex 2 -->
+2. 把发射振荡器与接收振荡器彼此垂直放置，在接收振荡器中会
+产生振荡吗？
+
+<!-- ex 3 -->
+3. 在图 120 所示的无线电接收机线路中，$L=2\times10^{-4}$ 亨利，可变
+电容器的电容 $C$ 可在 12 到 450 皮法拉间变化。这个无线电接收机接
+收的波长是多大？
+
+<!-- fig 图 127 box 554,566,354,317 owner-ex 4 -->
+![图 127](figures/fig-127.png)
+
+<!-- cap 图 127 -->
+图 127
+
+<!-- ex 4 -->
+4. 图 127 所示为电视接收天线。对从电视中心发出的波的磁感
+应强度矢量的振动方向可以做出什么判断？
+
+<!-- ex 5 -->
+5. 在月球上和在地球上的无线电波的传播条件有没有本质区别？
+
+<!-- foot -->
+· *156* ·

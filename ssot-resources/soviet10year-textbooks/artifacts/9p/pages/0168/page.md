@@ -1,0 +1,82 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 168,
+  "printed_page": 159,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 168
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "721b0a7d89b236f4c5d98738dd922470895aa707056c0b31e50b1037b8ec093f"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Actual page168 has only scan shadow at the extreme left/right bottom, below footer159; all printed text and footer lie outside the excluded 100px side strips. This is counting-copy-only, not omitted source text."
+  },
+  "notes": [
+    "Author-only scratch. First paragraph continues p0167#5; the unresolved p0167#6 footnote separator is not changed or adjudicated here.",
+    "Original historical/scientific assertions are transcribed without modernization. No source errata authored.",
+    "Independent author physical row inventory: 25 including footer; native prepare reports26 before source-bound edge exclusion."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+**物质**的性质. 指出这些性质是对电场是什么这个问题的唯一
+回答.
+
+<!-- p -->
+研究电场时，我们将碰到物质的特殊形式，这种物质的运
+动不遵循牛顿力学定律. 在整个科学史中，电场的发现开始
+出现了深刻的观念：存在有不同形式的物质，每一种物质都
+有自己的规律.
+
+<!-- h3 -->
+67. 电场强度 场的叠加原理
+
+<!-- p -->
+电场是什么的概念，是在实验研究电场性质的过程中形
+成的. 随着电动力学的研究，我们将认识新的内容和电场的
+新的性质.
+
+<!-- p -->
+**电场的主要性质是它对电荷施以力的作用** 根据对电荷
+的作用，人们断定了电场的存在，以及它在空间中的分布，并
+研究了它的全部特性.
+
+<!-- p -->
+静止电荷的电场叫做**静电场**. 电场存在于电荷周围的空
+间中，并与电荷有密切的联系. 今后我们还要介绍与电荷没
+有密切联系的随时间变化的**交变电场**. 但是，交变电场对电
+荷的作用，完全与静电场一样. 静电场和交变电场在许多性
+质方面是一样的. 然而，它们之间也有差异. 谈到场的性质
+时，如果这个性质完全是**静电场或交变电场**所固有的，则我们
+把这个场简称为电场.
+
+<!-- p -->
+**电场强度** 电场是根据对电荷的作用力来发现的. 可以
+断言：如果我们知道了场中任意点对任意电荷的作用力，那
+么我们就了解了电场.
+
+<!-- p open -->
+如果把几个不大的带电体分别放在场中的同一点，并测
+
+<!-- foot -->
+· 159 ·

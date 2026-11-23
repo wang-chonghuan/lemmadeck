@@ -1,0 +1,362 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "d78e5a6a1d7a28110d6e1cd2eabed60e9b147ece4e481950ae00808429f1f8ab",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "n146-b53-rating",
+      "source_numbers": ["1"],
+      "view": {
+        "mode": "single",
+        "stem": "假设一台电器的说明书标有“额定电功率 120 瓦特”。这条信息能说明什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "无论使用多长时间，累计消耗的电能都是 120 焦耳。", "figure_ids": []},
+          {"id": "b", "text": "在规定的额定工作条件下，每秒消耗 120 焦耳电能。", "figure_ids": []},
+          {"id": "c", "text": "无论处于哪种运行状态，每秒都消耗 120 焦耳电能。", "figure_ids": []},
+          {"id": "d", "text": "在规定的额定工作条件下，每小时消耗 120 焦耳电能。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Interpret the quantity ordinarily given in appliance instructions as conditional rated electrical power rather than a cumulative energy total or unconditional operating power.",
+        "source_solution": "Source 1: rated electrical power is ordinarily stated. It describes an energy-consumption rate under specified working conditions, not accumulated energy or every actual state. For the explicitly authored hypothetical 120 W label, 1 W=1 J/s gives a rated rate of 120 J/s.",
+        "unit_reason": "One complete interpretation of one rating is the response unit. The hypothetical number makes the source's quantity-identification task a rate interpretation; separate clicks for quantity, units and operating conditions would score the same interpretation repeatedly.",
+        "concept_blocks": [0, 2, 3],
+        "limitations": ["Recognition does not demonstrate independently naming the quantity in a written response.", "The hypothetical 120 W label is an authored transfer premise, not an observed household appliance or source datum."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Copy the numerical power rating 120 into a total energy and change W to J without multiplying by a duration. This produces a fixed 120 J independent of usage time, although at rated operation energy grows with duration.",
+            "misconception": "Treat a rate's numerical label as the accumulated quantity, dropping the time dependence."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "The stipulated rating is 120 W under rated working conditions. Since W=J/s, it corresponds to 120 J consumed per second under those conditions; the statement does not claim that every actual operating state satisfies the rating.",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Correctly rewrite 120 W as 120 J/s, then remove the restriction to rated working conditions and apply the value to every state, including changed-power states. A conditional rating cannot establish that universal conclusion.",
+            "misconception": "Promote rated power under specified conditions to an unconditional instantaneous operating power."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Rewrite 120 W as 120 J per unit of time but substitute an hour for the second without multiplying the energy by 3600. Under rated operation an hour would consume 120 times 3600 J, not 120 J.",
+            "misconception": "Change the time unit in a rate while leaving its numerical energy unchanged."
+          }
+        ]
+      }
+    },
+    {
+      "id": "n146-b53-interval",
+      "source_numbers": ["2"],
+      "view": {
+        "mode": "multiple",
+        "stem": "要把一台电器在整段时间内消耗的电能记为 $A=Pt$。这里 $t>0$ 是整段时间的长度，功率与时间的单位相互配合。下列哪些关于 $P$ 的条件足以保证这个计算成立？选择所有符合的条件。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "功率可能变化；$P$ 是这整段时间的平均功率。", "figure_ids": []},
+          {"id": "b", "text": "功率可能变化；$P$ 只是整段时间开始时的功率。", "figure_ids": []},
+          {"id": "c", "text": "工作时平均功率为 $P>0$；$t$ 还包含一段功率为零的关机时间。", "figure_ids": []},
+          {"id": "d", "text": "在这整段时间内，电器的功率始终保持为 $P$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine which descriptions of power legitimately support the source relation A=Pt over the chosen complete time interval.",
+        "source_solution": "Source 2: multiply P=A/t by t to obtain A=Pt. P must be constant over that interval or the whole-interval average. A starting instantaneous value does not specify later consumption. If a positive active-state average is multiplied by time including a nonzero off interval, the estimate exceeds the actual energy because the off part contributes zero.",
+        "unit_reason": "The response is one native multiple selection over sufficient interval conditions. Constant power and whole-interval average are two genuinely valid premises, not a combination-coded single choice. No separate formula-recall question is added.",
+        "concept_blocks": [0, 1, 6],
+        "limitations": ["Judging conditions for the supplied formula does not demonstrate independently rearranging P=A/t or writing A=Pt.", "The off-interval case is a stated transfer condition used to expose interval mismatch, not a measured household duty cycle."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "d"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "By the whole-interval average-power definition, P=A/t over precisely this interval; multiplying by its duration t yields A=Pt even when instantaneous power changes.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Sample power at the start and extend that one value through the entire interval. For example, operation at a positive starting power for the first half followed by zero power for the second half consumes only half the energy that this extension predicts. The premise cannot guarantee the product.",
+            "misconception": "Treat one instantaneous sample as the average over a possibly changing complete interval."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Let active duration be u and the positive off duration be v, so t=u+v. Actual energy from these states is P u+0 v=P u, whereas the proposed product gives P(u+v)=P u+P v. Since P>0 and v>0, it overcounts.",
+            "misconception": "Multiply an active-only average by a longer clock interval that also includes zero-power time."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "A constant rate P throughout duration t has whole-interval average P, so its accumulated energy is Pt.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "n146-b53-units",
+      "source_numbers": ["3"],
+      "view": {
+        "mode": "single",
+        "stem": "把下列三种电能单位换算成焦耳，哪一份完整记录正确？百瓦小时表示 100 瓦特的功率持续 1 小时对应的电能。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "1 瓦特小时 = 60 焦耳；1 百瓦小时 = 6000 焦耳；1 千瓦小时 = 60000 焦耳。", "figure_ids": []},
+          {"id": "b", "text": "1 瓦特小时 = 3600 焦耳；1 百瓦小时 = 36000 焦耳；1 千瓦小时 = 360000 焦耳。", "figure_ids": []},
+          {"id": "c", "text": "1 瓦特小时 = 3600 焦耳；1 百瓦小时 = 360000 焦耳；1 千瓦小时 = 360000 焦耳。", "figure_ids": []},
+          {"id": "d", "text": "1 瓦特小时 = 3600 焦耳；1 百瓦小时 = 360000 焦耳；1 千瓦小时 = 3600000 焦耳。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recognize a coherent conversion record for the practical electrical-work units introduced in the source lesson, including its historical hundred-watt-hour example.",
+        "source_solution": "Source 3: Wh and kWh are practical energy units, and the lesson also retains the hundred-watt-hour example. From W=J/s and h=3600 s, 1 Wh=3600 J; 1 hundred-watt-hour=100 Wh=360000 J; 1 kWh=1000 Wh=3600000 J. They are energy units, not W or kW power units.",
+        "unit_reason": "One complete record preserves the relationships across all three energy units. Per-row questions would repeat the same conversion rule, and a separate power-versus-energy vocabulary click would overlap the rating interpretation.",
+        "concept_blocks": [2, 3, 4, 5],
+        "limitations": ["Recognizing a supplied conversion record does not demonstrate independently recalling a list of practical units or producing the conversions.", "The source's unit-list task is extended to conversion judgment; no claim is made that hundred-watt-hours are a common present-day billing unit."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Use 1 h=60 s instead of 3600 s. Multiplication by 1, 100 and 1000 W then produces 60, 6000 and 60000 J respectively.",
+            "misconception": "Stop after the hour-to-minute factor and mistake minutes for seconds."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Compute 1 Wh=3600 J correctly, but scale hundred and thousand as 10 and 100 instead of 100 and 1000. This yields 36000 and 360000 J for the last two entries.",
+            "misconception": "Shift both prefix multipliers one decimal place too low."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Compute Wh and hundred-watt-hour correctly, then reuse the hundred multiplier 100 for the kilo entry. The result is 360000 J again, falsely equating the hundred-watt-hour and kilowatt-hour.",
+            "misconception": "Reuse the preceding hundred-prefix factor instead of applying the kilo factor 1000."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "Multiply 1, 100 and 1000 W by 3600 s. The three complete results are 3600, 360000 and 3600000 J.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "n146-b53-iron",
+      "source_numbers": ["g2-1"],
+      "view": {
+        "mode": "single",
+        "stem": "一只电熨斗连续以 0.6 千瓦的功率运行 1.5 小时。在这段时间内，它消耗多少电能？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "0.4 千瓦小时。", "figure_ids": []},
+          {"id": "b", "text": "1.1 千瓦小时。", "figure_ids": []},
+          {"id": "c", "text": "0.9 千瓦小时。", "figure_ids": []},
+          {"id": "d", "text": "0.6 千瓦小时。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Accumulate the energy consumed during the iron's explicitly constant-power operating interval.",
+        "source_solution": "Source g2-1: continuous operation at 0.6 kW for 1.5 h gives 0.6 times 1.5=0.9 kWh=900 Wh=3240000 J. No heating duty cycle or changed power is inferred.",
+        "unit_reason": "The complete energy with its unit is one response. A separate joule equivalent, duration conversion or numerical blank would rescore the same consumption calculation. This source is independent of the household lamp aggregation.",
+        "concept_blocks": [0, 1, 4],
+        "limitations": ["Selecting the complete consumption does not demonstrate writing the calculation or choosing the unit without supplied alternatives."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Divide the numerical power by duration instead of multiplying: 0.6/1.5=0.4. Then label the result as kWh even though dividing kW by h cannot give energy.",
+            "misconception": "Reverse the time operation when accumulating a constant rate."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Misread decimal 1.5 h as 1 h 50 min. That is 1+50/60=11/6 h, and 0.6 times 11/6=1.1 kWh.",
+            "misconception": "Interpret decimal-hour digits as minutes on a base-100 clock rather than a fraction of an hour."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "The entire 1.5 h interval has constant power 0.6 kW, so energy is 0.6 times 1.5=0.9 kWh.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Copy the power magnitude 0.6 and attach kWh as though the interval were 1 h, omitting the supplied multiplier 1.5.",
+            "misconception": "Retain a power magnitude as an energy magnitude by silently assuming one hour."
+          }
+        ]
+      }
+    },
+    {
+      "id": "n146-b53-lamps",
+      "source_numbers": ["g2-2"],
+      "view": {
+        "mode": "single",
+        "stem": "一所住宅中有两盏 60 瓦特的电灯和两盏 40 瓦特的电灯。每盏灯每天大约点亮 3 小时，点亮时以题给功率运行。假设每消耗 1 千瓦小时电能收费 4 美分，这只是题设价格，不是实际电价。只计算这四盏灯的电能费用，不计固定费用。30 天的费用大约是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "0.24 美元。", "figure_ids": []},
+          {"id": "b", "text": "0.36 美元。", "figure_ids": []},
+          {"id": "c", "text": "7.20 美元。", "figure_ids": []},
+          {"id": "d", "text": "0.72 美元。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Estimate one complete 30-day energy-only charge by aggregating four lamps' power-time consumption and applying the explicitly hypothetical per-kWh price.",
+        "source_solution": "Source g2-2: 2 times 60+2 times 40=200 W=0.2 kW. Each lamp's daily duration is about 3 h, yielding total 0.6 kWh/day and 18 kWh in 30 days. At the explicitly hypothetical 4 US cents/kWh, the estimated energy-only charge is 72 US cents=US$0.72. The lamps need not operate simultaneously. Fixed fees and current real tariffs are out of scope.",
+        "unit_reason": "One coherent bill result is the response unit for this multi-step word problem. Separate total-power, daily-energy, monthly-energy and charge questions would double-score nested stages and expose later answers. No companion question uses the 18 kWh intermediate.",
+        "concept_blocks": [0, 1, 4, 6],
+        "limitations": ["Choice recognition does not demonstrate producing a written multistep derivation.", "The result is approximate because daily use is stated approximately; it is not a real household bill or current price claim."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Correctly sum the power as 0.2 kW and retain 30 days, but omit the daily duration factor 3. The mistaken total is 0.2 times 30=6 kWh; at US$0.04/kWh it gives US$0.24.",
+            "misconception": "Count each day as only one operating hour instead of the supplied three hours."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Count just one lamp of each power: 60+40=100 W=0.1 kW. Then 0.1 times 3 times 30=9 kWh and 9 times US$0.04=US$0.36.",
+            "misconception": "Omit the multiplicity of two lamps in each power group."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Obtain the correct energy 18 kWh but convert 4 US cents to US$0.40 instead of US$0.04. Multiplication gives 18 times 0.40=US$7.20.",
+            "misconception": "Convert cents to dollars with a divisor of ten instead of one hundred."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "Sum each lamp's consumption: (2 times 0.060+2 times 0.040) kW times 3 h/day times 30 days=18 kWh. Multiply by 4 US cents/kWh to obtain 72 US cents, or US$0.72, as an estimate.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "n146-b53-fee-comparison",
+      "source_numbers": ["q1"],
+      "view": {
+        "mode": "single",
+        "stem": "这里只讨论一种假设计费条件：同一周内所有电能均按 $r$ 美分/千瓦小时收费，另收固定费用 $f$ 美分。设根据电器使用记录估算的这一周电能为 $x$ 千瓦小时，电表在同一周内的读数差为 $y$ 千瓦小时。电表读数差对应的电能费减去电器估算的电能费，应怎样表示？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$r(y-x)+f$ 美分。", "figure_ids": []},
+          {"id": "b", "text": "$\\dfrac{r(y-x)}{7}$ 美分。", "figure_ids": []},
+          {"id": "c", "text": "$r(y-x)$ 美分。", "figure_ids": []},
+          {"id": "d", "text": "$r(y+x)$ 美分。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Perform a conditional transfer judgment about like-for-like weekly energy charges, excluding a separately identified fixed fee. This is not the source household investigation itself.",
+        "source_solution": "Source q1 has no determinate empirical result: actual appliance records, operating modes, matched meter readings and tariff are absent. A real solution must collect them safely with adult help, model power/time assumptions, use actual pricing and separate fixed fees. For the explicitly authored uniform-rate premise only, estimated energy charge is r x and meter-based energy charge is r y in cents. The requested signed difference is r y-r x=r(y-x). The fixed fee f is not part of either energy-only charge, and both x and y already cover one week.",
+        "unit_reason": "This single comparison expression isolates a substantive billing boundary left in the original investigation: compare the same interval's energy charges rather than a total bill against an energy-only estimate. It does not repeat power-interval modeling or the lamp bill calculation. The real survey is explicitly deferred, not reduced to this choice.",
+        "concept_blocks": [4],
+        "limitations": ["The entire empirical household survey remains deferred: adult-assisted safe observations, appliance inventory, use-duration records, changed-power/standby assumptions, actual tariff, same-week meter readings and explanation of observed differences.", "The uniform rate and symbols x, y, r, f are stated transfer premises, not fabricated household measurements or a claim about actual tariff structure.", "Expression recognition does not demonstrate gathering evidence, computing a real weekly estimate or producing an independent report."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Use the meter-based total bill r y+f as though it were the meter-based energy-only charge, then subtract r x. This yields r(y-x)+f, incorrectly inserting a fixed fee into the requested energy-charge difference.",
+            "misconception": "Compare one side's total bill including a fixed fee with the other side's energy-only estimate."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Compute the weekly energy-charge difference r(y-x), then divide by seven as though the requested quantity were a daily average. The question requests a difference for the entire same week.",
+            "misconception": "Normalize an already matched weekly comparison to a daily amount without being asked."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "The uniform hypothetical rate gives meter energy charge r y and estimated energy charge r x. Their signed weekly difference is r y-r x=r(y-x) cents. Fixed fee f is excluded from both.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Add r y and r x instead of taking meter energy charge minus estimated energy charge. This produces r(y+x), the sum of two charges rather than their comparison difference.",
+            "misconception": "Add the two energy estimates when the requested comparison is a signed subtraction."
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "1",
+      "question_ids": ["n146-b53-rating"],
+      "omitted_tasks": ["Independently naming the usual instruction/nameplate quantity in a written answer."],
+      "reason": "Preserve the meaning of rated power through a conditional-rate transfer interpretation using an explicitly hypothetical label."
+    },
+    {
+      "source_number": "2",
+      "question_ids": ["n146-b53-interval"],
+      "omitted_tasks": ["Independently writing or deriving A=Pt from P=A/t."],
+      "reason": "Select the valid complete-interval premises for the source relation in one native multiple response; preserve both constant-power and whole-interval-average cases."
+    },
+    {
+      "source_number": "3",
+      "question_ids": ["n146-b53-units"],
+      "omitted_tasks": ["Unaided recall and written listing of practical energy units.", "Unaided production of the conversion relationships."],
+      "reason": "Extend unit identification to one coherent conversion record using all three lesson units, without independent per-row scoring."
+    },
+    {
+      "source_number": "g2-1",
+      "question_ids": ["n146-b53-iron"],
+      "omitted_tasks": ["Producing the constant-power energy derivation in writing."],
+      "reason": "Preserve the complete specified iron-energy problem and its constant-power premise as one result-with-unit selection."
+    },
+    {
+      "source_number": "g2-2",
+      "question_ids": ["n146-b53-lamps"],
+      "omitted_tasks": ["Producing the lamp aggregation, unit conversion and cost derivation in writing."],
+      "reason": "Preserve the complete four-lamp 30-day estimated energy-only charge under the explicitly hypothetical 4 US cents/kWh rate. No separately scored intermediate energy exposes the final result."
+    },
+    {
+      "source_number": "q1",
+      "question_ids": ["n146-b53-fee-comparison"],
+      "omitted_tasks": [
+        "The real adult-assisted household investigation, including safe appliance and meter observations; do not dismantle appliances or touch wiring.",
+        "Collecting actual same-week use records, rated/operating powers and heating, standby or off-state assumptions.",
+        "Obtaining actual tariff information and matched beginning/end meter readings.",
+        "Estimating and comparing actual weekly energy charges and explaining the observed discrepancy."
+      ],
+      "reason": "No empirical data or tariff is present. The entire original investigation remains deferred. The related symbolic flat-rate comparison is explicitly hypothetical and tests only separation of fixed fees from matched energy-only charges; it supplies no invented household data and is not reported as completion of q1."
+    }
+  ]
+}

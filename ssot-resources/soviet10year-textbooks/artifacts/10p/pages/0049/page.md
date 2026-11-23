@@ -1,0 +1,107 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 49,
+  "printed_page": 39,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 49
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "5d6cf8a65656ebc07d266b165c66c9e353787ee0099fdab9319d56e024adc2ac"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "notes": [
+    "源作者逐印刷视觉行转写，图24、25仅标粗网格框；图内像素不重画。未收口或独立审批。",
+    "图25框下印有电子示波器，再下一行为图25；后一行与图24图号共排，拆为同标签 cap 并只在共排行标 samerow。图题不进入图框。",
+    "脚注①为正文解释性 footnote，归本页首段①；脚注对末段 outgoing open 透明。",
+    "扫掠电压采用正常数学记号 u_p；p形下标的拉丁或西里尔编码不能由同形扫描字形判定。",
+    "末段在在字处跨页，接0050首段的转动时，线圈……；本页无 incoming cont。"
+  ],
+  "errata": [],
+  "figure_crops": {
+    "fig-25": {
+      "padding_px": 0,
+      "reason": "The source apparatus ends immediately above the separately retained electronic-oscilloscope caption. Default 12px padding includes caption ink; retain the exact snapped diagram with no extra padding."
+    }
+  },
+  "printed_lines": 20,
+  "figures": [
+    {
+      "id": "fig-24",
+      "label": "图 24",
+      "box": [
+        248,
+        977,
+        503,
+        272
+      ]
+    },
+    {
+      "id": "fig-25",
+      "label": "图 25",
+      "box": [
+        864,
+        798,
+        433,
+        491
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+在示波器的显像管里窄细的电子束射到荧光屏上，荧光
+屏在用电子轰击时能够发光. 在水平偏转板上加上“锯齿形”
+的交变扫描电压$u_p$（图24）. 电压比较缓慢地增大，随后急
+剧地减小. 偏转板间的电场使电子射线在水平方向上匀速
+地扫过屏幕，然后几乎在一瞬间就返回起点. 此后，整个过
+程再重复进行. 如果现在把竖直偏转板和电容器连接，那么
+在电容器放电时，电压的振荡就会引起射线在竖直方向上振
+荡，结果在屏上就形成振荡的时间“展开图”（图25）. 其图形
+和带沙漏的摆在运动的纸片上绘出的图形完全相似. 振荡随
+时间的推移而衰减①.
+
+<!-- fig 图 24 box 248,977,503,272 -->
+![图 24](figures/fig-24.png)
+
+<!-- fig 图 25 box 864,798,433,491 -->
+![图 25](figures/fig-25.png)
+
+<!-- cap 图 25 -->
+电子示波器
+
+<!-- cap 图 24 -->
+图 24
+
+<!-- cap 图 25 samerow -->
+图 25
+
+<!-- p -->
+这种振荡是**自由电振荡**. 它发生在电容器充电使系统离
+开平衡状态以后. 电容器的充电相当于摆偏离平衡位置.
+
+<!-- p open -->
+在电路里也不难获得**受迫电振荡**. 在电路中存在着周期
+性电动势时，就出现这种振荡. 用几匝线圈做成的线圈框，在
+
+<!-- p footnote -->
+① 但是回路里的振荡经过几分之一秒（不到一秒）就衰减了. 所以为了便
+于观察它们，要利用带有特殊荧光屏的示波器，该荧光屏在电子射线激发它以
+后，发光时间较长.
+
+<!-- foot -->
+· 39 ·

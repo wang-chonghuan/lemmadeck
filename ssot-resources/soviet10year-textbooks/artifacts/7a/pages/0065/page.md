@@ -1,0 +1,87 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 65,
+  "printed_page": 59,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 65
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "31b891ff593b1c4aff305f4f5fc5e350465b5503e7e5ba10016d42968a65238e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "SOURCE-FIRST author only: one full page.grid.png view. Observed 25 physical printed rows, including footer 59; no figures.",
+    "The initial two rows close exercise 181 from physical page 64. The printed 复习题 heading and exercises 182 through 184 precede the genuine 第一章补充习题 boundary at p0065#6.",
+    "第1小节 is preserved as an exercise-group heading beneath the supplement unit, not a newly introduced chapter or section ancestor.",
+    "Exercises 185 through 187 close on this page. Exercise 188 has its stem and subpart а on this page, ends with a semicolon and remains open; no unseen continuation is invented. The chapter supplement is incomplete and must not be promoted as a complete lesson.",
+    "Ambiguity p0065#10, exercise 187 subpart ж: the first y superscript after x^9 is provisionally read as 8; 3 is also visually possible in the single grid view. The second y superscript is read as 3. The original candidate x^{11}-y^{11}+x^9y^8-x^2y^3 is not repaired by algebraic factoring or an expected answer.",
+    "No OCR, answer keys, downstream finalization or independent review used."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 181 cont -->
+а) 把行星按照质量递增的顺序写出来；
+б) 木星质量是地球质量的多少倍？
+
+<!-- exhead -->
+复习题
+
+<!-- ex 182 -->
+182. 火车因故延误了 $15$ 分钟，为了正点到站，必须在余下的
+$120$ 公里把速度增加到时刻表规定速度的 $1.2$ 倍。火车
+在这 $120$ 公里的运行速度是多少？
+
+<!-- ex 183 -->
+183. 用图解法解方程：
+а) $6x^{-1}=x-1$；　　б) $6x^{-1}=x+3$。
+
+<!-- ex 184 -->
+184. 化简：
+а) $\left(\frac{8a^{-2}}{b^{-3}}\right)^3\cdot\left(\frac{b^{-2}}{16a^{-3}}\right)^2$；　　б) $\left(-\frac{9x^4}{2y^3}\right)^{-3}\cdot\left(\frac{4y^4}{27x^6}\right)^{-2}$。
+
+<!-- h3 -->
+第一章补充习题
+
+<!-- exhead -->
+第1小节
+
+<!-- ex 185 -->
+185. 把下列各式变形成标准形式的多项式：
+а) $(3x-2)(3x+2)+(x-3)^2-(5x-1)(2x-5)$；
+б) $(5y+6)(4y+5)-(4y+7)^2-(3y-5)(3y+5)$。
+
+<!-- ex 186 -->
+186. 证明下列两式是恒等式：
+$(a^2+b^2)(x^2+y^2)$和$(ax-by)^2+(ay+bx)^2$。
+
+<!-- ex 187 -->
+187. 分解因式：
+а) $9a^2b^6-18ab^9+6ab^2$；　　б) $80a^5x^8-24a^3x^5-20a^2x^2$；
+в) $a(b-c)^2-b(c-b)^2$；　　г) $a(a-b)^3+b(b-a)^3$；
+д) $5a^3+10a^2-3ab-6b$；　　е) $8xy^3-24y^2-7xy+21$；
+ж) $x^{11}-y^{11}+x^9y^8-x^2y^3$；　　з) $(ab)^{10}+b^{22}-a^{10}-b^{12}$。
+
+<!-- ex 188 open -->
+188. 证明下列各式可以化成均含有变量的四个因式的积：
+а) $b^2(x^2-4)-2b(x^2-4)+(x^2-4)$；
+
+<!-- foot -->
+59

@@ -1,0 +1,239 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "54df858d64020351f1d89b85d8d75c24680dcc07ce7a66a35eeb06b966393720",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "n66-q1-bounded-regions",
+      "source_numbers": ["242"],
+      "view": {
+        "mode": "single",
+        "stem": "区域 $R$ 由 $y=2x+1$、$x=1$、$x=4$ 和 $y=0$ 围成；区域 $S$ 由 $y=x^2$、$x=1$ 和 $y=0$ 围成。将两个区域分别绕横轴旋转一周。下列哪份计算方案对两个区域都正确？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[1,4]$ | $V_R=\\pi\\int_1^4(2x+1)^2\\,dx=117\\pi$ |\n| $S$ | $[-1,1]$ | $V_S=\\pi\\int_{-1}^1x^4\\,dx=\\dfrac{2\\pi}{5}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[1,4]$ | $V_R=\\pi\\int_1^4(2x+1)^2\\,dx=117\\pi$ |\n| $S$ | $[0,1]$ | $V_S=\\pi\\int_0^1x^4\\,dx=\\dfrac{\\pi}{5}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[0,3]$ | $V_R=\\pi\\int_0^3(2x+1)^2\\,dx=57\\pi$ |\n| $S$ | $[0,1]$ | $V_S=\\pi\\int_0^1x^4\\,dx=\\dfrac{\\pi}{5}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[1,4]$ | $V_R=\\pi\\int_1^4(2x+1)\\,dx=18\\pi$ |\n| $S$ | $[0,1]$ | $V_S=\\pi\\int_0^1x^2\\,dx=\\dfrac{\\pi}{3}$ |",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine the regions and both volumes for source subparts 1 and 2. Distinguish fixed vertical endpoints from the parabola-axis intersection, retain the original coordinate-dependent radius, and use disk area rather than signed planar area.",
+        "source_solution": "FIRST source subpart 1: x in [1,4], r = 2x+1 > 0, V = pi integral_1^4 (4x^2+4x+1) dx = pi[(4/3)x^3+2x^2+x]_1^4 = 117pi. FIRST source subpart 2: x^2=0 has only x=0; with x=1 the bounded region is [0,1], r=x^2, V = pi integral_0^1 x^4 dx = pi/5. There is no boundary at x=-1, and replacing [1,4] by [0,3] while keeping 2x+1 is not a coordinate change of the same region.",
+        "unit_reason": "The meaningful response is one complete pair of region-and-volume calculations, not two answer boxes. Both tasks contrast explicit endpoint data with endpoint inference from an axis intersection. Option A retains the correct R calculation but enlarges S; option C retains the correct S calculation but changes R. Neither volume alone selects the full correct scheme. The pairing follows the boundary distinction, not the printed subpart count.",
+        "concept_blocks": [12],
+        "limitations": [
+          "Complete-scheme recognition does not verify independent writing of integration limits, squared integrands, antiderivatives, or endpoint substitutions for either source task.",
+          "The displayed complete results allow mathematical elimination; a correct selection is not evidence that both integrations were independently carried out.",
+          "Region determination is assessed by recognizing the interval in a full calculation, not by independently drawing or describing the region."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "The R row gives the actual 117pi. The erroneous S region uses [-1,1]; integral_-1^1 x^4 dx = [x^5/5]_-1^1 = 2/5, giving 2pi/5. The arithmetic is correct for an enlarged region, but the stated boundaries meet at x=0 and x=1 and do not enclose a region with a vertical side x=-1. Thus one row is false for the actual task.",
+            "misconception": "From the even graph y=x^2 and the given x=1, mirror the line to x=-1, replace the curve-axis intersection x=0 with that invented line, and integrate over [-1,1]. This adds an unstated boundary and doubles the actual volume."
+          },
+          {
+            "option_id": "B",
+            "truth": "correct",
+            "derivation": "For R the stated endpoints are 1 and 4, and r^2=(2x+1)^2; integral_1^4 (4x^2+4x+1) dx = 84+30+3 = 117. For S the only curve-axis intersection is x=0, hence [0,1], and r^2=x^4 gives [x^5/5]_0^1=1/5. Both rows match their respective boundaries and disk volumes.",
+            "misconception": null
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "The S row is correct. For the altered R interval, integral_0^3 (2x+1)^2 dx = (4/3)27+2(9)+3 = 57. This is not the source R volume 117pi, because its vertical sides are x=1 and x=4, not x=0 and x=3.",
+            "misconception": "Compute the width 4-1=3 and reset the limits to 0 and 3 without changing the function. A genuine substitution t=x-1 would require 2x+1=2t+3, not 2t+1; omitting that substitution gives exactly 57pi."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "Keeping the correct intervals but integrating the ordinates gives integral_1^4(2x+1) dx = [x^2+x]_1^4 = 18 and integral_0^1 x^2 dx = 1/3. Multiplying these areas by pi gives the displayed 18pi and pi/3, neither of which is the required disk volume 117pi or pi/5.",
+            "misconception": "Use pi times the planar area integral pi integral f(x) dx instead of pi integral f(x)^2 dx for both solids. This concrete unsquared-integrand procedure produces both displayed false values."
+          }
+        ]
+      }
+    },
+    {
+      "id": "n66-q2-root-and-parameter",
+      "source_numbers": ["242"],
+      "view": {
+        "mode": "single",
+        "stem": "区域 $R$ 由 $y=2x-x^2$ 和 $y=0$ 围成；区域 $S$ 由 $y=\\sqrt{ax}$、$y=0$ 和 $x=a$ 围成，其中 $a>0$。将两个区域分别绕横轴旋转一周。下列哪份计算方案对两个区域都正确，并对任意 $a>0$ 成立？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[0,1]$ | $V_R=\\pi\\int_0^1(2x-x^2)^2\\,dx=\\dfrac{8\\pi}{15}$ |\n| $S$ | $[0,a]$ | $V_S=\\pi\\int_0^a ax\\,dx=\\dfrac{\\pi a^3}{2}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[0,2]$ | $V_R=\\pi\\int_0^2(2x-x^2)^2\\,dx=\\dfrac{16\\pi}{15}$ |\n| $S$ | $[0,a]$ | $V_S=\\pi\\int_0^a a^2\\,dx=\\pi a^3$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[0,2]$ | $V_R=\\pi\\int_0^2(4x^2+x^4)\\,dx=\\dfrac{256\\pi}{15}$ |\n| $S$ | $[0,a]$ | $V_S=\\pi\\int_0^a a^2\\,dx=\\pi a^3$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "| 区域 | 横向区间 | 体积计算 |\n| --- | --- | --- |\n| $R$ | $[0,2]$ | $V_R=\\pi\\int_0^2(2x-x^2)^2\\,dx=\\dfrac{16\\pi}{15}$ |\n| $S$ | $[0,a]$ | $V_S=\\pi\\int_0^a ax\\,dx=\\dfrac{\\pi a^3}{2}$ |",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine the closed arch and the positive-parameter square-root region, then evaluate both disk-volume integrals for source subparts 3 and 4. Identify the two roots of the arch, retain the polynomial cross term, and distinguish a variable radius from an endpoint-radius cylinder.",
+        "source_solution": "FIRST source subpart 3: 2x-x^2=x(2-x)=0 at 0 and 2 and is nonnegative between them. V = pi integral_0^2 (4x^2-4x^3+x^4) dx = pi[(4/3)x^3-x^4+x^5/5]_0^2 = 16pi/15. FIRST source subpart 4: a>0 gives x>=0 for the real graph sqrt(ax), whose zero is 0; the vertical line x=a closes [0,a]. r^2=ax, treating a as fixed gives V=pi[ax^2/2]_0^a=pi a^3/2.",
+        "unit_reason": "The response is a complete two-region disk-volume scheme. Both regions require extracting a closure from graph-axis intersections rather than two supplied vertical lines, but squaring their radii behaves differently: a polynomial needs its cross term and a square root gives ax. Option A has the correct S row and a truncated R; option B has the correct R row and a false S cylinder. Both mathematical tasks are needed to choose the whole scheme, and the positive parameter is preserved rather than replaced by a numerical example.",
+        "concept_blocks": [12],
+        "limitations": [
+          "Recognizing the pair of complete integrals and volumes cannot verify independent construction or evaluation of either integral.",
+          "All candidate S rows display [0,a], so the square-root-domain endpoint is present for comparison, not an independently demonstrated endpoint derivation.",
+          "The task assesses variable-radius and parameter reasoning through recognition; it does not establish a complete written proof for arbitrary a>0."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "The S row is the required pi a^3/2. The R row evaluates only the half-arch: [(4/3)x^3-x^4+x^5/5]_0^1 = 4/3-1+1/5 = 8/15. The actual second axis intersection is x=2, so the full volume is 16pi/15 and the truncated region is not the stated enclosed region.",
+            "misconception": "Write 2x-x^2=1-(x-1)^2, take the vertex abscissa x=1 as the right boundary, and stop the integral there instead of solving both roots x=0 and x=2. The resulting half-region volume is exactly 8pi/15."
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "The R row is correct. At the endpoint x=a the S radius is sqrt(a*a)=a, but for interior x it is sqrt(ax), not the constant a. Integrating the constant squared radius gives pi integral_0^a a^2 dx=pi a^3, exactly twice the actual pi a^3/2. These values are different for every a>0.",
+            "misconception": "Evaluate the graph only at x=a, use that endpoint radius a for every cross section, and treat the solid as a cylinder of length a. This produces the displayed pi a^3 instead of integrating the varying squared radius ax."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "Dropping the polynomial cross term yields integral_0^2 (4x^2+x^4) dx = 32/3+32/5 = 256/15, instead of 16/15. The missing integral of -4x^3 is -16. The S row independently uses the endpoint cylinder and yields pi a^3 rather than pi a^3/2 for every a>0. Both rows are false for the source regions.",
+            "misconception": "For R replace (u-v)^2 with u^2+v^2 using u=2x and v=x^2, hence 4x^2+x^4 and 256pi/15. For S replace sqrt(ax) throughout [0,a] by its endpoint value a, hence constant squared radius a^2 and pi a^3. This full erroneous scheme combines two explicitly reproduced geometric/algebraic mistakes."
+          },
+          {
+            "option_id": "D",
+            "truth": "correct",
+            "derivation": "R closes at x=0 and x=2; r^2=(2x-x^2)^2=4x^2-4x^3+x^4 and its integral is 32/3-16+32/5=16/15. S closes at x=0 and x=a, has r^2=ax, and integral_0^a ax dx=a^3/2. Both rows are valid, and the S derivation holds for each a>0.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "n66-q3-cubic-axis-distance",
+      "source_numbers": ["242"],
+      "view": {
+        "mode": "single",
+        "stem": "区域 $R$ 由 $y=x^3$、$x=2$ 和 $y=0$ 围成；区域 $S$ 由 $y=1-x^3$、$x=2$ 和 $y=0$ 围成。将两个区域分别绕横轴旋转一周。下列哪份方案的横向区间、旋转半径 $r(x)$ 和体积计算对两个区域都正确？",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "| 区域 | 横向区间 | $r(x)$ | 体积计算 |\n| --- | --- | --- | --- |\n| $R$ | $[0,2]$ | $x^3$ | $V_R=\\pi\\int_0^2x^6\\,dx=\\dfrac{128\\pi}{7}$ |\n| $S$ | $[0,2]$ | $\\lvert1-x^3\\rvert$ | $V_S=\\pi\\int_0^2(1-x^3)^2\\,dx=\\dfrac{86\\pi}{7}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "| 区域 | 横向区间 | $r(x)$ | 体积计算 |\n| --- | --- | --- | --- |\n| $R$ | $[0,2]$ | $x^3$ | $V_R=\\pi\\int_0^2x^3\\,dx=4\\pi$ |\n| $S$ | $[1,2]$ | $x^3-1$ | $V_S=\\pi\\int_1^2(x^3-1)^2\\,dx=\\dfrac{163\\pi}{14}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "| 区域 | 横向区间 | $r(x)$ | 体积计算 |\n| --- | --- | --- | --- |\n| $R$ | $[0,2]$ | $x^3$ | $V_R=\\pi\\int_0^2x^6\\,dx=\\dfrac{128\\pi}{7}$ |\n| $S$ | $[1,2]$ | $x^3-1$ | $V_S=\\pi\\int_1^2(x^3-1)^2\\,dx=\\dfrac{163\\pi}{14}$ |",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "| 区域 | 横向区间 | $r(x)$ | 体积计算 |\n| --- | --- | --- | --- |\n| $R$ | $[0,2]$ | $x^3$ | $V_R=\\pi\\int_0^2x^6\\,dx=\\dfrac{128\\pi}{7}$ |\n| $S$ | $[1,2]$ | $1-x^3$ | $V_S=-\\pi\\int_1^2(1-x^3)^2\\,dx=-\\dfrac{163\\pi}{14}$ |",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine both cubic regions and their volumes for source subparts 5 and 6, with particular attention to deriving the sixth interval from its actual zero and using a nonnegative distance-to-axis radius for its below-axis curve.",
+        "source_solution": "FIRST source subpart 5: x^3=0 at x=0, so the supplied x=2 closes [0,2] with r=x^3 and V=pi[x^7/7]_0^2=128pi/7. FIRST source subpart 6: 1-x^3=0 only at x=1, so x=2 closes [1,2], where 1-x^3<=0. The radius is |1-x^3|=x^3-1, and V=pi integral_1^2(1-2x^3+x^6) dx=pi[x-x^4/2+x^7/7]_1^2=pi(86/7-9/14)=163pi/14. No x=0 boundary is supplied for S; the region and its volume are unique under the modern geometric distance definition.",
+        "unit_reason": "These two cubic problems share the same explicit right boundary but not the same left closure or ordinate sign. A complete paired scheme exposes the essential contrast rather than making six source values into scalar choices. Option A preserves the correct R result but adds an unstated S boundary; option B preserves the correct S result but uses an area integrand for R. Neither cubic volume alone settles the complete scheme.",
+        "concept_blocks": [12],
+        "limitations": [
+          "Recognizing the complete radius-and-volume scheme does not verify independent integral setup, polynomial expansion, antiderivative writing, or endpoint evaluation for the two cubics.",
+          "A learner can eliminate schemes from boundary or radius contradictions without calculating every displayed integral; selection is not a full written proof.",
+          "The modern region-between-curves and nonnegative distance-to-axis definitions resolve the negative ordinate geometrically. No unseen source convention restricting the term curvilinear trapezoid to f>=0 is asserted."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "The R row is correct. For S, F(x)=x-x^4/2+x^7/7 and F(2)-F(0)=86/7, so the displayed enlarged-region integral is evaluated correctly. The stated curve meets the axis at x=1, however, so its actual bounded region has [1,2] and volume F(2)-F(1)=163/14 times pi. The added [0,1] piece has volume 9pi/14 and is not enclosed by the supplied boundary list.",
+            "misconception": "Reuse the left endpoint 0 from the y=x^3 region, implicitly add x=0 for the y=1-x^3 region, and integrate the squared ordinate on [0,2]. Taking an absolute-value radius handles signs on that altered region but does not repair the invented boundary; the procedure gives exactly 86pi/7."
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "The S row has the correct interval, nonnegative radius, and volume 163pi/14. For R, integral_0^2 x^3 dx=[x^4/4]_0^2=4, but disk area requires (x^3)^2=x^6 and yields 128/7. Thus 4pi is a false volume despite the correct stated radius and interval.",
+            "misconception": "For R insert the radius x^3 itself as the integrand in pi integral r(x) dx instead of its square. The concrete unsquared-radius procedure produces 4pi; S is left correctly computed."
+          },
+          {
+            "option_id": "C",
+            "truth": "correct",
+            "derivation": "For R the zero is x=0, r=x^3>=0 on [0,2], and integral_0^2 x^6 dx=128/7. For S the zero is x=1; on [1,2] the graph is below the axis, so r=x^3-1>=0. Squaring gives x^6-2x^3+1, whose integral is [x^7/7-x^4/2+x]_1^2=86/7-9/14=163/14. Both rows are correct.",
+            "misconception": null
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "The R row is correct. For S the ordinate 1-x^3 is negative for x>1 and therefore is not a radius. Its square still integrates to the positive 163/14, but the displayed prefactor -pi negates that result to -163pi/14. Rotation volume is nonnegative and the actual radius is x^3-1, so both the S radius claim and its negative volume claim are false.",
+            "misconception": "Treat the below-axis ordinate 1-x^3 as a signed radius, then transfer its negative sign to the volume by placing a minus before pi integral (1-x^3)^2 dx. This explicitly yields the displayed -163pi/14 instead of the positive solid volume."
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "242",
+      "question_ids": [
+        "n66-q1-bounded-regions",
+        "n66-q2-root-and-parameter",
+        "n66-q3-cubic-axis-distance"
+      ],
+      "omitted_tasks": [
+        "Independent written construction and evaluation of the six source volume integrals is not demonstrated by complete-scheme recognition.",
+        "Independent region drawing is not assessed; no source or authored figures are used.",
+        "Some derived correct limits recur in all options for a region, so those particular endpoint derivations are available as recognition context rather than independently elicited production."
+      ],
+      "reason": "All six boundary/region and volume tasks are represented with full conditions and exact results: subparts 1-2 in the explicit-versus-derived boundary pair, 3-4 in the closed-arch and positive-parameter pair, and 5-6 in the above-versus-below-axis cubic pair. No mathematical subpart or parameter condition is silently removed. The native response unit is a coherent complete paired calculation, never six copied answer slots. The recorded production losses remain subject to independent semantic review; structural validation alone cannot approve fidelity."
+    }
+  ]
+}

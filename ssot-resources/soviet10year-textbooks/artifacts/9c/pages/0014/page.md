@@ -1,0 +1,77 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9c",
+  "page": 14,
+  "printed_page": 7,
+  "source": {
+    "pdf": "9c 苏联十年制学校数学教材 代数和分析初步 九年级.pdf",
+    "pdf_sha256": "622f972014ce83a76a36b3174ce6d6995e77b86efa0f8dbaba7f5497729a8aec",
+    "pdf_page": 14
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2381,
+    "sha256": "55cf71850ca2fc6a50428d5a05df55077c601e9144b18adaeaf1a25914595d7c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+于是，提出假设
+
+<!-- p -->
+$\frac{1}{1\times3}+\frac{1}{3\times5}+\frac{1}{5\times7}+\cdots+\frac{1}{(2n-1)(2n+1)}↵=\frac{n}{2n+1}$.　　　　　　　（2）
+
+<!-- p -->
+利用数学归纳法证明等式（2）成立.
+
+<!-- p -->
+用$A(n)$表示关于自然数$n$的等式（2）.
+
+<!-- p -->
+1. $A(1)$成立，因为$S_1=\frac{1}{3}=\frac{1}{2\times1+1}$.
+
+<!-- p -->
+2. 我们来证明$A(k)\Longrightarrow A(k+1)$：
+
+<!-- p -->
+$S_{k+1}=S_k+\frac{1}{(2k+1)(2k+3)}=\frac{k}{2k+1}+\frac{1}{(2k+1)(2k+3)}↵=\frac{k(2k+3)+1}{(2k+1)(2k+3)}=\frac{(k+1)(2k+1)}{(2k+1)(2k+3)}↵=\frac{k+1}{2(k+1)+1}$.
+
+<!-- p -->
+数学归纳法证明的两部分已完成，就是说，等式（2）证毕，
+于是
+
+<!-- p -->
+$\frac{1}{1\times3}+\frac{1}{3\times5}+\frac{1}{5\times7}+\cdots+\frac{1}{(2n-1)(2n+1)}=\frac{n}{2n+1}$
+
+<!-- p -->
+对于任意自然数$n$都成立.
+
+<!-- p -->
+例2. 求证：对于任意自然数$n$，表达式$n^3+5n$的值可
+以被$6$整除.
+
+<!-- p -->
+用$A(n)$表示命题：“$x_n=n^3+5n$可以被$6$整除”.
+
+<!-- p -->
+因为$x_1=1+5=6$，所以当$n=1$时$x_n$可以被$6$整除，即
+$A(1)$成立. 我们来证明：$A(k)\Longrightarrow A(k+1)$，即由“$x_k$可以被
+$6$整除”，可以推出“$x_{k+1}$可以被$6$整除”.
+
+<!-- foot -->
+· 7 ·

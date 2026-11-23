@@ -1,0 +1,35 @@
+# 45. 函数的积的导数
+
+引理．如果函数 $f$ 在点 $x_0$ 有导数，那么$\lim_{\Delta x\to0}\Delta f(x_0)=0.$
+
+证明
+
+$\lim_{\Delta x\to0}\Delta f(x_0)=\lim_{\Delta x\to0}\frac{\Delta f(x_0)}{\Delta x}\cdot\Delta x=f'(x_0)\cdot0=0.$
+
+由这个引理得出，函数 $f$ 在点 $x_0$ 有导数，那么函数 $f$ 在该点连续。
+
+事实上，因为
+
+$f(x)=f(x_0)+f(x)-f(x_0)=f(x_0)+\Delta f(x_0),$
+
+所以只要回忆一下第 42 小节中对公式（3）所作的说明就可得出：
+
+$\lim_{x\to x_0}f(x)=\lim_{\Delta x\to0}(f(x_0)+\Delta f(x_0))=f(x_0)+\lim_{\Delta x\to0}\Delta f(x_0)=f(x_0).$
+
+这就证明了所说的命题。
+
+重要注释　由引理得知，如果某一个函数 $f$ 在点 $x_0$ 不连续，那么它在该点没有导数。可是逆命题不成立。函数在点$x_0$ 连续，然而在该点可以没有导数。例如，函数 $f(x)=|x|$ 在点 $0$ 连续，但是在这个点没有导数（参看第 $43$ 小节）。
+
+定理。如果导数 $u'$ 和 $v'$ 存在，那么两个函数的积 $uv$ 的导数由公式$(uv)'=u'v+uv'$给出。
+
+这个公式叫做莱布尼兹公式。
+
+证明　用 $w(x)$ 表示积 $u(x)\cdot v(x)$，并计算它的导数。首先看到，由函数的改变量的定义$\Delta u=u(x+\Delta x)-u(x)$得出$u(x+\Delta x)=u(x)+\Delta u,$或者用 $u$ 表示 $u(x)$ 后，化简成：$u(x+\Delta x)=u+\Delta u.$同样有$v(x+\Delta x)=v+\Delta v.$于是，$\frac{\Delta w(x)}{\Delta x}=\frac{w(x+\Delta x)-w(x)}{\Delta x}=\frac{u(x+\Delta x)v(x+\Delta x)-u(x)v(x)}{\Delta x}=\frac{(u+\Delta u)(v+\Delta v)-uv}{\Delta x}=\frac{v\Delta u+u\Delta v+\Delta u\Delta v}{\Delta x}=v\frac{\Delta u}{\Delta x}+u\frac{\Delta v}{\Delta x}+\Delta u\frac{\Delta v}{\Delta x}.$因为 $u=u(x)$ 和 $v=v(x)$ 是常数因子（当 $x$ 固定），可是根据引理（因为函数 $u$ 可微分），有$\lim_{\Delta x\to 0}\Delta u=0,$因此，$(uv)'=w'=\lim_{\Delta x\to 0}\frac{\Delta w}{\Delta x}=\lim_{\Delta x\to 0}\left(v\cdot\frac{\Delta u}{\Delta x}+u\cdot\frac{\Delta v}{\Delta x}+\Delta u\cdot\frac{\Delta v}{\Delta x}\right)=\lim_{\Delta x\to 0}\left(v\cdot\frac{\Delta u}{\Delta x}\right)+\lim_{\Delta x\to 0}\left(u\cdot\frac{\Delta v}{\Delta x}\right)+\lim_{\Delta x\to 0}\left(\Delta u\cdot\frac{\Delta v}{\Delta x}\right)=v\cdot\lim_{\Delta x\to 0}\frac{\Delta u}{\Delta x}+u\cdot\lim_{\Delta x\to 0}\frac{\Delta v}{\Delta x}+\lim_{\Delta x\to 0}\Delta u\cdot\lim_{\Delta x\to 0}\frac{\Delta v}{\Delta x}=v\cdot u'+u\cdot v'+0\cdot v'=uv'+u'v.$
+
+例 $1$．$((x+3)(x+15))'=(x+3)'(x+15)+(x+3)(x+15)'=(1+0)(x+15)+(x+3)(1+0)=2x+18.$
+
+推论。常数因子可以提到导数符号外面：$(kf(x))'=kf'(x).$
+
+事实上，对积 $kf(x)$（其中 $k$ 是常数）应用上述定理，得$(kf(x))'=k'f(x)+kf'(x)=0\cdot f(x)+kf'(x)=kf'(x).$
+
+例 $2$．$\left(\frac{x}{15}-3\right)'=\left(\frac{x}{15}\right)'-0=\frac{1}{15}(x)'=\frac{1}{15}.$

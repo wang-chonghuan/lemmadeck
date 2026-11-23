@@ -1,0 +1,85 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 118,
+  "printed_page": 111,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 118
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "ac26f939fda93e354772bc4a7a190459153875f566902ed2b20ade8a9d47a6b4"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "Physical118/printed111; one full prepared page.grid.png view. Exercises321-323 are complete and belong to section34; section35 begins at the actual printed heading 异面直线的公垂线.",
+    "Section35's construction problem and initial solution are fully transcribed. Figure128 belongs to that prose construction, not exercises321-323: parallel planes alpha/beta, a/b/b1, C/D/D1/M/N, projection/dashed segments and right-angle marks in one source figure; caption is an independent printed row.",
+    "The final prose paragraph remains open at 实际上，因 and must continue on119. Exercise323's |CD|=b spans two printed rows, represented by one wrap marker. No count exclusions, count overrides, inferred closure or errata."
+  ],
+  "errata": [],
+  "printed_lines": 19,
+  "figures": [
+    {
+      "id": "fig-128",
+      "label": "图 128",
+      "box": [
+        448,
+        1256,
+        529,
+        409
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 321 -->
+321. 求与两个不同的平行平面距离相同的所有点的
+集合.
+
+<!-- ex 322 -->
+322. 已知两个不同的平行平面$\alpha$和$\beta$. 指出将$\alpha$映射
+到$\beta$的对称轴. 所有这样的轴的并集是什么图形？
+
+<!-- ex 323 -->
+323. 线段$AB$和$CD$的端点属于不同的平行平面，并投
+影在两个平面中的一个上. 如果已知：1) $|AB|:|CD|=10:17$，
+这些线段射影的长分别为12cm和3dm；2) $|AB|=a$，$|CD|↵=b$，且它们射影长的比是$m:n$；3) $|AB|=a$，$|CD|=b$，且它
+们射影长的和等于$c$. 求平面间的距离.
+
+<!-- h3 -->
+§35. 异面直线的公垂线
+
+<!-- p -->
+问题. 已知异面直线$a$和$b$. 求作直线和两条已知直线
+都相交并且垂直.
+
+<!-- p -->
+解. 通过$a$与$b$作平行平面$\alpha$和$\beta$(图128)(§11，问
+题).
+
+<!-- fig 图 128 box 448,1256,529,409 -->
+![图 128](figures/fig-128.png)
+
+<!-- cap 图 128 -->
+图 128
+
+<!-- p open -->
+直线$b$在平面$\alpha$上的正射影是直线$b_1$，它平行于直线$b$ 
+(§11，定理7). 直线$a$和$b_1$的交点用$M$来表示. 这个点是
+直线$b$的某个点$N$的射影；$(MN)$是所求的直线. 实际上，因
+
+<!-- foot -->
+• 111 •

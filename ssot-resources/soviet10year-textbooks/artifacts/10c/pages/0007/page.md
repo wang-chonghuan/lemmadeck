@@ -1,0 +1,116 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 7,
+  "printed_page": 1,
+  "notes": [
+    "实际原图确认物理7页为印刷1页，起始章题为第六章（三角函数及其图象和导数，续），§15，第75单元；本页没有习题题号。",
+    "章题按原印刷分成两行；图1为正文单位圆局部示意，含O、A、B、C、P_0及两个x角标，粗框不含图题。图题与假设б)的高分式处在同一横排行带，标记cap samerow，不把分子分母拆成两行。",
+    "式(1)后升高星号是原脚注指示，脚注用foot note保留两行；正文弧记号用宽弧形式保留。章题下横线、脚注上横线及页边墨迹不是正文或插图；首次21/19失败保留。独立源审查后登记页底扫描边线排除；父方非作者独立实际标题裁图确认左缘孤立黑点误并入标题行带，仅追加现有左5%窄框计数排除，不改标题或计数算法。",
+    "末段停在“整段弧AB的长”，用p open续到下页；图及脚注在正文续接中透明。"
+  ],
+  "errata": [],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        2451,
+        1695,
+        129
+      ],
+      "reason": "Independent source review confirms only a fragmented bottom scan boundary in the existing bottom5% strip. The actual folio ends at y2312; no title, prose, formula, footnote, caption or figure pixels are excluded. Original pixels and crop remain unchanged."
+    },
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        540,
+        84,
+        130
+      ],
+      "reason": "Parent non-author independently opened the unchanged direct title crop and confirmed a solitary left-edge blot at x19..32,y640..653 and minute specks only. All title glyphs are at x690 or farther right. This existing left5% strip masks no instructional or folio pixels; the original image is unchanged."
+    }
+  ],
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 7
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "0f9412befdb57b4a8cf1ba74732dda253a93f308990cd51879c6c1ce5bfda2d0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 19,
+  "figures": [
+    {
+      "id": "fig-01",
+      "label": "图 1",
+      "box": [
+        1072,
+        1340,
+        317,
+        356
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h1 -->
+第六章 三角函数及其图象
+和导数（续）
+
+<!-- h2 -->
+§ 15. 三角函数的导函数
+
+<!-- h3 -->
+75. 正弦函数的导函数
+
+<!-- p -->
+在这一节里，将推出三角函数的导函数公式. 首先我们
+证明：
+
+<!-- p -->
+$\sin' x=\cos x^{*}$. (1)
+
+<!-- p -->
+(1)式是根据下面两点假设推出的（稍后就证明这两点假
+设的正确性）：
+
+<!-- p -->
+а) 当自变量取所有的值时，
+函数$\cos$是连续的，就是
+$\lim_{\Delta x\to0}\cos(x+\Delta x)=\cos x$；
+
+<!-- p -->
+б) $\lim_{x\to0}\frac{\sin x}{x}=1$.
+
+<!-- fig 图 1 box 1072,1340,317,356 -->
+![图 1](figures/fig-01.png)
+
+<!-- cap 图 1 samerow -->
+图 1
+
+<!-- p open -->
+关于$\lim_{x\to0}\frac{\sin x}{x}$等于1的假设，从几何上考虑就足以使人
+信服. 事实上，如果首先认为$x$是正的，在单位圆上（图1）从
+点$P_0$向两边取长度为$x$的弧$\widehat{P_0A}$和$\widehat{P_0B}$. 整段弧$\widehat{AB}$的长
+
+<!-- foot note -->
+* 等式(1)可以写成
+$(\sin x)'=\cos x$.
+
+<!-- foot -->
+· 1 ·
