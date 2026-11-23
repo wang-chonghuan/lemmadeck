@@ -1,5 +1,213 @@
 # 生产检查点
 
+## 2026-11-23 180-7 n12 Complete Offline; Immediate Narrow Save
+
+Same Bacon final internal review PASS seven choices/28 option rationales and
+eight answers/coverage rows; auto4/ungraded4, no further content revisions.
+Choice validation/retention exit0. Answer finalize first failed because the
+working copy inherited approved-snapshot read-only permissions; original exit1
+retained, only working output made writable, recovery PASS8. Approved snapshot
+remains read-only. Full render once PASS48 prose/8 written/7 choices/0 figures.
+
+Display preserves two real checker-title failures (number and surface suffix).
+Desktop text PASS reused; next five runtime checks exit0, but independent visual
+review found mobile written question7's detached squared exponent. Original
+HTML, screenshots, reports and scripts retained. Narrow shared inline renderer
+repair groups recognized written units with separate powers without changing
+source, edition prose/exercises, keys or choices; proseInline unchanged.
+Focused unit/emphasis/answer-render tests14/14. Only written HTML regenerated.
+Affected mobile-written execution exit0 and actual screenshot PASS, all3 unit
+power groups one line. Combined six-surface DISPLAY PASS is five reused plus
+one affected; no passed-surface replay. Bacon collected/closed,total20/24 images.
+
+Immediate save only n12 raw/modern, necessary59–62/65 source and recovery
+evidence, exact tested layout/inline renderer deltas, corresponding indexes
+and existing checkpoint/usage. Actual220 owned files staged; raw index33/93,
+working34/94 untouched. Default whitespace check flags seven trailing spaces
+only in immutable baseline/candidate01 unittest failure streams; exact bytes
+preserved. All other staged paths pass whitespace check.63/64 approval reused
+unchanged.65 n13 body is
+not independently approved; n13/n37 lessons, other HOLDs, installer/user
+changes and app/schema remain excluded. Actual raw staged index33/93 versus
+working34/94; held n37 preserved. Delivered35/increment7 until actual push.
+Parent23/24, paid69 historical/new0, unknown tokens/costs. No DB/publication,
+deployment/closure/new chat/worktree/branch/timer. Full group incomplete.
+
+## 2026-11-23 180-7 n12 Blind Condition Repair PASS; Key Comparison Active
+
+First blind pure-view review found one real missing-axis condition in
+`speed-and-direction`; literal original complete true set was empty. Original
+draft/view and independent failure report remain frozen. Parent repaired only
+that stem to require motion along the fixed line used as the coordinate axis,
+plus the same premise in answer3. Other six question views are unchanged.
+Same Bacon affected-only blind review PASS: complete set A/B/C, D false,
+no affected leakage; six prior PASS results reused. No keys disclosed until
+this result was received. Final key/rationale/coverage and all8 answer comparison
+is now active against the reviewer's already frozen independent solutions.
+Images0 new/11 reviewer cumulative, parent23/24; paid69 historical/new0.
+Delivered35/increment7 until actual push. No DB, publication, deployment,
+closure, new chat/worktree/branch/timer or passed-source replay.
+
+## 2026-11-23 180-7 n12 Source Resolved; Modern PASS; Blind Choice Review
+
+Same Bacon native62 affected phase PASS all3 typography units,0 edits,3 new
+images/11 cumulative. Prior three-HOLD report remains frozen. Native pixel
+comparisons positively support lead-only italics, normal question weight and
+ordinary-weight italic terms.59/60/61 faithful source and65 exercise8/boundary
+approvals reused;63/64 unchanged approval reused. n13 weight HOLD remains local.
+
+Limited59–65 assembly once exit0:3 scratch units,10 total tasks,0 figures;
+selected n12 is39 prose/8 tasks/0 figures. Incoming59 exercise5 warning belongs
+to preceding n11, not selected n12. Only n12 promoted; working index34/94
+continues to retain held n37. Unit paragraph joins60#9/61#1 and scientific
+footnote60#10 remains separate.
+
+Modern FIRST wholetext/eight-question review PASS,0 requested revisions/images;
+48 paragraphs,7 exact tool-derived boundaries, one registered source-bound
+projection correction with explicit original-error disclosure. Adjacent strong
+wrappers only joined as layout. Adapt-finalize exit0,30/39 prose changes
+(layout plus registered correction),0/8 exercise changes,0 new figures.
+Seven choices/28 options authored from8 seeds, structure exit0; two related
+definition sources form one complete question. Eight answer drafts have full
+working,proposed auto4/ungraded4, no new interactions; not yet final/approved.
+
+Independent source-only solutions for all8 now frozen before any author view/
+key access. Same sole reviewer next pure-view phase; no internal keys disclosed.
+Delivered35/increment7 until push, parent23/24, paid69/new0, unknown tokens/costs.
+No DB/publication/deployment/closure, new chat/worktree/branch/timer or source replay.
+
+## 2026-11-23 180-7 n12 Counter Integrated; Source62 Native-Pixel Recovery
+
+Hegel collected/closed,1 actual image. Candidate02 SOURCE60 focused10/0 and
+unchanged P54 portable6/0, including all25 real anchors/deletions in both
+orientations, actual glyph/fraction/minus preservation. Exact line_bands-only
+delta applied; live SHA
+`b7c18ef0992b98a27b56ecd0437c3a5f2286f6da1ab5df02b0189ed14cc9a03a`.
+Baseline93 and candidate01 eight subtest failures retained. Counter evidence
+copied byte-for-byte to page0060/counter-recovery except reconstructible original
+PDF renders; no whole-PDF/runtime duplication or global test replay.
+Affected60/61/62/65 finalize each exit0,25/25,0 normalizations.
+
+Bacon first recovery SOURCE:59/60 PASS;61 faithful source PASS with one definite
+scientific contradiction;62 only three font-extent/weight HOLDs, first numerator
+definitively v_0;65 exercise8 and n13 boundary PASS only.8 source images actual.
+Original review frozen.61 original body untouched; source-bound erratum
+`p0061-projection-norm-1` registered and metadata-only finalize exit0,25/25.
+Modern correction not yet authored/approved.
+
+Concrete further62 evidence: PDF object123 is native1472x2240 one-bit CCITT at
+261ppi, while the previously reviewed1695x2580 PNG was resampled at300dpi.
+Original bitmap extracted unchanged in scratch; same sole reviewer next affected
+phase may inspect at most3 native original-only crops for T62-1/2/3, without
+enhancement, passed-unit replay or certainty fabrication. Remaining actual
+ambiguities stay local HOLD. No n12 assembly/promotion or completion counted.
+Delivered35/increment7, parent23/24, paid69/new0, unknown tokens/costs unchanged.
+
+## 2026-11-23 180-7 n12 Source Author Collected; Independent Recovery Review
+
+Sagan collected/closed: AUTHOR repairs61/62/65 retained with exact baselines,
+old frozen reports unchanged. One author pass each, representation units6/8/12;
+7 actual source images total.61 has no newly unresolved author item;62 still
+has source-typography questions;65's sole remaining segment-letter weight doubt
+is n13-only. Exercise8 before n13 is unchanged, not whole65 SOURCE PASS.
+Parent changed ONLY60 scientific-footnote block type to named
+`foot source-footnote-p0060-1`, preserving all four source text rows and the
+original p representation in existing first-failure evidence.
+
+Bacon `01a2074b-db99-73c0-b639-d8b3e0c95cc6` is sole independent semantic
+reviewer: new59/60, affected61/62, applicable65 exercise8/boundary; max8 source
+images this phase,24 cumulative.63/64/54 approvals remain reused, no replay.
+Source content and technical60 are not yet approved. Hegel's private candidate01
+has correct total but8 deletion/small-glyph control failures; not applied.
+Original failures preserved; technical refinement remains active.
+Delivered35/increment7, parent23/24, paid69/new0, unknown tokens/costs unchanged.
+No DB, new chat/worktree/branch/timer, deployment or closure.
+
+## 2026-11-23 180-7 Explicit Supervisory n12 Recovery Active
+
+New supervisory continuation explicitly authorizes reversible technical repairs
+and source/report-grounded content repairs for60–62/65 without treating spent
+repair1, FIRST counters or old read-only labels as an additional approval stop.
+Original FIRST, historical usage, costs and frozen uncertainties remain unchanged;
+unresolvable scientific/source issues still stay local HOLD, never forced PASS.
+The preceding request for extra authorization is superseded for this named scope.
+
+Parent read-only current60 counter remains26 at width1640, using committed
+layout SHA8cb92aec54903cec817cec5c0f4fa29502e6f16ffc3919b7052ef217ed4d9e8d;
+candidate25 rows and thin band1960–1966 remain actual facts.
+Hegel `01a20745-5cdf-7a93-81fd-65b496345b2d` owns PRIVATE60 classifier
+diagnosis/candidate/row-deletion controls only, no live code/source/finalize.
+Sagan `01a20744-81e3-7cd2-bf60-7ba4c5a4a3ad` owns61/62/65 actual-original
+source repair AUTHOR, at most8 new images, no finalize/source approval.
+No semantic reviewer is active. Original61/62 incident drafts remain immutable;
+their newer copy is an explicit author baseline, not recovered historical FIRST.
+63/64/54 and delivered evidence reused;65 n13-only weight issues are kept distinct
+from n12's required exercise8. Parent will preserve scientific footnote separately
+using existing source-footnote representation, without altering its four source rows.
+Source60 code/content still unapproved. Delivered35/increment7, parent23/24,
+paid69/new0, unknown tokens/costs; no DB/new chat/tree/branch/timer/merge/deploy.
+
+## 2026-11-23 180-7 Post-Summary Selection; Existing Source HOLD Boundary
+
+Summary3 push/intake below remains actual delivered35/increment7.
+Read-only next-course selection did not execute any new producer/reviewer stage,
+open images, amend source, reset budgets or create another agent.
+
+Candidate-specific existing facts:
+
+- 8p second-chapter summary depends on84/85 SOURCE HOLD; old85 defects are
+  inside its prose, unlike summary3's excluded104. No false boundary bypass.
+- 7p n131 ends0329#9 open and requires blocked330; not a complete329-only course.
+- 7p n134 begins335, whose independent SOURCE verdict has missing bold on则
+  and unresolved punctuation typography;336/337 author-ready is not approval.
+- 8p n23 needs111/112 with actual historical first-count failures and114's
+  unresolved first counter failure. Page110/113 approval does not close gaps.
+- n9 FIG36 is deterministic but its routing report explicitly requires complete
+  accepted source/edition context before final authoring. That context is absent;
+  no spec was made from failed-page crops merely to bypass n9's source/artwork HOLD.
+- n12 historical60 has the same25/26 first-count failure as the newer draft.
+  More importantly,61 SOURCE remains unresolved after spent repair1;62 retains
+  three omitted italic spans/frozen uncertainties;65 retains nine weight defects/
+  three unresolved source items. Historical65 AUTHORREADY is NOT SOURCEPASS.
+  Source63/64 approvals remain reused and untouched. The new60/65 drafts cannot
+  authorize replacement FIRST reviews or erase those original holds.
+
+This is NOT an all-corpus exhaustion verdict; file absence and a few local holds
+do not prove one. No listed incomplete candidate is approved or added to intake.
+The next n12 path needs explicit authorization to reopen its held source stages;
+current restrictions do not supply it. Parent23/24, paid69/new0, unknown tokens/
+costs unchanged. All agents closed and owned exec sessions finished. Exact intake
+notes remain in the existing checkpoint/usage for the next normal content commit,
+without a report-only commit or duplicate push. Full production group incomplete.
+
+## 2026-11-23 180-7 Third-Chapter Summary Pushed; Supervisor-Only Intake
+
+Ordinary push exit0 saved exact23-file snapshot
+`89a8ec799140734ef5992b629ab7cc195598f2d7`,
+remote31977e1d8..89a8ec799. Delivered35 /180-7 increment7.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s3-t7`, 第三章提要,
+  legitimate number null. Use exact pushed snapshot above.
+- Durable modern lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s3-t7/`.
+- Necessary raw summary and independent text/display evidence retained;
+  unchanged source103 and its independent PASS reused. Source104 excluded.
+  Incoming103#1 belongs to preceding n21, not this summary.
+- Actual2 raw prose objects/2 rendered paragraphs/1 exact concept boundary,
+  0 figures/exercises/answers/choices/new interactions; empty answers ready.
+- Source/text/display independently PASS0 content revisions. One desktop/mobile
+  two-surface run, both screenshots visually inspected PASS. Reuse evidence.
+- Writer serializes existing one-lesson base and empty-answer publishers as
+  required, then one small summary readback. No choices/interactions stage,
+  earlier/all-lesson replay or duplicate display pipeline.
+
+No remote replay, producer DB writes or DB waiting. Working held n37 and all
+source/installer/user dirty bytes preserved. Hooke collected/closed,total2images;
+parent23/24, paid69/new0, unknown costs/tokens unchanged. Continue other authorized
+source-backed work; this is not formal/full-group handoff or publication.
+
 ## 2026-11-23 180-7 Third-Chapter Summary Complete Offline; Immediate Save
 
 Hooke FIRST modern-text PASS0 revisions/0 images, reused unchanged source103

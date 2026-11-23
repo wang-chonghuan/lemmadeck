@@ -1,0 +1,221 @@
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+
+const root = process.cwd();
+assert.equal(root, "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180");
+const require = createRequire(path.join(root, "app/package.json"));
+const { chromium } = require("playwright");
+const lesson = "phy8-c1-s2-n12";
+const relative = `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/${lesson}`;
+const directory = path.join(root, relative);
+const output = path.join(directory, "display");
+const render = path.join(root, ".tmp/ld-s10y-lesson/render/8p/modern-us-neutral", lesson);
+const read = (name) => JSON.parse(fs.readFileSync(path.join(directory, name), "utf8"));
+const figures = read("figures.json").figures;
+const written = read("exercises.json").exercises;
+const answers = read("answer-keys.json").answers;
+const choicePath = path.join(directory, "choice-set/draft.json");
+const choices = fs.existsSync(choicePath) ? read("choice-set/draft.json").questions : [];
+const { proseOutline, sectionBreakIndices } = require(path.join(root, ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js"));
+const prose = proseOutline(read("lesson.json").prose);
+const sectionIndices = sectionBreakIndices(read("lesson.json").prose, read("lesson.json").section_breaks);
+const applicable = ["text", ...(written.length ? ["exercises"] : []), ...(choices.length ? ["choices"] : [])];
+const surfaces = process.argv[2] ? process.argv[2].split(",") : applicable;
+assert.ok(surfaces.every((value) => ["text", "exercises", "choices"].includes(value)));
+assert.ok(prose.length > 0);
+assert.equal(answers.length, written.length);
+assert.equal(written.length, 8);
+assert.equal(figures.length, 0);
+fs.mkdirSync(output, { recursive: true });
+delete process.env.PWDEBUG;
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const results = [];
+try {
+  for (const [device, viewport] of [
+    ["desktop", { width: 1440, height: 960 }],
+    ["mobile", { width: 390, height: 844 }],
+  ]) {
+    const context = await browser.newContext({ viewport });
+    try {
+      for (const surface of surfaces) {
+        const page = await context.newPage();
+        const errors = [];
+        let metrics;
+        page.on("pageerror", (error) => errors.push(error.message));
+        page.on("console", (message) => {
+          if (message.type() === "error") errors.push(message.text());
+        });
+        try {
+          await page.goto(pathToFileURL(path.join(render, `${surface}.html`)).href);
+          await page.evaluate(() => document.fonts.ready);
+          assert.equal(await page.locator("h1").count(), 1);
+          assert.equal((await page.locator("h1").innerText()).replace(/\s+/g, ""), "加速度匀加速运动");
+          assert.equal(await page.locator(".katex-error, textarea, math-field, input:enabled").count(), 0);
+          metrics = await page.evaluate(() => {
+            const paragraphs = [...document.querySelectorAll("p.para")];
+            const media = [...document.querySelectorAll(".figure-media")].map((element) => {
+              const svg = element.querySelector("svg");
+              const rect = element.getBoundingClientRect();
+              const labels = [...(svg?.querySelectorAll("text") ?? [])].map((text) => {
+                const box = text.getBoundingClientRect();
+                const transform = text.getScreenCTM();
+                return {
+                  text: text.textContent,
+                  left: box.left, top: box.top, right: box.right, bottom: box.bottom,
+                  size: parseFloat(getComputedStyle(text).fontSize) *
+                    Math.hypot(transform.a, transform.b),
+                };
+              }).filter((label) => label.right > label.left && label.bottom > label.top);
+              const overlaps = [];
+              for (let i = 0; i < labels.length; i++) {
+                for (let j = i + 1; j < labels.length; j++) {
+                  const a = labels[i], b = labels[j];
+                  if (Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1 &&
+                      Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1) {
+                    overlaps.push([a.text, b.text]);
+                  }
+                }
+              }
+              return {
+                width: rect.width, height: rect.height,
+                svg: !!svg,
+                geometry: svg?.querySelectorAll("path, polygon, polyline, line, circle").length ?? 0,
+                images: [...element.querySelectorAll("img")].map((image) => ({
+                  complete: image.complete, width: image.naturalWidth, height: image.naturalHeight,
+                })),
+                labels, overlaps,
+              };
+            });
+            return {
+              width: innerWidth,
+              scrollWidth: Math.max(document.body.scrollWidth, document.documentElement.scrollWidth),
+              textLength: document.body.innerText.trim().length,
+              rawMarkup: /<\/?(?:span|strong|em)(?:\s|>)/.test(document.body.innerText),
+              prose: paragraphs.length,
+              indents: paragraphs.map((element) => getComputedStyle(element).textIndent),
+              fonts: [...document.querySelectorAll("p.para .prose-math, p.para .katex")].map((element) => {
+                const style = getComputedStyle(element);
+                return {
+                  family: style.fontFamily,
+                  size: parseFloat(style.fontSize),
+                  parentSize: parseFloat(getComputedStyle(element.closest("p.para")).fontSize),
+                };
+              }),
+              written: document.querySelectorAll("li.ex").length,
+              answers: document.querySelectorAll(".written-answer .answer-text").length,
+              choices: document.querySelectorAll("section.choice").length,
+              options: document.querySelectorAll(".choice-options li").length,
+              media,
+            };
+          });
+          assert.ok(metrics.textLength > 80, `${surface}: blank or error-only`);
+          assert.equal(metrics.rawMarkup, false);
+          assert.ok(metrics.scrollWidth <= metrics.width + 1, `${surface}: page overflow`);
+          for (const media of metrics.media) {
+            assert.ok(media.width > 0 && media.height > 0);
+            assert.ok(media.geometry > 0 || media.images.length > 0);
+            assert.ok(media.images.every((image) => image.complete && image.width > 0 && image.height > 0));
+            if (media.svg) assert.ok(media.labels.length > 0);
+            assert.deepEqual(media.overlaps, []);
+            assert.ok(media.labels.every((label) => label.size >= 15.99));
+          }
+          if (surface === "text") {
+            assert.equal(metrics.prose, prose.length);
+            assert.equal(metrics.media.length, figures.length);
+            assert.ok(metrics.indents.every((indent) => parseFloat(indent) === 0));
+            assert.ok(metrics.fonts.length > 0);
+            for (const font of metrics.fonts) {
+              assert.match(font.family, /KaTeX_Main/);
+              assert.ok(font.size >= font.parentSize * 1.09);
+            }
+            const sections = await page.locator("p.para.section").evaluateAll((elements) =>
+              elements.map((element) => {
+                let previous = element.previousElementSibling;
+                while (previous && !previous.matches("p.para")) {
+                  previous = previous.previousElementSibling;
+                }
+                return {
+                  paragraphIndex: [...document.querySelectorAll("p.para")].indexOf(element),
+                  before: previous?.innerText ?? "",
+                  after: element.innerText,
+                  borderWidth: parseFloat(getComputedStyle(element).borderTopWidth),
+                };
+              }));
+            assert.equal(sections.length, read("lesson.json").section_breaks.length);
+            assert.deepEqual(sections.map((section) => section.paragraphIndex), sectionIndices);
+            for (const section of sections) {
+              assert.ok(section.before.trim().length > 0);
+              assert.ok(section.after.trim().length > 0);
+              assert.ok(section.borderWidth > 0);
+            }
+            metrics.sections = sections;
+          } else if (surface === "exercises") {
+            assert.equal(metrics.written, written.length);
+            assert.equal(metrics.answers, answers.length);
+            assert.equal(metrics.media.length, written.reduce((count, exercise) =>
+              count + (exercise.figures ?? []).length, 0));
+            for (const answer of await page.locator(".written-answer .answer-text").all()) {
+              assert.ok((await answer.innerText()).trim().length > 0);
+            }
+          } else {
+            assert.equal(metrics.choices, choices.length);
+            assert.equal(metrics.options, choices.reduce((count, question) => count + question.view.options.length, 0));
+            assert.equal(metrics.media.length, choices.reduce((count, question) =>
+              count + question.view.figure_ids.length +
+                question.view.options.reduce((total, option) => total + option.figure_ids.length, 0), 0));
+            assert.equal(await page.locator("[data-correct], .correct, .rationale").count(), 0);
+            assert.equal(await page.locator("input:checked").count(), 0);
+            for (const [mode, type] of [["single", "radio"], ["multiple", "checkbox"]]) {
+              const expected = choices.filter((question) => question.view.mode === mode)
+                .reduce((count, question) => count + question.view.options.length, 0);
+              assert.equal(await page.locator(`input[disabled][type="${type}"]`).count(), expected);
+            }
+          }
+          for (const media of await page.locator(".figure-media").all()) {
+            await media.evaluate((element) => { element.scrollLeft = element.scrollWidth; });
+            assert.ok(await media.evaluate((element) =>
+              element.scrollLeft + element.clientWidth >= element.scrollWidth - 1));
+          }
+          await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" }));
+          assert.ok(await page.evaluate(() =>
+            innerHeight + scrollY >= document.documentElement.scrollHeight - 2));
+          assert.deepEqual(errors, []);
+          const screenshot = `${device}-${surface}.png`;
+          await page.screenshot({ path: path.join(output, screenshot), fullPage: true });
+          results.push({ device, viewport, surface, ...metrics, consoleErrors: errors, screenshot });
+        } catch (error) {
+          const prefix = `first-${device}-${surface}-failure`;
+          if (!fs.existsSync(path.join(output, `${prefix}.json`))) {
+            await page.screenshot({ path: path.join(output, `${prefix}.png`), fullPage: true });
+            fs.writeFileSync(path.join(output, `${prefix}.json`), JSON.stringify({
+              device, viewport, surface, error: String(error), metrics, passedSurfaces: results,
+              renderedHtmlSha256: crypto.createHash("sha256")
+                .update(fs.readFileSync(path.join(render, `${surface}.html`))).digest("hex"),
+            }, null, 2) + "\n");
+          }
+          throw error;
+        } finally {
+          await page.close();
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+}
+const bindings = [
+  "lesson.json", "exercises.json", "figures.json", "answer-keys.json",
+  ...(choices.length ? ["choice-set/seed.json", "choice-set/draft.json", "choice-set/review.json"] : []),
+].map((name) => ({
+  path: `${relative}/${name}`,
+  sha256: crypto.createHash("sha256").update(fs.readFileSync(path.join(directory, name))).digest("hex"),
+}));
+fs.writeFileSync(path.join(output, JSON.stringify(surfaces) === JSON.stringify(applicable) ? "check.json" : "affected-check.json"),
+  JSON.stringify({ lesson, browser: "isolated headless Chrome", bindings, results }, null, 2) + "\n");
+console.log(JSON.stringify({ lesson, status: "pass", output, surfaces: results.length }));

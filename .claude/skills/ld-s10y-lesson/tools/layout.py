@@ -324,68 +324,21 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
-    # A footnote rule separates body type from smaller type; shape alone
-    # cannot distinguish it from a minus or a fraction bar.
-    for index, (a, b) in enumerate(raw):
-        if index == 0 or index + 1 == len(raw) or b - a + 1 > 0.2 * glyph_h:
-            continue
-        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
-        if xs.size == 0 or xs[-1] - xs[0] + 1 < 8 * glyph_h:
-            continue
-        rule_ids = np.unique(components[a:b + 1])
-        rule_ids = rule_ids[rule_ids != 0]
-        if len(rule_ids) != 1:
-            continue
-        rule_id = int(rule_ids[0])
-        rows, columns = bounds_list[rule_id - 1]
-        if not (a == rows.start and rows.stop == b + 1):
-            continue
-        prev_a, prev_b = raw[index - 1]
-        next_a, next_b = raw[index + 1]
-        if not (
-            0.6 * glyph_h <= a - prev_b - 1 <= 4 * glyph_h
-            and 0.3 * glyph_h <= next_a - b - 1 <= 4 * glyph_h
-        ):
-            continue
-        neighbors = []
-        for top, bottom in ((prev_a, prev_b), (next_a, next_b)):
-            glyphs = [
-                (r, c) for bounds in bounds_list if bounds is not None
-                for r, c in [bounds]
-                if top <= r.start and r.stop <= bottom + 1
-                and 0.5 * glyph_h <= r.stop - r.start <= 1.35 * glyph_h
-                and 0.4 * glyph_h <= c.stop - c.start <= 1.3 * glyph_h
-            ]
-            neighbors.append(glyphs)
-        body, small = neighbors
-        if min(len(body), len(small)) < 5:
-            continue
-        body_h = float(np.median([r.stop - r.start for r, _ in body]))
-        small_h = float(np.median([r.stop - r.start for r, _ in small]))
-        body_columns = [
-            c for bounds in bounds_list if bounds is not None
-            for r, c in [bounds]
-            if a - 12 * body_h <= r.start and r.stop <= a
-            and 0.75 * body_h <= r.stop - r.start <= 1.35 * body_h
-            and 0.2 * body_h <= c.stop - c.start <= 1.3 * body_h
-            and 0.05 * ink.shape[1] <= c.start
-            and c.stop <= 0.95 * ink.shape[1]
+    # Establish smaller type before margin filtering can erase an isolated glyph.
+    small_type_rows = []
+    for a, b in raw:
+        heights = [
+            rows.stop - rows.start
+            for bounds in bounds_list if bounds is not None
+            for rows, columns in [bounds]
+            if a <= rows.start and rows.stop <= b + 1
+            and 0.5 * glyph_h <= rows.stop - rows.start <= 1.35 * glyph_h
+            and 0.4 * glyph_h <= columns.stop - columns.start <= 1.3 * glyph_h
         ]
-        if not (
-            body_columns
-            and 0.75 * glyph_h <= body_h <= 1.35 * glyph_h
-            and 0.55 * body_h <= small_h <= 0.82 * body_h
-            and (
-                abs(columns.start - min(c.start for c in body_columns)) <= 0.25 * body_h
-                or abs(columns.stop - max(c.stop for c in body_columns)) <= 0.25 * body_h
-            )
-            and max(c.stop for _, c in small) - min(c.start for _, c in small)
-            >= 2 * (columns.stop - columns.start)
-        ):
-            continue
-        region = ink[rows, columns]
-        region[components[rows, columns] == rule_id] = False
-        components[rows, columns] = 0
+        if len(heights) >= 5:
+            font_h = float(np.median(heights))
+            if font_h <= 0.85 * glyph_h:
+                small_type_rows.append((a, b, font_h))
     # Emphasis dots below consecutive body glyphs can bridge printed rows.
     # Remove only the isolated dot sequence from this counting-only mask.
     for index, (a, b) in enumerate(raw):
@@ -575,6 +528,20 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             for item in fragments
         ):
             continue
+        # A small printed glyph can have disconnected, full-height thin strokes.
+        if any(
+            max(top - rows.stop, rows.start - bottom, 0) <= 8 * font_h
+            and any(
+                0.75 * font_h <= r.stop - r.start <= 1.35 * font_h
+                and 0.2 * font_h <= c.stop - c.start <= 0.65 * font_h
+                and np.count_nonzero(ndimage.binary_opening(
+                    ink[r, c], structure=np.ones((3, 3), dtype=bool),
+                )) < 0.8 * np.count_nonzero(ink[r, c])
+                for r, c in fragments
+            )
+            for top, bottom, font_h in small_type_rows
+        ):
+            continue
         area = np.count_nonzero(ink[bounds])
         dense_fragments = all(
             item[0].stop - item[0].start <= 0.65 * glyph_h
@@ -661,27 +628,77 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         if height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height:
             region = ink[bounds]
             region[components[bounds] == component_id] = False
+    # Resolve rule neighbors after margin noise and emphasis-dot cleanup.
+    raw = _merge_close(
+        _row_fragments(ink, content_w), GLYPH_GAP_FACTOR * glyph_h,
+    )
+    # A footnote rule separates body type from smaller type; shape alone
+    # cannot distinguish it from a minus or a fraction bar.
+    for index, (a, b) in enumerate(raw):
+        if index == 0 or index + 1 == len(raw) or b - a + 1 > 0.2 * glyph_h:
+            continue
+        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        if xs.size == 0 or xs[-1] - xs[0] + 1 < 8 * glyph_h:
+            continue
+        rule_ids = np.unique(components[a:b + 1])
+        rule_ids = rule_ids[rule_ids != 0]
+        if len(rule_ids) != 1:
+            continue
+        rule_id = int(rule_ids[0])
+        rows, columns = bounds_list[rule_id - 1]
+        if not (a == rows.start and rows.stop == b + 1):
+            continue
+        prev_a, prev_b = raw[index - 1]
+        next_a, next_b = raw[index + 1]
+        if not (
+            0.6 * glyph_h <= a - prev_b - 1 <= 4 * glyph_h
+            and 0.3 * glyph_h <= next_a - b - 1 <= 4 * glyph_h
+        ):
+            continue
+        neighbors = []
+        for top, bottom in ((prev_a, prev_b), (next_a, next_b)):
+            glyphs = [
+                (r, c) for bounds in bounds_list if bounds is not None
+                for r, c in [bounds]
+                if top <= r.start and r.stop <= bottom + 1
+                and 0.5 * glyph_h <= r.stop - r.start <= 1.35 * glyph_h
+                and 0.4 * glyph_h <= c.stop - c.start <= 1.3 * glyph_h
+            ]
+            neighbors.append(glyphs)
+        body, small = neighbors
+        if min(len(body), len(small)) < 5:
+            continue
+        body_h = float(np.median([r.stop - r.start for r, _ in body]))
+        small_h = float(np.median([r.stop - r.start for r, _ in small]))
+        body_columns = [
+            c for bounds in bounds_list if bounds is not None
+            for r, c in [bounds]
+            if a - 12 * body_h <= r.start and r.stop <= a
+            and 0.5 * body_h <= r.stop - r.start <= 1.35 * body_h
+            and 0.2 * body_h <= c.stop - c.start <= 1.3 * body_h
+            and 0.05 * ink.shape[1] <= c.start
+            and c.stop <= 0.95 * ink.shape[1]
+        ]
+        if not (
+            body_columns
+            and 0.75 * glyph_h <= body_h <= 1.35 * glyph_h
+            and 0.55 * body_h <= small_h <= 0.82 * body_h
+            and (
+                abs(columns.start - min(c.start for c in body_columns)) <= 0.25 * body_h
+                or abs(columns.stop - max(c.stop for c in body_columns)) <= 0.25 * body_h
+            )
+            and max(c.stop for _, c in small) - min(c.start for _, c in small)
+            >= 2 * (columns.stop - columns.start)
+        ):
+            continue
+        region = ink[rows, columns]
+        region[components[rows, columns] == rule_id] = False
+        components[rows, columns] = 0
     raw = _row_fragments(ink, content_w)
     if not raw:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     detected_raw = raw.copy()
-    # Smaller letters need evidence of nearby small type, not a page-wide
-    # density relaxation that would recover arbitrary subglyph specks.
-    small_type_rows = []
-    for a, b in raw:
-        heights = [
-            rows.stop - rows.start
-            for bounds in bounds_list if bounds is not None
-            for rows, columns in [bounds]
-            if a <= rows.start and rows.stop <= b + 1
-            and 0.5 * glyph_h <= rows.stop - rows.start <= 1.35 * glyph_h
-            and 0.4 * glyph_h <= columns.stop - columns.start <= 1.3 * glyph_h
-        ]
-        if len(heights) >= 5:
-            font_h = float(np.median(heights))
-            if font_h <= 0.85 * glyph_h:
-                small_type_rows.append((a, b, font_h))
     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:

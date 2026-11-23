@@ -46,8 +46,10 @@ function sourceTagHtml(tag) {
 }
 // 公式后面紧跟的标点要与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
+const UNIT_SUFFIX = /(?<![A-Za-z])(?:千米|厘米|毫米|米|km|cm|mm|m)(?:\/(?:秒|s))?$/
+const UNIT_POWER = /^\s*\^\s*(?:\{\s*[23]\s*\}|[23])\s*$/
 
-function renderInline(text, renderText) {
+function renderInline(text, renderText, bindUnitPowers = false) {
   const tokens = [...text.matchAll(INLINE_TOKEN)]
   const allowedTags = new Map(), stack = []
   for (const token of tokens) {
@@ -75,7 +77,10 @@ function renderInline(text, renderText) {
   }
   let out = "", last = 0
   for (const m of tokens) {
-    out += renderText(text.slice(last, m.index))
+    const preceding = text.slice(last, m.index)
+    const unit = bindUnitPowers && m[2] && UNIT_POWER.test(m[2])
+      ? preceding.match(UNIT_SUFFIX)?.[0] ?? "" : ""
+    out += renderText(unit ? preceding.slice(0, -unit.length) : preceding)
     if (m[0].startsWith("&#")) {
       const value = m[0].slice(2, -1)
       const code = value.startsWith("x")
@@ -100,7 +105,10 @@ function renderInline(text, renderText) {
     last = m.index + m[0].length
     const t = (text.slice(last).match(TRAIL) || [""])[0]
     last += t.length
-    out += protect(`<span class="sr-nb">${html}${esc(t)}</span>`)
+    const math = `<span class="sr-nb">${html}${esc(t)}</span>`
+    // Keep a separately written unit and its power on the same line.
+    out += protect(unit
+      ? `<span style="white-space:nowrap">${renderText(unit)}${math}</span>` : math)
   }
   return strong(out + renderText(text.slice(last))).replace(
     new RegExp(`${marker}(\\d+)${marker}`, "g"),
@@ -108,7 +116,7 @@ function renderInline(text, renderText) {
   )
 }
 
-const inline = (text) => renderInline(text, escText)
+const inline = (text) => renderInline(text, escText, true)
 const proseInline = (text) => renderInline(text, escProseText)
 
 function proseParagraphs(text) {
