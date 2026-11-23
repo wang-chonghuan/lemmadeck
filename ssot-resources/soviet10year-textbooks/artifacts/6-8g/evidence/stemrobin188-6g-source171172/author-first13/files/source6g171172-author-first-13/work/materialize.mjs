@@ -1,0 +1,25 @@
+import { createHash } from "node:crypto";
+import { chmodSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const own = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const page = process.argv[2];
+if (!["171", "172"].includes(page)) throw new Error("Only pages171/172 are authorized.");
+const pageDir = resolve(own, "work", "6-8g", "pages", page.padStart(4, "0"));
+const first = resolve(pageDir, "page.FIRST.md");
+if ((statSync(first).mode & 0o777) !== 0o444) throw new Error("FIRST is not frozen.");
+const hashReceipt = resolve(own, "work", "receipts", page === "171" ? "06-sha-first171.stdout" : "13-sha-first172.stdout");
+const expected = readFileSync(hashReceipt, "utf8").split(/\s+/)[0];
+const bytes = readFileSync(first);
+const sha256 = createHash("sha256").update(bytes).digest("hex");
+if (sha256 !== expected) throw new Error("FIRST hash no longer matches the sequential SHA receipt.");
+const artifactDir = resolve(own, "artifacts", "6-8g", "pages", page.padStart(4, "0"));
+mkdirSync(artifactDir, { recursive: true });
+const candidate = resolve(artifactDir, "page.md");
+const revision0 = resolve(pageDir, "page.candidate.revision0.md");
+writeFileSync(candidate, bytes, { flag: "wx", mode: 0o644 });
+chmodSync(candidate, 0o644);
+writeFileSync(revision0, bytes, { flag: "wx", mode: 0o444 });
+chmodSync(revision0, 0o444);
+console.log(JSON.stringify({ page: Number(page), first, sha256, candidate, candidateMode: "0644", revision0, revision: 0, candidateEqualsFirst: true }));

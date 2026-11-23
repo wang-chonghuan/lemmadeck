@@ -1,0 +1,30 @@
+{
+  "cwd": "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188",
+  "failures": [
+    {
+      "stage": "initial text-only path inventory",
+      "command": "rg --files ssot-resources/soviet10year-textbooks/artifacts/6-8g/evidence/stemrobin188-6g-n37/preparation7 .intentfold/tickets/STEMROBIN-188/tmp/n37-text-author7",
+      "exitCode": 2,
+      "stderr": "rg: .intentfold/tickets/STEMROBIN-188/tmp/n37-text-author7: No such file or directory (os error 2)",
+      "validOutput": "Preparation7 file inventory was returned; no images loaded.",
+      "diagnosis": "Owned output directory did not exist yet. Not an input or content failure.",
+      "recovery": "Created only the owned candidate directory and writable copies.",
+      "nativeInvoked": false
+    },
+    {
+      "stage": "first native-flow wrapper, before tool invocation",
+      "command": "node --input-type=module -e",
+      "argv": [
+        "import fs from \"node:fs\"; import path from \"node:path\"; import crypto from \"node:crypto\"; import {spawnSync} from \"node:child_process\"; const W=process.cwd(), A=path.join(W,\".intentfold/tickets/STEMROBIN-188/tmp/n37-text-author7\"), input=path.join(A,\"candidate/lesson.template.json\"), script=path.join(W,\".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs\"), sha=p=>crypto.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\"), receipt=path.join(A,\"prose-flow.execution.json\"); if(fs.existsSync(receipt))throw Error(\"Native flow receipt already exists; no replay authorized\"); const inputHash=sha(input), started=new Date().toISOString(), argv=[script,input], r=spawnSync(process.execPath,argv,{cwd:W,encoding:\"utf8\"}); const out=path.join(A,\"prose-flow.stdout\"), err=path.join(A,\"prose-flow.stderr\"); fs.writeFileSync(out,r.stdout??\"\",{flag:\"wx\"}); fs.writeFileSync(err,r.stderr??\"\",{flag:\"wx\"}); const record={stage:\"prose-flow\",cwd:W,command:process.execPath,argv,started,finished:new Date().toISOString(),exitCode:r.status,signal:r.signal,error:r.error?.message??null,input:{path:input,sha256:inputHash},tool:{path:script,sha256:sha(script)},streams:{stdout:{path:out,sha256:sha(out)},stderr:{path:err,sha256:sha(err)}}, raw=JSON.stringify(record,null,2)+\"\\n\"; fs.writeFileSync(receipt,raw,{flag:\"wx\"}); console.log(r.stdout); console.error(r.stderr); console.log(JSON.stringify({receipt,sha256:sha(receipt),exitCode:r.status})); process.exitCode=r.status??1;"
+      ],
+      "exitCode": 1,
+      "stderr": "SyntaxError: Unexpected token ';'\nNode.js v24.16.0",
+      "diagnosis": "Missing closing object brace caused JavaScript compilation failure before any statement executed.",
+      "nativeInvoked": false,
+      "outputFilesCreated": false,
+      "recovery": "Applied a readable run-native-flow.mjs wrapper, then invoked native prose_flow.mjs once successfully."
+    }
+  ],
+  "newContentFailures": [],
+  "failuresErased": false
+}
