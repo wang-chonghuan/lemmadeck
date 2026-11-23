@@ -942,6 +942,45 @@ def _fraction_tail_split(
     return None
 
 
+def _single_body_with_edge_fragment(ink: np.ndarray, rows, glyph_h: float) -> bool:
+    """Keep a close sub-body edge fragment within one wide body baseline."""
+    if len(rows) != 2:
+        return False
+    bounds = ndimage.find_objects(ndimage.label(ink)[0])
+    supported = [
+        [
+            item for item in bounds if item is not None
+            for ys, xs in [item]
+            if a - 0.15 * glyph_h <= ys.start
+            and ys.stop - 1 <= b + 0.15 * glyph_h
+            and 0.6 * glyph_h <= ys.stop - ys.start <= 1.8 * glyph_h
+            and xs.stop - xs.start >= 0.2 * glyph_h
+        ]
+        for a, b in rows
+    ]
+    if rows[1][0] - rows[0][1] > 0.4 * glyph_h:
+        return False
+    if rows[-1][1] - rows[0][0] + 1 > 1.9 * glyph_h:
+        return False
+    for edge_index in range(2):
+        edge, body = supported[edge_index], supported[1 - edge_index]
+        if len(edge) != 1:
+            continue
+        ys, xs = edge[0]
+        full_body = [item for item in body if item[0].stop - item[0].start >= 0.8 * glyph_h]
+        if (
+            ys.stop - ys.start <= 0.65 * glyph_h
+            and xs.stop - xs.start <= 1.3 * glyph_h
+            and (xs.stop <= 0.1 * ink.shape[1] or xs.start >= 0.9 * ink.shape[1])
+            and len(full_body) >= 3
+            and max(item[1].stop for item in full_body) - min(
+                item[1].start for item in full_body
+            ) >= 0.25 * ink.shape[1]
+        ):
+            return True
+    return False
+
+
 def _supported_glyph_rows(
     ink: np.ndarray, fragments, glyph_h: float
 ) -> list[tuple[int, int]]:
@@ -1493,7 +1532,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             _subscript_continues(ink, a, a + x, b, glyph_h)
             for x, _ in fragments[1:]
         )
-        carrier_row = _single_carrier_row(components, bounds_list, a, b, glyph_h)
+        carrier_row = (
+            _single_carrier_row(components, bounds_list, a, b, glyph_h)
+            or _single_body_with_edge_fragment(ink[a:b + 1], glyph_rows, glyph_h)
+        )
         if (
             a not in fraction_starts
             and not subscript_row

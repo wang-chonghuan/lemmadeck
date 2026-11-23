@@ -152,6 +152,70 @@ N11/supplement unassembled, unpromoted, unqueued; zero whole-lesson credit.
 The existing complete-display script is reused
 with N11 title and counts derived from its future canonical objects; syntax PASS,
 not executed and not display acceptance.
+N11 incomplete source checkpoint ordinary pushed as53600d97b; no queue entry.
+N15 `ana9-c3-s1-n15` selected. Historical source60-63 review and first native
+outputs are absent from working evidence but located in local Git snapshot
+b6d1dc098. Recover necessary exact files, not the old500MB nested package.
+Reuse canonical59 and native60 PASS27/27,61 PASS26/26,62 PASS23/23.
+P63 old FAIL22/21 holds the closing124/125; N16 begins afterwards on63.
+Source61's visibly empty primed base stays source-empty, not inferred printed y.
+No new preparation, source opens, native replay, promotion or lesson credit yet.
+Necessary21 Git files and3 unchanged59 files recovered once, no preparation or
+finalization. One read-only count comparison finds committed HEAD and current
+working layout both23 bands under original figure boxes/no exclusions; old
+22/21 native audit remains unchanged. This is diagnosis, not source/count PASS.
+Disjoint bounded source-count and text-only mathematics reviewers are active;
+new parent model image opens0, no dependent pipeline started.
+N15 count-source review independently confirms21 print rows; current23 has
+one false title split and one extreme-bottom trace. Right-margin blot and
+interior mark provenance remain UNKNOWN and are not excluded. Only exact
+bottom box162,2369,426,8 is applied to counting copy. New scoped body-baseline
+affiliation preserves the entire title615-695 and UNKNOWN edge ink:6synthetic
+cases and hash-bound source63 test PASS. Related49 tests have45PASS/2FAIL/
+2missing-source skips; both failures reproduce on committed HEAD and working
+code with the N15 hook removed, not a new regression or all-green claim.
+One affected native63 PASS21/21,12blocks,2unchanged figure boxes,0normalizations.
+Affected-only source/body review PASS with disclosed native profile-SHA update;
+reviewer actually closed at3images. Source/math118-125 freeze received.
+Source61 missing-base erratum registered, raw empty base unchanged; mathematical
+y repair derives from operands/following formula, not invented pixel reading.
+One affected61 native PASS26/26; original source/PASS retained.
+Scoped source59-63 assembly completes19prose/8exercises/0figures; orphan14 and
+partial N16 remain unpromoted. First modern finalize PASS14/19prose and5/8
+exercise changes,25paragraphs and4actual proseFlow anchors7/12/18/22.
+Base offline render PASS.8derived answer drafts bound,7auto/1ungraded/
+43parts with2precision-sensitive exact keys; independent modern/answer review
+and necessary editor-contract validation pending. No complete N15 credit,
+queue entry or producer DB write; source60/62 PASS not replayed.
+Modern review collected once: minor comparison-reference ambiguity and five
+clarification classifications corrected only. First affected finalize had wrong
+work-root/adapt duplication before content processing; corrected invocation PASS.
+Affected text/anchor review PASS; first modern snapshot and both reports retained.
+Answer review PASS8displays/43parts. One official finalizer PASS includes the
+two real-editor exact checks; successful child output is captured/discarded by the
+existing wrapper, so no per-case report is claimed or gate replayed.
+Eight interactions finalized1free/6number/1math,0pending. Exact24base/source/
+answer/interaction files promoted, raw reindex and edition-row update complete.
+Only affected modern offline render refreshed. Fresh blind choice author receives
+eight prepared seeds and definitions1/2/3/5/8/15/16, no answers or old choices.
+N15 remains incomplete until choices and complete display, with no queue credit.
+Choice author returned8questions/34options and structuralPASS, then actually
+closed at0images. Original seed binding and view-only34truths collected before
+internal disclosure. Original full review REVISE/validatorexit3 retained:
+122/123 canonical-tail qualification and119d nondiscriminating coverage.
+One affected repair adds root-only false E table, explicit decimal-point wording,
+canonical-tail statements and matching internal scope; Q7 discrimination claim
+made honest. All34old option texts/truths and exact keys unchanged.
+Affected-only review and bound validatorPASS;8questions/35options retained.
+Recognition/production, Q7zero omission, Q8rounding coincidence and partial
+Q4-to-Q8sqrt3 assistance limits remain explicit. Complete display now running.
+One complete headed desktop/mobile display PASS8captures/94clicks; every measured
+math port reachable, zero page/formula/control faults, four breaks and matched
+prose math fonts. Independent display review scoped PASS with explicit tight
+table spacing, scaled full-frame and scrolled-tail limits. Heisenberg actually
+closed after8total image opens once each; parent new model image opens0.
+N15 complete offline at finish=review, ready for scoped commit/ordinary push.
+No unchanged app/keyboard regression, publication, queue credit or packaging replay.
 
 ## 184-6 N88 review-ready delivery (2026-11-22)
 
