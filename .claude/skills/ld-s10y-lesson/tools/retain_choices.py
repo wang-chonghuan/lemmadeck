@@ -9,24 +9,26 @@ from pathlib import Path
 from production import validate_book, validate_workspace
 
 
-def retain(repo: Path, book: str, lesson: str, source: Path) -> str:
+def retain(repo: Path, book: str, lesson: str, source: Path,
+           edition: str = "modern-us-neutral") -> str:
     validate_workspace(repo)
     validate_book(repo, book)
     sys.path.insert(0, str(repo / ".agents/skills/ld-s10y-choice/scripts"))
     from prepare import component, load_json
 
     component(lesson, "lesson")
+    component(edition, "edition")
     source = source.resolve(strict=True)
     seed = load_json(source / "seed.json")
     if seed["source"]["book"] != book or seed["source"]["lesson"] != lesson:
         raise ValueError("choice seed belongs to another book or lesson")
     target = repo / "ssot-resources/soviet10year-textbooks/artifacts" / book / \
-        "editions/modern-us-neutral/lessons" / lesson / "choice-set"
+        "editions" / edition / "lessons" / lesson / "choice-set"
     if target.resolve() != target:
         raise ValueError("choice output has a redirected owner")
     gate = subprocess.run([
         sys.executable, str(repo / ".agents/skills/ld-s10y-choice/scripts/validate.py"),
-        "--repo", str(repo), "--seed", str(source / "seed.json"),
+        "--repo", str(repo), "--edition", edition, "--seed", str(source / "seed.json"),
         "--draft", str(source / "draft.json"), "--review", str(source / "review.json"),
     ], capture_output=True, text=True)
     if gate.returncode:
@@ -65,11 +67,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True)
     parser.add_argument("--book", required=True)
+    parser.add_argument("--edition", default="modern-us-neutral")
     parser.add_argument("--lesson", required=True)
     parser.add_argument("--source", required=True)
     args = parser.parse_args()
     try:
-        result = retain(Path(args.repo).resolve(), args.book, args.lesson, Path(args.source))
+        result = retain(Path(args.repo).resolve(), args.book, args.lesson, Path(args.source),
+                        args.edition)
     except (ValueError, OSError) as error:
         parser.exit(1, f"ERROR: {error}\n")
     print(f"{result}: {args.book}/{args.lesson}")

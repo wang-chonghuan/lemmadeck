@@ -20,7 +20,7 @@ export async function publishChoices({ book, editionName, requestedLessons, dry,
     const draftPath = path.join(dir, 'draft.json')
     const reviewPath = path.join(dir, 'review.json')
     const gate = spawnSync(process.env.PYTHON || 'python3', [
-      path.join(skill, 'scripts/validate.py'), '--repo', repo,
+      path.join(skill, 'scripts/validate.py'), '--repo', repo, '--edition', editionName,
       '--seed', seedPath, '--draft', draftPath, '--review', reviewPath,
     ], { encoding: 'utf8' })
     if (gate.error || gate.status !== 0) {

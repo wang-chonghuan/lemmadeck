@@ -59,7 +59,7 @@ def visible_text(value, where):
                           value, re.IGNORECASE), f"{where}: embedded media/HTML/URL")
 
 
-def check_seed(seed, repo):
+def check_seed(seed, repo, edition="modern-us-neutral"):
     fields(seed, "schema source exercises concepts figures trace", "seed")
     require(seed["schema"] == "s10y-choice-seed-v1", "seed schema mismatch")
     fields(seed["source"], "book lesson concept_figure_ids", "seed.source")
@@ -73,7 +73,7 @@ def check_seed(seed, repo):
         blocks.append(concept["block"])
     source = seed["source"]
     refreshed = prepare_seed(repo, source["book"], source["lesson"], list(exercises),
-                             blocks, source["concept_figure_ids"])
+                             blocks, source["concept_figure_ids"], edition)
     trace = keyed(seed["trace"], "path", "path sha256", "seed.trace",
                   {entry["path"] for entry in refreshed["trace"]})
     for entry in trace.values():
@@ -258,8 +258,8 @@ def check_review(seed, draft, review, exercises, figures, questions):
     return outcome
 
 
-def validate(repo, seed, draft, review=None):
-    exercises, figures, blocks = check_seed(seed, repo)
+def validate(repo, seed, draft, review=None, edition="modern-us-neutral"):
+    exercises, figures, blocks = check_seed(seed, repo, edition)
     questions, figures = check_draft(seed, draft, repo, exercises, figures, blocks)
     return check_review(seed, draft, review, exercises, figures, questions) if review is not None else None
 
@@ -267,13 +267,14 @@ def validate(repo, seed, draft, review=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True)
+    parser.add_argument("--edition", default="modern-us-neutral")
     parser.add_argument("--seed", required=True)
     parser.add_argument("--draft", required=True)
     parser.add_argument("--review")
     args = parser.parse_args()
     try:
         outcome = validate(args.repo, load_json(args.seed), load_json(args.draft),
-                           load_json(args.review) if args.review else None)
+                           load_json(args.review) if args.review else None, args.edition)
         if outcome and outcome != "pass":
             print(f"mechanical checks passed; semantic review outcome: {outcome}", file=sys.stderr)
             return 3

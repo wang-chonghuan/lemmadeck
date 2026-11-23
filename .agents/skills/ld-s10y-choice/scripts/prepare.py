@@ -69,10 +69,10 @@ def component(value, where):
     return value
 
 
-def source_files(repo, book, lesson):
+def source_files(repo, book, lesson, edition="modern-us-neutral"):
     repo = Path(repo).resolve()
     base = inside(repo / ARTIFACTS / component(book, "book"), repo / ARTIFACTS)
-    directory = inside(base / "editions/modern-us-neutral/lessons" /
+    directory = inside(base / "editions" / component(edition, "edition") / "lessons" /
                        component(lesson, "lesson"), base)
     paths = [base / "book.json"] + [directory / name for name in
                                    ("lesson.json", "exercises.json", "figures.json")]
@@ -136,8 +136,8 @@ def project_figure(figure, repo, base, directory):
     return {"id": text(figure["id"], "figure id"), "label": label, "assets": assets}
 
 
-def prepare_seed(repo, book, lesson, numbers, blocks, concept_figures):
-    repo, base, directory, paths, data = source_files(repo, book, lesson)
+def prepare_seed(repo, book, lesson, numbers, blocks, concept_figures, edition="modern-us-neutral"):
+    repo, base, directory, paths, data = source_files(repo, book, lesson, edition)
     require(bool(numbers), "select at least one exercise")
     unique(numbers, "selected exercises")
     unique(blocks, "selected concept blocks")
