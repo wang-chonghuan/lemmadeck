@@ -1,5 +1,53 @@
 # 当前检查点
 
+### 2026-11-23 N62完整单课保存及writer提交
+
+- N62《小数乘法的特殊情况》`math4-c2-s3-n62`离线全部收口，
+  physical233–235/printed224–226，1073–1083共11题、14显示正文段，
+  本课原/现代图均0。235图228仅N63来源边界，不混入N62正文或题面。
+  233/234/235官方页级实际25/25、24/24、23/23 PASS，normalizations0；
+  官方局部装订只保留N62。raw lesson
+  a114d13dceb159f207cef16440fe536696620113b032899a1ee7f4e6703c43ed，
+  exercises8ba5b24dec6aab79f96a83838c71f8ababa0a09f8e0740edeb185dbf7c8f0e30。
+- source独审11题/53outcomes、现代TEXT独审PASS；14标号Latin、
+  1083两姓名Alex、一次actual section boundary。233原一位→457.6印刷错保留，
+  modern二位由同源句4.576/457.6和页hash/块p0233#9完整勘误绑定。
+  adapt-finalize FIRST exit2及绑定metadata修复前字节留evidence；
+  只修绑定后affected233及adapt-finalize实际通过，不重解N61或改其源对象。
+  modern lesson900b36bb787d0c989bec16368dfa01242b280b06788cfb468b267d548f33afc5，
+  exercises ea6c0b8506eaba10ca45a40da727876e713c756ae6281ca12816ee0e023828a6。
+- 答案FIRST Gate2实际REVISE：1080内部区域排除了所称公共边界射线；
+  原keys/review/author保留，唯一display句改为包含边界的闭区域，仍ungraded/parts[]。
+  作者零填充仅保数值、不一定保分子A的注释另留REPAIR1，不覆写FIRST。
+  affected独审d152924edded9cd66dbb4091d6343f7e50140a165d802e4d4a7618ca9731642c
+  实际Gate2 PASS；52numeric keys/其余题不变。官方answer finalize实际
+  PASS11derived/10auto/1ungraded，ready keys
+  a4d1bc2c9da1256832a2fc512ab9270000e0075faefa414f59eb6907752ca4f1。
+  interactions prepare/finalize均实际exit0，10number/1free、needsAuthoring0，
+  SHA b433aefc3ad7ad7b1e62ad1847cf8851a5414d2206303018e3661a0a3d2c6266。
+- choice12questions/9single/3multiple/52options、11源映射，
+  正式独审fe5dd72f543f41b31d0f68e8b3d49f639c3c8fef989c7c59041f180775e56fd6
+  PASS，全部17真35假及作者推导比较一致。canonical draft
+  7d7d7f2e3f4ac41251538377c7a600e4a488e9c3873ac76733f705af5f48c980。
+  21重复numeric cases未逐项考查、1080choice不评作图，损失明确；
+  原书写题与完整答案保持。官方带review validator一次实际exit0，
+  retain_choices实际exit0；盲审、作者及正式比较必要文件均已持久保留。
+- render一次实际exit0，既有display driver一次实际exit0，
+  desktop1440×960/mobile390×844的text/exercises/choices/answers共8视图；
+  无公式error、整页overflow或未可达末项，正文/题面/答案逐项匹配。
+  fresh Harvey独立实际8截图各一次，visual PASS；review
+  db6c441ddf51791b0914d534b2a0a95f264415c2d57f5c08c39d4099cc113505。
+  report3bdc4c4892ea372bac1b6d9d73d8602baf60a75d6ccdbd1dc6e98e133eaa6b72
+  保持原机器记录，其visualReviewPending是当时状态；后续raw visual review完成批准。
+  离线headless显示证明，不冒称DB或共享app交互验收，不重跑已有公共键盘判分。
+- 本课窄提交准备：仅HEAD+N62两个索引、N62 raw/modern/必要evidence、
+  新source233–235、原边界fig-228.png及本节与N60实际回执；
+  当前commit/push尚未执行，实际SHA/普通push及writer路径将在成功后补入本节。
+  无N61/N63或稳定工具纳入暂存，不写DB/.env，不发writer/监督/同伴消息。
+  本课writer提交以既有本checkpoint排队记录为渠道，发布待真实writer回执。
+- 父永久24/24、零新图；N61/N57原科学HOLD与所有dirty/staged/FIRST/计数/费用保留。
+  不合并/部署/关闭，完成保存后继续下一授权课，不等writer；本节不是整组完成或暂停。
+
 ### 2026-11-23 N60完整单课保存及writer提交
 
 - N60《数的四舍五入》`math4-c2-s2-n60`离线全部收口，物理221–224/
@@ -32,8 +80,12 @@
   `087d6065ebf29f8f44d5b81506643148d06ac87967b58c6ef7d24c593c336b8f`。
   采样不是整文像素审查，未含表像素；全量内容/表维数复用同次DOM证据。
   实跑driver/report/fullscreenshots/inspection/visualreview均持久保留。
-- 本课已离线完整，接着执行本课窄commit/普通push；本行尚不声称push成功，
-  实际SHA及单一writer提交将在成功后填写，不制造第二receipt-only commit。
+- 本课146owned files窄commit
+  `3b84940d850fc4284229ec30871a3746c59a20c1`，普通push实际exit0，
+  `6b7621879..3b84940d8`到既有`codex/STEMROBIN-187-textbooks`。
+  两索引仅HEAD+N60，来源222–224新增三页87→90；
+  其它工作区字节保留，没有稳定工具提交或第二receipt-only commit。
+  **提交唯一串行DB写入方：`math4-c2-s2-n60`，以上pushed commit为输入**。
   retained根`ssot-resources/soviet10year-textbooks/artifacts/4m/`：
   raw`lessons/math4-c2-s2-n60/`、source`pages/0221/`至`pages/0224/`、
   原`figures/fig-224.{png,svg}`和`figures/fig-225.{png,svg}`；
