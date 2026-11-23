@@ -17,7 +17,7 @@
   },
   "profile": {
     "id": "soviet-cn",
-    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+    "sha256": "ae373713f7b09f810d6de1e4a12b5916710e5673e4827148c875674f847f1e81"
   },
   "notes": [
     "Only physical page 32 pixels read, after completing page 31 authoring; first prose row continues p0031#11.",
@@ -27,7 +27,14 @@
     "The last prose row is open; no page 33 content was read.",
     "Figure 23 contains a non-origin-starting vector with two projections; source dashed and solid strokes are retained."
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0032-projection-algebra",
+      "block": "p0032#3",
+      "original": "几何学的一般法则",
+      "reason": "Projection on a fixed axis is a signed scalar. The source's preceding sum, difference and scalar-multiplication rules are algebraic scalar operations, so the concluding claim that projections follow general geometry rules contradicts those explicit rules. Preserve the printed wording in the faithful layer; correct only the bound modern-edition wording."
+    }
+  ],
   "printed_lines": 19,
   "figures": [
     {

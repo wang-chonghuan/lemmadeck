@@ -1,0 +1,89 @@
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+
+const root = process.cwd();
+assert.equal(root, "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180");
+const require = createRequire(path.join(root, "app/package.json"));
+const { chromium } = require("playwright");
+const lesson = "phy8-c1-s1-n5";
+const directory = path.join(root,
+  "ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons", lesson);
+const output = path.join(directory, "display");
+const html = path.join(root, ".tmp/ld-s10y-lesson/render/8p/modern-us-neutral", lesson, "text.html");
+const digest = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+const first = JSON.parse(fs.readFileSync(path.join(output, "first-auto-check.snapshot.txt")));
+for (const binding of first.bindings) {
+  assert.equal(digest(path.join(root, binding.path)), binding.sha256);
+}
+delete process.env.PWDEBUG;
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+const results = [];
+try {
+  for (const prior of first.results) {
+    const context = await browser.newContext({ viewport: prior.viewport });
+    try {
+      const page = await context.newPage();
+      const errors = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      page.on("console", (message) => {
+        if (message.type() === "error") errors.push(message.text());
+      });
+      await page.goto(pathToFileURL(html).href);
+      await page.evaluate(() => document.fonts.ready);
+      const metrics = await page.evaluate(() => {
+        const emphasis = [...document.querySelectorAll('[style*="text-emphasis"]')];
+        const theorem = [...document.querySelectorAll("p.para")].find((element) =>
+          element.innerText.includes("不难证明"));
+        return {
+          width: innerWidth,
+          scrollWidth: Math.max(document.body.scrollWidth, document.documentElement.scrollWidth),
+          escapedMarkup: /<\/?span\b/.test(document.body.innerText),
+          emphasisCount: emphasis.length,
+          theoremText: theorem?.innerText,
+          theoremEmphasis: [...(theorem?.querySelectorAll("span[style]") ?? [])].map((span) => ({
+            text: span.innerText,
+            style: getComputedStyle(span).textEmphasisStyle,
+            position: getComputedStyle(span).textEmphasisPosition,
+          })),
+          sectionCount: document.querySelectorAll("p.para.section").length,
+        };
+      });
+      assert.equal(metrics.escapedMarkup, false);
+      assert.equal(metrics.emphasisCount, 6);
+      assert.equal(metrics.theoremEmphasis.length, 2);
+      assert.ok(metrics.theoremEmphasis.every((span) =>
+        span.style.includes("dot") && span.position.includes("under")));
+      assert.ok(metrics.theoremEmphasis[0].text.includes("矢量差在轴"));
+      assert.ok(metrics.theoremEmphasis[1].text.endsWith("投影的代数差"));
+      assert.equal(metrics.sectionCount, 3);
+      assert.ok(metrics.scrollWidth <= metrics.width + 1);
+      assert.equal(await page.locator(".katex-error, .sr-tex-err").count(), 0);
+      assert.deepEqual(errors, []);
+      await page.locator("p.para").filter({ hasText: "不难证明" }).scrollIntoViewIfNeeded();
+      const screenshot = `${prior.device}-emphasis-affected.png`;
+      await page.screenshot({ path: path.join(output, screenshot) });
+      results.push({ device: prior.device, viewport: prior.viewport, metrics, screenshot });
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+}
+const report = {
+  lesson,
+  status: "pass",
+  affectedScope: "Projection-difference emphasis and escaped source markup only",
+  reusedScope: "Unchanged nine-figure display, section boundary pairs, empty exercises and answers",
+  reusedEvidence: { path: "first-auto-check.snapshot.txt", sha256: digest(path.join(output, "first-auto-check.snapshot.txt")) },
+  bindings: first.bindings,
+  renderedHtmlSha256: digest(html),
+  results,
+};
+fs.writeFileSync(path.join(output, "emphasis-affected-check.json"),
+  JSON.stringify(report, null, 2) + "\n");
+console.log(JSON.stringify({ lesson, status: report.status, surfaces: results.length, output }));

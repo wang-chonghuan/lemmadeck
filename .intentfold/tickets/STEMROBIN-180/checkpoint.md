@@ -1,5 +1,360 @@
 # 生产检查点
 
+## 2026-11-23 180-7 n5 Verified; Immediate Commit/Push
+
+Dewey first22/23 independent source/current-pixel PASS, images4; final22
+local visual HOLD resolved, SVG/spec copied unchanged, current review recorded.
+Reviewer collected/closed. Nine deterministic figures15-23 now independently
+PASS with all source/author/review and actual first-failure evidence durable.
+
+First modern-finalize failed because the validator demanded formulas in every
+erratum, rejecting the two approved source-bound wording/figure disclosures.
+Actual output and pre-repair code retained in raw n5. Minimal semantic-erratum
+guard repair keeps original formula-erasure, source/hash/target/original and
+unrelated math/numeric defenses. New10 + existing owner10 + existing erratum8
+tests PASS28/28. Only the owned guard is staged from the otherwise installer-dirty
+edition.py. Actual affected finalize PASS16/43, empty answers ready0, render46
+entries (28 paragraphs,9 figures,9 captions), zero written/choice questions.
+
+First desktop/mobile script passed its assertions but revealed a genuine
+escaped-emphasis markup defect in the actual report. It is not complete display
+approval. First report/screenshots and pre-repair renderer retained. One strict
+HTML whitelist regex now accepts equivalent source `text-emphasis: dot`,
+canonicalizing only that allowed style; new7 and existing5 formatting/safety
+test entries PASS12/12. A rejected p2c --text-only invocation and first affected
+selector failure18/2 are retained. Existing render_lesson.js text-only render
+then completed; affected-only desktop/mobile emphasis check PASS after precise
+selector repair. Actual two under-dot theorem spans, six total emphasis spans,
+three sections, formulas and no raw markup/overflow/errors passed. Unchanged
+nine-figure/empty-exercise/section-pair display evidence reused, not replayed.
+Current display/check.json combines the two valid scopes.
+
+Parent opened four specific display screenshots, cumulative19/24, not the
+source/figure batches. Desktop/mobile minimum label sizes25.5/19.01875px.
+Approved source/template/SVG/spec/review bytes unchanged by both tool repairs.
+No new interactions, invented questions, paid calls, DB writes or deployment.
+Ready n5 is immediately committed/pushed next; complete delivery count remains
+29/increment1 until actual push. n37 and n7/new pages stay excluded; staged raw
+index27/pages78 preserves working raw index28. Full-project checks remain
+deferred to formal handoff, not claimed PASS here.
+
+## 2026-11-23 180-7 n5 FIG15-21 PASS; First22-23 Review Active
+
+Hubble first15-18 source/current-pixel review PASS, images8/8, no reopens.
+All four SVG/specs promoted byte-identical, render paths rebound, proper current
+reviews and inspection/source evidence retained under edition figures.
+Original author failures remain. Reviewer collected/closed.
+Dewey `01a20643-f8bc-7572-b3b9-f28097731d9e` is the sole first independent22/23
+reviewer. After this batch, finalize n5, prepare/finalize empty answers,
+render and run the existing one desktop/mobile display check, then push.
+
+n5 owned source/counter/pass-figure bytes are staged, not committed or complete.
+Staged raw index is HEAD26+n5=27 with78 source pages; working index28 remains
+byte-identical and still includes held n37. n37, n7 new39-42 and installer
+changes are not staged. Final n5 assets/checkpoint must be added before commit.
+
+Leibniz technical p41 diagnosis confirms two false-margin bands, not missing
+source. Scratch candidate19/19, six focused tests, all19 real-row deletions
+count18, three margin deletions stay19; p29/p31/p158 guards remain13/15/27.
+Four expanded narrow-margin-numeral subtest failures also occur on the
+unchanged baseline, with two skips; no all-green claim or unrelated repair.
+Original failures and candidate/control snapshots retained in p41
+`first-failure/counter-sidecar-n7/`. Worker collected/closed, images1.
+Do not apply its53-line shared-code diff or finalize41 until n5 is committed.
+Parent images15, complete29/increment1, paid69/new0 and unknown costs unchanged.
+
+## 2026-11-23 180-7 n5 FIG20 Affected PASS; First15-18 Review Active
+
+Locke's narrow r2 repair restored the original horizontal projection indicators
+and solid/dashed guide distinction. Actual draft/render failures survive, not
+recast as PASS. Author collected/closed, images2. Same Linnaeus inspected only
+the new20 composite, reused frozen source inventory and unaffected19/21/text
+PASS, and returned affected20 PASS, cumulative images7. Current20 SVG/spec
+promoted byte-identical; render paths rebound and proper review retained.
+First REVISE and all true failures remain. Reviewer collected/closed.
+
+Hubble is now the sole first independent15-18 reviewer, bounded to four
+originals followed by four actual current composites, total cap8. First22/23
+review is serialized behind this batch. Original15-18/22-23 author files are
+retained in raw n5 `figure-author-evidence-*`; historical JSONs are immutable
+text snapshots, not current PASS metadata. Actual reviewed modern template
+is retained byte-identical as `modern-text-reviewed.template.snapshot.txt`.
+Figure template now names the nine deterministic final contracts; this is
+not finalization or approval of the missing figures.
+
+Next n7 source sidecar returned new39/40/42 AUTHORREADY and41 counter HOLD21/19,
+four grid images, six source crops, zero approvals. Its actual first failed
+page/audit/crops/receipt remain in p41 `first-failure/`. Existing38 was only
+prepared for its missing render cache; source not rewritten. Next source
+pages are not included in n5's upcoming commit. Leibniz diagnoses41 in a
+scratch-only counter scope; no shared code/source change before n5 is saved.
+Parent images15, paid69/new0, complete29/increment1 unchanged; no DB work.
+
+## 2026-11-23 180-7 n5 Source/Text PASS; Final Figure Reviews Pending
+
+Resume the same authorized detached checkout at
+`29a7f8c88b23b1599843c1b81f709f5d3c4e04a9`; all commands explicitly use
+`/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180`.
+n36 publication/readback is already supervisor-reported PASS; do not repeat.
+n37 remains a local modern-artwork HOLD and is excluded from the next n5 commit.
+
+Cicero's source treatment PASS is retained in n5
+`source-review-fig22-treatment.md`, together with the first HOLD and affected
+source report. External FIG7 is a faithful earlier-source reference, not a
+missing modern7 asset. The two registered modern-only errata leave raw prose
+and source crops unchanged. Current modern text independently PASS in
+`modern-text-review.md`, bound to template SHA
+`0d64d52579593024087aec5f033d4a429e63075c1297bcf1913fc967788f6ef5`.
+Do not overwrite this template with prepare.
+
+Kuhn's p31 counter repair closes the separate pre-existing short-continuation
+merge, not a p29 regression: finalize15/15, focused15/15 PASS, including twelve
+actual p31 body-row deletion controls, ten p29 controls and the p158 controls.
+Both earlier guards and actual first failed code/test/page/audit snapshots
+remain durable. Counter workers are closed; unchanged source needs no rerun.
+
+Raman's final15-18 drafts validate/render PASS; final15/16/18 notation pixels
+are not yet independently inspected, so local visual HOLD remains. Author
+collected/closed, images8/8, no paid generation. Gauss's22/23 drafts are also
+unreviewed, images4; especially repaired22 pixels still need first independent
+inspection. Linnaeus first19/21 PASS were promoted byte-identical with durable
+hash-bound reviews. First20 REVISE for omitted horizontal projection indicators
+and solid/dashed distinction is retained. Locke owns only that affected repair;
+the same Linnaeus remains open for affected20 review. No second independent
+reviewer is dispatched while this reviewer remains active.
+
+Parent image loads15, historical paid69/newpaid0, complete29 /
+180-7 increment1, costs/tokens unknown. n5 still unsealed, empty answers and
+desktop/mobile display not yet run. Finish/push n5 immediately after its missing
+stages, record supervisor-only intake, then continue without waiting for DB.
+
+## 2026-11-23 180-7 n5 FIG22 Source Error Confirmed; p31 Counter Failure
+
+Cicero's affected report closes comma/crop/canonical/F7 dependencies with their
+actual scopes. Cumulative images8, no further pixels authorized. FIG7's original
+crop equals physical21's exact padded source rectangle and all objects were
+inventoried; it is usable for n5's external reference, not a modern7 rendering
+approval. Source22а's outlined c=a-b really points down-left despite longer a
+and shorter b pointing up-right. Only that original arrow is wrong; б is
+consistent. First affected SOURCE HOLD remains recorded for unresolved
+mathematical treatment, not waived.
+
+Author registers `p0031-fig22a-arrow` at the figure's own p31#4 prose-reference
+block, with original PNG hash and exact source relationships in the reason.
+Raw text/crop unchanged; pre-erratum31 md/json snapshots retained. Intended
+modern disclosure says original (a) arrow was reversed and modern diagram
+keeps c=a-b, reversing only that arrow to follow longer a. The same reviewer
+is assessing this explicit source-bound treatment from frozen pixels without
+more image loads; no modern figure or completed lesson approval yet.
+
+Metadata-only finalize31 unexpectedly FAIL14 printed/15 MD. First failed
+audit/page snapshots are durable in p31. Do not assume15 correct or waive it.
+Fresh bounded Kuhn owns only its diagnosis and any proven generic counter
+repair/test; preserve p29 solid-core and p158 cutoff guards, no page override,
+body deletion or caption hack. Dependent finalization remains pending.
+
+Raman's first15-18 author drafts hit invisible-inventory-point validation
+failure before any render. First reports/specs must remain; this was not
+source/mathematics PASS. Parent supersedes its own no-added-dot constraint:
+quiet visible endpoint markers may be declared modern additions, keeping
+every source relationship/assertion and all original absent-dot facts in the
+frozen inventory. No validator change or weakened source coverage authorized.
+Raman resumes using only four remaining render-preview loads (cumulative8);
+McClintock receives same authoring clarification. Neither self-promotes.
+Historical FAIL/HOLDs and paid69/newpaid0 remain. n5 still unsealed; continue
+affected recovery rather than treating a technical/local HOLD as global stop.
+
+## 2026-11-23 180-7 n5 First SOURCE HOLD; Affected Recovery And Figure Authors
+
+Cicero's first SOURCE HOLD is retained verbatim in raw n5 `source-review.md`,
+bound to its independent five-page `source-first.md` and initial candidate
+hashes. Two genuine punctuation drifts were found: p28#6 `示.用` versus printed
+`示，用`, and p30#9 `相加. 也就是` versus printed comma. Exactly one punctuation
+repair restored both; affected finalize28/30 PASS26/26 and20/20. Original28
+Markdown survives in the title-before-normalization snapshot; original30
+Markdown/JSON in before-source-repair snapshots.
+
+The first limited assembly emitted noncanonical x2 because original bold h3
+wrapped its number in math. First `book.json` remains raw n5
+`assembly-first-noncanonical.json`. Markup-only bold `5. ...` fixed recognition;
+same reviewer's heading-only PASS is appended without rewriting first HOLD.
+Limited28-32 assembly now yields canonical n5,43 prose entries/zero exercises/
+nine figures. Previous orphan and incomplete n6 remain scratch; only n5 was
+copied back and the existing raw index reindexed,28 retained including unsealed
+n37. Neither retained/index count is complete-course count.
+
+Copernicus collected/closed: p29's false row was a shallow left-margin blot,
+not a source omission. Guarded solid-core test preserved existing margin,
+size, density/hole and isolation rules and the committed p158 cutoff fix.
+Focused11/11 PASS, each of ten actual body-row removals counts12; exactly one
+repaired finalize13/13. The first core-control failure and code/matrix survive
+durably in p29 alongside first counter failure. No expected-count/page override
+or source pixel change was made. Source29/30 figures were vectorized once;
+unchanged31/32 PNGs reused and missing SVGs added. Exact15-20 crops are now in
+book/page figure paths. Two initial copy attempts failed on absent directories;
+mkdir plus exact copy recovered that technical issue, not content approval.
+
+Source S1 is confirmed original wording, not a transcription typo: p32 says
+projection follows general geometry rules. Faithful prose remains unchanged;
+metadata registers `p0032-projection-algebra` bound to p32#3, with explicit
+algebraic projection rationale. Original32 md/json snapshots retained; sole
+affected finalize19/19. Modern candidate substitutes only the bound wording,
+restores equality under-dots from reviewed source metadata, and changes Cyrillic
+subfigure references to Latin labels. Modern templates were refreshed from
+actually repaired source once, not promoted from the earlier stale snapshot.
+
+Same source reviewer is doing affected-only commas/retention/canonical identity
+and up to three additional original-image loads for external FIG7 and source
+FIG22 arrow uncertainty; cumulative cap8, no unchanged page reopens. FIG7 is a
+genuine external source reference, not deleted or guessed. Current modern
+candidate retains that reference, not an invented modern7 approval.
+
+Raman authors deterministic15-18, McClintock authors19-21 in separate bounded
+scratch batches; neither is an independent reviewer or may self-promote.
+FIG22/23 work waits for the concrete source-arrow assessment. Display script is
+prepared, not run or PASS. No modern lesson seal, answer/choice completion,
+commit/push or DB write for n5 yet. Parentimages15 unchanged; historicalpaid69 /
+newpaid0 and unknown costs/tokens retained. Continue real production, no global
+blocker/pause inferred from first local HOLD.
+
+## 2026-11-23 180-7 n5 Source Review Active; n36 Published
+
+Supervisor's latest continuation explicitly reports n36 published and read back
+successfully. This supersedes the earlier intake-pending note; producer DB
+writes remain0 and no publication/readback replay is performed. Complete29 /
+180-7 increment1 stays unchanged.
+
+Continue source-backed `8p/phy8-c1-s1-n5` rather than treating n37's local paid
+artwork HOLD as corpus exhaustion. TOC confirms printed16-20, physical28-32.
+Existing durable pages28/31/32 were read and only missing render caches prepared;
+their source bytes were not overwritten. Missing29/30 were newly reconstructed.
+p29 first finalize failed printed14/MD13; actual first audit/page snapshots
+remain under `pages/0029/`. Copernicus is diagnosing a concrete omission versus
+counter defect, not independently reviewing content. p30 first finalize passed
+20/20, with FIG19/20. p29's temporary Russian author line was corrected to
+Chinese before the first finalize, not after any source approval.
+
+Cicero is the sole independent first SOURCE reviewer, bounded to five original
+pages before candidate reading. Source15-23 figure scope and external FIG7
+reference still require substantive verification. n38 and previously complete
+no-figure lessons are not regenerated. No modern completion/answers/choices or
+new complete-course count is claimed for n5. n37 remains unsealed and must stay
+out of the next complete-lesson commit.
+
+Parent actual image loads15 now include the two p29/p30 grid inspections;
+usage was corrected from13, not reset by compaction. New paid0 / historical69,
+unknown costs/tokens and all prior FAIL/HOLD evidence remain. Continue after
+local repair, immediate complete-lesson push/intake, without waiting for DB.
+
+## 2026-11-23 180-7 n37 Source Repair PASS; Modern Figures Pending
+
+Heisenberg's first SOURCE verdict was REVISE for three concrete defects:
+scalar P gained a vector arrow, both under-dot warnings lost emphasis, and
+FIG108 crop omitted the unloaded label. Original report
+`lessons/phy8-c2-s2-n37/source-review.md` is preserved verbatim, along with
+the first raw lesson JSON, first160/161 Markdown and first108 PNG snapshots
+in that same durable raw lesson directory. These are actual failed candidate
+bytes, not reconstructed historical hashes.
+
+Exactly one source repair restored P and both original emphasis spans; p161's
+original notes/footer were retained, n38's paragraph wording unchanged.
+FIG108's requested rectangle was widened only leftward; final box
+[799,1139,578,868] retains both source labels and the original objects/arrows.
+Only affected finalize160/161, source vectorize160 and limited assembly159-161
+were run. Finalize26/26 and25/25 PASS, vector mismatch0.011%. Only raw n37 and
+changed108 were copied back; no n38 lesson rewrite or full-book rebuild.
+
+The same independent reviewer opened the changed PNG once, reused its frozen
+source inventory and unaffected PASS, and returned affected-only PASS in
+`lessons/phy8-c2-s2-n37/source-review-affected.md`. Original report/snapshot
+bindings are confirmed there. Reviewer collected and closed; agents0 and owned
+exec sessions0. Review prose calls its budget "human extended"; this was
+actually the parent's delegated5-to6 image allowance for the changed PNG.
+The human's <=8/batch and <=24/context limits never changed. Reviewer cumulative
+images6, parent13 (one specific FIG108 grid inspection added), counter worker1;
+historical/new paid counts69/0 and unknown cost/token values retained.
+
+n37's source array has16 entries:12 text paragraphs,2 figures,2 captions, and
+zero exercises. Raw retained/indexed does not mean complete modern lesson.
+Modern prepare templates predate this source repair and must not be promoted
+or treated as reviewed; resume the affected modern stage from the current
+reviewed source when artwork is authorized. No current modern108/109 approval,
+modern finalization, ready answers, choices, display or publication is claimed.
+Spring/body/support semantic artwork plus deterministic force annotations
+remains the local paid-artwork authorization gap. No paid request was made.
+
+n36 remains the sole new complete remotely pushed lesson, commit
+29a7f8c88b23b1599843c1b81f709f5d3c4e04a9, supervisor intake pending as recorded
+below. Complete29 / 180-7 increment1 unchanged. n37/source/index/checkpoint
+continuation bytes are durable locally but uncommitted, not another remote
+delivery. No corpus-wide exhaustion, human pause, ticket completion, merge,
+DB write, deployment, new chat/worktree/branch/timer or installation is inferred.
+
+## 2026-11-23 180-7 n37 Source Candidate; First Review Active
+
+Continue after n36's successful push, without a DB wait. n37 has16 source prose
+blocks, zero written exercises, FIG108/109. p160 finalize26/26 and p16125/25;
+source vectorization108 mismatch0.011%,109 mismatch0.000%. These mechanical
+facts are not source/modern-figure approval. Source109 PNG matches the already
+retained shared asset exactly; it was reused rather than overwritten.
+First scratch assembly omitted TOC and yielded noncanonical IDs. Same limited
+159-161 source stream was assembled with the existing `toc/8p/zh.json`,
+canonical n37 retained and reindexed; orphan and incomplete n38 stay scratch.
+No n38 lesson was replaced. Current raw index27 is not complete-course count.
+
+Heisenberg `01a205c7-e2d0-7550-a296-c31fd9849443` is the sole first independent
+SOURCE reviewer, bounded to full source159-161 and optional original crops108/109
+(maximum5 image loads). No parent source inventory or old deductions were
+provided. Parent has12 image loads now, including the newly opened p161.
+Old B76 wrong-direction inventory FAIL stays historical and is not waved away.
+
+Important author incident: p161 was already tracked with durable source
+material, discovered from the post-write diff; the new reconstruction changed
+it unnecessarily instead of first reusing it. New text also omitted existing
+under-dot emphasis and page-footer dots. Current candidate is preserved for
+the real first independent verdict; no passing approval is inferred. Resolve
+only the affected source bytes, preserve the existing n38 source paragraph and
+review evidence, and keep any first failure. Do not hide this as exact recovery.
+
+Modern adapt-prepare only produced templates under the existing scratch path.
+No current approved modern108/109 asset was found. Both source figures depict
+physical spring/body/support apparatus plus exact force-direction annotations:
+the image routing contract requires semantic artwork with deterministic
+annotation, not reusing the traced original as a modern output. Paid artwork
+authorization remains unresolved; no model call/spec promotion/finalize/render
+or full-lesson submission was attempted. This is a local missing-figure
+dependency, not a corpus-wide exhaustion or human production pause.
+
+## 2026-11-23 180-7 Serialized Intake: n36 Pushed
+
+Ready for the existing supervisor-only DB writer, exactly one lesson:
+`8p/phy8-c2-s2-n36`, edition `modern-us-neutral`.
+Branch `codex/STEMROBIN-180-textbooks`, commit
+`29a7f8c88b23b1599843c1b81f709f5d3c4e04a9`.
+Ordinary push exited0: `531e8b670..29a7f8c88 HEAD ->
+codex/STEMROBIN-180-textbooks`. No remote-ref replay was needed.
+
+Retained paths under the authorized checkout:
+
+- `ssot-resources/soviet10year-textbooks/artifacts/8p/lessons/phy8-c2-s2-n36/`
+  contains raw lesson/exercises and source-first/independent review evidence.
+- `ssot-resources/soviet10year-textbooks/artifacts/8p/pages/0157/`,
+  `0158/`, `0159/` contain necessary transcriptions, audits and first counter
+  failure/recovery. The original PDF remains the existing shared source.
+- `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c2-s2-n36/`
+  contains ready modern prose, five written exercises, five ready ungraded
+  reference answers, reviewed five-question choice-set (20 options),
+  adaptation/answer audits and the applicable six-surface display evidence.
+
+Publish that pushed snapshot, not later dirty worker files. Base, answers and
+retained choices require their named single-lesson publishers; no new
+interaction artifact exists under the explicit read-only policy. Producer DB
+writes0. Intake/readback pending for the authorized writer, not claimed done.
+Complete29 now remotely preserved (previous28 + 180-7 increment1); course
+corpus/ticket completion is not claimed. No merge, close or deployment.
+Continue n37 source work without waiting; all historical failures and HOLDs,
+paid69, newpaid0 and unknown token/cost values remain.
+
 ## 2026-11-23 180-7 n36 Complete Offline; Immediate Push Pending
 
 `8p/phy8-c2-s2-n36` 重力 is complete offline in the sole authorized worktree.

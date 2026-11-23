@@ -1,0 +1,53 @@
+import AppKit
+import Foundation
+
+let root = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+precondition(root.path == "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180")
+let output = root.appendingPathComponent(".tmp/180-7-n5-review-15-18")
+let bindingData = try Data(contentsOf: output.appendingPathComponent("current-bindings.json"))
+let bindings = try JSONSerialization.jsonObject(with: bindingData) as! [String: Any]
+for f in bindings["figures"] as! [[String: Any]] {
+    let id = f["id"] as! String
+    let preview = f["preview"] as! [String: Any]
+    let input = root.appendingPathComponent(preview["path"] as! String)
+    let image = NSImage(contentsOf: input)!
+    let source = image.cgImage(forProposedRect: nil, context: nil, hints: nil)!
+    let fullWidth = CGFloat(source.width)
+    let fullHeight = CGFloat(source.height)
+    precondition(source.width == 640)
+    let h480 = fullHeight * 480 / fullWidth
+    let h318 = fullHeight * 318 / fullWidth
+    let width = source.width + 540
+    let height = Int(max(fullHeight + 70, h480 + h318 + 120))
+    let context = CGContext(data: nil, width: width, height: height,
+                            bitsPerComponent: 8, bytesPerRow: width * 4,
+                            space: CGColorSpaceCreateDeviceRGB(),
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+    context.setFillColor(NSColor.white.cgColor)
+    context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+    context.interpolationQuality = .high
+    func draw(_ x: CGFloat, _ top: CGFloat, _ w: CGFloat, _ h: CGFloat) {
+        context.draw(source, in: CGRect(x: x, y: CGFloat(height) - top - h, width: w, height: h))
+    }
+    draw(20, 45, fullWidth, fullHeight)
+    draw(fullWidth + 40, 45, 480, h480)
+    draw(fullWidth + 40, h480 + 100, 318, h318)
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+    let attributes: [NSAttributedString.Key: Any] = [
+        .font: NSFont.systemFont(ofSize: 15),
+        .foregroundColor: NSColor.black
+    ]
+    func label(_ text: String, _ x: CGFloat, _ top: CGFloat) {
+        (text as NSString).draw(at: CGPoint(x: x, y: CGFloat(height) - top - 20),
+                               withAttributes: attributes)
+    }
+    label("\(id): current PNG, full \(source.width) px", 20, 10)
+    label("Normal 480 px", fullWidth + 40, 10)
+    label("Normal 318 px", fullWidth + 40, h480 + 65)
+    NSGraphicsContext.restoreGraphicsState()
+    let bitmap = NSBitmapImageRep(cgImage: context.makeImage()!)
+    try bitmap.representation(using: .png, properties: [:])!
+        .write(to: root.appendingPathComponent(f["compositePath"] as! String), options: .withoutOverwriting)
+    print("\(id): full \(source.width)x\(source.height), normal 480 and 318; composite \(width)x\(height)")
+}

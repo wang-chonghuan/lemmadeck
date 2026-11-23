@@ -1,0 +1,101 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8p",
+  "page": 30,
+  "printed_page": 18,
+  "source": {
+    "pdf": "8p 苏联中学课本 物理 八年级.pdf",
+    "pdf_sha256": "4ec6a3d5fafe2c5c861a5053cf8cf047a3a6bd7988a4de799859d6a4fef8cc46",
+    "pdf_page": 30
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "9c4bb0323ccfe026882836d96d3b1ed4353e76ead84e5bd54f6d18ef4f13ca73"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "ae373713f7b09f810d6de1e4a12b5916710e5673e4827148c875674f847f1e81"
+  },
+  "notes": [
+    "2026-11-23 targeted reconstruction of missing retained n5 source. The top paragraph continues p29. Captions19/20 share one printed row. The vector projection theorem retains the original under-dot emphasis; no new numerical data or exercise was invented."
+  ],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [
+    {
+      "id": "fig-19",
+      "label": "图 19",
+      "box": [
+        221,
+        620,
+        467,
+        349
+      ]
+    },
+    {
+      "id": "fig-20",
+      "label": "图 20",
+      "box": [
+        842,
+        600,
+        473,
+        372
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+据这个法则. 指向同一方向或彼此相反的共线矢量的加法，
+如图 $18$ 和 $19$ 所示. 从这两个图可以看出，平行（共线）矢量
+的相加，象代数量一样，如果一个方向取“$+$”号，而相反的方
+向取“$-$”号.
+
+<!-- fig 图 19 box 221,620,467,349 -->
+![图 19](figures/fig-19.png)
+
+<!-- cap 图 19 -->
+图 19
+
+<!-- fig 图 20 box 842,600,473,372 -->
+![图 20](figures/fig-20.png)
+
+<!-- cap 图 20 samerow -->
+图 20
+
+<!-- p -->
+如何求几个矢量的合矢量的投影呢？
+
+<!-- p -->
+在图 $20$ 上绘出了几个矢量 $\vec a$、$\vec b$ 和 $\vec c$，并且指明了合矢量
+$\vec f$，它等于这些矢量之和：
+
+<!-- p -->
+$\vec f=\vec a+\vec b+\vec c$.
+
+<!-- p -->
+从这个图可以看出，矢量 $\vec a$、$\vec b$ 在 $X$ 轴上的投影是正的，而
+矢量 $\vec c$ 的投影是负的. 同时也可以看出，如果把所有三个被
+加矢量的投影按代数方法相加. 也就是考虑到矢量 $\vec c$ 的投影
+是负的，则得到合矢量的投影. 因此，<span style="text-emphasis: filled dot; text-emphasis-position: under;">矢量的总和在给定轴上
+的投影等于被加矢量在同一轴上的投影的代数和</span>. 所以，为
+了求矢量总和的投影，不必先求出合矢量，再求其投影. 简单
+的方法是考虑所有矢量投影的符号，把它们相加.
+
+<!-- p -->
+**$2.$ 矢量减法**　为了求等于两个矢量 $\vec a$ 和 $\vec b$ 之差的矢量
+$\vec c$，应当把矢量 $\vec a$ 和 $(-\vec b)$ 相加（图 $21$）：
+
+<!-- p -->
+$\vec c=\vec a-\vec b=\vec a+(-\vec b)$.
+
+<!-- foot -->
+• *18* •

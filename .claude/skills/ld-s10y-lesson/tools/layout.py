@@ -119,6 +119,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     rules = []
     components, _ = ndimage.label(band)
     text_centers = []
+    text_glyphs = []
     for bounds in ndimage.find_objects(components):
         if bounds is None:
             continue
@@ -129,6 +130,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             and columns.stop - columns.start >= 0.85 * (rows.stop - rows.start)
         ):
             text_centers.append((rows.start + rows.stop) / 2)
+            text_glyphs.append((rows, columns))
         if (
             columns.stop - columns.start >= 0.7 * line_h
             and rows.stop - rows.start <= 0.2 * line_h
@@ -146,6 +148,31 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     ]
     if len(text_rows) >= 2 and text_rows[-1][0] - text_rows[0][1] >= 1.5 * line_h:
         return False
+    # Rule-column masking can erase a two-glyph continuation aligned with prose.
+    for start, end in _merge_close(
+        [(center, center) for center in sorted(text_centers)], 0.4 * line_h
+    ):
+        short = sorted(
+            [(rows, cols) for rows, cols in text_glyphs
+             if start <= (rows.start + rows.stop) / 2 <= end],
+            key=lambda glyph: glyph[1].start,
+        )
+        if len(short) != 2 or not (
+            0 <= short[1][1].start - short[0][1].stop <= 0.6 * line_h
+        ):
+            continue
+        for body_start, body_end in text_rows:
+            if max(start - body_end, body_start - end) < 1.5 * line_h:
+                continue
+            body = [
+                cols for rows, cols in text_glyphs
+                if body_start <= (rows.start + rows.stop) / 2 <= body_end
+            ]
+            if all(
+                any(abs(cols.start - other.start) <= 0.25 * line_h for other in body)
+                for _, cols in short
+            ):
+                return False
     horizontal = ndimage.binary_opening(
         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
     )
@@ -355,11 +382,19 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         height, width = rows.stop - rows.start, columns.stop - columns.start
         area = np.count_nonzero(ink[bounds])
         clearance = int(2 * glyph_h)
+        compact_shape = 0.8 * height <= width <= 1.4 * height
+        if not compact_shape and width <= 1.3 * glyph_h and height <= 0.75 * glyph_h:
+            # A shallow smear can have thin tails around a solid, glyph-sized core.
+            core_size = max(2, int(0.2 * glyph_h))
+            core = ndimage.binary_opening(
+                ink[bounds], structure=np.ones((core_size, core_size), dtype=bool)
+            )
+            compact_shape = np.count_nonzero(core) >= 0.7 * area
         margin_blot = (
             (columns.stop <= 0.05 * ink.shape[1]
              or columns.start >= int(0.95 * ink.shape[1]))
             and 0.45 * glyph_h <= height <= 1.3 * glyph_h
-            and 0.8 * height <= width <= 1.4 * height
+            and compact_shape
             and (
                 area >= 0.6 * width * height
                 or (

@@ -1,0 +1,105 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+assert.equal(process.cwd(), '/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180');
+const raw = 'ssot-resources/soviet10year-textbooks/artifacts/8p/lessons/phy8-c1-s1-n5';
+const work = '.tmp/180-7-n5-review-15-18';
+const bindingPath = '.tmp/180-7-n5-figures-15-18/hash-bindings.current.json';
+const json = p => JSON.parse(fs.readFileSync(p));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bind = p => ({ path: p, sha256: sha(fs.readFileSync(p)) });
+const bindings = json(bindingPath);
+const expectedTemplate = '0d64d52579593024087aec5f033d4a429e63075c1297bcf1913fc967788f6ef5';
+assert.equal(bind(bindings.candidate.path).sha256, expectedTemplate);
+assert.equal(bindings.candidate.sha256, expectedTemplate);
+assert.equal(bind(`${raw}/modern-text-reviewed.template.snapshot.txt`).sha256, expectedTemplate);
+const lesson = json(bindings.candidate.path);
+const figures = [];
+for (const f of bindings.figures) {
+  for (const k of ['sourceImage', 'spec', 'svg', 'preview', 'render', 'validation']) {
+    assert.equal(bind(f[k].path).sha256, f[k].sha256, `${f.id}: stale ${k}`);
+  }
+  const spec = json(f.spec.path);
+  const render = json(f.render.path);
+  const validation = json(f.validation.path);
+  assert.equal(validation.status, 'pass');
+  assert.equal(f.validation.exitCode, 0);
+  assert.equal(render.status, 'pass');
+  assert.equal(f.render.exitCode, 0);
+  assert.deepEqual(render.spec, f.spec);
+  assert.deepEqual(render.output.svg, f.svg);
+  assert.deepEqual(spec.source.image, f.sourceImage);
+  assert.equal(render.collisions.length, 0);
+  for (const t of spec.source.authoritativeText) {
+    assert.equal(t.lesson, lesson.id);
+    assert(lesson.prose.some(p => p.text === t.text), `${f.id}: relevant text drift`);
+  }
+  const pts = new Map(spec.objects.filter(o => o.type === 'point').map(o => [o.id, o.at]));
+  const objects = new Map(spec.objects.map(o => [o.id, o]));
+  const vec = id => {
+    const o = objects.get(id);
+    return pts.get(o.to).map((v, i) => v - pts.get(o.from)[i]);
+  };
+  const add = (...vectors) => vectors.reduce((a, b) => a.map((v, i) => v + b[i]), [0, 0]);
+  let equations;
+  if (f.id === 'fig-15') {
+    const a = vec('input-a'), b = vec('input-b'), sum = vec('sum-result');
+    assert.deepEqual(vec('sum-a'), a);
+    assert.deepEqual(vec('sum-b'), b);
+    assert.deepEqual(vec('completion-a'), a);
+    assert.deepEqual(vec('completion-b'), b);
+    assert.deepEqual(sum, add(a, b));
+    equations = { a, b, sum };
+  } else if (f.id === 'fig-16') {
+    const a = vec('input-a'), b = vec('input-b'), sum = add(a, b);
+    for (const id of ['ab-a', 'ba-a']) assert.deepEqual(vec(id), a);
+    for (const id of ['ab-b', 'ba-b']) assert.deepEqual(vec(id), b);
+    for (const id of ['ab-result', 'ba-result']) assert.deepEqual(vec(id), sum);
+    equations = { a, b, bothResultants: sum };
+  } else if (f.id === 'fig-17') {
+    const chain = ['chain-OA', 'chain-AB', 'chain-BC', 'chain-CD', 'chain-DE'].map(vec);
+    assert.deepEqual(add(...chain), vec('chain-OE'));
+    equations = { chain, resultant: vec('chain-OE') };
+  } else if (f.id === 'fig-18') {
+    const a = vec('input-a'), b = vec('input-b'), sum = vec('result');
+    assert.deepEqual(vec('chain-a'), a);
+    assert.deepEqual(vec('chain-b'), b);
+    assert.deepEqual(sum, add(a, b));
+    assert(a[0] > 0 && b[0] > a[0]);
+    assert.equal(pts.get('chain-start')[0], pts.get('result-start')[0]);
+    assert.equal(pts.get('chain-end')[0], pts.get('result-end')[0]);
+    equations = { a, b, sum };
+  } else assert.fail('out-of-scope figure');
+  assert(render.displayChecks.every(c => c.status === 'pass' && c.measuredMinPx >= 16));
+  const retained = {};
+  for (const k of ['svg', 'preview', 'validation']) {
+    const name = f[k].path.split('/').at(-1) + (k === 'validation' ? '.snapshot.txt' : '');
+    const p = `${raw}/figure-author-evidence-15-18/${name}`;
+    assert.equal(bind(p).sha256, f[k].sha256, `${f.id}: retained ${k}`);
+    retained[k] = bind(p);
+  }
+  const retainedRender = `${raw}/figure-author-evidence-15-18/${f.render.path.split('/').at(-1)}.snapshot.txt`;
+  assert.equal(bind(retainedRender).sha256, f.render.sha256);
+  retained.render = bind(retainedRender);
+  figures.push({
+    id: f.id,
+    ...Object.fromEntries(['sourceImage', 'spec', 'svg', 'preview', 'render', 'validation'].map(k => [k, f[k]])),
+    equations, display: spec.display, displayChecks: render.displayChecks,
+    authoritativeText: spec.source.authoritativeText, retained,
+    compositePath: `${work}/${f.id}.current.composite.png`,
+  });
+}
+assert.equal(figures.length, 4);
+const payload = {
+  ticket: 'STEMROBIN-180/180-7',
+  independentSourceInventory: bind(`${work}/source-pixel-inventory.frozen.md`),
+  currentBindings: bind(bindingPath),
+  reviewedTemplate: bind(`${raw}/modern-text-reviewed.template.snapshot.txt`),
+  authorReport: bind(`${raw}/figure-author-15-18.md`),
+  reusedValidatorAndRenderPass: true,
+  noGeometryRerender: true,
+  figures,
+};
+fs.writeFileSync(`${work}/current-bindings.json`, JSON.stringify(payload, null, 2) + '\n', { flag: 'wx' });
+console.log('PASS: current hashes, retained author evidence, exact current text, directed equations and existing display reports. No validator/render rerun.');

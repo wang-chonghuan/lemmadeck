@@ -1529,10 +1529,8 @@ def validate_errata(
         if corrected == source_record["original"]:
             errors.append(f"lesson.errata[{erratum_id}].corrected 不得照抄错误原式")
             continue
-        if (
-            not math_signature(source_record["original"])
-            or not math_signature(corrected)
-        ):
+        # Source-bound wording and figure disclosures need not contain an equation.
+        if math_signature(source_record["original"]) and not math_signature(corrected):
             errors.append(f"lesson.errata[{erratum_id}] 必须绑定数学原式与修正式")
             continue
         target = source_record["target"]

@@ -35,7 +35,7 @@ const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
 const SOURCE_TAG = /<\/?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*>/g
 const SOURCE_ENTITY = /&#(?:[0-9]{1,7}|x[0-9a-fA-F]{1,6});/
 const INLINE_TOKEN = new RegExp(`${MATH.source}|${SOURCE_TAG.source}|${SOURCE_ENTITY.source}`, "gs")
-const SOURCE_DOTS = /^<span\s+style=(["'])\s*(text-emphasis-style\s*:\s*dot|text-emphasis\s*:\s*filled\s+dot)\s*;\s*text-emphasis-position\s*:\s*under\s*;?\s*\1\s*>$/
+const SOURCE_DOTS = /^<span\s+style=(["'])\s*(text-emphasis-style\s*:\s*dot|text-emphasis\s*:\s*(?:filled\s+)?dot)\s*;\s*text-emphasis-position\s*:\s*under\s*;?\s*\1\s*>$/
 function sourceTagHtml(tag) {
   if (/^<\/?(?:strong|em|sup|small)>$/.test(tag) || tag === "</span>") return tag
   const dots = tag.match(SOURCE_DOTS)

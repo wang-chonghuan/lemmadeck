@@ -1,0 +1,72 @@
+"""Compose existing final preview pixels; never invoke the geometry renderer."""
+
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
+
+ROOT = Path("/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180")
+AUTHOR = ROOT / ".tmp/180-7-n5-figures-22-23"
+OUT = ROOT / ".tmp/180-7-n5-review-22-23"
+CASES = (
+    ("22", "repair1", "e681ad5c2131c493edf7a0fa383f63890bf82c7f2e3fa4a10c793e7e8aad7bb2"),
+    ("23", "repair2", "5651e3dd15d94f0601be3015e476e1238504afe91a7b097856884c898befacf6"),
+)
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+records = []
+for number, revision, expected_preview in CASES:
+    preview = AUTHOR / f"fig-{number}.{revision}.preview.png"
+    svg = AUTHOR / f"fig-{number}.{revision}.svg"
+    spec_path = AUTHOR / f"fig-{number}.spec.json"
+    render_path = AUTHOR / f"fig-{number}.{revision}.render.json"
+    render = json.loads(render_path.read_text())
+    spec = json.loads(spec_path.read_text())
+    assert render["status"] == "pass"
+    assert render["spec"]["sha256"] == digest(spec_path)
+    assert render["output"]["svg"]["sha256"] == digest(svg)
+    assert digest(preview) == expected_preview
+    source = spec["source"]["image"]
+    assert digest(ROOT / source["path"]) == source["sha256"]
+    image = Image.open(preview).convert("RGB")
+    assert image.size == (spec["canvas"]["width"], spec["canvas"]["height"])
+    widths = (640, 480, 318)
+    margin, gap, header = 12, 16, 32
+    composite = Image.new(
+        "RGB", (sum(widths) + margin * 2 + gap * 2, image.height + header + margin), "white"
+    )
+    draw = ImageDraw.Draw(composite)
+    font = ImageFont.load_default(size=18)
+    left = margin
+    for width in widths:
+        height = round(image.height * width / image.width)
+        pixels = image if width == image.width else image.resize(
+            (width, height), Image.Resampling.LANCZOS
+        )
+        draw.text((left, 6), f"Figure {number}: {width}px", font=font, fill="black")
+        composite.paste(pixels, (left, header))
+        left += width + gap
+    output = OUT / f"fig-{number}.full-640-480-318.png"
+    composite.save(output)
+    records.append({
+        "figure": f"fig-{number}",
+        "source": source,
+        "spec": {"path": str(spec_path.relative_to(ROOT)), "sha256": digest(spec_path)},
+        "render": {"path": str(render_path.relative_to(ROOT)), "sha256": digest(render_path)},
+        "svg": {"path": str(svg.relative_to(ROOT)), "sha256": digest(svg)},
+        "preview": {"path": str(preview.relative_to(ROOT)), "sha256": digest(preview)},
+        "composite": {"path": str(output.relative_to(ROOT)), "sha256": digest(output)},
+        "widths": list(widths),
+        "method": "Existing author final preview, original full pixels at 640; proportional Lanczos at 480/318. No geometry rerender.",
+    })
+
+(OUT / "actual-inspection-bindings.json").write_text(
+    json.dumps(records, indent=2) + "\n"
+)
+print(json.dumps(records, indent=2))
