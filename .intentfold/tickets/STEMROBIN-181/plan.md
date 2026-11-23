@@ -1,5 +1,16 @@
 # 开发路线
 
+2026-11-22 181-7 最新直接授权：恢复同一生产断点，唯一运行根为
+`/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-181`。旧暂停、四课等待和 E 等待
+仅保留为历史。逐课完成缺失阶段、一次独立实质复核和适用桌面/手机显示，明确路径
+commit 后普通 push `HEAD:codex/STEMROBIN-181-textbooks`，在原检查点提交监督的单一
+串行入库队列后立即下一课。工人不写 DB；英文不得覆盖中文。
+首课选择 `phy9-c2-s1` 的缺失英文版：复用 D1521 来源/科学/图上下文 PASS，
+仅续 R1-R3 可读性修正、独立 affected 复核及完整显示，不以 partial excerpt 交付。
+附加现有工作树失败原因为 `This linked worktree belongs to another chat.`；
+不创建替代工作树、分支、聊天或定时器。最新版技能已在本根安装，原错误、
+暂停、费用及 ignored 字节保留。概率缺源和图181付费 metadata 缺口继续局部 HOLD。
+
 2026-11-15 恢复：沿用本工作树和分支，按总单179恢复评论
 `42d63c8c-43f6-4db8-9458-c7ce5602cf1c` 接续。默认每批4课（3至5课、
 大题集及尾批灵活）；完成即commit/push同一分支，再做下一批。
