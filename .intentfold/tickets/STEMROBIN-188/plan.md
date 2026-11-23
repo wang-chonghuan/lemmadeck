@@ -1,7 +1,8 @@
 # 接续计划
 
-当前状态：**ACTIVE**。2026-11-22 用户直接恢复 SAME188-6 生产；
-只在原树和原分支继续 6-8g、9-10g，finish=review，不写共享 DB、不部署或合并。
+当前状态：**ACTIVE**。188-7 最新直接人类恢复授权已覆盖旧暂停；
+仅在 `/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188` 与原分支继续
+6-8g、9-10g，finish=review，不写共享 DB、不部署或合并，不启动 E。
 执行时以文末最新检查点为准；中间各次在途状态是保留的历史，不代表当前代理状态。
 2026-11-21 的安全点暂停及全部历史记录保留。原恢复作者均已收取关闭；
 现 N22 的126–138现代图及282–286五答案已独审并保留；N23/N24原版装订完成，
@@ -10749,3 +10750,273 @@ recovery2 stage实际exit0，1326staged paths：四课/必要既存证据与新�
 code index从HEAD只替换已审函数，AST核新版目标函数相同且其它函数与HEAD相同，
 用户既有SourceBook/dump/prose等dirty改动不混入；应用/秘密/Charter/其它技能/
 未完课程均staged为空。不把工作树说成clean，不新增全项目防线或正式handoff。
+
+batch06普通commit/push实际成功0852fe5fb16360a3ebcc161123bb04b6865f5024，
+远端同head，四限定index blobs及四课产物提交字节一致，未stage秘密；
+delivery一次exit0，tmp/batch-06-delivery.json，不称工作树clean。
+未force/rebase/pull/改main/DB/合并/部署/关单/正式handoff/全项目防线。
+
+## 2026-11-22 接续18：直接继续N30首次装订
+
+四课批交付后未停在checkpoint，N30首次受限assemble/adapt-prepare各exit0：
+28正文、373–380八题、190–193四源图，左p0138#4，右排除p0142#7补充习题。
+所有来源page/crop与既有SOURCE hash绑定一次，仅复用可读源和边界PASS；
+已有SOURCE全页/原裁图未重开，章节其它课及补充习题未装订或计新完整。
+assembly/prepare retention
+SHA2f7067ed3940c2741219edfa922f3d95cf73cdcba9dfafcb5567d76a122de0b6，
+40绑定/15新增复制，其余复用已保留源文件，不复制PDF/runtime或全旧包。
+来源139实际资本C作半径的数学不一致尚需如实处理，SOURCE-fidelity PASS不当数学批准；
+192磨损及141字形角色UNKNOWN保持。现代正文/图/答案/choice/显示仍待。
+当前父永久24/24，本轮0图，无父exec/server或在途审者，准备窄作者任务，不读在途root。
+
+接续18制作中：已派NONFORK Gauss正文作者01a2051f-2233-7573-b6a2-a80b6768bd21，
+own tmp/n30-text-author-first-18，28正文/八题模板，仅布局及勘误提案，无源改写；
+Mendel答案作者01a2051f-51f5-79b3-8c5c-a878a90df5de，own
+tmp/n30-eight-answers-author-first-18，373–380均无题图，零图独立求解；
+Godel图作者01a2051f-9522-7fe1-9e13-80d8ffee4540，own
+tmp/n30-fig192193-author-first-18，只两图，max8charged/max24context，原192磨损/
+141字形UNKNOWN保留，不作独审PASS或canonical提升。
+Copernicus01a20520-a39d-7912-a807-086c17b751fe为当前唯一独审，own
+tmp/n30-errata-first-independent-review-18，仅source-only先推导190/191的
+半径记号/点身份与存在唯一性，再实际FIRST0444/hash锁定，未给作者稿/键。
+source-only input SHA2bd151fbf2309d7e969a37ede0e31585fab0d41889e643d1fb8cb9b03cfbff9e。
+所有在途roots未父读；父本段0图/永久24，不重SOURCE/assembly/prepare PASS，
+canonical N30未安装，无新完整课/DB/env/付费/全项目防线/正式handoff/合并部署关单。
+
+接续18收存：Mendel八答案作者已一次接收、持久化并关闭，8ungraded/14作答小问，
+key SHA9268adcb5c26c611d03ff32c951ad0e9186fe9b4d337b2f56b5f14b3789f9d6c；
+378题意UNKNOWN及374高所在直线/377380零长/379特例保留，作者127算术cases
+只有manifest报告及工具完成事实、无rawstreams，不伪造或重跑；
+retention SHAbfac9b2cb137db5f0b4f4d5828792fadaf8d049c9f00aceb90aa6f5a54ecf6f4。
+父接收脚本语法FIRSTFAIL及旧脚本保留，恢复一次exit0，未改答案/重求解。
+Gauss正文作者已一次接收持久化并关闭，28源entries/32最终段落、8题/10编号分题、
+105公式未改、8Latinlabel替换、4actualflowboundary，flow一次exit0。
+text SHAba7cb02d74c228a4ea928dcd1c19f7ff012c8377196d70290233af8003c18cd1，
+retention SHAec4857d34086de0f45ccfd0ac224ad94cc127653b07dd860832a6078e0f42695；
+作者一次page139 JSONmetadata只读偏离指令已明示、0像素；提案未当来源勘误登记。
+Godel192193作者一次接收持久化并关闭，5panels/19points，2图当前render/draft
+PASS，8/8charged、6contentgatefail、3revisionevents/6figureinstances全保留，
+UNKNOWN不清；retention SHA5bfa4eac41d3cbf17611f5000028080db94c4f7ad4bd5f325e8bbf48a93b1f44。
+Copernicus源FIRST已一次接收持久化，actual0444/hash
+8164179023d7bb42e5a70dc9d1a70778a1eab604e307a3652c0db88c15884c07，
+两原190191各一次，2/8与2/24，无proposal/key；独立推得半径c=AB、
+非退化c>a>0、镜像两placement一全等类，sourceC和190弱glyph/lower点UNKNOWN仍保留。
+retention SHA0a49bad1eade95498c691bbd5034135e914816516d06147f4b41841c88d3765c。
+唯一独审现phase2 own tmp/n30-errata-proposals-independent-review-18，只两提案
+与已锁FIRST比较/来源唯一span核对，0新图，未父读在途root。
+新Kierkegaard图作者01a20529-513e-7403-b2b7-fb57b351403c，own
+tmp/n30-fig190191-author-first-18，max8charged，候选修正预览text
+SHA9bbe0676e864f8daaff03cfd9caa3f3ef22260d8e57180004663ec0653a6bfd7，
+原source/作者稿未改，registerederrata0/正式native不可放行；预览不是批准或完整课。
+下课仅只读定位：N33physical155及N34physical159–160存在旧源问题，
+未装订/追加作者/解HOLD。父永久24/24，本段0图，无父exec/server/新完整课程。
+
+接续18后段：Copernicus两提案独审PASS已一次接收持久化，approval
+SHAcc2e3c763aa6c8f253325d5b5dca1445b2db7a9383fefda6ea69a127a07fa1cf，
+retention SHA5c6afaf6e5f68fe2a56e8baed0e23936ac1dc971b73f7f9c2b51b935a6b8d64f；
+源139#1的(B,C)→(B,c)、139#5的以C为半径→以c为半径两唯一span，
+原FIRST及source_text不改，非全文/图/答案PASS。
+父metadata-only原生登记一次exit0，parse/dump原26行与faithfulblocks完全不变，
+不重sourcefinalizer/裁图/assembly；只meta.errata两记录，原errata0audit保持真实旧bytes。
+affected adapt-prepare一次exit0，原生sourcehash/block/target生成两绑定；
+现代candidateprose与已批预览逐块同bytes，仅errata绑定新增，原作者稿/旧prepare不覆写。
+registration retention SHAbd153a7b6e39e3c440624f8f4e37765529014e96e9152f5309dd9f8a07ba0b7f。
+同Copernicus现第三独立scope own tmp/n30-text-and-eight-answers-independent-review-18，
+当前唯一在途独审，source-only八题先独解actualFIRST锁再看keys，零新图，
+全文28entries/105公式及两勘误绑定、8Latinlabels/4boundary/8keys14parts分别判决；
+378题意不得因UNKNOWN字样永久悬置，也不得猜给定量。其root未父读。
+Kierkegaard190191作者已一次收存关闭，manifest
+SHA47b29aa71c8c1a99b986156504b6e8eed80a88b3aea832c2974f777e34be3bad，
+6/8charged及6/24context，2contentgatefail/1technicaldisplayfail/1preparationfail；
+计数包含initialauthoring的spec版本190=2/191=3，真正initial后candidatechanges3，
+所有失败/原SVG/spec快照保留，不当独审PASS；retention
+SHA270930551989bf1e65127b064ce5934a02619ec21bc24996bcd1f99534e58838。
+作者旧“registrationpending”保留为历史，实际父registration已通过，不新造永久HOLD。
+四图仅meta重绑定durablePNG/currenttext：190191sourcepath-only、192193text仅空白差，
+canvas/objects/assertions/inventory/SVG完全不变，无renderer/图片/有效checks重跑。
+retention SHAc818c9b11b52ea3fb384ff8a80f70ade97c3a2074f67fa8a0364bd639e3dbb77。
+两限定图审input只备未派：192193 SHA5be4c0116393b0c2d0794b52d17ff5c30e2d755e67e224c6c0e0c71edbdd0b2d，
+190191 SHA791aeb2986df9a9afafda4a422cae4c4834b01e95e26166c28f392edcc9e6ad0；
+各预计6/max8charged，等待唯一content审者收取后逐批fresh NONFORK，不开第二独审。
+父永久24/24、本段0图，无exec/server/modern-finalize/answer-finalize/choice/native-display，
+无新完整N30或本批课程/DB/env/付费/全项目防线/正式handoff/新commit/合并部署关单。
+
+## 2026-11-22 接续19：接续既有第三审查、备受限收口入口
+
+直接继续接续18，不重setup/freshness/Grill或batch06已完成交付。
+Copernicus第三scope仍唯一在途独审，其owned root未读；已排队提醒只完成原scope，
+不追加第四phase或重放此前两勘误PASS。两组新图独审仍待其一次收取关闭后串行派出。
+只准备n30-production-19.mjs分阶段入口，首次node syntax check exit0；
+尚未执行promotion/native/install/render/surfaces，不把脚本准备当阶段PASS。
+
+新增choice preseed source-only投影只含八道现代题面、空figure_refs及定理38定义，
+无答案/interaction/旧choice，SOURCE-SOLVING输入actual0444，
+SHAd89a27e1d74d7b8e1736dfed92a71eca60e05ac6290513151df9da73ab65c133。
+这不是官方seed，正式prepare仍要等本课原生收口。
+Bohr the 2nd 01a20537-c08c-7ca2-864f-c94fa4ad6015为零图choice SOURCE作者，
+own tmp/n30-choice-source-solver-author-19，只独解八源与真实小问、存在条件/特例/
+378歧义及自然response units/作图能力损失，actual SOURCE-SOLVED锁后返回；
+未准许options/draft/choice批准或canonical改动，其root未读。
+作者不计作第二独审。父本段0图/永久24，无exec/server/新完整课/新commit。
+
+### 接续19安全暂停回执
+
+最新人类安全暂停覆盖上文ACTIVE生产授权。实际根目录：
+`/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck`；
+分支仍`codex/STEMROBIN-188-textbooks`。未为暂停commit/push、重建、删改备份、
+回滚、移动refs或Git锁；全部未提交/ignored产物、原FIRST及失败计数原地保留。
+父无exec/server/browser/background在途，自有代理均已安全结束并关闭：
+Copernicus、Bohr the 2nd、Laplace the 2nd、Carver the 2nd；不能停止的自有任务：0。
+不影响其它生产聊天或无关进程，不写共享DB，不重启自动任务，不新建/迁移树。
+
+暂停前已完成的接续事实（不是整课完成）：
+- Copernicus第三审查已收存，正文PASS、七答案PASS，378原deferral请求修订保留。
+  仅精确应用其两个已独立验算充分的displayAnswer/notes替换值，其它键/题面不变；
+  未执行现代/答案finalize。collection SHA
+  `83f9b63dd9ae5792a8a3a8d25c881e84115e5a2a77a46db6a8958bede46eeca3`，
+  原独审retention SHA`e2aba37c8647b3a1bd3d6191ca57ad1533eff90f891d42396cbf2b573aedf4d0`，
+  精确替换retention SHA`ac13b3a54acfc1e7185016706a45e2a6d94ae9fbc1fc422fad2b7dbb24e10cb7`。
+  接收scopeClosed误按boolean的首次技术失败及原脚本已留存，恢复exit0，不重审。
+- Bohr零图来源作者已收存，SOURCE-SOLVED实际0444，
+  SHA`f9af22ebf34fb725249cf784df460b33760bdd630e69606784a2026d89cc5c39`；
+  retention SHA`28773e0ae725d15826824912fb6c0b59f09932a14b6ebd308758a502e4c1c402`。
+  两技术恢复及89算术样本只有manifest/工具历史，无独立rawstream文件，不伪造或重跑。
+  未生成官方seed/options/draft，378条件性解释与风险仍在原作者锁内。
+- Laplace新173174作者已完成，原地`tmp/source6g173174-author-first-19/manifest.json`，
+  SHA`4ae5c55a14583de7de840674cecb9b13442e440135b6d6c1ddc36692f4836896`；
+  173 native exit0、20/20、230 owner-ex479；174 exit1、25/25、▮白名单失败，
+  38证明仍OPEN。6/8图片及FIRST/四crop/回执全部原地保留，未新建retention包装或独审。
+- Carver按暂停指令停止图192193部分审查；两原图与四实际截图共6/8、6/24，
+  0图失败/crop/reopen，两非图path-probe失败在工具历史。未出最终verdict/report/manifest/
+  review@1，不冒充图PASS。原地`tmp/n30-fig192193-independent-review-19/FIRST.md`
+  actual0444、8051bytes，SHA`b65b61636114d3b4d3bb81c325371d5870d19a9f715c557b4355f2dcc1d4512c`。
+  没有开启下一190191图审。父本段0图片、永久24/24，不复看或重置。
+
+现有可供监督统一入库的完整离线中文课程4课（既有batch06记录，均published=false）：
+`geo68-c2-s4-n29`、`geo68-c3-s1-n32`、
+`geo910-appendix-s4`、`geo910-appendix-s9`。
+现有完成与普通交付证据：
+`/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/batch-06-delivery.json`，
+对应已提交/推送`0852fe5fb16360a3ebcc161123bb04b6865f5024`。
+本聊天未为暂停重新查询236课基线或重验全量；由监督与该基线统一核对。
+接续19新增完整课程：0。N30未安装/未finalize/未正式choice/未整页显示，不能入完整清单。
+安全暂停已落实；等待直接人类恢复，不再开启课程、审查、修复、构建、付费或下游阶段。
+
+## 2026-11-22 188-7 直接恢复
+
+本聊天按最新直接授权恢复，仅 6-8g / 9-10g，finish=review。
+唯一生产根 `/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-188`；
+HEAD `0852fe5fb16360a3ebcc161123bb04b6865f5024`，原有暂存为空。
+attach_worktree 失败原因为 `This linked worktree belongs to another chat.`；
+不创建替代树，所有生产命令继续显式使用唯一根。
+live188 已读取（state_group=started）；本地最新技能及 production-resume 已读取，
+安装记录 701fae7e 保持，不重复 setup / bootstrap / 全包哈希。
+最新直接授权覆盖旧暂停、四课与 E 等待；不启动 E、不写共享 DB，
+不发送监督/同伴消息。逐课完整审查、持久保存、普通 commit/push 后，
+在本检查点留 lessonId/commit/路径提交监督单一入库队列并立即下一课。
+未知 ignored 字节及旧 batch06 回执不冒称恢复，历史备份不动。
+N30 优先补缺失阶段；正文及七答案 PASS 与 378 两精确字段批准直接复用。
+Harvey 为唯一在途独审，仅补 fig192/193 中断且未获 PASS 的范围；
+旧 Carver 不唤醒，源 UNKNOWN、历史 24/24 及作者失败/修订计数保留。
+本聊天新实际图片上下文从其自身加载记录计数，当前 0，不宣布历史清零。
+
+### 2026-11-23 188-7 N30 收口与 N33 局部技术审查
+
+N30 两组缺失图审串行完成并收存、关闭：Harvey fig192193 PASS，manifest
+`2b3f46d33900d8d62614798119985a92f409aa8a155280cb407a3adad06d2105`；
+Archimedes fig190191 PASS，manifest
+`8198166e43065ad0b0ead81edaef6176497d458cf43223148d71b58373e46a2c`。
+各 6/8 图片、6/24 上下文，不重绘；四图 spec/source/SVG 不改，
+仅提升输出路径元数据并原生记录已有审查。raw N30 与 0138–0142 已安装，
+正文、七答案和 378 两精确批准字段直接复用。
+modern 首次与 recovery1 的段落边界失败均保留；按当前 normalizer/prose_flow
+只改三个 before 锚点，boundary-recovery2 PASS，28 blocks/8 exercises/4 figures。
+answer-finalize PASS，auto=0/ungraded=8；offline render PASS。
+正文、习题及只读答案桌面/手机显示各一次 PASS，证据在
+`6-8g/evidence/stemrobin188-6g-n30/display7/`，不声明产品功能验证或新增键盘交互。
+父本接续实际图片 8/24（N33 原图4 + N30 显示4），显示批4/8，历史24/24不改。
+官方 choice seed 已生成，八源题373–380与概念block16，无图；
+digest `c879d546b0558e6dcbc22c20852fb8ad71926f6ff8d7690f52c2479e551bb4c1`。
+Ohm 仅在 tmp/n30-choices7 写作者稿，独审尚未派出；未称整课完成或提交推送。
+
+N33 parent 对 Parfit 单行 SEC_NUM 修复完成独立受影响代码审查：
+新增分支均为非捕获组，group1 数字与 group2 标题、后续标点及非空标题要求未变；
+cut_lessons 仍保留 printed_title/source blocks，不修改源字符。
+既有 before/after 59 定向检查证据复用，两个 literal case 从失败变通过，
+其它捕获/来源保存 checks 不变；未重跑全书或源审。
+此修复解除的是 native ID 的技术识别缺口，不是图/数学/字形身份 PASS。
+原 heading-binding-repair7 README 的 pending 为历史状态；实际本段已审。
+N33 preparation7 原 fallback 输出保留；后续只恢复受影响 assemble/prepare，
+source triangular mark、445 stars、旧严格顺序及所有历史失败/UNKNOWN 不改。
+
+N33 Euler scoped raw assemble PASS，native `geo68-c3-s1-n33`，
+20 blocks/12 text/5 exercises441–445/4 figures209–212，无N34/160，0图。
+`preparation-recovery7/manifest.json` SHA
+`845b04fbbeb532e1d34adcebfe9f6e97defb69b68c1370b1a3b772492eedbc32` 保留其
+自加sandbox的 adapt-prepare 根探测失败；Euler 已收取关闭。
+parent 在同一已授权根直接原生 adapt-prepare 重试 exit0，实际输出
+`preparation-recovery7/work/adapt/6-8g/modern-us-neutral/lessons/geo68-c3-s1-n33/`；
+未改 guard 或重跑 raw/source。Sagan 仅 author tmp/n33-text-author7，
+保守正文/布局及 A/B 与 P/Q 精确勘误提案，不注册/批准/生成图。
+Faraday 为当前唯一 choice 独审，tmp/n30-choice-independent7，先 seed-only 源解锁定，
+当前未披露 draft/key；Ohm 仍为 choice 作者，不当独审。
+
+N30 Ohm 一次收取关闭：11题/53选项/0图，原 draft digest
+`fadef4611e7b02abbaa358ebf8be9269360b6e92341a04179fabc8367658e54b`；
+作者 seed-binding 首败完整保留于 AUTHOR-NOTES。
+parent 诊断当前工作 validate.check_seed 将 include_group_instructions 从 comparable
+删除、refreshed 却保留而必败；只删该多余 source 重建分支，恢复 HEAD 已有比较方式，
+其它既有 legacy/dirty 改动不回滚、不混入本课提交。
+定向检查 exit0：current/legacy/index-trace 三接受，false-mode/题面/定义/三来源trace 六拒绝。
+恢复 checker 后首次 draft 检查仍exit2，三个数学不等式被HTML正则误识别；
+原 `draft.author-original7.json` 保留，只在 q04C/q05D/q06E 用等价 \\lt/\\gt 记法，
+源/键/任务不改；恢复后结构检查exit0，不冒称语义批准。
+Faraday SOURCE-FIRST actual0444/hash
+`622357df66bd55dee0863452e990a824bac7aacbe2064e32f7569e394b13060c` 已一次接收；
+view-only actual0444/hash
+`223f83e503d8143a35f0b0524cb5b2125bfe3c4edc1f6c2784881291756da97d` 已提供，
+当前逐项独解53选项并先判fidelity/redundancy/leakage，作者键尚未披露。
+
+Faraday VIEWS-FIRST.md actual0444/hash
+`cf221b0a4ca818c1a0654f522a4cbe6d20fa3044d56f07510f778f5bb4ebb2a4` 已一次收取，
+53项独解31真22假，fidelity/redundancy/leakage 与损失先于键检查记录。
+当前已准其与作者内部推导/键作最终比较，未出正式 semantic PASS 或留存 choice-set。
+N30 显示脚本仅改未执行的 choices 阶段：整题边界分段、每图最高5500px、
+总批次至多8图，以一次桌面/手机显示保证全文可读；不重跑已有四张显示。
+
+N33 Sagan 作者精确转写已收取关闭、持久保留于
+`6-8g/evidence/stemrobin188-6g-n33/text-author7/`；
+原 before-initials 候选保留，仅正文12历史缩写 Н·И·→N.I. 及相关元数据/锚点，
+source、人物身份、日期、公式与 mark/star UNKNOWN 不改，A/B–P/Q提案仍未批准或应用。
+Heisenberg 五答案作者已收取关闭、持久保留于同N33 `answers-author7/`；
+441–445全部derived/ungraded/parts=[]，书后答案文件不存在、不虚构bookRaw，0图/无交互文件。
+两组图作者 Aquinas209210、Erdos211212 仍在其限定root工作，
+各max8images，源库存/非欧示意与现代规则分开，不冒称独审PASS。
+
+N33 四图作者均一次收取、关闭、持久保留：
+`fig209210-author7/manifest.json` SHA
+`97efe05400d23e5e80f64931a16a94fde935cacba7f0872c213b031b7f4e02b6`，
+7/8图片、7/24上下文，4次失败保留，209修订1、210修订3；
+`fig211212-author7/manifest.json` SHA
+`6b6c2c2695b18a81a99362936b3daba4020f8b7bea01c286854a77c8f4d72dd3`，
+7/8图片、7/24上下文，211一次渲染失败/一次标签修订，212无失败/修订。
+211仅有限trace在P交会及P离a，不添加Euclidean parallel断言；
+212保留曲线在K交会/基线处垂直切向，circular arcs仅示意规整，不冒称来源metric/model。
+两组glyph/script/dash UNKNOWN均保留，四图尚无独审/正式review@1/提升或完整课PASS。
+父本接续仍8/24，无重开子批图或新的源图审。
+
+### N30 逐课保存入口
+
+Faraday 正式选择题独审 PASS，review actual0444/byte SHA
+`95a4ebe57f712a1b4f09a4e94d699451c4944bec71e9ff46649190c00033db13`；
+8 source reviews/11 question reviews/53 option checks，native validator exit0。
+retain_choices 原生 exit0，已存本课 `choice-set/`，损失与378条件解释保持明确。
+choices 显示首次裁剪执行exit1，两partial图及原脚本/错误记录保留，未查看/冒称PASS；
+只加 fullPage:true 并用 recovery1 新文件，恢复截图exit0。
+独立显示复核 PASS，DISPLAY-REVIEW actual0444/SHA
+`45a5bfdbb2468d63488631c4d2b7fa9b8ad90a6958400e27670619303201db20`；
+实际3图（桌面1、手机2整题分段），全11题53项完整，无必要裁切/重叠，
+次要可读标点/比较式换行如实记录。审者3/8、3/24，父仍8/24；Faraday已关闭。
+本课 raw/modern/四图/八只读答案/十一choices及必要源、失败、审查、显示均完整离线，
+准备本分支窄commit/普通push；未写DB或称已发布。两index只暂存N30及实际必要pages，
+其余未完课、其它技能/代码/9-10g dirty与既有暂存不混入。

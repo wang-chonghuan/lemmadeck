@@ -1,0 +1,26 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport json,sys\nfrom pathlib import Path\nrepo,book,work=map(Path,sys.argv[1:])\nassert Path.cwd()==repo\nsys.path.insert(0,str(repo/\".claude/skills/ld-s10y-lesson/tools\"))\nimport assemble\nstream=assemble.load_stream(book);refs={b[\"ref\"]:b for b in stream}\nleft,right=\"p0138#4\",\"p0142#7\"\nassert \"\".join(refs[left][\"lines\"])==\"30. 作图问题\"\nassert refs[left][\"kind\"]==\"h3\" and refs[right][\"kind\"]==\"exhead\"\nassert \"\".join(refs[right][\"lines\"])==\"第二章补充习题\"\nstart=next(i for i,b in enumerate(stream) if b[\"ref\"]==left)\nend=next(i for i,b in enumerate(stream) if b[\"ref\"]==right)\nselected=stream[start:end]\nassert [b[\"ref\"] for b in selected if b[\"kind\"]==\"h3\"]==[left]\nassert not any(b[\"kind\"] in (\"h1\",\"h2\") for b in selected)\nstatus=assemble.run(book,repo/\"ssot-resources/soviet10year-textbooks/toc/6-8g/zh.json\",\n repo/\".claude/skills/ld-s10y-lesson/profiles/soviet-cn.json\",strict=True,\n work=work,exercise_numbering=\"book\",stream=[refs[\"p0068#1\"],refs[\"p0132#6\"],*selected])\nif status==0:\n index=json.loads((book/\"book.json\").read_text())\n assert [r[\"id\"] for r in index[\"lessons\"]]==[\"geo68-c2-s4-n30\"]\n ex=json.loads((book/\"lessons/geo68-c2-s4-n30/exercises.json\").read_text())\n assert [r[\"number\"] for r in ex[\"exercises\"]]==[str(n) for n in range(373,381)]\n assert len(json.loads((book/\"lessons/geo68-c2-s4-n30/lesson.json\").read_text())[\"figures\"])==4\nsys.exit(status)\n",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-draft-first-18/artifacts/6-8g",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-draft-first-18/work/6-8g"
+  ],
+  "startedAt": "2026-11-22T21:14:25.770Z",
+  "endedAt": "2026-11-22T21:14:25.933Z",
+  "exitCode": 0,
+  "signal": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-draft-first-18/first-assembly.stdout",
+      "sha256": "e755638fe11c209572caaa1431af34bdef9847c42bbbed6b3b1c7d19018ca941"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-draft-first-18/first-assembly.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}

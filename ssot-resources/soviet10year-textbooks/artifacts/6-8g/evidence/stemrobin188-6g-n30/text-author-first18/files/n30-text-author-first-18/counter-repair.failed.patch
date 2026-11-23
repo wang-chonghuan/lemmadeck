@@ -1,0 +1,30 @@
+*** Begin Patch
+*** Update File: /Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-text-author-first-18/evidence.mjs
+@@
+-      subpartLabelConversions += Array.from(item.source_text.matchAll(/(?:^|[:;\s])[абв]\)/gu)).length
++      const withoutSubfigureLabels = item.source_text.replace(/图\d+,\s*[абв]/gu, '')
++      subpartLabelConversions += Array.from(withoutSubfigureLabels.matchAll(/[абв]\)/gu)).length
+@@
+   assert.equal(lesson.errata.length, 0)
++  assert.equal(subfigureLabelConversions, 6)
++  assert.equal(subpartLabelConversions, 2)
+@@
+     'preflight.execution.json',
++    'manifest.initial-counter-attempt.json',
+@@
+       reason: 'The initial counter included six subfigure references ending in a Cyrillic label plus closing parenthesis. The corrected counter separates the six subfigure references from the two a/b list labels. The successful original preflight output is retained unchanged.',
++      intermediate_manifest: {
++        path: path.join(root, 'manifest.initial-counter-attempt.json'),
++        reported_subpart_conversions: 6,
++        reason: 'Whitespace inside four subfigure references still matched the first attempted context-sensitive counter. Final counting removes all subfigure labels before counting the remaining list labels.',
++      },
+*** Update File: /Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-text-author-first-18/manifest.json
+*** Move to: /Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-text-author-first-18/manifest.initial-counter-attempt.json
+*** Update File: /Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-text-author-first-18/author-status.md
+@@
+-That successful original output is retained unchanged; no candidate content changed for it.
++That successful original output is retained unchanged; no candidate content changed for it.
++The first attempted counter repair still included four whitespace-prefixed subfigure labels.
++Its intermediate manifest is retained as manifest.initial-counter-attempt.json. The final counter
++removes all six subfigure references before counting the two remaining list labels.
+*** End Patch

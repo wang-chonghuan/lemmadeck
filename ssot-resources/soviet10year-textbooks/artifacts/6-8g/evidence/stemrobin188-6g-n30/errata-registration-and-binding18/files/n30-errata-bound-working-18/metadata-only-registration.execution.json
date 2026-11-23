@@ -1,0 +1,26 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport json,sys\nfrom pathlib import Path\nsys.path.insert(0,sys.argv[1])\nimport blocks,p2c\nold,out=map(Path,sys.argv[2:])\noriginal=json.loads((old/\"page.json\").read_text())\ncandidate=json.loads((out/\"page.json\").read_text())\nold_meta,old_blocks=blocks.parse((old/\"page.md\").read_text())\nassert candidate[\"blocks\"]==original[\"blocks\"]\nerrors=p2c._validate_page_errata(candidate[\"meta\"],candidate[\"blocks\"],139)\nassert not errors,errors\nmd=blocks.dump(candidate[\"meta\"],candidate[\"blocks\"],139)\nnew_meta,new_blocks=blocks.parse(md)\nassert new_meta==candidate[\"meta\"]\nassert new_blocks==old_blocks\nassert blocks.printed_lines(new_blocks)==blocks.printed_lines(old_blocks)==26\n(out/\"page.md\").write_text(md)\nprint(json.dumps({\"nativeErrataValidation\":\"PASS\",\"parseDump\":\"PASS\",\n \"unchangedFaithfulBlocks\":True,\"printedLines\":26,\"nativeFinalizerReplays\":0}))\n",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/source6g139140-author-first-04/artifacts/6-8g/pages/0139",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-errata-bound-working-18/artifacts/6-8g/pages/0139"
+  ],
+  "startedAt": "2026-11-22T21:35:20.597Z",
+  "endedAt": "2026-11-22T21:35:20.880Z",
+  "exitCode": 0,
+  "signal": null,
+  "streams": {
+    "stdout": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-errata-bound-working-18/metadata-only-registration.stdout",
+      "sha256": "4e90b463cf2a2e480fe4443f491476d58eca53b531b116402a482130cc794548"
+    },
+    "stderr": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n30-errata-bound-working-18/metadata-only-registration.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}
