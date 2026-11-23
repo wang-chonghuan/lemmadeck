@@ -1,5 +1,152 @@
 # 生产检查点
 
+## 2026-11-23 180-7 Intro Complete Offline; Immediate Save
+
+Herschel FIRST modern-text PASS0 revisions/0 newimages. Adapt-finalize
+PASS2/3 layout-only,0 figures/exercises; empty answers prepare/finalize
+PASSauto0/ungraded0. One render emits4 paragraphs/1 concept boundary.
+One isolated headless Chrome display invocation PASS2 surfaces1440x960/390x844,
+both screenshots visually inspected; bold definition/vector formulas complete,
+no clipping/overflow/errors/leaks, actual KaTeX1.10 scale. Reviewer total3images,
+parent23/24 unchanged. Reviewed template copies and source/text/display evidence
+durable. No source or applicable display replay.
+Immediate commit scope intro raw/modern and54 with tested narrow counter code,
+portable test and all first/candidate/final evidence. Staged raw index31/88 is
+HEAD+intro only. Working33/89 preserves held n37 AND prepared summary3.
+Modern staged index adds ONLYintro. No n11/n12/summary3 source/course rows,
+60/65 drafts,61/62 incidents, installer/user changes or app/schema staged.
+Next summary3 raw promoted and template prepared with exact1 adjacent anchor,
+actual2 paragraphs; old103 PASS reused without image/finalize/source replay.
+It is NOT modern-reviewed, complete or part of intro's commit/intake.
+Saved33/increment5 until actual push, paid69/new0, unknown tokens/costs.
+Diff check found only two EOF blank lines in immutable first counter-test
+snapshots; retained exact bytes. Other whitespace checked with historical
+blank-at-eol/blank-at-eof exceptions, not rewritten evidence or code weakening.
+No DB/publication/closure/deployment or new branch/worktree/chat/timer.
+
+## 2026-11-23 180-7 Intro Source PASS; Modern FIRST Active; n12 Intake Collected
+
+Herschel FIRST whole54 SOURCE PASS0 revisions:21 rows/11 blocks;1 image,
+0 crops/reopens. Independent inventory frozen before candidate; selected
+intro3 prose/9 printrows/2 formulas/0 exercises/figures closes before n11.
+Scientific footnote retained in wholepage and excluded with n11 from intro.
+Only intro raw promoted, working index32/89 retains held n37. Adapt-prepare
+PASS3 prose objects; actualflow4 paragraphs. One exact text anchor before
+bold definition added; same sole reviewer FIRST modern-text active0 newimages.
+Staged selected raw index will be HEAD+intro only31/88.
+
+Einstein corrected author return collected/closed:60 initial finalize exit1,
+26 counted/25 faithfulrows,11 blocks/0 figures/normalizations. Original
+draft/failure/streams durable page0060; no retry or source PASS.
+New65 authored25 rows/9 blocks, n12exercise8 followed by n13; current finalize65
+not run after60failure. Historical65 AUTHORREADY25/25 remains old evidence,
+not reset or promoted by this new retained draft. 61/62 incident candidates
+moved outside active source pages and retained under0060/source-author-scope;
+original holds/reports unchanged. ONLY own63 delta restored against exact entry,
+64 unchanged. Actual6 sourceimages/9 cumulative incl old63/64 accidental opens;
+no budget reset and no n12 source/course approval. Technical worker closed
+after verified54 proof; only Herschel semantic reviewer remains active.
+
+Next independent sourced item located: old103 SOURCE PASS from
+source-review-8p103.md reused; current MD exact matching
+`060026817a9bc5e11b962fc7156108556ee705146c44efc9a38351eeaea49372`.
+One limited103 scratch assembly PASS selected thirdchapter summary2 prose,
+0 figures/tasks. Unmatched incoming103#1 warning belongs preceding n21,
+not selected summary. No103image/review/finalize replay or104 inclusion.
+Not yet promoted/modern-approved/saved; intro is the immediate save priority.
+Saved33/increment5, parent23/24, paid69/new0, unknown tokens/costs; no DB/closure.
+
+## 2026-11-23 180-7 Source54 Counter PASS; Intro FIRST Review; n12 Scope Corrected
+
+Epicurus technical candidate05 collected: all21 source-row deletion controls,
+2 specks, real standalone t/denominators and original positives PASS; focused
+p54 eleven/typography4/prior13/p53eleven/guard2/portable6 PASS. Shared original
+4 failures/2 skips unchanged. Verified line_bands-only delta applied,
+live SHA `8cb92aec54903cec817cec5c0f4fa29502e6f16ffc3919b7052ef217ed4d9e8d`.
+0 new images,total3. First/candidate03/04 failures and final proof durable at
+page0054/counter-repair/refinement. Technical PASS is not source approval.
+Parent corrected only引言 heading h2->h3 per TOC, first h2 still preserved in
+initial failure. Affected54 finalize exit0; limited54 assembly PASS:
+complete intro3 prose objects/0 exercises/figures, n11 starter separate.
+Herschel `01a20705-5e59-7603-af5b-b7a9d18db1b5` is fresh sole FIRST full54
+source reviewer,1-grid baseline, source-first independent inventory, no earlier
+source replay or promotion. Parent23/24; no semantic verdict yet.
+
+Parent's next-source scope error found and corrected before any promotion:
+63/64 were already approved/retained in `88193f85973afacb74f01b666ad9817b0ad51cb8`.
+Einstein stopped rewriting/finalizing them; new63 candidate is retained
+separately and ONLY author-owned63 delta is to be removed against exact entry.
+Original63/64 approvals reused. Further historical61/62 source blockers found:
+61 spent mechanical repair1 with3 unresolved source observations;62 italic
+omission blocker remains. Original reports/budgets unchanged. No new source
+review, approval or cross-gap n12 assembly allowed by this new author attempt.
+Einstein now finishes ONLY genuinely new60/65;61/62 drafts/open images, if any,
+are retained as this scope incident, not clean first approval or budget reset.
+Summary intakef082840e4 remains exact/saved33/increment5/paid69/new0.
+No DB, deployment/closure, new chat/worktree/branch/timer or all-group completion.
+
+## 2026-11-23 180-7 n12 Required Boundary59 FIRST PASS
+
+Parent FIRST-finalized59 once as n12's independent required starting boundary:
+actual exit0,10 blocks/23 printed and authored rows,0 figures/normalizations.
+Original Pauli author text reused without image reopening or rewriting;
+actual argv/cwd/streams remain page0059/finalize-initial. This does not approve
+n11's preceding exercise5/6 or complete n11, and is not a55/56 replay.
+Source58 still not finalized after57failure. Einstein owns only new60-65.
+Selected n12 assembly/staging helpers prepared from existing single-lesson
+pattern under.tmp/180-7-n12; no assembly, raw/modern promotion or source approval.
+Summary pushed intake above remains exact; source59 is NOT retroactively part
+of summary's pushed snapshot. Parent23/24 and paid69/new0 unchanged.
+
+## 2026-11-23 180-7 Next n12 Missing Source Active; Local Holds Remain
+
+Einstein `01a206eb-20af-7581-a828-61b9e6b75a0f` completed summary reviews;
+now owns FIRST missing60-65 source AUTHOR for DIFFERENT n12, using existing59
+tail text only. No n12 source review delegated yet, no semantic reviewer active.
+New source author batch6 grids/<=8; prior cumulative3 images remain historical.
+Prepare60-63 then64-65, author all before firstorderedfinalize; firstfailure
+stops downstream. No59 reopen/rewrite/finalize, no raw/modern promotion yet.
+Epicurus same bounded p54 owner continues four valid classifier gaps; exact
+candidate03 NO-APPLY and prior baseline retained under page54/counter-repair.
+Pauli's n11 routing author returned/closed:1 further crop image,total7/8;
+figure37 hybrid car+stopwatch-housing artwork local HOLD, no paid call/spec/
+source or figure approval. Source57 first20/19 remains technical pending,
+source58/59 not finalized after that failure. Source55/56 earlier PASS reused.
+Saved33/increment5; parent23/24, paid69/new0; unknown costs/tokens.
+Summary intake above is not completion of the production group. No DB waiting,
+replay, new chat/worktree/branch/timer, deployment/closure or producer publication.
+
+## 2026-11-23 180-7 Summary Pushed; Supervisor-Only Single-Lesson Intake
+
+Ordinary push exit0 saved exact129-file snapshot
+`f082840e4d07a921f41b7cc49d145da957d032a0`,
+remote3d1ec46eb..f082840e4. Delivered33 /180-7 increment5.
+No remote replay, producer DB writes or DB waiting.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c1-s1-t12`, 第一章提要,
+  legitimate number null. Use exact pushed snapshot above.
+- Durable modern lesson:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c1-s1-t12/`.
+- Necessary raw summary and independent source/modern-text reviews, source52
+  unchanged PASS reused plus new53 PASS16/16. Summary ends53#5; NO page54.
+- Actual counts:5 raw prose objects,6 rendered paragraphs,2 concept boundaries,
+  0 figures/exercises/answers/choices/new interactions. Empty answers ready.
+- Source/text/display independently PASS0 content revisions. One desktop/mobile
+  two-surface check and both actual screenshots passed. Reuse unchanged evidence.
+- Writer serializes existing one-lesson base and empty-answer publishers as
+  required, then one small summary readback. No choices/interactions stage,
+  earlier/all-lesson replay or duplicate display pipeline.
+- Diagnostic44/47 facts and45/48 original failures in the commit support portable
+  counter controls ONLY; no n8/n9 lesson rows/intake/source approval are implied.
+
+Working held n37 index and all unfinished p54/n8/n9/n11/installer/user bytes
+preserved. Parent images23/24, paid69/new0, unknown tokens/costs. P54 original
+and candidate03 NO-APPLY history copied once to durable page54/counter-repair;
+same owner continues exact four remaining control failures privately.
+Continue sourced work; not formal handoff/full-group completion or publication.
+
 ## 2026-11-23 180-7 Summary Complete Offline; Immediate Save
 
 Same Einstein reviewer FIRST modern-text PASS0 revisions/0 new images;
