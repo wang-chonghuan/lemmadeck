@@ -112,10 +112,35 @@ function sectionBreakIndices(blocks, sectionBreaks = []) {
   return indices
 }
 
+function associateFigureCaptions(blocks) {
+  const result = []
+  const label = (text) => String(text ?? "").replace(/\s+/gu, "")
+  for (let index = 0; index < blocks.length;) {
+    const start = index
+    while (["fig", "cap"].includes(blocks[index]?.kind)) index += 1
+    if (index === start) {
+      result.push(blocks[index++])
+      continue
+    }
+    const group = blocks.slice(start, index)
+    const figures = group.filter((block) => block.kind === "fig")
+    const captions = group.filter((block) => block.kind === "cap")
+    const pairs = figures.map((figure) =>
+      captions.filter((caption) => label(figure.label) && label(caption.text) === label(figure.label)))
+    const matched = pairs.flat()
+    if (figures.length > 1 && captions.length === figures.length
+        && pairs.every((pair) => pair.length === 1)
+        && new Set(matched).size === captions.length) {
+      figures.forEach((figure, offset) => result.push(figure, pairs[offset][0]))
+    } else result.push(...group)
+  }
+  return result
+}
+
 function proseFlow(blocks, sectionBreaks = []) {
   const breaks = new Set(sectionBreakIndices(blocks, sectionBreaks))
   let paragraphIndex = 0
-  return blocks.flatMap((block) => {
+  return associateFigureCaptions(blocks.flatMap((block) => {
     if (block.kind !== "p") return [block]
     return proseParagraphs(block.text).map((text) => {
       const item = {
@@ -126,7 +151,7 @@ function proseFlow(blocks, sectionBreaks = []) {
       paragraphIndex += 1
       return item
     })
-  })
+  }))
 }
 
 /** 插图取矢量优先；SVG 直接内联，宿主可用 CSS 换色（fill 是 currentColor）。 */

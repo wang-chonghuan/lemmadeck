@@ -1,0 +1,139 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const { proseInline } = require(path.join(repo, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'));
+const lesson = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n11');
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108/display-7a-N11-FIRST');
+assert.ok(!fs.existsSync(root));
+fs.mkdirSync(path.join(root, 'screenshots'), { recursive: true });
+const bind = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const keysFile = path.join(lesson, 'answer-keys.json');
+const keys = JSON.parse(fs.readFileSync(keysFile, 'utf8'));
+assert.equal(keys.status, 'ready');
+assert.equal(keys.answers.length, 16);
+const originals = {
+  text: path.join(lesson, 'evidence/first-text-written-display/text.html'),
+  exercises: path.join(lesson, 'evidence/first-text-written-display/exercises.html'),
+  choices: path.join(lesson, 'choice-set/evidence/first-choice-display/choices.html'),
+};
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+const errors = [];
+const external = [];
+page.on('pageerror', error => errors.push(error.message));
+await page.route('**/*', async route => {
+  if (/^https?:/.test(route.request().url())) {
+    external.push(route.request().url());
+    await route.abort();
+  } else {
+    await route.continue();
+  }
+});
+const frames = [];
+const surfaces = [];
+try {
+  await page.goto(pathToFileURL(originals.exercises).href);
+  await page.evaluate(() => document.fonts.ready);
+  const fragments = keys.answers.map(answer => {
+    const html = proseInline(answer.displayAnswer)
+      .replaceAll('class="sr-nb"', 'class="nb"')
+      .replaceAll('class="sr-prose-math"', 'class="prose-math"');
+    return `<li class="ex" data-answer="${answer.exercise}"><span class="no">${answer.exercise}.</span><div class="body">${html}</div></li>`;
+  }).join('');
+  await page.evaluate(html => {
+    document.title = '负整数指数幂 - 标准答案';
+    document.querySelector('.sheet').innerHTML = `<h1>负整数指数幂</h1><p class="crumb">标准答案</p><ol class="ex">${html}</ol>`;
+  }, fragments);
+  const answersFile = path.join(root, 'answers.html');
+  fs.writeFileSync(answersFile, await page.content(), { flag: 'wx' });
+  const files = { ...originals, answers: answersFile };
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(viewport);
+    for (const [surface, file] of Object.entries(files)) {
+      await page.goto(pathToFileURL(file).href);
+      await page.evaluate(() => document.fonts.ready);
+      assert.equal(await page.locator('.katex-error,.err,.sr-tex-err').count(), 0, `${surface}: math rendering`);
+      assert.ok((await page.locator('.sheet').innerText()).trim().length > 100);
+      const geometry = await page.evaluate(() => {
+        const scrollable = [...document.querySelectorAll('.nb,.sr-nb,.body,.choice-stem,.choice-option-body')]
+          .filter(e => e.scrollWidth > e.clientWidth + 1);
+        scrollable.forEach((element, index) => element.dataset.displayScroll = String(index));
+        return {
+          height: document.documentElement.scrollHeight,
+          width: document.documentElement.scrollWidth,
+          scrollers: scrollable.map(e => ({
+            id: e.dataset.displayScroll,
+            top: e.getBoundingClientRect().top + window.scrollY,
+            bottom: e.getBoundingClientRect().bottom + window.scrollY,
+            clientWidth: e.clientWidth,
+            scrollWidth: e.scrollWidth,
+          })),
+        };
+      });
+      assert.ok(geometry.width <= viewport.width + 1, `${surface}: page overflow ${geometry.width}`);
+      const maxY = Math.max(0, geometry.height - viewport.height);
+      const start = surface === 'answers' ? 0 : Math.min(maxY, viewport.height - 48);
+      const ys = [];
+      if (surface === 'answers' || maxY > 0) {
+        for (let y = start; y < maxY; y += viewport.height - 64) ys.push(y);
+        if (!ys.includes(maxY)) ys.push(maxY);
+      }
+      const rightOnly = geometry.scrollers
+        .filter(s => !ys.some(y => s.top < y + viewport.height && s.bottom > y))
+        .map(s => Math.max(0, Math.min(maxY, s.top - 32)));
+      const capture = async (y, state) => {
+        await page.evaluate(({ y, state }) => {
+          for (const e of document.querySelectorAll('[data-display-scroll]')) {
+            e.scrollLeft = state === 'right' ? e.scrollWidth : 0;
+          }
+          window.scrollTo(0, y);
+        }, { y, state });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const actualY = await page.evaluate(() => window.scrollY);
+        assert.ok(Math.abs(actualY - y) <= 2, `${surface}: unreachable vertical position`);
+        const screenshot = path.join(root, 'screenshots', `${String(frames.length).padStart(3, '0')}-${viewport.width}-${surface}-${state}.png`);
+        await page.screenshot({ path: screenshot, animations: 'disabled' });
+        frames.push({ index: frames.length, surface, viewport, scrollY: actualY, horizontalState: state, ...bind(screenshot) });
+      };
+      for (const y of ys) {
+        await capture(y, 'left');
+        if (geometry.scrollers.some(s => s.top < y + viewport.height && s.bottom > y)) {
+          await capture(y, 'right');
+        }
+      }
+      for (const y of [...new Set(rightOnly)]) await capture(y, 'right');
+      surfaces.push({ surface, viewport, file: bind(file), geometry, captured: frames.filter(f => f.surface === surface && f.viewport.width === viewport.width).length, initialWindowReused: surface !== 'answers' });
+    }
+  }
+  assert.deepEqual(errors, []);
+  assert.deepEqual(external, []);
+  const report = {
+    at: new Date().toISOString(),
+    workdir: repo,
+    lesson: 'alg7-c1-s4-n11',
+    status: 'RUNTIME_PASS_NEW_PIXELS_PENDING',
+    mode: 'isolated headless; no user browser activated',
+    unchangedInitialWindowsReused: true,
+    input: bind(keysFile),
+    sharedHtmlFragmentRenderer: bind(path.join(repo, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js')),
+    surfaces, frames, errors, externalRequests: external,
+    newImageViews: 0,
+    hostTokenUsageAndCost: null,
+  };
+  const reportFile = path.join(root, 'capture.record');
+  fs.writeFileSync(reportFile, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
+  console.log(JSON.stringify({ ...bind(reportFile), status: report.status, screenshots: frames.length, surfaces: surfaces.map(s => ({ surface: s.surface, viewport: s.viewport, captured: s.captured })) }, null, 2));
+} finally {
+  await browser.close();
+}

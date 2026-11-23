@@ -251,6 +251,9 @@ def _fraction_across_split(
             rows.stop - rows.start <= 0.25 * glyph_h
             and columns.stop - columns.start >= 0.7 * glyph_h
             and abs(centre - split) <= 0.5 * glyph_h
+            # Wavy emphasis underlines can have glyphs both above and below.
+            and band[rows, columns].sum(axis=1).max()
+            >= 0.9 * (columns.stop - columns.start)
         ):
             continue
         contained = [
@@ -269,15 +272,39 @@ def _fraction_across_split(
         if rows.stop - rows.start < 0.6 * glyph_h:
             continue
         centre_x = (columns.start + columns.stop) / 2
-        centre_y = (rows.start + rows.stop) / 2
         if not any(
             rule_columns.start - 0.15 * glyph_h <= centre_x
             <= rule_columns.stop + 0.15 * glyph_h
-            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= 0.5 * glyph_h
+            or rows.start - 0.25 * glyph_h
+            <= (rule_rows.start + rule_rows.stop) / 2
+            <= rows.stop + 0.25 * glyph_h
             for rule_rows, rule_columns in supported
         ):
             return False
     return _single_fraction_row(ink, a, b, glyph_h)
+
+
+def _fraction_followed_by_text(
+    ink: np.ndarray, a: int, prev_b: int, next_a: int, b: int, glyph_h: float
+) -> bool:
+    """Keep a completed tall quotient separate from a short following sentence."""
+    if not (
+        prev_b - a + 1 >= 1.8 * glyph_h
+        and 0.6 * glyph_h <= b - next_a + 1 <= 1.3 * glyph_h
+    ):
+        return False
+    labels, _ = ndimage.label(ink[next_a:b + 1])
+    glyphs = [
+        bounds for bounds in ndimage.find_objects(labels) if bounds is not None
+        if 0.6 * glyph_h <= bounds[0].stop - bounds[0].start <= 1.3 * glyph_h
+        and 0.2 * glyph_h <= bounds[1].stop - bounds[1].start <= 1.3 * glyph_h
+    ]
+    return (
+        len(glyphs) >= 3
+        and _single_fraction_row(ink, a, prev_b, glyph_h)
+        and not _single_fraction_row(ink, a, b, glyph_h)
+        and not _fraction_across_split(ink, a, (prev_b + next_a) // 2, b, glyph_h)
+    )
 
 
 def _offset_system_label_band(
@@ -632,6 +659,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 a - prev_b <= merge_gap
                 and not separate_tall_rows
                 and not separate_full_text
+                and not _fraction_followed_by_text(ink, prev_a, prev_b, a, b, glyph_h)
                 and not different_stacked_rows((prev_a, prev_b), (a, b))
             ):
                 merged[-1] = (prev_a, b)
@@ -681,6 +709,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             )
             if (
                 not separate_full_row
+                and not _fraction_followed_by_text(ink, prev_a, prev_b, a, b, glyph_h)
                 and not different_stacked_rows((prev_a, prev_b), (a, b))
                 and
                 a - prev_b <= (

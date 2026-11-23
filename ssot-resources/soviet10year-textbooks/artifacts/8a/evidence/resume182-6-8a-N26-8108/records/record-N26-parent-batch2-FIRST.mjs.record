@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const capture = JSON.parse(fs.readFileSync(path.join(root, 'display-8a-N26-written-FIRST/capture.record'), 'utf8'));
+const seen = [
+  [20, 'Mobile header26, both square-root properties, theorem1/2 and theorem1 proof remain legible. Long equations wrap without covering adjacent prose. Lower text continues in next window.'],
+  [22, 'Mobile theorem2 verbal statement and examples1/2 are fully visible, with mixed-fraction example3 starting at bottom. Separator and root indices remain clear.'],
+  [24, 'Mobile mixed-fraction calculation and nested-root theorem3 proof show all factors and indices, with theorem4 beginning below. No right-side formula is clipped.'],
+  [26, 'Mobile theorem4 proof and final corrected exponent3 example fit the narrow sheet. Conclusion sqrt(2) is visible; bottom link remains outside this window and is not certified here.'],
+];
+const frames = seen.map(([index, evidence]) => {
+  const f = capture.frames.find(f => f.index === index);
+  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(f.path)).digest('hex'), f.sha256);
+  return { index, sha256: f.sha256, status: 'PASS', evidence, horizontalState: f.horizontalState };
+});
+const record = { at: new Date().toISOString(), observer: 'parent actual first image views', status: 'PASS', frames, imageViewsThisBatch: 4, reopened: 0, parentContextImageViewsBefore: 20, parentContextImageViewsAfter: 24, sourceOrMathematicsReviewRepeated: false, hostTokenUsageAndCost: null };
+const output = path.join(root, 'display-N26-observers/parent-batch2.record');
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: output, sha256: crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex'), observed: frames.length }));

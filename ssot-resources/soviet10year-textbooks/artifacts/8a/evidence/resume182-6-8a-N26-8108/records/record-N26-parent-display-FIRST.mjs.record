@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/ld-s10y-lesson/resume182-6-8108');
+const capture = JSON.parse(fs.readFileSync(path.join(root, 'display-8a-N26-written-FIRST/capture.record'), 'utf8'));
+const evidence = [
+  'Header26 and the product/quotient properties are readable; theorem1/2 conditions and proof do not overlap. Lower separator has continuation in next window.',
+  'Examples1--3 show fourth-root product, cube-root multiplication and mixed-fraction calculation. Theorem3 nested-root index and proof remain readable without clipping.',
+  'Theorem4 index reduction and the final cube_root(2*sqrt(2)) example are fully visible; bound corrected exponent3 renders above2, not as a subscript. Bottom20-question link is within the sheet.',
+  'Overlapping final window covers theorem4 through sqrt(2) conclusion and bottom link, with no lost last line or occluding control.',
+];
+const frames = capture.frames.filter(f => f.index < 8).map(f => {
+  assert.equal(crypto.createHash('sha256').update(fs.readFileSync(f.path)).digest('hex'), f.sha256);
+  return { index: f.index, sha256: f.sha256, status: 'PASS', evidence: evidence[Math.floor(f.index / 2)], horizontalState: f.horizontalState };
+});
+assert.equal(frames.length, 8);
+const record = {
+  at: new Date().toISOString(), observer: 'parent actual first image views',
+  status: 'PASS', frames, imageViewsThisBatch: 8, reopened: 0,
+  parentContextImageViewsBefore: 12, parentContextImageViewsAfter: 20,
+  sourceOrMathematicsReviewRepeated: false, hostTokenUsageAndCost: null,
+};
+const output = path.join(root, 'display-N26-observers/parent-batch1.record');
+fs.mkdirSync(path.dirname(output), { recursive: true });
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: output, sha256: crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex'), observed: frames.length }));

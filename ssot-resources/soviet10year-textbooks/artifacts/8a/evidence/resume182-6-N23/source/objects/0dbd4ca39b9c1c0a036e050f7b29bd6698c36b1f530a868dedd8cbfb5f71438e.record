@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3129/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [output, command, ...args] = process.argv.slice(2);
+assert.ok(output && command);
+const directory = path.resolve(output);
+assert.ok(directory.startsWith(`${repo}/.tmp/ld-s10y-lesson/resume182-6-3129/`));
+assert.ok(!fs.existsSync(directory), 'Preserve earlier execution receipts');
+fs.mkdirSync(directory, { recursive: true });
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const save = (name, bytes) => {
+  const file = path.join(directory, name);
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const startedAt = new Date().toISOString();
+const result = spawnSync(command, args, {
+  cwd: repo, env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  maxBuffer: 32 * 1024 * 1024,
+});
+const endedAt = new Date().toISOString();
+const receipt = {
+  schema: 'stemrobin-182/actual-execution@1',
+  cwd: repo, argv: [command, ...args],
+  exitCode: result.status, signal: result.signal, startedAt, endedAt,
+  ...(result.error ? { error: result.error.message } : {}),
+  streams: {
+    stdout: save('stdout', result.stdout ?? Buffer.alloc(0)),
+    stderr: save('stderr', result.stderr ?? Buffer.alloc(0)),
+  },
+};
+const binding = save('execution.json', Buffer.from(`${JSON.stringify(receipt, null, 2)}\n`));
+console.log(JSON.stringify({ ...binding, exitCode: result.status, startedAt, endedAt }));
+process.stdout.write(result.stdout ?? Buffer.alloc(0));
+process.stderr.write(result.stderr ?? Buffer.alloc(0));
+process.exitCode = result.status ?? 1;

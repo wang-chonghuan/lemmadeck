@@ -1,0 +1,49 @@
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+
+def stamp():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+receipt_dir = Path(sys.argv[1]).resolve()
+receipt_dir.mkdir(parents=True, exist_ok=False)
+argv = sys.argv[2:]
+started = stamp()
+env = os.environ.copy()
+env["PYTHONDONTWRITEBYTECODE"] = "1"
+with (receipt_dir / "stdout").open("xb") as out:
+    with (receipt_dir / "stderr").open("xb") as err:
+        child = subprocess.run(argv, stdout=out, stderr=err, env=env)
+ended = stamp()
+streams = {}
+for name in ("stdout", "stderr"):
+    path = receipt_dir / name
+    data = path.read_bytes()
+    streams[name] = {
+        "path": str(path),
+        "bytes": len(data),
+        "sha256": hashlib.sha256(data).hexdigest(),
+    }
+record = {
+    "schema": "stemrobin-182/actual-execution@1",
+    "cwd": str(Path.cwd()),
+    "argv": argv,
+    "exitCode": child.returncode,
+    "signal": -child.returncode if child.returncode < 0 else None,
+    "startedAt": started,
+    "endedAt": ended,
+    "environmentOverrides": {"PYTHONDONTWRITEBYTECODE": "1"},
+    "streams": streams,
+    "approvalMeaning": "Native execution only; independent source review PENDING.",
+}
+(receipt_dir / "execution.json").write_text(
+    json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+)
+print(json.dumps(record, ensure_ascii=False))
+sys.exit(child.returncode if child.returncode >= 0 else 128 - child.returncode)

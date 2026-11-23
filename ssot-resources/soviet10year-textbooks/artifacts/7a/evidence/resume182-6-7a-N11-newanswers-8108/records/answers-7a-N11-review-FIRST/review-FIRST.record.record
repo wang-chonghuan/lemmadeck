@@ -1,0 +1,310 @@
+# FIRST candidate comparison: bounded standard-answer review
+
+Verdict: REVISE
+Reason: grading adequacy defects R1 and R2 below.
+Mathematical standard-answer content: matches the frozen blind solutions.
+Scope: Gate 2 content and grading adequacy only, original exercises 135--150.
+Ticket: STEMROBIN-182
+Parent: 182-6
+Book: 7a
+Edition: modern-us-neutral
+Lesson: alg7-c1-s4-n11
+Date: 2026-11-22
+Sole command cwd and write root:
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck
+
+## Evidence identities and independence
+
+The existing blind solution was read first and its actual hash reconfirmed before
+the parent-supplied candidate was opened. It was not edited or re-permissioned.
+No candidate, book answer, old answer, or choice output was used to derive it.
+
+Frozen blind solution:
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck/.tmp/ld-s10y-lesson/resume182-6-8108/answers-7a-N11-review-FIRST/independent-solutions.record
+Actual SHA-256:
+7ff7fbe5d70afd43fcd3c4b9965cead879c6ee8eefd20969821d37ec5bdbdc34
+Observed mode: 0444.
+
+Parent-supplied candidate reviewed:
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck/.tmp/ld-s10y-lesson/resume182-6-8108/answers-7a-N11-candidate-FIRST.json
+Actual SHA-256:
+94c59181ad779b72ce00cdbc6fae41bca683e3f02606b18b79b7cc5d1c2fbe68
+Observed mode: 0444.
+
+Actual exercise input:
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n11/exercises.json
+Actual SHA-256:
+3e85da8bbd329ffa380113ad7153fc0eab319e1959c1c945623085370b233e80
+
+Actual lesson input:
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n11/lesson.json
+Actual SHA-256:
+0200cf3251661f9fb079e850e6ace979bae6de702a312382cca6f9b530108118
+
+Both input hashes still match those bound into the blind solution.
+No embedded upstream source.sha256 was substituted for an actual file hash.
+
+## Coverage and provenance
+
+Candidate identity: schema ld-s10y-answer/lesson-answers@1, book 7a,
+lesson alg7-c1-s4-n11, edition modern-us-neutral, status draft.
+Exactly 16 answers, ordered 135 through 150, without omissions or duplicates.
+Exactly 91 parts: 58 exact, 27 numeric, 6 expression.
+Exactly 14 auto exercises and 2 ungraded exercises (142 and 148).
+Every answer declares source=derived; no bookRaw is present.
+The review verifies these derived results against the independent derivation,
+not against unconsulted book answers.
+
+Per-exercise part counts:
+135:4, 136:6, 137:8, 138:9, 139:21, 140:9, 141:8, 142:0,
+143:5, 144:3, 145:4, 146:6, 147:6, 148:0, 149:1, 150:1.
+
+The seven ungraded proof/graph subtasks are present separately in displayAnswer:
+four proofs in 142 and three graph constructions in 148. Thus 91 graded parts
+plus seven displayed ungraded tasks cover all 98 individual blind-solution
+outcomes; empty parts for those two ungraded exercises do not constitute a gap.
+
+## Findings requiring revision
+
+R1 [P2]: exact keys reject valid requested transformations.
+
+Locations: candidate answers for 135 a/b, 136 f, and 138 d/i.
+All stored expected values are mathematically correct, but their acceptance
+lists omit ordinary valid answers already identified in the blind solutions.
+The original prompts do not require these specific unevaluated denominators,
+positive bases, or fractional coefficients.
+
+Concrete comparisons:
+
+- 135 a: accepted \frac{1}{10^8}; valid \frac{1}{100000000} is omitted.
+- 135 b: accepted \frac{1}{5^2}; valid \frac{1}{25} is omitted.
+- 136 f: accepted 3^{-4}, 9^{-2}, 81^{-1};
+  valid (-3)^{-4} and (-9)^{-2} are omitted. Both equal positive 1/81
+  and are negative integer powers, as requested.
+- 138 d: accepted \frac{1}{7}a^5b^{-3};
+  valid 7^{-1}a^5b^{-3} is omitted.
+- 138 i: accepted \frac{1}{2}(a+b)^5(a-b)^{-4};
+  valid 2^{-1}(a+b)^5(a-b)^{-4} is omitted.
+
+This is not a request to enumerate purely stylistic MathLive serialization
+variants. These are different mathematical representations that satisfy the
+same prompt. The current exact matcher is lexical after normalization, without
+power evaluation or algebraic equivalence. For example, 135 b normalizes to
+1/(5^2), whereas the valid alternate normalizes to 1/25, so they cannot match.
+The other listed alternatives likewise remain distinct normalized strings.
+Consequently the auto keys would mark these correct student answers wrong.
+
+Required revision: ensure the acceptance policy covers valid requested forms,
+including at least the concrete alternatives above. Do not switch to bare
+numeric/expression equivalence without addressing the requested output form,
+since that can accept an untransformed input. If the supported judges cannot
+reliably honor a task's transformation requirement, use ungraded rather than
+claiming comprehensive auto grading.
+
+R2 [P2]: expression grading does not enforce exercise 147's fraction conversion.
+
+Locations: all six parts of candidate answer 147 (judge=expression).
+The prompt requests conversion of each original expression into a fraction.
+The blind review froze that representation requirement before seeing the
+candidate. The candidate's single-fraction display answers satisfy it, but the
+grading contract tests only mathematical expression equivalence.
+
+Examples of equivalent submissions that do not complete the requested form:
+
+- 147 a: a^{-2}+b^{-2}, the unchanged original sum, is equivalent to
+  \frac{a^2+b^2}{a^2b^2} on a,b != 0.
+- 147 d: 2xy-3-\frac{2}{xy}, an expanded sum rather than one fraction,
+  is equivalent to \frac{2x^2y^2-3xy-2}{xy}.
+- 147 e: a^{-1}b^{-1}, a product of negative powers, is equivalent to
+  \frac{1}{ab} on the original domain but is not the requested fraction form.
+
+Under the advertised expression-equivalence contract these are mathematically
+equivalent answers; there is no fraction-form condition in the candidate or
+the current grading branch. The unchanged input is therefore not distinguished
+from a completed transformation by this grading policy.
+This is a static content/contract finding, not a claimed native-engine execution
+result: no particular ComputeEngine submission was run in this review.
+
+Required revision: use an acceptance policy that checks the requested fraction
+form while accepting valid single-fraction alternatives, or make these tasks
+ungraded if the available judges cannot enforce both requirements reliably.
+Changing the policy or implementing a runtime guard is not authorized here;
+only this review report was written.
+
+## Static grading-contract evidence
+
+Only local source was read to resolve the acceptance-policy questions.
+No application code, test, browser transaction, or finalizer was executed.
+
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck/app/src/lib/answer-normalize.ts
+Actual SHA-256:
+5c11b4304874b65ec5d99f92413b524cfc4f6683a60268a0ba04143534c7448c
+Lines 160--195 define lexical normalization and exactMathAnswersMatch.
+The matcher compares normalized strings; it does not evaluate 5^2 to 25 or
+recognize reciprocal coefficient powers as equivalent fractions.
+
+/Users/yong/.codex/worktrees/stemrobin-182-six-8108/lemmadeck/app/src/lib/textbook-answer.ts
+Actual SHA-256:
+bee990b6367f8111ab30a4409c28d5e9387a01068c0bf27376326dfe4fe8ff8f
+Lines 74--101 route exact to that matcher and expression to input.isEqual(target).
+No requested-output-form guard appears in this grading branch.
+For numeric keys, a positive tolerance is a separate branch; zero does not
+enable approximate tolerance. These source observations do not certify native
+MathLive serialization, parse behavior, or any runtime acceptance test.
+
+## Per-exercise comparison evidence
+
+135 -- 4 exact parts. Content MATCH; grading REVISE via R1.
+Display and keys give 1/10^8, 1/5^2, 1/a, 1/x^20, respectively.
+Displayed a != 0 and x != 0 agree with the original variable domains.
+The first two fractions equal the blind values 1/100000000 and 1/25.
+Those alternative fraction forms are missing from exact acceptance.
+
+136 -- 6 exact parts. Content MATCH; grading REVISE via R1.
+Ordered principal keys: 10^{-2}, 5^{-6}, x^{-7}, y^{-10}, 10^{-3}, 3^{-4}.
+Domains x != 0 and y != 0 are displayed.
+The extra e key 1000^{-1} and f keys 9^{-2}, 81^{-1} are also correct.
+The valid negative-base alternatives for f are not accepted.
+
+137 -- 8 exact parts. Content MATCH.
+Ordered keys: 3/x^6, y/x^4, 5a/b^7, 5/(a^7b^7), 1/(xc^3),
+-9y/z^8, 2/(x+y)^4, 10/[x(x-y)^3].
+Part d additionally accepts 5/(ab)^7, matching the blind alternate.
+All displayed domains match:
+a,b parts x != 0; c b != 0; d a,b != 0; e x,c != 0;
+f z != 0; g x+y != 0; h x != 0 and x-y != 0.
+The scope of 5ab^{-7} versus 5(ab)^{-7} is correct; numerator-only variables
+are not unnecessarily excluded. The last denominator includes both x and
+(x-y)^3, as required.
+
+138 -- 9 exact parts. Content MATCH; grading REVISE via R1.
+Ordered keys: 3b^{-2}, xy^{-1}, 2a^8c^{-6}, (1/7)a^5b^{-3},
+x^{-2}y^{-3}, db^{-4}c^{-4}, 2a(a-2)^{-3},
+(x-3)(x+3)^{-1}, (1/2)(a+b)^5(a-b)^{-4}.
+The displayed common rule requires every negative-power base to be nonzero
+and preserves original denominator restrictions. Applied part by part it gives:
+a b != 0; b y != 0; c c != 0; d b != 0; e x,y != 0;
+f b,c != 0; g a != 2; h x != -3; i a != b.
+No nonzero restriction is imposed on numerator-only variables.
+The fractional coefficient versions match the blind equivalents, but the
+equally valid coefficient powers 7^{-1} and 2^{-1} are missing from the keys.
+
+139 -- 21 exact parts. Content MATCH.
+The labels identify each source number and preserve prompt order, without
+collapsing a whole list into one field.
+Base-2 exponents: 4,3,2,1,0,-1,-2,-3.
+Base-5 exponents: -3,-2,-1,0,1,2,3,4.
+Base-10 exponents: 1,-1,-3,-5,-7.
+All 8+8+5 conversions match the blind solutions.
+
+140 -- 9 numeric parts. Content and selected grading MATCH.
+Ordered values: 1/16, 1/81, 49, -1/10, -1/10000, 1/8, -1, 1, -1.
+The displayed precedence rule agrees with the blind scope check.
+In particular e is -(10^{-4}), f negates the negative value (-2)^{-3},
+and i is -(1^{-26})=-1, not (-1)^{-26}=1.
+
+141 -- 8 numeric parts. Content and selected grading MATCH.
+Ordered values: 1/8, -1/50000, -2, 50, 13/36, 1/16, 7, 10001.
+They match all eight blind computations, including the reciprocal of negative
+-9, the even negative power in f, and nonzero-base zero power in h.
+
+142 -- ungraded, 0 parts. Content and selected grading MATCH.
+All four subproofs are present in displayAnswer.
+a uses the reciprocal of 2/3; b the reciprocal square of 3/5;
+c requires p,q != 0 and reciprocates p/q;
+d sets k=-n>0 and derives q^k/p^k=(q/p)^{-n}.
+The domains and negative-integer condition match the blind proof.
+There is no scalar expected value or automatic proof verdict.
+
+143 -- 5 numeric parts. Content and selected grading MATCH.
+Ordered values: 27, 4/3, 10000, 121, -81/25.
+The last display also gives -3.24 and converts 1 2/3 to 5/3, correctly
+retaining the external coefficient -25.
+
+144 -- 3 numeric parts. Content and selected grading MATCH.
+a expected 64; b expected 0.20 with tolerance 0;
+c expected -0.62 with tolerance 0.
+The displayed exact intermediate values 16/81 and -8/13 are correct, and
+the rounded keys use the requested hundredths rather than those fractions.
+Labels for b and c explicitly request two decimal places.
+Display retains the trailing zero in 0.20. Numeric equality may accept 0.2,
+which is the same rounded value, rather than enforcing typography.
+No positive tolerance is supplied that would intentionally admit 0.19,
+-0.61, or unrounded values through a tolerance interval.
+No native numeric-engine verification is claimed.
+
+145 -- 4 exact sign parts. Content and selected grading MATCH.
+Labels a through d explicitly request the comparison symbol with zero, rather
+than asking for a numerical value while storing a sign-only answer.
+Expected signs in order: >, <, >, <.
+Each displayed inequality and the parity/reciprocal explanation match the
+blind solution. The implied left operand is the original expression and the
+right operand is zero. No comparison-direction ambiguity was found.
+
+146 -- 6 exact sign parts. Content and selected grading MATCH.
+Labels a through f explicitly request the left-versus-right comparison symbol.
+Expected signs in order: >, >, <, <, <, =.
+Displayed reasons use 1/32 > 1/243, 125 > 8, reciprocal denominator order,
+125/8 < 625/16, -1/8 < 1/8, and equality at 1/81.
+All signs correspond to the prompt's operand order.
+
+147 -- 6 expression parts. Content MATCH; grading REVISE via R2.
+Ordered single-fraction keys:
+(a^2+b^2)/(a^2b^2), x(y+1)/y^2, (1-a^2b^2)/(ab),
+(2x^2y^2-3xy-2)/(xy), 1/(ab), -(a+b)/[a^2b^2(a-b)].
+All six agree with the blind derivation, including the -3xy term in d
+and the overall minus in f.
+Displayed original domains match:
+a a,b != 0; b y != 0; c a,b != 0; d x,y != 0;
+e a,b != 0 and a+b != 0; f a,b != 0 and a != b.
+The canceled a+b exclusion is expressly retained in e. The a=b exclusion
+is retained in f, while valid a=-b cases are not ruled out.
+The issue is accepting equivalent non-fraction submissions, not wrong algebra
+or missing domain restrictions in the standard answer.
+
+148 -- ungraded, 0 parts. Content and selected grading MATCH.
+a gives y=1/x, nonzero-x domain, four correct sample points, and separate
+quadrant-I/III branches approaching but not crossing either coordinate axis.
+b gives y=2/x, four correct sample points, the same branch quadrants,
+and both axes as asymptotes.
+c gives y=1 for nonzero x, a horizontal graph with an open circle at (0,1),
+and explicitly excludes 0^0.
+These are specific construction instructions, not a generic method or a
+fabricated point-input auto grade. Fewer sample points than the blind record
+do not change the correct graphs or omit a requested graph task.
+
+149 -- 1 numeric part. Content and selected grading MATCH.
+Key 17.5, label road cycling speed, unit km/h (spelled out in the candidate).
+Display derives dirt speed 12.5 from 28/(1.4u)+25/u=3.6 and returns road speed
+1.4*12.5=17.5. Leg times 1.6+2=3.6 hours independently check the result.
+The requested road speed is not confused with the dirt or average speed.
+Physical travel speeds are positive; no denominator-zero solution is returned.
+
+150 -- 1 numeric part. Content and selected grading MATCH.
+Key 3, label uphill speed, unit km/h (spelled out in the candidate).
+Display uses 9/v+9/(1.5v)=5, yielding uphill speed 3 and downhill speed 4.5.
+The two leg times 3+2=5 hours check the result, and each leg is 9 km.
+The answer is not downhill speed 4.5 or round-trip average speed 18/5.
+Physical travel speeds are positive; no denominator-zero solution is returned.
+
+## Gate 2 boundary and next action
+
+For this bounded content/grade review, coverage, derived mathematical content,
+part labels/units, displayed domains, proof content, graph instructions,
+rounded targets, and ungraded treatment were examined.
+Revision is required for Gate 2's reliable automatic-grading requirement.
+Correct standard-answer mathematics alone does not make these keys a PASS.
+
+The gate's native MathLive edit/serialization transaction and finalizer were
+not run and are not approved by this report. This is not full Gate 2, whole-
+lesson, source/figure/choice/display, publication, product, or course approval.
+
+Only review-FIRST.record was created. The candidate, blind evidence, lesson,
+exercise inputs, other edits, paused agents, and other trees were not modified.
+Images: 0. Native checks/execution: 0. DB/.env/network/install/Git: not used.
+Old PASS reruns: 0. Other chat messages: 0.
+Host tokens: UNKNOWN. Host cost: UNKNOWN.
+
+Next permitted substantive step requires a revised candidate from the parent.
+Reuse the frozen blind solutions; review only real candidate changes and the
+affected grading findings, rather than repeating unrelated passed stages.
