@@ -45,7 +45,9 @@ Only the count audit changed; its retained file is
 The shared original source remains SHA256
 `10c637fa27f71059839822d4f579bde1cceb2f27084cbf00e14077779c1af333`.
 
-Three diagnostic source opens and one native-regression source open occurred.
+Three diagnostic source opens and two native-regression source opens occurred.
+The second regression verifies the scoped staged snapshot without unrelated
+unstaged algorithm changes; all twelve focused tests pass on that snapshot.
 The direct native finalizer's internal codec activity is UNKNOWN, not zero.
 No model image opens, paid-service calls, new receipts/packages, DB writes or
 publication occurred. P52 r/tau, O/0 and fine figure semantics remain SOURCE HOLD.
