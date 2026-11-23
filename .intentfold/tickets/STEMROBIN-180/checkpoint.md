@@ -1,5 +1,252 @@
 # 生产检查点
 
+## 2026-11-23 n25 Complete Offline; Immediate Narrow Save
+
+SOURCE/WHOLETEXT/SCIENCE/FIG79/CHOICES/ANSWERS/DISPLAY all PASS with original
+failures retained. n25 has18 raw objects,34 prose paragraphs/36 rendered entries,
+4 boundaries,1 deterministic figure79,7 derived ready answers(auto1/ungraded6),
+4 native choice questions/19 independently judged options,0 interactions.
+Blind source/view freezes precede key/answer comparison; Hume collected/closed,
+8 figure images and0 answer/choice images. Meitner wholelesson display PASS,
+six current screenshots opened once,0 crops/reopens, collected/closed.
+One headless desktop/mobile check passed6surfaces, no content/browser replay.
+
+Approved answer draft bytes retained by reversing only finalizer status/count
+metadata, exact independent-review SHA matched before writing read-only snapshot;
+all answer/judging content unchanged. Initial status-only nonwriting probe's
+count omission remains explicit in finalization-binding.json.
+Final layout transfer, first source/figure/render/anchor failures and current
+proof retained under canonical n25 owners, not a new generic evidence package.
+One checkpoint patch failed on hunk order before writes; recovered only that edit.
+
+Explicit raw index staging adds only n25:35 lessons/97 pages; working36/98
+and held n37 remain untouched. Modern index diff is only n25's row.
+Commit/push pending at this entry; delivered37/increment9 until successful push.
+No source123/124, n27/n28/n37 assets, installer/tool changes, credentials or
+app/schema edits included. Parent23/24 images,paid69historical/new0,
+tokens/costs unknown; no producer DB writes, merge/deploy/closure or peer message.
+
+## 2026-11-23 n25 Figure79 Technical Recovery; Still Incomplete
+
+Latest: Hume affected connection PASS establishes aggregate FIG79 PASS;
+actual8/8 images,paid0. Spec/SVG promoted byte-identically from figure-repair/,
+original REVISE intact. First adapt-finalize failed at stale paragraph anchor
+after normalizing long contextual blocks. Existing layout normalizer applied
+only to blocks9/11/13/16; all content/formulas/numbers/refs/exercises equal the
+accepted snapshot, proved in modern-text-review/final-layout-binding.json.
+Recovered adapt-finalize PASS15/18 prose,0/7 exercises,1figure:
+final34 paragraphs/4 tool-derived section starts6,15,22,28. Original30-paragraph
+semantic review remains history, not a false final layout count.
+Final choice prepare/author/structural validation PASS fourquestions19options,
+all7source tasks,nofigures. Hume blind SOURCE then VIEW freeze active,0newimages,
+keys embargoed. No ready answers/semantic choices/display/delivery yet.
+
+Chandrasekhar author collected: actual1/8 images, two renderer failures, one
+ordinary stroke-width repair; no SVG/render or independent figure approval.
+Both failed candidates/receipts and the pre-recovery report/bindings remain.
+The parent identified the short rotation segment as below the existing
+renderer's default head-length requirement, producing a zero-sized marker.
+Same author now owns only endpoint-construction technical recovery and the
+missing isolated-headless fixture, without renderer changes or budget reset.
+Source inventory, apparatus, current accepted text and unrelated checks reused.
+
+Parent inspected seven current written tasks once; no exercise figures.
+Four choice units initially18 options authored in scratch from written prose/definitions,
+covering all seven tasks with explicit free-writing losses. No formal seed,
+checker or blind verdict yet; final modern files must exist before binding.
+No answer-key exposure to Hume, source/wholetext replay, new image open by
+parent, paid request, DB write or publication. Delivered37/increment9 unchanged.
+
+Author recovery now collected/closed: exact tangent extension to226.2,72.4,
+three full render calls total/two failures, one identified technical recovery.
+640px/18px headless desktop/mobile/theme checks and author inspection PASS,
+actual6/8 cumulative images,paid0. Hume owns independent original-first figure
+review, max8-image batch. His first verdict REVISE F79-SR-01 identifies the
+missing upper connection; original source-only freeze and failed spec/SVG/render
+remain read-only. First review actual6/8 images; no formal figure PASS.
+Parent repaired only that connection under raw n25/figure-repair/:
+one new inventory group, four invisible anchors, three connected segments/six
+assertions. Existing39 objects/22 assertions and accepted text untouched.
+Changed validator/render/fixture PASS46objects/4labels/640px/18px/all ends.
+This is one semantic revision; overall full renders4, inherited failures2.
+Hume affected-only review pending, limited to two final screenshots; parent
+new image opens0. No promotion or downstream finalize yet.
+
+Disjoint n27 artwork search found a potential existing approved Newton portrait:
+6p modern figures/tbl-p0079-01.png, owning lesson phy6-c3-s16, decorative160px,
+review PASS, remembered output SHA
+`a2c09acd6eb1eab91f091368306dceb48a06b756d73f1153ade372528fe402f6`.
+No image opened, copied or generated; no validity/promotion under new8p context
+claimed. Evaluate scoped reuse later, not a paid request or n27 delivery.
+
+## 2026-11-23 n25 Wholetext/Science PASS; Answers Authored, Still Incomplete
+
+Hume affected two-block/one-anchor PASS establishes derived wholetext/science
+PASS; unchanged findings reused, actual0 images. Original REVISE and both
+read-only author snapshots intact. Accepted current lesson template SHA
+`713def5d7da63a4154e6b900b383c815c345a3bb67027a360c7303ae20d504f4`.
+Exact approved text/exercise/figure working files are now in modern n25,
+without a false finalized/adaptation-audit or publication claim.
+Chandrasekhar receives that real canonical approved text context; experimental
+geometry/content unchanged. Figure79 author remains active, max8 images.
+
+Answer prepare once PASS7, no exercise figure evidence. Parent authored7
+derived draft keys, auto1/ungraded6. No finalize or independent answer
+approval yet. Keep these keys hidden from the next blind choice/source solver
+until its source and visible-option judgments are frozen. No old interactions,
+answers or choices were used as task seeds; no input interactions generated.
+Figure independent PASS, adapt-finalize, choices/blind review, answer gate,
+one whole-lesson desktop/mobile display and immediate commit/push remain.
+Delivered37/increment9,parent23/24,paid69/new0; no DB.
+
+## 2026-11-23 n25 Science REVISE Retained; Two-Paragraph Follow-Up
+
+Hume first wholetext/science reviewed18 objects and7 unchanged exercise
+stems; completeness, formulas/literals and30 paragraphs/4 boundaries PASS,
+actual0 images. Original REVISE, binding and single read-only author snapshot
+retained at raw n25/modern-text-review/. Two necessary context fixes:
+historical national-copy wording must not imply1889 Soviet state; invariant
+mass discussion requires unchanged body composition/internal state.
+
+Parent made one modern revision only to those two prose blocks. No formula,
+numeric, source or exercise edit. Affected flow remains30 paragraphs,
+4 exact tool-derived boundaries, only intrinsic-state anchor changed.
+Same sole reviewer owns affected-only follow-up; no wholetext/source replay.
+
+Chandrasekhar `01a2083b-9034-7e53-89e9-c3e456fbf01b` owns deterministic
+figure79 author work, max8 images, explicit isolated-headless fixtures.
+Unchanged experimental figure paragraph/values/relations already passed first
+science review; the current corrected edition context is authoritative working
+text, not a false finalized/whole-course approval. No promotion before figure
+independent PASS. Two active subtasks, maxone independent reviewer.
+Delivered37/increment9,parent23/24,paid69/new0; no DB.
+
+## 2026-11-23 n25 SOURCE PASS; Selected Assembly and Modern Draft
+
+Euclid final affected PASS establishes current selected n25 SOURCE PASS,
+reusing unchanged original findings and affected117–119 PASS. The last
+116 minimum italic term was repaired in a second actual source revision;
+only116 finalized again PASS24/24,0 normalizations. Initial and affected
+FAILs/snapshots unchanged. Wider italic punctuation endpoints remain
+nonblocking stylistic uncertainty, not a global typography PASS.
+Euclid collected/closed,actual8 cumulative images,0 added on either follow-up.
+
+Limited116–120 assembly once PASS; only n25 promoted:18 raw objects,
+7 exercises,figure79. Incoming n24 fragment/outgoing n26 open fragment
+remain scratch-only warnings. Working raw index36/98 retains held n37;
+no full-book rebuild or neighbor promotion.
+
+Modern draft30 tool-derived paragraphs/4 exact boundaries;0errata/
+numeric changes. Historical kilogram/current SI, water approximation,
+low-speed additivity and legacy relativistic-mass scope clarified in prose,
+raw and formulas unchanged. Hume `01a2082a-9ecf-7d03-926b-a3a830042673`
+is sole independent wholetext/science reviewer,0 image target. Figures,
+answer/choice approval, display and n25 commit/push remain missing.
+
+Next n27 author Plato collected/closed,actual8 images.123 finalize PASS23/23,
+124 PASS25/25,0 normalizations;82/83 and unnumbered Newton portrait exact
+crops retained only in canonical gallery. Sourcecaption82 punctuation and
+typography HOLDs remain; no independent SOURCE or n27/n28 promotion.
+Portrait may require unauthorized paid artwork later, not generated now.
+Delivered37/increment9,parent23/24,paid69/new0; no DB or new paid request.
+
+## 2026-11-23 n27 Disjoint Missing-Page Preparation
+
+While n25's affected SOURCE review remains with the sole independent reviewer,
+prepare123/124 each once exit0. No corresponding canonical/working candidates
+were found at entry; this is not proof of historical absence or FIRST authorship.
+Plato `01a2081d-6f51-7ec0-a3d0-0ebbcb0a0db9` owns only new123/124
+SOURCE author drafts/evidence, max8 images. Existing held122/n27 is read-only;
+its earlier interrupted author is not restarted. Outgoing124/n28 may be
+transcribed to close the page but cannot be promoted as complete.
+No future lesson enters n25's save/intake/counts. n25 remains the delivery
+priority; maxone in-flight independent reviewer, two active subtasks total.
+
+## 2026-11-23 n25 SOURCE FAIL Retained; Affected Repair Review Active
+
+Euclid's first missing SOURCE review returned FAIL at the canonical owner.
+Original-only freeze, native crops, original follow-up corrections and exact
+first-failure candidate page.md snapshots are preserved. Actual8 images,
+4 original pages plus4 native crops; no120 source replay. Figure79 extraction,
+rows and continuations verified; no modern or whole-course approval inferred.
+
+Parent repaired only definite findings:116 comma/minimum slanted terms,
+117机械/minimum slanted term,118 minimum slanted terms including split物/体,
+119 dotted additive-sentence emphasis/minimum slanted terms, and105–107
+italic footer digits. Original超近于, inline vector mark and every formula stay.
+Two atomic patch calls failed on an absent hunk and one failed on hunk order;
+these changed no bytes and were technical edit failures, not content retries.
+Actual successful source revision is one; all snapshots remain unchanged.
+
+Affected116–119 finalizes once PASS24/24,24/24,26/26,25/25, all0
+normalizations. Figure79 exact box [842,1807,558,360] unchanged.
+Executions retained at canonical source-review/repair-execution/.
+Same sole reviewer now checks only affected bytes using his bound original
+observations; broader italic punctuation endpoints remain explicitly scoped
+until his affected verdict. No n25 assembly or promotion yet.
+Delivered37/increment9,parent23/24,paid69/new0; no DB or full-book replay.
+
+## 2026-11-23 n25 SOURCE Review Continued; Existing Candidates Clarified
+
+Euclid `01a2080b-66ed-73e1-966b-4c5f9cee1310` is the sole active
+independent SOURCE reviewer. Original-only inventory freeze is retained under
+the canonical n25/source-review owner. Scope is selected n25 on116 and
+whole117–119; existing120 exercises2–7 SOURCE approval is reused unchanged.
+No SOURCE verdict, assembly or modern approval is inferred from the freeze.
+
+Correction to earlier bookkeeping:117/118 had preexisting tracked candidates,
+not absent source files. Exact originals survive in
+`source-author-preexisting-candidate.page.md`; their historical semantic
+approval is UNKNOWN. The current author/finalize records are this continuation's
+executions, not proof of historical FIRST work. Existing116 remains read-only,
+and119 is newly authored. All original snapshots and holds remain intact.
+
+Live Plane180 remains In Progress; latest direct human restart governs this
+continuation. No replacement chat/tree/branch, reinstall, source replay, paid
+request, DB write, merge/deploy/closure or proactive peer message.
+Delivered37/increment9, parent23/24 images and paid69 historical/new0 unchanged.
+
+## 2026-11-23 n26 Pushed; Supervisor-Only Single-Lesson Intake
+
+Ordinary push exit0 saved exact199-file snapshot
+`130b2a3c14c3517772e21d6b2184116ad09a25a7`,
+remote7b44b7cb7..130b2a3c1 on `codex/STEMROBIN-180-textbooks`.
+Delivered37 /180-7 increment9. Full production group remains incomplete.
+
+Designated supervisor/writer intake ONLY:
+
+- Book8p, edition modern-us-neutral, lesson `phy8-c2-s1-n26`, 月球的质量,
+  printed number26. Use exact pushed snapshot above, not later working edits.
+- Durable modern course:
+  `ssot-resources/soviet10year-textbooks/artifacts/8p/editions/modern-us-neutral/lessons/phy8-c2-s1-n26/`.
+  Faithful raw n26, source120–122, indispensable counter/source/figure reviews
+  and original failures retained. SOURCE122 certifies only n26 closing2 rows
+  and heading27, not n27 body; n25/n37 excluded from this intake.
+- Actual8 raw objects,10 rendered paragraphs/3 boundaries,2 deterministic
+  figures80/81,0 written exercises/ready empty answers,0 choices/interactions.
+  All source literals and coarse approximations preserved, no erratum.
+  Tiny radius-terminal contour is unresolved but explicitly nonblocking:
+  labelled plain radius segment is disclosed modern notation, not a force arrow.
+- SOURCE/wholetext/science/figure and one headless desktop/mobile DISPLAY PASS.
+  Reuse exact current reviews and display/check.json; no duplicate pipeline.
+  Author's earlier headed deviation and one construction-dot repair remain
+  truthful history. Current geometry copied byte-identically, not rerendered.
+  Counter removes only isolated1199-pixel margin blot; runner66 inherited
+  stress failures remain, not a global-green claim.
+- Writer serializes existing one-lesson base publisher and applicable empty
+  answer attachment, then one small n26 readback for edition/content/figures/
+  requested zero counts. No all-lesson replay, producer DB writes, invented
+  choice/interaction stages or duplicate display/functional suite.
+
+Raw pushed index34/96; working35/97 and held n37 preserved. Whitespace check
+passed with immutable original trailing-space evidence preserved; no credentials,
+app/schema or installer/user files staged. Harvey collected/closed,12 images;
+parent23/24,paid69 historical/new0, tokens/costs unknown. No report-only push,
+deployment/closure/new tree/chat/branch/timer or proactive supervisor message.
+This retained intake is not a publication claim. Continue n25's missing SOURCE
+review without waiting for the DB writer; its three finalized new pages remain
+local and unapproved, not counted as delivered.
+
 ## 2026-11-23 n26 Complete Offline; Immediate Narrow Save
 
 FIRST independent Figure80/81 PASS; source/spec/SVG/current geometry unchanged,

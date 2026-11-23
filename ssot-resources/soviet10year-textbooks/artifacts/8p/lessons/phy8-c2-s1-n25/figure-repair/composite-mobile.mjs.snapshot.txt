@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+assert.equal(process.cwd(), "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180");
+const require = createRequire(`${process.cwd()}/app/package.json`);
+const { chromium } = require("playwright");
+const owner = "ssot-resources/soviet10year-textbooks/artifacts/8p/lessons/phy8-c2-s1-n25/figure-repair";
+const output = `${owner}/fig-79.mobile-composite.png`;
+assert.equal(fs.existsSync(output), false);
+const browser = await chromium.launch({ executablePath: chromium.executablePath(), headless: true });
+try {
+  const page = await browser.newPage({ viewport: { width: 784, height: 600 } });
+  const images = ["left", "right"].map((end) =>
+    `<img alt="Mobile ${end}" src="data:image/png;base64,${fs.readFileSync(`${owner}/fig-79.mobile-${end}.png`).toString("base64")}">`);
+  await page.setContent(`<style>body{margin:0;display:flex;gap:4px;background:white}img{width:390px;height:auto;align-self:flex-start}</style>${images.join("")}`);
+  await page.waitForFunction(() => [...document.images].every((image) => image.complete && image.naturalWidth > 0));
+  await page.screenshot({ path: output, fullPage: true });
+} finally {
+  await browser.close();
+}
+console.log(JSON.stringify({ status: "composite-saved-no-human-image-open", output }));

@@ -1,0 +1,84 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import crypto from "node:crypto";
+
+assert.equal(process.cwd(), "/Users/yong/work/lemmadeck-ws/lemmadeck--STEMROBIN-180");
+const raw = "ssot-resources/soviet10year-textbooks/artifacts/8p/lessons/phy8-c2-s1-n25";
+const beforePath = `${raw}/figure-author/fig-79.spec.json`;
+const owner = `${raw}/figure-repair`;
+assert.equal(fs.existsSync(owner), false);
+const original = JSON.parse(fs.readFileSync(beforePath, "utf8"));
+const spec = structuredClone(original);
+const coordinates = [
+  ["upper-connection-steel-attachment", [120, 292]],
+  ["upper-connection-left-bend", [120, 320]],
+  ["upper-connection-right-bend", [548, 320]],
+  ["upper-connection-aluminum-attachment", [548, 292]],
+];
+const edges = [
+  ["source-upper-connection-left-terminal", coordinates[0][0], coordinates[1][0]],
+  ["source-upper-connection-span", coordinates[1][0], coordinates[2][0]],
+  ["source-upper-connection-right-terminal", coordinates[2][0], coordinates[3][0]],
+];
+const assertionIds = edges.map(([id]) => `${id}-connects`);
+const addedAssertions = edges.map(([id, from, to]) => ({
+  id: `${id}-connects`, type: "connects", arrow: id, from, to,
+}));
+addedAssertions.push({
+  id: "upper-connection-span-parallel-to-carrier", type: "parallel",
+  a: coordinates[1][0], b: coordinates[2][0],
+  c: "steel-reference", d: "aluminum-reference",
+});
+for (const [id, c, d] of [
+  ["upper-connection-left-terminal-normal", coordinates[0][0], coordinates[1][0]],
+  ["upper-connection-right-terminal-normal", coordinates[3][0], coordinates[2][0]],
+]) {
+  addedAssertions.push({
+    id, type: "perpendicular", a: coordinates[1][0], b: coordinates[2][0], c, d,
+  });
+}
+spec.source.inventory.push({
+  id: "source-upper-connection",
+  description: "The independently observed thin upper connection links the steel body's upper region to the outer portion of the joined aluminum assembly. Its short bent terminal connections are separate from the carrier and radius witnesses. Material and exact hardware are unresolved; the rectangular connector and attachment coordinates are declared modern regularization, not measured source data.",
+  objects: edges.map(([id]) => id),
+  assertions: [...assertionIds, ...addedAssertions.slice(3).map(({ id }) => id)],
+});
+spec.objects.push(
+  ...coordinates.map(([id, at]) => ({ id, type: "point", at, visible: false })),
+  ...edges.map(([id, from, to]) => ({ id, type: "segment", from, to, stroke: "ink", strokeWidth: 1.5 })),
+);
+spec.assertions.push(...addedAssertions);
+assert.deepEqual(spec.objects.slice(0, original.objects.length), original.objects);
+assert.deepEqual(spec.assertions.slice(0, original.assertions.length), original.assertions);
+assert.deepEqual(spec.source.authoritativeText, original.source.authoritativeText);
+const steelTop = original.objects.find(({ id }) => id === "source-steel-cylinder-body").d;
+const aluminumTop = original.objects.find(({ id }) => id === "source-aluminum-outer-cylinder-body").d;
+assert.match(steelTop, /^M 65 108 L 175 108 /);
+assert.match(aluminumTop, /^M 464 108 L 574 108 /);
+assert.equal(coordinates[0][1][1], original.canvas.height - 108);
+assert.equal(coordinates[3][1][1], original.canvas.height - 108);
+assert.ok(coordinates[0][1][0] > 65 && coordinates[0][1][0] < 175);
+assert.ok(coordinates[3][1][0] > 464 && coordinates[3][1][0] < 574);
+fs.mkdirSync(owner, { recursive: true });
+fs.writeFileSync(`${owner}/fig-79.spec.json`, JSON.stringify(spec, null, 2) + "\n", { flag: "wx" });
+const oldOwner = `${raw}/figure-author`;
+const fixture = fs.readFileSync(`${oldOwner}/fig-79.fixture.mjs`, "utf8")
+  .replace(`const owner = '${oldOwner}'`, `const owner = '${owner}'`)
+  .replace("actualImageOpensBeforeInspection: 1", "actualImageOpensBeforeInspection: 0");
+fs.writeFileSync(`${owner}/fig-79.fixture.mjs`, fixture, { flag: "wx" });
+const hash = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+fs.writeFileSync(`${owner}/repair-binding.json`, JSON.stringify({
+  status: "authored-affected-connection-pending-render-review",
+  finding: "F79-SR-01",
+  source_authority: `${raw}/figure-review/source-inventory.freeze.json`,
+  original_candidate: { path: beforePath, sha256: hash(beforePath) },
+  changed_candidate: { path: `${owner}/fig-79.spec.json`, sha256: hash(`${owner}/fig-79.spec.json`) },
+  original_objects_and_assertions_unchanged: true,
+  new_objects: 7,
+  new_assertions: addedAssertions.length,
+  executable_body_top_attachment_checks: "Both terminal points lie on the actual existing body-top contours; left in steel range65..175, right in outer aluminum range464..574, y=400-108. These coordinates regularize observed topology, not source measurement.",
+  parent_image_opens: 0,
+  semantic_revision_rounds: 1,
+  paid_calls: 0,
+}, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({ status: "authored", objects_added: 7, assertions_added: addedAssertions.length, unchanged_objects: original.objects.length }));
