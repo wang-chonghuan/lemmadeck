@@ -19,6 +19,7 @@ from scipy import ndimage
 
 INK_THRESHOLD = 128          # 灰度低于此值视为墨迹
 ROW_INK_MIN_RATIO = 0.008    # 行墨迹占版心宽比例低于此值视为空白（抑制扫描噪点）
+COLUMN_STREAK_RATIO = 0.5    # 一列墨迹占全页高比例高于此值视为书脊/扫描竖条，不是字
 MIN_BAND_HEIGHT = 3          # 保留拆成上下笔画的短标号（如表格前单独一行的 а)）
 MIN_BAND_WIDTH = 14          # Retain a single printed quotient digit.
 # 只用来把同一行里断开的笔画（分式、上下标、页码的点）接回去。不能取大：取 0.6
@@ -175,6 +176,13 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     edge = max(1, int(ink.shape[1] * 0.01))
     ink[:, :edge] = False
     ink[:, -edge:] = False
+    # A gutter streak can land just inside the fixed edge trim. A column inked
+    # down most of the page is a binding shadow, not type, and one such column
+    # joins every projection row into a single band, so the page reports zero
+    # printed lines instead of failing visibly.
+    streak = ink.mean(axis=0) > COLUMN_STREAK_RATIO
+    if streak.any():
+        ink[:, streak] = False
     raw = _row_fragments(ink, content_w)
     if not raw:
         return []
