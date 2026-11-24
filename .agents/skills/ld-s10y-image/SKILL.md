@@ -14,7 +14,6 @@ A tool retry does not reset paid/image usage or approve a failed figure.
 The lesson owner retains approved figures, specs and indispensable bound evidence
 before that lesson's commit/push and authorized serialized publication. Figure
 handoff does not authorize this child to commit other lessons or write the DB.
-Do not add packaging/full-intake gates; report a concrete rule conflict to the caller.
 
 ## Ownership
 
@@ -114,9 +113,9 @@ Update the lesson edition figure entry to exactly one final-output contract:
 - `hybrid`: `artwork` + overlay `svg` + `render` + `review` + `spec`
 - `generated`: `png` + `generation` + `review` + `spec`
 
-Remove fields from the other modes. A hybrid figure never publishes a
-flattened PNG. Its artwork-generation metadata is referenced by
-`spec.assets[].metadata`, not duplicated in the lesson manifest.
+Remove fields from the other modes. Artwork-generation metadata is referenced by
+`spec.assets[].metadata`, not duplicated in the lesson manifest. `edition.py` rejects
+a flattened hybrid PNG and a mode missing its required assets.
 
 ```bash
 python .agents/skills/ld-s10y-image/scripts/build_context.py \
@@ -208,8 +207,9 @@ not prove that the product uses it.
 - Use deterministic geometry for points, lines, grids, axes, ticks, dimensions,
   coordinates, transformations, and mathematical labels.
 - Declare every intended product display width and keep all final text at least
-  16 px there. Do not judge readability from the source canvas alone.
-- Do not infer display size from rendering mode or filename. Every newly
+  16 px there. `check_product.mjs` reads `display.minTextPx` and measures the real
+  on-screen size through `getScreenCTM()`, so the source canvas settles nothing.
+- Every newly
   authored or repaired FigureSpec states `display.purpose`; decorative figures
   use the compact width contract. Instructional figures retain normal readable
   sizing unless their spec explicitly declares a validated inline
@@ -235,8 +235,8 @@ not prove that the product uses it.
 - Visible labels are English; mathematical symbols and numbers are allowed.
 - Vector colors use only semantic roles: `ink`, `muted`, `accent`,
   `accentSoft`, `grid`, and `paper`. The SVG emits CSS variables so the app,
-  alternate themes, and print can recolor it. Do not encode a product theme
-  such as teal or green into the FigureSpec.
+  alternate themes, and print can recolor it; `edition.py` fails an SVG that does
+  not use the switchable semantic roles.
 - Do not copy Cyrillic, Chinese, decorative Soviet symbols, flags, uniforms,
   handwriting, old-book texture, or fictional cultural wording from source
   pixels. Preserve source-bound historical identities declared by the edition;

@@ -14,17 +14,8 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
 [图片批次规则](../../../.agents/skills/ld-s10y-image/SKILL.md#image-batches)；
 本流程及其子代理共用该规则，完成一批并返回文字结果后再处理新批次。
 
-生产、接续检查点或处理执行故障时，先读
-[逐课交付 SOP 与技术恢复](references/production-resume.md)。
-严格按「一课完成实质复核 → 必要产物和证据持久保留 → 本分支 commit / 普通 push →
-获准单一写入方串行入库该课 → 该课简短读回」执行，不等四课或整章才保存。
-严格的是工人遵守流程，不是增加门槛：新内容一次实质复核及桌面/手机显示检查，适用的
-已有证据直接复用，不强制离线、在线各查一遍，不每课重测未变的公共交互。
-不得自行增设全量验收、交接包装、重复审查或全书重建步骤；规则缺口或冲突先反馈调用方。
-调用方的暂停及离线授权优先于下文的默认发布流程。
-接收子任务只核一次实际状态、范围、必要文件/哈希和实质审查，不逐标量通读、
-不全文读工具源码或重审整包。局部修复只续受影响阶段；未变且已有有效审查的图和
-课程证据直接复用，新内容仍保留来源、数学、选项及桌面/手机显示的实质复核。
+交付纪律、接续和故障处理由
+[逐课交付 SOP](references/production-resume.md) 独占：**一课一 session**，本文件不复述它。
 
 ## 用户入口与术语
 
@@ -46,9 +37,8 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
 ## 备料与逐课交付
 
 用户通常只会给一句话：**「抽 5m 第 21–31 页」**或**「抽完 5、6、7 单元」**。
-这句话同时授权把指定且已完整的单元 upsert 到生产内容库。默认按下面整套走到底，
-直到产品中实际可见；离线或暂停指令优先，多工人共用数据库仍由调用方指定单一写入方。
-共享源页可一次备料，已通过且未变化的阶段不重跑：
+这句话同时授权把指定且已完整的单元 upsert 到生产内容库。共享源页可一次备料，
+已通过且未变化的阶段不重跑：
 
 ```bash
 set -e
@@ -64,7 +54,7 @@ $P $S vectorize --book 5m
 $P $S assemble  --book 5m --toc ssot-resources/soviet10year-textbooks/toc/5m/zh.json
 ```
 
-下面每次只交付一个已完整单元，不把多个 `--lesson` 组成延迟保存的批次：
+下面每次只交付一个已完整单元：
 
 ```bash
 set -e
@@ -77,11 +67,10 @@ $P $S adapt-prepare --book 5m --edition modern-us-neutral \
 #    所有现代图委托 ld-s10y-image，按 deterministic / hybrid / generated 路由
 $P $S adapt-finalize --book 5m --edition modern-us-neutral \
   --lesson "$L"
-# 按本次授权完成并 finalize 同课答案、交互及选择题；取得必要独立实质复核
+# 按本次授权完成并 finalize 同课答案、交互及选择题
 $P $S render --book 5m --edition modern-us-neutral \
   --lesson "$L"
-# 取得该完整课程一次适用的桌面/手机显示证据，保留必需产物及审查
-# 只提交本课及必要来源/索引/图等路径，保留其它未提交改动和已有暂存
+# 取得该完整课程一次适用的桌面/手机显示证据
 git add -- <本课及必要依赖的明确路径>
 git commit --only -m "Complete $L" -- <本课及必要依赖的明确路径>
 git push origin HEAD:<本工人的现有授权分支>
@@ -90,8 +79,6 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
   ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral --lesson "$L"
 # ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一课发布答案键、交互；需要时再发布已保留选择题
-# 写入方只对该课简短读回；显示证据已适用则复用，不重跑完整 cap7
-# 工人保存、push 并留入库记录后接续下一课，不等写入方或定时巡检
 ```
 
 - `assemble` 的 `--toc` **不能省**：课的 id 是从教材目录认领的，没有它产品里就没有地址
@@ -123,8 +110,6 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
 - 边界页常会带出下一节开头；它必须完整转写以通过页级对账，但**不得发布未完成的下一节**。
   用可重复的 `--lesson <cardId>` 只发布本次已完成的单元
 - **不允许以 `--dry` 作为交付终点**。dry-run 只能用于发布前检查，之后必须真实写库
-- 写库后只简短查询本课 `sr_lessons`；按 cap7 复用已有适用显示证据，缺口或异常才补
-  受影响检查。不要再人工全量重查或重复启动已有的授权服务
 
 ## 交付的是对象，不是页
 
@@ -359,31 +344,21 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    不动。编辑模板后，只有通过内容验收的结果才分别以 `lesson.json`、`exercises.json`
    和 `figures.json` 写入 `artifacts/<book>/editions/<edition>/lessons/<id>/`；模板本身
    不得进入持久目录。
-2. 只改文化语境，不改知识点、题号、分组、未登记公式、图引用和题量；非公式数字确需更新时，
-   必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。`adapt-prepare`
-   会把来源页 `errata` 自动带进 lesson 模板；作者只填写 `corrected` 并把目标块的 `changes`
-   标为 `math-correction`。`adapt-finalize` 会核对来源页、页 JSON 哈希、块引用、原式和修正式，
-   并在 prepare、finalize 和发布前重验时从权威页流核验所有非空引用；旧 lesson 缺
-   `source_refs` 时重建。未登记改写、错误绑定、无法恢复的缺失绑定、原式漂移、或把已知
-   错误原样带入现代版都会失败。完整字段见
-   [edition text contract](references/edition-text-contract.md)
-3. 发布文本不得含未声明的 profile 禁词或西里尔字母；小问标号改用拉丁字母。
-   虚构场景中的俄文或苏联人物姓名必须替换为常见的现代英文姓名，并在题面、图像上下文
-   和答案中保持同一映射；不得只替换文化场景却保留阿廖沙、别佳、谢尔盖、瓦西亚等姓名。
-   原书用于科学史教学的真实人物、地点、国家和机构应保留身份，并在对应正文或题目的
-   `historical_entities` 中逐项声明 `term` 和来源绑定的 `reason`；声明项必须同时出现在
-   原文快照与现代文本中，不能作为整本书的文化检查开关。
-4. 原始层继续按印刷视觉行忠实保存；现代版正文按完整语句和单独引出的公式分行，并把
-   连续 2–3 个语句组成短段落，发布时每个短段落成为独立正文块。若一道题含完整的数字、
-   拉丁字母或西里尔字母小问序列，必须按自然顺序排列，
-   **题干前缀和每个小问各自独占一行**，并移除原书多栏对齐所用的全角空格。
-   两栏公式列表必须先按连续各行的明确全角对齐分隔符还原列归属，再分小问；
-   只有首行标号、后续行续列时不得把右栏首题之后的全部公式串进同一小问。
-   没有连续对齐证据的普通公式序列不猜列，保持原顺序并对照源页确认。
-   `adapt-finalize` 会确定性执行这些排版规范并重写已有 edition，禁止手改原始
-   `pages/` 或原始 lesson JSON。
-   需要横线表达概念切换时，用 `prose_flow.mjs` 输出的相邻段落 `{before, after}` 对象填写
-   `section_breaks`；工具会按实际发布流解析并验证两侧内容，不得手算或只数横线。
+2. 只改文化语境，不改知识点、题号、分组、未登记公式、图引用和题量。非公式数字确需更新时
+   逐项写入 `numeric_changes` 并在 `changes` 中包含 `context-number`；来源页 `errata` 由
+   `adapt-prepare` 带进模板，作者只填 `corrected` 并把该块 `changes` 标为 `math-correction`。
+   绑定、哈希、原式与修正式由 `tools/edition.py` 强制（勘误、数字改写、块数与题量共 137 条判据），
+   失败即不可发布。完整字段见 [edition text contract](references/edition-text-contract.md)
+3. 发布文本不含未声明的 profile 禁词或西里尔字母，小问标号改用拉丁字母；虚构人物换成
+   常见现代英文姓名，并在题面、图像上下文和答案中保持同一映射。原书用于科学史教学的
+   真实人物、地点、国家和机构保留身份，在该正文或题目的 `historical_entities` 中逐项声明
+   `term` 与来源绑定的 `reason`。`edition.py` 强制：`仍含西里尔字母`、
+   `仍含旧文化词或俄文人名`、`term 不在原文中 / 不在现代版文本中`。
+4. 原始层按印刷视觉行忠实保存；现代版正文由 `adapt-finalize` **确定性**分行并组段
+   (完整语句与单独引出的公式各成行，连续 2–3 个语句成一短段，小问按自然顺序各占一行，
+   两栏公式先按全角对齐分隔符还原列归属）。排版由工具执行，作者不手改原始 `pages/` 或
+   原始 lesson JSON。概念切换的横线用 `prose_flow.mjs` 输出的相邻段落 `{before, after}`
+   填 `section_breaks`，工具按实际发布流验证两侧内容。
 5. 每张产品图委托项目技能 `ld-s10y-image`，并配
    `ld-s10y-image/figure-spec@2`：
    - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
@@ -391,12 +366,10 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    - 同时需要自然对象与精确数学关系时，用分层的 GPT artwork + JSXGraph overlay hybrid；
      产品分别保存 PNG 素材层和 SVG 数学层，不生成或发布扁平合成 PNG
    - 输入必须包含完整相关 edition 题面/正文与原始抽取图 PNG；edition 文本是语义真相
-   - 新建或复用已有现代图时，都必须重新打开 `source.image` 指向的原 PNG；先按原图列全
-     对象、标签、行列与关系，再绑定稳定的 object/assertion id。已有 FigureSpec、SVG 或
-     字节一致重建只能证明实现可复现，不能替代原图保真核对；现代规整或增补必须与原图事实
-     分开说明。网格行列用 `gridDimensions`，点位移用 `displacement`，集合归属用 `inside`，
-     语义连线用 `connects`，不能用 `objectCount` 代替关系断言；要求点关系的来源组中，
-     每个来源点都必须被组内映射的多点断言覆盖，组外或只覆盖其他点的关系不能替代
+   - 新建或复用已有现代图时，都必须重新打开 `source.image` 指向的原 PNG 做保真核对：
+     字节一致只证明实现可复现。关系用 `gridDimensions` / `displacement` / `inside` /
+     `connects` 断言，不用 `objectCount` 代替。`edition.py` 校验 FigureSpec SHA、
+     `source.inventory` 与原书 PNG 时效
    - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
    - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
      由产品主题和打印样式通过 CSS 变量决定实际颜色
@@ -405,9 +378,8 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
 6. **图内语言固定为英文**：数字、拉丁字母和数学符号可直接使用；禁止中文、日文、
    西里尔文字、装饰性苏联文化符号、旧书纹理和手写体。课程正文仍为中文。来源绑定的
    历史人物须保持可识别身份，但生成肖像必须明确是现代教材插画，不能冒充史料照片。
-7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
-   渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；
-   内容不符时最多针对缺陷修复一次；目录、权限等执行故障按技术恢复处理，不算内容批准。
+7. 按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
+   渲染碰撞与产品宽度字号检测，并写哈希绑定的 `review@1` 目视验收证据。
 8. `adapt-finalize` 校验原始快照、数学、FigureSpec、渲染或生成元数据；失败不能发布。
 
 原始层 cap3 的 potrace 只用于保存教材抽取事实；现代 edition 的图必须重新创作，两者用途不同。
@@ -451,10 +423,8 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
 两者都是可直接嵌入的 HTML 片段（KaTeX 已渲染、插图为内联图片数据），由产品自己排版；
 `html` 列不再写入。幂等 upsert，重复跑不会伤到别的课。
 
-`--lesson` 可重复，用于只写本次已经完整闭合的单元。跨页抽取为了完成上一单元而读到了
-下一单元开头时，必须指定它，禁止把只有标题或一道题的半个单元写进生产。
-逐课生产 SOP 每次恰好指定一个 `--lesson`；工具支持多课不是积攒批量交付的授权。
-本课必须已保留、commit 并普通 push；获准单一写入方收到该课后串行发布，工人不自行抢写库。
+`--lesson` 可重复，但逐课交付每次恰好指定一个：跨页读到下一单元开头时必须指定它，
+不把半个单元写进生产。保留、commit、push 与串行写入的纪律见 SOP。
 
 发布器只读取 `editions/<edition>/lessons/`，要求 adaptation audit 为 `pass`，并验证
 现代图、FigureSpec 与生成/渲染元数据。写入 DB 时只保留现代正文、现代题目、现代图片、edition 名和原始
@@ -467,17 +437,11 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 按任意顺序生成而不会撞 `(subject, stage, lesson_order)` 唯一约束。edition `book.json`
 仍按原始索引重建，禁止手工修排序。
 
-一课所需产物先在离线阶段全部完成复核、保留并 push，再按固定顺序发布：
-`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 → `ld-s10y-answer` 交互规格 →
-本次要求的已保留选择题。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
-交互规格。后一阶段失败只续该阶段，不重新发布已成功基础课或重做已通过内容。
+发布顺序固定：`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 → `ld-s10y-answer`
+交互规格 → 本次要求的已保留选择题。
 
-发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`
-替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。
-习题引用的图必须实际展示，并带经原 PNG 复核的 `source.inventory`；复用样本也不能沿用
-未经复核的旧清单。字节一致只证明确定性，不证明与来源一致。图改动涉及点位、标签或题中
-数据时，同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图
-推导的答案。
+发布器调用 `tools/validate_publish.py` 只读重验当前产物，不复用旧 audit 的 `pass`。
+图改动涉及点位、标签或题中数据时，同步核对受影响答案再走答案技能的 finalize/publish。
 
 连接串取仓库根 `.env` 的 `LEMMADECK_DATABASE_URL`（Supabase，schema `lemmadeck-schema`）。
 写入只用本技能的 Node `postgres` 发布器；只读核对使用项目 `operations.md` 当前指定的命令，
@@ -507,31 +471,14 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
 离线 `intent`、完整题源、作者键及审查文件不作为客户端载荷；应用只投影题面，
 单选点击提交，多选明确提交且由服务端按完整集合判分。
 
-生产写入后，对本课做一次简短读回，核对 edition、正文/题数及本次要求的组件。
-新课或变化内容必须有一次适用当前产物和显示合同的桌面/手机实质显示复核；已完成的
-离线或产品显示复核直接复用，不要求两边各查一遍。存在未覆盖的产品显示差异时，只补
-差异部分，不能只用题数或哈希代替实际显示。
+生产写入后对本课做一次简短读回，核对 edition、正文/题数及本次要求的组件。新课或变化
+内容需要一次适用当前产物的桌面/手机显示复核;已完成的离线或产品复核直接复用。
 
-下列是完整产品功能验收的断言，仅在交互/渲染变化、有效证据缺失、实际故障或用户明确
-要求时，对受影响范围执行。普通新增课文不逐课重验未变的公共数学键盘、匿名判分或
-SPA 行为；也不要求人工逐项全查后再跑一遍脚本。
-
-1. 用 node + `app/node_modules/postgres` 查询目标 `sr_lessons` 行，核对
-   `content.edition`、`exercises.edition`、`content.prose` 和 `exercises.count`；
-   edition 必须等于本次发布值，只有练习的单元允许 `content.prose=[]`
-2. 按项目 `operations.md` 启动服务：主 checkout 使用主端口，IntentFold 工单 worktree
-   使用 `ticket.json` 记录的工单端口，禁止把 3200 写死到工单验收
-3. 浏览器打开每个目标 `/card/<cardId>`，确认正文没有混入练习专用图、插图清晰、
-   习题入口与题数；逐段检查无首行缩进，并按 `section_breaks` 的 `before`/`after` 断言横线
-   两侧实际内容，正文外数字/拉丁字母和行内公式字体一致且不小于中文正文
-4. 打开每节的习题视图，确认所有题都能渲染，并按 `figure id` 检查同一张共享图
-   在该练习区只出现一次。**每个答案输入框**都必须有数学键盘，包括 `number`、`math`、
-   `free`；数字题只改变初始键盘布局，不得退回无数学键盘的普通 input。每课再以匿名状态
-   提交一道纯数值样本，确认判分结果中的标准答案已渲染 KaTeX 且没有残留 `$...$`；
-   匿名提交不得写学习记录。
-5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
-
-确需完整产品功能验收时，使用现有可失败脚本，只指定受影响课程：
+完整产品功能验收的断言**全部在 `tools/check_product.mjs` 里**，不在本文件复述：它在桌面与
+手机逐题检查图引用与媒体非空、按 FigureSpec 的 `display.minTextPx` 用 `getScreenCTM()`
+验实际字号、检查每个输入框的数学键盘归属、横向滚动末端可达、页尾答案框不被键盘遮住，
+以及匿名判分结果中的公式渲染。仅在交互/渲染变化、有效证据缺失、实际故障或用户明确要求时，
+对受影响范围运行：
 
 ```bash
 node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
@@ -541,24 +488,14 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
   --output .tmp/s10y-product-check
 ```
 
-工具支持重复 `--lesson` 和 `--all`，但普通逐课交付不强制运行本脚本，局部修复不使用 `--all`。
-脚本使用 app 已安装的 Playwright，
-在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取
-`display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查
-横向滚动末端与宽表末列可达及每个输入框的键盘实际输入归属；
-还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复，以及匿名判分结果中的公式渲染。
-匿名检查不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
-无正文的补充习题卡按内容对象断言正文为空，不能要求空正文容器具有可见高度；
-有正文或正文图的卡仍必须验证实际可见，且两类卡都要验证习题入口和全部题目。
+脚本用 app 已安装的 Playwright，支持重复 `--lesson` 和 `--all`;局部修复不使用 `--all`。
+它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
 
 自动检查 `.sr-d-scroll` 的末尾可达性时，用瞬时滚动并轮询几何条件；CSS 平滑滚动后立即
 读取位置会产生假失败。不要靠给容器留下内联样式来禁用平滑滚动，否则下一次 SPA 导航会
 制造 React 水合告警。
 
-本次必需项失败只修对应原因、续受影响阶段；不得把未做的完整功能验收写成通过。
-只生成文件或只 dry-run 不等于已入库；没有有效显示证据也不能宣称显示通过。
-入库记录留现有检查点，不为普通回执强制第二次提交/push；课程或审查内容实际改动仍须
-及时保存。已有通过阶段不重跑。
+只生成文件或只 dry-run 不等于已入库；没有有效显示证据不能宣称显示通过。
 
 ## 实测（5m 印刷页 1–11，PDF 10–20）
 
