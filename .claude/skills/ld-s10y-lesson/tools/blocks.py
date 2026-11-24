@@ -28,7 +28,7 @@ HEAD = re.compile(r"^<!--\s+(?P<kind>h1|h2|h3|p|exhead|ex|fig|cap|foot)\b"
                   r"(?P<rest>.*?)\s*-->$")
 BOX = re.compile(r"\bbox\s+(\d+,\d+,\d+,\d+)")
 FLAG = re.compile(r"\b(cont|open|samerow)\b")
-OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:-]+)\b")
+OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:*-]+)")
 WRAP = "↵"
 KINDS_TEXT = ("h1", "h2", "h3", "p", "exhead", "ex", "cap", "foot")
 
@@ -43,6 +43,19 @@ def fig_id(label: str, page: int, seq: int) -> str:
     if nums:
         return "fig-" + "-".join(n.zfill(2) if i == 0 else n for i, n in enumerate(nums))
     return f"tbl-p{page:04d}-{seq:02d}"
+
+
+def owner_ref(owner) -> str | None:
+    """The exercise a block belongs to, without the printed star.
+
+    An errata'd exercise prints its star in the body (`388.* ...`), not in the
+    block header, but a page that writes `owner-ex 388*` still names exercise
+    388.  Binding on the bare number keeps both spellings pointing at one
+    exercise, while `parse`/`dump` keep whatever the page actually wrote.
+    """
+    if owner is None:
+        return None
+    return str(owner).rstrip("*") or None
 
 
 def parse(md: str) -> tuple[dict, list[dict]]:
@@ -104,6 +117,79 @@ def dump(meta: dict, blocks: list[dict], page: int) -> str:
         out.extend(b["lines"])
         out.append("")
     return "\n".join(out).rstrip() + "\n"
+
+
+PRINTED_EQUALS = "＝"
+JOIN_SUBPART = re.compile(r"^\d+\)")
+JOIN_OPENS_WITH_DIGIT = re.compile(r"^\d")
+
+
+COLUMN_SEPARATOR = "\u3000"
+JOIN_TERMINALS = set("。？！；，、：．.;,:!?）)］]》」』…")
+
+
+def join_warnings(blocks: list[dict]) -> list[str]:
+    """印刷分栏行拼接后可能糊在一起的地方——提示，不是判定。
+
+    `join_defects` 只认等式分栏那一种确定的版式，窄到零误报；但同一类缺陷还会
+    出现在没有等式的表格里（`用米表示：　用秒表示：` 这种三栏题），`＝` 判据抓不
+    到，math3-c1-s4 的第 175 题就是这样带着 `1分20秒3 500厘米` 发出去的。
+
+    这里放宽到：两行都带分栏符 `　`，且上一行不是以标点收尾。在本语料 1587 页上
+    命中 10 处，其中约 6 处是真缺陷、4 处是中文句子折进公式的正常折行——所以它
+    只报警告，由人看一眼，不拦住收口。
+    """
+    out = []
+    for n, block in enumerate(blocks):
+        if block["kind"] not in KINDS_TEXT:
+            continue
+        for i, (prev, nxt) in enumerate(zip(block["lines"], block["lines"][1:])):
+            if prev != prev.rstrip() or prev.rstrip().endswith(WRAP):
+                continue
+            tail, head = prev.strip(), nxt.strip()
+            if not tail or tail[-1] in JOIN_TERMINALS:
+                continue
+            if COLUMN_SEPARATOR not in tail or COLUMN_SEPARATOR not in head:
+                continue
+            out.append(
+                f"{block['kind']}#{n + 1} 第 {i + 1}/{i + 2} 行都带分栏符而上一行没有收尾标点，"
+                f"拼接后可能糊成一句：{tail[-14:]!r} + {head[:14]!r}；"
+                "若是表格的两行，行尾补一个空格"
+            )
+    return out
+
+
+def join_defects(blocks: list[dict]) -> list[str]:
+    """印刷行拼接后会糊成一个式子的地方。
+
+    `text_of` 把块体的印刷行逐字接起来——中文句子折行本来就不需要分隔符，要分隔
+    的地方由页格式显式写出来（行尾一个空格，公式跨行写 `↵`）。有一种版式永远不是
+    折行：分栏的等式表格，第二栏接在第一栏下面几行。那里漏了分隔符，两个等式会被
+    拼成一个（`…＝□个一5米7分米＝…`），而下游没有任何东西会发现——行尾空白不改变
+    cap1 对账的印刷行数。
+
+    判据取得很窄，只认这种表格自己的特征：下一行以数字开头且不是分题标号，且两行
+    各自印着自己的 `＝`。在本语料已转写的 1 579 页上扫过，一页都不命中，所以命中
+    一次就是缺陷，不是书里的某种排法。
+    """
+    out = []
+    for n, block in enumerate(blocks):
+        if block["kind"] not in KINDS_TEXT:
+            continue
+        for i, (prev, nxt) in enumerate(zip(block["lines"], block["lines"][1:])):
+            if prev != prev.rstrip() or prev.rstrip().endswith(WRAP):
+                continue
+            tail, head = prev.strip(), nxt.strip()
+            if not JOIN_OPENS_WITH_DIGIT.match(head) or JOIN_SUBPART.match(head):
+                continue
+            if PRINTED_EQUALS not in tail or PRINTED_EQUALS not in head:
+                continue
+            out.append(
+                f"{block['kind']}#{n + 1} 第 {i + 1}/{i + 2} 行会被拼成一个式子："
+                f"{tail[-14:]!r} + {head[:14]!r}；"
+                "分栏表格要在行尾补一个空格（或用 ↵ 表示跳行）"
+            )
+    return out
 
 
 def printed_lines(blocks: list[dict]) -> int:

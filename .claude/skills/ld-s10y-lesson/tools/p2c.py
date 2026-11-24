@@ -352,6 +352,10 @@ def cmd_finalize(a) -> int:
         errors.append("白名单外字符 %d 处: %s" % (
             len(unknown), ", ".join(f"{u['char']}({u['codepoint']})" for u in unknown[:8])))
 
+    join_defects = B.join_defects(blks)
+    errors += join_defects
+    join_warnings = B.join_warnings(blks)
+
     m_err, m_warn = mathcheck.collect_and_check(texts, lambda x: [("text", x["text"])])
     # 跨页残片的公式配不平是必然的，校验义务推给 assemble（那时才有完整公式）
     open_ids = {f"{b['kind']}#{i+1}" for i, b in enumerate(blks) if b["open"] or b["cont"]}
@@ -389,7 +393,9 @@ def cmd_finalize(a) -> int:
     _dump(pdir / "page.json", {"meta": meta, "blocks": blks})
     _dump(pdir / "audit.json", {"page": a.page, "lines_printed": want, "lines_md": got,
                                 "figures": figs, "normalizations": applied,
-                                "unknown_chars": unknown, "katex_warnings": m_warn,
+                                "unknown_chars": unknown, "join_defects": join_defects,
+                                "join_warnings": join_warnings,
+                                "katex_warnings": m_warn,
                                 "errata": len(meta.get("errata", [])),
                                 "errors": errors})
 
@@ -397,13 +403,31 @@ def cmd_finalize(a) -> int:
           f"（印刷 {want}）, 插图 {len(figs)} 张, 规范化 {len(applied)} 处")
     for f in figs:
         print(f"    {f['id']}({f['label']}) → {f['box']}")
+    for w in join_warnings:
+        print(f"  ⚠ {w}")
     if errors:
         print(f"  ✗ 失败 {len(errors)} 项:")
         for e in errors:
             print(f"    - {e}")
         return 1
-    print("  ✓ 通过 行数对账 + 白名单 + 公式")
+    print("  ✓ 通过 行数对账 + 白名单 + 公式 + 行尾拼接")
     return 0
+
+
+def _exercise_numbering(a) -> str:
+    """本书题号怎么编——取自 source manifest。
+
+    十七本已编目的书里有十三本没声明它，所以全书默认保留；但这个没声明的值决定
+    assemble 是按全书还是按课检查题号连续性，选错了就会把一课自己的编号报成重号，
+    而且报在别的课上。所以宁可每次说清楚按哪个值在跑。
+    """
+    catalog = _catalog_config(a)
+    declared = catalog.get("exerciseNumbering")
+    if declared is None:
+        print(f"  ⚠ source manifest 未声明 {a.book} 的 exerciseNumbering，按 'book'（全书题号）处理；"
+              "若本书题号按课重排，在 manifest 里写明 'lesson' 或 'lesson-group'")
+        return "book"
+    return declared
 
 
 # ---------------------------------------------------------------- cap2 装订
@@ -413,7 +437,8 @@ def cmd_assemble(a) -> int:
     return assemble.run(_book_dir(a), Path(a.toc) if a.toc else None,
                         DEFAULT_PROFILE, strict=not a.lenient,
                         work=Path(a.work) / a.book,
-                        exercise_numbering=catalog.get("exerciseNumbering", "book"))
+                        exercise_numbering=_exercise_numbering(a),
+                        allow_rebind=a.allow_rebind)
 
 
 def cmd_reindex(a) -> int:
@@ -445,7 +470,7 @@ def cmd_reindex(a) -> int:
     rows.sort(key=lambda row: order[row["id"]])
     _dump(book / "book.json", {
         "book": a.book, "pages": len(list((book / "pages").glob("*/page.json"))),
-        "exercise_numbering": _catalog_config(a).get("exerciseNumbering", "book"),
+        "exercise_numbering": _exercise_numbering(a),
         "lessons": rows,
         "audit": {"warnings": ["Index rebuilt from retained source snapshots; no new source approval."]},
     })
@@ -553,6 +578,8 @@ def main() -> int:
     common(p, page=False)
     p.add_argument("--toc", default=None, help="TOC JSON；给了就核对小节覆盖")
     p.add_argument("--lenient", action="store_true", help="对账不通过也写出产物")
+    p.add_argument("--allow-rebind", action="store_true",
+                   help="允许重写已发布 edition 所绑定的 lesson.json（会打断绑定，确认要重新改写时才用）")
     p.set_defaults(fn=cmd_assemble)
 
     p = sub.add_parser("reindex", help="从已保留原课重建索引，不重写课件")

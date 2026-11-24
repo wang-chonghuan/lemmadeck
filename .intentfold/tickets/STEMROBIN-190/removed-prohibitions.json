@@ -1,0 +1,122 @@
+[
+ {
+  "tag": "开头 SOP 复述段(交付顺序/不增设验收/子任务收口)",
+  "text": "生产、接续检查点或处理执行故障时，先读\n[逐课交付 SOP 与技术恢复](references/production-resume.md)。\n严格按「一课完成实质复核 → 必要产物和证据持久保留 → 本分支 commit / 普通 push →\n获准单一写入方串行入库该课 → 该课简短读回」执行，不等四课或整章才保存。\n严格的是工人遵守流程，不是增加门槛：新内容一次实质复核及桌面/手机显示检查，适用的\n已有证据直接复用，不强制离线、在线各查一遍，不每课重测未变的公共交互。\n不得自行增设全量验收、交接包装、重复审查或全书重建步骤；规则缺口或冲突先反馈调用方。\n调用方的暂停及离线授权优先于下文的默认发布流程。\n接收子任务只核一次实际状态、范围、必要文件/哈希和实质审查，不逐标量通读、\n不全文读工具源码或重审整包。局部修复只续受影响阶段；未变且已有有效审查的图和\n课程证据直接复用，新内容仍保留来源、数学、选项及桌面/手机显示的实质复核。"
+ },
+ {
+  "tag": "备料段的发布纪律复述",
+  "text": "这句话同时授权把指定且已完整的单元 upsert 到生产内容库。默认按下面整套走到底，\n直到产品中实际可见；离线或暂停指令优先，多工人共用数据库仍由调用方指定单一写入方。\n共享源页可一次备料，已通过且未变化的阶段不重跑："
+ },
+ {
+  "tag": "「不组成延迟批次」(SOP 已定一课一 session)",
+  "text": "下面每次只交付一个已完整单元，不把多个 `--lesson` 组成延迟保存的批次："
+ },
+ {
+  "tag": "注释里的复核要求复述",
+  "text": "# 按本次授权完成并 finalize 同课答案、交互及选择题；取得必要独立实质复核"
+ },
+ {
+  "tag": "注释里的保留/提交纪律复述",
+  "text": "# 取得该完整课程一次适用的桌面/手机显示证据，保留必需产物及审查\n# 只提交本课及必要来源/索引/图等路径，保留其它未提交改动和已有暂存"
+ },
+ {
+  "tag": "注释里的读回/接续纪律复述",
+  "text": "# ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一课发布答案键、交互；需要时再发布已保留选择题\n# 写入方只对该课简短读回；显示证据已适用则复用，不重跑完整 cap7\n# 工人保存、push 并留入库记录后接续下一课，不等写入方或定时巡检"
+ },
+ {
+  "tag": "写库后读回纪律(SOP 第 5 步已定)",
+  "text": "- **不允许以 `--dry` 作为交付终点**。dry-run 只能用于发布前检查，之后必须真实写库\n- 写库后只简短查询本课 `sr_lessons`；按 cap7 复用已有适用显示证据，缺口或异常才补\n  受影响检查。不要再人工全量重查或重复启动已有的授权服务"
+ },
+ {
+  "tag": "cap4-2 的 adapt-finalize 核对细节复述",
+  "text": "2. 只改文化语境，不改知识点、题号、分组、未登记公式、图引用和题量；非公式数字确需更新时，\n   必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。`adapt-prepare`\n   会把来源页 `errata` 自动带进 lesson 模板；作者只填写 `corrected` 并把目标块的 `changes`\n   标为 `math-correction`。`adapt-finalize` 会核对来源页、页 JSON 哈希、块引用、原式和修正式，\n   并在 prepare、finalize 和发布前重验时从权威页流核验所有非空引用；旧 lesson 缺\n   `source_refs` 时重建。未登记改写、错误绑定、无法恢复的缺失绑定、原式漂移、或把已知\n   错误原样带入现代版都会失败。完整字段见\n   [edition text contract](references/edition-text-contract.md)",
+  "checker": "tools/edition.py — lesson.errata[*] 系列、{label} 已改写但 changes 为空、{label}.source 已过期"
+ },
+ {
+  "tag": "cap4-3 的禁词/人名/声明项执行细节复述",
+  "text": "3. 发布文本不得含未声明的 profile 禁词或西里尔字母；小问标号改用拉丁字母。\n   虚构场景中的俄文或苏联人物姓名必须替换为常见的现代英文姓名，并在题面、图像上下文\n   和答案中保持同一映射；不得只替换文化场景却保留阿廖沙、别佳、谢尔盖、瓦西亚等姓名。\n   原书用于科学史教学的真实人物、地点、国家和机构应保留身份，并在对应正文或题目的\n   `historical_entities` 中逐项声明 `term` 和来源绑定的 `reason`；声明项必须同时出现在\n   原文快照与现代文本中，不能作为整本书的文化检查开关。",
+  "checker": "tools/edition.py — {label} 仍含西里尔字母 / 仍含旧文化词或俄文人名 / {declaration_label}.term 不在原文中"
+ },
+ {
+  "tag": "cap4-4 的排版规范细节复述",
+  "text": "4. 原始层继续按印刷视觉行忠实保存；现代版正文按完整语句和单独引出的公式分行，并把\n   连续 2–3 个语句组成短段落，发布时每个短段落成为独立正文块。若一道题含完整的数字、\n   拉丁字母或西里尔字母小问序列，必须按自然顺序排列，\n   **题干前缀和每个小问各自独占一行**，并移除原书多栏对齐所用的全角空格。\n   两栏公式列表必须先按连续各行的明确全角对齐分隔符还原列归属，再分小问；\n   只有首行标号、后续行续列时不得把右栏首题之后的全部公式串进同一小问。\n   没有连续对齐证据的普通公式序列不猜列，保持原顺序并对照源页确认。\n   `adapt-finalize` 会确定性执行这些排版规范并重写已有 edition，禁止手改原始\n   `pages/` 或原始 lesson JSON。\n   需要横线表达概念切换时，用 `prose_flow.mjs` 输出的相邻段落 `{before, after}` 对象填写\n   `section_breaks`；工具会按实际发布流解析并验证两侧内容，不得手算或只数横线。",
+  "checker": "tools/edition.py + tools/prose_flow.mjs + tools/htmlfrag.js — adapt-finalize 确定性重写并验证 section_breaks"
+ },
+ {
+  "tag": "cap4-5 的 FigureSpec 断言细则复述",
+  "text": "- 新建或复用已有现代图时，都必须重新打开 `source.image` 指向的原 PNG；先按原图列全\n     对象、标签、行列与关系，再绑定稳定的 object/assertion id。已有 FigureSpec、SVG 或\n     字节一致重建只能证明实现可复现，不能替代原图保真核对；现代规整或增补必须与原图事实\n     分开说明。网格行列用 `gridDimensions`，点位移用 `displacement`，集合归属用 `inside`，\n     语义连线用 `connects`，不能用 `objectCount` 代替关系断言；要求点关系的来源组中，\n     每个来源点都必须被组内映射的多点断言覆盖，组外或只覆盖其他点的关系不能替代",
+  "checker": "tools/edition.py — {metadata_path}: FigureSpec SHA 不一致 / 原书 PNG 来源已过期 / exercise figure requires source.inventory"
+ },
+ {
+  "tag": "cap4-7 的修复次数与故障分类(SOP 的失败边界已定)",
+  "text": "7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、\n   渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；\n   内容不符时最多针对缺陷修复一次；目录、权限等执行故障按技术恢复处理，不算内容批准。",
+  "checker": "references/production-resume.md 的失败与停止边界表"
+ },
+ {
+  "tag": "cap6 的批量/写入方纪律复述",
+  "text": "`--lesson` 可重复，用于只写本次已经完整闭合的单元。跨页抽取为了完成上一单元而读到了\n下一单元开头时，必须指定它，禁止把只有标题或一道题的半个单元写进生产。\n逐课生产 SOP 每次恰好指定一个 `--lesson`；工具支持多课不是积攒批量交付的授权。\n本课必须已保留、commit 并普通 push；获准单一写入方收到该课后串行发布，工人不自行抢写库。",
+  "checker": "references/production-resume.md 第 3–4 步"
+ },
+ {
+  "tag": "cap6 发布器重验细则复述",
+  "text": "一课所需产物先在离线阶段全部完成复核、保留并 push，再按固定顺序发布：\n`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 → `ld-s10y-answer` 交互规格 →\n本次要求的已保留选择题。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和\n交互规格。后一阶段失败只续该阶段，不重新发布已成功基础课或重做已通过内容。\n\n发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`\n替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。\n习题引用的图必须实际展示，并带经原 PNG 复核的 `source.inventory`；复用样本也不能沿用\n未经复核的旧清单。字节一致只证明确定性，不证明与来源一致。图改动涉及点位、标签或题中\n数据时，同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图\n推导的答案。",
+  "checker": "tools/validate_publish.py + tools/edition.py 的图片类型与 source.inventory 判据"
+ },
+ {
+  "tag": "cap7 的 5 条人工断言清单(已由 check_product.mjs 逐项实现)",
+  "text": "生产写入后，对本课做一次简短读回，核对 edition、正文/题数及本次要求的组件。\n新课或变化内容必须有一次适用当前产物和显示合同的桌面/手机实质显示复核；已完成的\n离线或产品显示复核直接复用，不要求两边各查一遍。存在未覆盖的产品显示差异时，只补\n差异部分，不能只用题数或哈希代替实际显示。\n\n下列是完整产品功能验收的断言，仅在交互/渲染变化、有效证据缺失、实际故障或用户明确\n要求时，对受影响范围执行。普通新增课文不逐课重验未变的公共数学键盘、匿名判分或\nSPA 行为；也不要求人工逐项全查后再跑一遍脚本。\n\n1. 用 node + `app/node_modules/postgres` 查询目标 `sr_lessons` 行，核对\n   `content.edition`、`exercises.edition`、`content.prose` 和 `exercises.count`；\n   edition 必须等于本次发布值，只有练习的单元允许 `content.prose=[]`\n2. 按项目 `operations.md` 启动服务：主 checkout 使用主端口，IntentFold 工单 worktree\n   使用 `ticket.json` 记录的工单端口，禁止把 3200 写死到工单验收\n3. 浏览器打开每个目标 `/card/<cardId>`，确认正文没有混入练习专用图、插图清晰、\n   习题入口与题数；逐段检查无首行缩进，并按 `section_breaks` 的 `before`/`after` 断言横线\n   两侧实际内容，正文外数字/拉丁字母和行内公式字体一致且不小于中文正文\n4. 打开每节的习题视图，确认所有题都能渲染，并按 `figure id` 检查同一张共享图\n   在该练习区只出现一次。**每个答案输入框**都必须有数学键盘，包括 `number`、`math`、\n   `free`；数字题只改变初始键盘布局，不得退回无数学键盘的普通 input。每课再以匿名状态\n   提交一道纯数值样本，确认判分结果中的标准答案已渲染 KaTeX 且没有残留 `$...$`；\n   匿名提交不得写学习记录。\n5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错\n\n确需完整产品功能验收时，使用现有可失败脚本，只指定受影响课程：",
+  "checker": "tools/check_product.mjs — 图引用/媒体非空/minTextPx 屏幕字号/键盘归属/滚动末端/匿名判分公式渲染"
+ },
+ {
+  "tag": "cap7 脚本能力的二次复述(与上一条重复)",
+  "text": "工具支持重复 `--lesson` 和 `--all`，但普通逐课交付不强制运行本脚本，局部修复不使用 `--all`。\n脚本使用 app 已安装的 Playwright，\n在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取\n`display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查\n横向滚动末端与宽表末列可达及每个输入框的键盘实际输入归属；\n还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复，以及匿名判分结果中的公式渲染。\n匿名检查不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。\n无正文的补充习题卡按内容对象断言正文为空，不能要求空正文容器具有可见高度；\n有正文或正文图的卡仍必须验证实际可见，且两类卡都要验证习题入口和全部题目。",
+  "checker": "tools/check_product.mjs 自身"
+ },
+ {
+  "tag": "cap7 结尾的失败处理与保存纪律复述",
+  "text": "本次必需项失败只修对应原因、续受影响阶段；不得把未做的完整功能验收写成通过。\n只生成文件或只 dry-run 不等于已入库；没有有效显示证据也不能宣称显示通过。\n入库记录留现有检查点，不为普通回执强制第二次提交/push；课程或审查内容实际改动仍须\n及时保存。已有通过阶段不重跑。",
+  "checker": "references/production-resume.md 的失败与停止边界表 + 第 2–3 步"
+ },
+ {
+  "file": ".agents/skills/ld-s10y-choice/SKILL.md",
+  "tag": "交付/批次/intake gate/技术修复≠内容批准 的复述",
+  "text": "the lesson pipeline's [per-lesson delivery SOP and recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).\nDo not redo a passed content review to repair execution; offline authoring stays offline.\nThe lesson owner retains approved choices and their evidence before that lesson's\ncommit/push and authorized serialized publication. Scratch-only handoff is not\ndurable delivery; do not wait for a multi-lesson batch. Do not invent extra intake\ngates or review packages; report a concrete rule conflict to the caller.",
+  "checker": "references/production-resume.md 第 3–4 步与失败边界表"
+ },
+ {
+  "file": ".agents/skills/ld-s10y-choice/SKILL.md",
+  "tag": "「不得重写已批准快照 / 不要二次复核」散文",
+  "text": "Do not rewrite approved snapshots or ask for a second mathematical/image review\nsolely to package a handoff. For new figures, settle retained paths before the\nfinal question review when integration is authorized; preserve the offline\nauthor's boundary and the existing snapshot-binding contract.",
+  "checker": "tools/retain_choices.py — existing choice output differs; no overwrite / choice output has a redirected owner / authored figures must already declare the retained lesson path"
+ },
+ {
+  "file": ".agents/skills/ld-s10y-image/SKILL.md",
+  "tag": "「不要增设打包/全量 intake gate」(SOP 独占交付纪律)",
+  "text": "handoff does not authorize this child to commit other lessons or write the DB.\nDo not add packaging/full-intake gates; report a concrete rule conflict to the caller.",
+  "checker": "references/production-resume.md 第 2–4 步"
+ },
+ {
+  "file": ".agents/skills/ld-s10y-image/SKILL.md",
+  "tag": "「hybrid 永不发布扁平 PNG」散文",
+  "text": "Remove fields from the other modes. A hybrid figure never publishes a\nflattened PNG. Its artwork-generation metadata is referenced by\n`spec.assets[].metadata`, not duplicated in the lesson manifest.",
+  "checker": "tools/edition.py — {id}: hybrid 不再交付扁平 PNG / hybrid 缺 artwork / hybrid 缺 overlay svg"
+ },
+ {
+  "file": ".agents/skills/ld-s10y-image/SKILL.md",
+  "tag": "「不得从源画布/渲染模式推断显示尺寸」散文",
+  "text": "- Declare every intended product display width and keep all final text at least\n  16 px there. Do not judge readability from the source canvas alone.\n- Do not infer display size from rendering mode or filename. Every newly",
+  "checker": "tools/check_product.mjs — 按 FigureSpec 的 display.minTextPx 用 getScreenCTM() 验屏幕实际字号"
+ },
+ {
+  "file": ".agents/skills/ld-s10y-image/SKILL.md",
+  "tag": "「不得把产品主题色写进 FigureSpec」散文",
+  "text": "alternate themes, and print can recolor it. Do not encode a product theme\n  such as teal or green into the FigureSpec.",
+  "checker": "tools/edition.py — {metadata_path}: SVG 未使用可切换语义颜色"
+ },
+ {
+  "file": ".claude/skills/ld-s10y-answer/SKILL.md",
+  "tag": "「不得用 needsAuthoring 代替判分可靠性」措辞",
+  "text": "4. 全部小问 `judge=exact` → `math`；其 expected 已由 cap2 的 MathLive 实际编辑序列化\n   gate 验证，不得再用 `needsAuthoring` 代替判分可靠性",
+  "checker": "tools/check_mathlive_exact.mjs — cap2 的 MathLive 实际编辑序列化 gate"
+ }
+]

@@ -236,7 +236,7 @@ node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
 2. 任一小问 `judge=expression` → `math`
 3. 全部小问 `judge=numeric` 且 expected 均为普通数字 → 先试 `grid-point`，不成则 `number`
 4. 全部小问 `judge=exact` → `math`；其 expected 已由 cap2 的 MathLive 实际编辑序列化
-   gate 验证，不得再用 `needsAuthoring` 代替判分可靠性
+   gate(`tools/check_mathlive_exact.mjs`）验证，`needsAuthoring` 不是它的替代品
 5. 其余 → `math` + `needsAuthoring`
 
 每一条规格都必须带 `derivation` 写明依据。**不允许静默兜底**：落到 `math` 只是维持现状，
