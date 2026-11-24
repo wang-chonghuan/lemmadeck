@@ -370,6 +370,13 @@ def figure_sources(book: Path, figures: list[dict]) -> list[dict]:
             "spec": f"figures/{figure['id']}.spec.json",
             "changes": ["modernized"],
             "source": {},
+            # 这四项 edition.py 自己要检查，而模板以前不给，等于每张图都要人手补一遍。
+            # 默认 deterministic：表格类插图走 potrace 矢量化，这是本语料的常态；
+            # 真要 hybrid/generated 的图，改这一行比补四行便宜。
+            "mode": "deterministic",
+            "svg": f"figures/{figure['id']}.svg",
+            "render": f"figures/{figure['id']}.render.json",
+            "review": f"figures/{figure['id']}.review.json",
         }
         for suffix in (".png", ".svg"):
             path = book / "figures" / f"{figure['id']}{suffix}"

@@ -12,6 +12,15 @@ after lesson grows monotonically and pays for all of it again each turn, so its 
 rises with the square of its length. Ending the session is the only thing that makes
 the cost per lesson flat.
 
+**One stage, one session, too.** Inside a lesson the same arithmetic applies to the
+stages. STEMROBIN-191 measured one 12-exercise lesson end to end: 437 turns at an
+average context of 252K, $78 at list price, of which cache reads were 98% of the
+tokens and 68% of the money — the session re-reading its own history. Its two halves
+did comparable amounts of work and differed mainly in accumulated context, 187K
+against 330K, and the later half paid $0.240 a turn against $0.139. Hand the next
+stage what it needs (the checkpoint, the paths, the lesson id) and start it in a new
+session, rather than carrying cap1's page scans and potrace logs into cap6.
+
 The caller's pause or offline authorization overrides the publish steps below.
 
 ## Required workflow
@@ -68,6 +77,10 @@ Source pages and shared inputs may be prepared together. Delivery is per lesson.
 - Use a **200K-context model** for production work. A 1M-context model removes the
   ceiling that would otherwise force compaction, and the session runs to 900K+ with
   every turn billed at that size.
+- **Check that ceiling before the first tool call, and state the number.** Nothing
+  in the pipeline enforces it: the STEMROBIN-191 run reached a 389K peak context
+  with every turn billed at that size and no warning anywhere. If the session's
+  model does not have a 200K window, say so and stop instead of starting the lesson.
 - One worker per lesson. Parallel lessons are parallel sessions, not one session
   doing more.
 
@@ -108,6 +121,12 @@ Distinguish these four, because they have different remedies:
 
 A technical repair corrects its execution diagnosis, not a content or approval HOLD.
 Stop dependent stages at their first failure; independent completed work stays usable.
+
+**A stop is not a wait.** When something genuinely needs a human, ask once, then
+keep working on whatever does not depend on the answer, and end the turn — do not
+hold the session open waiting. The STEMROBIN-191 run spent 129 of its 172
+wall-clock minutes idle between asking and being answered: wall clock that buys
+nothing while a large context stays alive and the next turn re-reads all of it.
 
 On a direct pause or shutdown request, do not start the next lesson. Finish only the
 nearest safe in-flight step, retain completed work, write an honest incomplete

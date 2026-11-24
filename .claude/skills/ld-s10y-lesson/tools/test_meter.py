@@ -45,7 +45,8 @@ class Claude(unittest.TestCase):
         self.assertEqual("claude", usage["runtime"])
         self.assertEqual(2, usage["turns"])
         self.assertEqual(400, usage["cached"])
-        self.assertEqual(17, usage["input"])        # 10+5 + 0+2
+        self.assertEqual(7, usage["input"])          # 5 + 2 fresh
+        self.assertEqual(10, usage["cacheWrite"])    # 10 + 0 written to cache
         self.assertEqual(16, usage["output"])
         self.assertEqual(433, usage["total"])
         self.assertEqual(302, usage["peakContext"])  # max(115, 302)

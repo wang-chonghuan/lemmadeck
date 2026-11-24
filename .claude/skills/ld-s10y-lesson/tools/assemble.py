@@ -14,6 +14,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import shutil
@@ -115,7 +116,7 @@ def cut_lessons(
                     for lesson in lessons
                     for candidate in lesson["blocks"]
                     if candidate["kind"] == "ex"
-                    and str(candidate.get("label")) == str(b["owner_exercise"])
+                    and B.owner_ref(candidate.get("label")) == B.owner_ref(b["owner_exercise"])
                 ]
                 if len(matches) != 1:
                     error = "教学脚注 owner-ex 无法唯一绑定已出现的原题"
@@ -294,8 +295,8 @@ def claim_figures(
                 "page": figure["page"], "ref": figure["ref"], "error": message,
                 "affected_refs": [
                     ref for candidate in lessons for exercise in candidate["exercises"]
-                    if str(exercise["number"]) == str(figure["owner_exercise"])
-                    or _source_number(exercise) == str(figure["owner_exercise"])
+                    if B.owner_ref(exercise["number"]) == B.owner_ref(figure["owner_exercise"])
+                    or B.owner_ref(_source_number(exercise)) == B.owner_ref(figure["owner_exercise"])
                     for ref in exercise.get("pages", [])
                 ],
             })
@@ -324,7 +325,7 @@ def claim_figures(
             owner_number = figure.get("owner_exercise")
             if not owner_number:
                 continue
-            owner_key = str(owner_number)
+            owner_key = B.owner_ref(owner_number)
             source_matches = exercises_by_source.get(owner_key, [])
             identity_matches = exercises_by_number.get(owner_key, [])
             scoped_matches = exercises_by_group_source.get(owner_key, [])
@@ -695,6 +696,25 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
     return warn
 
 
+def edition_bindings_broken(book: Path, lesson_id: str, new_bytes: bytes) -> list[str]:
+    """已发布的哪些 edition 会因为写入这份新 lesson.json 而失去绑定。
+
+    一课的 edition 记着它改写时所依据的 raw lesson.json 的 sha256。而 assemble 是
+    全书重算：交付一课也会重算邻课，邻课的字节一变，已发布 edition 的绑定就被静默
+    打断，而且要等到以后校验别人没碰过的那一课时才暴露出来。所以写之前先问一句。
+    """
+    digest = hashlib.sha256(new_bytes).hexdigest()
+    broken = []
+    for index in sorted((book / "editions").glob(f"*/lessons/{lesson_id}/lesson.json")):
+        try:
+            recorded = json.loads(index.read_text(encoding="utf-8")).get("source", {}).get("sha256")
+        except (OSError, json.JSONDecodeError):
+            continue
+        if recorded and recorded != digest:
+            broken.append(index.parent.parent.parent.name)
+    return broken
+
+
 def run(
     book: Path,
     toc: Path | None,
@@ -702,6 +722,7 @@ def run(
     strict: bool = True,
     work: Path | None = None,
     exercise_numbering: str = "book",
+    allow_rebind: bool = False,
 ) -> int:
     stream = load_stream(book)
     if not stream:
@@ -730,6 +751,7 @@ def run(
 
     out = book / "lessons"
     index = []
+    rebind_blocked: list[tuple[str, list[str]]] = []
     for i, l in enumerate(lessons, 1):
         lid = l.get("card_id") or f"{l['number'] or f'x{i}'}-{_slug(l['title'])}"
         d = out / lid
@@ -761,7 +783,7 @@ def run(
                 (json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
                 root=book,
             )
-        write_if_changed(d / "lesson.json", (json.dumps(
+        lesson_bytes = (json.dumps(
             {"id": lid, "card_id": l.get("card_id"),
              "chapter": l["chapter"], "section": l["section"],
              "number": l["number"], "title": l["title"],
@@ -773,12 +795,24 @@ def run(
                         "printed_page": b.get("printed_page"),
                         "source_refs": b.get("spans") or [b["ref"]]}
                        for b in l["prose"]]},
-            ensure_ascii=False, indent=2) + "\n").encode("utf-8"), root=book)
+            ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+        rebound = edition_bindings_broken(book, lid, lesson_bytes)
+        if rebound and not allow_rebind:
+            rebind_blocked.append((lid, rebound))
+        else:
+            write_if_changed(d / "lesson.json", lesson_bytes, root=book)
         index.append({"id": lid, "card_id": l.get("card_id"),
                       "title": l["title"], "number": l["number"],
                       "start_printed": l["start_printed"],
                       "prose_blocks": len(l["prose"]),
                       "exercises": len(l["exercises"]), "figures": len(l["figures"])})
+
+    for lesson_id, editions in rebind_blocked:
+        report["errors"].append(
+            f"{lesson_id}: 重算出的 lesson.json 与已发布 edition 记录的 source.sha256 不符"
+            f"（{', '.join(editions)}）；已保留原文件、未写入。若本次交付本不该动这一课，"
+            "先查清它为什么变了；确实要重新改写它，加 --allow-rebind 重跑"
+        )
 
     write_if_changed(book / "book.json", (json.dumps(
         {"book": book.name, "pages": len({b["page"] for b in stream}),

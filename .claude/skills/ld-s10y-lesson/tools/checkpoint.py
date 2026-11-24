@@ -27,10 +27,11 @@ TOP_KEYS = ("schema", "book", "updated", "lessons", "sessions")
 LESSON_KEYS = ("lesson", "stage", "session", "commit", "tokens", "note")
 SESSION_KEYS = (
     "session", "started", "ended", "turns",
-    "input", "cached", "output", "total", "peakContext",
+    "input", "cacheWrite", "cached", "output", "total", "peakContext", "costCents",
 )
 LESSON_INTS = ("tokens",)
-SESSION_INTS = ("turns", "input", "cached", "output", "total", "peakContext")
+SESSION_INTS = ("turns", "input", "cacheWrite", "cached", "output", "total",
+                "peakContext", "costCents")
 
 STAGES = ("prepared", "authored", "retained", "pushed", "published", "held")
 
