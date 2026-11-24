@@ -1,0 +1,83 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "3m",
+  "page": 45,
+  "printed_page": 41,
+  "source": {
+    "pdf": "3m 苏联十年制学校教材 数学 三年级.pdf",
+    "pdf_sha256": "4236c9590e8bb4111892c07424a3d8bcef1d449e69aae86af4dd9c48706d9fa9",
+    "pdf_page": 45
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2481,
+    "h": 3784,
+    "sha256": "f2e23e23ffdf672efef64f3cd3b854269ae91580394028e8a2b3afdce7aee9f9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "页面最下缘 y≈3762-3783 有一条扫描装订阴影横带，不是印刷文字。"
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 2 -->
+2. $862-658\quad 564-187\quad 637-208\quad 906-358$ 
+$715-426\quad 926-836\quad 742-356\quad 900-254$
+
+<!-- ex 3 -->
+3. $17\cdot 5-2\cdot 7\quad 16\cdot 6-18\cdot 2\quad 51:3+84:6\quad 75:5\cdot 3$ 
+$18\cdot 3+4\cdot 9\quad 100-13\cdot 7\quad 85-56:4\quad 81:9\cdot 6$
+
+<!-- ex 4 -->
+4. $80\cdot 5\quad 150\cdot 3\quad 207\cdot 2\quad 6\cdot 20\quad 250\cdot 4$ 
+$70\cdot 7\quad 190\cdot 4\quad 409\cdot 2\quad 9\cdot 50\quad 305\cdot 2$
+
+<!-- ex 5 -->
+5. $85\cdot 2\quad 75\cdot 2\quad 96\cdot 5\quad 6\cdot 20\quad 75\cdot 8$ 
+$96\cdot 2\quad 15\cdot 9\quad 38\cdot 7\quad 7\cdot 25\quad 88\cdot 5$
+
+<!-- ex 6 -->
+6. $120:2\quad 350:5\quad 480:6\quad 300:5\quad 160:4$ 
+$240:6\quad 850:5\quad 640:8\quad 560:8\quad 810:9$
+
+<!-- ex 7 -->
+7. $51:6\quad 80:9\quad 59:6\quad 49:6\quad 42:5\quad 37:2$ 
+$60:9\quad 54:7\quad 71:8\quad 70:9\quad 30:4\quad 74:7$
+
+<!-- ex 8 -->
+8. 解下列方程：
+1) $(x+39)-45=18$　　$92-(43-x)=68$ 
+$52-(a-12)=35$　　$(71-x)+32=67$ 
+2) $b\cdot 3=45+21$　　$(24+k)\cdot 2=72$ 
+$c:8=24+16$　　$68:(a+15)=4$
+
+<!-- ex 9 -->
+9. 师傅8小时能做120个零件。当他和徒弟一起工作时，
+5小时就能做这么多零件。徒弟每小时能做多少零件？
+
+<!-- ex 10 -->
+10. 买6米丝绸和3米毛织品共花108卢布。1米毛织品的
+价钱是24卢布，1米丝绸的价钱是多少？
+
+<!-- ex 11 -->
+11. 一列火车有16节客车厢。其中6节车厢，每节乘50位
+旅客；其余的车厢，每节乘45位旅客。这列火车共乘多
+少位旅客？
+
+<!-- ex 12 open -->
+12. 学校菜园里3畦胡萝卜共收2公担。第一畦收了76公
+
+<!-- foot -->
+· 41 ·

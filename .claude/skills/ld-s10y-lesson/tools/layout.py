@@ -355,6 +355,8 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
 
     # 扫描页常有页顶黑边、章标题横线和孤立墨点。它们能通过最小宽高阈值，却不是
     # 印刷文字行；只过滤明显偏薄且过宽/过窄的孤立带，页底的页码装饰则保留。
+    # 页底判据比页顶严：页码行下面总有留白，而一条一直压到图像最后一行的墨迹
+    # 是扫描裁切处的纸边阴影，不是铅字（页顶黑边允许落在上 2% 内）。
     out = []
     page_h = ink.shape[0]
     for a, b in merged:
@@ -362,7 +364,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         band_h = b - a + 1
         band_w = int(xs[-1] - xs[0] + 1)
         thin = band_h < 0.4 * typical_h
-        edge_border = a < 0.02 * page_h and (
+        edge_border = (a < 0.02 * page_h or b >= page_h - 1) and (
             thin or band_w > 0.7 * content_w
         )
         short_text = False

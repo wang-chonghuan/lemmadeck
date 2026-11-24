@@ -517,15 +517,30 @@ def phase_edition(args, plan: dict, report: Report) -> bool:
     return True
 
 
+# adapt-prepare 自己会把分题拆行、去掉分栏对齐空格，并把这类差异记成
+# changes:["layout"]。模板一生成就带着它们，所以「text != source_text」单独
+# 不能证明模型写过一个字——3m math3-c1-ex5 实测：30 题里 4 题一出生就是
+# layout 差异，G2 于是在现代版文本完全没改的情况下静默通过。
+MECHANICAL_CHANGES = {"layout"}
+
+
 def _templates_rewritten(lesson_template: Path, exercises_template: Path) -> bool:
-    """模板是否已经被改写过——判据是「有任何一条 text 与 source_text 不同」。"""
+    """模板是否已经被改写过——判据是「有任何一条 text 与 source_text 不同，
+    且这条差异不是 adapt-prepare 自己做的机械排版归一」。"""
     for path, key in ((lesson_template, "prose"), (exercises_template, "exercises")):
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             return False
         for item in document.get(key, []):
-            if isinstance(item, dict) and item.get("text") != item.get("source_text"):
+            if not isinstance(item, dict):
+                continue
+            if item.get("text") == item.get("source_text"):
+                continue
+            changes = item.get("changes")
+            tags = set(changes) if isinstance(changes, list) else set()
+            # 没有标签的差异也算改写：它过不了 edition.py，但确实有人动过。
+            if not tags or tags - MECHANICAL_CHANGES:
                 return True
     return False
 
@@ -750,9 +765,20 @@ def phase_ship(args, plan: dict, report: Report) -> bool:
     if report.failures:
         report.step("P4 入库", False)
         return False
-    report.step("P4 入库", True, live.stdout.strip().splitlines()[-1] if live.stdout.strip() else "")
+    report.step("P4 入库", True, _published_line(live.stdout, plan["card"]))
     report.done = True
     return True
+
+
+def _published_line(stdout: str, card: str) -> str:
+    """publish.mjs 收尾会把 sr_lessons 整张表列一遍（`· <id> …`，按 id 排序），
+    所以 stdout 的最后一行是全库最后一课，不是本次写进去的那一课。取
+    `✓ <card>` 这条确认行与它对应的那条清单行，别再把别人的课报成交付。"""
+    lines = [line.strip() for line in stdout.splitlines() if line.strip()]
+    written = [line for line in lines if line.lstrip("✓ ").strip() == card]
+    listed = [line for line in lines if line.lstrip("· ").startswith(f"{card}  ")]
+    detail = " ".join(listed or written)
+    return detail or f"{card}（publish 没有回报这一课，请看 publish 输出）"
 
 
 # --------------------------------------------------------------- 入口
