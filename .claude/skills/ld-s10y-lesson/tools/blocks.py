@@ -124,6 +124,41 @@ JOIN_SUBPART = re.compile(r"^\d+\)")
 JOIN_OPENS_WITH_DIGIT = re.compile(r"^\d")
 
 
+COLUMN_SEPARATOR = "\u3000"
+JOIN_TERMINALS = set("。？！；，、：．.;,:!?）)］]》」』…")
+
+
+def join_warnings(blocks: list[dict]) -> list[str]:
+    """印刷分栏行拼接后可能糊在一起的地方——提示，不是判定。
+
+    `join_defects` 只认等式分栏那一种确定的版式，窄到零误报；但同一类缺陷还会
+    出现在没有等式的表格里（`用米表示：　用秒表示：` 这种三栏题），`＝` 判据抓不
+    到，math3-c1-s4 的第 175 题就是这样带着 `1分20秒3 500厘米` 发出去的。
+
+    这里放宽到：两行都带分栏符 `　`，且上一行不是以标点收尾。在本语料 1587 页上
+    命中 10 处，其中约 6 处是真缺陷、4 处是中文句子折进公式的正常折行——所以它
+    只报警告，由人看一眼，不拦住收口。
+    """
+    out = []
+    for n, block in enumerate(blocks):
+        if block["kind"] not in KINDS_TEXT:
+            continue
+        for i, (prev, nxt) in enumerate(zip(block["lines"], block["lines"][1:])):
+            if prev != prev.rstrip() or prev.rstrip().endswith(WRAP):
+                continue
+            tail, head = prev.strip(), nxt.strip()
+            if not tail or tail[-1] in JOIN_TERMINALS:
+                continue
+            if COLUMN_SEPARATOR not in tail or COLUMN_SEPARATOR not in head:
+                continue
+            out.append(
+                f"{block['kind']}#{n + 1} 第 {i + 1}/{i + 2} 行都带分栏符而上一行没有收尾标点，"
+                f"拼接后可能糊成一句：{tail[-14:]!r} + {head[:14]!r}；"
+                "若是表格的两行，行尾补一个空格"
+            )
+    return out
+
+
 def join_defects(blocks: list[dict]) -> list[str]:
     """印刷行拼接后会糊成一个式子的地方。
 

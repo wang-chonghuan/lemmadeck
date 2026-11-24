@@ -354,6 +354,7 @@ def cmd_finalize(a) -> int:
 
     join_defects = B.join_defects(blks)
     errors += join_defects
+    join_warnings = B.join_warnings(blks)
 
     m_err, m_warn = mathcheck.collect_and_check(texts, lambda x: [("text", x["text"])])
     # 跨页残片的公式配不平是必然的，校验义务推给 assemble（那时才有完整公式）
@@ -393,6 +394,7 @@ def cmd_finalize(a) -> int:
     _dump(pdir / "audit.json", {"page": a.page, "lines_printed": want, "lines_md": got,
                                 "figures": figs, "normalizations": applied,
                                 "unknown_chars": unknown, "join_defects": join_defects,
+                                "join_warnings": join_warnings,
                                 "katex_warnings": m_warn,
                                 "errata": len(meta.get("errata", [])),
                                 "errors": errors})
@@ -401,6 +403,8 @@ def cmd_finalize(a) -> int:
           f"（印刷 {want}）, 插图 {len(figs)} 张, 规范化 {len(applied)} 处")
     for f in figs:
         print(f"    {f['id']}({f['label']}) → {f['box']}")
+    for w in join_warnings:
+        print(f"  ⚠ {w}")
     if errors:
         print(f"  ✗ 失败 {len(errors)} 项:")
         for e in errors:
