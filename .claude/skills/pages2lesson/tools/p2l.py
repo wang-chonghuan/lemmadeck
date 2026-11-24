@@ -346,9 +346,35 @@ def phase_pages(args, plan: dict, report: Report) -> bool:
 
     if missing:
         report.gate = GATE_PAGES
-        report.work_order.append(
-            f"逐页读 .tmp 里的图，把 page.md 写到持久目录。缺 {len(missing)} 页："
-        )
+        # 同 G3：工单自带清单。实测一课 43.6M token 里 98.5% 是 cache read
+        # （已有上下文 × 轮数），而 ld-s10y-lesson/SKILL.md 全文 32KB 会被每一轮
+        # 重新计费。这里给够写一页所需的，不够时再去翻 SKILL.md。
+        report.work_order += [
+            "块格式（块头声明这一块是什么；块体里**一行 = 一印刷行**，行数对账靠这个）：",
+            "    <!-- h1 --> 章   <!-- h2 --> §   <!-- h3 --> 小节标题   <!-- p --> 正文段",
+            "    <!-- exhead --> 习题栏标题    <!-- ex 20 --> 第 20 题（原书题号）",
+            "    <!-- cap 图 7 --> 印刷出来的图题行       <!-- foot --> 页码",
+            "    <!-- fig 图 7 region r3 -->              插图/表格，认领候选区域",
+            "    <!-- fig 表 region r2+r3 owner-ex 20 --> 无编号练习图，明确归第 20 题",
+            "    <!-- fig 图 7 box 790,1640,490,250 -->   候选对不上时自己画粗框",
+            "  三个标记加在块头：open（这个对象还没完，下页接着）/ cont（承接上一个同类对象）",
+            "    / samerow（本块与上一块共享印刷行，如正文右侧的图题）。",
+            "    被插图从中间截断的段落写成 `p open` … `fig` … `p cont`，装订会接成一段。",
+            "  最容易悄悄发错内容的四条：",
+            "    1. 印刷行末本该有空格时（半角句点后、中英之间）**把空格写在行尾**——",
+            "       拼接是首尾直接相接的，漏了会装订出「…个一5米7分米…」，而行数对账照样全绿。",
+            "    2. 习题小问标号必须是**西里尔** а) б) в)，与拉丁 a) b) e) 字形完全相同，",
+            "       只能按码点写对。这是最常见的错误来源。",
+            "    3. 一条公式被印刷从中间切开：公式写完整，断点处写 ↵（行数照样对得上）。",
+            "    4. frontmatter 要填 printed_page（空的会被 finalize 拒掉）；",
+            "       原书印错照抄原样，确认的数学印刷错误另填 errata。",
+            "  行内数学用 $...$，上下标一律 LaTeX（x^2，禁 x²），分式 \\frac（禁 \\dfrac）；",
+            "    中文顿号逗号句号等全角标点放在 $...$ 之外；含中文的集合写成普通文本。",
+            "  完整规则在 .claude/skills/ld-s10y-lesson/SKILL.md 的 cap1 一节——",
+            "    上面这些不够用时再去翻它，不要每页都整篇读（32KB，每轮都重新计费）。",
+            "",
+            f"逐页读 .tmp 里的图，把 page.md 写到持久目录。缺 {len(missing)} 页：",
+        ]
         for page in missing:
             work_page = LESSON_WORK / args.book / "pages" / f"{page:04d}"
             layout = json.loads((work_page / "layout.json").read_text(encoding="utf-8"))
