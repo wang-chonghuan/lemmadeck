@@ -397,7 +397,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         "status": "draft",
         "profile": {
             "id": profile["id"],
-            "path": profile_path.as_posix(),
+            "path": portable_path(profile_path),
             "sha256": sha256(profile_path),
         },
         "lessons": existing_lessons,
@@ -600,6 +600,75 @@ def marker_order(markers: list[re.Match[str]]) -> dict[str, int] | None:
     ):
         return None
     return {label: index for index, label in enumerate(expected)}
+
+
+def portable_path(path: Path) -> str:
+    """A checkout-relative path, so recorded indexes do not pin one machine.
+
+    The profile default resolves to an absolute path, which would otherwise be
+    written verbatim into the committed edition index and differ per checkout.
+    """
+    absolute = Path(path).resolve()
+    try:
+        return absolute.relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return absolute.as_posix()
+
+
+def restore_column_rows(lines: list) -> list | None:
+    """Regroup a printed multi-column sub-part grid into one row per marker.
+
+    A two-column exercise prints its sub-item markers across the first row and
+    continues each column on the rows beneath it.  Which cell belongs to which
+    marker is carried by the printed row boundaries and the fullwidth alignment
+    separator, so the regrouping has to happen while the rows are still
+    separate: once they are flattened into one string the row break becomes an
+    ordinary space and the grid is no longer recoverable.
+
+    Returns the regrouped rows, or None when the lines hold no such grid.
+    """
+    start = width = None
+    for index, line in enumerate(lines):
+        cells = line.split("\u3000")
+        if len(cells) < 2 or any(not cell.strip() for cell in cells):
+            continue
+        if not all(PART_MARKER.match(masked_math(cell.strip())) for cell in cells):
+            continue
+        start, width = index, len(cells)
+        break
+    if start is None:
+        return None
+    run = [lines[start].split("\u3000")]
+    end = start + 1
+    while end < len(lines):
+        cells = lines[end].split("\u3000")
+        if len(cells) != width or any(not cell.strip() for cell in cells):
+            break
+        if any(PART_MARKER.match(masked_math(cell.strip())) for cell in cells):
+            break
+        run.append(cells)
+        end += 1
+    if len(run) < 2:
+        return None
+    columns = [
+        " ".join(row[column].strip() for row in run) + " "
+        for column in range(width)
+    ]
+    return list(lines[:start]) + columns + list(lines[end:])
+
+
+def printed_rows(item: dict) -> str:
+    """The source exercise text, with any printed column grid regrouped.
+
+    Falls back to the stored flat ``text`` whenever there is no grid, so every
+    exercise that does not print one is compared exactly as before.
+    """
+    lines = item.get("lines")
+    if isinstance(lines, list) and lines and all(isinstance(l, str) for l in lines):
+        restored = restore_column_rows(lines)
+        if restored is not None:
+            return "".join(restored)
+    return item.get("text", "")
 
 
 def normalize_numbered_subparts(text: str) -> str:
@@ -1599,7 +1668,7 @@ def validate_lesson(
             label,
         )
         errors += validate_text(
-            source_item.get("text", ""),
+            printed_rows(source_item),
             modern_item.get("text"),
             modern_item.get("changes"),
             modern_item.get("numeric_changes"),
@@ -1827,14 +1896,14 @@ def update_book_index(
         "status": "ready",
         "profile": {
             "id": load(profile_path)["id"],
-            "path": profile_path.as_posix(),
+            "path": portable_path(profile_path),
             "sha256": sha256(profile_path),
         },
         "lessons": [],
     }
     existing["profile"] = {
         "id": load(profile_path)["id"],
-        "path": profile_path.as_posix(),
+        "path": portable_path(profile_path),
         "sha256": sha256(profile_path),
     }
     by_id = {item["id"]: item for item in existing.get("lessons", [])}
