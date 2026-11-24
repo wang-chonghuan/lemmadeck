@@ -643,6 +643,34 @@ def phase_figures(args, plan: dict, report: Report) -> bool:
                 "  标签位置不用自己算：写 labelPlacement.position 当首选就行，"
                 "渲染器会自己错位/错开/扩画布去解，解不开才报它试过什么。"
             )
+            report.work_order += [
+                "  骨架照抄下面这份，别去 dump 现成的 spec 文件——那是实测里最贵的一次读：",
+                "    {",
+                '      "schema": "ld-s10y-image/figure-spec@2",',
+                '      "id": "<figure id>", "mode": "deterministic",',
+                '      "description": "<一句话说清这张图画的是什么>",',
+                '      "source": {',
+                '        "image": {"path": "<原书 PNG 相对仓库根的路径>", "sha256": "<该文件的 sha256>"},',
+                '        "authoritativeText": [{"text": "<相关 edition 题面/正文原文>"}],',
+                '        "inventory": [{"id": "<物件>", "description": "<按原图描述，含数值与归属>"}]',
+                "      },",
+                '      "canvas": {"width": 640, "height": 360,',
+                '                 "boundingBox": [xMin, yMax, xMax, yMin], "background": "paper"},',
+                '      "display": {"layout": "inline", "maxWidthPx": 640, "minTextPx": 16,',
+                '                  "widths": [331, 640]},',
+                '      "objects": [...], "assertions": [...]',
+                "    }",
+                "  会把 spec 挡回来的数值边界（先对一遍，省一轮）：",
+                "    canvas.width / canvas.height 都必须是 320–4096 的整数（**高度也不能小于 320**）",
+                "    boundingBox 是 [xMin, yMax, xMax, yMin]，要求 xMin<xMax 且 yMin<yMax",
+                "    display.minTextPx ≥ 16；display.widths 每项 128–1600；",
+                "      layout=inline 时 widths 必须含一个 ≤352 的产品宽度（移动端 331）",
+                "    display.maxWidthPx：instructional 取 240–960，decorative 取 128–240",
+                "    颜色只用语义角色 ink/muted/accent/accentSoft/grid/paper，不写具体色值",
+                "    标签文字只能是英文/数字/数学符号；几何物件必须配 assertions；禁止泄答案",
+                "  source.inventory 不能空，且不要用 objectCount 代替关系断言——",
+                "    关系用 gridDimensions / displacement / inside / connects 表达。",
+            ]
         if pending_review:
             report.work_order.append(
                 f"看 {len(pending_review)} 张已渲出的图，和原书 PNG 对照，然后带 "

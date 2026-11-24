@@ -35,13 +35,23 @@ $P $L run --book 3m --lesson math3-c1-ex5
 | **G2 写现代版文本** | 把 `text` 改成 modern-us-neutral | `.tmp/.../adapt/.../*.template.json` |
 | **G3 写插图语义** | FigureSpec（有哪些物件、哪些数值、谁拥有它）+ 目视验收 | `editions/<edition>/figures/<id>.spec.json`，然后 `--accept-figure <id>` |
 
-**裁图框不要你算。** `prepare` 已经把候选区域画在 `page.regions.png` 上并编了号，
+**裁图框先看候选。** `prepare` 把候选区域画在 `page.regions.png` 上并编了号，
 块头写 `region r3` 认领；一张表被拆成两个候选时写 `region r2+r3`。
-候选对不上时 `box x,y,w,h` 照旧可用。
+
+实测（3m 印刷页 40–43）：**候选只对「有外框的连续墨块」有效。** 那一课两张图一个都没认领成——
+靠留白分组的竖式阵列根本没被提出来，被细网格线切碎的方格条只提出左半截，
+反而把背面透印的竖条和纸边污点提成了候选。所以判据是：
+**对得上就认领，对不上直接 `box x,y,w,h`，不要为了用 region 去凑。**
+手画的粗框 `finalize` 照旧吸附，代价不大。
 
 **标签位置不要你算。** 写 `labelPlacement.position` 当首选就行。渲染器自己错位（八个方位）、
 错开（gap ×1/1.5/2.25/3）、扩画布（边距 8%/16%/25%，且只在实测字号仍 ≥ `minTextPx` 时接受），
 解不开才失败，并报出它试过哪些布局。
+
+**FigureSpec 的骨架和数值边界在 G3 的工单里直接给出**，照抄即可——不要去 dump 现成的
+spec 文件学格式，那是实测里最贵的一次读。最容易白跑一轮的两条：`canvas.width` 和
+`canvas.height` 都必须是 **320–4096** 的整数（高度也不能小于 320），
+`display.widths` 在 `layout: inline` 下必须含一个 ≤352 的产品宽度。
 
 内容规则（块格式、字符白名单、西里尔小问标号、现代版改写判据、FigureSpec 字段）
 **全在 `ld-s10y-lesson/SKILL.md` 和 `ld-s10y-image/SKILL.md` 里**，这里不复述。

@@ -176,18 +176,23 @@ class ThroughputTest(unittest.TestCase):
 
     def test_new_invocation_detects_source_change_and_wrong_binding(self):
         first, exercises = self.raw("1-First")
-        before = edition.source_errata(self.book, first, exercises)
+        before, before_errors = edition.source_errata(self.book, first, exercises)
+        self.assertEqual(before_errors, [])
         page = self.book / "pages/0001/page.json"
         value = edition.load(page)
         value["meta"]["errata"][0]["reason"] = "Changed source reason"
         save(page, value)
-        after = edition.source_errata(self.book, first, exercises)
+        after, after_errors = edition.source_errata(self.book, first, exercises)
+        self.assertEqual(after_errors, [])
         self.assertNotEqual(before[0]["source"]["sha256"], after[0]["source"]["sha256"])
         self.assertEqual(after[0]["reason"], "Changed source reason")
         wrong = copy.deepcopy(first)
         wrong["prose"][0]["source_refs"] = ["p0002#2"]
-        with self.assertRaises(SystemExit):
-            edition.source_errata(self.book, wrong, exercises)
+        _, wrong_errors = edition.source_errata(self.book, wrong, exercises)
+        self.assertTrue(
+            any("来源引用与权威页装订身份不一致" in error for error in wrong_errors),
+            wrong_errors,
+        )
 
     def test_page_cache_is_not_mutated_by_cross_page_merge(self):
         pages = [(Path("one"), {

@@ -36,10 +36,9 @@ class LocalBindingsTest(unittest.TestCase):
                 self.assertEqual(block["lines"], ["Original"])
         source = SourceBook(Path("."))
         source._binding_errors = errors
-        source.assert_bindings(candidates[-1])
+        self.assertEqual(source.binding_errors(candidates[-1]), [])
         for candidate in candidates[:-1]:
-            with self.assertRaises(SystemExit):
-                source.assert_bindings(candidate)
+            self.assertTrue(source.binding_errors(candidate))
 
     def test_scoped_figure_errors_block_possible_owners(self):
         stream = [block for block in self.stream() if block["kind"] != "foot"]
@@ -57,10 +56,9 @@ class LocalBindingsTest(unittest.TestCase):
         self.assertEqual(len(errors), 1)
         source = SourceBook(Path("."))
         source._binding_errors = errors
-        source.assert_bindings(candidates[-1])
+        self.assertEqual(source.binding_errors(candidates[-1]), [])
         for candidate in candidates[:-1]:
-            with self.assertRaises(SystemExit):
-                source.assert_bindings(candidate)
+            self.assertTrue(source.binding_errors(candidate))
 
 
 if __name__ == "__main__":
