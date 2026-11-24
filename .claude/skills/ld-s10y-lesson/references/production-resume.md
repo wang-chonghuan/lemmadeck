@@ -74,13 +74,20 @@ Source pages and shared inputs may be prepared together. Delivery is per lesson.
 
 ## Production worker configuration
 
-- Use a **200K-context model** for production work. A 1M-context model removes the
-  ceiling that would otherwise force compaction, and the session runs to 900K+ with
-  every turn billed at that size.
-- **Check that ceiling before the first tool call, and state the number.** Nothing
-  in the pipeline enforces it: the STEMROBIN-191 run reached a 389K peak context
-  with every turn billed at that size and no warning anywhere. If the session's
-  model does not have a 200K window, say so and stop instead of starting the lesson.
+- **Work under a 200K context ceiling.** What matters is the ceiling, not which
+  model supplies it. A 200K-context model enforces it for you: it has to compact,
+  so the session cannot quietly bill every turn at 400K. A 1M-context model
+  enforces nothing, and the first STEMROBIN-191 run reached a 389K peak with no
+  warning anywhere; the second ran its whole lesson above 300K and paid about
+  three times what the same work costs under the ceiling.
+- **On a model with a larger window, enforce the ceiling yourself, and say so
+  before the first tool call**: state the window you actually have, read the real
+  context at every cap boundary, and when it approaches 200K, hand the remaining
+  caps to a new session instead of carrying on. A large window is a reason to
+  measure, not a reason to refuse the lesson — an unstarted lesson delivers
+  nothing, and on a fleet where every session is 1M a refusal would stop all
+  production. Record the per-cap context readings; they are what tells us whether
+  the ceiling is holding.
 - One worker per lesson. Parallel lessons are parallel sessions, not one session
   doing more.
 
