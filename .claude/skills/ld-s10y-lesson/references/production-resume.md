@@ -1,186 +1,163 @@
-# Per-lesson delivery SOP and recovery
+# Per-lesson delivery SOP
 
-Use the active ticket's authorization, not the skill's usual publish default.
-An offline repair or a paused production assignment does not authorize DB writes,
-deployment or starting other workers. This is the binding delivery sequence for
-the lesson, image, choice and answer skills. Workers must follow this lean
-workflow; "strict" does not authorize additional checks, paperwork or waiting gates.
+The binding delivery sequence for the lesson, image, choice and answer skills.
 
-## Required worker workflow
+**One lesson, one session.** The session boundary is the lesson boundary: finish the
+authorized lesson, record it, and end the session. Do not begin another lesson in a
+session that has already delivered one.
 
-Source pages and shared inputs may be prepared together, and multi-lesson tools
-may reuse their invocation-local source stream. Delivery is different: finish and
-save each complete authorized lesson immediately. Do not wait for four lessons,
-a chapter, a context checkpoint or the next scheduled inspection.
+That is the whole reason this file is short. Production cost is not the content —
+it is the session's own history, re-read on every turn. A session that runs lesson
+after lesson grows monotonically and pays for all of it again each turn, so its cost
+rises with the square of its length. Ending the session is the only thing that makes
+the cost per lesson flat.
 
-1. Complete the selected lesson and every component required by the assignment:
-   prose, exercises, figures, answers/interactions and choices where requested.
-   Keep the existing substantive source, mathematics and option review. Check
-   the complete new/changed lesson's desktop/mobile display once, using offline
-   or product evidence applicable to its current files and display contract;
-   do not require both surfaces to repeat the same display review. Reuse valid,
-   unchanged bound evidence. Stable keyboards, judging and other shared app
-   behavior do not need a full functional retest for every new lesson.
-2. Retain the reviewed lesson and its necessary dependencies under
-   `ssot-resources/soviet10year-textbooks/artifacts/<book>/`. Use the existing
-   page, edition, figure, answer and choice paths, preserving indispensable
-   source/review evidence and original failures. Do not leave the only copy in
-   an auto-cleanable worker tree or ignored `tmp/`. Use the existing checkpoint;
-   do not manufacture per-command receipts, new evidence packages or duplicate
-   shared assets. Never commit secrets or runtime dependencies.
-3. Promptly commit this lesson's owned artifacts and required
-   source/index/asset changes, then ordinary push to the worker's recorded
-   existing branch. Use the exact authorized absolute workdir. Do not stage
-   unrelated dirty or already staged work, use `git add -A`, create a replacement
-   branch, merge, deploy or force push. For a detached checkout, push
-   `HEAD:<recorded-existing-branch>`. A normal successful push result is enough;
-   inspect remote refs only if the outcome is uncertain. Do not add file-by-file
-   rehashing or another review before saving. A local commit or Git lock alone
-   is not remote preservation. Failed push blocks that lesson's publication,
-   not unrelated source work.
-4. Submit that pushed lesson immediately to the already authorized DB writer
-   using the existing checkpoint and its lesson ID, branch/commit and retained
-   paths. Multi-session production uses one caller-designated writer; producers
-   do not acquire DB authorization from this SOP. Publish the pushed lesson
-   snapshot and its dependencies, not later uncommitted worker edits; use the
-   existing retention/intake contract without merging worker branches.
-   The writer serializes writes, uses the existing named publishers with exactly
-   one `--lesson <id>`, and runs
-   only the required stages in order: base lesson, answers, interactions, then
-   retained choices where requested. Do not use `--all` or publish unchanged
-   earlier lessons. Do not turn single-lesson submission into a four-lesson queue
-   gate, periodic full intake or a new service. A busy writer does not prevent
-   source work on the next authorized lesson.
-5. After the required writes succeed, perform one small affected-lesson DB
-   readback for edition, content presence/counts and the requested components.
-   Use the publishers' existing validation; do not prepend an identical checker.
-   Reuse applicable display evidence from step 1. Only an uncovered display or
-   integration change, an actual failure, or an explicit functional-test request
-   needs the affected cap7 check; do not run the full product suite per lesson.
-   Record the actual push and publication results in the existing checkpoint.
-   Publication notes alone do not require a second commit/push; retain them at
-   the existing durable location or include them in the next normal commit.
-   Changed course/review bytes still need affected review and prompt preservation.
-   A DB row is not a backup of source/review artifacts.
+The caller's pause or offline authorization overrides the publish steps below.
 
-After saving/pushing and recording the single-lesson submission, continue the
-next authorized lesson without waiting for the DB writer, a batch report or
-inspection. This SOP does not create a background writer. Offline-only
-assignments stop at their authorized handoff; they do not call publishers. Explicitly paused
-assignments remain paused even after this SOP is repaired or installed.
-If a rule is missing or conflicts with the assignment, report the concrete
-conflict to the caller before that stage; do not invent an extra gate or bypass
-a required review.
+## Required workflow
+
+Source pages and shared inputs may be prepared together. Delivery is per lesson.
+
+1. **Produce** the authorized lesson and every component the assignment names:
+   prose, exercises, figures, answers/interactions, and choices where requested.
+   Keep the substantive source, mathematics and option review. Check the new or
+   changed lesson's desktop/mobile display once, using offline or product evidence
+   applicable to its current files. Reuse valid unchanged bound evidence. Shared app
+   behaviour — keyboards, judging, SPA navigation — needs no retest per lesson.
+
+2. **Retain** the reviewed lesson and its dependencies under
+   `ssot-resources/soviet10year-textbooks/artifacts/<book>/`, in the existing page,
+   edition, figure, answer and choice paths. Keep the first failure receipt and the
+   changed candidate snapshot once. Never commit secrets or runtime dependencies.
+
+3. **Commit and push** this lesson's owned paths to the worker's recorded branch.
+   Name the paths explicitly; never `git add -A`. For a detached checkout, push
+   `HEAD:<recorded-branch>`. A normal successful push is enough. A failed push blocks
+   this lesson's publication, not unrelated source work.
+
+4. **Submit** the pushed lesson to the authorized DB writer with its lesson id,
+   branch/commit and retained paths. One caller-designated writer serializes writes,
+   using the named publishers with exactly one `--lesson <id>`, in order: base
+   lesson, answers, interactions, then retained choices where requested. Publish the
+   pushed snapshot, not later uncommitted edits.
+
+5. **Read back** that lesson once: edition, content presence and counts, and the
+   requested components. Reuse the display evidence from step 1. Only an uncovered
+   display change, an actual failure, or an explicit functional-test request needs
+   the affected cap7 check.
+
+6. **Record and end.** Write the lesson's stage and this session's real token usage
+   into the checkpoint, then **end this session**:
+
+   ```bash
+   python3 .claude/skills/ld-s10y-lesson/tools/checkpoint.py set-lesson \
+     --repo . --ticket <ticket-id> --lesson <card-id> --stage published \
+     --commit <sha> --session <session-id>
+   python3 .claude/skills/ld-s10y-lesson/tools/meter.py record \
+     --repo . --ticket <ticket-id>
+   ```
+
+   `meter.py` exits non-zero past its budget. That is not a failure of the lesson —
+   it is the signal that this session was already too long, and the next lesson
+   starts in a new one regardless.
+
+   The next lesson starts in a **new session**, from the checkpoint.
+
+## Production worker configuration
+
+- Use a **200K-context model** for production work. A 1M-context model removes the
+  ceiling that would otherwise force compaction, and the session runs to 900K+ with
+  every turn billed at that size.
+- One worker per lesson. Parallel lessons are parallel sessions, not one session
+  doing more.
+
+## Resume
+
+The checkpoint is the only resume input:
+
+```bash
+python3 .claude/skills/ld-s10y-lesson/tools/checkpoint.py check \
+  --repo . --ticket <ticket-id>
+```
+
+Read the latest direct human instruction and the checkpoint, then continue the first
+lesson that is not `published`. A direct pause stays effective until a later direct
+human resume for that scope; old resume messages, heartbeats and the completion of a
+repair do not lift it.
+
+Collect already completed child results before dispatching replacements. Bind
+returned paths to the actual files and reuse passed stages. A bounded offline
+experiment does not authorize another lesson or a DB write.
 
 ## Failure and stop boundaries
 
 Keep successful commits, pushes and publisher results when a later stage fails.
-Diagnose the concrete cause, then resume only the missing/failed stage for that
-lesson. If a write's outcome is uncertain, read back that lesson before retrying;
-do not blindly republish the base or regenerate the lesson. Existing answers,
-interactions and valid choices must survive a permitted base republish.
+Diagnose the concrete cause, then resume only the missing or failed stage for that
+lesson. If a write's outcome is uncertain, read that lesson back before retrying.
+Existing answers, interactions and valid choices must survive a permitted base
+republish.
 
-On a direct pause or shutdown request, do not start the next lesson. Finish only
-the nearest safe in-flight step, retain completed work and an honest incomplete
-checkpoint, and stop owned tasks. Preserve unfinished files and existing staging.
-Save/push in-scope checkpoint bytes when authorized, clearly marked incomplete;
-do not publish an incomplete lesson or infer a resume from saving it.
+Distinguish these four, because they have different remedies:
 
-## Continue from facts
+| What happened | What it is |
+|---|---|
+| bad cwd, missing output directory, read-only file, parser error | tool execution failure — fix and resume the failed stage |
+| review found the content wrong | content failure — revise, then affected-only review |
+| source missing or ambiguous | a stop with evidence, not a verdict on the content |
+| human approval absent | a stop; never self-granted |
 
-- Before continuing, read the latest direct human instruction and the existing
-  checkpoint. A direct pause stays effective until a later direct human resume
-  for that scope; old resume messages, heartbeats and completion of a repair do
-  not lift it.
-- Collect already completed child results before dispatching replacements.
-  Bind the returned paths to the actual files and reuse passed stages. A
-  checkpoint, batch report or context compression is not a completion condition.
-  Follow the single-lesson delivery sequence above within the authorized scope.
-  A bounded offline experiment does not authorize another lesson or DB writes.
-- Distinguish tool execution failure, content review failure, missing/ambiguous
-  source, and human approval. A bad cwd, missing output directory, read-only
-  working file or output-parser error is not a scientific verdict or a permanent
-  prohibition on that content.
-- Preserve the failed call and any valid output. Correct the identified technical
-  cause and continue only the failed stage; do not redo passed authors/reviews or
-  count recovery as approval. Content changes still need affected-only review.
-  Real content-revision, image and paid-call usage is never reset.
-- Read a checkpoint's HOLD reason to identify the held phase. A technical repair
-  corrects its execution diagnosis, not a separate content or approval HOLD.
-- Stop dependent stages at their first failure. Independent completed work remains
-  usable; a local gap does not block unrelated authorized lessons.
+A technical repair corrects its execution diagnosis, not a content or approval HOLD.
+Stop dependent stages at their first failure; independent completed work stays usable.
 
-## Existing tool contracts
+On a direct pause or shutdown request, do not start the next lesson. Finish only the
+nearest safe in-flight step, retain completed work, write an honest incomplete
+checkpoint, and stop. Do not publish an incomplete lesson or infer a resume from
+saving one.
 
-Commands run from the exact active checkout root. Book identity is explicit;
-neither the environment nor another book supplies a default.
+## Tool contracts
+
+Commands run from the exact active checkout root. Book identity is explicit; neither
+the environment nor another book supplies a default.
 
 ```bash
 P=.claude/skills/ld-s10y-lesson/.venv/bin/python
 $P .claude/skills/ld-s10y-lesson/tools/production.py prepare-range \
   --repo . --book <book> --first <physical-page> --last <physical-page> \
   --work .tmp/ld-s10y-lesson
-$P .claude/skills/ld-s10y-lesson/tools/production.py read-json \
-  --input <saved-stdout>
+$P .claude/skills/ld-s10y-lesson/tools/production.py read-json --input <saved-stdout>
 $P .claude/skills/ld-s10y-lesson/tools/production.py read-receipt \
   --input <saved-execution.json> --expected <handoff-execution.json>
 $P .claude/skills/ld-s10y-lesson/tools/retain_choices.py \
   --repo . --book <book> --lesson <card-id> --source <approved-choice-directory>
 ```
 
-Range preparation reuses complete prepared pages and stops before the next page
-when a command fails. It is preparation only, never source/content approval.
-Use the returned machine result for control; human logs are not one JSON document.
-For historical mixed stdout, read all complete top-level documents without
-rerunning the successful producer. Do not turn candidate presence into approval.
+`checkpoint.py` and `meter.py` use the system `python3` and the standard library;
+they do not need the virtual environment.
 
-Receive a handoff once using its status, scope, referenced files/hashes, actual
-execution receipts and required substantive review. Do not add a parent gate
-that reads every JSON scalar, the entire checker source, or every package file
-before releasing the next stage. Only expand a specific missing or conflicting
-fact. The parent does not redo the child's content or image review.
+Range preparation reuses complete prepared pages and stops before the next page when
+a command fails. It is preparation only, never source or content approval. Use the
+returned machine result for control.
 
 `read-receipt` compares execution facts across the known `cwd`/`workdir`,
 `exitCode`/`exit_code`/`returncode`, `argv`/`child_argv` and flat/nested `streams`
-wrappers. A string `command` is one executable, with `argv` supplying its
-arguments; shell strings are not parsed. Optional timestamps, counters and extra
-package metadata are not equality gates. Conflicting aliases, nonzero or missing
-exit status, interrupted calls, missing streams and recorded hash drift fail.
-Resolve relative stream paths against each receipt's directory. This read-only
-helper does not execute commands or establish content approval; retain the
-original receipt and its source/review bindings. Do not invent missing evidence
-or compare a whole child record against a handoff's partial metadata object.
+wrappers. Conflicting aliases, nonzero or missing exit status, interrupted calls,
+missing streams and recorded hash drift fail. It establishes no content approval.
 
 For local repairs, run only the affected downstream lesson stages. `assemble`
-still reconciles the authoritative book structure, but replaces only changed
-outputs; it does not delete other lesson directories or attached evidence.
-The current book index, not leftover directories, defines the active set.
-Multi-lesson edition commands share one invocation-local source page stream and
-source reconstruction. A later invocation rereads source; there is no persistent
-cache that can conceal changed pages or errata.
+reconciles the authoritative book structure and replaces only changed outputs; the
+current book index, not leftover directories, defines the active set.
 
-Choice retention verifies the existing choice checker against the current lesson,
-its projection and assets. It refuses a wrong owner or a different existing
-target; exact outputs can be reused. The seed's original index trace stays
-historical: adding unrelated lessons to the book index does not invalidate
-unchanged reviewed question content. Changed lesson files or assets still fail.
+`reindex --book <book> --toc <toc.json>` derives the index from retained lesson files
+without rewriting them, for importing already approved raw lessons into a repair
+checkout.
 
-Immutable evidence and editable outputs are different files. Keep the original
-approved snapshots read-only; make a writable working copy. Modern finalization
-replaces its output files, not the evidence snapshot or its permissions.
+Keep approved snapshots read-only and work from a writable copy. Modern finalization
+replaces its output files, not the evidence snapshot.
 
-When importing already approved raw lessons into a repair checkout, `p2c.py
-reindex --book <book> --toc <toc.json>` derives the index from retained lesson
-files without rewriting them. It is not a substitute for assembling or reviewing
-new/incomplete source.
+## Evidence
 
-## Evidence without duplicate packages
-
-Reference the existing source/PDF/runtime path, Git revision and file hash.
-Keep the first failure receipt and changed candidate snapshot once. Do not copy
-Node, Python, whole PDFs or a whole earlier evidence package into each new batch.
-Only a genuinely required changed input or output needs new bytes.
-Follow the image skill's bounded contexts; return text and evidence paths/hashes,
-not image-bearing history. Keep one applicable desktop/mobile display review of
-new/changed content, then only affected checks after a real defect. A new handoff,
-commit, push or checkpoint alone does not invalidate a passed review.
+Reference the existing source/PDF/runtime path, Git revision and file hash. One
+applicable desktop/mobile display review of new or changed content, then affected
+checks only after a real defect. Do not copy Node, Python, whole PDFs or an earlier
+evidence package into a new batch. Return text and evidence paths or hashes, not
+image-bearing history.
