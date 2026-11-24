@@ -404,6 +404,39 @@ def _pollution(book_dir: Path, card: str) -> list[str]:
     return restored
 
 
+def _assemble_verdict(book_dir: Path, plan: dict, report: Report) -> None:
+    """对账按**本次交付的那张卡**作用域。
+
+    `assemble` 是全书重算，它的退出码带着全书的既有失败——3m 的 `x1-承上页` 自
+    STEMROBIN-191 起就报「题号缺号 [17, 24..93]」。拿退出码当判据，这条路径在这本书上
+    永远是红的，而那条红和本次交付无关。所以判据取 book.json 的 audit：提到本卡的
+    失败才拦，其余只报告。
+    """
+    index_path = book_dir / "book.json"
+    if not index_path.is_file():
+        report.failures.append("assemble 没有写出 book.json——装订整体失败")
+        return
+    try:
+        audit = json.loads(index_path.read_text(encoding="utf-8")).get("audit", {})
+    except (json.JSONDecodeError, OSError) as error:
+        report.failures.append(f"book.json 读不出来: {error}")
+        return
+    card = plan["card"]
+    title = plan.get("title") or ""
+    mine, theirs = [], []
+    for error in audit.get("errors", []):
+        (mine if card in error or (title and title in error) else theirs).append(error)
+    report.failures += [f"装订: {error}" for error in mine]
+    if theirs:
+        report.step(
+            "P2 既有失败（不属于本次交付，只报告）", True,
+            f"{len(theirs)} 项: " + "; ".join(item[:120] for item in theirs),
+        )
+    for item in audit.get("unclosed_cards", []):
+        if item.get("card_id") == card:
+            report.failures.append(f"小节边界: {item['message']}")
+
+
 def phase_assemble(args, plan: dict, report: Report) -> bool:
     book_dir = ARTIFACTS / args.book
     report.phase = "assemble"
@@ -414,7 +447,8 @@ def phase_assemble(args, plan: dict, report: Report) -> bool:
         ("assemble(图库同步)", ["assemble", "--book", args.book, "--toc", str(toc)]),
     ):
         result = _run([sys.executable, str(P2C)] + argv)
-        report.failures += _tool_failures(result, label)
+        if label == "vectorize":
+            report.failures += _tool_failures(result, label)
 
     restored = _pollution(book_dir, plan["card"])
     if restored:
@@ -424,17 +458,7 @@ def phase_assemble(args, plan: dict, report: Report) -> bool:
             + ", ".join(_rel(REPO / path) for path in restored),
         )
 
-    index_path = book_dir / "book.json"
-    unclosed = []
-    if index_path.is_file():
-        audit = json.loads(index_path.read_text(encoding="utf-8")).get("audit", {})
-        unclosed = [
-            item for item in audit.get("unclosed_cards", [])
-            if item.get("card_id") == plan["card"]
-        ]
-    for item in unclosed:
-        report.failures.append(f"小节边界: {item['message']}")
-
+    _assemble_verdict(book_dir, plan, report)
     report.step("P2 装订", not report.failures, f"{plan['card']}")
     return not report.failures
 
@@ -474,7 +498,7 @@ def phase_edition(args, plan: dict, report: Report) -> bool:
         report.step("P3 现代版备料", True, _rel(paths["templates"]))
 
     source_lesson = ARTIFACTS / args.book / "lessons" / plan["card"]
-    rewritten = _templates_rewritten(templates[0], templates[1])
+    rewritten = args.edition_ready or _templates_rewritten(templates[0], templates[1])
     if not rewritten:
         report.gate = GATE_EDITION
         report.work_order += [
@@ -485,6 +509,8 @@ def phase_edition(args, plan: dict, report: Report) -> bool:
             f"  figures.template.json 已预置 mode/svg/render/review 四个路径，"
             f"默认 deterministic；真需要 hybrid 时改 mode 并补 artwork",
             "改完原样再跑这条命令，它会接着做插图与校验。",
+            "（判据是「有任何一条 text 与 source_text 不同」。确实一字不改时加 "
+            "--edition-ready 跳过这个判据。）",
         ]
         return False
     report.step("P3 现代版文本", True, "模板已改写")
@@ -794,6 +820,8 @@ def main() -> int:
                      help="目视验收这张图，记 review 证据；可重复")
     run.add_argument("--review-note", default="pages2lesson 驱动下的目视验收",
                      help="写进 review 证据的说明")
+    run.add_argument("--edition-ready", action="store_true",
+                     help="模板确实一字不改时跳过 G2 的「已改写」判据")
     run.add_argument("--no-publish", action="store_true",
                      help="做到发布预检就停，真实入库交给人")
     run.set_defaults(func=cmd_run)
