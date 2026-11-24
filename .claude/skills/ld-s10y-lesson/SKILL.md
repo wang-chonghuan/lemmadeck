@@ -188,6 +188,10 @@ ssot-resources/soviet10year-textbooks/artifacts/5m/
 
 工具入口：`.claude/skills/ld-s10y-lesson/.venv/bin/python .claude/skills/ld-s10y-lesson/tools/p2c.py`
 
+生产记账用系统 `python3`，只依赖标准库，不需要 venv：
+`tools/checkpoint.py`（定长 checkpoint，字段 200 字符 / 文件 256 KiB 硬上限）、
+`tools/meter.py`（读本 session 转写的真实 token 用量，超预算非零退出）。
+
 依赖引导（缺失时）：
 ```bash
 uv venv <skill>/.venv --python 3.13
