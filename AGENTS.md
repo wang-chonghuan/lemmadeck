@@ -24,6 +24,7 @@ Read the routed file directly; don't duplicate its content here.
 | Machine-current module facts (reverse-engineered) | `.evodocs/modules/` |
 | Ticket spec / acceptance criteria | the ticket in plane, live — never a local copy |
 | Content-generation skills | `.agents/skills/` (`sr-story`, `sr-voa1500`, `ld-galaxy`, `ld-s10y-image`) |
+| 一段页码 → 一课并入库（一条命令，三个 gate） | `.claude/skills/pages2lesson/` —— `ld-s10y-lesson` 之上的驱动，共用同一套工具与发布器 |
 | Soviet 10 Years 教材 → lesson / exercise | `.claude/skills/ld-s10y-lesson/`（现代图委托 `ld-s10y-image`；产物在 `ssot-resources/soviet10year-textbooks/artifacts/`） |
 | Soviet 10 Years 书后答案 → answer | `.claude/skills/ld-s10y-answer/` |
 

@@ -9,7 +9,9 @@
     <!-- p -->             正文段
     <!-- exhead -->        习题栏标题（复习题 / 家庭作业题）
     <!-- ex 20 -->         习题，20 是原书题号
-    <!-- fig 图 7 box 790,1640,490,250 -->
+    <!-- fig 图 7 region r3 -->            （机器提的候选区域，prepare 已画在 page.regions.png 上）
+    <!-- fig 图 7 region r2+r3 -->          （一张表被拆成两个候选时合起来认领）
+    <!-- fig 图 7 box 790,1640,490,250 -->  （候选对不上时照旧自己画粗框）
     <!-- cap 图 7 -->      印刷出来的图题行（是文字，要能检索）
     <!-- foot -->          页码
 
@@ -27,6 +29,9 @@ from pathlib import Path
 HEAD = re.compile(r"^<!--\s+(?P<kind>h1|h2|h3|p|exhead|ex|fig|cap|foot)\b"
                   r"(?P<rest>.*?)\s*-->$")
 BOX = re.compile(r"\bbox\s+(\d+,\d+,\d+,\d+)")
+# 机器提出的候选裁图区域（STEMROBIN-192）：模型写 `region r3`，或 `region r2+r3`
+# 把被拆开的一张表合起来。`box` 语法原样保留，候选对不上时还能自己画框。
+REGION = re.compile(r"\bregion\s+(r\d+(?:\s*\+\s*r\d+)*)")
 FLAG = re.compile(r"\b(cont|open|samerow)\b")
 OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:*-]+)")
 WRAP = "↵"
@@ -73,12 +78,18 @@ def parse(md: str) -> tuple[dict, list[dict]]:
             mb = BOX.search(rest)
             box = [int(v) for v in mb.group(1).split(",")] if mb else None
             rest = BOX.sub("", rest)
+            mr = REGION.search(rest)
+            regions = (
+                [item.strip() for item in mr.group(1).split("+")] if mr else None
+            )
+            rest = REGION.sub("", rest)
             mo = OWNER.search(rest)
             owner_exercise = mo.group(1) if mo else None
             rest = OWNER.sub("", rest)
             flags = set(FLAG.findall(rest))
             label = FLAG.sub("", rest).strip() or None
             cur = {"kind": m.group("kind"), "label": label, "box": box,
+                   "regions": regions,
                    "owner_exercise": owner_exercise,
                    "cont": "cont" in flags, "open": "open" in flags,
                    "samerow": "samerow" in flags, "lines": []}
@@ -99,6 +110,8 @@ def dump(meta: dict, blocks: list[dict], page: int) -> str:
         head = ["<!--", b["kind"]]
         if b.get("label"):
             head.append(b["label"])
+        if b.get("regions"):
+            head.append("region " + "+".join(b["regions"]))
         if b.get("box"):
             head.append("box " + ",".join(map(str, b["box"])))
         if b.get("owner_exercise"):

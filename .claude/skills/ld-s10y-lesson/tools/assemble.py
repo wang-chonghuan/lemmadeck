@@ -696,6 +696,76 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
     return warn
 
 
+def _toc_nodes(toc: dict) -> list[dict]:
+    """目录里每一个带 id 的层级条目——章、节、编号单元，不筛可发布性。"""
+    nodes = []
+    for content in toc.get("contents", []):
+        nodes.append(content)
+        for section in content.get("lessons", []) or []:
+            nodes.append(section)
+            nodes.extend(section.get("topics") or [])
+    return [node for node in nodes if node.get("id")]
+
+
+def check_card_closure(
+    lessons: list[dict], toc_path: Path, extracted_printed_pages: set[int],
+) -> list[dict]:
+    """哪些卡片的末页没有被下一张卡片收口——连续三课漏题就是漏了这条检查。
+
+    小节边界常落在印刷页中间：TOC 说这张卡起于印刷页 40、下一张起于 43，那么 40–42
+    属于这张卡，而**只有把 43 也转写出来**，才知道第 42 页之后没有本卡的内容了。
+    43 没转写时，装订照样产出一课、题号连续性照样过（本卡自己的题号没缺），
+    页级行数对账也照样全绿——它只看单页。于是一课少几道题是静默的。
+
+    返回每张未收口卡片一条记录，而不是一句话：驱动要按卡片判定本次交付能不能放行。
+    """
+    toc = json.loads(toc_path.read_text(encoding="utf-8"))
+    # 收口边界是**目录里下一个带页码的条目**，不只是可发布卡片：一张卡的后面常常
+    # 直接是下一章的章头（3m 的 math3-c1-ex5 之后是 math3-c2，而 c2 的第一张卡片
+    # 远在 21 页之后），按卡片找边界会把范围算得太大。
+    boundaries = [
+        node for node in _toc_nodes(toc) if node.get("page") is not None
+    ]
+    boundaries.sort(key=lambda node: node["page"])
+    cards = [card for card in _toc_cards(toc) if card.get("page") is not None]
+    next_page = {}
+    for card in cards:
+        next_page[card["id"]] = next(
+            (
+                node for node in boundaries
+                if node["page"] > card["page"] and node["id"] != card["id"]
+            ),
+            None,
+        )
+    open_cards = []
+    for lesson in lessons:
+        card_id = lesson.get("card_id")
+        if not card_id or card_id not in next_page:
+            continue
+        following = next_page[card_id]
+        if following is None:      # 全书最后一张卡，没有下一张来收口
+            continue
+        if following["page"] in extracted_printed_pages:
+            continue
+        own = next(
+            (card for card in cards if card["id"] == card_id), {"page": None},
+        )
+        open_cards.append({
+            "card_id": card_id,
+            "title": lesson.get("title"),
+            "start_printed": own.get("page"),
+            "next_card": following["id"],
+            "next_printed": following["page"],
+            "message": (
+                f"{card_id}「{lesson.get('title')}」可能没收完：下一张卡片 "
+                f"{following['id']} 起于印刷页 {following['page']}，而这一页还没转写，"
+                f"所以印刷页 {own.get('page')}–{following['page'] - 1} 里本卡的内容"
+                "有没有被吃完无从判断。把那一页也转写出来（只发布本卡）再交付"
+            ),
+        })
+    return open_cards
+
+
 def edition_bindings_broken(book: Path, lesson_id: str, new_bytes: bytes) -> list[str]:
     """已发布的哪些 edition 会因为写入这份新 lesson.json 而失去绑定。
 
@@ -737,13 +807,18 @@ def run(
     report = audit(lessons, merged, profile, exercise_numbering)
     report["errors"] = figure_errors + report["errors"]
     report["warnings"] = warn_merge + warn_fig + report["warnings"]
+    report["unclosed_cards"] = []
     if toc:
-        report["warnings"] += check_toc(
-            lessons,
-            toc,
-            book.name,
-            {b["printed_page"] for b in stream if b.get("printed_page") is not None},
+        extracted_printed = {
+            b["printed_page"] for b in stream if b.get("printed_page") is not None
+        }
+        report["warnings"] += check_toc(lessons, toc, book.name, extracted_printed)
+        report["unclosed_cards"] = check_card_closure(
+            lessons, toc, extracted_printed,
         )
+        report["warnings"] += [
+            card["message"] for card in report["unclosed_cards"]
+        ]
 
     # 全书图库：.tmp 页目录里的裁图按原书图号提升，重号即报。
     # 只覆盖本次重建的图，不清空已有图库；这样删掉 .tmp 后重新 assemble 也不会丢图。
@@ -759,31 +834,7 @@ def run(
             raise ValueError(f"lesson output redirects its owner: {d}")
         d.mkdir(parents=True, exist_ok=True)
         head = " · ".join(x for x in (l["chapter"], l["section"]) if x)
-        md = [f"# {l['printed_title'] or l['title']}", ""]
-        if head:
-            md += [f"> {head}", ""]
-        for b in l["prose"]:
-            if b["kind"] == "fig":
-                md += [f"![{b.get('label') or ''}](../../figures/{b['id']}.svg)", ""]
-            elif b["kind"] == "cap":
-                md += [f"*{B.text_of(b)}*", ""]
-            else:
-                md += [B.text_of(b), ""]
-        write_if_changed(d / "lesson.md", ("\n".join(md).rstrip() + "\n").encode("utf-8"), root=book)
-        exercises_document = {
-            "lesson": lid,
-            "count": len(l["exercises"]),
-            "exercises": l["exercises"],
-        }
-        previous_path = d / "exercises.json"
-        previous = json.loads(previous_path.read_bytes()) if previous_path.is_file() else None
-        if previous is None or not can_reuse_exercises(previous, exercises_document):
-            write_if_changed(
-                d / "exercises.json",
-                (json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
-                root=book,
-            )
-        lesson_bytes = (json.dumps(
+        pending_lesson_bytes = (json.dumps(
             {"id": lid, "card_id": l.get("card_id"),
              "chapter": l["chapter"], "section": l["section"],
              "number": l["number"], "title": l["title"],
@@ -796,11 +847,43 @@ def run(
                         "source_refs": b.get("spans") or [b["ref"]]}
                        for b in l["prose"]]},
             ensure_ascii=False, indent=2) + "\n").encode("utf-8")
-        rebound = edition_bindings_broken(book, lid, lesson_bytes)
-        if rebound and not allow_rebind:
+        rebound = edition_bindings_broken(book, lid, pending_lesson_bytes)
+        frozen = bool(rebound) and not allow_rebind
+        md = [f"# {l['printed_title'] or l['title']}", ""]
+        if head:
+            md += [f"> {head}", ""]
+        for b in l["prose"]:
+            if b["kind"] == "fig":
+                md += [f"![{b.get('label') or ''}](../../figures/{b['id']}.svg)", ""]
+            elif b["kind"] == "cap":
+                md += [f"*{B.text_of(b)}*", ""]
+            else:
+                md += [B.text_of(b), ""]
+        if not frozen:
+            write_if_changed(
+                d / "lesson.md",
+                ("\n".join(md).rstrip() + "\n").encode("utf-8"),
+                root=book,
+            )
+        exercises_document = {
+            "lesson": lid,
+            "count": len(l["exercises"]),
+            "exercises": l["exercises"],
+        }
+        previous_path = d / "exercises.json"
+        previous = json.loads(previous_path.read_bytes()) if previous_path.is_file() else None
+        if not frozen and (
+            previous is None or not can_reuse_exercises(previous, exercises_document)
+        ):
+            write_if_changed(
+                d / "exercises.json",
+                (json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+                root=book,
+            )
+        if frozen:
             rebind_blocked.append((lid, rebound))
         else:
-            write_if_changed(d / "lesson.json", lesson_bytes, root=book)
+            write_if_changed(d / "lesson.json", pending_lesson_bytes, root=book)
         index.append({"id": lid, "card_id": l.get("card_id"),
                       "title": l["title"], "number": l["number"],
                       "start_printed": l["start_printed"],
@@ -810,7 +893,8 @@ def run(
     for lesson_id, editions in rebind_blocked:
         report["errors"].append(
             f"{lesson_id}: 重算出的 lesson.json 与已发布 edition 记录的 source.sha256 不符"
-            f"（{', '.join(editions)}）；已保留原文件、未写入。若本次交付本不该动这一课，"
+            f"（{', '.join(editions)}）；已保留该课全部原文件（lesson.json / lesson.md / "
+            "exercises.json）、未写入。若本次交付本不该动这一课，"
             "先查清它为什么变了；确实要重新改写它，加 --allow-rebind 重跑"
         )
 

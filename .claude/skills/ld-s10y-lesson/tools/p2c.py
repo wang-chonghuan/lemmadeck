@@ -247,9 +247,13 @@ def cmd_prepare(a) -> int:
         "notes": [],
         "errata": [],
     }
+    # 候选裁图区域：机器提框，模型只认领编号（STEMROBIN-192）
+    regions = layout.candidate_regions(ink, content_w)
+    layout.region_overlay(png, pdir / "page.regions.png", regions)
     _dump(pdir / "layout.json", {"w": img.width, "h": img.height,
                                  "content_width": content_w,
-                                 "line_bands": [[int(x), int(y)] for x, y in bands]})
+                                 "line_bands": [[int(x), int(y)] for x, y in bands],
+                                 "candidate_regions": regions})
     if not (pdir / "page.template.md").exists() or a.force:
         (pdir / "page.template.md").write_text(
             TEMPLATE.format(meta=json.dumps(meta, ensure_ascii=False, indent=2)),
@@ -257,6 +261,10 @@ def cmd_prepare(a) -> int:
     print(f"[prepare] {a.book} p{a.page:04d} -> {pdir}")
     print(f"  {img.width}x{img.height} @{a.dpi}dpi  印刷行 {len(bands)} 行"
           f"  读图用 page.grid.png（网格 {layout.GRID}px）")
+    print(f"  候选裁图区域 {len(regions)} 个（看 page.regions.png，块头写 region <id>）:")
+    for region in regions:
+        print(f"    {region['id']}: box {region['box']}"
+              f"  连通域 {region['components']}  跨印刷行 {region['printed_rows']}")
     print(f"  按模板写入持久文件 {_page_dir(a, a.page) / 'page.md'}")
     return 0
 
@@ -288,20 +296,74 @@ def cmd_finalize(a) -> int:
             prior_audit = {}
     errors: list[str] = []
 
+    # 候选裁图区域（STEMROBIN-192）：块头写 `region r3`，这里按 id 取回 prepare 算好的
+    # 精确框。候选框本来就贴着连通域，不再吸附一次——重复 finalize 几何因此稳定。
+    layout_path = work / "layout.json"
+    candidates: dict[str, list[int]] = {}
+    if layout_path.exists():
+        try:
+            candidates = {
+                region["id"]: region["box"]
+                for region in json.loads(
+                    layout_path.read_text(encoding="utf-8")
+                ).get("candidate_regions", [])
+            }
+        except (json.JSONDecodeError, OSError, KeyError, TypeError):
+            candidates = {}
+
+    def _claimed_box(block: dict) -> tuple[list[int] | None, str | None]:
+        claimed = block.get("regions") or []
+        boxes, unknown = [], []
+        for region_id in claimed:
+            if region_id in candidates:
+                boxes.append(candidates[region_id])
+            else:
+                unknown.append(region_id)
+        if unknown:
+            return None, (
+                f"region {'+'.join(unknown)} 不在本页候选里"
+                f"（可用: {', '.join(sorted(candidates)) or '无'}；"
+                "先跑 prepare，或改用 box）"
+            )
+        x0 = min(box[0] for box in boxes)
+        y0 = min(box[1] for box in boxes)
+        x1 = max(box[0] + box[2] for box in boxes)
+        y1 = max(box[1] + box[3] for box in boxes)
+        return [x0, y0, x1 - x0, y1 - y0], None
+
     # 1) 插图：粗框吸附到真实墨迹再裁；文件名用原书图号，跨页唯一
     figs, seq = [], 0
     for b in blks:
         if b["kind"] != "fig":
             continue
         seq += 1
+        resolved_from_region = False
+        if not b.get("box") and b.get("regions"):
+            box_from_region, region_error = _claimed_box(b)
+            if region_error:
+                errors.append(f"fig {b.get('label')}: {region_error}")
+                continue
+            b["box"] = box_from_region
+            resolved_from_region = True
         if not b.get("box"):
-            errors.append(f"fig {b.get('label')}: 缺 box")
+            errors.append(
+                f"fig {b.get('label')}: 缺 box 或 region"
+                "（看 page.regions.png 认领候选区域）"
+            )
             continue
         b["id"] = B.fig_id(b.get("label"), a.page, seq)
         reused = _reusable_figure_geometry(
             meta, prior_audit, b["id"], b["box"], render_sha256
         )
-        box, info = reused if reused is not None else layout.snap(ink, b["box"])
+        if reused is not None:
+            box, info = reused
+        elif resolved_from_region:
+            # 候选框已经贴着连通域；再吸附一次没有收益，只会引入几何漂移
+            box = b["box"]
+            _, info = layout.snap(ink, b["box"])
+            info = {**info, "from": "region " + "+".join(b["regions"])}
+        else:
+            box, info = layout.snap(ink, b["box"])
         b["box"] = box
         layout.crop(render_path, box, work / "figures" / f"{b['id']}.png")
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})

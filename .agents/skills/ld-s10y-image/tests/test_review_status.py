@@ -56,8 +56,24 @@ class ReviewStatusTests(unittest.TestCase):
             self.assertEqual(validate_review(review, spec_path, "render",
                                              report, {"svg": svg}, spec["id"]), [])
 
-            # Move a real label into a visible point to create a renderer failure.
-            spec["objects"][-1]["labelPlacement"] = {"position": "CENTER"}
+            # STEMROBIN-192: a requested position that collides is no longer a
+            # renderer failure — the renderer searches the other positions, then
+            # wider gaps, then a padded canvas, and reports what it settled on.
+            colliding = copy.deepcopy(spec)
+            colliding["objects"][-1]["labelPlacement"] = {"position": "CENTER"}
+            save(spec_path, colliding)
+            result = render()
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            solved = json.loads(report.read_text())
+            self.assertEqual(solved["status"], "pass")
+            self.assertEqual(solved["collisions"], [])
+            placed = {item["id"]: item for item in solved["layout"]["resolution"]["labels"]}
+            self.assertNotEqual(placed["right-name-label"]["position"], "CENTER")
+
+            # A real renderer failure still gates record_review. Demanding a font
+            # size no layout can deliver fails the display check, which is
+            # independent of label placement.
+            spec["display"] = {**spec["display"], "minTextPx": 400}
             save(spec_path, spec)
             result = render()
             self.assertNotEqual(result.returncode, 0)

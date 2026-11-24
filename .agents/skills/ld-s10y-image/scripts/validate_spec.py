@@ -88,8 +88,13 @@ def coordinate(value: Any) -> bool:
 def point_map(objects: list[dict]) -> dict[str, tuple[float, float]]:
     points = {}
     for item in objects:
-        if item.get("type") == "point" and coordinate(item.get("at")):
-            points[item["id"]] = tuple(item["at"])
+        if not isinstance(item, dict) or item.get("type") != "point":
+            continue
+        identity = item.get("id")
+        if not isinstance(identity, str) or not identity:
+            continue
+        if coordinate(item.get("at")):
+            points[identity] = tuple(item["at"])
     return points
 
 
@@ -1291,7 +1296,17 @@ def main() -> int:
     )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
-    errors = validate(args.spec, args.stage)
+    # A missing or unparseable spec is one more error in the report, not a
+    # SystemExit: the driver batches every figure's findings into one call, and a
+    # raise here would hide every other figure behind this one.
+    try:
+        errors = validate(args.spec, args.stage)
+    except SystemExit as error:
+        errors = [str(error).removeprefix("ERROR: ")]
+    except Exception as error:  # noqa: BLE001 - a crash must not swallow the report
+        errors = [
+            f"validator crashed on this spec: {type(error).__name__}: {error}"
+        ]
     payload = {
         "schema": "ld-s10y-image/spec-validation@1",
         "spec": args.spec.as_posix(),

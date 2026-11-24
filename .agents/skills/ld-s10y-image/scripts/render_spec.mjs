@@ -605,6 +605,7 @@ async function render(spec, output) {
           height: Math.abs(bottomRight[1] - topLeft[1]),
         }
       }
+      const layoutErrors = []
       const labelLayer = document.createElementNS(SVG_NS, 'g')
       labelLayer.setAttribute('id', `${boardId}-label-layer`)
       svg.appendChild(labelLayer)
@@ -631,8 +632,6 @@ async function render(spec, output) {
         ...imageRegions.map(rectFromRegion),
         ...(figureSpec.layout?.avoidRegions || []).map(rectFromRegion),
       ]
-      const occupied = []
-      const collisions = []
 
       const overlapArea = (a, b) => {
         const width = Math.max(
@@ -651,19 +650,6 @@ async function render(spec, output) {
         width: rect.width + amount * 2,
         height: rect.height + amount * 2,
       })
-      const outsideArea = (rect) => {
-        const clippedWidth = Math.max(
-          0,
-          Math.min(rect.x + rect.width, figureSpec.canvas.width) -
-            Math.max(rect.x, 0),
-        )
-        const clippedHeight = Math.max(
-          0,
-          Math.min(rect.y + rect.height, figureSpec.canvas.height) -
-            Math.max(rect.y, 0),
-        )
-        return rect.width * rect.height - clippedWidth * clippedHeight
-      }
       const strokeHitsRect = (node, rect) => {
         if (typeof node.getTotalLength !== 'function') return false
         let length
@@ -702,93 +688,155 @@ async function render(spec, output) {
         N: [0, -1, 'middle'],
         S: [0, 1, 'middle'],
       }
+      const AUTOMATIC = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
+      // Concession ladder (STEMROBIN-192). The renderer used to score eight
+      // candidate positions and then fail, leaving the model to guess new
+      // coordinates — five round trips for one figure. Minimising over the three
+      // concessions a human would make, in increasing order of cost, is the
+      // search that was missing: shift the label, widen its gap, then pad the
+      // canvas. Padding is last because it scales the whole figure down at a
+      // fixed product width, so a margin is only accepted while the real
+      // measured font size still clears display.minTextPx.
+      const GAP_SCALES = [1, 1.5, 2.25, 3]
+      const unsupported = new Set()
 
-      for (const label of labels) {
-        const node = document.createElementNS(SVG_NS, 'text')
-        node.textContent = label.text
-        node.setAttribute('fill', label.fill)
-        node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
-        node.setAttribute('font-size', String(label.fontSize))
-        node.setAttribute('font-weight', String(label.fontWeight))
-        node.setAttribute('dominant-baseline', label.dominantBaseline)
-        node.setAttribute('data-label-id', label.id)
-        labelLayer.appendChild(node)
-
-        const [anchorX, anchorY] = toScreen(label.at)
-        const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
-        const offset = label.placement.offset || [0, 0]
-        const requested = label.placement.position
-        const automatic = ['NE', 'NW', 'SE', 'SW', 'E', 'W', 'N', 'S']
-        const candidates = requested
-          ? (
-              label.placement.fallback
-                ? [requested, ...automatic.filter((item) => item !== requested)]
-                : [requested]
-            )
-          : automatic
-        let best = null
-
-        for (const position of candidates) {
-          if (!placements[position]) {
-            throw new Error(`Unsupported label placement: ${position}`)
-          }
-          const [xDirection, yDirection, anchor] = placements[position]
-          node.setAttribute(
-            'x',
-            String(anchorX + xDirection * gap + offset[0]),
-          )
-          node.setAttribute(
-            'y',
-            String(anchorY + yDirection * gap + offset[1]),
-          )
-          node.setAttribute('text-anchor', label.textAnchor || anchor)
-          const rect = node.getBBox()
-          const padded = inflate(rect, minGap)
-          const overlap = [...avoid, ...occupied].reduce(
-            (sum, other) => sum + overlapArea(padded, other),
-            0,
-          )
-          const strokeCollision = geometryNodes.some(
-            (geometry) => strokeHitsRect(geometry, padded),
-          )
-          const score =
-            overlap +
-            outsideArea(padded) * 100 +
-            (strokeCollision ? 10000 : 0)
-          if (!best || score < best.score) {
-            best = {
-              position,
-              x: node.getAttribute('x'),
-              y: node.getAttribute('y'),
-              anchor: label.textAnchor || anchor,
-              rect: {
-                x: rect.x,
-                y: rect.y,
-                width: rect.width,
-                height: rect.height,
-              },
-              score,
-            }
-          }
+      // Every label is laid out from scratch for a given margin, so a margin
+      // retry is not biased by the previous pass's occupied rectangles.
+      const layoutLabels = (margin) => {
+        while (labelLayer.firstChild) labelLayer.removeChild(labelLayer.firstChild)
+        const canvasRect = {
+          x: -margin,
+          y: -margin,
+          width: figureSpec.canvas.width + margin * 2,
+          height: figureSpec.canvas.height + margin * 2,
         }
+        const outsideArea = (rect) => {
+          const clippedWidth = Math.max(
+            0,
+            Math.min(rect.x + rect.width, canvasRect.x + canvasRect.width) -
+              Math.max(rect.x, canvasRect.x),
+          )
+          const clippedHeight = Math.max(
+            0,
+            Math.min(rect.y + rect.height, canvasRect.y + canvasRect.height) -
+              Math.max(rect.y, canvasRect.y),
+          )
+          return rect.width * rect.height - clippedWidth * clippedHeight
+        }
+        const occupied = []
+        const collisions = []
+        const resolved = []
+        for (const label of labels) {
+          const node = document.createElementNS(SVG_NS, 'text')
+          node.textContent = label.text
+          node.setAttribute('fill', label.fill)
+          node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
+          node.setAttribute('font-size', String(label.fontSize))
+          node.setAttribute('font-weight', String(label.fontWeight))
+          node.setAttribute('dominant-baseline', label.dominantBaseline)
+          node.setAttribute('data-label-id', label.id)
+          labelLayer.appendChild(node)
 
-        node.setAttribute('x', best.x)
-        node.setAttribute('y', best.y)
-        node.setAttribute('text-anchor', best.anchor)
-        occupied.push(inflate(best.rect, minGap))
-        if (best.score > 0.5) {
-          collisions.push({
+          const [anchorX, anchorY] = toScreen(label.at)
+          const baseGap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
+          const offset = label.placement.offset || [0, 0]
+          const requested = label.placement.position
+          // The requested position is tried first and kept when it is clean;
+          // `fallback: false` no longer means "fail instead of looking".
+          const positions = requested
+            ? [requested, ...AUTOMATIC.filter((item) => item !== requested)]
+            : AUTOMATIC
+          let best = null
+          const tried = []
+
+          for (const gapScale of GAP_SCALES) {
+            for (const position of positions) {
+              if (!placements[position]) {
+                unsupported.add(position)
+                continue
+              }
+              const [xDirection, yDirection, anchor] = placements[position]
+              const gap = baseGap * gapScale
+              node.setAttribute(
+                'x',
+                String(anchorX + xDirection * gap + offset[0]),
+              )
+              node.setAttribute(
+                'y',
+                String(anchorY + yDirection * gap + offset[1]),
+              )
+              node.setAttribute('text-anchor', label.textAnchor || anchor)
+              const rect = node.getBBox()
+              const padded = inflate(rect, minGap)
+              const overlap = [...avoid, ...occupied].reduce(
+                (sum, other) => sum + overlapArea(padded, other),
+                0,
+              )
+              const strokeCollision = geometryNodes.some(
+                (geometry) => strokeHitsRect(geometry, padded),
+              )
+              const score =
+                overlap +
+                outsideArea(padded) * 100 +
+                (strokeCollision ? 10000 : 0)
+              tried.push({ position, gapScale, score: Math.round(score) })
+              if (!best || score < best.score) {
+                best = {
+                  position,
+                  gapScale,
+                  x: node.getAttribute('x'),
+                  y: node.getAttribute('y'),
+                  anchor: label.textAnchor || anchor,
+                  rect: {
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                  },
+                  score,
+                }
+              }
+            }
+            // A clean placement at this gap is accepted; the wider gaps exist to
+            // break a collision, not to spread labels that already fit.
+            if (best && best.score <= 0.5) break
+          }
+
+          node.setAttribute('x', best.x)
+          node.setAttribute('y', best.y)
+          node.setAttribute('text-anchor', best.anchor)
+          occupied.push(inflate(best.rect, minGap))
+          resolved.push({
             id: label.id,
             text: label.text,
             position: best.position,
-            score: best.score,
+            gapScale: best.gapScale,
+            score: Math.round(best.score * 1000) / 1000,
           })
+          if (best.score > 0.5) {
+            collisions.push({
+              id: label.id,
+              text: label.text,
+              position: best.position,
+              gapScale: best.gapScale,
+              score: best.score,
+              tried,
+            })
+          }
         }
+        return { collisions, resolved }
       }
 
-      svg.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
-      window.materializeArrowheads(svg)
-      const displayChecks = figureSpec.display.widths.map((width) => {
+      const applyCanvas = (margin) => {
+        const width = figureSpec.canvas.width + margin * 2
+        const height = figureSpec.canvas.height + margin * 2
+        svg.setAttribute('width', String(width))
+        svg.setAttribute('height', String(height))
+        svg.setAttribute('viewBox', `${-margin} ${-margin} ${width} ${height}`)
+        return { width, height }
+      }
+
+      const measureDisplay = () => figureSpec.display.widths.map((width) => {
         const host = document.createElement('div')
         host.style.cssText =
           `position:absolute;left:-10000px;top:0;width:${width}px;overflow:visible`
@@ -823,6 +871,54 @@ async function render(spec, output) {
           status: failures.length ? 'fail' : 'pass',
         }
       })
+
+      const span = Math.max(figureSpec.canvas.width, figureSpec.canvas.height)
+      const margins = [0, ...(
+        figureSpec.layout?.expandCanvas === false
+          ? []
+          : [0.08, 0.16, 0.25].map((ratio) => Math.round(span * ratio))
+      )]
+      const attempts = []
+      let chosen = null
+      for (const margin of margins) {
+        const canvas = applyCanvas(margin)
+        const { collisions, resolved } = layoutLabels(margin)
+        const displayChecks = measureDisplay()
+        const displayOk = displayChecks.every((item) => item.status === 'pass')
+        attempts.push({
+          margin,
+          canvas,
+          collisions: collisions.length,
+          display: displayOk ? 'pass' : 'fail',
+          labels: resolved,
+        })
+        if (!chosen) chosen = { margin, canvas, collisions, resolved, displayChecks }
+        if (collisions.length === 0 && displayOk) {
+          chosen = { margin, canvas, collisions, resolved, displayChecks }
+          break
+        }
+      }
+      // Re-apply the accepted margin: the loop may have moved past it while
+      // testing a wider one that then failed the font-size check.
+      applyCanvas(chosen.margin)
+      const { collisions: finalCollisions, resolved: finalResolved } =
+        layoutLabels(chosen.margin)
+      const collisions = finalCollisions
+      const layout = {
+        resolution: {
+          margin: chosen.margin,
+          canvas: chosen.canvas,
+          labels: finalResolved,
+        },
+        attempts,
+      }
+      for (const position of unsupported) {
+        layoutErrors.push(`Unsupported label placement: ${position}`)
+      }
+
+      svg.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+      window.materializeArrowheads(svg)
+      const displayChecks = measureDisplay()
       const cloneFor = (layer) => {
         const clone = svg.cloneNode(true)
         clone.style.background = layer === 'composite'
@@ -846,6 +942,8 @@ async function render(spec, output) {
         artworkSvg: figureSpec.mode === 'hybrid' ? cloneFor('artwork') : null,
         labels: labels.length,
         collisions,
+        layout,
+        layoutErrors,
         objects: figureSpec.objects.length,
         imageFits,
         displayChecks,
@@ -973,10 +1071,13 @@ async function main() {
     objects: result.objects,
     labels: result.labels,
     collisions: result.collisions,
+    layout: result.layout,
+    layoutErrors: result.layoutErrors,
     imageFits: result.imageFits,
     displayChecks: result.displayChecks,
     status: (
       result.collisions.length ||
+      result.layoutErrors.length ||
       result.imageFits.some((item) => item.status !== 'pass') ||
       result.displayChecks.some((item) => item.status !== 'pass')
     ) ? 'fail' : 'pass',

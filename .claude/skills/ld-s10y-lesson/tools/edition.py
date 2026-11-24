@@ -119,6 +119,7 @@ class SourceBook:
         self._pages = None
         self._candidates = None
         self._binding_errors = []
+        self.figure_errors: list[str] = []
 
     def pages(self) -> list[tuple[Path, dict]]:
         if self._pages is None:
@@ -142,14 +143,20 @@ class SourceBook:
                 )
             figure_errors, _ = assemble.claim_figures(candidates, merged, self._binding_errors)
             diagnosed = {error["error"] for error in self._binding_errors}
-            if any(error not in diagnosed for error in figure_errors):
-                raise SystemExit(
-                    "ERROR: 无法从权威页重建来源引用: " + "; ".join(figure_errors)
+            undiagnosed = [
+                error for error in figure_errors if error not in diagnosed
+            ]
+            if undiagnosed:
+                # Collected, not raised: the caller folds this into the one report
+                # that also carries the text, figure and FigureSpec findings.
+                self.figure_errors.append(
+                    "无法从权威页重建来源引用: " + "; ".join(undiagnosed)
                 )
             self._candidates = candidates
         return self._candidates
 
-    def assert_bindings(self, candidate: dict) -> None:
+    def binding_errors(self, candidate: dict) -> list[str]:
+        """Every binding defect touching this card, not just the first one."""
         refs = {
             ref for block in candidate["blocks"]
             for ref in block.get("spans") or [block["ref"]]
@@ -157,9 +164,12 @@ class SourceBook:
         pages = {candidate["start_page"]} | {
             block["page"] for block in candidate["blocks"]
         } | {int(ref[1:5]) for ref in refs if re.match(r"^p\d{4}#", ref)}
-        for error in self._binding_errors:
-            if pages & {error["page"] - 1, error["page"]} or refs & set(error["affected_refs"]):
-                raise SystemExit(f"ERROR: {error['ref']}: {error['error']}")
+        return list(self.figure_errors) + [
+            f"{error['ref']}: {error['error']}"
+            for error in self._binding_errors
+            if pages & {error["page"] - 1, error["page"]}
+            or refs & set(error["affected_refs"])
+        ]
 
 
 def _authoritative_source_targets(
@@ -167,10 +177,19 @@ def _authoritative_source_targets(
     lesson: dict,
     exercises: dict,
     source_book: SourceBook | None = None,
-) -> dict[str, dict[str, str]]:
+) -> tuple[dict[str, dict[str, str]], list[str]]:
+    """Resolve the card's authoritative source refs, collecting every defect.
+
+    Returns `(targets, errors)`. Before STEMROBIN-192 each defect here raised
+    `SystemExit`, so one run reported exactly one of them and the independent
+    figure, FigureSpec and display checks downstream never ran at all. Identity
+    that cannot be resolved still yields empty targets — nothing after it is
+    meaningful — but every mismatch it *can* see is reported in one pass.
+    """
     source_book = source_book or SourceBook(book)
     if source_book.book != book:
         raise ValueError("source context belongs to a different book")
+    errors: list[str] = []
     candidates = source_book.candidates()
 
     identity_fields = (
@@ -193,27 +212,28 @@ def _authoritative_source_targets(
     if not available and len(candidates) == 1:
         matches = candidates
     if len(matches) != 1:
-        raise SystemExit(
-            "ERROR: 无法从权威页唯一确认 lesson 来源身份；"
-            "请重新运行 assemble"
+        errors.append(
+            "无法从权威页唯一确认 lesson 来源身份；请重新运行 assemble"
         )
+        return {}, errors
 
     candidate = matches[0]
-    source_book.assert_bindings(candidate)
+    errors += source_book.binding_errors(candidate)
     raw_prose = lesson.get("prose", [])
     source_prose = candidate.get("prose", [])
     if len(raw_prose) != len(source_prose):
-        raise SystemExit(
-            "ERROR: lesson 正文块数量与权威页装订结果不一致；"
-            "请重新运行 assemble"
+        errors.append(
+            f"lesson 正文块数量与权威页装订结果不一致"
+            f"（当前 {len(raw_prose)}，权威 {len(source_prose)}）；请重新运行 assemble"
         )
 
     targets: dict[str, dict[str, str]] = {}
     for index, (raw_block, source_block) in enumerate(zip(raw_prose, source_prose)):
         for field in ("kind", "id", "label", "printed_page"):
             if field in raw_block and raw_block.get(field) != source_block.get(field):
-                raise SystemExit(
-                    "ERROR: lesson 正文身份与权威页装订结果不一致；"
+                errors.append(
+                    f"lesson.prose[{index}].{field} 身份与权威页装订结果不一致"
+                    f"（当前 {raw_block.get(field)!r}，权威 {source_block.get(field)!r}）；"
                     "请重新运行 assemble"
                 )
         for ref in source_block.get("spans") or [source_block["ref"]]:
@@ -222,25 +242,31 @@ def _authoritative_source_targets(
     raw_items = exercises.get("exercises", [])
     source_items = candidate.get("exercises", [])
     if len(raw_items) != len(source_items):
-        raise SystemExit(
-            "ERROR: exercises 题目数量与权威页装订结果不一致；"
-            "请重新运行 assemble"
+        errors.append(
+            f"exercises 题目数量与权威页装订结果不一致"
+            f"（当前 {len(raw_items)}，权威 {len(source_items)}）；请重新运行 assemble"
         )
     for index, (raw_item, source_item) in enumerate(zip(raw_items, source_items)):
         for field in ("number", "source_number", "group", "group_id"):
             if field in raw_item and raw_item.get(field) != source_item.get(field):
-                raise SystemExit(
-                    "ERROR: exercises 题目身份与权威页装订结果不一致；"
+                errors.append(
+                    f"exercises[{index}].{field} 身份与权威页装订结果不一致"
+                    f"（当前 {raw_item.get(field)!r}，权威 {source_item.get(field)!r}）；"
                     "请重新运行 assemble"
                 )
         for ref in source_item.get("pages", []):
             targets.setdefault(ref, {})[f"exercises[{index}]"] = raw_item.get("text", "")
-    return targets
+    return targets, errors
 
 
 def source_errata(
     book: Path, lesson: dict, exercises: dict, source_book: SourceBook | None = None,
-) -> list[dict]:
+) -> tuple[list[dict], list[str]]:
+    """Source-page errata bound to this card, plus every binding defect found.
+
+    Returns `(records, errors)`; STEMROBIN-192 replaced this function's
+    `SystemExit` exits so one call reports all of them.
+    """
     source_book = source_book or SourceBook(book)
     if source_book.book != book:
         raise ValueError("source context belongs to a different book")
@@ -250,17 +276,20 @@ def source_errata(
         for _, page in pages
         for erratum in page.get("meta", {}).get("errata", [])
     ):
-        return []
+        return [], []
 
+    errors: list[str] = []
     declared_targets = _source_target_map(lesson, exercises)
-    targets = _authoritative_source_targets(book, lesson, exercises, source_book)
+    targets, errors = _authoritative_source_targets(
+        book, lesson, exercises, source_book,
+    )
     declared_refs = _refs_by_target(declared_targets)
     authoritative_refs = _refs_by_target(targets)
     for target, expected in authoritative_refs.items():
         actual = declared_refs.get(target, set())
         if actual and actual != expected:
-            raise SystemExit(
-                f"ERROR: {target} 的来源引用与权威页装订身份不一致 "
+            errors.append(
+                f"{target} 的来源引用与权威页装订身份不一致 "
                 f"(当前 {sorted(actual)}，权威 {sorted(expected)})；"
                 "请重新运行 assemble"
             )
@@ -283,17 +312,20 @@ def source_errata(
             if not authoritative_bound:
                 continue
             if not matches:
-                raise SystemExit(
-                    f"ERROR: {page_path} 的勘误 {erratum.get('id')!r} "
+                errors.append(
+                    f"{page_path} 的勘误 {erratum.get('id')!r} "
                     "已绑定本课来源块，但 original 未唯一出现在忠实 lesson/exercise"
                 )
+                continue
             if len(matches) != 1:
-                raise SystemExit(
-                    f"ERROR: {page_path} 的勘误 {erratum.get('id')!r} "
+                errors.append(
+                    f"{page_path} 的勘误 {erratum.get('id')!r} "
                     "不能唯一绑定到 lesson/exercise"
                 )
+                continue
             if erratum["id"] in seen:
-                raise SystemExit(f"ERROR: 来源页勘误 id 重复: {erratum['id']}")
+                errors.append(f"来源页勘误 id 重复: {erratum['id']}")
+                continue
             seen.add(erratum["id"])
             records.append({
                 "id": erratum["id"],
@@ -309,7 +341,7 @@ def source_errata(
                 "corrected": "",
                 "reason": erratum["reason"],
             })
-    return records
+    return records, errors
 
 
 def edition_dir(args: argparse.Namespace) -> Path:
@@ -359,6 +391,33 @@ def modern_exercises(source: dict) -> list[dict]:
             "historical_entities": [],
         })
     return result
+
+
+def exercise_shared_figures(raw_exercises: dict, raw_figures: list[dict]) -> list[dict]:
+    """Shared figures the exercises reference but the lesson's own list omits.
+
+    `validate_lesson` expects the manifest to be the lesson's figures in printed
+    order followed by exactly these. Seeding them here removes a whole reporting
+    round: the author no longer learns about them one opaque error at a time.
+    """
+    known = {figure["id"] for figure in raw_figures}
+    appended: list[dict] = []
+    for item in raw_exercises.get("exercises", []) or []:
+        if not isinstance(item, dict):
+            continue
+        referenced = [
+            figure_id for figure_id in item.get("figure_refs", []) or []
+            if isinstance(figure_id, str)
+        ] + [
+            figure.get("id") for figure in item.get("figures", []) or []
+            if isinstance(figure, dict) and isinstance(figure.get("id"), str)
+        ]
+        for figure_id in referenced:
+            if figure_id in known:
+                continue
+            known.add(figure_id)
+            appended.append({"id": figure_id, "label": None})
+    return appended
 
 
 def figure_sources(book: Path, figures: list[dict]) -> list[dict]:
@@ -419,6 +478,14 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         raw_lesson = lesson_source["data"]
         raw_exercises = exercises_source["data"]
         target = work_edition / "lessons" / lesson_id
+        errata_records, errata_errors = source_errata(
+            book, raw_lesson, raw_exercises, source_book,
+        )
+        if errata_errors:
+            raise SystemExit(
+                f"ERROR: {lesson_id} 的来源绑定不成立，共 {len(errata_errors)} 项:\n  - "
+                + "\n  - ".join(errata_errors)
+            )
 
         lesson_template = {
             **copy.deepcopy(raw_lesson),
@@ -428,7 +495,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "source": lesson_source,
             "prose": modern_prose(raw_lesson),
             "section_breaks": [],
-            "errata": source_errata(book, raw_lesson, raw_exercises, source_book),
+            "errata": errata_records,
         }
         exercises_template = {
             **copy.deepcopy(raw_exercises),
@@ -443,7 +510,13 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "edition": args.edition,
             "lesson": lesson_id,
             "status": "draft",
-            "figures": figure_sources(book, raw_lesson.get("figures", [])),
+            "figures": figure_sources(
+                book,
+                list(raw_lesson.get("figures", []))
+                + exercise_shared_figures(
+                    raw_exercises, raw_lesson.get("figures", []),
+                ),
+            ),
         }
         for name, value in (
             ("lesson.template.json", lesson_template),
@@ -990,38 +1063,44 @@ def validate_svg(
     metadata_path: Path | None = None,
     expected_modes: set[str] | None = None,
 ) -> list[str]:
+    # One call reports every class of defect: a missing or unparseable SVG no longer
+    # hides the FigureSpec and render-report errors behind it. Returning at the first
+    # missing artifact is what made a new figure take three rounds to report.
     errors = []
+    root = None
     if not path.exists():
-        return [f"缺少现代 SVG: {path}"]
+        errors.append(f"缺少现代 SVG: {path}")
+    else:
+        text = path.read_text(encoding="utf-8")
+        link_scan = re.sub(r'\sxmlns(?::\w+)?="[^"]+"', "", text)
+        if "data:" in link_scan or "http://" in link_scan or "https://" in link_scan:
+            errors.append(f"{path}: 禁止 data URI 或外链")
+        try:
+            root = ET.fromstring(text)
+        except ET.ParseError as error:
+            errors.append(f"{path}: SVG XML 无效: {error}")
+    if root is not None:
+        if local_name(root.tag) != "svg":
+            errors.append(f"{path}: 根节点必须是 svg")
+        if not root.get("viewBox"):
+            errors.append(f"{path}: 缺 viewBox")
+        tags = [local_name(node.tag) for node in root.iter()]
+        banned = sorted(set(tags) & {"image", "foreignObject", "script"})
+        if banned:
+            errors.append(f"{path}: 禁止节点 {banned}")
+        if not (set(tags) & GRAPHIC_TAGS):
+            errors.append(f"{path}: 没有可见矢量图元")
+        if figure_text_language == "English":
+            for node in root.iter():
+                if local_name(node.tag) not in {"text", "title", "desc"}:
+                    continue
+                value = "".join(node.itertext()).strip()
+                if NON_ENGLISH_FIGURE_SCRIPT.search(value):
+                    errors.append(
+                        f"{path}: {local_name(node.tag)} 必须使用英文，发现 {value!r}"
+                    )
     if not spec_path.exists():
-        return [f"缺少 SVG spec: {spec_path}"]
-    text = path.read_text(encoding="utf-8")
-    link_scan = re.sub(r'\sxmlns(?::\w+)?="[^"]+"', "", text)
-    if "data:" in link_scan or "http://" in link_scan or "https://" in link_scan:
-        errors.append(f"{path}: 禁止 data URI 或外链")
-    try:
-        root = ET.fromstring(text)
-    except ET.ParseError as error:
-        return [f"{path}: SVG XML 无效: {error}"]
-    if local_name(root.tag) != "svg":
-        errors.append(f"{path}: 根节点必须是 svg")
-    if not root.get("viewBox"):
-        errors.append(f"{path}: 缺 viewBox")
-    tags = [local_name(node.tag) for node in root.iter()]
-    banned = sorted(set(tags) & {"image", "foreignObject", "script"})
-    if banned:
-        errors.append(f"{path}: 禁止节点 {banned}")
-    if not (set(tags) & GRAPHIC_TAGS):
-        errors.append(f"{path}: 没有可见矢量图元")
-    if figure_text_language == "English":
-        for node in root.iter():
-            if local_name(node.tag) not in {"text", "title", "desc"}:
-                continue
-            value = "".join(node.itertext()).strip()
-            if NON_ENGLISH_FIGURE_SCRIPT.search(value):
-                errors.append(
-                    f"{path}: {local_name(node.tag)} 必须使用英文，发现 {value!r}"
-                )
+        return errors + [f"缺少 SVG spec: {spec_path}"]
     spec, spec_errors = validate_figure_spec(
         spec_path,
         figure["id"],
@@ -1054,7 +1133,9 @@ def validate_svg(
                 errors.append(f"{metadata_path}: renderer 必须是 JSXGraph")
             if metadata.get("status") != "pass":
                 errors.append(f"{metadata_path}: render status 必须是 pass")
-            if metadata.get("output", {}).get("svg", {}).get("sha256") != sha256(path):
+            if path.exists() and metadata.get("output", {}).get("svg", {}).get(
+                "sha256"
+            ) != sha256(path):
                 errors.append(f"{metadata_path}: output SVG SHA 不一致")
             if metadata.get("spec", {}).get("sha256") != sha256(spec_path):
                 errors.append(f"{metadata_path}: FigureSpec SHA 不一致")
@@ -1090,7 +1171,9 @@ def validate_review(
         errors.append(f"{path}: figure 与清单不一致")
     if review.get("status") != "pass":
         errors.append(f"{path}: review status 必须是 pass")
-    if review.get("spec", {}).get("sha256") != sha256(spec_path):
+    if not spec_path.exists():
+        errors.append(f"{path}: 缺 review 绑定的 FigureSpec {spec_path}")
+    elif review.get("spec", {}).get("sha256") != sha256(spec_path):
         errors.append(f"{path}: FigureSpec review 已过期")
     if not evidence_path.is_file():
         errors.append(f"{path}: 缺 review 对应的 {evidence_name} 文件")
@@ -1439,15 +1522,11 @@ def validate_errata(
     exercises: dict,
     source_book: SourceBook | None = None,
 ) -> tuple[dict[str, list[dict]], list[str]]:
-    try:
-        expected = source_errata(book, raw_lesson, raw_exercises, source_book)
-    except SystemExit as error:
-        return {}, [str(error)]
+    expected, errors = source_errata(book, raw_lesson, raw_exercises, source_book)
     actual = lesson.get("errata", [])
     if not isinstance(actual, list):
-        return {}, ["lesson.errata 必须是数组"]
+        return {}, errors + ["lesson.errata 必须是数组"]
 
-    errors = []
     expected_by_id = {item["id"]: item for item in expected}
     actual_by_id = {
         item.get("id"): item
@@ -1722,12 +1801,24 @@ def validate_lesson(
         )
         if isinstance(figure_id, str)
     } | exercise_figure_ids
-    if (
-        manifest_ids[:len(raw_figure_ids)] != raw_figure_ids
-        or len(manifest_ids) != len(set(manifest_ids))
-        or set(manifest_ids) != expected_ids
-    ):
-        errors.append("现代图必须保留原书图顺序，并只追加实际引用的共享图")
+    if manifest_ids[:len(raw_figure_ids)] != raw_figure_ids:
+        errors.append(
+            "现代图必须先按原书图顺序排列原书图："
+            f"期望前 {len(raw_figure_ids)} 项是 {raw_figure_ids}，"
+            f"实际是 {manifest_ids[:len(raw_figure_ids)]}"
+        )
+    duplicates = sorted({
+        figure_id for figure_id in manifest_ids
+        if manifest_ids.count(figure_id) > 1
+    })
+    if duplicates:
+        errors.append(f"现代图清单有重复 id: {duplicates}")
+    missing = sorted(expected_ids - set(manifest_ids))
+    if missing:
+        errors.append(f"现代图清单缺实际引用的图: {missing}")
+    extra = sorted(set(manifest_ids) - expected_ids)
+    if extra:
+        errors.append(f"现代图清单有没被引用的图: {extra}")
     for figure in figure_items:
         spec_path = edition / figure.get("spec", "")
         spec = load(spec_path) if spec_path.is_file() else {}

@@ -424,6 +424,158 @@ def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
         "components": int(took), "from": box}
 
 
+# 候选区域（STEMROBIN-192）。以前模型要自己画粗框，框歪了对不上行数、再画一次——
+# 裁图框来回试四次是实测数据。机器本来就有连通域、行带和页边过滤，缺的只是「把非字形
+# 连通域聚成簇、编号、画出来」这一步。模型因此只认领 r3，不再报坐标。
+REGION_DILATE_FACTOR = 1.2   # 以字形高为单位的垂直膨胀半径：接住断开的笔画与标注
+# 横向膨胀取垂直的 3 倍：一张表的各列落在同一批印刷行上、横向间距比行距大得多，
+# 等向膨胀会把一张表拆成三个候选（实测 3m p0043 的宽表被拆成 r2/r3/r4）。
+REGION_DILATE_ASPECT = 3.0
+REGION_MIN_GLYPHS = 6.0      # 面积下限（字形高²）：比这还小的簇就是正文，不是图
+REGION_MIN_HEIGHT = 1.6      # 高度下限（字形高）：一行高的东西不是插图
+
+
+def _glyph_height(ink: np.ndarray, content_w: int) -> float:
+    """字形高的稳健估计，判据与 line_bands 一致。"""
+    raw = _row_fragments(ink, content_w)
+    if not raw:
+        return 0.0
+    line_h = float(np.median([b - a + 1 for a, b in raw]))
+    components, _ = ndimage.label(ink)
+    heights = [
+        rows.stop - rows.start
+        for bounds in ndimage.find_objects(components) if bounds is not None
+        for rows, columns in [bounds]
+        if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
+        and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+    ]
+    return float(np.percentile(heights, 75)) if len(heights) >= 3 else line_h
+
+
+def candidate_regions(ink: np.ndarray, content_w: int) -> list[dict]:
+    """机器提出的裁图候选区域，按阅读顺序编号 r1..rN。
+
+    这不是「机械判断哪里是图」——那条路试过并放弃了（见模块注释）。这里只提出
+    *候选*：墨迹里明显不是单个字形的连通域（高的、长横线、面积大的），聚成簇、
+    吸附到真实墨迹上。模型照旧负责说「r3 是图 7」或者「r3 不是图」。
+    """
+    height_px, width_px = ink.shape
+    glyph_h = _glyph_height(ink, content_w)
+    if glyph_h <= 0:
+        return []
+    components, count = ndimage.label(ink)
+    if count == 0:
+        return []
+    bounds_list = ndimage.find_objects(components)
+
+    seeds = np.zeros_like(ink)
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        h = rows.stop - rows.start
+        w = columns.stop - columns.start
+        # 贯通整页的连通域是扫描黑边或书脊，不是内容（判据与 snap 一致）
+        if h > 0.9 * height_px or w > 0.9 * width_px:
+            continue
+        tall = h > 2.0 * glyph_h
+        rule = w > 4.0 * glyph_h and h < 0.6 * glyph_h
+        bulky = w * h > 6.0 * glyph_h * glyph_h and h > 1.2 * glyph_h
+        if tall or rule or bulky:
+            seeds |= components == component_id
+
+    if not seeds.any():
+        return []
+    radius = max(2, int(round(REGION_DILATE_FACTOR * glyph_h)))
+    grown = ndimage.binary_dilation(
+        seeds,
+        structure=np.ones(
+            (radius, max(radius, int(round(radius * REGION_DILATE_ASPECT)))),
+            dtype=bool,
+        ),
+    )
+    clusters, cluster_count = ndimage.label(grown)
+    regions: list[list[int]] = []
+    for cluster_id in range(1, cluster_count + 1):
+        rows, columns = ndimage.find_objects(clusters)[cluster_id - 1]
+        box = [
+            int(columns.start), int(rows.start),
+            int(columns.stop - columns.start), int(rows.stop - rows.start),
+        ]
+        # snap 把整体落在簇里的连通域（图内标注、坐标轴刻度）一并吸进来
+        snapped, info = snap(ink, box)
+        if info.get("components", 0) == 0:
+            continue
+        if (
+            snapped[2] * snapped[3] < REGION_MIN_GLYPHS * glyph_h * glyph_h
+            or snapped[3] < REGION_MIN_HEIGHT * glyph_h
+        ):
+            continue
+        # 贴着纸边的窄条是扫描黑边与邻页透字，不是内容；真图不会又贴边又细长
+        touches_border = (
+            snapped[0] <= 1 or snapped[1] <= 1
+            or snapped[0] + snapped[2] >= width_px - 1
+            or snapped[1] + snapped[3] >= height_px - 1
+        )
+        if touches_border and min(snapped[2], snapped[3]) < 4.0 * glyph_h:
+            continue
+        regions.append(snapped)
+
+    # 膨胀后仍可能有两簇吸附到重叠的框：合并，否则同一块墨迹会被裁两次
+    merged: list[list[int]] = []
+    for box in sorted(regions, key=lambda b: (-b[2] * b[3])):
+        for index, kept in enumerate(merged):
+            if (
+                box[0] < kept[0] + kept[2] and kept[0] < box[0] + box[2]
+                and box[1] < kept[1] + kept[3] and kept[1] < box[1] + box[3]
+            ):
+                x0 = min(box[0], kept[0]); y0 = min(box[1], kept[1])
+                x1 = max(box[0] + box[2], kept[0] + kept[2])
+                y1 = max(box[1] + box[3], kept[1] + kept[3])
+                merged[index] = [x0, y0, x1 - x0, y1 - y0]
+                break
+        else:
+            merged.append(box)
+
+    bands = line_bands(ink, content_w)
+    result = []
+    for index, box in enumerate(sorted(merged, key=lambda b: (b[1], b[0])), 1):
+        x, y, w, h = box
+        region_ink = ink[y:y + h, x:x + w]
+        labels_in, taken = ndimage.label(region_ink)
+        result.append({
+            "id": f"r{index}",
+            "box": box,
+            "components": int(taken),
+            "ink_px": int(region_ink.sum()),
+            "printed_rows": sum(
+                1 for a, b in bands if a < y + h and y < b + 1
+            ),
+            "glyph_h": round(glyph_h, 1),
+        })
+    return result
+
+
+def region_overlay(
+    png: Path, out: Path, regions: list[dict], step: int = GRID,
+) -> Path:
+    """候选区域画在整页图上并标号，供模型认领。"""
+    img = Image.open(png).convert("RGB")
+    d = ImageDraw.Draw(img)
+    for x in range(0, img.width, step):
+        d.line([(x, 0), (x, img.height)], fill=(235, 235, 235), width=1)
+    for y in range(0, img.height, step):
+        d.line([(0, y), (img.width, y)], fill=(235, 235, 235), width=1)
+    for region in regions:
+        x, y, w, h = region["box"]
+        d.rectangle([x, y, x + w, y + h], outline=(0, 160, 0), width=4)
+        tag = region["id"]
+        d.rectangle([x, max(0, y - 30), x + 14 + 18 * len(tag), y], fill=(0, 160, 0))
+        d.text((x + 6, max(0, y - 26)), tag, fill=(255, 255, 255))
+    img.save(out)
+    return out
+
+
 def crop(png: Path, box: list[int], out: Path, pad: int = 12) -> None:
     img = Image.open(png)
     x, y, w, h = box

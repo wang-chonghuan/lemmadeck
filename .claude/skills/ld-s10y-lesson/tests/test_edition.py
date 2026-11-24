@@ -531,7 +531,7 @@ class EditionTest(unittest.TestCase):
             raw_exercises = {"exercises": []}
             lesson = {
                 "prose": edition.modern_prose(raw_lesson),
-                "errata": edition.source_errata(book, raw_lesson, raw_exercises),
+                "errata": edition.source_errata(book, raw_lesson, raw_exercises)[0],
             }
             exercises = {"exercises": []}
             lesson["errata"][0]["corrected"] = corrected
@@ -596,8 +596,10 @@ class EditionTest(unittest.TestCase):
                 }],
             }
 
-            with self.assertRaisesRegex(SystemExit, "original 未唯一出现"):
-                edition.source_errata(book, raw_lesson, {"exercises": []})
+            _, errors = edition.source_errata(book, raw_lesson, {"exercises": []})
+            self.assertTrue(
+                any("original 未唯一出现" in error for error in errors), errors
+            )
 
     def test_legacy_lesson_reconstructs_erratum_source_refs(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -635,15 +637,18 @@ class EditionTest(unittest.TestCase):
                 }],
             }
 
-            records = edition.source_errata(book, raw_lesson, {"exercises": []})
+            records, errors = edition.source_errata(book, raw_lesson, {"exercises": []})
 
+            self.assertEqual(errors, [])
             self.assertEqual(len(records), 1)
             self.assertEqual(records[0]["target"], "lesson.prose[0]")
             self.assertEqual(records[0]["source"]["block"], "p0001#2")
 
             raw_lesson["prose"][0]["text"] = "原始 lesson 被改成 $1+1=4$。"
-            with self.assertRaisesRegex(SystemExit, "original 未唯一出现"):
-                edition.source_errata(book, raw_lesson, {"exercises": []})
+            _, errors = edition.source_errata(book, raw_lesson, {"exercises": []})
+            self.assertTrue(
+                any("original 未唯一出现" in error for error in errors), errors
+            )
 
     def test_nonempty_wrong_source_ref_is_rejected_against_authoritative_assembly(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -697,11 +702,11 @@ class EditionTest(unittest.TestCase):
                 }],
             }
 
-            with self.assertRaisesRegex(
-                SystemExit,
-                "来源引用与权威页装订身份不一致",
-            ):
-                edition.source_errata(book, raw_lesson, raw_exercises)
+            _, errors = edition.source_errata(book, raw_lesson, raw_exercises)
+            self.assertTrue(
+                any("来源引用与权威页装订身份不一致" in error for error in errors),
+                errors,
+            )
 
     def test_authoritative_binding_ignores_other_lessons_errata(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -754,7 +759,7 @@ class EditionTest(unittest.TestCase):
 
             self.assertEqual(
                 edition.source_errata(book, raw_lesson, {"exercises": []}),
-                [],
+                ([], []),
             )
 
     def test_legacy_source_snapshot_allows_only_added_source_references(self) -> None:
@@ -818,7 +823,7 @@ class EditionTest(unittest.TestCase):
             raw_exercises = {"exercises": []}
             base_lesson = {
                 "prose": edition.modern_prose(raw_lesson),
-                "errata": edition.source_errata(book, raw_lesson, raw_exercises),
+                "errata": edition.source_errata(book, raw_lesson, raw_exercises)[0],
             }
             base_lesson["errata"][0]["corrected"] = corrected
             base_lesson["prose"][0]["text"] = f"原书应为 {corrected}。"
