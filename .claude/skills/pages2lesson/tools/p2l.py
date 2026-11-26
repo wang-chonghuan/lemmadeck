@@ -64,6 +64,7 @@ class Report:
     stops: list[str] = field(default_factory=list)
     gate: str | None = None
     work_order: list[str] = field(default_factory=list)
+    units: list[dict] = field(default_factory=list)
     done: bool = False
     quiet_when_idle: bool = False
 
@@ -91,6 +92,7 @@ class Report:
             "stops": self.stops,
             "gate": self.gate,
             "work_order": self.work_order,
+            "units": self.units,
             "done": self.done,
             "status": {0: "done", 1: "failures", 2: "stop", 3: "gate"}[self.exit_code()],
         }
@@ -113,10 +115,25 @@ class Report:
             for failure in self.failures:
                 print(f"    - {failure}")
         if self.gate:
-            print(f"\n⏸ 停在 {self.gate}。要做的事：")
+            print(f"\n⏸ 停在 {self.gate}。")
+            if self.units:
+                # 只打印路径，不打印 brief 内容。brief 进的是子代理的上下文，
+                # 不是本会话的——这正是这条路径省钱的地方。
+                print(f"\n  派 {len(self.units)} 个**全新**子代理（不要用 fork，"
+                      "fork 会继承你的全部上下文，等于白搭），各读自己那一份 brief：\n")
+                for unit in self.units:
+                    retry = (
+                        f"  ← 第 {unit['attempt']} 次（上一次的失败已写进 brief）"
+                        if unit["attempt"] > 1 else ""
+                    )
+                    print(f"    {unit['id']}: {unit['brief']}{retry}")
+                print("\n  给子代理的提示就一句：「读 <brief 路径> 并照它做完」。"
+                      "\n  brief 是自包含的，不要把它的内容复制进你自己的上下文，"
+                      "也不要替子代理读页面图。")
             for line in self.work_order:
                 print(f"    {line}")
-            print(f"\n  做完后原样再跑一次这条命令。完整报告: {_rel(path)}")
+            tail = "子代理都回来后，" if self.units else ""
+            print(f"\n  {tail}原样再跑一次这条命令。完整报告: {_rel(path)}")
         if self.done:
             print("\n✓ done —— 这一课已入库。")
         elif not self.gate and not self.failures and not self.stops and not self.quiet_when_idle:
@@ -152,6 +169,112 @@ def _tool_failures(result: subprocess.CompletedProcess, label: str) -> list[str]
         f"{label}: 退出码 {result.returncode}\n"
         + (result.stdout + result.stderr).strip()[-1500:]
     ]
+
+
+# --------------------------------------------------------------- 工作单元
+#
+# 为什么是子代理而不是「停下来让本会话做」（STEMROBIN-192 实测）：
+# 一课实付 $30.47，43.6M token 里 98.5% 是 cache read——218 轮会话重读了 218 遍
+# 自己的历史。真正不可约的工作只有入 28K / 出 22K，约 $0.3–0.7。
+# 钱不在步骤数上，在「所有工作挂在同一个会话里」这件事上：一页 300dpi 的图进了
+# 上下文，之后每一轮都要再付一遍。
+#
+# 所以每个单元派一个**全新**子代理：它只看到自己那份 brief（自包含）和自己那张图，
+# 做完把文件写在磁盘上、把结论还回来。页面图不进父会话的上下文。
+# brief 落在磁盘上而不是打印出来，连 brief 本身也不进父会话。
+# 用 fork 型子代理会继承父上下文，等于没改。
+
+UNIT_MAX_ATTEMPTS = 3
+
+
+def _units_dir(book: str, card: str) -> Path:
+    return WORK / book / card / "units"
+
+
+def _attempt_path(book: str, card: str, unit_id: str) -> Path:
+    return _units_dir(book, card) / f"{unit_id}.attempts"
+
+
+def _attempt_count(book: str, card: str, unit_id: str) -> int:
+    path = _attempt_path(book, card, unit_id)
+    try:
+        return int(path.read_text(encoding="utf-8").strip())
+    except (OSError, ValueError):
+        return 0
+
+
+def _bump_attempt(book: str, card: str, unit_id: str) -> int:
+    count = _attempt_count(book, card, unit_id) + 1
+    path = _attempt_path(book, card, unit_id)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(f"{count}\n", encoding="utf-8")
+    return count
+
+
+def _clear_attempts(book: str, card: str, prefix: str = "") -> None:
+    for path in _units_dir(book, card).glob(f"{prefix}*.attempts"):
+        path.unlink(missing_ok=True)
+
+
+COMMON_DISCIPLINE = """\
+## 纪律（每个单元都一样）
+
+- 工作目录是仓库根 `{repo}`。python 一律用
+  `.claude/skills/ld-s10y-lesson/.venv/bin/python`（已装好 numpy/pillow/scipy/potracer）。
+  **不要重装依赖、不要新建 venv、不要装任何东西。**
+- 只写本 brief 指定的文件。不要动别的课、不要动 `.intentfold/charter/`、
+  不要改 lockfile、不要 git commit、不要切分支。
+- 本 brief 是自包含的。需要更深的规则时才去读它点明的那个文件，不要整篇读 SKILL.md。
+- 做完**先自己跑一遍本 brief 给的校验命令**，绿了再回报。校验器一次会报出全部不通过项，
+  照着一次改完，不要改一条跑一次。
+- 回报就两行：做完了没有、校验命令的最后结论。不要把文件内容贴回来。
+"""
+
+
+def _write_brief(
+    book: str, card: str, unit_id: str, title: str, body: str,
+    failures: list[str] | None = None,
+) -> Path:
+    """把一个单元写成自包含 brief。失败重试时把上一次的报错附在最前面。"""
+    directory = _units_dir(book, card)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{unit_id}.md"
+    head = f"# {title}\n\n"
+    if failures:
+        head += (
+            "## ⚠ 上一次没通过，先修这些\n\n"
+            "下面是校验器这一次报出的**全部**不通过项。一次改完再自检。\n\n"
+            + "\n".join(f"- {item}" for item in failures)
+            + "\n\n---\n\n"
+        )
+    path.write_text(
+        head + body.rstrip() + "\n\n"
+        + COMMON_DISCIPLINE.format(repo=REPO) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _add_unit(
+    report: Report, book: str, card: str, unit_id: str, kind: str,
+    title: str, body: str, failures: list[str] | None = None,
+) -> bool:
+    """登记一个待派的单元；超过重试上限就变成硬失败，交给人。"""
+    attempt = _bump_attempt(book, card, unit_id)
+    if attempt > UNIT_MAX_ATTEMPTS:
+        report.stops.append(
+            f"{unit_id} 已经试了 {UNIT_MAX_ATTEMPTS} 次仍不通过，不再自动重试。"
+            f"最后一次的报错在 {_rel(_units_dir(book, card) / f'{unit_id}.md')}"
+        )
+        return False
+    brief = _write_brief(book, card, unit_id, title, body, failures)
+    report.units.append({
+        "id": unit_id,
+        "kind": kind,
+        "brief": _rel(brief),
+        "attempt": attempt,
+    })
+    return True
 
 
 # --------------------------------------------------------------- P0 解析
@@ -318,8 +441,131 @@ def page_state(book_dir: Path, page: int) -> dict:
     }
 
 
+PAGE_BLOCK_RULES = """\
+## 块格式
+
+块头声明这一块是什么；块体里**一行 = 一印刷行**。
+
+```
+<!-- h1 --> 章        <!-- h2 --> §        <!-- h3 --> 小节标题
+<!-- p -->  正文段     <!-- exhead --> 习题栏标题（复习题 / 家庭作业题）
+<!-- ex 20 -->        第 20 题，20 是原书题号
+<!-- cap 图 7 -->     印刷出来的图题行      <!-- foot --> 页码
+<!-- fig 图 7 region r3 -->               插图/表格，认领机器提的候选区域
+<!-- fig 表 region r2+r3 owner-ex 20 -->  一张表被拆成两个候选时合起来，并明确归第 20 题
+<!-- fig 图 7 box 790,1640,490,250 -->    候选对不上时自己画粗框，照网格估就行
+```
+
+三个标记加在块头：
+
+- `open` —— 这个对象还没完，下面接着（跨页、也跨插图）
+- `cont` —— 承接上一个同类对象
+- `samerow` —— 本块与上一块共享印刷行（正文右侧的图题、并排的两个图题）
+
+被插图从中间截断的段落写成 `p open` … `fig` … `p cont`，跨页装订会接成一段。
+配对时 `fig`/`cap`/`foot` 是透明的。
+
+## 最容易悄悄发错内容的四条
+
+1. **行尾空格**：印刷行末本该有空格时（半角句点后、中英之间）把空格写在行尾。
+   拼接是首尾直接相接的，漏了会装订出「…个一5米7分米…」——而所有校验照样全绿，
+   只有肉眼看装订结果才发现。
+2. **小问标号必须是西里尔** `а) б) в)`，与拉丁 `a) b) e)` 字形完全相同，只能按码点写对。
+   这是全流程最常见的错误来源。
+3. 一条公式被印刷从中间切开：**公式写完整**，断点处写 `↵`。
+4. frontmatter 要填 `printed_page`（空的会被拒）。原书印错照抄原样；
+   确认的数学印刷错误另填 `errata`（含稳定 `id`、本页块引用、忠实 `original`、核验 `reason`）。
+
+## 数学与字符
+
+- 行内 `$...$`；上下标一律 LaTeX（`x^2`，禁 `x²`）；分式 `\\frac`，禁 `\\dfrac`
+- 数学区内减号用 ASCII `-`，禁 `−`(U+2212)
+- 中文顿号、逗号、句号等全角标点放在 `$...$` **之外**
+- 含中文的集合 `{俄语、数学}`、含全角标点的数组写成普通文本，不要塞进 `$...$`
+- 苏联教材用法式区间记号 `]a, b[`，照抄，禁止改成 `(a, b)`
+- 页边、书脊或邻页透出的重复字迹是扫描串页，不是本页内容；对照相邻页确认后不写入块
+
+规则不够用时再读 `.claude/skills/ld-s10y-lesson/SKILL.md` 的 `## cap1` 一节；
+不要整篇读它（32KB）。
+"""
+
+
+def _page_brief_body(args, plan: dict, page: int) -> str:
+    work_page = LESSON_WORK / args.book / "pages" / f"{page:04d}"
+    target = ARTIFACTS / args.book / "pages" / f"{page:04d}" / "page.md"
+    layout = {}
+    try:
+        layout = json.loads((work_page / "layout.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        pass
+    offset = plan.get("printed_offset")
+    printed = page + offset if offset is not None else None
+    regions = layout.get("candidate_regions", [])
+    region_lines = "\n".join(
+        f"| `{item['id']}` | `{item['box']}` | {item['components']} | {item['printed_rows']} |"
+        for item in regions
+    ) or "| （这一页机器没提出候选） | | | |"
+    tail = _previous_page_tail(args.book, page)
+    tail_block = (
+        f"\n## 上一页的尾部文字（接续用，不要重复转写）\n\n```\n{tail}\n```\n"
+        if tail else ""
+    )
+    return f"""\
+把 **PDF 第 {page} 页（印刷页 {printed if printed is not None else '?'}）** 转写成带类型的块。
+
+## 要读的
+
+- 页面图（带 100px 坐标网格）：`{_rel(work_page / 'page.grid.png')}`
+- 候选裁图区域图（框上标了 r1/r2/…）：`{_rel(work_page / 'page.regions.png')}`
+
+**这一页机器数出 {len(layout.get('line_bands', []))} 个印刷行带**（挖掉插图之前）。
+它只是参考，不是要你凑的数字：照页面实际印出来的样子写，一行输出对一行印刷。
+
+机器提出的候选裁图区域：
+
+| id | box | 连通域 | 跨印刷行 |
+|---|---|---|---|
+{region_lines}
+
+候选只对「有外框的连续墨块」有效。实测靠留白分组的竖式阵列提不出来、
+被细网格线切碎的方格条只提出左半截，还可能把背面透印和纸边污点提成候选。
+**对得上就 `region rN` 认领，对不上直接 `box x,y,w,h`，不要为了用 region 去凑。**
+{tail_block}
+## 要写的
+
+写入 `{_rel(target)}`（模板在 `{_rel(work_page / 'page.template.md')}`，
+照它的 frontmatter 格式，删掉模板里那段注释）。
+
+{PAGE_BLOCK_RULES}
+## 自检（写完必须自己跑，绿了再回报）
+
+```bash
+.claude/skills/ld-s10y-lesson/.venv/bin/python \\
+  .claude/skills/ld-s10y-lesson/tools/p2c.py finalize --book {args.book} --page {page}
+```
+
+它会一次报出本页**全部**不通过项（行数、白名单字符、公式配平、小问标号、
+行尾拼接、errata 绑定）。照着一次改完再跑。
+
+**行数对不上时**：先对照页面图和遮图后的行带核对——高分式的分子分母属于同一印刷行，
+扫描黑边和残留表格边线不是文字。**禁止加空行、重复文字或伪造 `↵` 凑数**，
+那是把错误内容发给学习者。确实是工具数错了（例如纸边阴影被当成一行），
+在回报里说清楚你核对到的事实，不要改页面内容去迎合它。
+"""
+
+
+def _previous_page_tail(book: str, page: int, lines: int = 4) -> str:
+    """上一页的尾部文字。SKILL 明确要求跨页上下文传文字、不传像素。"""
+    previous = ARTIFACTS / book / "pages" / f"{page - 1:04d}" / "page.md"
+    if not previous.is_file():
+        return ""
+    body = previous.read_text(encoding="utf-8").split("---", 2)[-1]
+    kept = [line for line in body.splitlines() if line.strip()]
+    return "\n".join(kept[-lines:])
+
+
 def phase_pages(args, plan: dict, report: Report) -> bool:
-    """备料所有页，再收口所有页。两步都批量，错误一次报全。"""
+    """备料所有页，再收口所有页。两步都批量，错误按页分组回到各自的子代理。"""
     book_dir = ARTIFACTS / args.book
     report.phase = "pages"
     missing = []
@@ -336,8 +582,7 @@ def phase_pages(args, plan: dict, report: Report) -> bool:
             if result.returncode != 0:
                 report.failures += _tool_failures(result, f"prepare p{page:04d}")
                 continue
-        state = page_state(book_dir, page)
-        if not state["has_md"]:
+        if not page_state(book_dir, page)["has_md"]:
             missing.append(page)
     if report.failures:
         report.step("P1 备料", False, f"{len(plan['pdf_pages'])} 页")
@@ -346,67 +591,39 @@ def phase_pages(args, plan: dict, report: Report) -> bool:
 
     if missing:
         report.gate = GATE_PAGES
-        # 同 G3：工单自带清单。实测一课 43.6M token 里 98.5% 是 cache read
-        # （已有上下文 × 轮数），而 ld-s10y-lesson/SKILL.md 全文 32KB 会被每一轮
-        # 重新计费。这里给够写一页所需的，不够时再去翻 SKILL.md。
-        report.work_order += [
-            "块格式（块头声明这一块是什么；块体里**一行 = 一印刷行**，行数对账靠这个）：",
-            "    <!-- h1 --> 章   <!-- h2 --> §   <!-- h3 --> 小节标题   <!-- p --> 正文段",
-            "    <!-- exhead --> 习题栏标题    <!-- ex 20 --> 第 20 题（原书题号）",
-            "    <!-- cap 图 7 --> 印刷出来的图题行       <!-- foot --> 页码",
-            "    <!-- fig 图 7 region r3 -->              插图/表格，认领候选区域",
-            "    <!-- fig 表 region r2+r3 owner-ex 20 --> 无编号练习图，明确归第 20 题",
-            "    <!-- fig 图 7 box 790,1640,490,250 -->   候选对不上时自己画粗框",
-            "  三个标记加在块头：open（这个对象还没完，下页接着）/ cont（承接上一个同类对象）",
-            "    / samerow（本块与上一块共享印刷行，如正文右侧的图题）。",
-            "    被插图从中间截断的段落写成 `p open` … `fig` … `p cont`，装订会接成一段。",
-            "  最容易悄悄发错内容的四条：",
-            "    1. 印刷行末本该有空格时（半角句点后、中英之间）**把空格写在行尾**——",
-            "       拼接是首尾直接相接的，漏了会装订出「…个一5米7分米…」，而行数对账照样全绿。",
-            "    2. 习题小问标号必须是**西里尔** а) б) в)，与拉丁 a) b) e) 字形完全相同，",
-            "       只能按码点写对。这是最常见的错误来源。",
-            "    3. 一条公式被印刷从中间切开：公式写完整，断点处写 ↵（行数照样对得上）。",
-            "    4. frontmatter 要填 printed_page（空的会被 finalize 拒掉）；",
-            "       原书印错照抄原样，确认的数学印刷错误另填 errata。",
-            "  行内数学用 $...$，上下标一律 LaTeX（x^2，禁 x²），分式 \\frac（禁 \\dfrac）；",
-            "    中文顿号逗号句号等全角标点放在 $...$ 之外；含中文的集合写成普通文本。",
-            "  完整规则在 .claude/skills/ld-s10y-lesson/SKILL.md 的 cap1 一节——",
-            "    上面这些不够用时再去翻它，不要每页都整篇读（32KB，每轮都重新计费）。",
-            "",
-            f"逐页读 .tmp 里的图，把 page.md 写到持久目录。缺 {len(missing)} 页：",
-        ]
         for page in missing:
-            work_page = LESSON_WORK / args.book / "pages" / f"{page:04d}"
-            layout = json.loads((work_page / "layout.json").read_text(encoding="utf-8"))
-            printed = page + plan["printed_offset"] if plan["printed_offset"] is not None else "?"
-            report.work_order.append(
-                f"  PDF {page}（印刷页 {printed}）: 读 {_rel(work_page / 'page.grid.png')}"
-                f" 和 {_rel(work_page / 'page.regions.png')}"
-                f"；印刷行 {len(layout.get('line_bands', []))} 行"
-                f"；候选裁图区域 "
-                + (", ".join(
-                    f"{region['id']}(跨{region['printed_rows']}行)"
-                    for region in layout.get("candidate_regions", [])
-                ) or "无")
-            )
-            report.work_order.append(
-                f"      写入 {_rel(ARTIFACTS / args.book / 'pages' / f'{page:04d}' / 'page.md')}"
-                f"，模板在 {_rel(work_page / 'page.template.md')}"
-                "；插图块头用 `region r3`（或 `region r2+r3`）认领候选，别再手报坐标"
+            _add_unit(
+                report, args.book, plan["card"], f"page-{page:04d}", "page",
+                f"转写 {args.book} 的 PDF 第 {page} 页",
+                _page_brief_body(args, plan, page),
             )
         return False
 
-    # 收口：每页都跑，把全部页的失败收齐
-    finalize_failures = []
+    # 收口：每页都跑，失败按页分组，各自回到一个全新子代理
+    per_page: dict[int, list[str]] = {}
     for page in plan["pdf_pages"]:
         result = _run([
             sys.executable, str(P2C), "finalize",
             "--book", args.book, "--page", str(page),
         ])
-        finalize_failures += _tool_failures(result, f"finalize p{page:04d}")
-    report.failures += finalize_failures
-    report.step("P1 收口", not finalize_failures, f"{len(plan['pdf_pages'])} 页")
-    return not finalize_failures
+        failures = _tool_failures(result, f"finalize p{page:04d}")
+        if failures:
+            per_page[page] = failures
+    if per_page:
+        report.step("P1 收口", False, f"{len(per_page)}/{len(plan['pdf_pages'])} 页没过")
+        report.gate = GATE_PAGES
+        for page, failures in per_page.items():
+            if not _add_unit(
+                report, args.book, plan["card"], f"page-{page:04d}", "page",
+                f"修 {args.book} 的 PDF 第 {page} 页",
+                _page_brief_body(args, plan, page), failures,
+            ):
+                report.failures += failures
+        return False
+    _clear_attempts(args.book, plan["card"], "page-")
+    report.step("P1 收口", True, f"{len(plan['pdf_pages'])} 页全绿")
+    return True
+
 
 
 # --------------------------------------------------------------- P2 装订
@@ -504,6 +721,58 @@ def _edition_paths(args, plan: dict) -> dict[str, Path]:
     }
 
 
+def _edition_brief_body(args, plan: dict, paths: dict) -> str:
+    source_lesson = ARTIFACTS / args.book / "lessons" / plan["card"]
+    profile = LESSON_SKILL / "profiles" / f"{args.edition}.json"
+    return f"""\
+把 `{plan['card']}`（{plan.get('title')}）的课文与题改写成 **{args.edition}** 版。
+
+## 只改这两个模板
+
+- `{_rel(paths['templates'] / 'lesson.template.json')}`
+- `{_rel(paths['templates'] / 'exercises.template.json')}`
+
+**只改模板**，不要去写持久目录——`adapt-finalize` 负责把通过验收的结果提升进
+`{_rel(paths['lesson'])}`。原始课文与题在 `{_rel(source_lesson)}`（只读，不许改）。
+
+## 改什么、不改什么
+
+每一项只改 `text`。**`source_text`、题号、`group`、`group_id`、`figure_refs`、题量
+一个都不许动**，块数与题量必须与原书一致。
+
+- 只改文化语境，不改知识点、不改未登记的公式
+- 虚构人物换成常见现代英文姓名，同一映射在题面、图像上下文、答案里保持一致
+- 小问标号从西里尔 `а) б) в)` 改成拉丁 `a) b) c)`
+- 发布文本里不能再出现西里尔字母，也不能有 profile 的禁词
+  （`{_rel(profile)}` 的 `forbidden_terms`，先读它一眼——卢布/戈比/少先队这类都在里面）
+- 原书用于科学史教学的真实人物、地点、国家、机构**保留身份**，并在该项的
+  `historical_entities` 里逐项声明 `term` 与来源绑定的 `reason`
+- 非公式数字确需更新时，逐项写入 `numeric_changes`，并在 `changes` 里包含
+  `context-number`；来源页 `errata` 已被带进模板，只填 `corrected` 并把该块
+  `changes` 标成 `math-correction`
+- 排版不用你管：`adapt-finalize` 会确定性分行组段。概念切换的横线用
+  `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.json>`
+  的输出填 `section_breaks`，**禁止按块或换行手算整数**
+
+## 自检（写完必须自己跑，绿了再回报）
+
+```bash
+.claude/skills/ld-s10y-lesson/.venv/bin/python \\
+  .claude/skills/ld-s10y-lesson/tools/p2c.py adapt-finalize \\
+  --book {args.book} --edition {args.edition} --lesson {plan['card']}
+```
+
+它一次报出全部不通过项（137 条判据：绑定、哈希、原式、块数、题量、禁词、
+西里尔残留、分题排版…）。照着一次改完再跑。
+**它校验的是 `.tmp` 里的模板，不是持久文件**——改错地方会让你白绕一圈。
+
+图还没写时它会报缺 FigureSpec，那是下一个单元的事，不用你管；
+只要「禁词/西里尔/块数/题量/绑定」这几类全绿就算你这一单完成。
+
+完整字段表在 `.claude/skills/ld-s10y-lesson/references/edition-text-contract.md`。
+"""
+
+
 def phase_edition(args, plan: dict, report: Report) -> bool:
     paths = _edition_paths(args, plan)
     report.phase = "edition"
@@ -523,24 +792,22 @@ def phase_edition(args, plan: dict, report: Report) -> bool:
             return False
         report.step("P3 现代版备料", True, _rel(paths["templates"]))
 
-    source_lesson = ARTIFACTS / args.book / "lessons" / plan["card"]
     rewritten = args.edition_ready or _templates_rewritten(templates[0], templates[1])
     if not rewritten:
         report.gate = GATE_EDITION
-        report.work_order += [
-            f"改写 {_rel(paths['templates'])} 下的三个模板（只改模板，adapt-finalize 负责提升）：",
-            f"  lesson.template.json / exercises.template.json —— 把 text 改成 "
-            f"modern-us-neutral；source_text、题号、分组、图引用、题量都不许动",
-            f"  原始课文与题在 {_rel(source_lesson)}",
-            f"  figures.template.json 已预置 mode/svg/render/review 四个路径，"
-            f"默认 deterministic；真需要 hybrid 时改 mode 并补 artwork",
-            "改完原样再跑这条命令，它会接着做插图与校验。",
-            "（判据是「有任何一条 text 与 source_text 不同」。确实一字不改时加 "
-            "--edition-ready 跳过这个判据。）",
-        ]
+        _add_unit(
+            report, args.book, plan["card"], "edition", "edition",
+            f"改写 {plan['card']} 的现代版文本",
+            _edition_brief_body(args, plan, paths),
+        )
+        report.work_order.append(
+            "（判据是「有一条 text 与 source_text 不同，且差异不只是 layout」。"
+            "确实一字不改时加 --edition-ready 跳过它。）"
+        )
         return False
     report.step("P3 现代版文本", True, "模板已改写")
     return True
+
 
 
 # adapt-prepare 自己会把分题拆行、去掉分栏对齐空格，并把这类差异记成
@@ -572,19 +839,168 @@ def _templates_rewritten(lesson_template: Path, exercises_template: Path) -> boo
 
 
 # --------------------------------------------------------------- P3b 插图
+FIGURE_SPEC_RULES = r"""
+## FigureSpec 骨架（照抄，不要去 dump 现成的 spec 文件学格式）
+
+```json
+{
+  "schema": "ld-s10y-image/figure-spec@2",
+  "id": "<figure id>",
+  "mode": "deterministic",
+  "description": "<一句话说清这张图画的是什么>",
+  "source": {
+    "image": {"path": "<原书 PNG 相对仓库根的路径>", "sha256": "<该文件的 sha256>"},
+    "authoritativeText": [{"text": "<相关 edition 题面/正文原文>"}],
+    "inventory": [{"id": "<物件>", "description": "<按原图描述，含数值与归属>"}]
+  },
+  "canvas": {"width": 640, "height": 360,
+             "boundingBox": [xMin, yMax, xMax, yMin], "background": "paper"},
+  "display": {"layout": "inline", "maxWidthPx": 640, "minTextPx": 16,
+              "widths": [331, 640]},
+  "objects": [],
+  "assertions": []
+}
+```
+
+## 会把 spec 挡回来的数值边界（先对一遍，省一轮）
+
+- `canvas.width` / `canvas.height` 都必须是 **320–4096** 的整数（**高度也不能小于 320**）
+- `boundingBox` 是 `[xMin, yMax, xMax, yMin]`，要求 `xMin < xMax` 且 `yMin < yMax`
+- `display.minTextPx ≥ 16`；`display.widths` 每项 128–1600；
+  `layout: inline` 时 `widths` 必须含一个 ≤352 的产品宽度（移动端 331）
+- `display.maxWidthPx`：`instructional` 取 240–960，`decorative` 取 128–240
+- 颜色只用语义角色 `ink` / `muted` / `accent` / `accentSoft` / `grid` / `paper`，
+  不写具体色值
+- 标签文字只能是英文、数字、数学符号——**禁止中文、西里尔文**
+- 几何物件必须配 `assertions`；`source.inventory` 不能空
+- 关系用 `gridDimensions` / `displacement` / `inside` / `connects` 断言表达，
+  **不要用 `objectCount` 代替关系断言**
+
+## 两条红线
+
+- **禁止泄答案**：不添加原图没有的解答标注
+- **标签位置不用你算**：写 `labelPlacement.position` 当首选就行。渲染器自己错位
+  （八个方位）、错开（gap ×1/1.5/2.25/3）、扩画布（边距 8%/16%/25%，且只在实测字号
+  仍 ≥ `minTextPx` 时接受），解不开才失败并报出它试过哪些布局。不要手工调坐标去凑。
+
+更深的字段说明在 `.agents/skills/ld-s10y-image/references/figure-spec.md`。
+"""
+
+
+def _figure_brief_body(args, plan: dict, paths: dict, figure: dict) -> str:
+    figure_id = figure.get("id")
+    spec_path = paths["edition"] / figure.get("spec", "")
+    source_dir = ARTIFACTS / args.book / "figures"
+    svg_path = paths["edition"] / (figure.get("svg") or "")
+    render_path = paths["edition"] / (figure.get("render") or "")
+    review_path = paths["edition"] / (figure.get("review") or "")
+    exercises = paths["templates"] / "exercises.template.json"
+    candidates = " 或 ".join(
+        f"`{_rel(source_dir / f'{figure_id}{suffix}')}`" for suffix in (".png", ".svg")
+    )
+    return f"""\
+为 `{plan['card']}` 的插图 **{figure_id}** 写 FigureSpec，渲出来，并做目视验收。
+
+## 要读的
+
+- **原书图**：{candidates} —— 这是保真的基准，必须打开看
+- 相关题面（现代版，语义真相）：`{_rel(exercises)}` 里引用了 `{figure_id}` 的那几题
+
+## 要写的
+
+1. `{_rel(spec_path)}` —— FigureSpec，格式见下
+2. 然后跑渲染，它会写出 `{_rel(svg_path)}` 和 `{_rel(render_path)}`
+3. 最后记目视验收证据 `{_rel(review_path)}`
+
+{FIGURE_SPEC_RULES}
+## 自检与验收（三步都要自己跑完，绿了再回报）
+
+```bash
+P=.claude/skills/ld-s10y-lesson/.venv/bin/python
+I=.agents/skills/ld-s10y-image/scripts
+
+$P $I/validate_spec.py {_rel(spec_path)} --stage draft --json
+node $I/render_spec.mjs --spec {_rel(spec_path)} \\
+  --svg {_rel(svg_path)} --report {_rel(render_path)}
+$P $I/validate_spec.py {_rel(spec_path)} --stage rendered --json
+```
+
+`validate_spec` 一次报出全部判据；渲染失败时报告里有 `layout.attempts`，
+写着渲染器试过哪些边距与方位——照它说的改，不要自己猜坐标。
+
+三步都绿之后，**打开渲出来的 SVG 和原书 PNG 逐项对照**（物件数、数值、
+相对位置、标签归属），确认保真后记证据：
+
+```bash
+$P $I/record_review.py --spec {_rel(spec_path)} --render {_rel(render_path)} \\
+  --output {_rel(review_path)} --status pass --notes "<你对照了什么>"
+```
+
+对不上就改 spec 重来；**不要用 `--status pass` 盖过一张不保真的图**。
+
+## 零付费图像调用
+
+`mode` 只能是 `deterministic` 或 `hybrid`。需要 `generated`（Azure gpt-image-2）的图
+**停下来回报，不要自己调** —— 本单零付费图像调用，而且那把 key 当前是失效的。
+"""
+
+
+def _figure_tool_errors(args, paths: dict, figure: dict) -> list[str]:
+    """一张图的全部不通过项：draft spec、渲染、rendered spec，一次收齐。"""
+    figure_id = figure.get("id")
+    spec_path = paths["edition"] / figure.get("spec", "")
+    svg_path = paths["edition"] / (figure.get("svg") or "")
+    render_path = paths["edition"] / (figure.get("render") or "")
+    failures: list[str] = []
+    validation = _run([
+        sys.executable, str(IMAGE_SKILL / "scripts" / "validate_spec.py"),
+        str(spec_path), "--stage", "draft", "--json",
+    ])
+    payload = _json_or_none(validation.stdout)
+    if payload is None:
+        failures.append(
+            f"{figure_id} spec(draft): validator 输出异常 "
+            f"{(validation.stderr or validation.stdout).strip()[:200]}"
+        )
+    else:
+        failures += [f"{figure_id} spec(draft): {e}" for e in payload.get("errors", [])]
+
+    spec = _json_or_none(spec_path.read_text(encoding="utf-8")) or {}
+    argv = [
+        "node", str(IMAGE_SKILL / "scripts" / "render_spec.mjs"),
+        "--spec", str(spec_path), "--report", str(render_path), "--svg", str(svg_path),
+    ]
+    if spec.get("mode") == "hybrid":
+        argv += ["--artwork", str(paths["edition"] / (figure.get("artwork") or ""))]
+    render = _run(argv)
+    if render.returncode != 0:
+        failures += _render_failures(figure_id, render, render_path)
+    else:
+        validation = _run([
+            sys.executable, str(IMAGE_SKILL / "scripts" / "validate_spec.py"),
+            str(spec_path), "--stage", "rendered", "--json",
+        ])
+        payload = _json_or_none(validation.stdout) or {}
+        failures += [
+            f"{figure_id} spec(rendered): {e}" for e in payload.get("errors", [])
+        ]
+    return failures
+
+
 def phase_figures(args, plan: dict, report: Report) -> bool:
     paths = _edition_paths(args, plan)
     report.phase = "figures"
     manifest_path = paths["templates"] / "figures.template.json"
     figures = json.loads(manifest_path.read_text(encoding="utf-8")).get("figures", [])
-    missing_specs, pending_review, rendered = [], [], []
+    todo: list[tuple[dict, list[str]]] = []
     for figure in figures:
         figure_id = figure.get("id")
         spec_path = paths["edition"] / figure.get("spec", "")
+        review_path = paths["edition"] / (figure.get("review") or "")
         if not spec_path.is_file():
-            missing_specs.append((figure_id, spec_path))
+            todo.append((figure, []))
             continue
-        spec = json.loads(spec_path.read_text(encoding="utf-8"))
+        spec = _json_or_none(spec_path.read_text(encoding="utf-8")) or {}
         if spec.get("mode") == "generated":
             report.stops.append(
                 f"{figure_id}: FigureSpec 是 generated 模式，需要付费的 Azure gpt-image-2。"
@@ -592,124 +1008,34 @@ def phase_figures(args, plan: dict, report: Report) -> bool:
             )
             continue
         # 每张图都跑完，一张失败不跳过其余（工单 Scope：一次报出全部）
-        for stage in ("draft",):
-            validation = _run([
-                sys.executable, str(IMAGE_SKILL / "scripts" / "validate_spec.py"),
-                str(spec_path), "--stage", stage, "--json",
-            ])
-            payload = _json_or_none(validation.stdout)
-            report.failures += [
-                f"{figure_id} spec({stage}): {error}"
-                for error in (payload or {}).get("errors", [])
-            ]
-            if payload is None:
-                report.failures.append(
-                    f"{figure_id} spec({stage}): validator 输出异常 "
-                    f"{(validation.stderr or validation.stdout).strip()[:200]}"
-                )
-        svg_path = paths["edition"] / (figure.get("svg") or "")
-        render_path = paths["edition"] / (figure.get("render") or "")
-        review_path = paths["edition"] / (figure.get("review") or "")
-        argv = [
-            "node", str(IMAGE_SKILL / "scripts" / "render_spec.mjs"),
-            "--spec", str(spec_path), "--report", str(render_path),
-        ]
-        if spec.get("mode") == "hybrid":
-            argv += ["--svg", str(svg_path),
-                     "--artwork", str(paths["edition"] / (figure.get("artwork") or ""))]
-        else:
-            argv += ["--svg", str(svg_path)]
-        render = _run(argv)
-        if render.returncode != 0:
-            report.failures += _render_failures(figure_id, render, render_path)
-        else:
-            rendered.append((figure_id, svg_path, render_path))
-            validation = _run([
-                sys.executable, str(IMAGE_SKILL / "scripts" / "validate_spec.py"),
-                str(spec_path), "--stage", "rendered", "--json",
-            ])
-            payload = _json_or_none(validation.stdout) or {}
-            report.failures += [
-                f"{figure_id} spec(rendered): {error}"
-                for error in payload.get("errors", [])
-            ]
-            if figure_id in (args.accept_figure or []):
-                accept = _run([
-                    sys.executable, str(IMAGE_SKILL / "scripts" / "record_review.py"),
-                    "--spec", str(spec_path), "--render", str(render_path),
-                    "--output", str(review_path), "--status", "pass",
-                    "--notes", args.review_note,
-                ])
-                report.failures += _tool_failures(accept, f"{figure_id} record-review")
-            if not review_path.is_file():
-                pending_review.append((figure_id, svg_path, render_path))
+        failures = _figure_tool_errors(args, paths, figure)
+        if not failures and not review_path.is_file():
+            failures.append(
+                f"{figure_id}: 缺目视验收证据 {_rel(review_path)}"
+                "（对照原书 PNG 后用 record_review.py 记下来）"
+            )
+        if failures:
+            todo.append((figure, failures))
 
-    if report.stops or report.failures:
+    if report.stops:
         report.step("P3 插图", False, f"{len(figures)} 张")
-        if missing_specs:
-            report.failures += [
-                f"{figure_id}: 缺 FigureSpec {_rel(path)}"
-                for figure_id, path in missing_specs
-            ]
         return False
-    if missing_specs or pending_review:
+    if todo:
         report.gate = GATE_FIGURES
-        if missing_specs:
-            report.work_order.append(
-                f"写 {len(missing_specs)} 张图的 FigureSpec（figure-spec@2，语义角色配色，"
-                "英文标签，不许泄答案）："
-            )
-            for figure_id, path in missing_specs:
-                source = ARTIFACTS / args.book / "figures"
-                report.work_order.append(
-                    f"  {figure_id} → {_rel(path)}"
-                    f"；原书图在 {_rel(source)}/{figure_id}.png|svg"
-                )
-            report.work_order.append(
-                "  标签位置不用自己算：写 labelPlacement.position 当首选就行，"
-                "渲染器会自己错位/错开/扩画布去解，解不开才报它试过什么。"
-            )
-            report.work_order += [
-                "  骨架照抄下面这份，别去 dump 现成的 spec 文件——那是实测里最贵的一次读：",
-                "    {",
-                '      "schema": "ld-s10y-image/figure-spec@2",',
-                '      "id": "<figure id>", "mode": "deterministic",',
-                '      "description": "<一句话说清这张图画的是什么>",',
-                '      "source": {',
-                '        "image": {"path": "<原书 PNG 相对仓库根的路径>", "sha256": "<该文件的 sha256>"},',
-                '        "authoritativeText": [{"text": "<相关 edition 题面/正文原文>"}],',
-                '        "inventory": [{"id": "<物件>", "description": "<按原图描述，含数值与归属>"}]',
-                "      },",
-                '      "canvas": {"width": 640, "height": 360,',
-                '                 "boundingBox": [xMin, yMax, xMax, yMin], "background": "paper"},',
-                '      "display": {"layout": "inline", "maxWidthPx": 640, "minTextPx": 16,',
-                '                  "widths": [331, 640]},',
-                '      "objects": [...], "assertions": [...]',
-                "    }",
-                "  会把 spec 挡回来的数值边界（先对一遍，省一轮）：",
-                "    canvas.width / canvas.height 都必须是 320–4096 的整数（**高度也不能小于 320**）",
-                "    boundingBox 是 [xMin, yMax, xMax, yMin]，要求 xMin<xMax 且 yMin<yMax",
-                "    display.minTextPx ≥ 16；display.widths 每项 128–1600；",
-                "      layout=inline 时 widths 必须含一个 ≤352 的产品宽度（移动端 331）",
-                "    display.maxWidthPx：instructional 取 240–960，decorative 取 128–240",
-                "    颜色只用语义角色 ink/muted/accent/accentSoft/grid/paper，不写具体色值",
-                "    标签文字只能是英文/数字/数学符号；几何物件必须配 assertions；禁止泄答案",
-                "  source.inventory 不能空，且不要用 objectCount 代替关系断言——",
-                "    关系用 gridDimensions / displacement / inside / connects 表达。",
-            ]
-        if pending_review:
-            report.work_order.append(
-                f"看 {len(pending_review)} 张已渲出的图，和原书 PNG 对照，然后带 "
-                "--accept-figure <id> 再跑一次："
-            )
-            for figure_id, svg_path, render_path in pending_review:
-                report.work_order.append(
-                    f"  {figure_id}: {_rel(svg_path)}（渲染报告 {_rel(render_path)}）"
-                )
-        report.step("P3 插图", True, f"{len(figures)} 张，等 gate")
+        report.step("P3 插图", False, f"{len(todo)}/{len(figures)} 张没过")
+        for figure, failures in todo:
+            unit_id = f"figure-{figure.get('id')}"
+            if not _add_unit(
+                report, args.book, plan["card"], unit_id, "figure",
+                f"做 {plan['card']} 的插图 {figure.get('id')}",
+                _figure_brief_body(args, plan, paths, figure), failures,
+            ):
+                report.failures += failures or [f"{unit_id}: 缺 FigureSpec"]
         return False
+    _clear_attempts(args.book, plan["card"], "figure-")
     report.step("P3 插图", True, f"{len(figures)} 张渲染 + 验收齐备")
     return True
+
 
 
 def _json_or_none(text: str) -> dict | None:
@@ -775,9 +1101,50 @@ def phase_adapt_finalize(args, plan: dict, report: Report) -> bool:
     ]
     if result.returncode != 0 and not failures:
         failures = _tool_failures(result, "adapt-finalize")
-    report.failures += failures
-    report.step("P3 现代版收口", not failures)
-    return not failures
+    if not failures:
+        report.step("P3 现代版收口", True)
+        return True
+
+    # 收口的失败按归属分流回各自的单元：提到某张图的回那张图，其余回文本单元。
+    # 这一步以前是把失败报给本会话去改——那正是「模型在操作循环里」。
+    paths = _edition_paths(args, plan)
+    manifest = _json_or_none(
+        (paths["templates"] / "figures.template.json").read_text(encoding="utf-8")
+    ) or {}
+    figure_ids = [
+        item.get("id") for item in manifest.get("figures", []) if item.get("id")
+    ]
+    by_unit: dict[str, list[str]] = {}
+    for failure in failures:
+        owner = next((fid for fid in figure_ids if fid and fid in failure), None)
+        key = f"figure-{owner}" if owner else "edition"
+        by_unit.setdefault(key, []).append(failure)
+
+    report.step("P3 现代版收口", False, f"{len(failures)} 项，分流到 {len(by_unit)} 个单元")
+    report.gate = GATE_EDITION if "edition" in by_unit else GATE_FIGURES
+    for unit_id, unit_failures in by_unit.items():
+        if unit_id == "edition":
+            ok = _add_unit(
+                report, args.book, plan["card"], "edition", "edition",
+                f"修 {plan['card']} 的现代版文本",
+                _edition_brief_body(args, plan, paths), unit_failures,
+            )
+        else:
+            figure = next(
+                (item for item in manifest.get("figures", [])
+                 if f"figure-{item.get('id')}" == unit_id), None,
+            )
+            if figure is None:
+                report.failures += unit_failures
+                continue
+            ok = _add_unit(
+                report, args.book, plan["card"], unit_id, "figure",
+                f"修 {plan['card']} 的插图 {figure.get('id')}",
+                _figure_brief_body(args, plan, paths, figure), unit_failures,
+            )
+        if not ok:
+            report.failures += unit_failures
+    return False
 
 
 # --------------------------------------------------------------- P4 交付
@@ -896,10 +1263,6 @@ def main() -> int:
     common(run)
     run.add_argument("--force-prepare", action="store_true",
                      help="重建 .tmp 里的页渲染与模板")
-    run.add_argument("--accept-figure", action="append",
-                     help="目视验收这张图，记 review 证据；可重复")
-    run.add_argument("--review-note", default="pages2lesson 驱动下的目视验收",
-                     help="写进 review 证据的说明")
     run.add_argument("--edition-ready", action="store_true",
                      help="模板确实一字不改时跳过 G2 的「已改写」判据")
     run.add_argument("--no-publish", action="store_true",

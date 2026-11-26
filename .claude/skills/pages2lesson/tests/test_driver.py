@@ -22,8 +22,7 @@ def args(**overrides) -> Namespace:
     base = {
         "book": "3m", "lesson": None, "pages": None,
         "edition": "modern-us-neutral", "json": False,
-        "force_prepare": False, "accept_figure": None,
-        "review_note": "t", "no_publish": False, "edition_ready": False,
+        "force_prepare": False, "no_publish": False, "edition_ready": False,
     }
     return Namespace(**{**base, **overrides})
 
@@ -194,6 +193,98 @@ class RenderFailureReportTest(unittest.TestCase):
             )
         self.assertEqual(len(failures), 1)
         self.assertIn("node blew up", failures[0])
+
+
+class UnitBriefTest(unittest.TestCase):
+    """brief 必须自包含，且失败重试要把报错带进去——否则子代理还得回头问。"""
+
+    def setUp(self) -> None:
+        self.tmp = tempfile.TemporaryDirectory()
+        self._work = p2l.WORK
+        p2l.WORK = Path(self.tmp.name)
+
+    def tearDown(self) -> None:
+        p2l.WORK = self._work
+        self.tmp.cleanup()
+
+    def test_a_brief_is_self_contained(self) -> None:
+        report = p2l.Report(book="3m", edition="modern-us-neutral")
+        ok = p2l._add_unit(
+            report, "3m", "card-1", "page-0045", "page",
+            "转写第 45 页", "读 foo.png，写 bar.md",
+        )
+        self.assertTrue(ok)
+        self.assertEqual(len(report.units), 1)
+        unit = report.units[0]
+        self.assertEqual(unit["attempt"], 1)
+        text = (Path(self.tmp.name) / "3m/card-1/units/page-0045.md").read_text()
+        self.assertIn("转写第 45 页", text)
+        self.assertIn("读 foo.png，写 bar.md", text)
+        # 自包含的意思是纪律也在里面，子代理不必再去问环境怎么用
+        self.assertIn(".venv/bin/python", text)
+        self.assertIn("不要重装依赖", text)
+
+    def test_a_retry_carries_the_failures_into_the_brief(self) -> None:
+        report = p2l.Report(book="3m", edition="modern-us-neutral")
+        p2l._add_unit(report, "3m", "c", "page-1", "page", "t", "body")
+        report2 = p2l.Report(book="3m", edition="modern-us-neutral")
+        p2l._add_unit(
+            report2, "3m", "c", "page-1", "page", "t", "body",
+            ["行数对不上：印刷 27 行，块体 26 行", "白名单外字符 1 处"],
+        )
+        self.assertEqual(report2.units[0]["attempt"], 2)
+        text = (Path(self.tmp.name) / "3m/c/units/page-1.md").read_text()
+        self.assertIn("上一次没通过", text)
+        self.assertIn("行数对不上", text)
+        self.assertIn("白名单外字符", text)
+
+    def test_the_fourth_attempt_stops_instead_of_looping(self) -> None:
+        for expected in (1, 2, 3):
+            report = p2l.Report(book="3m", edition="modern-us-neutral")
+            self.assertTrue(p2l._add_unit(report, "3m", "c", "u", "page", "t", "b"))
+            self.assertEqual(report.units[0]["attempt"], expected)
+        report = p2l.Report(book="3m", edition="modern-us-neutral")
+        self.assertFalse(p2l._add_unit(report, "3m", "c", "u", "page", "t", "b"))
+        self.assertEqual(report.units, [])
+        self.assertTrue(any("不再自动重试" in stop for stop in report.stops))
+
+    def test_clearing_attempts_is_scoped_by_prefix(self) -> None:
+        for unit in ("page-1", "figure-a"):
+            report = p2l.Report(book="3m", edition="modern-us-neutral")
+            p2l._add_unit(report, "3m", "c", unit, "page", "t", "b")
+        p2l._clear_attempts("3m", "c", "page-")
+        self.assertEqual(p2l._attempt_count("3m", "c", "page-1"), 0)
+        self.assertEqual(
+            p2l._attempt_count("3m", "c", "figure-a"), 1,
+            "清页面单元的重试计数不该把插图单元的也清掉",
+        )
+
+    def test_emit_prints_paths_not_brief_content(self) -> None:
+        import contextlib, io
+        report = p2l.Report(book="3m", edition="modern-us-neutral")
+        report.gate = p2l.GATE_PAGES
+        p2l._add_unit(
+            report, "3m", "c", "page-1", "page", "t",
+            "SECRET-BRIEF-BODY-SHOULD-NOT-BE-PRINTED",
+        )
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            report.emit(Path(self.tmp.name) / "r.json", as_json=False)
+        out = buffer.getvalue()
+        self.assertIn("units/page-1.md", out)
+        self.assertNotIn("SECRET-BRIEF-BODY", out, "brief 内容不该进主会话的上下文")
+        self.assertIn("不要用 fork", out)
+
+
+class PreviousPageTailTest(unittest.TestCase):
+    def test_absent_previous_page_yields_nothing(self) -> None:
+        self.assertEqual(p2l._previous_page_tail("3m", 1), "")
+
+    def test_tail_comes_from_the_real_previous_page(self) -> None:
+        """跨页上下文传文字不传像素——SKILL 的原话。"""
+        tail = p2l._previous_page_tail("3m", 45)
+        self.assertTrue(tail, "PDF 44 已转写，应该取到它的尾部")
+        self.assertLessEqual(len(tail.splitlines()), 4)
 
 
 class ReportTest(unittest.TestCase):
