@@ -148,6 +148,19 @@ $P $L status --book 3m --lesson math3-c1-ex5      # 只看进度，什么都不�
   它中途抛异常时磁盘上留着上一次的 audit。驱动用输出里的 `[assemble]` 完成标记判断，
   没有标记就是失败——否则会把一个没把新转写页算进去的旧 lesson 发布出去。
 
+## 量这一课花了多少
+
+```bash
+python3 .claude/skills/ld-s10y-lesson/tools/meter.py read --repo . --budget 5000000
+```
+
+**不要加管道**（`| tail` 之类）：加了管道 `$?` 就是管道末端的退出码，
+超预算的非零信号会被吞掉。**只跑一次，以第一次为准**——跑仪表本身也计费。
+
+读数里 `ownTurns` / `ownTotal` 是主会话自己的，`subagentTurns` / `subagentTotal`
+是它派出去的子代理的，`turns` / `total` 是两者之和。
+这条路径的成本几乎全在子代理那一栏，所以**判收看合计，不看主会话那一栏**。
+
 ## 和 `ld-s10y-lesson` 的关系
 
 `ld-s10y-lesson` 仍然是逐 cap 的入口，**没有被删除、改名或改动对外命令**；

@@ -158,7 +158,34 @@ def _codex_usage(path: Path) -> dict:
     }
 
 
-def read_transcript(path: Path) -> dict:
+def subagent_transcripts(path: Path) -> list[Path]:
+    """这次会话派出去的子代理的 transcript。
+
+    为什么必须单独找（STEMROBIN-192）：主 transcript 是
+    `<project>/<session-id>.jsonl`，而子代理的落在 `<project>/<session-id>/subagents/`，
+    深一层。`discover` 用的 `root.glob("*.jsonl")` 不递归，所以子代理一条也看不见。
+    把模型工作挪进子代理之后，成本几乎全在那里——漏掉它们，读数会漂亮但没有意义。
+    """
+    directory = path.parent / path.stem / "subagents"
+    if not directory.is_dir():
+        return []
+    return sorted(item for item in directory.glob("*.jsonl") if item.is_file())
+
+
+def _merge_usage(total: dict, part: dict) -> dict:
+    """把一份子代理用量并进总账。单价分栏保持分开，不合并成一个数。"""
+    for key in (
+        "turns", "input", "cacheWrite", "cacheWrite5m", "cacheWrite1h",
+        "cached", "output", "total",
+    ):
+        total[key] = int(total.get(key) or 0) + int(part.get(key) or 0)
+    total["peakContext"] = max(
+        int(total.get("peakContext") or 0), int(part.get("peakContext") or 0),
+    )
+    return total
+
+
+def read_transcript(path: Path, include_subagents: bool = True) -> dict:
     path = Path(path).expanduser()
     if not path.is_file():
         raise MeterError(f"no transcript at {path}")
@@ -176,6 +203,23 @@ def read_transcript(path: Path) -> dict:
     else:
         raise MeterError(f"{path.name} is not a recognised session transcript")
     usage["session"] = path.stem
+    if not include_subagents:
+        return usage
+    parts = []
+    for child in subagent_transcripts(path):
+        try:
+            parts.append(_claude_usage(child))
+        except MeterError:
+            continue
+    if parts:
+        usage["ownTurns"] = usage["turns"]
+        usage["ownTotal"] = usage["total"]
+        usage["subagents"] = len(parts)
+        usage["subagentTurns"] = sum(item["turns"] for item in parts)
+        usage["subagentTotal"] = sum(item["total"] for item in parts)
+        for part in parts:
+            _merge_usage(usage, part)
+        usage["costCents"] = price_cents(usage)
     return usage
 
 
@@ -211,7 +255,7 @@ def resolve(args) -> tuple[dict, Path]:
         path = Path(args.transcript).expanduser()
     else:
         path = discover(cp.validate_repo(args.repo))
-    return read_transcript(path), path
+    return read_transcript(path, not getattr(args, "own_only", False)), path
 
 
 def cmd_read(args) -> int:
@@ -267,6 +311,10 @@ def main(argv: list[str] | None = None) -> int:
     read.add_argument("--repo", default=".")
     read.add_argument("--transcript")
     read.add_argument("--budget", type=int)
+    read.add_argument(
+        "--own-only", action="store_true",
+        help="只算主会话，不含它派出去的子代理（默认两者都算）",
+    )
     read.set_defaults(func=cmd_read)
 
     record = commands.add_parser("record", help="write the usage into the ticket checkpoint")

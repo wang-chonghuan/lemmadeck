@@ -52,6 +52,50 @@ class Claude(unittest.TestCase):
         self.assertEqual(302, usage["peakContext"])  # max(115, 302)
         self.assertEqual("sess-a", usage["session"])
 
+    def subagent(self, name, lines):
+        """子代理的 transcript 落在 `<session-id>/subagents/`，比主 transcript 深一层。"""
+        directory = self.path.parent / self.path.stem / "subagents"
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / f"{name}.jsonl").write_text(
+            "\n".join(lines) + "\n", encoding="utf-8",
+        )
+
+    def test_subagent_usage_is_counted(self):
+        """STEMROBIN-192：模型工作挪进子代理后，成本几乎全在那里。
+
+        `discover` 的 `root.glob("*.jsonl")` 不递归，所以子代理一条也看不见；
+        漏掉它们，读数会漂亮但量到的不是「做出一课花了多少」。
+        """
+        self.write([claude_line(read=100, write=10, plain=5, out=7)])
+        self.subagent("agent-a", [claude_line(read=900, write=0, plain=1, out=20)])
+        self.subagent("agent-b", [claude_line(read=500, write=0, plain=1, out=10)])
+
+        usage = meter.read_transcript(self.path)
+        self.assertEqual(usage["subagents"], 2)
+        self.assertEqual(usage["ownTurns"], 1)
+        self.assertEqual(usage["subagentTurns"], 2)
+        self.assertEqual(usage["turns"], 3)
+        self.assertEqual(usage["cached"], 1500)
+        self.assertEqual(usage["output"], 37)
+        self.assertEqual(usage["ownTotal"], 122)
+        self.assertEqual(usage["subagentTotal"], 921 + 511)
+        self.assertEqual(usage["total"], 122 + 921 + 511)
+
+    def test_own_only_excludes_subagents(self):
+        self.write([claude_line(read=100, write=10, plain=5, out=7)])
+        self.subagent("agent-a", [claude_line(read=900, write=0, plain=1, out=20)])
+        usage = meter.read_transcript(self.path, include_subagents=False)
+        self.assertEqual(usage["turns"], 1)
+        self.assertEqual(usage["total"], 122)
+        self.assertNotIn("subagents", usage)
+
+    def test_no_subagent_directory_changes_nothing(self):
+        usage = meter.read_transcript(
+            self.write([claude_line(read=100, write=10, plain=5, out=7)])
+        )
+        self.assertNotIn("subagents", usage)
+        self.assertEqual(usage["turns"], 1)
+
     def test_all_null_usage_reports_zero_not_an_invented_number(self):
         line = json.dumps({"message": {"usage": {
             "input_tokens": None, "cache_read_input_tokens": None,
