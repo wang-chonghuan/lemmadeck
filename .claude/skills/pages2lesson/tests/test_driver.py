@@ -81,18 +81,107 @@ class ResolveTest(unittest.TestCase):
         self.assertTrue(report.stops)
 
 
+class PagesEntryTest(unittest.TestCase):
+    """正确的页码范围必然含收口页，所以「只覆盖一张卡」做不了判据。"""
+
+    def test_pages_picks_the_card_the_range_starts_at(self) -> None:
+        report = p2l.Report(book="3m", edition="modern-us-neutral")
+        plan = p2l.resolve(args(pages="44-47"), report)
+        self.assertEqual(report.stops, [])
+        self.assertEqual(plan["card"], "math3-c1-ex5")
+
+    def test_a_range_not_starting_at_a_card_stops(self) -> None:
+        report = p2l.Report(book="3m", edition="modern-us-neutral")
+        self.assertIsNone(p2l.resolve(args(pages="45-47"), report))
+        self.assertTrue(
+            any("不是任何一张卡片的首页" in stop for stop in report.stops),
+            report.stops,
+        )
+
+
+class PollutionOwnerTest(unittest.TestCase):
+    def test_owner_is_read_from_either_lessons_path(self) -> None:
+        self.assertEqual(
+            p2l._owner_of("ssot-resources/.../artifacts/3m/lessons/other/lesson.json"),
+            "other",
+        )
+        self.assertEqual(
+            p2l._owner_of(".../editions/modern-us-neutral/lessons/other/lesson.json"),
+            "other",
+        )
+        self.assertIsNone(p2l._owner_of(".../artifacts/3m/book.json"))
+        self.assertIsNone(
+            p2l._owner_of(".../artifacts/3m/lessons/"),
+            "目录本身没有归属——这正是 -uall 要解决的那个漏网情况",
+        )
+
+
 class AssembleVerdictTest(unittest.TestCase):
     """对账按本次交付的那张卡作用域——否则 3m 的既有红让这条路径永远过不去。"""
 
-    def verdict(self, audit: dict, card: str = "math3-c1-ex5") -> p2l.Report:
+    def verdict(
+        self, audit: dict, card: str = "math3-c1-ex5",
+        lessons: list[dict] | None = None, completed: bool = True,
+        printed_pages: list[int] | None = None,
+    ) -> p2l.Report:
         report = p2l.Report(book="3m", edition="modern-us-neutral")
         with tempfile.TemporaryDirectory() as temp:
             book_dir = Path(temp)
             (book_dir / "book.json").write_text(
-                json.dumps({"audit": audit}), encoding="utf-8",
+                json.dumps({
+                    "audit": audit,
+                    "lessons": lessons if lessons is not None else [
+                        {"id": "math3-c1-ex1", "card_id": "math3-c1-ex1",
+                         "title": "巩固练习"},
+                        {"id": "math3-c1-ex5", "card_id": "math3-c1-ex5",
+                         "title": "巩固练习"},
+                        {"id": "x1-承上页", "card_id": None, "title": "（承上页）"},
+                    ],
+                }),
+                encoding="utf-8",
             )
-            p2l._assemble_verdict(book_dir, {"card": card, "title": "巩固练习"}, report)
+            p2l._assemble_verdict(
+                book_dir,
+                {"card": card, "title": "巩固练习",
+                 "printed_pages": printed_pages or [40, 41, 42, 43]},
+                report, completed,
+            )
         return report
+
+    def test_a_crashed_assemble_is_not_a_pass(self) -> None:
+        """book.json 是 assemble 最后一步才写的；崩了的话磁盘上留着上一次的 audit。"""
+        report = self.verdict({"errors": []}, completed=False)
+        self.assertTrue(report.failures)
+        self.assertIn("没有跑完", report.failures[0])
+
+    def test_a_page_segment_error_in_our_range_is_ours(self) -> None:
+        """「题号缺号（页段 44-47）」既不含卡片 id 也不含 title，却正是本次漏题的信号。"""
+        report = self.verdict({
+            "errors": ["题号缺号（页段 40-43）: [21, 22]（可能漏页或漏题）"],
+        })
+        self.assertEqual(len(report.failures), 1)
+        self.assertIn("题号缺号", report.failures[0])
+
+    def test_a_page_segment_error_outside_our_range_is_not_ours(self) -> None:
+        report = self.verdict({
+            "errors": ["题号缺号（页段 64-67）: [90]（可能漏页或漏题）"],
+        })
+        self.assertEqual(report.failures, [])
+
+    def test_a_same_titled_other_card_does_not_steal_the_blame(self) -> None:
+        """3m 的 math3-c1-ex1 和 ex5 都叫「巩固练习」，按 title 匹配会把本卡锁死。"""
+        report = self.verdict({"errors": ["math3-c1-ex1: 题号重复: [3]"]})
+        self.assertEqual(
+            report.failures, [],
+            "点名别的卡 id 的错误不该算本卡的，哪怕两张卡同名",
+        )
+
+    def test_an_unattributable_error_fails_closed(self) -> None:
+        report = self.verdict({"errors": ["某条谁也认不出来的失败"]})
+        self.assertEqual(
+            len(report.failures), 1,
+            "认不出归属时要拦住——静默放行一条可能是漏题的失败代价更大",
+        )
 
     def test_another_cards_pre_existing_error_does_not_fail_this_delivery(self) -> None:
         report = self.verdict({
@@ -128,7 +217,10 @@ class AssembleVerdictTest(unittest.TestCase):
     def test_a_missing_book_json_is_a_failure(self) -> None:
         report = p2l.Report(book="3m", edition="modern-us-neutral")
         with tempfile.TemporaryDirectory() as temp:
-            p2l._assemble_verdict(Path(temp), {"card": "x", "title": ""}, report)
+            p2l._assemble_verdict(
+                Path(temp), {"card": "x", "title": "", "printed_pages": []},
+                report, True,
+            )
         self.assertTrue(report.failures)
 
 
@@ -223,6 +315,8 @@ class UnitBriefTest(unittest.TestCase):
         # 自包含的意思是纪律也在里面，子代理不必再去问环境怎么用
         self.assertIn(".venv/bin/python", text)
         self.assertIn("不要重装依赖", text)
+        # 同一项目有多个工作树，子代理不先 cd 会写到别的分支上，而且没有工具会报警
+        self.assertIn(f"cd {p2l.REPO}", text.splitlines()[2])
 
     def test_a_retry_carries_the_failures_into_the_brief(self) -> None:
         report = p2l.Report(book="3m", edition="modern-us-neutral")
@@ -238,8 +332,8 @@ class UnitBriefTest(unittest.TestCase):
         self.assertIn("行数对不上", text)
         self.assertIn("白名单外字符", text)
 
-    def test_the_fourth_attempt_stops_instead_of_looping(self) -> None:
-        for expected in (1, 2, 3):
+    def test_attempts_run_out_and_then_stop(self) -> None:
+        for expected in range(1, p2l.UNIT_MAX_ATTEMPTS + 1):
             report = p2l.Report(book="3m", edition="modern-us-neutral")
             self.assertTrue(p2l._add_unit(report, "3m", "c", "u", "page", "t", "b"))
             self.assertEqual(report.units[0]["attempt"], expected)
@@ -248,16 +342,31 @@ class UnitBriefTest(unittest.TestCase):
         self.assertEqual(report.units, [])
         self.assertTrue(any("不再自动重试" in stop for stop in report.stops))
 
-    def test_clearing_attempts_is_scoped_by_prefix(self) -> None:
+    def test_attempts_are_never_cleared_mid_flow(self) -> None:
+        """中途清会让图单元每轮从 1 重新开始——无限循环、永不硬停。
+
+        `phase_figures` 通过后再清 `figure-`，而 `phase_adapt_finalize` 还会把带图 id
+        的失败路由回图单元，于是计数永远回到 1。所以代码里不该有任何中途清的调用点。
+        """
+        source = (
+            Path(p2l.__file__).read_text(encoding="utf-8")
+        )
+        calls = [
+            line.strip() for line in source.splitlines()
+            if "_clear_attempts(" in line and not line.strip().startswith("def ")
+        ]
+        self.assertEqual(
+            len(calls), 1,
+            f"_clear_attempts 只该在交付成功后调一次，实际 {calls}",
+        )
+
+    def test_clearing_is_scoped_by_prefix_when_asked(self) -> None:
         for unit in ("page-1", "figure-a"):
             report = p2l.Report(book="3m", edition="modern-us-neutral")
             p2l._add_unit(report, "3m", "c", unit, "page", "t", "b")
         p2l._clear_attempts("3m", "c", "page-")
         self.assertEqual(p2l._attempt_count("3m", "c", "page-1"), 0)
-        self.assertEqual(
-            p2l._attempt_count("3m", "c", "figure-a"), 1,
-            "清页面单元的重试计数不该把插图单元的也清掉",
-        )
+        self.assertEqual(p2l._attempt_count("3m", "c", "figure-a"), 1)
 
     def test_emit_prints_paths_not_brief_content(self) -> None:
         import contextlib, io

@@ -11,14 +11,19 @@
 这个驱动把缝焊上：**机械活一路跑到下一个未满足的 gate**，失败时一次报出本阶段全部问题，
 而不是在第一处失败就回来问。模型只在三个点介入：
 
-    G1  看页面图写页面文本          pages/<page>/page.md
-    G2  写现代版文本                editions/<edition>/lessons/<card>/*.template.json
-    G3  写插图语义 + 目视验收       figures/<id>.spec.json，然后 --accept-figure <id>
+    page-NNNN   看页面图写页面文本    artifacts/<book>/pages/NNNN/page.md
+    edition     写现代版文本          .tmp/ld-s10y-lesson/adapt/<book>/<ed>/lessons/<card>/
+    figure-<id> 写插图语义 + 目视验收  artifacts/<book>/editions/<ed>/figures/<id>.*
+
+每个 gate 把待做的工作写成若干份**自包含 brief** 落到
+.tmp/pages2lesson/<book>/<card>/units/，只打印路径；由调用方给每份 brief 派一个
+**全新**子代理（不要用 fork，它会继承全部上下文）。brief 和页面图都不进主会话。
 
 每次调用都从文件系统重新判断进度，没有状态文件（状态文件会和真相不一致）。
 反复跑同一条命令直到它说 done。
 
-退出码：0 已交付 / 3 停在 gate（已打印工单）/ 1 本阶段有失败（已全部列出）/ 2 硬停（需要人）。
+退出码：0 已交付（或 --no-publish 下预检通过）/ 3 停在 gate（brief 已写好）/
+1 本阶段有失败（已全部列出）/ 2 硬停（需要人）。
 """
 from __future__ import annotations
 
@@ -135,7 +140,9 @@ class Report:
             tail = "子代理都回来后，" if self.units else ""
             print(f"\n  {tail}原样再跑一次这条命令。完整报告: {_rel(path)}")
         if self.done:
-            print("\n✓ done —— 这一课已入库。")
+            print("\n✓ done。")
+            for line in self.work_order:
+                print(f"    {line}")
         elif not self.gate and not self.failures and not self.stops and not self.quiet_when_idle:
             print("\n（没有要做的事，也没有失败：检查 --lesson/--pages 是否指向预期的卡片）")
         return self.exit_code()
@@ -165,10 +172,14 @@ def _tool_failures(result: subprocess.CompletedProcess, label: str) -> list[str]
         if line.strip().startswith(("-", "ERROR", "✗")) or "ERROR" in line
     ]
     bullets = [line for line in lines if line and not line.startswith("✗ 失败")]
-    return [f"{label}: {item}" for item in bullets] or [
-        f"{label}: 退出码 {result.returncode}\n"
-        + (result.stdout + result.stderr).strip()[-1500:]
-    ]
+    if bullets:
+        return [f"{label}: {item}" for item in bullets]
+    # 兜底分支以前把 1500 字符的 stdout/stderr 尾巴直接打进主会话上下文
+    # （STEMROBIN-192 审查 S11）。落盘，只回一行路径。
+    dump = WORK / "tool-output" / f"{re.sub(r'[^A-Za-z0-9_.-]', '_', label)}.log"
+    dump.parent.mkdir(parents=True, exist_ok=True)
+    dump.write_text((result.stdout + result.stderr).strip() + "\n", encoding="utf-8")
+    return [f"{label}: 退出码 {result.returncode}，完整输出在 {_rel(dump)}"]
 
 
 # --------------------------------------------------------------- 工作单元
@@ -184,7 +195,9 @@ def _tool_failures(result: subprocess.CompletedProcess, label: str) -> list[str]
 # brief 落在磁盘上而不是打印出来，连 brief 本身也不进父会话。
 # 用 fork 型子代理会继承父上下文，等于没改。
 
-UNIT_MAX_ATTEMPTS = 3
+# 首发 1 次 + 修复 3 次。首发不该吃掉修复额度：adapt-finalize 有 137 条判据，
+# 一个单元只给两次修复机会是不够的。
+UNIT_MAX_ATTEMPTS = 4
 
 
 def _units_dir(book: str, card: str) -> Path:
@@ -212,6 +225,13 @@ def _bump_attempt(book: str, card: str, unit_id: str) -> int:
 
 
 def _clear_attempts(book: str, card: str, prefix: str = "") -> None:
+    """只在**交付成功**之后清，流程中途一律不清（STEMROBIN-192 审查 S3/S4）。
+
+    中途清会出两种相反的毛病：`phase_figures` 通过后清掉 `figure-` 计数，而紧接着
+    `phase_adapt_finalize` 还会把带图 id 的失败路由回图单元，于是图单元的计数每轮
+    重新从 1 开始——无限循环、永不硬停、每轮都花钱；而 `edition` 的计数没有任何
+    地方清，交付成功后也留着，日后返修同一张卡一轮就硬停。
+    """
     for path in _units_dir(book, card).glob(f"{prefix}*.attempts"):
         path.unlink(missing_ok=True)
 
@@ -239,7 +259,15 @@ def _write_brief(
     directory = _units_dir(book, card)
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{unit_id}.md"
-    head = f"# {title}\n\n"
+    # 同一个项目同时有多个工作树（主 checkout 与各 ticket worktree）。子代理默认
+    # 继承主会话的 cwd，不先 cd 就会在**另一个工作树**上读图写课，而 p2c 的
+    # validate_workspace 只校验「cwd 等于它自己那个 checkout」，不会报警
+    # （STEMROBIN-192 审查 S15）。所以工作树写在第一行，不放脚注。
+    head = (
+        f"# {title}\n\n"
+        f"**先 `cd {REPO}`**，本 brief 里所有相对路径都从这里算。\n"
+        f"这个项目同时有多个工作树，走错一个会把课写到别的分支上，而且没有任何工具会报警。\n\n"
+    )
     if failures:
         head += (
             "## ⚠ 上一次没通过，先修这些\n\n"
@@ -264,7 +292,8 @@ def _add_unit(
     if attempt > UNIT_MAX_ATTEMPTS:
         report.stops.append(
             f"{unit_id} 已经试了 {UNIT_MAX_ATTEMPTS} 次仍不通过，不再自动重试。"
-            f"最后一次的报错在 {_rel(_units_dir(book, card) / f'{unit_id}.md')}"
+            f"最后一次的报错写在 {_rel(_units_dir(book, card) / f'{unit_id}.md')} 的开头。"
+            f"查清原因后删掉 {_rel(_attempt_path(book, card, unit_id))} 可以重新放行它"
         )
         return False
     brief = _write_brief(book, card, unit_id, title, body, failures)
@@ -380,18 +409,41 @@ def resolve(args, report: Report) -> dict | None:
         )
         return None
     if card is None:
-        covered = [
-            item for item in cards.values() if item["page"] in printed_pages
+        # 正确的页码范围**必然**包含下一张卡的首页（收口页），所以「覆盖 1 张卡」
+        # 这个判据对全书 28 张卡里的 26 张都不成立，--pages 单给几乎没法用
+        # （STEMROBIN-192 审查 S9）。判据改成：取范围**起点**那张卡。
+        covered = sorted(
+            (item for item in cards.values() if item["page"] in printed_pages),
+            key=lambda item: item["page"],
+        )
+        starting = [
+            item for item in covered if item["page"] == printed_pages[0]
         ]
-        if len(covered) != 1:
+        if len(starting) == 1:
+            card = starting[0]
+            if len(covered) > 1:
+                report.step(
+                    "P0 卡片认领", True,
+                    f"印刷页 {printed_pages[0]}–{printed_pages[-1]} 起于 "
+                    f"{card['id']}；范围里还有 "
+                    f"{[item['id'] for item in covered if item is not card]}"
+                    "（收口页带出来的，不发布）",
+                )
+        else:
             report.stops.append(
-                f"印刷页 {printed_pages[0]}–{printed_pages[-1]} 覆盖了 "
-                f"{len(covered)} 张卡片 {[item['id'] for item in covered]}；"
-                "用 --lesson 指明这一次交付哪一张"
+                f"印刷页 {printed_pages[0]} 不是任何一张卡片的首页"
+                f"（这段里的卡片是 {[item['id'] for item in covered]}）；"
+                "用 --lesson 指明这一次交付哪一张，或让范围从某张卡的首页开始"
             )
             return None
-        card = covered[0]
 
+    if offset is None:
+        report.step(
+            "P0 印刷页偏移", False,
+            "推不出来（没有已转写页，或各页不一致）——P0 的收口页检查本次失效，"
+            "只剩 assemble 的 unclosed_cards 这一道；"
+            "页 brief 里的印刷页会写成 ?，子代理需要自己从页脚读出 printed_page",
+        )
     following = next_boundary(card)
     plan = {
         "card": card["id"],
@@ -502,12 +554,19 @@ def _page_brief_body(args, plan: dict, page: int) -> str:
     printed = page + offset if offset is not None else None
     regions = layout.get("candidate_regions", [])
     region_lines = "\n".join(
-        f"| `{item['id']}` | `{item['box']}` | {item['components']} | {item['printed_rows']} |"
+        "| `{id}` | `region {id}` | `box {box}` | {components} | {rows} |".format(
+            id=item["id"],
+            box=",".join(str(value) for value in item["box"]),
+            components=item["components"],
+            rows=item["printed_rows"],
+        )
         for item in regions
-    ) or "| （这一页机器没提出候选） | | | |"
+    ) or "| （这一页机器没提出候选） | | | | |"
     tail = _previous_page_tail(args.book, page)
     tail_block = (
         f"\n## 上一页的尾部文字（接续用，不要重复转写）\n\n```\n{tail}\n```\n"
+        "\n里面的 `![…](…)` 那种行是 `finalize` 自己生成的，**不要模仿着写**；"
+        "你只写块头和块体。\n"
         if tail else ""
     )
     return f"""\
@@ -523,8 +582,8 @@ def _page_brief_body(args, plan: dict, page: int) -> str:
 
 机器提出的候选裁图区域：
 
-| id | box | 连通域 | 跨印刷行 |
-|---|---|---|---|
+| id | 认领写法 | 换成手画框就是 | 连通域 | 跨印刷行 |
+|---|---|---|---|---|
 {region_lines}
 
 候选只对「有外框的连续墨块」有效。实测靠留白分组的竖式阵列提不出来、
@@ -549,8 +608,20 @@ def _page_brief_body(args, plan: dict, page: int) -> str:
 
 **行数对不上时**：先对照页面图和遮图后的行带核对——高分式的分子分母属于同一印刷行，
 扫描黑边和残留表格边线不是文字。**禁止加空行、重复文字或伪造 `↵` 凑数**，
-那是把错误内容发给学习者。确实是工具数错了（例如纸边阴影被当成一行），
-在回报里说清楚你核对到的事实，不要改页面内容去迎合它。
+那是把错误内容发给学习者。
+
+确实是工具数错了（例如纸边阴影被当成一行），**不要改页面内容去迎合它**。
+这种情况按这个格式回报，然后停下：
+
+```
+无法通过：行数对账
+工具说 N 行，我数出 M 行
+我核对的事实：<第几行带是什么、为什么它不是文字>
+page.md 我按页面实际印出来的样子写了，没有改动去迎合
+```
+
+同样，页面图看不清、或者你判断不了某一块是什么，也照这个格式停下来回报，
+不要猜一个填进去。
 """
 
 
@@ -620,41 +691,145 @@ def phase_pages(args, plan: dict, report: Report) -> bool:
             ):
                 report.failures += failures
         return False
-    _clear_attempts(args.book, plan["card"], "page-")
     report.step("P1 收口", True, f"{len(plan['pdf_pages'])} 页全绿")
     return True
 
 
 
 # --------------------------------------------------------------- P2 装订
-def _pollution(book_dir: Path, card: str) -> list[str]:
-    """assemble 是全书重算；它顺手改了别的课就还原并记录（工单 Constraints）。"""
-    result = _run(["git", "status", "--porcelain", "--", str(book_dir)])
+def _artifact_dirt(book_dir: Path) -> dict[str, str]:
+    """本书产物树里每个脏文件 → 状态码。`-uall` 才会逐个列出未跟踪文件。
+
+    不加 `-uall` 时 git 对一个**新目录**只输出一行 `?? lessons/`，于是按
+    `/lessons/` 过滤会把整个目录漏掉——而本技能的收口页机制每课都必然为下一张卡
+    产出一个新的 lesson 目录（STEMROBIN-192 审查 S5：`x7-多位数的加法和减法`
+    带着 4 道题进了 git，报告一个字没提）。
+    """
+    result = _run(["git", "status", "--porcelain", "-uall", "--", str(book_dir)])
     if result.returncode != 0:
-        return []
-    touched = []
+        return {}
+    dirt = {}
     for line in result.stdout.splitlines():
-        path = line[3:].strip().strip('"')
-        if "/lessons/" not in path:
+        if len(line) > 3:
+            dirt[line[3:].strip().strip('"')] = line[:2]
+    return dirt
+
+
+def _owner_of(path: str) -> str | None:
+    """这个产物文件属于哪张卡。`lessons/<id>/…` 与 `editions/*/lessons/<id>/…` 都算。"""
+    for marker in ("/lessons/", "lessons/"):
+        if marker in path:
+            tail = path.split(marker, 1)[1]
+            return tail.split("/", 1)[0] if "/" in tail else None
+    return None
+
+
+def _pollution(book_dir: Path, card: str, before: dict[str, str]) -> dict[str, list[str]]:
+    """assemble 是全书重算；它顺手改了别的课就还原并记录（工单 Constraints）。
+
+    `before` 是跑装订之前的脏文件快照。只处理「之前干净、之后脏」的文件——
+    人或另一个会话正在改的东西不属于本次装订的产物，无条件 `git checkout --`
+    会把它静默销毁且不可恢复（审查 S6）。
+
+    未跟踪的新文件还不回去（`git checkout --` 对它报 pathspec 不匹配），所以只报告，
+    不删——删别人的新文件比留着更坏。
+    """
+    after = _artifact_dirt(book_dir)
+    restored: list[str] = []
+    added: list[str] = []
+    kept: list[str] = []
+    for path, status in after.items():
+        if path in before:
+            kept.append(path)
             continue
-        owner = path.split("/lessons/", 1)[1].split("/", 1)[0]
-        if owner != card:
-            touched.append(path)
-    restored = []
-    for path in touched:
-        if _run(["git", "checkout", "--", path]).returncode == 0:
+        owner = _owner_of(path)
+        if owner is None or owner == card:
+            continue
+        if status.strip() == "??":
+            added.append(path)
+        elif _run(["git", "checkout", "--", path]).returncode == 0:
             restored.append(path)
-    return restored
+        else:
+            added.append(path)
+    return {"restored": restored, "added": added, "preexisting": kept}
 
 
-def _assemble_verdict(book_dir: Path, plan: dict, report: Report) -> None:
+PAGE_SEGMENT = re.compile(r"页段\s*(\d+)\s*[-–]\s*(\d+)")
+
+
+def _other_card_names(book_dir: Path, card: str) -> tuple[set[str], set[str]]:
+    """别的卡的 id 与 title，用来把不属于本次交付的既有红排除掉。"""
+    index_path = book_dir / "book.json"
+    ids: set[str] = set()
+    titles: set[str] = set()
+    try:
+        lessons = json.loads(index_path.read_text(encoding="utf-8")).get("lessons", [])
+    except (OSError, json.JSONDecodeError):
+        return ids, titles
+    mine_title = next(
+        (item.get("title") for item in lessons
+         if card in {item.get("id"), item.get("card_id")}),
+        None,
+    )
+    for item in lessons:
+        if card in {item.get("id"), item.get("card_id")}:
+            continue
+        for key in ("id", "card_id"):
+            if item.get(key):
+                ids.add(item[key])
+        # 同名卡存在（3m 的 math3-c1-ex1 与 ex5 都叫「巩固练习」），所以同名 title
+        # 不能用来排除——否则别人的红会把本卡锁死。只收不与本卡同名的 title。
+        if item.get("title") and item["title"] != mine_title:
+            titles.add(item["title"])
+    return ids, titles
+
+
+def _owns_error(
+    error: str, card: str, printed_pages: list[int],
+    other_ids: set[str], other_titles: set[str],
+) -> bool:
+    """这条 assemble 失败是不是本次交付的责任。
+
+    判据顺序是刻意的（STEMROBIN-192 审查 S2）：
+    1. 点名本卡 → 是。
+    2. 带「页段 A-B」→ 与本次页码范围相交就是，不相交就不是。`题号缺号（页段 44-47）` 和
+       `图号缺号（页段 …）` 这两条恰恰是「本次这几页漏题/漏裁」的信号，而它们
+       既不含卡片 id 也不含 title，按名字匹配会被当成别人的事放过去。
+    3. 点名别的卡（id，或与本卡不同名的 title）→ 不是。
+    4. 都认不出来 → **算本卡的**。静默放行一条可能是漏题的失败，代价比多拦一次大。
+    """
+    if card in error:
+        return True
+    segment = PAGE_SEGMENT.search(error)
+    if segment and printed_pages:
+        # 页段自己就说清了范围，相交与否都是定论，不用再往下猜。
+        first, last = int(segment.group(1)), int(segment.group(2))
+        return first <= printed_pages[-1] and printed_pages[0] <= last
+    if any(name in error for name in other_ids | other_titles):
+        return False
+    return True
+
+
+def _assemble_verdict(
+    book_dir: Path, plan: dict, report: Report, completed: bool,
+) -> None:
     """对账按**本次交付的那张卡**作用域。
 
     `assemble` 是全书重算，它的退出码带着全书的既有失败——3m 的 `x1-承上页` 自
     STEMROBIN-191 起就报「题号缺号 [17, 24..93]」。拿退出码当判据，这条路径在这本书上
-    永远是红的，而那条红和本次交付无关。所以判据取 book.json 的 audit：提到本卡的
-    失败才拦，其余只报告。
+    永远是红的，而那条红和本次交付无关。所以判据取 book.json 的 audit。
+
+    但 `completed` 必须单独传进来：`book.json` 是 `assemble.run` 最后一步才写的，
+    装订中途抛异常时磁盘上留着**上一次**的 audit。只看「文件存不存在」的话，
+    上一次是绿的就会打 ✓，然后把一个没把新转写页算进去的旧 lesson 发布出去。
     """
+    if not completed:
+        report.failures.append(
+            "assemble 没有跑完（输出里没有完成标记）——磁盘上的 book.json 是上一次的，"
+            "不能用它判收。先单独跑一次 "
+            f"`p2c.py assemble --book {plan.get('book', '')} --toc <toc>` 看它为什么崩"
+        )
+        return
     index_path = book_dir / "book.json"
     if not index_path.is_file():
         report.failures.append("assemble 没有写出 book.json——装订整体失败")
@@ -665,10 +840,14 @@ def _assemble_verdict(book_dir: Path, plan: dict, report: Report) -> None:
         report.failures.append(f"book.json 读不出来: {error}")
         return
     card = plan["card"]
-    title = plan.get("title") or ""
+    other_ids, other_titles = _other_card_names(book_dir, card)
+    printed = plan.get("printed_pages") or []
     mine, theirs = [], []
     for error in audit.get("errors", []):
-        (mine if card in error or (title and title in error) else theirs).append(error)
+        target = mine if _owns_error(
+            error, card, printed, other_ids, other_titles,
+        ) else theirs
+        target.append(error)
     report.failures += [f"装订: {error}" for error in mine]
     if theirs:
         report.step(
@@ -684,6 +863,10 @@ def phase_assemble(args, plan: dict, report: Report) -> bool:
     book_dir = ARTIFACTS / args.book
     report.phase = "assemble"
     toc = REPO / plan["toc"]
+    # 装订之前先把产物树的脏文件记下来：之后只处理「之前干净、之后脏」的，
+    # 不去碰人或别的会话正在改的东西。
+    before_dirt = _artifact_dirt(book_dir)
+    completed = False
     for label, argv in (
         ("assemble", ["assemble", "--book", args.book, "--toc", str(toc)]),
         ("vectorize", ["vectorize", "--book", args.book]),
@@ -692,16 +875,33 @@ def phase_assemble(args, plan: dict, report: Report) -> bool:
         result = _run([sys.executable, str(P2C)] + argv)
         if label == "vectorize":
             report.failures += _tool_failures(result, label)
+            continue
+        # `[assemble]` 是 assemble.run 最后一步才打印的完成标记；抛异常时没有它。
+        output = result.stdout + result.stderr
+        if "[assemble]" in output:
+            completed = True
+        elif "Traceback" in output:
+            report.failures.append(
+                f"{label} 抛异常中止："
+                + output.strip().splitlines()[-1][:300]
+            )
 
-    restored = _pollution(book_dir, plan["card"])
-    if restored:
+    dirt = _pollution(book_dir, plan["card"], before_dirt)
+    if dirt["restored"]:
         report.step(
-            "P2 邻课污染", True,
-            f"assemble 改了 {len(restored)} 个别的课的文件，已 git 还原: "
-            + ", ".join(_rel(REPO / path) for path in restored),
+            "P2 邻课污染（已还原）", True,
+            f"{len(dirt['restored'])} 个别的课的已跟踪文件被装订改过，已 git 还原: "
+            + ", ".join(dirt["restored"]),
+        )
+    if dirt["added"]:
+        # 收口页属于下一张卡，装订必然为它产出一个新的 lesson 目录。还原不了，
+        # 但必须让人看见——它会跟着这次交付一起进 commit。
+        report.step(
+            "P2 装订新建了别的课的文件（还原不了，需要人决定怎么处置）", True,
+            f"{len(dirt['added'])} 个: " + ", ".join(sorted(dirt["added"])[:12]),
         )
 
-    _assemble_verdict(book_dir, plan, report)
+    _assemble_verdict(book_dir, plan, report, completed)
     report.step("P2 装订", not report.failures, f"{plan['card']}")
     return not report.failures
 
@@ -721,16 +921,32 @@ def _edition_paths(args, plan: dict) -> dict[str, Path]:
     }
 
 
+def _size_label(path: Path) -> str:
+    try:
+        return f"{path.stat().st_size / 1024:.1f}KB"
+    except OSError:
+        return "还没生成"
+
+
 def _edition_brief_body(args, plan: dict, paths: dict) -> str:
     source_lesson = ARTIFACTS / args.book / "lessons" / plan["card"]
     profile = LESSON_SKILL / "profiles" / f"{args.edition}.json"
+    lesson_template = _rel(paths["templates"] / "lesson.template.json")
+    exercises_template = paths["templates"] / "exercises.template.json"
+    lesson_kb = _size_label(paths["templates"] / "lesson.template.json")
+    exercises_kb = _size_label(exercises_template)
+    document = _json_or_none(
+        exercises_template.read_text(encoding="utf-8")
+    ) if exercises_template.is_file() else None
+    exercise_count = len((document or {}).get("exercises", []))
     return f"""\
 把 `{plan['card']}`（{plan.get('title')}）的课文与题改写成 **{args.edition}** 版。
 
 ## 只改这两个模板
 
-- `{_rel(paths['templates'] / 'lesson.template.json')}`
-- `{_rel(paths['templates'] / 'exercises.template.json')}`
+- `{_rel(paths['templates'] / 'lesson.template.json')}`（{lesson_kb}）
+- `{_rel(paths['templates'] / 'exercises.template.json')}`（{exercises_kb}，
+  {exercise_count} 道题）—— 大文件，按题逐个 Edit，不要整文件重写
 
 **只改模板**，不要去写持久目录——`adapt-finalize` 负责把通过验收的结果提升进
 `{_rel(paths['lesson'])}`。原始课文与题在 `{_rel(source_lesson)}`（只读，不许改）。
@@ -750,9 +966,10 @@ def _edition_brief_body(args, plan: dict, paths: dict) -> str:
 - 非公式数字确需更新时，逐项写入 `numeric_changes`，并在 `changes` 里包含
   `context-number`；来源页 `errata` 已被带进模板，只填 `corrected` 并把该块
   `changes` 标成 `math-correction`
-- 排版不用你管：`adapt-finalize` 会确定性分行组段。概念切换的横线用
-  `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.json>`
-  的输出填 `section_breaks`，**禁止按块或换行手算整数**
+- 排版不用你管：`adapt-finalize` 会确定性分行组段。概念切换的横线这样取：
+  `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs {lesson_template}`
+  照它输出的相邻段落 `{{before, after}}` 对象填 `section_breaks`，
+  **禁止按块或换行手算整数**
 
 ## 自检（写完必须自己跑，绿了再回报）
 
@@ -766,8 +983,13 @@ def _edition_brief_body(args, plan: dict, paths: dict) -> str:
 西里尔残留、分题排版…）。照着一次改完再跑。
 **它校验的是 `.tmp` 里的模板，不是持久文件**——改错地方会让你白绕一圈。
 
-图还没写时它会报缺 FigureSpec，那是下一个单元的事，不用你管；
-只要「禁词/西里尔/块数/题量/绑定」这几类全绿就算你这一单完成。
+图还没写时它会报缺 FigureSpec / 缺 SVG / 缺 render 报告——**那是插图单元的事，
+不用你管**。除此之外的任何一条都算你的，必须全绿。
+
+判断方法：把它报出来的每一条看一遍，凡是不含 `figures/` 路径、也不是
+「缺 svg / 缺 render / 缺 review 证据路径 / 现代图清单…」这几类的，都是你要修的。
+**不要在还有属于你的红的时候回报完成**——那会白烧掉这个单元一次重试额度，
+而额度是有限的。
 
 完整字段表在 `.claude/skills/ld-s10y-lesson/references/edition-text-contract.md`。
 """
@@ -780,12 +1002,26 @@ def phase_edition(args, plan: dict, report: Report) -> bool:
         paths["templates"] / name for name in
         ("lesson.template.json", "exercises.template.json", "figures.template.json")
     ]
-    if not all(path.is_file() for path in templates):
+    present = [path for path in templates if path.is_file()]
+    if present and len(present) != len(templates) and not args.force_prepare:
+        # adapt-prepare 见到任何一个已存在的模板就拒绝，驱动没有参数能走出这个状态
+        # （STEMROBIN-192 审查 S7）。不自动 --force：已存在的那些可能是子代理改过的，
+        # 强制重建会把它的工作抹掉。
+        report.failures.append(
+            "现代版模板只剩一部分（上次写到中途，或被人删了一个）："
+            f"有 {[path.name for path in present]}，"
+            f"缺 {[path.name for path in templates if path not in present]}。"
+            f"确认 {_rel(paths['templates'])} 下的内容可以丢弃后，"
+            "删掉整个目录再跑，或者加 --force-prepare 让驱动重建"
+        )
+        report.step("P3 现代版备料", False)
+        return False
+    if len(present) != len(templates) or args.force_prepare:
         result = _run([
             sys.executable, str(P2C), "adapt-prepare",
             "--book", args.book, "--edition", args.edition,
             "--lesson", plan["card"],
-        ])
+        ] + (["--force"] if args.force_prepare else []))
         if result.returncode != 0:
             report.failures += _tool_failures(result, "adapt-prepare")
             report.step("P3 现代版备料", False)
@@ -904,7 +1140,14 @@ def _figure_brief_body(args, plan: dict, paths: dict, figure: dict) -> str:
 ## 要读的
 
 - **原书图**：{candidates} —— 这是保真的基准，必须打开看
-- 相关题面（现代版，语义真相）：`{_rel(exercises)}` 里引用了 `{figure_id}` 的那几题
+- 相关题面（现代版，语义真相）：`{_rel(exercises)}` 里 `figure_refs` 或 `figures`
+  含 `{figure_id}` 的那几题。`source.authoritativeText` 就从这些题的 `text` 原样摘。
+
+`source.image.sha256` 这样算（填哪个文件就算那个文件）：
+
+```bash
+shasum -a 256 {_rel(source_dir)}/{figure_id}.png | cut -d" " -f1
+```
 
 ## 要写的
 
@@ -1009,11 +1252,23 @@ def phase_figures(args, plan: dict, report: Report) -> bool:
             continue
         # 每张图都跑完，一张失败不跳过其余（工单 Scope：一次报出全部）
         failures = _figure_tool_errors(args, paths, figure)
-        if not failures and not review_path.is_file():
-            failures.append(
-                f"{figure_id}: 缺目视验收证据 {_rel(review_path)}"
-                "（对照原书 PNG 后用 record_review.py 记下来）"
+        if not failures:
+            review = (
+                _json_or_none(review_path.read_text(encoding="utf-8"))
+                if review_path.is_file() else None
             )
+            if review is None:
+                failures.append(
+                    f"{figure_id}: 缺目视验收证据 {_rel(review_path)}"
+                    "（对照原书 PNG 后用 record_review.py 记下来）"
+                )
+            elif review.get("status") != "pass":
+                # record_review.py 的 --status 允许 fail 并照写文件，只看文件在不在
+                # 会放行一张自述不保真的图（STEMROBIN-192 审查 S14）。
+                failures.append(
+                    f"{figure_id}: 目视验收记的是 status={review.get('status')!r}，"
+                    "不是 pass——改 spec 重渲到真的保真，不要用 pass 盖过去"
+                )
         if failures:
             todo.append((figure, failures))
 
@@ -1032,7 +1287,6 @@ def phase_figures(args, plan: dict, report: Report) -> bool:
             ):
                 report.failures += failures or [f"{unit_id}: 缺 FigureSpec"]
         return False
-    _clear_attempts(args.book, plan["card"], "figure-")
     report.step("P3 插图", True, f"{len(figures)} 张渲染 + 验收齐备")
     return True
 
@@ -1171,12 +1425,18 @@ def phase_ship(args, plan: dict, report: Report) -> bool:
         return False
     report.step("P4 发布预检", True)
     if args.no_publish:
-        report.gate = "P4 入库（--no-publish 时由人执行）"
+        # 终点，不是 gate：做成 gate 的话，按 SKILL「反复跑到它说 done」照做就是
+        # 死循环，真正的出口藏在一行工单里（STEMROBIN-192 审查 S12）。
+        report.step(
+            "P4 入库", True,
+            "--no-publish：预检通过，真实入库留给人执行",
+        )
         report.work_order.append(
-            f"预检通过。真实入库：node {_rel(PUBLISH)} {_rel(book_dir)} "
+            f"真实入库：node {_rel(PUBLISH)} {_rel(book_dir)} "
             f"--edition {args.edition} --lesson {plan['card']}"
         )
-        return False
+        report.done = True
+        return True
 
     live = _run([
         "node", str(PUBLISH), str(book_dir),
@@ -1187,6 +1447,7 @@ def phase_ship(args, plan: dict, report: Report) -> bool:
         report.step("P4 入库", False)
         return False
     report.step("P4 入库", True, _published_line(live.stdout, plan["card"]))
+    _clear_attempts(args.book, plan["card"])
     report.done = True
     return True
 
